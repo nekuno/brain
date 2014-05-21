@@ -1,0 +1,6 @@
+{
+  "require": {
+    "everyman/neo4jphp": "dev-master",
+    "silex/silex": "~1.2"
+  }
+}
