@@ -1,6 +1,4 @@
 /neo4j-community-2.0.3/
-/vendor/
+/app/vendor/
 /.idea/
-/composer.json~
-/composer.lock
-/composer.phar
+/app/composer.lock
