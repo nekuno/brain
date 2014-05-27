@@ -2,7 +2,7 @@
 
 /neo4j-community-2.0.3/
 
-/app/web/.htaccess
+
 /app/var/cache
 /app/var/logs
 /app/vendor/
