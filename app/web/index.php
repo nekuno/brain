@@ -1,27 +1,10 @@
 <?php
 
+ini_set('display_errors', 0);
+
 require_once __DIR__.'/../vendor/autoload.php';
 
-
-//Neo4j client initializacion
-$neo4jclient = new Everyman\Neo4j\Client('localhost', 7474);
-
-//print_r($neo4jclient->getServerInfo());
-
-//Silex app initialization
-$app = new Silex\Application();
-//Activate debug mode (show errors)
-$app['debug'] = true;
-
-$app->get('/', function() use($app){
-    return "Works!";
-});
- 
-$app->get('/hello/{name}', function ($name) use ($app) {
-    return 'Hello '.$app->escape($name);
-});
- 
+$app = require __DIR__.'/../src/app.php';
+require __DIR__.'/../config/prod.php';
+require __DIR__.'/../src/controllers.php';
 $app->run();
-
-
-

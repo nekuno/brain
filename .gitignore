@@ -1,4 +1,11 @@
+.idea
+
 /neo4j-community-2.0.3/
+
+/app/.htaccess
+/app/var/cache
+/app/var/logs
 /app/vendor/
-/.idea/
 /app/composer.lock
+
+
