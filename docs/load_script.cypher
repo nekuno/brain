@@ -20,6 +20,9 @@ CREATE
 CREATE
 (u:USER {_username: "user2", _status: "active"});
 
+CREATE
+(u:USER {_username: "user3", _status: "active"});
+
 //Create 5 questions
 CREATE
 (q:QUESTION {_id: "question1"}), 
