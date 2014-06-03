@@ -9,15 +9,18 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 //Request::setTrustedProxies(array('127.0.0.1'));
 
 $app->get(
-    '/',
-    function () use ($app) {
-        return $app['twig']->render('index.html', array());
+    '/{name}',
+    function ($name) use ($app) {
+
+        return $app['twig']->render('index.html', array(
+          'name' => $name,
+        ));
     }
 )
     ->bind('homepage');
 
 $app->get(
-    '/users/load',
+    '/users/load/$username',
     function () use ($app) {
         $client = $app['neo4j.client'];
         $error = array();
@@ -70,6 +73,26 @@ $app->get(
     }
 )
     ->bind('remove_users');
+
+$app->get(
+    '/users/view',
+    function () use ($app) {
+        $client = $app['neo4j.client'];
+
+        $queryString = 'MATCH n RETURN n LIMIT 25';
+
+        $query = new Everyman\Neo4j\Cypher\Query($client, $queryString);
+
+        $result = $query->getResultSet();
+
+        foreach ($result as $row) {
+            $output[] = $row['n']->getProperty('_username');
+        }
+
+        return new Response(var_dump($output));
+    }
+)
+    ->bind('view_users');
 
 
 
