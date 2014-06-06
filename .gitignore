@@ -7,5 +7,6 @@
 /app/var/logs
 /app/vendor/
 /app/composer.lock
+/app/~/.composer
 
 
