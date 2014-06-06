@@ -48,7 +48,7 @@ $app->post(
         }
 
         // Create and persist the User
-        $model = new \model\UserModel($app['neo4j.client']);
+        $model = new \Model\UserModel($app['neo4j.client']);
         $result = $model->create($request->request->all());
 
         $user = array();
