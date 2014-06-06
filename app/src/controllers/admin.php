@@ -39,7 +39,7 @@ $app->get(
 
         $query = new Everyman\Neo4j\Cypher\Query(
             $client,
-            'MATCH (n) OPTIONAL MATCH (n)-[r]-() DELETE n,r'
+            'MATCH (n) OPTIONAL MATCH (n)-[r]-() DELETE r,n'
         );
 
         try {

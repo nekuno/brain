@@ -5,8 +5,9 @@ use Symfony\Component\HttpFoundation\Response;
 
 //Request::setTrustedProxies(array('127.0.0.1'));
 
-include_once 'controllers/admin.php';
+//include_once 'controllers/admin.php';
 include_once 'controllers/users.php';
+include_once 'controllers/questions.php';
 
 $app->error(
     function (\Exception $e, $code) use ($app) {
