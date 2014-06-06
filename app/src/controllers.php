@@ -12,6 +12,13 @@ include_once 'controllers/users.php';
 $app->before(
     function(Request $request) use ($app) {
 
+        $validIP = array('127.0.0.1');
+
+        if(!in_array($request->getClientIp(), $validIP)){
+            // TODO: return 403 forbidden
+            return new \Symfony\Component\HttpFoundation\JsonResponse(array(), 403);
+        }
+
         if($request->getContentType() === 'json') {
             // Parse request content and populate parameters
             $data = json_decode(utf8_encode($request->getContent()), true);
