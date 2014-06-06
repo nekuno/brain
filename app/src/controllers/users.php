@@ -15,7 +15,6 @@ $app->get(
 
         $query = new Everyman\Neo4j\Cypher\Query($client, $queryString);
 
-
         $users = array();
         $result = $query->getResultSet();
 
@@ -39,10 +38,9 @@ $app->post(
 
         $neo4j = $app['neo4j.client'];
 
-//        $app['monolog']->addDebug($request->getContent());
-        // Parse request content and populate parameters
-        $data = json_decode($request->getContent(), true);
-        $request->request->replace(is_array($data) ? $data : array());
+        if($request->request->all() === array()){
+            return $app->json(array(), 500);
+        }
 
         $query = new Everyman\Neo4j\Cypher\Query(
             $neo4j,
