@@ -20,9 +20,13 @@ $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
 // Initialize neo4j
 $app['neo4j.client'] = $app->share(function($app) {
         $client = new Everyman\Neo4j\Client($app['neo4j.host'], $app['neo4j.port']);
-        $client->getTransport()->setAuth($app['neo4j.user'], $app['neo4j.pass']);
-
         return $client;
+    }
+);
+
+$app['neo4j.client'] = $app->extend('neo4j.client', function($client, $app){
+    $client->getTransport()->setAuth($app['neo4j.user'], $app['neo4j.pass']);
+    return $client;
     }
 );
 
