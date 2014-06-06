@@ -15,6 +15,8 @@ $app->get(
 
         $query = new Everyman\Neo4j\Cypher\Query($client, $queryString);
 
+
+        $users = array();
         $result = $query->getResultSet();
 
         foreach ($result as $row) {
