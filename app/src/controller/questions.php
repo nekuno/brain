@@ -3,9 +3,10 @@
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
 
-$app->get(
+$app->post(
     '/questions',
     function(Request $request) use ($app) {
-        return $app->json(array());
+        $app['monolog']->addDebug('Perfect ___________________------------>>>>>>><<');
+        return $app->json(array(), 200);
     }
 );
