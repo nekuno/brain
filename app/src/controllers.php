@@ -7,6 +7,19 @@ use Symfony\Component\HttpFoundation\Response;
 
 include_once 'controllers/admin.php';
 include_once 'controllers/users.php';
+//include_once 'controllers/questions.php';
+
+$app->before(
+    function(Request $request) use ($app) {
+
+        if($request->getContentType() === 'json') {
+            // Parse request content and populate parameters
+            $data = json_decode(utf8_encode($request->getContent()), true);
+            $request->request->replace(is_array($data) ? $data : array());
+        }
+
+    }
+);
 
 $app->error(
     function (\Exception $e, $code) use ($app) {
