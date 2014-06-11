@@ -21,7 +21,9 @@ $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
 $app['neo4j.client'] = $app->share(function($app) {
         $client = new Everyman\Neo4j\Client($app['neo4j.host'], $app['neo4j.port']);
         $client->getTransport()->setAuth($app['neo4j.user'], $app['neo4j.pass']);
+
         return $client;
-    });
+    }
+);
 
 return $app;
