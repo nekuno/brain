@@ -15,15 +15,15 @@ $app->post(
         $data = json_decode($request -> getContent(), true);
         $request->request->replace(is_array($data) ? $data : array());
 
-        //Construct the query
+        //Construct the query string
         $query = "CREATE (q:QUESTION {_id: '" . $request->request->get("id") . "', _content: '". $request->request->get("content") . "'}), ";
 
         $answers = $request->request->get("answers");
         $numAnswers = count($answers);
-        $i = 0;
+        $count = 0;
         foreach($answers as $answer){
             $query .= "(:ANSWER {_id: '" . $answer['id'] . "', _content: '" . $answer['content'] . "'})-[:IS_ANSWER_OF]->(q)";
-            if(++$i === $numAnswers){
+            if(++$count === $numAnswers){
                 $query .= ";";
             }
             else{
@@ -31,6 +31,7 @@ $app->post(
             }
         }
 
+        //Create the Neo4j query object
         $neoQuery = new Everyman\Neo4j\Cypher\Query(
             $neo4j,
             $query
