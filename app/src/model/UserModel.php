@@ -36,15 +36,22 @@ class UserModel {
         $query = new Query(
             $this->client,
             "CREATE (u:User {
-                status: 1,
-                qnoow_id: '" . $user['id'] . "',
-                username: '" . $user['username'] . "',
-                email: '"    . $user['email'] . "'
+                _status: 'active',
+                _id: '" . $user['id'] . "'
             })
             RETURN u;"
         );
 
-        return $query->getResultSet();
+        $result = $query->getResultSet();
+
+        $response = array();
+
+        foreach ($result as $row) {
+            $response['id'] = $row['u']->getProperty('_id');
+            $response['status'] = $row['u']->getProperty('_status');
+        }
+
+        return $response;
     }
 
     public function update(array $user = array()){
@@ -64,4 +71,5 @@ class UserModel {
     public function read($id = null){
         // TODO: do your magic here
     }
-} 
+
+}
