@@ -23,11 +23,13 @@ $app->before(
             return new \Symfony\Component\HttpFoundation\JsonResponse(array(), 403); // 403 Access forbidden
         }
 
+       //[DEBUG] echo $request->getContentType(); //Debug
+
         // Parse request content and populate parameters
-        if($request->getContentType() === 'json') {
+        //if($request->getContentType() === 'json') {
             $data = json_decode(utf8_encode($request->getContent()), true);
             $request->request->replace(is_array($data) ? $data : array());
-        }
+        //}
 
     }
 );
