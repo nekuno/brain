@@ -70,12 +70,9 @@ $app->post(
         $client = $app['neo4j.client'];
         $model = new \model\AnswerModel($client);
         $data = $request->request->all();
-        $result = $model->answer($id, $data);
+        $response = $model->answer($id, $data);
 
-        //Debug:
-        return new Response(var_dump($data));
-
-        return $result;
+        return $app->json($response, !empty($response) ? 201 : 200);
     }
 )->bind('users-answer-question');
 

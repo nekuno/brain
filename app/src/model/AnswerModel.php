@@ -24,8 +24,6 @@ class AnswerModel {
 
     public function answer ($userId, array $answer = array() ){
 
-        return $answer;
-
         //Construct the query string
         $query =
             "MATCH
@@ -59,7 +57,10 @@ class AnswerModel {
 
         $result = $neoQuery->getResultSet();
 
-        return $result;
+        $response = array();
+        $response['creation'] = "ok";
+
+        return $response;
     }
 
 } 
