@@ -46,7 +46,7 @@ $app->post(
 
         $query = new Everyman\Neo4j\Cypher\Query(
             $neo4j,
-            "CREATE (u:USER {_status: 'active', _id: '" . $request->request->get('id') . "'})  RETURN u;"
+            "CREATE (u:USER {_status: 'active', _id: '" . $request->request->get('username') . "'})  RETURN u;"
         );
 
         // Execute query and get new created user
@@ -122,7 +122,7 @@ $app->post(
  *  User {id} matches another user
  */
 $app->post(
-    'users/{id1}/answers',
+    'users/{id1}/matches',
     function(Request $request, $id1) use ($app){
 
         $neo4j = $app['neo4j.client'];
