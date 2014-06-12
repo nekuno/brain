@@ -10,11 +10,11 @@ $app['users.controller'] = $app->share(function(){
 });
 
 $app['questions.controller'] = $app->share(function(){
-    return new Controller\QuestionController();
+    return new Controller\QuestionController;
 });
 
 $app['answers.controller'] = $app->share(function(){
-    return new Controller\AnswersController();
+    return new Controller\AnswerController;
 });
 
 /**

@@ -3,33 +3,31 @@
  * Created by PhpStorm.
  * User: adridev
  * Date: 6/12/14
- * Time: 7:15 PM
+ * Time: 7:21 PM
  */
 
 namespace Controller;
 
-
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 
-class QuestionController {
+class AnswerController
+{
 
     public function addAction(Request $request, Application $app)
     {
-
         $data = $request->request->all();
 
-        if(empty($data)){
+        if(array() === $data){
             return $app->json(array(), 400);
         }
 
         // TODO: Validate received data
 
-        $model = $app['questions.model'];
+        $model  = $app['answers.model'];
         $result = $model->create($data);
 
         return $app->json($result, !empty($result) ? 201 : 200);
-
     }
 
 } 

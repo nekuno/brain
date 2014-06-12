@@ -17,16 +17,10 @@ class UserController
     public function indexAction(Request $request, Application $app)
     {
 
-        $model = $app['users.model'];
+        $model  = $app['users.model'];
         $result = $model->getAll();
-        $users = array();
-        foreach ($result as $row) {
-            $users[$row['u']->getProperty('username')]['username'] = $row['u']->getProperty('username');
-            $users[$row['u']->getProperty('username')]['email'] = $row['u']->getProperty('email');
-            $users[$row['u']->getProperty('username')]['qnoow_id'] = $row['u']->getProperty('qnoow_id');
-        }
 
-        return $app->json($users, 200);
+        return $app->json($result, 200);
     }
 
     public function addAction(Request $request, Application $app)
@@ -42,36 +36,67 @@ class UserController
                 return $app->json(array(), 400);
             }
 
-            if(!is_int($request->request->get('id')))
+            if (!is_int($request->request->get('id')))
                 return $app->json(array(), 400);
         } else {
             return $app->json(array(), 400);
         }
 
         // Create and persist the User
-        $model = $app['users.model'];
+        $model  = $app['users.model'];
         $result = $model->create($request->request->all());
 
-        $user = array();
-
-        foreach ($result as $row) {
-            $user[$row['u']->getProperty('username')]['username'] = $row['u']->getProperty('username');
-            $user[$row['u']->getProperty('username')]['email'] = $row['u']->getProperty('email');
-            $user[$row['u']->getProperty('username')]['qnoow_id'] = $row['u']->getProperty('qnoow_id');
-        }
-
-        return $app->json($user, !empty($user) ? 201 : 200);
-
-    }
-
-    public function deleteAction(Request $request, Application $app)
-    {
-
+        return $app->json($result, !empty($result) ? 201 : 200);
     }
 
     public function showAction(Request $request, Application $app)
     {
 
+        $id = $request->get('id');
+        if (null === $id) {
+            return $app->json(array(), 404);
+        }
+
+        $model  = $app['users.model'];
+        $result = $model->getById($request->get('id'));
+
+        return $app->json($result, !empty($user) ? 200 : 404);
+    }
+
+    public function deleteAction(Request $request, Application $app)
+    {
+
+        $id = $request->get('id');
+
+        if (null === $id) {
+            return $app->json(array(), 400);
+        }
+
+        $model = $app['users.model'];
+
+        $model->remove($id);
+
+        return $app->json(array(), 200);
+
+    }
+
+    public function getMatchingAction(Request $request, Application $app)
+    {
+
+        $id1 = $request->query->get('id1');
+        $id2 = $request->query->get('id2');
+
+        if (null === $id1 || null === $id2) {
+            return $app->json(array(), 400);
+        }
+
+        // TODO: check that users has one answered question at least
+
+        $model  = $app['users.model'];
+        $result = $model->getMatchingByIds($id1, $id2);
+
+        //return $query;
+        return $app->json($result, !empty($result) ? 201 : 200);
     }
 
 } 
