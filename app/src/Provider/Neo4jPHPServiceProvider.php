@@ -34,7 +34,6 @@ class Neo4jPHPServiceProvider implements ServiceProviderInterface {
             function ($client, $app) {
                 $client
                     ->getTransport()
-                    ->useHttps()
                     ->setAuth($app['neo4j.user'], $app['neo4j.pass']);
 
                 return $client;
