@@ -24,7 +24,7 @@ class QuestionModel {
         //Construct the query string
         $query =
             "CREATE
-                (q:Qestion {
+                (q:Question {
                     _id: '" . $data['id'] . "',
                     _text: '". $data['text'] . "'}), ";
 

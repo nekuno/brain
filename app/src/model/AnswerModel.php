@@ -22,19 +22,19 @@ class AnswerModel {
 
     }
 
-    public function answer ($userId, array $answer = array() ){
+    public function answer($userId, array $answer = array() ){
 
         //Construct the query string
         $query =
             "MATCH
-                (user:USER {_id: '" . $userId. "'}),
-                (answered:ANSWER {_id: '" . $answer['answerId'] . "'}), ";
+                (user:User {_id: '" . $userId. "'}),
+                (answered:Answer {_id: '" . $answer['answerId'] . "'}), ";
 
         $accepted = $answer['acceptedAnswers'];
         $numAccepted = count($accepted);
         $count = 0;
         foreach($accepted as $acc){
-            $query .= "(accepted" . $count . ":ANSWER {_id: '" . $acc['id'] . "'}), ";
+            $query .= "(accepted" . $count . ":Answer {_id: '" . $acc['id'] . "'}), ";
             ++$count;
         }
 
@@ -55,6 +55,7 @@ class AnswerModel {
             $query
         );
 
+        //Execute query
         $result = $neoQuery->getResultSet();
 
         $response = array();
