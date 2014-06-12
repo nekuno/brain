@@ -5,7 +5,7 @@ $app['users.model'] = function ($app) {
 };
 
 $app['questions.model'] = function ($app) {
-    return new \Model\UserModel($app['neo4j.client']);
+    return new \Model\QuestionModel($app['neo4j.client']);
 };
 
 $app['answers.model'] = function ($app) {

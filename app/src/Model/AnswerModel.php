@@ -11,57 +11,56 @@ namespace Model;
 use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
 
-
-class AnswerModel {
+class AnswerModel
+{
 
     protected $client;
 
-    public function __construct(Client $client){
+    public function __construct(Client $client)
+    {
 
         $this->client = $client;
 
     }
 
-    public function answer($userId, array $answer = array() ){
+    public function create(array $answer = array())
+    {
+
+        $userId = $answer['userId'];
 
         //Construct the query string
-        $query =
+        $queryString =
             "MATCH
-                (user:User {_id: '" . $userId. "'}),
-                (answered:Answer {_id: '" . $answer['answerId'] . "'}), ";
+                (user:User {qnoow_id: " . $userId . "}),
+                (answered:Answer {qnoow_id: '" . $answer['answerId'] . "'}), ";
 
-        $accepted = $answer['acceptedAnswers'];
+        $accepted    = $answer['acceptedAnswers'];
         $numAccepted = count($accepted);
-        $count = 0;
-        foreach($accepted as $acc){
-            $query .= "(accepted" . $count . ":Answer {_id: '" . $acc['id'] . "'}), ";
+        $count       = 0;
+        foreach ($accepted as $aa) {
+            $queryString .= "(accepted" . $count . ":Answer {qnoow_id: " . $aa['id'] . "}), ";
             ++$count;
         }
 
-        $query .=
-                "(answered)-[:IS_ANSWER_OF]->(question)
+        $queryString .=
+            "(answered)-[:IS_ANSWER_OF]->(question)
             CREATE
-                (user)-[:ANSWERS]->(answered), ";
+            (user)-[:ANSWERS]->(answered), ";
 
-        for ($count = 0; $count < $numAccepted; ++$count){
-            $query .= "(user)-[:ACCEPTS]->(accepted" .$count ."), ";
+        for ($count = 0; $count < $numAccepted; ++$count) {
+            $queryString .= "(user)-[:ACCEPTS]->(accepted" . $count . "), ";
         }
 
-        $query .= "(user)-[:RATES {_rating: " . $answer['rating'] . "}]->(question);";
+        $queryString .= "(user)-[:RATES {_rating: " . $answer['rating'] . "}]->(question);";
 
         //Create the Neo4j query object
-        $neoQuery = new Query(
+        $query = new Query(
             $this->client,
-            $query
+            $queryString
         );
 
         //Execute query
-        $result = $neoQuery->getResultSet();
-
-        $response = array();
-        $response['creation'] = "ok";
-
-        return $response;
+        $query->getResultSet();
     }
 
 } 

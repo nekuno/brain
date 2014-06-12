@@ -10,56 +10,67 @@ namespace Model;
 
 use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
+use Everyman\Neo4j\Query\ResultSet;
+use Exception\QueryErrorException;
 
-class QuestionModel {
+class QuestionModel
+{
 
     protected $client;
 
-    public function __construct(Client $client){
+    public function __construct(Client $client)
+    {
         $this->client = $client;
     }
 
-    public function create(array $data = array() ){
+    public function create(array $data = array())
+    {
 
         //Construct the query string
-        $query =
-            "CREATE
-                (q:Question {
-                    _id: '" . $data['id'] . "',
-                    _text: '". $data['text'] . "'}), ";
+        $stringQuery = "CREATE (q:Question {qnoow_id: " . $data['id'] . ", text: '" . $data['text'] . "'}), ";
 
-        $answers =$data['answers'];
+        $answers    = $data['answers'];
         $numAnswers = count($answers);
-        $count = 0;
-        foreach($answers as $answer){
-            $query .=
-                "(:Answer {
-                    _id: '" . $answer['id'] . "',
-                    _text: '" . $answer['text'] . "'
-                })-[:IS_ANSWER_OF]->(q)";
-            if(++$count === $numAnswers){
-                $query .= ";";
-            }
-            else{
-                $query .= ", ";
+        $count      = 0;
+        foreach ($answers as $answer) {
+            $stringQuery .=
+                "(:Answer {qnoow_id: " . $answer['id'] . ", text: '" . $answer['text'] . "'})-[:IS_ANSWER_OF]->(q)";
+            if (++$count !== $numAnswers) {
+                $stringQuery .= ", ";
             }
         }
 
+        $stringQuery .= " RETURN q";
+
         //Create the Neo4j query object
-        $neoQuery = new  Query (
+        $query = new  Query (
             $this->client,
-            $query
+            $stringQuery
         );
 
-        //Execute query and get new created question
-        $result = $neoQuery->getResultSet();
+        try{
+            $result = $query->getResultSet();
+        }catch (\Exception $e){
+            throw new QueryErrorException('Error on query');
+        }
 
-        //TECHNICALDEBT: implement a decent result
+        return $this->parseResultSet($result);
+    }
 
-        $response = array();
-        $response['creation'] = "ok";
+    private function parseResultSet(ResultSet $resultSet){
 
-        return $response;
+        $result = array();
+
+        foreach ($resultSet as $row) {
+            $question = array(
+                'id' => $row['q']->getProperty('qnoow_id'),
+                'text' => $row['q']->getProperty('text'),
+            );
+
+            $result[] = $question;
+        }
+
+        return $result;
     }
 
 } 
