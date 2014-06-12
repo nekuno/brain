@@ -9,14 +9,13 @@ $app['users.controller'] = $app->share(function(){
     return new Controller\UserController;
 });
 
+$app['questions.controller'] = $app->share(function(){
+    return new Controller\QuestionController();
+});
 
-
-// User routes
-$app->get('/users/{id}', 'text.controller:showAction')->value('id', null);
-$app->post('/users', 'text.controller:addAction');
-$app->post('/users/{id}', 'text.controller:updateAction')->value('id', null);
-$app->delete('/users/{id}', 'text.controller:deleteAction')->value('id', null);
-
+$app['answers.controller'] = $app->share(function(){
+    return new Controller\AnswersController();
+});
 
 /**
  * Middleware for filter some request

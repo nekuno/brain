@@ -6,7 +6,7 @@
  * Time: 8:57 PM
  */
 
-namespace model;
+namespace Model;
 
 use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
