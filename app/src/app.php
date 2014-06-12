@@ -25,8 +25,4 @@ $app['twig'] = $app->share(
     )
 );
 
-
-
-
-
 return $app;
