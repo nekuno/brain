@@ -32,4 +32,20 @@ class QuestionController {
 
     }
 
+    public function answerAction(Request $request, Application $app)
+    {
+        $data = $request->request->all();
+
+        if(array() === $data){
+            return $app->json(array(), 400);
+        }
+
+        // TODO: Validate received data
+
+        $model  = $app['questions.model'];
+        $result = $model->answer($data);
+
+        return $app->json($result, 201);
+    }
+
 } 

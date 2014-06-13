@@ -8,10 +8,7 @@ $app->get('/users', 'users.controller:indexAction');
 $app->post('/users', 'users.controller:addAction');
 
 // Question routes
+$app->post('/questions/answers', 'questions.controller:answerAction');
 $app->post('/questions', 'questions.controller:addAction');
 
-// Answer routes
-$app->post('/answers', 'answers.controller:addAction');
-
-// Matching routes
 

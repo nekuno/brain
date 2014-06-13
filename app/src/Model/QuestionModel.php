@@ -57,6 +57,51 @@ class QuestionModel
         return $this->parseResultSet($result);
     }
 
+    public function answer(array $answer = array())
+    {
+
+        $userId = $answer['userId'];
+
+        //Construct the query string
+        $queryString =
+            "MATCH
+                (user:User {qnoow_id: " . $userId . "}),
+                (answered:Answer {qnoow_id: '" . $answer['answerId'] . "'}), ";
+
+        $accepted    = $answer['acceptedAnswers'];
+        $numAccepted = count($accepted);
+        $count       = 0;
+        foreach ($accepted as $aa) {
+            $queryString .= "(accepted" . $count . ":Answer {qnoow_id: " . $aa['id'] . "}), ";
+            ++$count;
+        }
+
+        $queryString .=
+            "(answered)-[:IS_ANSWER_OF]->(question)
+            CREATE
+            (user)-[:ANSWERS]->(answered), ";
+
+        for ($count = 0; $count < $numAccepted; ++$count) {
+            $queryString .= "(user)-[:ACCEPTS]->(accepted" . $count . "), ";
+        }
+
+        $queryString .= "(user)-[:RATES {rating: " . $answer['rating'] . "}]->(question);";
+
+        //Create the Neo4j query object
+        $query = new Query(
+            $this->client,
+            $queryString
+        );
+
+        try{
+            //Execute query
+            $query->getResultSet();
+        }catch (\Exception $e){
+            throw new QueryErrorException('Error on query');
+        }
+
+    }
+
     private function parseResultSet(ResultSet $resultSet){
 
         $result = array();
