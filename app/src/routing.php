@@ -11,4 +11,5 @@ $app->delete('/users/{id}', 'users.controller:deleteAction')->value('id', null);
 $app->post('/questions/answers', 'questions.controller:answerAction');
 $app->post('/questions', 'questions.controller:addAction');
 
-
+// Content routes
+$app->post('/content/links', 'content.controler:addLink');
