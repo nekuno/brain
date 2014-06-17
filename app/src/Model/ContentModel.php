@@ -11,6 +11,7 @@ namespace Model;
 
 use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
+use Everyman\Neo4j\Query\ResultSet;
 
 class ContentModel {
 
@@ -22,6 +23,13 @@ class ContentModel {
 
     public function addLink(array $data)
     {
+
+
+        $duplicated = $this->isDuplicatedLink($data);
+
+        if($duplicated !== 0) {
+            return new ResultSet($this->client, array());
+        }
 
         $stringQuery = "
             MATCH (u:User {qnoow_id: " . $data['userId'] . "})
@@ -51,6 +59,23 @@ class ContentModel {
         }
 
         return $result;
+    }
+
+    private function isDuplicatedLink(array $data){
+
+        $stringQuery = "
+            MATCH
+                (l:Link {url: '" . $data['url'] . "'})-[r:SHARED_BY]->(u:User {qnoow_id: '" . $data['userId'] . "'})
+            RETURN r;";
+
+        $query = new Query(
+            $this->client,
+            $stringQuery
+        );
+
+        $result = $query->getResultSet();
+
+        return $result->count();
     }
 
 } 
