@@ -14,6 +14,9 @@ $app->register(new ServiceControllerServiceProvider());
 $app->register(new TwigServiceProvider());
 $app->register(new Neo4jPHPServiceProvider());
 
+// Sample yml config file ************************************REMOVE THIS SHIT!****************>>
+$app->register(new \Igorw\Silex\ConfigServiceProvider(__DIR__ . '/../config/sample_config.yml'));
+
 $app['twig'] = $app->share(
     $app->extend(
         'twig',
