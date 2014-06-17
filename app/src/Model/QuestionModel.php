@@ -10,8 +10,6 @@ namespace Model;
 
 use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
-use Everyman\Neo4j\Query\ResultSet;
-use Exception\QueryErrorException;
 
 class QuestionModel
 {
@@ -23,24 +21,19 @@ class QuestionModel
         $this->client = $client;
     }
 
-    public function create(array $data = array())
+    public function create(array $data)
     {
 
         //Construct the query string
-        $stringQuery = "CREATE (q:Question {qnoow_id: " . $data['id'] . ", text: '" . $data['text'] . "'}), ";
+        $stringQuery = "CREATE (q:Question {qnoow_id: " . $data['id'] . ", text: '" . $data['text'] . "'})";
 
-        $answers    = $data['answers'];
-        $numAnswers = count($answers);
-        $count      = 0;
+        $answers = $data['answers'];
         foreach ($answers as $answer) {
-            $stringQuery .=
-                "(:Answer {qnoow_id: " . $answer['id'] . ", text: '" . $answer['text'] . "'})-[:IS_ANSWER_OF]->(q)";
-            if (++$count !== $numAnswers) {
-                $stringQuery .= ", ";
-            }
+            $stringQuery .= ", (:Answer {qnoow_id: " . $answer['id'] . ", text: '" . $answer['text'] . "'})
+                    -[:IS_ANSWER_OF]->(q)";
         }
 
-        $stringQuery .= " RETURN q";
+        $stringQuery .= " RETURN q;";
 
         //Create the Neo4j query object
         $query = new  Query (
@@ -48,67 +41,11 @@ class QuestionModel
             $stringQuery
         );
 
-        try{
-            $result = $query->getResultSet();
-        }catch (\Exception $e){
-            throw new QueryErrorException('Error on query');
-        }
-
-        return $this->parseResultSet($result);
-    }
-
-    public function answer(array $answer = array())
-    {
-
-        $userId = $answer['userId'];
-
-        //Construct the query string
-        $queryString =
-            "MATCH
-                (user:User {qnoow_id: " . $userId . "}),
-                (answered:Answer {qnoow_id: '" . $answer['answerId'] . "'}), ";
-
-        $accepted    = $answer['acceptedAnswers'];
-        $numAccepted = count($accepted);
-        $count       = 0;
-        foreach ($accepted as $aa) {
-            $queryString .= "(accepted" . $count . ":Answer {qnoow_id: " . $aa['id'] . "}), ";
-            ++$count;
-        }
-
-        $queryString .=
-            "(answered)-[:IS_ANSWER_OF]->(question)
-            CREATE
-            (user)-[:ANSWERS]->(answered), ";
-
-        for ($count = 0; $count < $numAccepted; ++$count) {
-            $queryString .= "(user)-[:ACCEPTS]->(accepted" . $count . "), ";
-        }
-
-        $queryString .= "(user)-[:RATES {rating: " . $answer['rating'] . "}]->(question);";
-
-        //Create the Neo4j query object
-        $query = new Query(
-            $this->client,
-            $queryString
-        );
-
-        try{
-            //Execute query
-            $query->getResultSet();
-        }catch (\Exception $e){
-            throw new QueryErrorException('Error on query');
-        }
-
-    }
-
-    private function parseResultSet(ResultSet $resultSet){
-
         $result = array();
 
-        foreach ($resultSet as $row) {
+        foreach ($query->getResultSet() as $row) {
             $question = array(
-                'id' => $row['q']->getProperty('qnoow_id'),
+                'id'   => $row['q']->getProperty('qnoow_id'),
                 'text' => $row['q']->getProperty('text'),
             );
 
@@ -116,6 +53,46 @@ class QuestionModel
         }
 
         return $result;
+    }
+
+    public function answer(array $data)
+    {
+
+        //Construct the query string
+        $queryString =
+            "MATCH
+                (user:User {qnoow_id: " . $data['userId'] . "}),
+                (answered:Answer {qnoow_id: " . $data['answerId'] . "})";
+
+        $acceptedAnswers = $data['acceptedAnswers'];
+        $aliases         = array();
+        foreach ($acceptedAnswers as $aa) {
+            $alias = 'acceptedAnswer' . $aa['id'];
+            $queryString .= ", (" . $alias . ":Answer {qnoow_id: " . $aa['id'] . "})";
+            $aliases[] = $alias;
+        }
+
+        $queryString .=
+            ", (answered)-[:IS_ANSWER_OF]->(question:Question)
+            CREATE
+                (user)-[:ANSWERS]->(answered)";
+
+        foreach ($aliases as $alias) {
+            $queryString .= ", (user)-[:ACCEPTS]->(" . $alias . ")";
+        }
+
+        $queryString .= ", (user)-[:RATES {rating: " . $data['rating'] . "}]->(question);";
+
+        //Create the Neo4j query object
+        $query = new Query(
+            $this->client,
+            $queryString
+        );
+
+        $query->getResultSet();
+
+        return;
+
     }
 
 } 

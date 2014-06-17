@@ -6,6 +6,8 @@ use Silex\Provider\WebProfilerServiceProvider;
 // include the prod configuration
 require __DIR__.'/prod.php';
 
+$app['env'] = 'prod';
+
 // enable the debug mode
 $app['debug'] = true;
 

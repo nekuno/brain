@@ -8,7 +8,6 @@
 
 namespace Controller;
 
-
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -25,8 +24,15 @@ class QuestionController {
 
         // TODO: Validate received data
 
-        $model = $app['questions.model'];
-        $result = $model->create($data);
+        try{
+            $model = $app['questions.model'];
+            $result = $model->create($data);
+        }catch (\Exception $e){
+            if($app['env'] == 'dev'){
+                throw $e;
+            }
+            $app->json(array(), 500);
+        }
 
         return $app->json($result, !empty($result) ? 201 : 200);
 
@@ -42,10 +48,18 @@ class QuestionController {
 
         // TODO: Validate received data
 
-        $model  = $app['questions.model'];
-        $result = $model->answer($data);
+        try{
+            $model  = $app['questions.model'];
+            $result = $model->answer($data);
+        }catch (\Exception $e){
+            if($app['env'] == 'dev'){
+                throw $e;
+            }
+            $app->json(array(), 500);
+        }
 
         return $app->json($result, 201);
+
     }
 
 } 

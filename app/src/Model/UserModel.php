@@ -48,7 +48,7 @@ class UserModel {
         try{
             $result = $query->getResultSet();
         }catch (\Exception $e){
-            throw new QueryErrorException('Error on query');
+            throw $e;
         }
 
         return $this->parseResultSet($result);
@@ -59,13 +59,13 @@ class UserModel {
     }
 
     public function remove($id = null){
-        $queryString = "MATCH (u:User {qnoow_id:" . $id . "}) DELETE u";
+        $queryString = "MATCH (u:User {qnoow_id:" . $id . "}) DELETE u;";
         $query = new Query($this->client, $queryString);
 
         try{
             $result = $query->getResultSet();
         }catch (\Exception $e){
-            throw new QueryErrorException('Error on query');
+            throw $e;
         }
 
         return $this->parseResultSet($result);
@@ -73,13 +73,13 @@ class UserModel {
 
     public function getAll(){
 
-        $queryString = "MATCH (u:User) RETURN u";
+        $queryString = "MATCH (u:User) RETURN u;";
         $query = new Query($this->client, $queryString);
 
         try{
             $result = $query->getResultSet();
         }catch (\Exception $e){
-            throw new QueryErrorException('Error on query');
+            throw $e;
         }
 
         return $this->parseResultSet($result);
@@ -88,13 +88,13 @@ class UserModel {
     
     public function getById($id = null){
 
-        $queryString = "MATCH (u:User { qnoow_id : " . $id . "}) RETURN u";
+        $queryString = "MATCH (u:User { qnoow_id : " . $id . "}) RETURN u;";
         $query = new Query($this->client, $queryString);
 
         try{
             $result = $query->getResultSet();
         }catch (\Exception $e){
-            throw new QueryErrorException('Error on query');
+            throw $e;
         }
 
         return $this->parseResultSet($result);
@@ -124,7 +124,7 @@ class UserModel {
         try{
             $checkResult = $checkQuery->getResultSet();
         }catch (\Exception $e){
-            throw new QueryErrorException('Error on query');
+            throw $e;
         }
 
         $checkValue = 0;
@@ -178,7 +178,7 @@ class UserModel {
             try{
                 $result = $query->getResultSet();
             }catch (\Exception $e){
-                throw new QueryErrorException('Error on query');
+                throw $e;
             }
 
             foreach ($result as $row) {

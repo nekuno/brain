@@ -17,8 +17,15 @@ class UserController
     public function indexAction(Request $request, Application $app)
     {
 
-        $model  = $app['users.model'];
-        $result = $model->getAll();
+        try {
+            $model  = $app['users.model'];
+            $result = $model->getAll();
+        } catch (\Exception $e) {
+            if ($app['env'] == 'dev') {
+                throw $e;
+            }
+            $app->json(array(), 500);
+        }
 
         return $app->json($result, 200);
     }
@@ -43,8 +50,16 @@ class UserController
         }
 
         // Create and persist the User
-        $model  = $app['users.model'];
-        $result = $model->create($request->request->all());
+
+        try {
+            $model  = $app['users.model'];
+            $result = $model->create($request->request->all());
+        } catch (\Exception $e) {
+            if ($app['env'] == 'dev') {
+                throw $e;
+            }
+            $app->json(array(), 500);
+        }
 
         return $app->json($result, !empty($result) ? 201 : 200);
     }
@@ -57,8 +72,17 @@ class UserController
             return $app->json(array(), 404);
         }
 
-        $model  = $app['users.model'];
-        $result = $model->getById($request->get('id'));
+
+
+        try {
+            $model  = $app['users.model'];
+            $result = $model->getById($request->get('id'));
+        } catch (\Exception $e) {
+            if ($app['env'] == 'dev') {
+                throw $e;
+            }
+            $app->json(array(), 500);
+        }
 
         return $app->json($result, !empty($user) ? 200 : 404);
     }
@@ -72,9 +96,17 @@ class UserController
             return $app->json(array(), 400);
         }
 
-        $model = $app['users.model'];
 
-        $model->remove($id);
+
+        try {
+            $model = $app['users.model'];
+            $model->remove($id);
+        } catch (\Exception $e) {
+            if ($app['env'] == 'dev') {
+                throw $e;
+            }
+            $app->json(array(), 500);
+        }
 
         return $app->json(array(), 200);
 
@@ -92,8 +124,15 @@ class UserController
 
         // TODO: check that users has one answered question at least
 
-        $model  = $app['users.model'];
-        $result = $model->getMatchingByIds($id1, $id2);
+        try {
+            $model  = $app['users.model'];
+            $result = $model->getMatchingByIds($id1, $id2);
+        } catch (\Exception $e) {
+            if ($app['env'] == 'dev') {
+                throw $e;
+            }
+            $app->json(array(), 500);
+        }
 
         //return $query;
         return $app->json($result, !empty($result) ? 201 : 200);
