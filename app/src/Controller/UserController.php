@@ -24,7 +24,7 @@ class UserController
             if ($app['env'] == 'dev') {
                 throw $e;
             }
-            $app->json(array(), 500);
+            return $app->json(array(), 500);
         }
 
         return $app->json($result, 200);
@@ -58,7 +58,7 @@ class UserController
             if ($app['env'] == 'dev') {
                 throw $e;
             }
-            $app->json(array(), 500);
+            return $app->json(array(), 500);
         }
 
         return $app->json($result, !empty($result) ? 201 : 200);
@@ -81,7 +81,7 @@ class UserController
             if ($app['env'] == 'dev') {
                 throw $e;
             }
-            $app->json(array(), 500);
+            return $app->json(array(), 500);
         }
 
         return $app->json($result, !empty($user) ? 200 : 404);
@@ -105,7 +105,7 @@ class UserController
             if ($app['env'] == 'dev') {
                 throw $e;
             }
-            $app->json(array(), 500);
+            return $app->json(array(), 500);
         }
 
         return $app->json(array(), 200);
@@ -131,7 +131,7 @@ class UserController
             if ($app['env'] == 'dev') {
                 throw $e;
             }
-            $app->json(array(), 500);
+            return $app->json(array(), 500);
         }
 
         //return $query;

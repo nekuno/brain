@@ -31,7 +31,7 @@ class QuestionController {
             if($app['env'] == 'dev'){
                 throw $e;
             }
-            $app->json(array(), 500);
+            return $app->json(array(), 500);
         }
 
         return $app->json($result, !empty($result) ? 201 : 200);
@@ -55,7 +55,7 @@ class QuestionController {
             if($app['env'] == 'dev'){
                 throw $e;
             }
-            $app->json(array(), 500);
+            return $app->json(array(), 500);
         }
 
         return $app->json($result, 201);
