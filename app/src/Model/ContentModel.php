@@ -25,10 +25,10 @@ class ContentModel {
     {
 
 
+        // Check if exists other link with the same url and shared by the same user
         $duplicated = $this->isDuplicatedLink($data);
-
-        if($duplicated !== 0) { //if there is indeed a relationship already
-            return new ResultSet($this->client, array());
+        if($duplicated !== 0) {
+            return array();
         }
 
         $stringQuery = "
@@ -65,9 +65,9 @@ class ContentModel {
 
         $stringQuery = "
             MATCH
-                (l:Link {url: '" . $data['url'] . "'})-[r:SHARED_BY]->(u:User {qnoow_id: '" . $data['userId'] . "'})
+                (l:Link {url: '" . $data['url'] . "'})-[r:SHARED_BY]->(u:User {qnoow_id: " . $data['userId'] . "})
             RETURN
-                count(r) AS result;";
+                count(l) AS result;";
 
         $query = new Query(
             $this->client,
