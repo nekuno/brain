@@ -17,7 +17,7 @@ $app['answers.controller'] = $app->share(function () {
     return new Controller\AnswerController;
 });
 
-$app['content.controler'] = $app->share(function () {
+$app['social.controller'] = $app->share(function () {
     return new Controller\ContentController;
 });
 
