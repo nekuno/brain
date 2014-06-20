@@ -1,5 +1,6 @@
 <?php
 
+use Guzzle\GuzzleServiceProvider;
 use Provider\Neo4jPHPServiceProvider;
 use Silex\Application;
 use Silex\Provider\DoctrineServiceProvider;
@@ -24,6 +25,7 @@ $app->register(new DoctrineServiceProvider(), array(
     ),
 ));
 $app->register(new Neo4jPHPServiceProvider());
+$app->register(new GuzzleServiceProvider());
 
 // Sample yml config file ************************************REMOVE THIS SHIT!****************>>
 $app->register(new \Igorw\Silex\ConfigServiceProvider(__DIR__ . '/../config/sample_config.yml'));
