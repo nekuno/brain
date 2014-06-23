@@ -126,7 +126,7 @@ class UserController
 
         try {
             $model  = $app['users.model'];
-            $result = $model->getMatchingByIds($id1, $id2);
+            $result = $model->getMatchingByQuestionsByIds($id1, $id2);
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;

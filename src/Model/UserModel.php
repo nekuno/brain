@@ -101,7 +101,7 @@ class UserModel {
 
     }
 
-    public function getMatchingByIds($id1, $id2){
+    public function getMatchingByQuestionsByIds($id1, $id2){
 
         $response = array();
 
