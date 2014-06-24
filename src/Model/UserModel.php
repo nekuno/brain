@@ -37,7 +37,7 @@ class UserModel {
         $query = new Query(
             $this->client,
             "CREATE (u:User {
-                status: 1,
+                status: 'active',
                 qnoow_id: " . $user['id'] . ",
                 username: '" . $user['username'] . "',
                 email: '"    . $user['email'] . "'
