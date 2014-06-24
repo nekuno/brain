@@ -256,7 +256,7 @@ class UserModel {
                 OPTIONAL MATCH
                     (anyUser2)-[:LIKES|DISLIKES]->(commonDislikes)
                 WITH
-                    ( count(distinct commonLikes) + count(distinct commonDislikes) )*1.0 / (count(distinct contentU1) + count(distinct contentU2) ) AS ratio,
+                    ( count(distinct commonLikes) + count(distinct commonDislikes) )*1.0 / ( (count(distinct contentU1) + count(distinct contentU2) - count(distinct commonLikes) - count(distinct commonDislikes) ) ) AS ratio,
                     ( ( count(distinct anyUser1) + count(distinct anyUser2) )*1.0 / ( count(distinct commonLikes) + count(distinct commonDislikes) ) ) / max_likes_dislikes as popul
                 WITH
                     (ratio + ((1 - popul)^(1.0/3)) ) /2 AS match_content
