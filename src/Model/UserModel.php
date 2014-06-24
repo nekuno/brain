@@ -164,7 +164,9 @@ class UserModel {
                     (u1:User {qnoow_id: '" . $id1 . "'}),
                     (u2:User {qnoow_id: '" . $id2 . "'})
                 CREATE UNIQUE
-                    (u1)-[m:MATCHES]-(u2) SET m.questionMatching = match_user1_user2
+                    (u1)-[m:MATCHES]-(u2)
+                SET
+                    m.questionMatching = match_user1_user2
                 RETURN
                     m;";
 
@@ -264,7 +266,9 @@ class UserModel {
                     (u1:User {qnoow_id: '" . $id1 . "'}),
                     (u2:User {qnoow_id: '" . $id2 . "'})
                 CREATE UNIQUE
-                    (u1)-[m:MATCHES]-(u2) SET m.contentMatching = match_user1_user2
+                    (u1)-[m:MATCHES]-(u2)
+                SET
+                    m.contentMatching = match_user1_user2
                 RETURN
                     m;";
 
