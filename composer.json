@@ -24,7 +24,8 @@
         "doctrine/dbal": "2.2.*",
         "everyman/neo4jphp": "dev-master",
         "igorw/config-service-provider": "1.2.*@dev",
-        "guzzle/silex-provider": "1.0.*@dev"
+        "guzzle/silex-provider": "1.0.*@dev",
+        "knplabs/console-service-provider": "dev-master"
     },
     "require-dev": {
         "phpunit/phpunit": "~3.7"
