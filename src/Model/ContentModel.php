@@ -35,7 +35,7 @@ class ContentModel
         } else {
             $stringQuery = "MATCH (u:User)" .
                 ", (l:Link) " .
-                "WHERE u.qnoow_id = " . $data['userId'] . " AND l.url = '" . $data['userId'] . "'" .
+                "WHERE u.qnoow_id = " . $data['userId'] . " AND l.url = '" . $data['url'] . "'" .
                 "CREATE UNIQUE (l)-[r:SHARED_BY]->(u) " .
                 "RETURN l;
             ";

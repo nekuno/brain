@@ -13,4 +13,4 @@ $app->post('/questions', 'questions.controller:addAction');
 
 // Content routes
 $app->post('/social/links', 'social.controller:addLink');
-$app->get('/social/facebook/{user}/fetch/links', 'social.controller:fetchFacebookLinksAction');
+$app->get('/social/facebook/{userId}/fetch/links', 'social.controller:fetchFacebookLinksAction');
