@@ -1,3 +1,5 @@
+SetEnv dev
+
 <IfModule mod_rewrite.c>
     Options -MultiViews
 
