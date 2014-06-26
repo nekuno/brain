@@ -8,80 +8,93 @@
 
 namespace Model;
 
-
 use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
-use Everyman\Neo4j\Query\ResultSet;
 
-class ContentModel {
+class ContentModel
+{
 
     protected $client;
 
-    public function __construct(Client $client){
+    public function __construct(Client $client)
+    {
         $this->client = $client;
     }
 
     public function addLink(array $data)
     {
 
+        $duplicate = $this->getDuplicate($data['url']);
 
-        // Check if exists other link with the same url and shared by the same user
-        $duplicated = $this->isDuplicatedLink($data);
-        if($duplicated !== 0) {
-            return array();
+        if (array() === $duplicate) {
+            $stringQuery = "MATCH (u:User) " .
+                "WHERE u.qnoow_id = " . $data['userId'] .
+                "CREATE (l:Link {url: '" . $data['url'] . "', title: '" . $data['title'] . "', description: '" . $data['description'] . "'})" .
+                ", (l)-[r:SHARED_BY]->(u) " .
+                "RETURN l;";
+        } else {
+            $stringQuery = "MATCH (u:User)" .
+                ", (l:Link) " .
+                "WHERE u.qnoow_id = " . $data['userId'] . " AND l.url = '" . $data['url'] . "'" .
+                "CREATE UNIQUE (l)-[r:SHARED_BY]->(u) " .
+                "RETURN l;
+            ";
         }
-
-        $stringQuery = "
-            MATCH (u:User {qnoow_id: " . $data['userId'] . "})
-            CREATE
-                (l:Link
-                    {
-                        url: '" . $data['url'] . "'
-                        , title: '" . $data['title'] . "'
-                        , description: '" . $data['description'] . "'
-                    }
-                ),
-                (l)-[r:SHARED_BY]->(u)
-            RETURN l;";
 
         $query = new Query(
             $this->client,
             $stringQuery
         );
 
-        $result = array();
+        $resultSet = $query->getResultSet();
 
-        foreach ($query->getResultSet() as $row) {
-            $link['url'] = $row['l']->getProperty('url');
-            $link['title'] = $row['l']->getProperty('title');
+        foreach ($resultSet as $row) {
+            $link = array();
+            $link['url']         = $row['l']->getProperty('url');
+            $link['title']       = $row['l']->getProperty('title');
             $link['description'] = $row['l']->getProperty('description');
-            $result[] = $link;
+            $result[]            = $link;
         }
 
-        return $result;
+        if(isset($result)){
+            return $result;
+        }
+
     }
 
-    private function isDuplicatedLink(array $data){
+    private function getDuplicate($url)
+    {
 
         $stringQuery = "
             MATCH
-                (l:Link {url: '" . $data['url'] . "'})-[r:SHARED_BY]->(u:User {qnoow_id: " . $data['userId'] . "})
-            RETURN
-                count(l) AS result;";
+                (l:Link)-[r:SHARED_BY]->(u)
+            WHERE l.url = {url}
+            RETURN l, u
+            LIMIT 1";
 
         $query = new Query(
             $this->client,
-            $stringQuery
+            $stringQuery,
+            array('url' => $url)
         );
 
         $result = $query->getResultSet();
 
-        $numberOfShares = 0;
-        foreach($result as $row){
-            $numberOfShares = $row['result'];
+        $duplicates = array();
+
+        foreach ($result as $row) {
+            $duplicate = array();
+            $duplicate['userId']  = $row['u']->getProperty('qnoow_id');
+            $duplicate['linkUrl'] = $row['l']->getProperty('url');
+            $duplicates[]         = $duplicate;
         }
 
-        return $numberOfShares;
+        if (count($duplicates) > 0) {
+            return $duplicates[0];
+        }
+
+        return $duplicates;
+
     }
 
 } 

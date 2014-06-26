@@ -12,4 +12,5 @@ $app->post('/questions/answers', 'questions.controller:answerAction');
 $app->post('/questions', 'questions.controller:addAction');
 
 // Content routes
-$app->post('/content/links', 'content.controler:addLink');
+$app->post('/social/links', 'social.controller:addLink');
+$app->get('/social/{resource}/{userId}/fetch/links', 'social.controller:fetchLinksAction');
