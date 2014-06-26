@@ -39,7 +39,7 @@ class SocialFetchLinksCommand extends ContainerAwareCommand
         $consumer = new $FQNClassName($this->app);
 
         try {
-            $consumer->fetch();
+            $consumer->fetchLinks();
             $output->writeln('Success!');
         } catch(\Exception $e) {
             $output->writeln(sprintf('Error: %s', $e->getMessage()));
