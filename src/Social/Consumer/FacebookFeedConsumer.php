@@ -2,24 +2,14 @@
 
 namespace Social\Consumer;
 
-use Guzzle\Http\Exception\RequestException;
 use Silex\Application;
 
 /**
  * Class FacebookConsumer
  * @package Social
  */
-class FacebookFeedConsumer
+class FacebookFeedConsumer extends GenericConsumer
 {
-
-    /**
-     * @var \Silex\Application
-     */
-    protected $app;
-
-    public function __construct(Application $app){
-        $this->app = $app;
-    }
 
     /**
      * Fetch data for all users if $userId is null
@@ -27,78 +17,45 @@ class FacebookFeedConsumer
      * @param null $userId
      * @return array
      */
-    public function fetch($userId = null)
+    public function fetchLinks($userId = null)
     {
 
+        $errors = array();
         $users = $this->getUsersByResource('facebook', $userId);
 
-        $links = array();
-
+        $data = array();
         foreach ($users as $user) {
-            $data = $this->fetchLinksFromUser($user);
 
-            $links[$user['id']] = $this->storeLinks($data, $user['id']);
+            $url = 'https://graph.facebook.com/v2.0/' . $user['facebookID'] . '/links'
+                . '?access_token=' . $user['oauthToken'];
+
+            try {
+                $data[$user['id']] = $this->fetchDataFromUrl($url);
+            } catch(\Exception $e) {
+                $errors[] = $this->getError($e);
+
+            }
+
         }
 
-        return $links;
+        $links = array();
+        foreach ($data as $userId => $shared) {
+            try {
+                array_merge($links, $this->parseLinks($shared, $userId));;
+            } catch(\Exception $e) {
+                $errors[] = $this->getError($e);
 
-}
-
-    /**
-     * Fetch last links from user feed on Facebook
-     *
-     * @param $user
-     * @return mixed
-     * @throws \Exception
-     * @throws RequestException
-     */
-    protected function fetchLinksFromUser($user)
-    {
-        $client = $this->app['guzzle.client'];
-
-        $url = 'https://graph.facebook.com/v2.0/' . $user['facebookID'] . '/links'
-            . '?access_token=' . $user['oauthToken'];
-
-        $request = $client->get($url);
+            }
+        }
 
         try {
-            $response = $request->send();
-            $data = $response->json();
-        } catch (RequestException $e) {
-            throw $e;
+            $stored = $this->storeLinks($links);
+        } catch(\Exception $e) {
+            $errors[] = $this->getError($e);
         }
 
-        return $data;
-    }
+        return isset($stored) ? $stored : array();
 
-    /**
-     * Get users by resource owner
-     *
-     * @param $resource
-     * @param $userId
-     * @return mixed
-     */
-    protected function getUsersByResource($resource, $userId = null)
-    {
-
-        $sql = "SELECT * " .
-            " FROM users AS u" .
-            " INNER JOIN user_access_tokens AS ut ON u.id = ut.user_id" .
-            " WHERE ut.resourceOwner = '" . $resource . "'";
-
-        if(null !== $userId){
-            $sql .= " AND u.id = " . $userId;
-        }
-
-        $sql .= ";";
-
-        try {
-            $users = $this->app['db']->fetchAll($sql);
-        } catch (\Exception $e) {
-            throw new $e;
-        }
-
-        return $users;
     }
 
     /**
@@ -109,9 +66,9 @@ class FacebookFeedConsumer
      * @return array
      * @throws \Exception
      */
-    protected function storeLinks($data, $userId)
+    protected function parseLinks($data, $userId)
     {
-        $result = array();
+        $parsed = array();
 
         foreach ($data['data'] as $item) {
             $link['url']   = $item['link'];
@@ -119,19 +76,10 @@ class FacebookFeedConsumer
             $link['description'] = array_key_exists('description', $item) ? $item['description'] : '';
             $link['userId']      = $userId;
 
-            try {
-                $model = $this->app['content.model'];
-                $link  = $model->addLink($link);
-                if ($link) {
-                    $result[] = $link;
-                }
-            } catch (\Exception $e) {
-                throw $e;
-            }
-
+            $parsed[] = $link;
         }
 
-        return $result;
+        return $parsed;
     }
 
 }
