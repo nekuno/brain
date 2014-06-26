@@ -9,7 +9,6 @@
 namespace Controller;
 
 use Silex\Application;
-use Social\Consumer\FacebookFeedConsumer;
 use Symfony\Component\HttpFoundation\Request;
 
 class ContentController
@@ -35,15 +34,17 @@ class ContentController
 
     }
 
-    public function fetchFacebookLinksAction(Request $request, Application $app)
+    public function fetchLinksAction(Request $request, Application $app)
     {
 
-        $consumer = new FacebookFeedConsumer($app);
-
         $userId = $request->get('userId');
+        $resource = $request->get('resource');
+        $FQNClassName = '\\Social\\Consumer\\' . ucfirst($resource) . 'FeedConsumer';
+
+        $consumer = new $FQNClassName($app);
 
         try {
-            $result = $consumer->fetch($userId);
+            $result = $consumer->fetchLinks($userId);
         } catch(\Exception $e) {
             if($app['env'] == 'dev'){
                 throw $e;
