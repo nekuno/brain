@@ -1,6 +1,6 @@
 <?php
 
-use Guzzle\GuzzleServiceProvider;
+use Provider\GuzzleServiceProvider;
 use Provider\Neo4jPHPServiceProvider;
 use Silex\Application;
 use Silex\Provider\DoctrineServiceProvider;
