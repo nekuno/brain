@@ -8,14 +8,11 @@
 
 namespace Social\Consumer;
 
-class GoogleFeedConsumer extends GenericConsumer
+class GoogleFeedConsumer extends GenericConsumer implements LinksConsumerInterface
 {
 
     /**
-     * Fetch data for all users if $userId is null
-     *
-     * @param null $userId
-     * @return array
+     * { @inheritdoc }
      */
     public function fetchLinks($userId = null)
     {
@@ -26,6 +23,8 @@ class GoogleFeedConsumer extends GenericConsumer
 
         $data = array();
         foreach ($users as $user) {
+
+            if(!$user['googleID']) continue;
 
             $url = 'https://www.googleapis.com/plus/v1/people/me/activities/public'
                 . '?access_token=' . $user['oauthToken']
@@ -39,21 +38,9 @@ class GoogleFeedConsumer extends GenericConsumer
 
         }
 
-        $links = array();
-        foreach ($data as $userId => $shared) {
-            try {
-                $parseLinks = $this->parseLinks($shared, $userId);
-                $links = $links + $parseLinks;
-            } catch (\Exception $e) {
-                $errors[] = $this->getError($e);
-
-            }
-        }
-
-        $stored = array();
         try {
-            $stored = $this->storeLinks($links);
-        } catch (\Exception $e) {
+            $stored = $this->processData($data);
+        } catch(\Exception $e) {
             $errors[] = $this->getError($e);
         }
 
@@ -62,12 +49,11 @@ class GoogleFeedConsumer extends GenericConsumer
     }
 
     /**
-     * Save links to Graph DB
+     * Parse links to model expected format
      *
-     * @param $data fetched data from user feed
+     * @param $data
      * @param $userId
-     * @return array
-     * @throws \Exception
+     * @return mixed
      */
     protected function parseLinks($data, $userId)
     {

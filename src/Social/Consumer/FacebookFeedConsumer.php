@@ -8,14 +8,11 @@ use Silex\Application;
  * Class FacebookConsumer
  * @package Social
  */
-class FacebookFeedConsumer extends GenericConsumer
+class FacebookFeedConsumer extends GenericConsumer implements LinksConsumerInterface
 {
 
     /**
-     * Fetch data for all users if $userId is null
-     *
-     * @param null $userId
-     * @return array
+     * { @inheritdoc }
      */
     public function fetchLinks($userId = null)
     {
@@ -25,6 +22,8 @@ class FacebookFeedConsumer extends GenericConsumer
 
         $data = array();
         foreach ($users as $user) {
+
+            if(!$user['facebookID']) continue;
 
             $url = 'https://graph.facebook.com/v2.0/' . $user['facebookID'] . '/links'
                 . '?access_token=' . $user['oauthToken'];
@@ -38,18 +37,8 @@ class FacebookFeedConsumer extends GenericConsumer
 
         }
 
-        $links = array();
-        foreach ($data as $userId => $shared) {
-            try {
-                array_merge($links, $this->parseLinks($shared, $userId));;
-            } catch(\Exception $e) {
-                $errors[] = $this->getError($e);
-
-            }
-        }
-
         try {
-            $stored = $this->storeLinks($links);
+            $stored = $this->processData($data);
         } catch(\Exception $e) {
             $errors[] = $this->getError($e);
         }
@@ -59,12 +48,11 @@ class FacebookFeedConsumer extends GenericConsumer
     }
 
     /**
-     * Save links to Graph DB
+     * Parse links to model expected format
      *
-     * @param $data fetched data from user feed
+     * @param $data
      * @param $userId
-     * @return array
-     * @throws \Exception
+     * @return mixed
      */
     protected function parseLinks($data, $userId)
     {

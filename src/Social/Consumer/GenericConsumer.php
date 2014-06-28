@@ -8,7 +8,7 @@
 
 namespace Social\Consumer;
 
-use Guzzle\Http\Exception\RequestException;
+use GuzzleHttp\Exception\RequestException;
 
 class GenericConsumer extends ContainerAwareConsumer
 {
@@ -54,10 +54,9 @@ class GenericConsumer extends ContainerAwareConsumer
     {
         $client = $this->app['guzzle.client'];
 
-        $request = $client->get($url);
+        $response = $client->get($url);
 
         try {
-            $response = $request->send();
             $data     = $response->json();
         } catch (RequestException $e) {
             throw $e;
@@ -66,6 +65,46 @@ class GenericConsumer extends ContainerAwareConsumer
         return $data;
     }
 
+    /**
+     * @param $data
+     * @return array
+     * @throws \Exception
+     */
+    protected function processData($data)
+    {
+        $links = array();
+        foreach ($data as $userId => $shared) {
+            try {
+                $parseLinks = $this->parseLinks($shared, $userId);
+                $links      = $links + $parseLinks;
+            } catch (\Exception $e) {
+                throw $e;
+            }
+        }
+
+        try {
+            $stored = $this->storeLinks($links);
+
+            return $stored;
+        } catch (\Exception $e) {
+            throw $e;
+        }
+
+    }
+
+    /**
+     * @param $data
+     * @param $userId
+     * @return array
+     */
+    protected function parseLinks($data, $userId){
+        return array();
+    }
+
+    /**
+     * @param array $links
+     * @return array
+     */
     protected function storeLinks(array $links)
     {
 
