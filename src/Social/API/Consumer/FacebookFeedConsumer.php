@@ -1,6 +1,6 @@
 <?php
 
-namespace Social\Consumer;
+namespace Social\API\Consumer;
 
 use Silex\Application;
 
@@ -8,7 +8,7 @@ use Silex\Application;
  * Class FacebookConsumer
  * @package Social
  */
-class FacebookFeedConsumer extends GenericConsumer implements LinksConsumerInterface
+class FacebookFeedConsumer extends AbstractConsumer implements LinksConsumerInterface
 {
 
     /**
@@ -18,7 +18,7 @@ class FacebookFeedConsumer extends GenericConsumer implements LinksConsumerInter
     {
 
         $errors = array();
-        $users = $this->getUsersByResource('facebook', $userId);
+        $users = $this->userProvider->getUsersByResource('facebook', $userId);
 
         $data = array();
         foreach ($users as $user) {
@@ -29,7 +29,7 @@ class FacebookFeedConsumer extends GenericConsumer implements LinksConsumerInter
                 . '?access_token=' . $user['oauthToken'];
 
             try {
-                $data[$user['id']] = $this->fetchDataFromUrl($url);
+                $data[$user['id']] = $this->httpConnector->fetch($url);
             } catch(\Exception $e) {
                 $errors[] = $this->getError($e);
 

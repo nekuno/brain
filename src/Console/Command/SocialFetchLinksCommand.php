@@ -8,6 +8,9 @@
 
 namespace Console\Command;
 
+use Social\API\Consumer\Auth\DBUserProvider;
+use Social\API\Consumer\Http\Client;
+use Social\API\Consumer\Storage\DBStorage;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -35,8 +38,13 @@ class SocialFetchLinksCommand extends ContainerAwareCommand
             exit;
         }
 
-        $FQNClassName = '\\Social\\Consumer\\' . ucfirst($resource) . 'FeedConsumer';
-        $consumer = new $FQNClassName($this->app);
+        $FQNClassName = '\\Social\\API\\Consumer\\' . ucfirst($resource) . 'FeedConsumer';
+
+        $storage = new DBStorage($this->app['content.model']);
+        $userProvider = new DBUserProvider($this->app['db']);
+        $httpClient = new Client($this->app['guzzle.client']);
+
+        $consumer = new $FQNClassName($storage, $userProvider, $httpClient);
 
         try {
             $consumer->fetchLinks();

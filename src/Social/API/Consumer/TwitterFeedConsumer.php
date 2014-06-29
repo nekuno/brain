@@ -1,11 +1,12 @@
 <?php
 
-namespace Social\Consumer;
+namespace Social\API\Consumer;
 
-use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Subscriber\Oauth\Oauth1;
-
-class TwitterFeedConsumer extends GenericConsumer implements LinksConsumerInterface
+/**
+ * Class TwitterFeedConsumer
+ * @package Social\API\Consumer
+ */
+class TwitterFeedConsumer extends AbstractConsumer implements LinksConsumerInterface
 {
 
     private $config = array(
@@ -18,8 +19,8 @@ class TwitterFeedConsumer extends GenericConsumer implements LinksConsumerInterf
      */
     public function fetchLinks($userId = null)
     {
-        $errors = array();
-        $users  = $this->getUsersByResource('twitter', $userId);
+
+        $users  = $this->userProvider->getUsersByResource('twitter', $userId);
 
         $data = array();
         foreach ($users as $user) {
@@ -36,7 +37,7 @@ class TwitterFeedConsumer extends GenericConsumer implements LinksConsumerInterf
             $this->config = array_merge($this->config, $userOauthTokens);
 
             try {
-                $data[$user['id']] = $this->fetchDataFromUrl($url);
+                $data[$user['id']] = $this->httpConnector->fetch($url, $this->config, true);
             } catch (\Exception $e) {
                 $errors[] = $this->getError($e);
             }
@@ -48,34 +49,7 @@ class TwitterFeedConsumer extends GenericConsumer implements LinksConsumerInterf
             $errors[] = $this->getError($e);
         }
 
-        return isset($stored) ? $stored : array();
-    }
-
-    /**
-     * { @inheritdoc }
-     */
-    protected function fetchDataFromUrl($url)
-    {
-        $client = $this->app['guzzle.client'];
-
-        $oauth = new Oauth1([
-            'consumer_key'    => $this->config['oauth_consumer_key'],
-            'consumer_secret' => $this->config['oauth_consumer_secret'],
-            'token'           => $this->config['oauth_access_token'],
-            'token_secret'    => $this->config['oauth_access_token_secret']
-        ]);
-
-        $client->getEmitter()->attach($oauth);
-
-        $response = $client->get($url, array('auth' => 'oauth'));
-
-        try {
-            $data     = $response->json();
-        } catch (RequestException $e) {
-            throw $e;
-        }
-
-        return $data;
+        return isset($errors) ? $errors : $stored;
     }
 
     /**

@@ -9,6 +9,9 @@
 namespace Controller;
 
 use Silex\Application;
+use Social\API\Consumer\Auth\DBUserProvider;
+use Social\API\Consumer\Http\Client;
+use Social\API\Consumer\Storage\DBStorage;
 use Symfony\Component\HttpFoundation\Request;
 
 class ContentController
@@ -39,9 +42,13 @@ class ContentController
 
         $userId = $request->get('userId');
         $resource = $request->get('resource');
-        $FQNClassName = '\\Social\\Consumer\\' . ucfirst($resource) . 'FeedConsumer';
+        $FQNClassName = '\\Social\\API\\Consumer\\' . ucfirst($resource) . 'FeedConsumer';
 
-        $consumer = new $FQNClassName($app);
+        $storage = new DBStorage($app['content.model']);
+        $userProvider = new DBUserProvider($app['db']);
+        $httpClient = new Client($app['guzzle.client']);
+
+        $consumer = new $FQNClassName($storage, $userProvider, $httpClient);;
 
         try {
             $result = $consumer->fetchLinks($userId);

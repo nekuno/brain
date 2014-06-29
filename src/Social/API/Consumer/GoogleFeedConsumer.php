@@ -6,9 +6,13 @@
  * Time: 1:25 PM
  */
 
-namespace Social\Consumer;
+namespace Social\API\Consumer;
 
-class GoogleFeedConsumer extends GenericConsumer implements LinksConsumerInterface
+/**
+ * Class GoogleFeedConsumer
+ * @package Social\API\Consumer
+ */
+class GoogleFeedConsumer extends AbstractConsumer implements LinksConsumerInterface
 {
 
     /**
@@ -19,7 +23,7 @@ class GoogleFeedConsumer extends GenericConsumer implements LinksConsumerInterfa
 
         $errors = array();
 
-        $users = $this->getUsersByResource('google', $userId);
+        $users = $this->userProvider->getUsersByResource('google', $userId);
 
         $data = array();
         foreach ($users as $user) {
@@ -31,7 +35,7 @@ class GoogleFeedConsumer extends GenericConsumer implements LinksConsumerInterfa
                 . '&maxResults=100&fields=items(object(attachments(content,embed/url,url),content,url),title,url)';
 
             try {
-                $data[$user['id']] = $this->fetchDataFromUrl($url, $user['oauthToken']);
+                $data[$user['id']] = $this->httpConnector->fetch($url);
             } catch (\Exception $e) {
                 $errors[] = $this->getError($e);
             }
