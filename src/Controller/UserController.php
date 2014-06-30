@@ -112,7 +112,7 @@ class UserController
 
     }
 
-    public function getMatchingAction(Request $request, Application $app)
+    public function getMatchingByQuestionsAction(Request $request, Application $app)
     {
 
         $id1 = $request->query->get('id1');
@@ -127,6 +127,32 @@ class UserController
         try {
             $model  = $app['users.model'];
             $result = $model->getMatchingByQuestionsByIds($id1, $id2);
+        } catch (\Exception $e) {
+            if ($app['env'] == 'dev') {
+                throw $e;
+            }
+            return $app->json(array(), 500);
+        }
+
+        //return $query;
+        return $app->json($result, !empty($result) ? 201 : 200);
+    }
+
+    public function getMatchingByContentAction(Request $request, Application $app)
+    {
+
+        $id1 = $request->query->get('id1');
+        $id2 = $request->query->get('id2');
+
+        if (null === $id1 || null === $id2) {
+            return $app->json(array(), 400);
+        }
+
+        // TODO: check that users has one answered question at least
+
+        try {
+            $model  = $app['users.model'];
+            $result = $model->getMatchingByContentByIds($id1, $id2);
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;
