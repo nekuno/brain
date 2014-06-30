@@ -9,7 +9,7 @@
 namespace Social\API\Consumer;
 
 use Social\API\Consumer\Auth\UserProviderInterface;
-use Social\API\Consumer\Http\Client;
+use Social\API\Consumer\Http\HttpClientInterface;
 use Social\API\Consumer\Storage\StorageInterface;
 
 class AbstractConsumer
@@ -26,11 +26,11 @@ class AbstractConsumer
     protected $userProvider;
 
     /**
-     * @var Client
+     * @var HttpClientInterface
      */
     protected $httpConnector;
 
-    public function __construct(StorageInterface $store, UserProviderInterface $userProvider, Client $Connector)
+    public function __construct(StorageInterface $store, UserProviderInterface $userProvider, HttpClientInterface $Connector)
     {
 
         $this->storage = $store;

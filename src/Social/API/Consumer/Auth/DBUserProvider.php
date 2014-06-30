@@ -12,6 +12,9 @@ use Doctrine\DBAL\Connection;
 
 class DBUserProvider implements UserProviderInterface {
 
+    /**
+     * @var Connection
+     */
     private $driver;
 
     public function __construct(Connection $driver)

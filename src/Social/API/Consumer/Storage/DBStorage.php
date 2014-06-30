@@ -8,8 +8,13 @@
 
 namespace Social\API\Consumer\Storage;
 
+use Model\ContentModel;
+
 class DBStorage implements StorageInterface {
 
+    /**
+     * @var ContentModel
+     */
     protected $model;
 
     public function __construct($model)

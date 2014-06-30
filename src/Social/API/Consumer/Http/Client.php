@@ -17,7 +17,7 @@ use GuzzleHttp\Subscriber\Oauth\Oauth1;
  * Class Client
  * @package Social\API\Consumer\Http
  */
-class Client {
+class Client implements HttpClientInterface {
 
     /**
      * @var BaseClient
@@ -65,16 +65,4 @@ class Client {
         return $data;
     }
 
-    /**
-     * @param $url
-     */
-    protected function getClient($url, $legacy = false)
-    {
-
-        if($legacy){
-
-        }
-
-    }
-
-} 
+}
