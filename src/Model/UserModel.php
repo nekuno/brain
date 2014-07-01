@@ -101,7 +101,7 @@ class UserModel {
 
     }
 
-    public function getMatchingByQuestionsByIds($id1, $id2){
+    public function getMatchingBetweenTwoUsersBasedOnAnswers($id1, $id2){
 
         $response = array();
 
@@ -196,7 +196,7 @@ class UserModel {
 
     }
 
-    public function getMatchingByContentByIdsV1($id1, $id2){
+    public function getMatchingBetweenTwoUsersBasedOnSharedContent($id1, $id2){
 
         $response = array();
 

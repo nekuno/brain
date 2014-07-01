@@ -8,6 +8,7 @@
 
 namespace Controller;
 
+use Model\UserModel;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -24,6 +25,7 @@ class UserController
             if ($app['env'] == 'dev') {
                 throw $e;
             }
+
             return $app->json(array(), 500);
         }
 
@@ -58,6 +60,7 @@ class UserController
             if ($app['env'] == 'dev') {
                 throw $e;
             }
+
             return $app->json(array(), 500);
         }
 
@@ -72,8 +75,6 @@ class UserController
             return $app->json(array(), 404);
         }
 
-
-
         try {
             $model  = $app['users.model'];
             $result = $model->getById($request->get('id'));
@@ -81,6 +82,7 @@ class UserController
             if ($app['env'] == 'dev') {
                 throw $e;
             }
+
             return $app->json(array(), 500);
         }
 
@@ -96,8 +98,6 @@ class UserController
             return $app->json(array(), 400);
         }
 
-
-
         try {
             $model = $app['users.model'];
             $model->remove($id);
@@ -105,6 +105,7 @@ class UserController
             if ($app['env'] == 'dev') {
                 throw $e;
             }
+
             return $app->json(array(), 500);
         }
 
@@ -112,9 +113,11 @@ class UserController
 
     }
 
-    public function getMatchingByQuestionsAction(Request $request, Application $app)
+    public function getMatchingAction(Request $request, Application $app)
     {
 
+        // Get params
+        $basedOn = $request->get('type');
         $id1 = $request->query->get('id1');
         $id2 = $request->query->get('id2');
 
@@ -122,46 +125,28 @@ class UserController
             return $app->json(array(), 400);
         }
 
-        // TODO: check that users has one answered question at least
-
         try {
-            $model  = $app['users.model'];
-            $result = $model->getMatchingByQuestionsByIds($id1, $id2);
+            /** @var UserModel $model */
+            $model = $app['users.model'];
+            if ($basedOn == 'answers') {
+                // TODO: check that users has one answered question at least
+                $result = $model->getMatchingBetweenTwoUsersBasedOnAnswers($id1, $id2);
+            }
+            if ($basedOn == 'content') {
+                $result = $model->getMatchingBetweenTwoUsersBasedOnSharedContent($id1, $id2);
+            }
+
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;
             }
+
             return $app->json(array(), 500);
         }
 
         //return $query;
         return $app->json($result, !empty($result) ? 201 : 200);
-    }
 
-    public function getMatchingByContentAction(Request $request, Application $app)
-    {
-
-        $id1 = $request->query->get('id1');
-        $id2 = $request->query->get('id2');
-
-        if (null === $id1 || null === $id2) {
-            return $app->json(array(), 400);
-        }
-
-        // TODO: check that users has one answered question at least
-
-        try {
-            $model  = $app['users.model'];
-            $result = $model->getMatchingByContentByIds($id1, $id2);
-        } catch (\Exception $e) {
-            if ($app['env'] == 'dev') {
-                throw $e;
-            }
-            return $app->json(array(), 500);
-        }
-
-        //return $query;
-        return $app->json($result, !empty($result) ? 201 : 200);
     }
 
 } 
