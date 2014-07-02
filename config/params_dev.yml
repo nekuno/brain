@@ -1,0 +1,2 @@
+db.neo4j.host: 127.0.0.1
+db.neo4j.port: 7474

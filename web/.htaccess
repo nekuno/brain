@@ -1,4 +1,4 @@
-SetEnv dev
+SetEnv APP_ENV dev
 
 <IfModule mod_rewrite.c>
     Options -MultiViews

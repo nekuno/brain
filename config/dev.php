@@ -17,8 +17,5 @@ $app->register(new MonologServiceProvider(), array(
 $app->register($p = new WebProfilerServiceProvider(), array(
     'profiler.cache_dir' => __DIR__.'/../var/cache/profiler',
 ));
+
 $app->mount('/_profiler', $p);
-
-
-$app['neo4j.host'] = 'localhost';
-$app['neo4j.port'] = 7474;
