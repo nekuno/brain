@@ -8,12 +8,12 @@
 
 namespace Provider;
 
-
 use Everyman\Neo4j\Client;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
 
-class Neo4jPHPServiceProvider implements ServiceProviderInterface {
+class Neo4jPHPServiceProvider implements ServiceProviderInterface
+{
 
     /**
      * { @inheritdoc }
@@ -23,22 +23,24 @@ class Neo4jPHPServiceProvider implements ServiceProviderInterface {
         // Initialize neo4j
         $app['neo4j.client'] = $app->share(
             function ($app) {
-                $client = new Client($app['neo4j.host'], $app['neo4j.port']);
+                $client = new Client($app['db.neo4j.host'], $app['db.neo4j.port']);
 
                 return $client;
             }
         );
 
-        $app['neo4j.client'] = $app->extend(
-            'neo4j.client',
-            function ($client, $app) {
-                $client
-                    ->getTransport()
-                    ->setAuth($app['neo4j.user'], $app['neo4j.pass']);
+        if (getenv('APP_ENV') === 'prod') {
+            $app['neo4j.client'] = $app->extend(
+                'neo4j.client',
+                function ($client, $app) {
+                    $client
+                        ->getTransport()
+                        ->setAuth($app['db.neo4j.user'], $app['db.neo4j.pass']);
 
-                return $client;
-            }
-        );
+                    return $client;
+                }
+            );
+        }
     }
 
     /**
