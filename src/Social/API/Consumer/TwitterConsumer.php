@@ -17,7 +17,7 @@ class TwitterConsumer extends AbstractConsumer implements LinksConsumerInterface
 
         $errors = array();
 
-        $users  = $this->userProvider->getUsersByResource('twitter', $userId);
+        $users = $this->userProvider->getUsersByResource('twitter', $userId);
 
         $data = array();
 
@@ -66,7 +66,7 @@ class TwitterConsumer extends AbstractConsumer implements LinksConsumerInterface
                 continue;
             }
             $link['url']         = $item['entities']['urls'][0]['expanded_url']
-                ? $item['entities']['urls'][0]['expanded_url'] : $item['entities']['urls'][0]['url'] ;
+                ? $item['entities']['urls'][0]['expanded_url'] : $item['entities']['urls'][0]['url'];
             $link['title']       = array_key_exists('text', $item) ? $item['text'] : '';
             $link['description'] = '';
             $link['userId']      = $userId;
