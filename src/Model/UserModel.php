@@ -37,7 +37,7 @@ class UserModel {
         $query = new Query(
             $this->client,
             "CREATE (u:User {
-                status: 1,
+                status: 'active',
                 qnoow_id: " . $user['id'] . ",
                 username: '" . $user['username'] . "',
                 email: '"    . $user['email'] . "'
@@ -101,7 +101,7 @@ class UserModel {
 
     }
 
-    public function getMatchingByIds($id1, $id2){
+    public function getMatchingBetweenTwoUsersBasedOnAnswers($id1, $id2){
 
         $response = array();
 
@@ -164,7 +164,9 @@ class UserModel {
                     (u1:User {qnoow_id: '" . $id1 . "'}),
                     (u2:User {qnoow_id: '" . $id2 . "'})
                 CREATE UNIQUE
-                    (u1)-[m:MATCHES]-(u2) SET m.matching = match_user1_user2
+                    (u1)-[m:MATCHES]-(u2)
+                SET
+                    m.questionMatching = match_user1_user2
                 RETURN
                     m;";
 
@@ -182,7 +184,109 @@ class UserModel {
             }
 
             foreach ($result as $row) {
-                $response['matching'] = $row['m']->getProperty('matching');
+                $response['matching'] = $row['m']->getProperty('questionMatching');
+            }
+
+        }
+        else{
+            $response['matching'] = 0;
+        }
+
+        return $response;
+
+    }
+
+    public function getMatchingBetweenTwoUsersBasedOnSharedContent($id1, $id2){
+
+        $response = array();
+
+        //Check that both users have at least one url in common
+        $check =
+            "MATCH
+                (u1:User {qnoow_id: '" . $id1 . "'}),
+                (u2:User {qnoow_id: '" . $id2 . "'})
+            OPTIONAL MATCH
+                (u1)-[:LIKES]->(l:Link)-<-[:LIKES]-(u2)
+            OPTIONAL MATCH
+                (u1)-[:DISLIKES]->(d:Link)-<-[:DISLIKES]-(u2)
+            RETURN
+                count(l) AS l,
+                count(d) AS d;";
+
+        //Create the Neo4j query object
+        $checkQuery = new Query(
+            $this->client,
+            $check
+        );
+
+        try{
+            $checkResult = $checkQuery->getResultSet();
+        }catch (\Exception $e){
+            throw $e;
+        }
+
+        $checkValueLikes = 0;
+        $checkValueDislikes = 0;
+        foreach($checkResult as $checkRow){
+            $checkValueLikes = $checkRow['l'];
+            $checkValueDislikes = $checkRow['d'];
+        }
+
+        if ($checkValueLikes > 0 || $checkValueDislikes > 0){
+
+            //Construct the query string if both users have at least one link in common
+            $query =
+                "MATCH
+                    (u:User)-[r:LIKES|DISLIKES]->(l:Link)
+                WITH
+                    l, count(r) AS num_likes_dislikes
+                ORDER BY num_likes_dislikes DESC
+                WITH
+                    collect(num_likes_dislikes)[0] AS max_likes_dislikes
+                MATCH
+                    (u1:User {qnoow_id: 'user-test1'}),
+                    (u2:User {qnoow_id: 'user-test2'})
+                OPTIONAL MATCH
+                    (u1)-[:LIKES]->(commonLikes:Link)<-[:LIKES]-(u2)
+                OPTIONAL MATCH
+                    (u1)-[:DISLIKES]->(commonDislikes:Link)<-[:DISLIKES]-(u2)
+                OPTIONAL MATCH
+                    (u1)-[:LIKES|DISLIKES]->(contentU1),
+                    (u2)-[:LIKES|DISLIKES]->(contentU2)
+                OPTIONAL MATCH
+                    (anyUser1)-[:LIKES|DISLIKES]->(commonLikes)
+                OPTIONAL MATCH
+                    (anyUser2)-[:LIKES|DISLIKES]->(commonDislikes)
+                WITH
+                    ( count(distinct commonLikes) + count(distinct commonDislikes) )*1.0 / ( (count(distinct contentU1) + count(distinct contentU2) - count(distinct commonLikes) - count(distinct commonDislikes) ) ) AS ratio,
+                    ( ( count(distinct anyUser1) + count(distinct anyUser2) )*1.0 / ( count(distinct commonLikes) + count(distinct commonDislikes) ) ) / max_likes_dislikes as popul
+                WITH
+                    (ratio + ((1 - popul)^(1.0/3)) ) /2 AS match_content
+                MATCH
+                    (u1:User {qnoow_id: '" . $id1 . "'}),
+                    (u2:User {qnoow_id: '" . $id2 . "'})
+                CREATE UNIQUE
+                    (u1)-[m:MATCHES]-(u2)
+                SET
+                    m.contentMatching = match_user1_user2
+                RETURN
+                    m;";
+
+            //Create the Neo4j query object
+            $neoQuery = new Query(
+                $this->client,
+                $query
+            );
+
+            //Execute query and get the return
+            try{
+                $result = $query->getResultSet();
+            }catch (\Exception $e){
+                throw $e;
+            }
+
+            foreach ($result as $row) {
+                $response['matching'] = $row['m']->getProperty('contentMatching');
             }
 
         }
