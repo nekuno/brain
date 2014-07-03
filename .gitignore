@@ -3,9 +3,7 @@
 /neo4j-community-2.0.3/
 
 
-/var/cache
-/var/logs
-/vendor/
+/var/cache/*
+/var/logs/*
+/vendor/*
 /composer.lock
-/tests/
-/phpunit.xml
