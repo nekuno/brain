@@ -1,6 +1,5 @@
 <?php
 
-use Igorw\Silex\YamlConfigDriver;
 use Provider\GuzzleServiceProvider;
 use Provider\Neo4jPHPServiceProvider;
 use Silex\Application;
