@@ -10,7 +10,8 @@ namespace Social\API\Consumer\Auth;
 
 use Doctrine\DBAL\Connection;
 
-class DBUserProvider implements UserProviderInterface {
+class DBUserProvider implements UserProviderInterface
+{
 
     /**
      * @var Connection
@@ -43,6 +44,13 @@ class DBUserProvider implements UserProviderInterface {
             $users = $this->driver->fetchAll($sql);
         } catch (\Exception $e) {
             throw new $e;
+        }
+
+        foreach ($users as $k => $user) {
+            if ($user['expireTime'] < time()) {
+                unset($users[$k]);
+                // TODO: Refresh token
+            }
         }
 
         return $users;

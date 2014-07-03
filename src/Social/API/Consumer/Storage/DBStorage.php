@@ -48,5 +48,4 @@ class DBStorage implements StorageInterface {
         return $result;
 
     }
-
-} 
+}

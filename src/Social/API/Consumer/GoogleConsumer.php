@@ -1,18 +1,12 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: adridev
- * Date: 6/26/14
- * Time: 1:25 PM
- */
 
 namespace Social\API\Consumer;
 
 /**
- * Class GoogleFeedConsumer
+ * Class GoogleConsumer
  * @package Social\API\Consumer
  */
-class GoogleFeedConsumer extends AbstractConsumer implements LinksConsumerInterface
+class GoogleConsumer extends AbstractConsumer implements LinksConsumerInterface
 {
 
     /**
@@ -26,50 +20,52 @@ class GoogleFeedConsumer extends AbstractConsumer implements LinksConsumerInterf
         $users = $this->userProvider->getUsersByResource('google', $userId);
 
         $data = array();
+
         foreach ($users as $user) {
 
-            if(!$user['googleID']) continue;
+            if (!$user['googleID']) {
+                continue;
+            }
 
             $url = 'https://www.googleapis.com/plus/v1/people/me/activities/public'
                 . '?access_token=' . $user['oauthToken']
                 . '&maxResults=100&fields=items(object(attachments(content,embed/url,url),content,url),title,url)';
 
             try {
-                $data[$user['id']] = $this->httpConnector->fetch($url);
+                $data[$user['id']] = $this->fetch($url);
             } catch (\Exception $e) {
                 $errors[] = $this->getError($e);
             }
 
         }
 
+        $stored = array();
+
         try {
             $stored = $this->processData($data);
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             $errors[] = $this->getError($e);
         }
 
-        return empty($errors) ? $stored : $errors;
+        return array() !== $errors ? $errors : $stored;
 
     }
 
     /**
-     * Parse links to model expected format
-     *
-     * @param $data
-     * @param $userId
-     * @return mixed
+     * { @inheritdoc }
      */
-    protected function parseLinks($data, $userId)
+    protected function parseLinks($userId, array $data = array())
     {
         $parsed = array();
 
         foreach ($data['items'] as $item) {
-            if(!array_key_exists('object', $item) || !array_key_exists('attachments', $item['object'])){
+            if (!array_key_exists('object', $item) || !array_key_exists('attachments', $item['object'])) {
                 continue;
             }
-            $link['url']   = $item['object']['attachments'][0]['url'];
-            $link['title'] = array_key_exists('title', $item) ? $item['title'] : '';
-            $link['description'] = array_key_exists('content', $item['object']['attachments']) ? $item['object']['attachments'][0]['content'] : '';
+            $link['url']         = $item['object']['attachments'][0]['url'];
+            $link['title']       = array_key_exists('title', $item) ? $item['title'] : '';
+            $link['description'] = array_key_exists('content', $item['object']['attachments'])
+                ? $item['object']['attachments'][0]['content'] : '';
             $link['userId']      = $userId;
 
             $parsed[] = $link;

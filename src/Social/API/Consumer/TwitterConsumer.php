@@ -3,16 +3,11 @@
 namespace Social\API\Consumer;
 
 /**
- * Class TwitterFeedConsumer
+ * Class TwitterConsumer
  * @package Social\API\Consumer
  */
-class TwitterFeedConsumer extends AbstractConsumer implements LinksConsumerInterface
+class TwitterConsumer extends AbstractConsumer implements LinksConsumerInterface
 {
-
-    private $config = array(
-        'oauth_consumer_key'    => 'm9NY9ZghlVeYFVk8fbPp8pp1g',
-        'oauth_consumer_secret' => 'yQ5XBabTj1vzCCBVeJoqX9Bli4zcjVWsF6FxHvPtZwkAJseu1l'
-    );
 
     /**
      * { @inheritdoc }
@@ -20,28 +15,35 @@ class TwitterFeedConsumer extends AbstractConsumer implements LinksConsumerInter
     public function fetchLinks($userId = null)
     {
 
+        $errors = array();
+
         $users  = $this->userProvider->getUsersByResource('twitter', $userId);
 
         $data = array();
+
         foreach ($users as $user) {
 
-            if (!$user['twitterID']) continue;
+            if (!$user['twitterID']) {
+                continue;
+            }
 
             $url = 'https://api.twitter.com/1.1/statuses/user_timeline.json';
 
-            $userOauthTokens = array(
+            $userOptions = array(
                 'oauth_access_token'        => $user['oauthToken'],
                 'oauth_access_token_secret' => $user['oauthTokenSecret'],
             );
 
-            $this->config = array_merge($this->config, $userOauthTokens);
+            $oauthData = array_merge($this->options, $userOptions);
 
             try {
-                $data[$user['id']] = $this->httpConnector->fetch($url, $this->config, true);
+                $data[$user['id']] = $this->fetch($url, $oauthData, true);
             } catch (\Exception $e) {
                 $errors[] = $this->getError($e);
             }
         }
+
+        $stored = array();
 
         try {
             $stored = $this->processData($data);
@@ -49,17 +51,13 @@ class TwitterFeedConsumer extends AbstractConsumer implements LinksConsumerInter
             $errors[] = $this->getError($e);
         }
 
-        return isset($errors) ? $errors : $stored;
+        return array() !== $errors ? $errors : $stored;
     }
 
     /**
-     * Parse links to model expected format
-     *
-     * @param $data
-     * @param $userId
-     * @return mixed
+     * { @inheritdoc }
      */
-    protected function parseLinks($data, $userId)
+    protected function parseLinks($userId, array $data = array())
     {
         $parsed = array();
 
@@ -67,7 +65,8 @@ class TwitterFeedConsumer extends AbstractConsumer implements LinksConsumerInter
             if (empty($item['entities']) || empty($item['entities']['urls'][0])) {
                 continue;
             }
-            $link['url']         = $item['entities']['urls'][0]['expanded_url'] ? $item['entities']['urls'][0]['expanded_url'] : $item['entities']['urls'][0]['url'] ;
+            $link['url']         = $item['entities']['urls'][0]['expanded_url']
+                ? $item['entities']['urls'][0]['expanded_url'] : $item['entities']['urls'][0]['url'] ;
             $link['title']       = array_key_exists('text', $item) ? $item['text'] : '';
             $link['description'] = '';
             $link['userId']      = $userId;
