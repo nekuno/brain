@@ -1,19 +1,14 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: adridev
- * Date: 6/17/14
- * Time: 6:39 PM
- */
 
 namespace Controller;
 
 use Model\ContentModel;
 use Silex\Application;
+use Social\API\Consumer\AbstractConsumer;
 use Social\API\Consumer\Auth\DBUserProvider;
+use Social\API\Consumer\LinksConsumerInterface;
 use Social\API\Consumer\Storage\DBStorage;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 
 class ContentController
 {
@@ -49,7 +44,7 @@ class ContentController
             return $app->json(array(), 400);
         }
 
-        $FQNClassName = '\\Social\\API\\Consumer\\' . ucfirst($resource) . 'Consumer';
+        $FQNClassName = 'Social\\API\\Consumer\\' . ucfirst($resource) . 'Consumer';
 
         $storage      = new DBStorage($app['content.model']);
         $userProvider = new DBUserProvider($app['db']);
@@ -66,13 +61,12 @@ class ContentController
 
         $consumer = new $FQNClassName($storage, $userProvider, $httpClient, $options);
 
-
         try {
             $result = $consumer->fetchLinks($userId);
         } catch (\Exception $e) {
             return $app->json(array(), 500);
         }
-
+        
         return $app->json($result);
 
     }

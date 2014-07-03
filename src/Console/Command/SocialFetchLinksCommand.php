@@ -38,7 +38,7 @@ class SocialFetchLinksCommand extends ContainerAwareCommand
             exit;
         }
 
-        $FQNClassName = '\\Social\\API\\Consumer\\' . ucfirst($resource) . 'Consumer';
+        $FQNClassName = 'Social\\API\\Consumer\\' . ucfirst($resource) . 'Consumer';
 
         $storage      = new DBStorage($this->app['content.model']);
         $userProvider = new DBUserProvider($this->app['db']);
