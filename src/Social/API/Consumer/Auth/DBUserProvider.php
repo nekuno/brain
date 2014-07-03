@@ -32,16 +32,16 @@ class DBUserProvider implements UserProviderInterface
         $sql = "SELECT * " .
             " FROM users AS u" .
             " INNER JOIN user_access_tokens AS ut ON u.id = ut.user_id" .
-            " WHERE ut.resourceOwner = '" . $resource . "'";
+            " WHERE ut.resourceOwner = :resource";
 
         if (null !== $userId) {
-            $sql .= " AND u.id = " . $userId;
+            $sql .= " AND u.id = :userId";
         }
 
         $sql .= ";";
 
         try {
-            $users = $this->driver->fetchAll($sql);
+            $users = $this->driver->fetchAll($sql, array(':userId' => $userId, ':resource' => $resource));
         } catch (\Exception $e) {
             throw new $e;
         }
