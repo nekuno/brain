@@ -46,13 +46,6 @@ class DBUserProvider implements UserProviderInterface
             throw new $e;
         }
 
-        foreach ($users as $k => $user) {
-            if ($user['expireTime'] < time()) {
-                unset($users[$k]);
-                // TODO: Refresh token
-            }
-        }
-
         return $users;
     }
 
