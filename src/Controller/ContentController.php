@@ -8,8 +8,12 @@
 
 namespace Controller;
 
+use Model\ContentModel;
 use Silex\Application;
+use Social\API\Consumer\Auth\DBUserProvider;
+use Social\API\Consumer\Storage\DBStorage;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class ContentController
 {
@@ -20,6 +24,7 @@ class ContentController
         $data = $request->request->all();
 
         try {
+            /** @var ContentModel $model */
             $model  = $app['content.model'];
             $result = $model->addLink($data);
         } catch (\Exception $e) {
@@ -37,18 +42,34 @@ class ContentController
     public function fetchLinksAction(Request $request, Application $app)
     {
 
-        $userId = $request->get('userId');
-        $resource = $request->get('resource');
-        $FQNClassName = '\\Social\\Consumer\\' . ucfirst($resource) . 'FeedConsumer';
+        $userId   = $request->query->get('userId');
+        $resource = $request->query->get('resource');
 
-        $consumer = new $FQNClassName($app);
+        if (null === $userId || null === $resource) {
+            return $app->json(array(), 400);
+        }
+
+        $FQNClassName = '\\Social\\API\\Consumer\\' . ucfirst($resource) . 'Consumer';
+
+        $storage      = new DBStorage($app['content.model']);
+        $userProvider = new DBUserProvider($app['db']);
+        $httpClient   = $app['guzzle.client'];
+
+        $options = array();
+
+        if ($resource == 'twitter') {
+            $options = array(
+                'oauth_consumer_key'     => $app['twitter.consumer_key'],
+                'oauth_consumer_secret' => $app['twitter.consumer_secret'],
+            );
+        }
+
+        $consumer = new $FQNClassName($storage, $userProvider, $httpClient, $options);
+
 
         try {
             $result = $consumer->fetchLinks($userId);
-        } catch(\Exception $e) {
-            if($app['env'] == 'dev'){
-                throw $e;
-            }
+        } catch (\Exception $e) {
             return $app->json(array(), 500);
         }
 
