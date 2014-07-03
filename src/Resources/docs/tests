@@ -1,0 +1,10 @@
+MATCH
+(q:QUESTION {_id:"question2"})
+MATCH
+(u:USER)-[:RATES]->(q),
+(a:ANSWER)-[:IS_ANSWER_OF]->(q)
+WITH
+[n IN collect(distinct u) |n] AS n,
+[m IN collect(distinct a) |m] AS m
+RETURN
+n, m;

@@ -3,9 +3,7 @@
 /neo4j-community-2.0.3/
 
 
-/app/var/cache
-/app/var/logs
-/app/vendor/
-/app/composer.lock
-
-
+/var/cache/*
+/var/logs/*
+/vendor/*
+/composer.lock
