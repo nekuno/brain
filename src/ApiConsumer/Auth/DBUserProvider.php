@@ -6,9 +6,10 @@
  * Time: 18:34
  */
 
-namespace Social\API\Consumer\Auth;
+namespace ApiConsumer\Auth;
 
 use Doctrine\DBAL\Connection;
+use Social\API\Consumer\Auth\UserProviderInterface;
 
 class DBUserProvider implements UserProviderInterface
 {

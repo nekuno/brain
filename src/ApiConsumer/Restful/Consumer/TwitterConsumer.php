@@ -1,6 +1,9 @@
 <?php
 
-namespace Social\API\Consumer;
+namespace ApiConsumer\Restful\Consumer;
+
+use Goutte\Client;
+use Social\Web\Scraper\Scraper;
 
 /**
  * Class TwitterConsumer
@@ -65,13 +68,25 @@ class TwitterConsumer extends AbstractConsumer implements LinksConsumerInterface
             if (empty($item['entities']) || empty($item['entities']['urls'][0])) {
                 continue;
             }
-            $link['url']         = $item['entities']['urls'][0]['expanded_url']
-                ? $item['entities']['urls'][0]['expanded_url'] : $item['entities']['urls'][0]['url'];
-            $link['title']       = array_key_exists('text', $item) ? $item['text'] : '';
-            $link['description'] = '';
-            $link['userId']      = $userId;
+
+            $scraper  = new Scraper(new Client());
+            $url      = $item['entities']['urls'][0]['url'];
+            $metadata = $scraper->scrap($url);
+
+            $link           = array();
+            $link['url']    = $url;
+            $link['userId'] = $userId;
+
+            if (array() === $metadata) {
+                $link['title']       = array_key_exists('title', $metadata) ? $metadata['title'] : '';
+                $link['description'] = '';
+            } else {
+                $link['title']       = array_key_exists('description', $metadata) ? $metadata['description'] : '';
+                $link['description'] = '';
+            }
 
             $parsed[] = $link;
+
         }
 
         return $parsed;

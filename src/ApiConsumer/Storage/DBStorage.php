@@ -6,7 +6,7 @@
  * Time: 18:27
  */
 
-namespace Social\API\Consumer\Storage;
+namespace ApiConsumer\Storage;
 
 use Model\ContentModel;
 

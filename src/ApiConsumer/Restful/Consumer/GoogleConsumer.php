@@ -1,6 +1,8 @@
 <?php
 
-namespace Social\API\Consumer;
+namespace ApiConsumer\Restful\Consumer;
+
+use Social\API\Consumer\LinksConsumerInterface;
 
 /**
  * Class GoogleConsumer

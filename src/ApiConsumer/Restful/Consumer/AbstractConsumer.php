@@ -6,18 +6,18 @@
  * Time: 1:30 PM
  */
 
-namespace Social\API\Consumer;
+namespace ApiConsumer\Restful\Consumer;
 
+use ApiConsumer\Auth\UserProviderInterface;
+use ApiConsumer\Storage\StorageInterface;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Subscriber\Oauth\Oauth1;
-use Social\API\Consumer\Auth\UserProviderInterface;
-use Social\API\Consumer\Storage\StorageInterface;
 
 class AbstractConsumer
 {
 
-    /** @var StorageInterface */
+    /** @var \ApiConsumer\Storage\StorageInterface */
     protected $storage;
 
     /** @var UserProviderInterface */

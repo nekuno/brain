@@ -6,7 +6,7 @@
  * Time: 22:18
  */
 
-namespace Social\Web\Scraper;
+namespace ApiConsumer\WebScraper;
 
 use Goutte\Client;
 use Symfony\Component\DomCrawler\Crawler;

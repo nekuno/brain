@@ -6,7 +6,7 @@
  * Time: 11:57 AM
  */
 
-namespace Social\API\Consumer;
+namespace ApiConsumer\Restful\Consumer;
 
 
 interface LinksConsumerInterface {
