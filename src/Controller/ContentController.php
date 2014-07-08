@@ -3,9 +3,7 @@
 namespace Controller;
 
 use ApiConsumer\Auth\DBUserProvider;
-use ApiConsumer\Restful\Consumer\FacebookConsumer;
-use ApiConsumer\Restful\Consumer\GoogleConsumer;
-use ApiConsumer\Restful\Consumer\TwitterConsumer;
+use ApiConsumer\Restful\Consumer\ConsumerFactory;
 use ApiConsumer\Storage\DBStorage;
 use ApiConsumer\WebScraper\Scraper;
 use Goutte\Client;
@@ -61,19 +59,7 @@ class ContentController
             );
         }
 
-        switch($resource){
-            case 'twitter':
-                $consumer = new TwitterConsumer($userProvider, $httpClient, $options);
-                break;
-            case 'facebook':
-                $consumer = new FacebookConsumer($userProvider, $httpClient);
-                break;
-            case 'google':
-                $consumer = new GoogleConsumer($userProvider, $httpClient);
-                break;
-            default:
-                throw new \Exception('Invalid consumer');
-        }
+        $consumer = ConsumerFactory::create($resource, $userProvider, $httpClient, $options);
 
         try {
 
