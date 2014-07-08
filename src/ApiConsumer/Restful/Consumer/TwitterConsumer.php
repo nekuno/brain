@@ -2,14 +2,11 @@
 
 namespace ApiConsumer\Restful\Consumer;
 
-use ApiConsumer\WebScraper\Scraper;
-use Goutte\Client;
-
 /**
- * Class TwitterLinksConsumer
+ * Class TwitterConsumer
  * @package Social\API\Consumer
  */
-class TwitterLinksConsumer extends AbstractLinksConsumer implements LinksConsumerInterface
+class TwitterConsumer extends AbstractConsumer implements LinksConsumerInterface
 {
 
     /**

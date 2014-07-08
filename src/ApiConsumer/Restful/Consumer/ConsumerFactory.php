@@ -31,13 +31,13 @@ class ConsumerFactory
 
         switch ($resource) {
             case 'twitter':
-                $consumer = new TwitterLinksConsumer($userProvider, $httpClient, $options);
+                $consumer = new TwitterConsumer($userProvider, $httpClient, $options);
                 break;
             case 'facebook':
-                $consumer = new FacebookLinksConsumer($userProvider, $httpClient);
+                $consumer = new FacebookConsumer($userProvider, $httpClient);
                 break;
             case 'google':
-                $consumer = new GoogleLinksConsumer($userProvider, $httpClient);
+                $consumer = new GoogleConsumer($userProvider, $httpClient);
                 break;
             default:
                 throw new \Exception('Invalid consumer');

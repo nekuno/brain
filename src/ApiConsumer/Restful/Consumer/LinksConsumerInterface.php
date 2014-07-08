@@ -8,8 +8,8 @@
 
 namespace ApiConsumer\Restful\Consumer;
 
-
-interface LinksConsumerInterface {
+interface LinksConsumerInterface
+{
 
     /**
      * Fetch links from user feed
@@ -17,6 +17,6 @@ interface LinksConsumerInterface {
      * @param $userId
      * @return mixed
      */
-    public function fetchLinks($userId);
+    public function fetchLinks($userId = null);
 
 } 
