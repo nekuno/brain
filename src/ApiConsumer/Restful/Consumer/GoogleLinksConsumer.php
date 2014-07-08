@@ -3,10 +3,10 @@
 namespace ApiConsumer\Restful\Consumer;
 
 /**
- * Class GoogleConsumer
+ * Class GoogleLinksConsumer
  * @package Social\API\Consumer
  */
-class GoogleConsumer extends AbstractConsumer implements LinksConsumerInterface
+class GoogleLinksConsumer extends AbstractLinksConsumer implements LinksConsumerInterface
 {
 
     /**

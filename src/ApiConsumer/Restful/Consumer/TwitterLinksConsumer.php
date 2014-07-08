@@ -6,10 +6,10 @@ use ApiConsumer\WebScraper\Scraper;
 use Goutte\Client;
 
 /**
- * Class TwitterConsumer
+ * Class TwitterLinksConsumer
  * @package Social\API\Consumer
  */
-class TwitterConsumer extends AbstractConsumer implements LinksConsumerInterface
+class TwitterLinksConsumer extends AbstractLinksConsumer implements LinksConsumerInterface
 {
 
     /**

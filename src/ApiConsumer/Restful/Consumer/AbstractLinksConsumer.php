@@ -13,7 +13,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Subscriber\Oauth\Oauth1;
 
-class AbstractConsumer
+class AbstractLinksConsumer
 {
 
     /** @var UserProviderInterface */

@@ -3,10 +3,10 @@
 namespace ApiConsumer\Restful\Consumer;
 
 /**
- * Class FacebookConsumer
+ * Class FacebookLinksConsumer
  * @package Social
  */
-class FacebookConsumer extends AbstractConsumer implements LinksConsumerInterface
+class FacebookLinksConsumer extends AbstractLinksConsumer implements LinksConsumerInterface
 {
 
     /**

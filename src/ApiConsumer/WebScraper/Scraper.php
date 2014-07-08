@@ -1,16 +1,14 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: adridev
- * Date: 3/07/14
- * Time: 22:18
- */
 
 namespace ApiConsumer\WebScraper;
 
 use Goutte\Client;
 use Symfony\Component\DomCrawler\Crawler;
 
+/**
+ * Class Scraper
+ * @package ApiConsumer\WebScraper
+ */
 class Scraper
 {
 
@@ -27,6 +25,10 @@ class Scraper
 
     }
 
+    /**
+     * Fetch metadata from an url
+     * @return array
+     */
     public function scrap()
     {
 
@@ -107,6 +109,14 @@ class Scraper
      */
     protected function extractMetaTagsMetadata($metaTags)
     {
+
+//        $validMetaNames = array(
+//            'description',
+//            'author',
+//            'keywords',
+//            'title'
+//        );
+
         $metadata = $metaTags->each(function (Crawler $node) {
 
             return array(
@@ -118,6 +128,20 @@ class Scraper
 
         });
 
+//        foreach ($metadata as $index => $data) {
+//            if ('' === $data['rel'] && '' === $data['name'] && '' === $data['property']) {
+//                unset($metadata[$index]);
+//            }
+//
+//            if ('' !== $data['name'] && !in_array($data['name'], $validMetaNames)) {
+//                unset($metadata[$index]);
+//            }
+//
+//            if ('' === $data['content']) {
+//                unset($metadata[$index]);
+//            }
+//        }
+
         return $metadata;
     }
 
@@ -127,6 +151,7 @@ class Scraper
      */
     protected function trimNullValuesAndReindexArray(&$nodeWithOgMetadata)
     {
+
         foreach ($nodeWithOgMetadata as $k => $v) {
             if ($v === null) {
                 unset($nodeWithOgMetadata[$k]);
@@ -136,5 +161,4 @@ class Scraper
         return array_values($nodeWithOgMetadata);
 
     }
-
 }
