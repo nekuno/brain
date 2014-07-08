@@ -1,6 +1,6 @@
 <?php
 
-namespace ApiConsumer\WebScraper;
+namespace ApiConsumer;
 
 use Goutte\Client;
 use Symfony\Component\DomCrawler\Crawler;
