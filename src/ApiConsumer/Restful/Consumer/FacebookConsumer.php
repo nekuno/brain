@@ -2,8 +2,6 @@
 
 namespace ApiConsumer\Restful\Consumer;
 
-use Social\API\Consumer\LinksConsumerInterface;
-
 /**
  * Class FacebookConsumer
  * @package Social
@@ -17,11 +15,9 @@ class FacebookConsumer extends AbstractConsumer implements LinksConsumerInterfac
     public function fetchLinks($userId = null)
     {
 
-        $errors = array();
+        $users = $this->userProvider->getUsersByResource('facebook', $userId);
 
-        $users  = $this->userProvider->getUsersByResource('facebook', $userId);
-
-        $data = array();
+        $links = array();
 
         foreach ($users as $user) {
 
@@ -35,45 +31,28 @@ class FacebookConsumer extends AbstractConsumer implements LinksConsumerInterfac
                 . '?access_token=' . $user['oauthToken'];
 
             try {
-
-                $data[$user['id']] = $this->fetch($url);
-
+                $response       = $this->makeRequestJSON($url);
+                $links[$userId] = $this->formatResponse($response);
             } catch (\Exception $e) {
-
-                $errors[] = $this->getError($e);
-
+                throw $e;
             }
-
         }
 
-        $stored = array();
-
-        try {
-
-            $stored = $this->processData($data);
-
-        } catch (\Exception $e) {
-
-            $errors[] = $this->getError($e);
-
-        }
-
-        return array() !== $errors ? $errors : $stored;
+        return $links;
 
     }
 
     /**
      * { @inheritdoc }
      */
-    protected function parseLinks($userId, array $data = array())
+    protected function formatResponse(array $response = array())
     {
         $parsed = array();
 
-        foreach ($data['data'] as $item) {
-            $link['url']   = $item['link'];
-            $link['title'] = array_key_exists('name', $item) ? $item['name'] : '';
+        foreach ($response['data'] as $item) {
+            $link['url']         = $item['link'];
+            $link['title']       = array_key_exists('name', $item) ? $item['name'] : '';
             $link['description'] = array_key_exists('description', $item) ? $item['description'] : '';
-            $link['userId']      = $userId;
 
             $parsed[] = $link;
         }

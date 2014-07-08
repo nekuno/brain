@@ -2,8 +2,8 @@
 
 namespace ApiConsumer\Restful\Consumer;
 
+use ApiConsumer\WebScraper\Scraper;
 use Goutte\Client;
-use Social\Web\Scraper\Scraper;
 
 /**
  * Class TwitterConsumer
@@ -18,11 +18,9 @@ class TwitterConsumer extends AbstractConsumer implements LinksConsumerInterface
     public function fetchLinks($userId = null)
     {
 
-        $errors = array();
-
         $users = $this->userProvider->getUsersByResource('twitter', $userId);
 
-        $data = array();
+        $links = array();
 
         foreach ($users as $user) {
 
@@ -40,56 +38,43 @@ class TwitterConsumer extends AbstractConsumer implements LinksConsumerInterface
             $oauthData = array_merge($this->options, $userOptions);
 
             try {
-                $data[$user['id']] = $this->fetch($url, $oauthData, true);
+                $response = $this->makeRequestJSON($url, $oauthData, true);
+                $links[$userId] = $this->formatResponse($response);
             } catch (\Exception $e) {
-                $errors[] = $this->getError($e);
+                throw $e;
             }
         }
 
-        $stored = array();
+        return $links;
 
-        try {
-            $stored = $this->processData($data);
-        } catch (\Exception $e) {
-            $errors[] = $this->getError($e);
-        }
-
-        return array() !== $errors ? $errors : $stored;
     }
 
     /**
-     * { @inheritdoc }
+     * @param array $response
+     * @return array
      */
-    protected function parseLinks($userId, array $data = array())
+    public function formatResponse(array $response = array())
     {
-        $parsed = array();
+        $formatted = array();
 
-        foreach ($data as $item) {
+        foreach ($response as $item) {
             if (empty($item['entities']) || empty($item['entities']['urls'][0])) {
                 continue;
             }
 
-            $scraper  = new Scraper(new Client());
-            $url      = $item['entities']['urls'][0]['url'];
-            $metadata = $scraper->scrap($url);
+            $url = $item['entities']['urls'][0]['expanded_url']
+                ? $item['entities']['urls'][0]['expanded_url']
+                : $item['entities']['urls'][0]['url'];
 
-            $link           = array();
-            $link['url']    = $url;
-            $link['userId'] = $userId;
+            $link                = array();
+            $link['url']         = $url;
+            $link['title']       = array_key_exists('text', $item) ? $item['text'] : '';
+            $link['description'] = '';
 
-            if (array() === $metadata) {
-                $link['title']       = array_key_exists('title', $metadata) ? $metadata['title'] : '';
-                $link['description'] = '';
-            } else {
-                $link['title']       = array_key_exists('description', $metadata) ? $metadata['description'] : '';
-                $link['description'] = '';
-            }
-
-            $parsed[] = $link;
+            $formatted[] = $link;
 
         }
 
-        return $parsed;
+        return $formatted;
     }
-
 }

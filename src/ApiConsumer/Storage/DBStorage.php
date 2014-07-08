@@ -10,12 +10,23 @@ namespace ApiConsumer\Storage;
 
 use Model\ContentModel;
 
-class DBStorage implements StorageInterface {
+class DBStorage implements StorageInterface
+{
 
     /**
      * @var ContentModel
      */
     protected $model;
+
+    protected $errors = array();
+
+    /**
+     * @return array
+     */
+    public function getErrors()
+    {
+        return $this->errors;
+    }
 
     public function __construct($model)
     {
@@ -29,23 +40,25 @@ class DBStorage implements StorageInterface {
     public function storeLinks(array $links)
     {
 
-        $errors = 0;
-        $result = array();
-
-        foreach ($links as $link) {
+        foreach ($links as $user => $userLinks) {
             try {
-                $link = $this->model->addLink($link);
-                if ($link) {
-                    $result[] = $link;
-                }
+                $this->model->saveUserLinks($user, $userLinks);
             } catch (\Exception $e) {
-                $errors++;
-                continue;
+                $this->errors[] = $this->getFormattedError($e);
             }
         }
 
-        // TODO: Log and handle error percentage and make blocking if needed
-        return $result;
+        return $this;
 
     }
+
+    /**
+     * @param $e
+     * @return string
+     */
+    protected function getFormattedError(\Exception $e)
+    {
+        return sprintf('Error: %s on file %s line %s', $e->getMessage(), $e->getFile(), $e->getLine());
+    }
+
 }

@@ -9,16 +9,12 @@
 namespace ApiConsumer\Restful\Consumer;
 
 use ApiConsumer\Auth\UserProviderInterface;
-use ApiConsumer\Storage\StorageInterface;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Subscriber\Oauth\Oauth1;
 
 class AbstractConsumer
 {
-
-    /** @var \ApiConsumer\Storage\StorageInterface */
-    protected $storage;
 
     /** @var UserProviderInterface */
     protected $userProvider;
@@ -29,10 +25,8 @@ class AbstractConsumer
     /** @var array Configuration */
     protected $options = array();
 
-    public function __construct(StorageInterface $store, UserProviderInterface $userProvider, Client $httpClient, array $options = array())
+    public function __construct(UserProviderInterface $userProvider, Client $httpClient, array $options = array())
     {
-
-        $this->storage = $store;
 
         $this->userProvider = $userProvider;
 
@@ -51,7 +45,7 @@ class AbstractConsumer
      * @return mixed
      * @throws RequestException
      */
-    public function fetch($url, array $config = array(), $legacy = false)
+    public function makeRequestJSON($url, array $config = array(), $legacy = false)
     {
 
         if ($legacy) {
@@ -78,49 +72,4 @@ class AbstractConsumer
         return $data;
     }
 
-    /**
-     * @param $data
-     * @return array
-     * @throws \Exception
-     */
-    protected function processData($data)
-    {
-        $links = array();
-        foreach ($data as $userId => $shared) {
-            try {
-                $parseLinks = $this->parseLinks($userId, $shared);
-                $links      = $links + $parseLinks;
-            } catch (\Exception $e) {
-                throw $e;
-            }
-        }
-
-        try {
-            return $this->storage->storeLinks($links);
-        } catch (\Exception $e) {
-            throw $e;
-        }
-
-    }
-
-    /**
-     * Parse links to model expected format
-     *
-     * @param $data
-     * @param $userId
-     * @return mixed
-     */
-    protected function parseLinks($userId, array $data = array()){
-        return array();
-    }
-
-    /**
-     * @param $e
-     * @return string
-     */
-    protected function getError(\Exception $e)
-    {
-        return sprintf('Error: %s on file %s line %s', $e->getMessage(), $e->getFile(), $e->getLine());
-    }
-
-} 
+}
