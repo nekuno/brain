@@ -2,13 +2,17 @@
 
 namespace Controller;
 
+use ApiConsumer\Auth\DBUserProvider;
+use ApiConsumer\Restful\Consumer\FacebookConsumer;
+use ApiConsumer\Restful\Consumer\GoogleConsumer;
+use ApiConsumer\Restful\Consumer\TwitterConsumer;
+use ApiConsumer\Storage\DBStorage;
+use ApiConsumer\WebScraper\Scraper;
+use Goutte\Client;
 use Model\ContentModel;
 use Silex\Application;
-use Social\API\Consumer\AbstractConsumer;
-use Social\API\Consumer\Auth\DBUserProvider;
-use Social\API\Consumer\LinksConsumerInterface;
-use Social\API\Consumer\Storage\DBStorage;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class ContentController
 {
@@ -44,8 +48,6 @@ class ContentController
             return $app->json(array(), 400);
         }
 
-        $FQNClassName = 'Social\\API\\Consumer\\' . ucfirst($resource) . 'Consumer';
-
         $storage      = new DBStorage($app['content.model']);
         $userProvider = new DBUserProvider($app['db']);
         $httpClient   = $app['guzzle.client'];
@@ -54,21 +56,53 @@ class ContentController
 
         if ($resource == 'twitter') {
             $options = array(
-                'oauth_consumer_key'     => $app['twitter.consumer_key'],
+                'oauth_consumer_key'    => $app['twitter.consumer_key'],
                 'oauth_consumer_secret' => $app['twitter.consumer_secret'],
             );
         }
 
-        $consumer = new $FQNClassName($storage, $userProvider, $httpClient, $options);
+        switch($resource){
+            case 'twitter':
+                $consumer = new TwitterConsumer($userProvider, $httpClient, $options);
+                break;
+            case 'facebook':
+                $consumer = new FacebookConsumer($userProvider, $httpClient);
+                break;
+            case 'google':
+                $consumer = new GoogleConsumer($userProvider, $httpClient);
+                break;
+            default:
+                throw new \Exception('Invalid consumer');
+        }
 
         try {
-            $result = $consumer->fetchLinks($userId);
+
+            $links = $consumer->fetchLinks($userId);
+
+            $storage->storeLinks($links);
+
+            $errors = $storage->getErrors();
+
+            if (array() !== $errors) {
+                $app->json($errors, 500);
+            }
+
         } catch (\Exception $e) {
-            return $app->json(array(), 500);
+            return $app->json($this->getError($e), 500);
         }
-        
-        return $app->json($result);
+
+        return $app->json($links);
 
     }
 
+}
+
+    /**
+     * @param $e
+     * @return string
+     */
+    protected function getError(\Exception $e)
+    {
+        return sprintf('Error: %s on file %s line %s', $e->getMessage(), $e->getFile(), $e->getLine());
+    }
 }
