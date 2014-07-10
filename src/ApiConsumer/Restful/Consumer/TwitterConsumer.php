@@ -35,7 +35,7 @@ class TwitterConsumer extends AbstractConsumer implements LinksConsumerInterface
             $oauthData = array_merge($this->options, $userOptions);
 
             try {
-                $response = $this->makeRequestJSON($url, $oauthData, true);
+                $response       = $this->makeRequestJSON($url, $oauthData, true);
                 $links[$userId] = $this->formatResponse($response);
             } catch (\Exception $e) {
                 throw $e;
@@ -52,6 +52,7 @@ class TwitterConsumer extends AbstractConsumer implements LinksConsumerInterface
      */
     public function formatResponse(array $response = array())
     {
+
         $formatted = array();
 
         foreach ($response as $item) {

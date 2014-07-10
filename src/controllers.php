@@ -6,21 +6,24 @@ use Symfony\Component\HttpFoundation\Response;
 //Request::setTrustedProxies(array('127.0.0.1'));
 
 $app['users.controller'] = $app->share(function () {
+
     return new Controller\UserController;
 });
 
 $app['questions.controller'] = $app->share(function () {
+
     return new Controller\QuestionController;
 });
 
 $app['answers.controller'] = $app->share(function () {
+
     return new Controller\AnswerController;
 });
 
 $app['social.controller'] = $app->share(function () {
+
     return new Controller\ContentController;
 });
-
 
 /**
  * Middleware for filter some request
@@ -51,6 +54,7 @@ $app->before(
  */
 $app->error(
     function (\Exception $e, $code) use ($app) {
+
         if ($app['debug']) {
             return;
         }

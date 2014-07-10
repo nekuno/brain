@@ -11,26 +11,28 @@ namespace Controller;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 
-class QuestionController {
+class QuestionController
+{
 
     public function addAction(Request $request, Application $app)
     {
 
         $data = $request->request->all();
 
-        if(empty($data)){
+        if (empty($data)) {
             return $app->json(array(), 400);
         }
 
         // TODO: Validate received data
 
-        try{
-            $model = $app['questions.model'];
+        try {
+            $model  = $app['questions.model'];
             $result = $model->create($data);
-        }catch (\Exception $e){
-            if($app['env'] == 'dev'){
+        } catch (\Exception $e) {
+            if ($app['env'] == 'dev') {
                 throw $e;
             }
+
             return $app->json(array(), 500);
         }
 
@@ -40,21 +42,23 @@ class QuestionController {
 
     public function answerAction(Request $request, Application $app)
     {
+
         $data = $request->request->all();
 
-        if(array() === $data){
+        if (array() === $data) {
             return $app->json(array(), 400);
         }
 
         // TODO: Validate received data
 
-        try{
+        try {
             $model  = $app['questions.model'];
             $result = $model->answer($data);
-        }catch (\Exception $e){
-            if($app['env'] == 'dev'){
+        } catch (\Exception $e) {
+            if ($app['env'] == 'dev') {
                 throw $e;
             }
+
             return $app->json(array(), 500);
         }
 

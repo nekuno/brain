@@ -18,15 +18,6 @@ class Scraper
 
     private $logger;
 
-    /**
-     * @param mixed $logger
-     */
-    public function setLogger(Logger $logger)
-    {
-
-        $this->logger = $logger;
-    }
-
     public function __construct(Client $client, $url = null)
     {
 
@@ -37,8 +28,17 @@ class Scraper
     }
 
     /**
+     * @param mixed $logger
+     */
+    public function setLogger(Logger $logger)
+    {
+
+        $this->logger = $logger;
+    }
+
+    /**
      * @return MetadataServer IP Whitelist
-    83.59.176.5Remove84.124.227.43Remove79.151.34.164Remove54.195.225.42Remove88.1.74.78Remove88.12.7.99Remove92.222.1.98
+     * 83.59.176.5Remove84.124.227.43Remove79.151.34.164Remove54.195.225.42Remove88.1.74.78Remove88.12.7.99Remove92.222.1.98
      * @throws \Exception
      */
     public function scrap()

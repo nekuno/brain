@@ -20,9 +20,11 @@ class Neo4jPHPServiceProvider implements ServiceProviderInterface
      */
     public function register(Application $app)
     {
+
         // Initialize neo4j
         $app['neo4j.client'] = $app->share(
             function ($app) {
+
                 $client = new Client($app['db.neo4j.host'], $app['db.neo4j.port']);
 
                 return $client;
@@ -33,6 +35,7 @@ class Neo4jPHPServiceProvider implements ServiceProviderInterface
             $app['neo4j.client'] = $app->extend(
                 'neo4j.client',
                 function ($client, $app) {
+
                     $client
                         ->getTransport()
                         ->setAuth($app['db.neo4j.user'], $app['db.neo4j.pass']);

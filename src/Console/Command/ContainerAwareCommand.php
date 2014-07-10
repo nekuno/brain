@@ -13,6 +13,7 @@ use Silex\Application;
 
 abstract class ContainerAwareCommand extends Command
 {
+
     /**
      * @var \Silex\Application
      */
@@ -20,6 +21,7 @@ abstract class ContainerAwareCommand extends Command
 
     public function __construct(Application $app, $name = null)
     {
+
         parent::__construct($name);
         $this->app = $app;
     }

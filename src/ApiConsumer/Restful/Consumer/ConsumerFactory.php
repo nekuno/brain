@@ -8,8 +8,8 @@
 
 namespace ApiConsumer\Restful\Consumer;
 
-use GuzzleHttp\Client;
 use ApiConsumer\Auth\UserProviderInterface;
+use GuzzleHttp\Client;
 
 class ConsumerFactory
 {
@@ -27,7 +27,8 @@ class ConsumerFactory
         UserProviderInterface $userProvider,
         Client $httpClient,
         array $options = array()
-    ) {
+    )
+    {
 
         switch ($resource) {
             case 'twitter':

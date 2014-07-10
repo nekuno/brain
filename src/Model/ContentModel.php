@@ -18,6 +18,7 @@ class ContentModel
 
     public function __construct(Client $client)
     {
+
         $this->client = $client;
     }
 

@@ -8,6 +8,7 @@ use Silex\ServiceProviderInterface;
 
 class GuzzleServiceProvider implements ServiceProviderInterface
 {
+
     /**
      * Register Guzzle with Silex
      *
@@ -15,7 +16,9 @@ class GuzzleServiceProvider implements ServiceProviderInterface
      */
     public function register(Application $app)
     {
-        $app['guzzle.client'] = $app->share(function() use ($app) {
+
+        $app['guzzle.client'] = $app->share(function () use ($app) {
+
             return new Client();
         });
     }

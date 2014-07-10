@@ -20,6 +20,7 @@ class SocialFetchLinksCommand extends ContainerAwareCommand
 
     protected function configure()
     {
+
         $this->setName('social:fetch:links')
             ->setDescription("Fetch data from given provider")
             ->setDefinition(

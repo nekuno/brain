@@ -18,6 +18,7 @@ class QuestionModel
 
     public function __construct(Client $client)
     {
+
         $this->client = $client;
     }
 

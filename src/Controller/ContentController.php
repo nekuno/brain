@@ -90,20 +90,6 @@ class ContentController
 
     }
 
-    /**
-     * @param $link
-     * @return \ApiConsumer\Scraper\Metadata
-     */
-    private function getMetadata($link)
-    {
-
-        $scraper = new Scraper(new Client(), $link['url']);
-
-        $metadata = $scraper->scrap();
-
-        return $metadata;
-    }
-
     private function scrapLinksMetadata(array $links = array())
     {
 
@@ -131,6 +117,20 @@ class ContentController
 
         return $processedLinks;
 
+    }
+
+    /**
+     * @param $link
+     * @return \ApiConsumer\Scraper\Metadata
+     */
+    private function getMetadata($link)
+    {
+
+        $scraper = new Scraper(new Client(), $link['url']);
+
+        $metadata = $scraper->scrap();
+
+        return $metadata;
     }
 
     /**

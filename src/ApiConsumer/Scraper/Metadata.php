@@ -13,18 +13,18 @@ use Symfony\Component\DomCrawler\Crawler;
 class Metadata
 {
 
-    private $crawler;
-
-    private $validMetaRel = array(
-        'author',
-        'description'
-    );
-
     protected $validMetaName = array(
         'description',
         'author',
         'keywords',
         'title'
+    );
+
+    private $crawler;
+
+    private $validMetaRel = array(
+        'author',
+        'description'
     );
 
     public function __construct(Crawler $crawler)
@@ -51,6 +51,36 @@ class Metadata
         $this->trimUseLessTags($metaTagsData);
 
         return $metaTagsData;
+    }
+
+    /**
+     * @param $metadata
+     */
+    protected function trimUseLessTags($metadata)
+    {
+
+        foreach ($metadata as $index => $data) {
+
+            if (null === $data['rel'] && null === $data['name'] && null === $data['property']) {
+                unset($metadata[$index]);
+            }
+
+            if (null !== $data['name'] && !in_array($data['name'], $this->validMetaName)) {
+                unset($metadata[$index]);
+            }
+
+            if (null !== $data['rel'] && !in_array($data['rel'], $this->validMetaRel)) {
+                unset($metadata[$index]);
+            }
+
+            if (null === $data['content']) {
+                unset($metadata[$index]);
+            }
+
+        }
+
+        return $metadata;
+
     }
 
     /**
@@ -93,36 +123,6 @@ class Metadata
         }
 
         return $ogMetadata;
-
-    }
-
-    /**
-     * @param $metadata
-     */
-    protected function trimUseLessTags($metadata)
-    {
-
-        foreach ($metadata as $index => $data) {
-
-            if (null === $data['rel'] && null === $data['name'] && null === $data['property']) {
-                unset($metadata[$index]);
-            }
-
-            if (null !== $data['name'] && !in_array($data['name'], $this->validMetaName)) {
-                unset($metadata[$index]);
-            }
-
-            if (null !== $data['rel'] && !in_array($data['rel'], $this->validMetaRel)) {
-                unset($metadata[$index]);
-            }
-
-            if (null === $data['content']) {
-                unset($metadata[$index]);
-            }
-
-        }
-
-        return $metadata;
 
     }
 

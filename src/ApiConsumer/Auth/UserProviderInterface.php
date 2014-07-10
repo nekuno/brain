@@ -8,8 +8,8 @@
 
 namespace ApiConsumer\Auth;
 
-
-interface UserProviderInterface {
+interface UserProviderInterface
+{
 
     /**
      * Get users by resource owner

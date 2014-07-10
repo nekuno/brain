@@ -20,6 +20,7 @@ class DBUserProvider implements UserProviderInterface
 
     public function __construct(Connection $driver)
     {
+
         $this->driver = $driver;
     }
 

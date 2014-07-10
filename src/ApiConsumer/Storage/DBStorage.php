@@ -20,6 +20,12 @@ class DBStorage implements StorageInterface
 
     protected $errors = array();
 
+    public function __construct($model)
+    {
+
+        $this->model = $model;
+    }
+
     /**
      * @return array
      */
@@ -27,12 +33,6 @@ class DBStorage implements StorageInterface
     {
 
         return $this->errors;
-    }
-
-    public function __construct($model)
-    {
-
-        $this->model = $model;
     }
 
     /**

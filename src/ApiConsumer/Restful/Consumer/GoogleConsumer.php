@@ -30,7 +30,7 @@ class GoogleConsumer extends AbstractConsumer implements LinksConsumerInterface
                 . '&maxResults=100&fields=items(object(attachments(content,embed/url,url),content,url),title,url)';
 
             try {
-                $response = $this->makeRequestJSON($url);
+                $response       = $this->makeRequestJSON($url);
                 $links[$userId] = $this->formatResponse($response);
             } catch (\Exception $e) {
                 throw $e;
@@ -43,6 +43,7 @@ class GoogleConsumer extends AbstractConsumer implements LinksConsumerInterface
 
     protected function formatResponse(array $response = array())
     {
+
         $parsed = array();
 
         foreach ($response['items'] as $item) {

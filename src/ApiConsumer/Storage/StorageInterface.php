@@ -8,8 +8,8 @@
 
 namespace ApiConsumer\Storage;
 
-
-interface StorageInterface {
+interface StorageInterface
+{
 
     /**
      * @param array $linksGroupedByUser

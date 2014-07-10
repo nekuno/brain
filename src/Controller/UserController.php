@@ -45,8 +45,9 @@ class UserController
                 return $app->json(array(), 400);
             }
 
-            if (!is_int($request->request->get('id')))
+            if (!is_int($request->request->get('id'))) {
                 return $app->json(array(), 400);
+            }
         } else {
             return $app->json(array(), 400);
         }
@@ -118,8 +119,8 @@ class UserController
 
         // Get params
         $basedOn = $request->get('type');
-        $id1 = $request->query->get('id1');
-        $id2 = $request->query->get('id2');
+        $id1     = $request->query->get('id1');
+        $id2     = $request->query->get('id2');
 
         if (null === $id1 || null === $id2) {
             return $app->json(array(), 400);

@@ -47,6 +47,7 @@ class FacebookConsumer extends AbstractConsumer implements LinksConsumerInterfac
      */
     protected function formatResponse(array $response = array())
     {
+
         $parsed = array();
 
         foreach ($response['data'] as $item) {

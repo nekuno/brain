@@ -11,7 +11,7 @@ use Silex\Provider\ValidatorServiceProvider;
 
 $app = new Application();
 
-$app['env'] = getenv('APP_ENV') ? : 'prod';
+$app['env'] = getenv('APP_ENV') ?: 'prod';
 
 $app->register(new Igorw\Silex\ConfigServiceProvider(__DIR__ . "/../config/params.yml"));
 $app->register(new Igorw\Silex\ConfigServiceProvider(__DIR__ . "/../config/params_{$app['env']}.yml"));
@@ -37,6 +37,7 @@ $app['twig'] = $app->share(
     $app->extend(
         'twig',
         function ($twig, $app) {
+
             // add custom globals, filters, tags, ...
 
             return $twig;

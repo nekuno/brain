@@ -12,7 +12,8 @@ use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
 use Exception\QueryErrorException;
 
-class UserModel {
+class UserModel
+{
 
     /**
      * @var \Everyman\Neo4j\Client
@@ -22,7 +23,9 @@ class UserModel {
     /**
      * @param \Everyman\Neo4j\Client $client
      */
-    public function __construct(Client $client){
+    public function __construct(Client $client)
+    {
+
         $this->client = $client;
     }
 
@@ -32,7 +35,8 @@ class UserModel {
      * @param array $user
      * @return \Everyman\Neo4j\Query\ResultSet
      */
-    public function create(array $user = array()){
+    public function create(array $user = array())
+    {
 
         $query = new Query(
             $this->client,
@@ -40,60 +44,83 @@ class UserModel {
                 status: 'active',
                 qnoow_id: " . $user['id'] . ",
                 username: '" . $user['username'] . "',
-                email: '"    . $user['email'] . "'
+                email: '" . $user['email'] . "'
             })
             RETURN u;"
         );
 
-        try{
+        try {
             $result = $query->getResultSet();
-        }catch (\Exception $e){
+        } catch (\Exception $e) {
             throw $e;
         }
 
         return $this->parseResultSet($result);
     }
 
-    public function update(array $user = array()){
+    private function parseResultSet($resultSet)
+    {
+
+        $users = array();
+
+        foreach ($resultSet as $row) {
+            $user    = array(
+                'qnoow_id' => $row['u']->getProperty('qnoow_id'),
+                'username' => $row['u']->getProperty('username'),
+                'email'    => $row['u']->getProperty('email'),
+            );
+            $users[] = $user;
+        }
+
+        return $users;
+
+    }
+
+    public function update(array $user = array())
+    {
         // TODO: do your magic here
     }
 
-    public function remove($id = null){
-        $queryString = "MATCH (u:User {qnoow_id:" . $id . "}) DELETE u;";
-        $query = new Query($this->client, $queryString);
+    public function remove($id = null)
+    {
 
-        try{
+        $queryString = "MATCH (u:User {qnoow_id:" . $id . "}) DELETE u;";
+        $query       = new Query($this->client, $queryString);
+
+        try {
             $result = $query->getResultSet();
-        }catch (\Exception $e){
+        } catch (\Exception $e) {
             throw $e;
         }
 
         return $this->parseResultSet($result);
     }
 
-    public function getAll(){
+    public function getAll()
+    {
 
         $queryString = "MATCH (u:User) RETURN u;";
-        $query = new Query($this->client, $queryString);
+        $query       = new Query($this->client, $queryString);
 
-        try{
+        try {
             $result = $query->getResultSet();
-        }catch (\Exception $e){
+        } catch (\Exception $e) {
             throw $e;
         }
 
         return $this->parseResultSet($result);
 
     }
-    
-    public function getById($id = null){
+
+    public function getById($id = null)
+    {
 
         $queryString = "MATCH (u:User { qnoow_id : " . $id . "}) RETURN u;";
-        $query = new Query($this->client, $queryString);
+        $query       = new Query($this->client, $queryString);
 
-        try{
+        try {
             $result = $query->getResultSet();
-        }catch (\Exception $e){
+        } catch (\Exception $e) {
             throw $e;
         }
 
@@ -101,7 +128,8 @@ class UserModel {
 
     }
 
-    public function getMatchingBetweenTwoUsersBasedOnAnswers($id1, $id2){
+    public function getMatchingBetweenTwoUsersBasedOnAnswers($id1, $id2)
+    {
 
         $response = array();
 
@@ -121,18 +149,18 @@ class UserModel {
             $check
         );
 
-        try{
+        try {
             $checkResult = $checkQuery->getResultSet();
-        }catch (\Exception $e){
+        } catch (\Exception $e) {
             throw $e;
         }
 
         $checkValue = 0;
-        foreach($checkResult as $checkRow){
+        foreach ($checkResult as $checkRow) {
             $checkValue = $checkRow['n'];
         }
 
-        if ($checkValue > 0){
+        if ($checkValue > 0) {
 
             //Construct the query string
             $query =
@@ -177,9 +205,9 @@ class UserModel {
             );
 
             //Execute query and get the return
-            try{
+            try {
                 $result = $query->getResultSet();
-            }catch (\Exception $e){
+            } catch (\Exception $e) {
                 throw $e;
             }
 
@@ -187,8 +215,7 @@ class UserModel {
                 $response['matching'] = $row['m']->getProperty('questionMatching');
             }
 
-        }
-        else{
+        } else {
             $response['matching'] = 0;
         }
 
@@ -196,7 +223,8 @@ class UserModel {
 
     }
 
-    public function getMatchingBetweenTwoUsersBasedOnSharedContent($id1, $id2){
+    public function getMatchingBetweenTwoUsersBasedOnSharedContent($id1, $id2)
+    {
 
         $response = array();
 
@@ -219,20 +247,20 @@ class UserModel {
             $check
         );
 
-        try{
+        try {
             $checkResult = $checkQuery->getResultSet();
-        }catch (\Exception $e){
+        } catch (\Exception $e) {
             throw $e;
         }
 
-        $checkValueLikes = 0;
+        $checkValueLikes    = 0;
         $checkValueDislikes = 0;
-        foreach($checkResult as $checkRow){
-            $checkValueLikes = $checkRow['l'];
+        foreach ($checkResult as $checkRow) {
+            $checkValueLikes    = $checkRow['l'];
             $checkValueDislikes = $checkRow['d'];
         }
 
-        if ($checkValueLikes > 0 || $checkValueDislikes > 0){
+        if ($checkValueLikes > 0 || $checkValueDislikes > 0) {
 
             //Construct the query string if both users have at least one link in common
             $query =
@@ -279,9 +307,9 @@ class UserModel {
             );
 
             //Execute query and get the return
-            try{
+            try {
                 $result = $query->getResultSet();
-            }catch (\Exception $e){
+            } catch (\Exception $e) {
                 throw $e;
             }
 
@@ -289,29 +317,11 @@ class UserModel {
                 $response['matching'] = $row['m']->getProperty('contentMatching');
             }
 
-        }
-        else{
+        } else {
             $response['matching'] = 0;
         }
 
         return $response;
-
-    }
-
-    private function parseResultSet($resultSet){
-
-        $users = array();
-
-        foreach ($resultSet as $row) {
-            $user = array(
-                'qnoow_id' => $row['u']->getProperty('qnoow_id'),
-                'username' => $row['u']->getProperty('username'),
-                'email' => $row['u']->getProperty('email'),
-            );
-            $users[] = $user;
-        }
-
-        return $users;
 
     }
 
