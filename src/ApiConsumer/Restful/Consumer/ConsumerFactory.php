@@ -40,7 +40,7 @@ class ConsumerFactory
                 $consumer = new GoogleConsumer($userProvider, $httpClient);
                 break;
             default:
-                throw new \Exception('Invalid consumer');
+                throw new \Exception('Invalid consumer name given');
         }
         return $consumer;
 
