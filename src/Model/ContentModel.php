@@ -63,24 +63,6 @@ class ContentModel
 
     }
 
-    public function saveUserLinks($userId, array $links)
-    {
-
-        $result = array();
-
-        foreach ($links as $link) {
-            $link['userId'] = $userId;
-            try {
-                $result[] = $this->addLink($link);
-            } catch (\Exception $e) {
-                throw $e;
-            }
-        }
-
-        return $result;
-
-    }
-
     private function getDuplicate($url)
     {
 

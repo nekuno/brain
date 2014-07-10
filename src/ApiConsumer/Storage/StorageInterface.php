@@ -12,9 +12,9 @@ namespace ApiConsumer\Storage;
 interface StorageInterface {
 
     /**
-     * @param array $links
+     * @param array $linksGroupedByUser
      * @return mixed
      */
-    function storeLinks(array $links);
+    function storeLinks(array $linksGroupedByUser);
 
 } 

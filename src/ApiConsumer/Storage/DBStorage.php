@@ -25,26 +25,33 @@ class DBStorage implements StorageInterface
      */
     public function getErrors()
     {
+
         return $this->errors;
     }
 
     public function __construct($model)
     {
+
         $this->model = $model;
     }
 
     /**
-     * @param array $links
+     * @param array $linksGroupedByUser
      * @return array
      */
-    public function storeLinks(array $links)
+    public function storeLinks(array $linksGroupedByUser)
     {
 
-        foreach ($links as $user => $userLinks) {
-            try {
-                $this->model->saveUserLinks($user, $userLinks);
-            } catch (\Exception $e) {
-                $this->errors[] = $this->getFormattedError($e);
+        foreach ($linksGroupedByUser as $user => $userLinks) {
+
+            foreach ($userLinks as $link) {
+                $link['userId'] = $user;
+                try {
+                    $this->model->addLink($link);
+                } catch (\Exception $e) {
+                    $this->errors[] = $this->getFormattedError($link);
+                    continue;
+                }
             }
         }
 
@@ -53,12 +60,13 @@ class DBStorage implements StorageInterface
     }
 
     /**
-     * @param $e
+     * @param $link
      * @return string
      */
-    protected function getFormattedError(\Exception $e)
+    protected function getFormattedError(array $link)
     {
-        return sprintf('Error: %s on file %s line %s', $e->getMessage(), $e->getFile(), $e->getLine());
+
+        return sprintf('Error: adding link with url: %s to DDBB.', $link['url']);
     }
 
 }
