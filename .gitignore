@@ -1,9 +1,5 @@
 .idea
 
-/neo4j-community-2.0.3/
-
-
-/var/cache/*
-/var/logs/*
-/vendor/*
+/var
+/vendor
 /composer.lock
