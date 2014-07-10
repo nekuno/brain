@@ -3,7 +3,7 @@
 namespace ApiConsumer\Scraper;
 
 use Goutte\Client;
-use Symfony\Component\DomCrawler\Crawler;
+use Monolog\Logger;
 
 /**
  * Class Scraper
@@ -16,6 +16,17 @@ class Scraper
 
     private $url;
 
+    private $logger;
+
+    /**
+     * @param mixed $logger
+     */
+    public function setLogger(Logger $logger)
+    {
+
+        $this->logger = $logger;
+    }
+
     public function __construct(Client $client, $url = null)
     {
 
@@ -26,8 +37,9 @@ class Scraper
     }
 
     /**
-     * Fetch metadata from an url
-     * @return array
+     * @return MetadataServer IP Whitelist
+    83.59.176.5Remove84.124.227.43Remove79.151.34.164Remove54.195.225.42Remove88.1.74.78Remove88.12.7.99Remove92.222.1.98
+     * @throws \Exception
      */
     public function scrap()
     {
@@ -36,129 +48,25 @@ class Scraper
             throw new \InvalidArgumentException('The URL can not be empty');
         }
 
-        $crawler = $this->client->request('GET', $this->url);
-
-        $htmlMetaTags = $crawler->filterXPath('//head/meta | //title');
-
-        $metaTagsMetadata = $this->extractMetaTagsMetadata($htmlMetaTags);
-
-        $ogMetadata = $this->extractOgMetadata($metaTagsMetadata);
-
-        if (array() !== $ogMetadata) {
-            return $ogMetadata;
+        try {
+            $crawler = $this->client
+                ->request('GET', $this->url)
+                ->filterXPath('//head/meta | //title');
+        } catch (\Exception $e) {
+            throw $e;
         }
 
-        $defaultMetadata[] = array('title' => $htmlMetaTags->filter('title')->text());
-
-        $defaultMetadata = array_merge($defaultMetadata, $this->extractDefaultMetadata($metaTagsMetadata));
-
-        if (array() !== $defaultMetadata) {
-            return $defaultMetadata;
-        }
-
-        return array();
+        return new Metadata($crawler);
 
     }
 
     /**
-     * @param $metadata
-     * @return array
+     * @param $e
+     * @return string
      */
-    protected function extractDefaultMetadata($metadata)
+    protected function getError(\Exception $e)
     {
 
-        $validKeywords = array('author', 'title', 'description', 'canonical');
-
-        $defaultMetadata = array();
-
-        foreach ($metadata as $nodeMetadata) {
-            if ('' !== $nodeMetadata['name']) {
-                if (in_array($nodeMetadata['name'], $validKeywords)) {
-                    $defaultMetadata[] = array($nodeMetadata['name'] => $nodeMetadata['content']);
-                }
-            }
-        }
-
-        $this->trimNullValuesAndReindexArray($defaultMetadata);
-
-        return $defaultMetadata;
-    }
-
-    /**
-     * @param $metadata
-     * @return array
-     */
-    protected function extractOgMetadata($metadata)
-    {
-
-        $ogMetadata = array();
-
-        foreach ($metadata as $nodeMetadata) {
-            if (strstr($nodeMetadata['property'], 'og:')) {
-                $ogMetadata[] = array($nodeMetadata['property'] => $nodeMetadata['content']);
-            }
-        }
-
-        $this->trimNullValuesAndReindexArray($ogMetadata);
-
-        return $ogMetadata;
-    }
-
-    /**
-     * @param $metaTags
-     */
-    protected function extractMetaTagsMetadata($metaTags)
-    {
-
-//        $validMetaNames = array(
-//            'description',
-//            'author',
-//            'keywords',
-//            'title'
-//        );
-
-        $metadata = $metaTags->each(function (Crawler $node) {
-
-            return array(
-                'rel'      => $node->attr('rel'),
-                'name'     => $node->attr('name'),
-                'property' => $node->attr('property'),
-                'content'  => $node->attr('content'),
-            );
-
-        });
-
-//        foreach ($metadata as $index => $data) {
-//            if ('' === $data['rel'] && '' === $data['name'] && '' === $data['property']) {
-//                unset($metadata[$index]);
-//            }
-//
-//            if ('' !== $data['name'] && !in_array($data['name'], $validMetaNames)) {
-//                unset($metadata[$index]);
-//            }
-//
-//            if ('' === $data['content']) {
-//                unset($metadata[$index]);
-//            }
-//        }
-
-        return $metadata;
-    }
-
-    /**
-     * @param $nodeWithOgMetadata
-     * @return array
-     */
-    protected function trimNullValuesAndReindexArray(&$nodeWithOgMetadata)
-    {
-
-        foreach ($nodeWithOgMetadata as $k => $v) {
-            if ($v === null) {
-                unset($nodeWithOgMetadata[$k]);
-            }
-        }
-
-        return array_values($nodeWithOgMetadata);
-
+        return sprintf('Error: %s on file %s line %s', $e->getMessage(), $e->getFile(), $e->getLine());
     }
 }

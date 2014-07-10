@@ -4,13 +4,12 @@ namespace Controller;
 
 use ApiConsumer\Auth\DBUserProvider;
 use ApiConsumer\Restful\Consumer\ConsumerFactory;
+use ApiConsumer\Scraper\Scraper;
 use ApiConsumer\Storage\DBStorage;
-use ApiConsumer\WebScraper\Scraper;
 use Goutte\Client;
 use Model\ContentModel;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 
 class ContentController
 {
@@ -63,25 +62,102 @@ class ContentController
 
         try {
 
-            $links = $consumer->fetchLinks($userId);
+            $linksGroupedByUser = $consumer->fetchLinks($userId);
 
-            $storage->storeLinks($links);
+            $processedLinks = array();
+
+            foreach ($linksGroupedByUser as $user => $userLinks) {
+                $processedLinks[$user] = $this->scrapLinksMetadata($userLinks);
+            }
+
+            $storage->storeLinks($processedLinks);
 
             $errors = $storage->getErrors();
 
             if (array() !== $errors) {
-                $app->json($errors, 500);
+                foreach ($errors as $error) {
+                    $app->json($errors, 500); // TODO: this is only for development
+                    $app['monolog']->addDebug($error);
+                }
+
             }
 
         } catch (\Exception $e) {
             return $app->json($this->getError($e), 500);
         }
 
-        return $app->json($links);
+        return $app->json($processedLinks);
 
     }
 
-}
+    /**
+     * @param $link
+     * @return \ApiConsumer\Scraper\Metadata
+     */
+    private function getMetadata($link)
+    {
+
+        $scraper = new Scraper(new Client(), $link['url']);
+
+        $metadata = $scraper->scrap();
+
+        return $metadata;
+    }
+
+    private function scrapLinksMetadata(array $links = array())
+    {
+
+        $processedLinks = array();
+
+        foreach ($links as $link) {
+
+            $metadata = $this->getMetadata($link);
+
+            $metaTags = $metadata->getMetaTags();
+
+            $metaOgData = $metadata->extractOgMetadata($metaTags);
+            if (array() !== $metaOgData) {
+                $link = $this->mergeLinkMetadata($metaOgData, $link);
+            } else {
+                $metaDefaultData = $metadata->extractDefaultMetadata($metaTags);
+                if (array() !== $metaDefaultData) {
+                    $link = $this->mergeLinkMetadata($metaDefaultData, $link);
+                }
+            }
+
+            $processedLinks[] = $link;
+
+        }
+
+        return $processedLinks;
+
+    }
+
+    /**
+     * @param $scrapedData
+     * @param $link
+     * @return mixed
+     */
+    private function mergeLinkMetadata(array $scrapedData, array $link)
+    {
+
+        foreach ($scrapedData as $meta) {
+            if (array_key_exists('title', $meta) && null !== $meta['title']) {
+                $link['title'] = $meta['title'];
+            }
+
+            if (array_key_exists('description', $meta) && null !== $meta['description']) {
+                $link['description'] = $meta['description'];
+            }
+
+            if (array_key_exists('canonical', $meta) && null !== $meta['canonical']) {
+                $link['url'] = $meta['canonical'];
+            }
+        }
+
+        return $link;
+
+    }
 
     /**
      * @param $e
@@ -89,6 +165,7 @@ class ContentController
      */
     protected function getError(\Exception $e)
     {
+
         return sprintf('Error: %s on file %s line %s', $e->getMessage(), $e->getFile(), $e->getLine());
     }
 }
