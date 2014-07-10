@@ -8,8 +8,9 @@
 
 namespace Console\Command;
 
-use Social\API\Consumer\Auth\DBUserProvider;
-use Social\API\Consumer\Storage\DBStorage;
+use ApiConsumer\Auth\DBUserProvider;
+use ApiConsumer\Restful\Consumer\ConsumerFactory;
+use ApiConsumer\Storage\DBStorage;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -38,21 +39,37 @@ class SocialFetchLinksCommand extends ContainerAwareCommand
             exit;
         }
 
-        $FQNClassName = 'Social\\API\\Consumer\\' . ucfirst($resource) . 'Consumer';
-
         $storage      = new DBStorage($this->app['content.model']);
         $userProvider = new DBUserProvider($this->app['db']);
         $httpClient   = $this->app['guzzle.client'];
 
-        /** @var $FQNClassName $consumer */
-        $consumer = new $FQNClassName($storage, $userProvider, $httpClient);
+        $options = array();
+
+        if ($resource == 'twitter') {
+            $options = array(
+                'oauth_consumer_key'    => $this->app['twitter.consumer_key'],
+                'oauth_consumer_secret' => $this->app['twitter.consumer_secret'],
+            );
+        }
+
+        $consumer = ConsumerFactory::create($resource, $userProvider, $httpClient, $options);
 
         try {
-            $consumer->fetchLinks();
+            $links = $consumer->fetchLinks();
+
+            $storage->storeLinks($links);
+
+            $errors = $storage->getErrors();
+
+            if (array() !== $errors) {
+                foreach ($errors as $error) {
+                    $output->writeln($error);
+                }
+            }
+
             $output->writeln('Success!');
         } catch (\Exception $e) {
             $output->writeln(sprintf('Error: %s', $e->getMessage()));
         }
     }
-
-} 
+}

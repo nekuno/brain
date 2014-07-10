@@ -28,37 +28,38 @@ class ContentModel
 
         if (array() === $duplicate) {
             $stringQuery = "MATCH (u:User) " .
-                "WHERE u.qnoow_id = " . $data['userId'] .
-                "CREATE (l:Link {url: '" . $data['url'] . "', title: '" . $data['title'] . "', description: '" . $data['description'] . "'})" .
-                ", (l)-[r:SHARED_BY]->(u) " .
-                "RETURN l;";
+                "WHERE u.qnoow_id = {userId}"
+                . " CREATE "
+                . " (l:Link {url: {url}, title: {title}, description: {description}})"
+                . ", (l)-[r:SHARED_BY]->(u) "
+                . " RETURN l;";
         } else {
             $stringQuery = "MATCH (u:User)" .
-                ", (l:Link) " .
-                "WHERE u.qnoow_id = " . $data['userId'] . " AND l.url = '" . $data['url'] . "'" .
-                "CREATE UNIQUE (l)-[r:SHARED_BY]->(u) " .
-                "RETURN l;
+                ", (l:Link) "
+                . " WHERE u.qnoow_id = {userId} AND l.url = {url}"
+                . " CREATE UNIQUE (l)-[r:SHARED_BY]->(u)"
+                . " RETURN l;
             ";
         }
 
         $query = new Query(
             $this->client,
-            $stringQuery
+            $stringQuery,
+            array(
+                'title'       => $data['title'],
+                'description' => $data['description'],
+                'url'         => $data['url'],
+                'userId'      => $data['userId']
+            )
         );
 
-        $resultSet = $query->getResultSet();
-
-        foreach ($resultSet as $row) {
-            $link = array();
-            $link['url']         = $row['l']->getProperty('url');
-            $link['title']       = $row['l']->getProperty('title');
-            $link['description'] = $row['l']->getProperty('description');
-            $result[]            = $link;
+        try {
+            $resultSet = $query->getResultSet();
+        } catch (\Exception $e) {
+            throw $e;
         }
 
-        if(isset($result)){
-            return $result;
-        }
+        return $resultSet;
 
     }
 
@@ -83,7 +84,7 @@ class ContentModel
         $duplicates = array();
 
         foreach ($result as $row) {
-            $duplicate = array();
+            $duplicate            = array();
             $duplicate['userId']  = $row['u']->getProperty('qnoow_id');
             $duplicate['linkUrl'] = $row['l']->getProperty('url');
             $duplicates[]         = $duplicate;
@@ -96,5 +97,4 @@ class ContentModel
         return $duplicates;
 
     }
-
-} 
+}

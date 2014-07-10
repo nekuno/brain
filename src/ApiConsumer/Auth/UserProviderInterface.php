@@ -6,7 +6,7 @@
  * Time: 18:33
  */
 
-namespace Social\API\Consumer\Auth;
+namespace ApiConsumer\Auth;
 
 
 interface UserProviderInterface {

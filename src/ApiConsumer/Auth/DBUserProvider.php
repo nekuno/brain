@@ -6,7 +6,7 @@
  * Time: 18:34
  */
 
-namespace Social\API\Consumer\Auth;
+namespace ApiConsumer\Auth;
 
 use Doctrine\DBAL\Connection;
 
@@ -34,16 +34,21 @@ class DBUserProvider implements UserProviderInterface
             " INNER JOIN user_access_tokens AS ut ON u.id = ut.user_id" .
             " WHERE ut.resourceOwner = :resource";
 
+        $params = array(
+            ':resource' => $resource
+        );
+
         if (null !== $userId) {
             $sql .= " AND u.id = :userId";
+            $params[':userId'] = $userId;
         }
 
         $sql .= ";";
 
         try {
-            $users = $this->driver->fetchAll($sql, array(':userId' => $userId, ':resource' => $resource));
+            $users = $this->driver->fetchAll($sql, $params);
         } catch (\Exception $e) {
-            throw new $e;
+            throw $e;
         }
 
         return $users;

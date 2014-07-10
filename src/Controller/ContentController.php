@@ -2,12 +2,13 @@
 
 namespace Controller;
 
+use ApiConsumer\Auth\DBUserProvider;
+use ApiConsumer\Restful\Consumer\ConsumerFactory;
+use ApiConsumer\Scraper\Scraper;
+use ApiConsumer\Storage\DBStorage;
+use Goutte\Client;
 use Model\ContentModel;
 use Silex\Application;
-use Social\API\Consumer\AbstractConsumer;
-use Social\API\Consumer\Auth\DBUserProvider;
-use Social\API\Consumer\LinksConsumerInterface;
-use Social\API\Consumer\Storage\DBStorage;
 use Symfony\Component\HttpFoundation\Request;
 
 class ContentController
@@ -44,8 +45,6 @@ class ContentController
             return $app->json(array(), 400);
         }
 
-        $FQNClassName = 'Social\\API\\Consumer\\' . ucfirst($resource) . 'Consumer';
-
         $storage      = new DBStorage($app['content.model']);
         $userProvider = new DBUserProvider($app['db']);
         $httpClient   = $app['guzzle.client'];
@@ -54,21 +53,119 @@ class ContentController
 
         if ($resource == 'twitter') {
             $options = array(
-                'oauth_consumer_key'     => $app['twitter.consumer_key'],
+                'oauth_consumer_key'    => $app['twitter.consumer_key'],
                 'oauth_consumer_secret' => $app['twitter.consumer_secret'],
             );
         }
 
-        $consumer = new $FQNClassName($storage, $userProvider, $httpClient, $options);
+        $consumer = ConsumerFactory::create($resource, $userProvider, $httpClient, $options);
 
         try {
-            $result = $consumer->fetchLinks($userId);
+
+            $linksGroupedByUser = $consumer->fetchLinks($userId);
+
+            $processedLinks = array();
+
+            foreach ($linksGroupedByUser as $user => $userLinks) {
+                $processedLinks[$user] = $this->scrapLinksMetadata($userLinks);
+            }
+
+            $storage->storeLinks($processedLinks);
+
+            $errors = $storage->getErrors();
+
+            if (array() !== $errors) {
+                foreach ($errors as $error) {
+                    $app->json($errors, 500); // TODO: this is only for development
+                    $app['monolog']->addDebug($error);
+                }
+
+            }
+
         } catch (\Exception $e) {
-            return $app->json(array(), 500);
+            return $app->json($this->getError($e), 500);
         }
-        
-        return $app->json($result);
+
+        return $app->json($processedLinks);
 
     }
 
+    /**
+     * @param $link
+     * @return \ApiConsumer\Scraper\Metadata
+     */
+    private function getMetadata($link)
+    {
+
+        $scraper = new Scraper(new Client(), $link['url']);
+
+        $metadata = $scraper->scrap();
+
+        return $metadata;
+    }
+
+    private function scrapLinksMetadata(array $links = array())
+    {
+
+        $processedLinks = array();
+
+        foreach ($links as $link) {
+
+            $metadata = $this->getMetadata($link);
+
+            $metaTags = $metadata->getMetaTags();
+
+            $metaOgData = $metadata->extractOgMetadata($metaTags);
+            if (array() !== $metaOgData) {
+                $link = $this->mergeLinkMetadata($metaOgData, $link);
+            } else {
+                $metaDefaultData = $metadata->extractDefaultMetadata($metaTags);
+                if (array() !== $metaDefaultData) {
+                    $link = $this->mergeLinkMetadata($metaDefaultData, $link);
+                }
+            }
+
+            $processedLinks[] = $link;
+
+        }
+
+        return $processedLinks;
+
+    }
+
+    /**
+     * @param $scrapedData
+     * @param $link
+     * @return mixed
+     */
+    private function mergeLinkMetadata(array $scrapedData, array $link)
+    {
+
+        foreach ($scrapedData as $meta) {
+            if (array_key_exists('title', $meta) && null !== $meta['title']) {
+                $link['title'] = $meta['title'];
+            }
+
+            if (array_key_exists('description', $meta) && null !== $meta['description']) {
+                $link['description'] = $meta['description'];
+            }
+
+            if (array_key_exists('canonical', $meta) && null !== $meta['canonical']) {
+                $link['url'] = $meta['canonical'];
+            }
+        }
+
+        return $link;
+
+    }
+
+    /**
+     * @param $e
+     * @return string
+     */
+    protected function getError(\Exception $e)
+    {
+
+        return sprintf('Error: %s on file %s line %s', $e->getMessage(), $e->getFile(), $e->getLine());
+    }
 }
