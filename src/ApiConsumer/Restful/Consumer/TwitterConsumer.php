@@ -4,6 +4,7 @@ namespace ApiConsumer\Restful\Consumer;
 
 /**
  * Class TwitterConsumer
+ *
  * @package Social\API\Consumer
  */
 class TwitterConsumer extends AbstractConsumer implements LinksConsumerInterface
@@ -43,7 +44,6 @@ class TwitterConsumer extends AbstractConsumer implements LinksConsumerInterface
         }
 
         return $links;
-
     }
 
     /**
@@ -70,7 +70,6 @@ class TwitterConsumer extends AbstractConsumer implements LinksConsumerInterface
             $link['description'] = '';
 
             $formatted[] = $link;
-
         }
 
         return $formatted;

@@ -40,7 +40,7 @@ class SocialFetchLinksCommand extends ContainerAwareCommand
             exit;
         }
 
-        $storage      = new DBStorage($this->app['content.model']);
+        $storage      = new DBStorage($this->app['links.model']);
         $userProvider = new DBUserProvider($this->app['db']);
         $httpClient   = $this->app['guzzle.client'];
 

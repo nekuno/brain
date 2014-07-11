@@ -11,7 +11,7 @@ namespace Model;
 use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
 
-class ContentModel
+class LinkModel
 {
 
     protected $client;

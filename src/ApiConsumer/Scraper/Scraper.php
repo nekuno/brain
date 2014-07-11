@@ -1,71 +1,62 @@
 <?php
+/**
+ * Created by PhpStorm.
+ * User: adridev
+ * Date: 11/07/14
+ * Time: 14:31
+ */
 
 namespace ApiConsumer\Scraper;
 
 use Goutte\Client;
-use Monolog\Logger;
+use Symfony\Component\DomCrawler\Crawler;
 
 /**
  * Class Scraper
- * @package ApiConsumer\WebScraper
+ *
+ * @package ApiConsumer\Scraper
  */
 class Scraper
 {
 
-    private $client;
+    /**
+     * @var Client
+     */
+    protected $client;
 
-    private $url;
+    /**
+     * @var Crawler
+     */
+    protected $crawler;
 
-    private $logger;
-
-    public function __construct(Client $client, $url = null)
+    /**
+     * @param Client $client
+     */
+    public function __construct(Client $client)
     {
 
         $this->client = $client;
-
-        $this->url = $url;
-
     }
 
     /**
-     * @param mixed $logger
+     * @param $url
+     * @param string $method
      */
-    public function setLogger(Logger $logger)
+    public function initCrawler($url, $method = 'GET')
     {
 
-        $this->logger = $logger;
+        $this->crawler = $this->client->request($method, $url);
+
+        return $this;
     }
 
     /**
-     * @return Metadata
-     * @throws \Exception
+     * @param $filter
+     * @return Crawler
      */
-    public function scrap()
+    public function scrap($filter)
     {
 
-        if (null === $this->url) {
-            throw new \InvalidArgumentException('The URL can not be empty');
-        }
-
-        try {
-            $crawler = $this->client
-                ->request('GET', $this->url)
-                ->filterXPath('//head/meta | //title');
-        } catch (\Exception $e) {
-            throw $e;
-        }
-
-        return new Metadata($crawler);
-
-    }
-
-    /**
-     * @param $e
-     * @return string
-     */
-    protected function getError(\Exception $e)
-    {
-
-        return sprintf('Error: %s on file %s line %s', $e->getMessage(), $e->getFile(), $e->getLine());
+        return $this->crawler->filterXPath($filter);
     }
 }

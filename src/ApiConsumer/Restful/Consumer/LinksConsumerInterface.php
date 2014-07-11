@@ -18,5 +18,4 @@ interface LinksConsumerInterface
      * @return mixed
      */
     public function fetchLinks($userId = null);
-
-} 
+}

@@ -27,8 +27,7 @@ class ConsumerFactory
         UserProviderInterface $userProvider,
         Client $httpClient,
         array $options = array()
-    )
-    {
+    ) {
 
         switch ($resource) {
             case 'twitter':
@@ -44,7 +43,5 @@ class ConsumerFactory
                 throw new \Exception('Invalid consumer name given');
         }
         return $consumer;
-
     }
-
 }

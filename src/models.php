@@ -10,7 +10,7 @@ $app['questions.model'] = function ($app) {
     return new \Model\QuestionModel($app['neo4j.client']);
 };
 
-$app['content.model'] = function ($app) {
+$app['links.model'] = function ($app) {
 
-    return new \Model\ContentModel($app['neo4j.client']);
+    return new \Model\LinkModel($app['neo4j.client']);
 };

@@ -19,5 +19,4 @@ interface UserProviderInterface
      * @return mixed
      */
     function getUsersByResource($resource, $userId = null);
-
-} 
+}

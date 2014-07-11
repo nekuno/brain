@@ -8,13 +8,13 @@
 
 namespace ApiConsumer\Storage;
 
-use Model\ContentModel;
+use Model\LinkModel;
 
 class DBStorage implements StorageInterface
 {
 
     /**
-     * @var ContentModel
+     * @var LinkModel
      */
     protected $model;
 
@@ -56,7 +56,6 @@ class DBStorage implements StorageInterface
         }
 
         return $this;
-
     }
 
     /**
@@ -68,5 +67,4 @@ class DBStorage implements StorageInterface
 
         return sprintf('Error: adding link with url: %s to DDBB.', $link['url']);
     }
-
 }

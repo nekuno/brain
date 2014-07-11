@@ -20,12 +20,18 @@ class Metadata
         'title'
     );
 
-    private $crawler;
-
+    /**
+     * @var array
+     */
     private $validMetaRel = array(
         'author',
         'description'
     );
+
+    /**
+     * @var Crawler
+     */
+    private $crawler;
 
     public function __construct(Crawler $crawler)
     {
@@ -33,6 +39,9 @@ class Metadata
         $this->crawler = $crawler;
     }
 
+    /**
+     * @return array
+     */
     public function getMetaTags()
     {
 
@@ -82,6 +91,36 @@ class Metadata
     }
 
     /**
+     * @param $data
+     * @return bool
+     */
+    protected function haveOneUsefulMetaAtLeast($data)
+    {
+
+        return null === $data['rel'] && null === $data['name'] && null === $data['property'];
+    }
+
+    /**
+     * @param $data
+     * @return bool
+     */
+    protected function isValidName($data)
+    {
+
+        return in_array($data['name'], $this->validMetaName);
+    }
+
+    /**
+     * @param $data
+     * @return bool
+     */
+    protected function isValidRel($data)
+    {
+
+        return in_array($data['rel'], $this->validMetaRel);
+    }
+
+    /**
      * @param $metaTags
      * @return array
      */
@@ -124,32 +163,27 @@ class Metadata
     }
 
     /**
-     * @param $data
-     * @return bool
+     * @param $scrapedData
+     * @param $link
+     * @return mixed
      */
-    protected function isValidRel($data)
+    public function mergeLinkMetadata(array $scrapedData, array $link)
     {
 
-        return in_array($data['rel'], $this->validMetaRel);
-    }
+        foreach ($scrapedData as $meta) {
+            if (array_key_exists('title', $meta) && null !== $meta['title']) {
+                $link['title'] = $meta['title'];
+            }
 
-    /**
-     * @param $data
-     * @return bool
-     */
-    protected function isValidName($data)
-    {
+            if (array_key_exists('description', $meta) && null !== $meta['description']) {
+                $link['description'] = $meta['description'];
+            }
 
-        return in_array($data['name'], $this->validMetaName);
-    }
+            if (array_key_exists('canonical', $meta) && null !== $meta['canonical']) {
+                $link['url'] = $meta['canonical'];
+            }
+        }
 
-    /**
-     * @param $data
-     * @return bool
-     */
-    protected function haveOneUsefulMetaAtLeast($data)
-    {
-
-        return null === $data['rel'] && null === $data['name'] && null === $data['property'];
+        return $link;
     }
 }
