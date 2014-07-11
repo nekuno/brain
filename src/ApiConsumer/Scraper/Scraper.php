@@ -37,8 +37,7 @@ class Scraper
     }
 
     /**
-     * @return MetadataServer IP Whitelist
-     * 83.59.176.5Remove84.124.227.43Remove79.151.34.164Remove54.195.225.42Remove88.1.74.78Remove88.12.7.99Remove92.222.1.98
+     * @return Metadata
      * @throws \Exception
      */
     public function scrap()
