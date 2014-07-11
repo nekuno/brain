@@ -1,5 +1,6 @@
 <?php
 
+use Dflydev\Silex\Provider\DoctrineOrm\DoctrineOrmServiceProvider;
 use Provider\GuzzleServiceProvider;
 use Provider\Neo4jPHPServiceProvider;
 use Silex\Application;
@@ -21,15 +22,32 @@ $app->register(new ValidatorServiceProvider());
 $app->register(new ServiceControllerServiceProvider());
 $app->register(new TwigServiceProvider());
 $app->register(new DoctrineServiceProvider(), array(
-    'db.options' => array(
-        'driver'   => 'pdo_mysql',
-        'host'     => '127.0.0.1',
-        'dbname'   => isset($app['db.dbname']) ? $app['db.dbname'] : 'qnoow',
-        'user'     => isset($app['db.user']) ? $app['db.user'] : 'qnoowdev',
-        'password' => isset($app['db.password']) ? $app['db.password'] : 'qnoow2014',
-        'charset'  => 'utf8',
+    'dbs.options' => array(
+        'mysql_local' => array(
+            'driver'   => $app['dbs.mysql_local.driver'],
+            'host'     => $app['dbs.mysql_local.host'],
+            'dbname'   => $app['dbs.mysql_local.dbname'],
+            'user'     => $app['dbs.mysql_local.user'],
+            'password' => $app['dbs.mysql_local.pass'],
+            'charset'  => 'utf8',
+        ),
+
     ),
 ));
+
+$app->register(new DoctrineOrmServiceProvider, array(
+        "orm.proxies_dir" => '/path/to/proxies',
+        "orm.em.options" => array(
+            "mappings" => array(
+                array(
+                    "type" => "annotation",
+                    "namespace" => 'Entities',
+                    "resources_namespace" => 'Entities',
+                ),
+            ),
+        ),
+    ));
+
 $app->register(new Neo4jPHPServiceProvider());
 $app->register(new GuzzleServiceProvider());
 
