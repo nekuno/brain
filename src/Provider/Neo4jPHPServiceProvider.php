@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: adridev
- * Date: 6/9/14
- * Time: 8:40 PM
- */
 
 namespace Provider;
 
@@ -31,7 +25,7 @@ class Neo4jPHPServiceProvider implements ServiceProviderInterface
             }
         );
 
-        if (getenv('APP_ENV') === 'prod') {
+        if (isset($app['db.neo4j.auth']) && $app['db.neo4j.auth']) {
             $app['neo4j.client'] = $app->extend(
                 'neo4j.client',
                 function ($client, $app) {
