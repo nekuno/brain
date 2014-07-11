@@ -21,7 +21,7 @@
         "symfony/translation": "~2.3",
         "symfony/twig-bridge": "~2.3",
         "symfony/validator": "~2.3",
-        "doctrine/dbal": "2.2.*",
+        "dflydev/doctrine-orm-service-provider": "1.0.*@dev",
         "everyman/neo4jphp": "dev-master",
         "igorw/config-service-provider": "1.2.*@dev",
         "guzzlehttp/guzzle": "~4.0",
