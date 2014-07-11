@@ -31,22 +31,22 @@ class Metadata
     {
 
         $this->crawler = $crawler;
-
     }
 
     public function getMetaTags()
     {
 
-        $metaTagsData = $this->crawler->each(function (Crawler $node) {
+        $metaTagsData = $this->crawler->each(
+            function (Crawler $node) {
 
-            return array(
-                'rel'      => $node->attr('rel'),
-                'name'     => $node->attr('name'),
-                'property' => $node->attr('property'),
-                'content'  => $node->attr('content'),
-            );
-
-        });
+                return array(
+                    'rel'      => $node->attr('rel'),
+                    'name'     => $node->attr('name'),
+                    'property' => $node->attr('property'),
+                    'content'  => $node->attr('content'),
+                );
+            }
+        );
 
         $this->trimUseLessTags($metaTagsData);
 
@@ -61,26 +61,24 @@ class Metadata
 
         foreach ($metadata as $index => $data) {
 
-            if (null === $data['rel'] && null === $data['name'] && null === $data['property']) {
+            if ($this->haveOneUsefulMetaAtLeast($data)) {
                 unset($metadata[$index]);
             }
 
-            if (null !== $data['name'] && !in_array($data['name'], $this->validMetaName)) {
+            if (null !== $data['name'] && !$this->isValidName($data)) {
                 unset($metadata[$index]);
             }
 
-            if (null !== $data['rel'] && !in_array($data['rel'], $this->validMetaRel)) {
+            if (null !== $data['rel'] && !$this->isValidRel($data)) {
                 unset($metadata[$index]);
             }
 
             if (null === $data['content']) {
                 unset($metadata[$index]);
             }
-
         }
 
         return $metadata;
-
     }
 
     /**
@@ -123,7 +121,35 @@ class Metadata
         }
 
         return $ogMetadata;
-
     }
 
+    /**
+     * @param $data
+     * @return bool
+     */
+    protected function isValidRel($data)
+    {
+
+        return in_array($data['rel'], $this->validMetaRel);
+    }
+
+    /**
+     * @param $data
+     * @return bool
+     */
+    protected function isValidName($data)
+    {
+
+        return in_array($data['name'], $this->validMetaName);
+    }
+
+    /**
+     * @param $data
+     * @return bool
+     */
+    protected function haveOneUsefulMetaAtLeast($data)
+    {
+
+        return null === $data['rel'] && null === $data['name'] && null === $data['property'];
+    }
 }
