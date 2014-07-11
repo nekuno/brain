@@ -8,13 +8,13 @@
 
 namespace ApiConsumer\Storage;
 
-use Model\ContentModel;
+use Model\LinkModel;
 
 class DBStorage implements StorageInterface
 {
 
     /**
-     * @var ContentModel
+     * @var LinkModel
      */
     protected $model;
 
