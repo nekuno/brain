@@ -16,5 +16,4 @@ interface StorageInterface
      * @return mixed
      */
     function storeLinks(array $linksGroupedByUser);
-
-} 
+}

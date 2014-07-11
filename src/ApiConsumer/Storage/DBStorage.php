@@ -56,7 +56,6 @@ class DBStorage implements StorageInterface
         }
 
         return $this;
-
     }
 
     /**
@@ -68,5 +67,4 @@ class DBStorage implements StorageInterface
 
         return sprintf('Error: adding link with url: %s to DDBB.', $link['url']);
     }
-
 }

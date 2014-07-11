@@ -4,6 +4,7 @@ namespace ApiConsumer\Restful\Consumer;
 
 /**
  * Class FacebookConsumer
+ *
  * @package Social
  */
 class FacebookConsumer extends AbstractConsumer implements LinksConsumerInterface
@@ -24,7 +25,6 @@ class FacebookConsumer extends AbstractConsumer implements LinksConsumerInterfac
             if (!$user['facebookID']) {
 
                 continue;
-
             }
 
             $url = 'https://graph.facebook.com/v2.0/' . $user['facebookID'] . '/links'
@@ -39,7 +39,6 @@ class FacebookConsumer extends AbstractConsumer implements LinksConsumerInterfac
         }
 
         return $links;
-
     }
 
     /**
@@ -60,5 +59,4 @@ class FacebookConsumer extends AbstractConsumer implements LinksConsumerInterfac
 
         return $parsed;
     }
-
 }

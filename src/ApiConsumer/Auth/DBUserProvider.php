@@ -54,5 +54,4 @@ class DBUserProvider implements UserProviderInterface
 
         return $users;
     }
-
 }

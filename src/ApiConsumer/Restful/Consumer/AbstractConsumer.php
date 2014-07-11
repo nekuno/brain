@@ -33,7 +33,6 @@ class AbstractConsumer
         $this->httpClient = $httpClient;
 
         $this->options = array_merge($this->options, $options);
-
     }
 
     /**
@@ -49,12 +48,14 @@ class AbstractConsumer
     {
 
         if ($legacy) {
-            $oauth = new Oauth1([
-                'consumer_key'    => $config['oauth_consumer_key'],
-                'consumer_secret' => $config['oauth_consumer_secret'],
-                'token'           => $config['oauth_access_token'],
-                'token_secret'    => $config['oauth_access_token_secret']
-            ]);
+            $oauth = new Oauth1(
+                [
+                    'consumer_key'    => $config['oauth_consumer_key'],
+                    'consumer_secret' => $config['oauth_consumer_secret'],
+                    'token'           => $config['oauth_access_token'],
+                    'token_secret'    => $config['oauth_access_token_secret']
+                ]
+            );
 
             $this->httpClient->getEmitter()->attach($oauth);
 
@@ -71,5 +72,4 @@ class AbstractConsumer
 
         return $data;
     }
-
 }

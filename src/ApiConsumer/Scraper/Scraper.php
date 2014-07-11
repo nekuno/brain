@@ -7,6 +7,7 @@ use Monolog\Logger;
 
 /**
  * Class Scraper
+ *
  * @package ApiConsumer\WebScraper
  */
 class Scraper
@@ -24,7 +25,6 @@ class Scraper
         $this->client = $client;
 
         $this->url = $url;
-
     }
 
     /**
@@ -56,7 +56,6 @@ class Scraper
         }
 
         return new Metadata($crawler);
-
     }
 
     /**

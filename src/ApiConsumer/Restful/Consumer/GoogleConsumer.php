@@ -4,6 +4,7 @@ namespace ApiConsumer\Restful\Consumer;
 
 /**
  * Class GoogleConsumer
+ *
  * @package Social\API\Consumer
  */
 class GoogleConsumer extends AbstractConsumer implements LinksConsumerInterface
@@ -38,7 +39,6 @@ class GoogleConsumer extends AbstractConsumer implements LinksConsumerInterface
         }
 
         return $links;
-
     }
 
     protected function formatResponse(array $response = array())
@@ -63,5 +63,4 @@ class GoogleConsumer extends AbstractConsumer implements LinksConsumerInterface
 
         return $parsed;
     }
-
 }
