@@ -41,7 +41,7 @@ class SocialFetchLinksCommand extends ContainerAwareCommand
         }
 
         $storage      = new DBStorage($this->app['links.model']);
-        $userProvider = new DBUserProvider($this->app['dbs']['mysql_local']);
+        $userProvider = new DBUserProvider($this->app['dbs']['mysql_social']);
         $httpClient   = $this->app['guzzle.client'];
 
         $options = array();
