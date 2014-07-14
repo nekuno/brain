@@ -21,32 +21,50 @@ $app->register(new UrlGeneratorServiceProvider());
 $app->register(new ValidatorServiceProvider());
 $app->register(new ServiceControllerServiceProvider());
 $app->register(new TwigServiceProvider());
-$app->register(new DoctrineServiceProvider(), array(
-    'dbs.options' => array(
-        'mysql_local' => array(
-            'driver'   => $app['dbs.mysql_local.driver'],
-            'host'     => $app['dbs.mysql_local.host'],
-            'dbname'   => $app['dbs.mysql_local.dbname'],
-            'user'     => $app['dbs.mysql_local.user'],
-            'password' => $app['dbs.mysql_local.pass'],
-            'charset'  => 'utf8',
-        ),
-
-    ),
-));
-
-$app->register(new DoctrineOrmServiceProvider, array(
-        "orm.proxies_dir" => '/path/to/proxies',
-        "orm.em.options" => array(
-            "mappings" => array(
-                array(
-                    "type" => "annotation",
-                    "namespace" => 'Entities',
-                    "resources_namespace" => 'Entities',
-                ),
+$app->register(
+    new DoctrineServiceProvider(),
+    array(
+        'dbs.options' => array(
+            'mysql_social' => array(
+                'driver'   => $app['dbs.mysql_social.driver'],
+                'host'     => $app['dbs.mysql_social.host'],
+                'dbname'   => $app['dbs.mysql_social.dbname'],
+                'user'     => $app['dbs.mysql_social.user'],
+                'password' => $app['dbs.mysql_social.pass'],
+                'charset'  => 'utf8',
+            ),
+            'mysql_brain' => array(
+                'driver'   => $app['dbs.mysql_brain.driver'],
+                'host'     => $app['dbs.mysql_brain.host'],
+                'dbname'   => $app['dbs.mysql_brain.dbname'],
+                'user'     => $app['dbs.mysql_brain.user'],
+                'password' => $app['dbs.mysql_brain.pass'],
+                'charset'  => 'utf8',
             ),
         ),
-    ));
+    )
+);
+$app->register(
+    new DoctrineOrmServiceProvider,
+    array(
+        "orm.proxies_dir"       => __DIR__. '/../cache/DoctrineProxy',
+        "orm.ems.default"       => 'brain',
+        "orm.ems.options"       => array(
+            'brain' => array(
+                "connection"                   => 'mysql_brain',
+                "mappings"                     => array(
+                    array(
+                        "type"      => "annotation",
+                        "namespace" => 'Model\Entity',
+                        "path"      => __DIR__ . "/Model/Entity",
+                    ),
+                ),
+                "use_simple_annotation_reader" => false
+            ),
+
+        ),
+    )
+);
 
 $app->register(new Neo4jPHPServiceProvider());
 $app->register(new GuzzleServiceProvider());

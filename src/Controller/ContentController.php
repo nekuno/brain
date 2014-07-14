@@ -167,7 +167,7 @@ class ContentController
     private function getConsumer(Application $app, $resource)
     {
 
-        $userProvider = new DBUserProvider($app['dbs']['mysql_local']);
+        $userProvider = new DBUserProvider($app['dbs']['mysql_social']);
         $httpClient   = $app['guzzle.client'];
 
         $options = array();
