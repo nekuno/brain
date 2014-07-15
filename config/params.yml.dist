@@ -1,7 +1,15 @@
 ## Doctrine
-db.dbname: 'qnoow'
-db.user: 'qnoowdev'
-db.pass: 'qnoow2014'
+dbs.mysql_social.dbname: 'qnoow'
+dbs.mysql_social.user: 'qnoowdev'
+dbs.mysql_social.pass: 'qnoow2014'
+dbs.mysql_social.host: '127.0.0.1'
+dbs.mysql_social.driver: 'pdo_mysql'
+
+dbs.mysql_brain.dbname: 'brain'
+dbs.mysql_brain.user: 'root'
+dbs.mysql_brain.pass: 'socket'
+dbs.mysql_brain.host: '127.0.0.1'
+dbs.mysql_brain.driver: 'pdo_mysql'
 
 ## Neo4j
 db.neo4j.host: 127.0.0.1
