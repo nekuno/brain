@@ -325,4 +325,59 @@ class UserModel
 
     }
 
+    /**
+    * Get top recommended users based on Answes to Questions
+    *
+    * @param    int     $id     id of the user
+    * @return   array           ordered array of users
+    */
+    public function getUserRecommendationsBasedOnAnswers($id)
+    {
+        $response = array(
+            1 => array(
+                'id' => '1',
+                'matching' => '0.89'
+                )
+            );
+
+        return $response;
+    }
+
+    /**
+    * Get top recommended users based on Answes to Questions
+    *
+    * @param    int     $id     id of the user
+    * @return   array           ordered array of users
+    */
+    public function getUserRecommendationsBasedOnSharedContent($id)
+    {
+        $response = array(
+            1 => array(
+                'id' => '1',
+                'matching' => '0.89'
+                )
+            );
+
+        return $response;
+    }
+
+    /**
+    * Get top recommended users based on Answes to Questions
+    *
+    * @param    int     $id     id of the user
+    * @return   array           ordered array of contents
+    */
+    public function getContentRecommendations($id)
+    {
+        $response = array(
+            1 => array(
+                'title' => 'Google',
+                'url' => 'http://google.com',
+                'description' => 'Web search engine'
+                )
+            );
+
+        return $response;
+    }
+
 } 
