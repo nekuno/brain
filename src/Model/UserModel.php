@@ -371,7 +371,6 @@ class UserModel
     {
         $response = array(
             1 => array(
-                'id' => '1',
                 'title' => 'Google',
                 'url' => 'http://google.com',
                 'description' => 'Web search engine'
