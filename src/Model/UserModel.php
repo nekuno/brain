@@ -177,10 +177,10 @@ class UserModel
                     (u1)-[:ANSWERS]->(:Answer)-[:IS_ANSWER_OF]->(commonquestion:Question)<-[:IS_ANSWER_OF]-(:Answer)<-[:ANSWERS]-(u2),
                     (u1)-[r3:RATES]->(commonquestion)<-[r4:RATES]-(u2)
                 WITH
-                    [n1 IN collect(distinct r1) |n1._rating] AS little1_elems,
-                    [n2 IN collect(distinct r2) |n2._rating] AS little2_elems,
-                    [n3 IN collect(distinct r3) |n3._rating] AS CIT1_elems,
-                    [n4 IN collect(distinct r4) |n4._rating] AS CIT2_elems
+                    [n1 IN collect(distinct r1) |n1.rating] AS little1_elems,
+                    [n2 IN collect(distinct r2) |n2.rating] AS little2_elems,
+                    [n3 IN collect(distinct r3) |n3.rating] AS CIT1_elems,
+                    [n4 IN collect(distinct r4) |n4.rating] AS CIT2_elems
                 WITH
                     reduce(little1 = 0, n1 IN little1_elems | little1 + n1) AS little1,
                     reduce(little2 = 0, n2 IN little2_elems | little2 + n2) AS little2,
