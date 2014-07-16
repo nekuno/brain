@@ -272,7 +272,7 @@ class UserModel
     MATCH
     (u:User)-[r:LIKES|DISLIKES]->(l:Link)
     WITH
-    l, count(r) AS num_likes_dislikes
+    l, count(distinct r) AS num_likes_dislikes
     ORDER BY num_likes_dislikes DESC
     WITH
     collect(num_likes_dislikes)[0] AS max_likes_dislikes
@@ -313,7 +313,7 @@ class UserModel
     MATCH
     (u:User)-[r:LIKES|DISLIKES]->(l:Link)
     WITH
-    l, count(r) AS num_likes_dislikes
+    l, count(distinct r) AS num_likes_dislikes
     ORDER BY num_likes_dislikes DESC
     WITH
     collect(num_likes_dislikes)[0] AS max_likes_dislikes
@@ -368,7 +368,7 @@ class UserModel
     MATCH
     (u:User)-[r:LIKES|DISLIKES]->(l:Link)
     WITH
-    l, count(r) AS num_likes_dislikes
+    l, count(distinct r) AS num_likes_dislikes
     ORDER BY num_likes_dislikes DESC
     WITH
     collect(num_likes_dislikes)[0] AS max_likes_dislikes
