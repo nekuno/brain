@@ -484,62 +484,122 @@ class UserModel
     }
 
     /**
-    * Get top recommended users based on Answes to Questions
-    *
-    * @param    int     $id     id of the user
-    * @return   array           ordered array of users
-    */
+     * Get top recommended users based on Answes to Questions
+     *
+     * @param    int     $id     id of the user
+     * @return   array           ordered array of users
+     */
     public function getUserRecommendationsBasedOnAnswers($id)
     {
         calculateAllMatchingsBasedOnAnswers($id);
 
+        /* TODO: execute this query and get response. In the response, each row has a qnoow_id (ids) and its corresponding matching_questions (matchings_questions).
+         *   TODO: construct $response with the previous data returned by Neo4j
+         *  NOTE: LIMIT can be a variable, it has been set to 10, but can take any value
+MATCH
+(u:User {qnoow_id: 1})
+MATCH
+(u)-[r:MATCHES]-(anyUser:User)
+WITH
+r.matching_questions AS m, anyUser.qnoow_id AS users, r
+RETURN
+users AS ids, m AS matchings_questions
+ORDER BY
+m DESC
+LIMIT 10
+;
+         */
+
         $response = array(
             1 => array(
                 'id' => '1',
                 'matching' => '0.89'
-                )
-            );
+            )
+        );
 
         return $response;
     }
 
     /**
-    * Get top recommended users based on Answes to Questions
-    *
-    * @param    int     $id     id of the user
-    * @return   array           ordered array of users
-    */
+     * Get top recommended users based on Answes to Questions
+     *
+     * @param    int     $id     id of the user
+     * @return   array           ordered array of users
+     */
     public function getUserRecommendationsBasedOnSharedContent($id)
     {
         calculateAllMatchingsBasedOnContent($id);
 
+        /* TODO: execute this query and get response. In the response, each row has a qnoow_id (ids) and its corresponding matching_questions (matchings_questions).
+         * TODO: construct $response with the previous data returned by Neo4j
+         *  NOTE: LIMIT can be a variable, it has been set to 10, but can take any value
+MATCH
+(u:User {qnoow_id: 1})
+MATCH
+(u)-[r:MATCHES]-(anyUser:User)
+WITH
+r.matching_content AS m, anyUser.qnoow_id AS users, r
+RETURN
+users AS ids, m AS matchings_content
+ORDER BY
+m DESC
+LIMIT 10
+;
+          */
+
         $response = array(
             1 => array(
                 'id' => '1',
                 'matching' => '0.89'
-                )
-            );
+            )
+        );
 
         return $response;
     }
 
     /**
-    * Get top recommended users based on Answes to Questions
-    *
-    * @param    int     $id     id of the user
-    * @return   array           ordered array of contents
-    */
+     * Get top recommended users based on Answes to Questions
+     *
+     * @param    int     $id     id of the user
+     * @return   array           ordered array of contents
+     */
     public function getContentRecommendations($id)
     {
+        if(getNumberOfSharedContent($id) > (2 * getNumberOfAnsweredQuestions($id)) ){
+
+            getUserRecommendationsBasedOnSharedContent($id);
+
+        }
+        else{
+
+            getUserRecommendationsBasedOnAnswers($id);
+
+        }
+
+
         $response = array(
             1 => array(
                 'title' => 'Google',
                 'url' => 'http://google.com',
                 'description' => 'Web search engine'
-                )
-            );
+            )
+        );
 
         return $response;
+    }
+
+    /**
+     * @param $id id of the user for which we want to know how many questions he or she has answered
+     */
+    public function getNumberOfAnsweredQuestions($id){
+
+    }
+
+    /**
+     * @param $id id of the user for which we want to know how many contents he or she has shared
+     */
+    public function  getNumberOfSharedContent($id){
+
     }
 
     /**
@@ -548,6 +608,12 @@ class UserModel
      * @param   int $id id of the user
      */
     public function calculateAllMatchingsBasedOnAnswers($id){
+
+        $users = getAllUserIdsExceptTheOneOfTheUser($id);
+
+        foreach ($users as $u){
+            getMatchingBetweenTwoUsersBasedOnAnswers($id, $u);
+        }
 
     }
 
@@ -558,6 +624,27 @@ class UserModel
      */
     public function calculateAllMatchingsBasedOnContent($id){
 
+        $users = getAllUserIdsExceptTheOneOfTheUser($id);
+
+        foreach ($users as $u){
+            getMatchingBetweenTwoUsersBasedOnSharedContent($id, $u);
+        }
+
     }
 
-} 
+    public function getAllUserIdsExceptTheOneOfTheUser($id){
+
+        /*
+MATCH
+(u:User)
+WHERE
+NOT(u.qnoow_id = 'user-test1')
+RETURN
+collect(u.qnoow_id);
+         */
+
+        //TODO: execute the query above and return the array returned by the query as the array returned by this function
+
+    }
+
+}
