@@ -478,6 +478,19 @@ class UserModel
                 $response['matching'] = $row['m']->getProperty('contentMatching');
             }
 
+            /*
+             * TODO: execute this query after matching calculated:
+            MATCH
+            (u1:User {qnoow_id: '" . $id1 . "'}),
+                    (u2:User {qnoow_id: '" . $id2 . "'})
+                CREATE UNIQUE
+            (u1)-[m:MATCHES]-(u2)
+                SET
+                    m.matching_content = $matching
+                RETURN
+                    m;
+            */
+
         } else {
             $response['matching'] = 0;
         }
