@@ -13,11 +13,11 @@ use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
- * Class ContentController
+ * Class FetchController
  *
  * @package Controller
  */
-class ContentController
+class FetchController
 {
 
     /**
