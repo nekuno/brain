@@ -357,7 +357,7 @@ class UserModel
     count(distinct r) AS popul_not_common_u1,
     max_popul
     WITH
-    reduce(num = 0.0, c IN collect(popul_not_common_u1) | num + (1 - (c*1.0 / max_popul))^3 ) as divisor1,
+    reduce(num = 0.0, c IN collect(popul_not_common_u1) | num + ( (c*1.0 / max_popul))^3 ) as divisor1,
     max_popul
 
     RETURN
@@ -412,7 +412,7 @@ class UserModel
     count(distinct r) AS popul_not_common_u2,
     max_popul
     WITH
-    reduce(num = 0.0, c IN collect(popul_not_common_u2) | num + (1 - (c*1.0 / max_popul))^3 ) as divisor2,
+    reduce(num = 0.0, c IN collect(popul_not_common_u2) | num + ( (c*1.0 / max_popul))^3 ) as divisor2,
     max_popul
     RETURN
     divisor2;
