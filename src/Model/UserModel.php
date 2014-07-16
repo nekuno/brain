@@ -420,7 +420,7 @@ class UserModel
                 TODO: borrar $query y construir las correspondientes $query1, $query2 y $query3
                 TODO: a la hora de construir las queries, sustituir "user-testX" por la variable (string) $idX
                 TODO: guardar los resultados devueltos por las tres queries en variables de PHP
-                TODO: matching = sqrt( dividendo / (divisor1+divisor2) )
+                TODO: matching = sqrt( dividendo^2 / ( (dividendo + divisor1)*(dividendo + divisor2) ) )
 
      */
 
