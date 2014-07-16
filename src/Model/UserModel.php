@@ -133,9 +133,9 @@ class UserModel
                 (u1:User {qnoow_id: " . $id1 . "}),
                 (u2:User {qnoow_id: " . $id2 . "})
             OPTIONAL MATCH
-                (u1)-[:ANSWERS]->(a1:Answer)-[:IS_ANSWER_OF]->(commonquestion:Question)<-[:IS_ANSWER_OF]-(a2:Answer)<-[:ANSWERS]-(u2)
+                (u1)-[:RATES]->(commonquestion:Question)<-[:RATES]-(u2)
             RETURN
-                count(commonquestion) AS n;";
+                count(distinct commonquestion) AS n;";
 
         //Create the Neo4j query object
         $checkQuery = new Query(
@@ -201,7 +201,7 @@ class UserModel
 
             //Execute query and get the return
             try {
-                $result = $query->getResultSet();
+                $result = $neoQuery->getResultSet();
             } catch (\Exception $e) {
                 throw $e;
             }
