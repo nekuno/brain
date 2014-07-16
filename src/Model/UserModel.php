@@ -194,7 +194,7 @@ class UserModel
                 CREATE UNIQUE
                     (u1)-[m:MATCHES]-(u2)
                 SET
-                    m.questionMatching = match_user1_user2
+                    m.matching_questions = match_user1_user2
                 RETURN
                     m;";
 
