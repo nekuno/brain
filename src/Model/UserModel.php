@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: adridev
- * Date: 6/6/14
- * Time: 11:33 PM
- */
 
 namespace Model;
 
@@ -194,7 +188,7 @@ class UserModel
                 CREATE UNIQUE
                     (u1)-[m:MATCHES]-(u2)
                 SET
-                    m.questionMatching = match_user1_user2
+                    m.matching_questions = match_user1_user2
                 RETURN
                     m;";
 
@@ -468,6 +462,19 @@ class UserModel
                     ($unpopularityOfCommonContent + $popularityOfUser2ExclusiveContent)
                 )
             );
+
+            /*
+             * TODO: execute this query after matching calculated:
+            MATCH
+            (u1:User {qnoow_id: '" . $id1 . "'}),
+                    (u2:User {qnoow_id: '" . $id2 . "'})
+                CREATE UNIQUE
+            (u1)-[m:MATCHES]-(u2)
+                SET
+                    m.matching_content = $matching
+                RETURN
+                    m;
+            */
 
         } else {
             $response['matching'] = 0;
