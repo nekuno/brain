@@ -162,166 +162,6 @@ class UserModel
 
         if ($checkValue > 0) {
 
-            /*
-             *  QUERY DEL DIVIDENDO:
-             *
-MATCH
-(u:User)-[r:LIKES|DISLIKES]->(l:Link)
-WITH
-l, count(r) AS num_likes_dislikes
-ORDER BY num_likes_dislikes DESC
-WITH
-collect(num_likes_dislikes)[0] AS max_likes_dislikes
-
-MATCH
-(u1:User {qnoow_id: 'user-test1'}),
-(u2:User {qnoow_id: 'user-test2'})
-OPTIONAL MATCH
-(u1)-[:LIKES]->(commonLikes:Link)<-[:LIKES]-(u2)
-OPTIONAL MATCH
-(u1)-[:DISLIKES]->(commonDislikes:Link)<-[:DISLIKES]-(u2)
-WITH
-max_likes_dislikes,
-collect(distinct commonLikes) AS cl,
-collect(distinct commonDislikes) As cd
-MATCH
-(n)
-WHERE
-n IN cl OR n IN cd
-WITH
-n AS common,
-max_likes_dislikes AS max_popul
-
-MATCH
-(anyUser1)-[r1:LIKES|DISLIKES]->(common)
-WITH
-common,
-count(distinct r1) AS popul_comm,
-max_popul
-WITH
-reduce(num = 0.0, c IN collect(popul_comm) | num + (1 - (c*1.0 / max_popul))^3 ) as dividend,
-max_popul
-RETURN
-dividend;
-
-             * QUERY DEL DIVISOR 1:
-
-MATCH
-(u:User)-[r:LIKES|DISLIKES]->(l:Link)
-WITH
-l, count(r) AS num_likes_dislikes
-ORDER BY num_likes_dislikes DESC
-WITH
-collect(num_likes_dislikes)[0] AS max_likes_dislikes
-
-MATCH
-(u1:User {qnoow_id: 'user-test1'}),
-(u2:User {qnoow_id: 'user-test2'})
-OPTIONAL MATCH
-(u1)-[:LIKES]->(commonLikes:Link)<-[:LIKES]-(u2)
-OPTIONAL MATCH
-(u1)-[:DISLIKES]->(commonDislikes:Link)<-[:DISLIKES]-(u2)
-WITH
-max_likes_dislikes,
-collect(distinct commonLikes) AS cl,
-collect(distinct commonDislikes) As cd
-MATCH
-(n)
-WHERE
-n IN cl OR n IN cd
-WITH
-n AS common,
-max_likes_dislikes AS max_popul
-
-MATCH
-(u1:User {qnoow_id: 'user-test1'})
-OPTIONAL MATCH
-(u1)-[:LIKES|DISLIKES]->(contentU1)
-OPTIONAL MATCH
-(anyUser)-[r:LIKES|DISLIKES]->(contentU1)
-WITH
-collect(distinct contentU1) AS c1,
-collect(common) AS common,
-max_popul,
-r
-MATCH
-(n)
-WHERE
-n IN c1 AND NOT(n IN common)
-WITH
-n as not_common_u1,
-count(distinct r) AS popul_not_common_u1,
-max_popul
-WITH
-reduce(num = 0.0, c IN collect(popul_not_common_u1) | num + (1 - (c*1.0 / max_popul))^3 ) as divisor1,
-max_popul
-
-RETURN
-divisor1;
-
-             * QUERY DEL DIVISOR 2:
-
-MATCH
-(u:User)-[r:LIKES|DISLIKES]->(l:Link)
-WITH
-l, count(r) AS num_likes_dislikes
-ORDER BY num_likes_dislikes DESC
-WITH
-collect(num_likes_dislikes)[0] AS max_likes_dislikes
-
-MATCH
-(u1:User {qnoow_id: 'user-test1'}),
-(u2:User {qnoow_id: 'user-test2'})
-OPTIONAL MATCH
-(u1)-[:LIKES]->(commonLikes:Link)<-[:LIKES]-(u2)
-OPTIONAL MATCH
-(u1)-[:DISLIKES]->(commonDislikes:Link)<-[:DISLIKES]-(u2)
-WITH
-max_likes_dislikes,
-collect(distinct commonLikes) AS cl,
-collect(distinct commonDislikes) As cd
-MATCH
-(n)
-WHERE
-n IN cl OR n IN cd
-WITH
-n AS common,
-max_likes_dislikes AS max_popul
-
-MATCH
-(u2:User {qnoow_id: 'user-test2'})
-OPTIONAL MATCH
-(u2)-[:LIKES|DISLIKES]->(contentU2)
-OPTIONAL MATCH
-(anyUser)-[r:LIKES|DISLIKES]->(contentU2)
-WITH
-collect(distinct contentU2) AS c2,
-collect(common) AS common,
-max_popul,
-r
-MATCH
-(n)
-WHERE
-n IN c2 AND NOT(n IN common)
-WITH
-n as not_common_u2,
-count(distinct r) AS popul_not_common_u2,
-max_popul
-WITH
-reduce(num = 0.0, c IN collect(popul_not_common_u2) | num + (1 - (c*1.0 / max_popul))^3 ) as divisor2,
-max_popul
-RETURN
-divisor2;
-
-            TODO: borrar $query y construir las correspondientes $query1, $query2 y $query3
-            TODO: a la hora de construir las queries, sustituir "user-testX" por la variable (string) $idX
-            TODO: guardar los resultados devueltos por las tres queries en variables de PHP
-            TODO: matching = sqrt( dividendo / (divisor1+divisor2) )
-
-
-
-             */
-
             //Construct the query string
             $query =
                 "MATCH
@@ -424,6 +264,166 @@ divisor2;
         if ($checkValueLikes > 0 || $checkValueDislikes > 0) {
 
             //Construct the query string if both users have at least one link in common
+
+
+            /*
+                 *  QUERY DEL DIVIDENDO:
+                 *
+    MATCH
+    (u:User)-[r:LIKES|DISLIKES]->(l:Link)
+    WITH
+    l, count(r) AS num_likes_dislikes
+    ORDER BY num_likes_dislikes DESC
+    WITH
+    collect(num_likes_dislikes)[0] AS max_likes_dislikes
+
+    MATCH
+    (u1:User {qnoow_id: 'user-test1'}),
+    (u2:User {qnoow_id: 'user-test2'})
+    OPTIONAL MATCH
+    (u1)-[:LIKES]->(commonLikes:Link)<-[:LIKES]-(u2)
+    OPTIONAL MATCH
+    (u1)-[:DISLIKES]->(commonDislikes:Link)<-[:DISLIKES]-(u2)
+    WITH
+    max_likes_dislikes,
+    collect(distinct commonLikes) AS cl,
+    collect(distinct commonDislikes) As cd
+    MATCH
+    (n)
+    WHERE
+    n IN cl OR n IN cd
+    WITH
+    n AS common,
+    max_likes_dislikes AS max_popul
+
+    MATCH
+    (anyUser1)-[r1:LIKES|DISLIKES]->(common)
+    WITH
+    common,
+    count(distinct r1) AS popul_comm,
+    max_popul
+    WITH
+    reduce(num = 0.0, c IN collect(popul_comm) | num + (1 - (c*1.0 / max_popul))^3 ) as dividend,
+    max_popul
+    RETURN
+    dividend;
+
+                 * QUERY DEL DIVISOR 1:
+
+    MATCH
+    (u:User)-[r:LIKES|DISLIKES]->(l:Link)
+    WITH
+    l, count(r) AS num_likes_dislikes
+    ORDER BY num_likes_dislikes DESC
+    WITH
+    collect(num_likes_dislikes)[0] AS max_likes_dislikes
+
+    MATCH
+    (u1:User {qnoow_id: 'user-test1'}),
+    (u2:User {qnoow_id: 'user-test2'})
+    OPTIONAL MATCH
+    (u1)-[:LIKES]->(commonLikes:Link)<-[:LIKES]-(u2)
+    OPTIONAL MATCH
+    (u1)-[:DISLIKES]->(commonDislikes:Link)<-[:DISLIKES]-(u2)
+    WITH
+    max_likes_dislikes,
+    collect(distinct commonLikes) AS cl,
+    collect(distinct commonDislikes) As cd
+    MATCH
+    (n)
+    WHERE
+    n IN cl OR n IN cd
+    WITH
+    n AS common,
+    max_likes_dislikes AS max_popul
+
+    MATCH
+    (u1:User {qnoow_id: 'user-test1'})
+    OPTIONAL MATCH
+    (u1)-[:LIKES|DISLIKES]->(contentU1)
+    OPTIONAL MATCH
+    (anyUser)-[r:LIKES|DISLIKES]->(contentU1)
+    WITH
+    collect(distinct contentU1) AS c1,
+    collect(common) AS common,
+    max_popul,
+    r
+    MATCH
+    (n)
+    WHERE
+    n IN c1 AND NOT(n IN common)
+    WITH
+    n as not_common_u1,
+    count(distinct r) AS popul_not_common_u1,
+    max_popul
+    WITH
+    reduce(num = 0.0, c IN collect(popul_not_common_u1) | num + (1 - (c*1.0 / max_popul))^3 ) as divisor1,
+    max_popul
+
+    RETURN
+    divisor1;
+
+                 * QUERY DEL DIVISOR 2:
+
+    MATCH
+    (u:User)-[r:LIKES|DISLIKES]->(l:Link)
+    WITH
+    l, count(r) AS num_likes_dislikes
+    ORDER BY num_likes_dislikes DESC
+    WITH
+    collect(num_likes_dislikes)[0] AS max_likes_dislikes
+
+    MATCH
+    (u1:User {qnoow_id: 'user-test1'}),
+    (u2:User {qnoow_id: 'user-test2'})
+    OPTIONAL MATCH
+    (u1)-[:LIKES]->(commonLikes:Link)<-[:LIKES]-(u2)
+    OPTIONAL MATCH
+    (u1)-[:DISLIKES]->(commonDislikes:Link)<-[:DISLIKES]-(u2)
+    WITH
+    max_likes_dislikes,
+    collect(distinct commonLikes) AS cl,
+    collect(distinct commonDislikes) As cd
+    MATCH
+    (n)
+    WHERE
+    n IN cl OR n IN cd
+    WITH
+    n AS common,
+    max_likes_dislikes AS max_popul
+
+    MATCH
+    (u2:User {qnoow_id: 'user-test2'})
+    OPTIONAL MATCH
+    (u2)-[:LIKES|DISLIKES]->(contentU2)
+    OPTIONAL MATCH
+    (anyUser)-[r:LIKES|DISLIKES]->(contentU2)
+    WITH
+    collect(distinct contentU2) AS c2,
+    collect(common) AS common,
+    max_popul,
+    r
+    MATCH
+    (n)
+    WHERE
+    n IN c2 AND NOT(n IN common)
+    WITH
+    n as not_common_u2,
+    count(distinct r) AS popul_not_common_u2,
+    max_popul
+    WITH
+    reduce(num = 0.0, c IN collect(popul_not_common_u2) | num + (1 - (c*1.0 / max_popul))^3 ) as divisor2,
+    max_popul
+    RETURN
+    divisor2;
+
+                TODO: borrar $query y construir las correspondientes $query1, $query2 y $query3
+                TODO: a la hora de construir las queries, sustituir "user-testX" por la variable (string) $idX
+                TODO: guardar los resultados devueltos por las tres queries en variables de PHP
+                TODO: matching = sqrt( dividendo / (divisor1+divisor2) )
+
+     */
+
             $query =
                 "MATCH
                     (u:User)-[r:LIKES|DISLIKES]->(l:Link)
@@ -494,6 +494,8 @@ divisor2;
     */
     public function getUserRecommendationsBasedOnAnswers($id)
     {
+        calculateAllMatchingsBasedOnAnswers($id);
+
         $response = array(
             1 => array(
                 'id' => '1',
@@ -512,6 +514,8 @@ divisor2;
     */
     public function getUserRecommendationsBasedOnSharedContent($id)
     {
+        calculateAllMatchingsBasedOnContent($id);
+
         $response = array(
             1 => array(
                 'id' => '1',
@@ -539,6 +543,24 @@ divisor2;
             );
 
         return $response;
+    }
+
+    /**
+     * Calculate matchings of the user with any other user, based on Answers to Questions
+     *
+     * @param   int $id id of the user
+     */
+    public function calculateAllMatchingsBasedOnAnswers($id){
+
+    }
+
+    /**
+     * Calculate matchings of the user with any other user, based on shared Content
+     *
+     * @param   int $id id of the user
+     */
+    public function calculateAllMatchingsBasedOnContent($id){
+
     }
 
 } 
