@@ -15,18 +15,23 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class SocialFetchLinksCommand extends ContainerAwareCommand
+class FetchLinksCommand extends ContainerAwareCommand
 {
 
     protected function configure()
     {
 
-        $this->setName('social:fetch:links')
-            ->setDescription("Fetch data from given provider")
-            ->setDefinition(
-                array(
-                    new InputOption('resource', null, InputOption::VALUE_REQUIRED, 'Resource owner'),
-                )
+        $this->setName('fetch:links')
+             ->setDescription("Fetch links from given resource owner")
+             ->setDefinition(
+             array(
+                 new InputOption(
+                     'resource',
+                     null,
+                     InputOption::VALUE_REQUIRED,
+                     'The resource owner which should fetch links'
+                 ),
+             )
             );
     }
 

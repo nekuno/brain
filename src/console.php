@@ -8,7 +8,7 @@ $console->getDefinition()->addOption(new InputOption('--env', '-e', InputOption:
 $console->setDispatcher($app['dispatcher']);
 
 $console->addCommands(array(
-    new \Console\Command\SocialFetchLinksCommand($app),
+    new \Console\Command\FetchLinksCommand($app),
 ));
 
 return $console;
