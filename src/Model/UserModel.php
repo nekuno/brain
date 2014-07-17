@@ -491,7 +491,7 @@ class UserModel
      */
     public function getUserRecommendationsBasedOnAnswers($id)
     {
-        calculateAllMatchingsBasedOnAnswers($id);
+        $this->calculateAllMatchingsBasedOnAnswers($id);
 
         /* TODO: execute this query and get response. In the response, each row has a qnoow_id (ids) and its corresponding matching_questions (matchings_questions).
          *   TODO: construct $response with the previous data returned by Neo4j
@@ -528,7 +528,7 @@ LIMIT 10
      */
     public function getUserRecommendationsBasedOnSharedContent($id)
     {
-        calculateAllMatchingsBasedOnContent($id);
+        $this->calculateAllMatchingsBasedOnContent($id);
 
         /* TODO: execute this query and get response. In the response, each row has a qnoow_id (ids) and its corresponding matching_questions (matchings_questions).
          * TODO: construct $response with the previous data returned by Neo4j
@@ -565,14 +565,14 @@ LIMIT 10
      */
     public function getContentRecommendations($id)
     {
-        if(getNumberOfSharedContent($id) > (2 * getNumberOfAnsweredQuestions($id)) ){
+        if($this->getNumberOfSharedContent($id) > (2 * $this->getNumberOfAnsweredQuestions($id)) ){
 
-            getUserRecommendationsBasedOnSharedContent($id);
+            $this->getUserRecommendationsBasedOnSharedContent($id);
 
         }
         else{
 
-            getUserRecommendationsBasedOnAnswers($id);
+            $this->getUserRecommendationsBasedOnAnswers($id);
 
         }
 
@@ -609,10 +609,10 @@ LIMIT 10
      */
     public function calculateAllMatchingsBasedOnAnswers($id){
 
-        $users = getAllUserIdsExceptTheOneOfTheUser($id);
+        $users = $this->getAllUserIdsExceptTheOneOfTheUser($id);
 
         foreach ($users as $u){
-            getMatchingBetweenTwoUsersBasedOnAnswers($id, $u);
+            $this->getMatchingBetweenTwoUsersBasedOnAnswers($id, $u);
         }
 
     }
@@ -624,10 +624,10 @@ LIMIT 10
      */
     public function calculateAllMatchingsBasedOnContent($id){
 
-        $users = getAllUserIdsExceptTheOneOfTheUser($id);
+        $users = $this->getAllUserIdsExceptTheOneOfTheUser($id);
 
         foreach ($users as $u){
-            getMatchingBetweenTwoUsersBasedOnSharedContent($id, $u);
+            $this->getMatchingBetweenTwoUsersBasedOnSharedContent($id, $u);
         }
 
     }
