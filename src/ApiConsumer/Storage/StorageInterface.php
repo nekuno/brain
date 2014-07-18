@@ -12,8 +12,8 @@ interface StorageInterface
 {
 
     /**
-     * @param array $linksGroupedByUser
+     * @param array $linksGroupByUser
      * @return mixed
      */
-    function storeLinks(array $linksGroupedByUser);
+    function storeLinks(array $linksGroupByUser);
 }

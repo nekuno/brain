@@ -11,7 +11,7 @@ namespace Console\Command;
 use Knp\Command\Command;
 use Silex\Application;
 
-abstract class ContainerAwareCommand extends Command
+abstract class ApplicationAwareCommand extends Command
 {
 
     /**

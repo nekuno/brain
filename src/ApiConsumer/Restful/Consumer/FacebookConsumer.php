@@ -28,11 +28,11 @@ class FacebookConsumer extends AbstractConsumer implements LinksConsumerInterfac
             }
 
             $url = 'https://graph.facebook.com/v2.0/' . $user['facebookID'] . '/links'
-                . '?access_token=' . $user['oauthToken'];
+                . '?access_token=' . $user['oauthToken'] . '&limit=20';
 
             try {
                 $response       = $this->makeRequestJSON($url);
-                $links[$userId] = $this->formatResponse($response);
+                $links[$user['id']] = $this->formatResponse($response);
             } catch (\Exception $e) {
                 throw $e;
             }
@@ -51,8 +51,10 @@ class FacebookConsumer extends AbstractConsumer implements LinksConsumerInterfac
 
         foreach ($response['data'] as $item) {
             $link['url']         = $item['link'];
-            $link['title']       = array_key_exists('name', $item) ? $item['name'] : '';
-            $link['description'] = array_key_exists('description', $item) ? $item['description'] : '';
+            $link['title']       = array_key_exists('name', $item) ? $item['name'] : null;
+            $link['description'] = array_key_exists('description', $item) ? $item['description'] : null;
+            $link['resourceItemId'] = array_key_exists('id', $item) ? (int) $item['id'] : null;
+            $link['resource'] = 'facebook';
 
             $parsed[] = $link;
         }

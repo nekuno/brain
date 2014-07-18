@@ -36,13 +36,13 @@ class DBStorage implements StorageInterface
     }
 
     /**
-     * @param array $linksGroupedByUser
+     * @param array $linksGroupByUser
      * @return array
      */
-    public function storeLinks(array $linksGroupedByUser)
+    public function storeLinks(array $linksGroupByUser)
     {
 
-        foreach ($linksGroupedByUser as $user => $userLinks) {
+        foreach ($linksGroupByUser as $user => $userLinks) {
 
             foreach ($userLinks as $link) {
                 $link['userId'] = $user;
@@ -65,6 +65,6 @@ class DBStorage implements StorageInterface
     protected function getFormattedError(array $link)
     {
 
-        return sprintf('Error: adding link with url: %s to DDBB.', $link['url']);
+        return sprintf('Adding link with url: %s to DDBB.', $link['url']);
     }
 }

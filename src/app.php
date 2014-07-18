@@ -48,9 +48,9 @@ $app->register(
     new DoctrineOrmServiceProvider,
     array(
         "orm.proxies_dir"       => __DIR__. '/../cache/DoctrineProxy',
-        "orm.ems.default"       => 'brain',
+        "orm.ems.default"       => 'mysql_brain',
         "orm.ems.options"       => array(
-            'brain' => array(
+            'mysql_brain' => array(
                 "connection"                   => 'mysql_brain',
                 "mappings"                     => array(
                     array(
