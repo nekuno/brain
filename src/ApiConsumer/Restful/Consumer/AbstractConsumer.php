@@ -61,7 +61,8 @@ abstract class AbstractConsumer
 
             $response = $this->httpClient->get($url, array('auth' => 'oauth'));
         } else {
-            $response = $this->httpClient->get($url);
+            $clientConfig = isset($config['headers'])?array('headers' => $config['headers']):array();
+            $response = $this->httpClient->get($url, $clientConfig);
         }
 
         try {
