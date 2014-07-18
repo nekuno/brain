@@ -39,6 +39,9 @@ class ConsumerFactory
             case 'google':
                 $consumer = new GoogleConsumer($userProvider, $httpClient);
                 break;
+            case 'spotify':
+                $consumer = new SpotifyConsumer($userProvider, $httpClient);
+                break;
             default:
                 throw new \Exception('Invalid consumer name given');
         }
