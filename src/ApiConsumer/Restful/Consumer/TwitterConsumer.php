@@ -26,7 +26,7 @@ class TwitterConsumer extends AbstractConsumer implements LinksConsumerInterface
                 continue;
             }
 
-            $url = 'https://api.twitter.com/1.1/statuses/user_timeline.json';
+            $url = 'https://api.twitter.com/1.1/statuses/user_timeline.json?count=20';
 
             $userOptions = array(
                 'oauth_access_token'        => $user['oauthToken'],
@@ -37,7 +37,7 @@ class TwitterConsumer extends AbstractConsumer implements LinksConsumerInterface
 
             try {
                 $response       = $this->makeRequestJSON($url, $oauthData, true);
-                $links[$userId] = $this->formatResponse($response);
+                $links[$user['id']] = $this->formatResponse($response);
             } catch (\Exception $e) {
                 throw $e;
             }
@@ -64,10 +64,12 @@ class TwitterConsumer extends AbstractConsumer implements LinksConsumerInterface
                 ? $item['entities']['urls'][0]['expanded_url']
                 : $item['entities']['urls'][0]['url'];
 
-            $link                = array();
-            $link['url']         = $url;
-            $link['title']       = array_key_exists('text', $item) ? $item['text'] : '';
-            $link['description'] = '';
+            $link                   = array();
+            $link['url']            = $url;
+            $link['title']          = array_key_exists('text', $item) ? $item['text'] : null;
+            $link['description']    = null;
+            $link['resourceItemId'] = array_key_exists('id', $item) ? $item['id'] : null;
+            $link['resource']       = 'twitter';
 
             $formatted[] = $link;
         }
