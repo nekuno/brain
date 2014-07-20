@@ -5,10 +5,8 @@ namespace Controller;
 use ApiConsumer\Auth\DBUserProvider;
 use ApiConsumer\History\Registry;
 use ApiConsumer\Restful\Consumer\ConsumerFactory;
-use ApiConsumer\Scraper\Scraper;
 use ApiConsumer\Storage\DBStorage;
-use ApiConsumer\TempFakeService;
-use Goutte\Client;
+use Model\Entity\FetchRegistry;
 use Model\LinkModel;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
@@ -31,7 +29,7 @@ class FetchController
 
         try {
             /** @var LinkModel $model */
-            $model = $app['links.model'];
+            $model  = $app['links.model'];
             $result = $model->addLink($data);
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
@@ -50,7 +48,7 @@ class FetchController
     public function fetchLinksAction(Request $request, Application $app)
     {
 
-        $userId = $request->query->get('userId');
+        $userId   = $request->query->get('userId');
         $resource = $request->query->get('resource');
 
         if (null === $userId || null === $resource) {
@@ -63,39 +61,41 @@ class FetchController
             return $app->json('User not found', 404);
         }
 
+        $logger  = $app['monolog'];
         $storage = new DBStorage($app['links.model']);
+
         $consumer = $this->getConsumer($app, $resource);
+
+        $registry = new Registry($app['orm.ems']['mysql_brain']);
+
+        $registryEntry = new FetchRegistry();
+        $registryEntry->setUserId($userId);
+        $registryEntry->setResource($resource);
 
         try {
             $linksGroupByUser = $consumer->fetchLinks($userId);
 
-            $registry = new Registry($app['orm.ems']['mysql_brain']);
-            $registry->recordFetchAttempt($userId, $resource);
-        } catch (\Exception $e) {
-            $app['monolog']->addError(sprintf('Error fetching links for user %d from resource %s', $userId, $resource));
-
-            return $app->json($this->getError($e), 500);
-        }
-
-        try {
-            $scraper = new Scraper(new Client());
-            $tempFakeService = new TempFakeService($scraper);
-
-            $processedLinks = $tempFakeService->processLinks($linksGroupByUser);
-
-            $storage->storeLinks($processedLinks);
+            $storage->storeLinks($linksGroupByUser);
 
             $errors = $storage->getErrors();
             if (array() !== $errors) {
                 foreach ($errors as $error) {
-                    $app['monolog']->addError($error);
+                    $logger->addError($error);
                 }
             }
+
+            $registry->recordFetchAttempt($registryEntry);
+
         } catch (\Exception $e) {
+            $logger->addError(sprintf('Error fetching links for user %d from resource %s', $userId, $resource));
+
+            $registryEntry->setStatus($registryEntry::STATUS_ERROR);
+            $registry->recordFetchAttempt($registryEntry);
+
             return $app->json($this->getError($e), 500);
         }
 
-        return $app->json($processedLinks);
+        return $app->json($linksGroupByUser);
     }
 
     /**
@@ -108,19 +108,20 @@ class FetchController
     {
 
         $userProvider = new DBUserProvider($app['dbs']['mysql_social']);
-        $httpClient = $app['guzzle.client'];
+        $httpClient   = $app['guzzle.client'];
 
         $options = array();
 
         if ($resource == 'twitter') {
             $options = array(
-                'oauth_consumer_key' => $app['twitter.consumer_key'],
+                'oauth_consumer_key'    => $app['twitter.consumer_key'],
                 'oauth_consumer_secret' => $app['twitter.consumer_secret'],
             );
         }
 
         return ConsumerFactory::create($resource, $userProvider, $httpClient, $options);
     }
+
 
     /**
      * @param $e
