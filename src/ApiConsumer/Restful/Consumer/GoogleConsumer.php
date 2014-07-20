@@ -12,7 +12,7 @@ class GoogleConsumer extends AbstractConsumer implements LinksConsumerInterface
 
     private $items = array();
 
-    private $url = 'https://www.googleapis.com/plus/v1/people/me/activities/public';
+    private $url = 'https://www.googleapis.com/plus/v1/people/';
 
     private $pageLength = 20;
 
@@ -25,13 +25,16 @@ class GoogleConsumer extends AbstractConsumer implements LinksConsumerInterface
         $users = $this->userProvider->getUsersByResource('google', $userId);
 
         foreach ($users as $user) {
-            $this->url .= '?access_token=' . $user['oauthToken'];
-            $this->url .= '&maxResults=' . $this->pageLength;
-            $this->url .= '&fields=items(object(attachments(content,displayName,id,objectType,url)),title),nextPageToken';
 
             if (!$user['googleID']) {
                 continue;
             }
+
+            $this->url .= $user['googleID'];
+            $this->url .= '/activities/public';
+            $this->url .= '?access_token=' . $user['oauthToken'];
+            $this->url .= '&maxResults=' . $this->pageLength;
+            $this->url .= '&fields=items(object(attachments(content,displayName,id,objectType,url)),title),nextPageToken';
 
             try {
 
