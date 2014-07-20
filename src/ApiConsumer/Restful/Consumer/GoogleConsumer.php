@@ -10,6 +10,12 @@ namespace ApiConsumer\Restful\Consumer;
 class GoogleConsumer extends AbstractConsumer implements LinksConsumerInterface
 {
 
+    private $items = array();
+
+    private $url = 'https://www.googleapis.com/plus/v1/people/';
+
+    private $pageLength = 20;
+
     /**
      * { @inheritdoc }
      */
@@ -24,15 +30,17 @@ class GoogleConsumer extends AbstractConsumer implements LinksConsumerInterface
                 continue;
             }
 
-            $url = 'https://www.googleapis.com/plus/v1/people/me/activities/public'
-                . '?access_token=' . $user['oauthToken']
-                . '&maxResults=20'
-                . '&fields=items(object(attachments(content,displayName,id,objectType,url)),title),nextPageToken';
+            $this->url .= $user['googleID'];
+            $this->url .= '/activities/public';
+            $this->url .= '?access_token=' . $user['oauthToken'];
+            $this->url .= '&maxResults=' . $this->pageLength;
+            $this->url .= '&fields=items(object(attachments(content,displayName,id,objectType,url)),title),nextPageToken';
 
             try {
-                $response = $this->makeRequestJSON($url);
 
-                $links[$user['id']] = $this->formatResponse($response);
+                $this->getLinksByPage();
+
+                $links[$user['id']] = $this->formatResponse();
 
                 return $links;
             } catch (\Exception $e) {
@@ -42,12 +50,31 @@ class GoogleConsumer extends AbstractConsumer implements LinksConsumerInterface
 
     }
 
-    protected function formatResponse(array $response = array())
+    private function getLinksByPage($nextPageToken = null)
+    {
+
+        $url = $this->url;
+        if ($nextPageToken) {
+            $url .= '&pageToken=' . $nextPageToken;
+        }
+
+        $response = $this->makeRequestJSON($url);
+
+        $this->items = array_merge($this->items, $response['items']);
+
+        if (array_key_exists('nextPageToken', $response)) {
+            return call_user_func(array($this, __FUNCTION__), $response['nextPageToken']);
+        }
+
+        return;
+    }
+
+    protected function formatResponse()
     {
 
         $parsed = array();
 
-        foreach ($response['items'] as $item) {
+        foreach ($this->items as $item) {
             if (!array_key_exists('object', $item) || !array_key_exists('attachments', $item['object'])) {
                 continue;
             }

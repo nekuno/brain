@@ -10,6 +10,12 @@ namespace ApiConsumer\Restful\Consumer;
 class TwitterConsumer extends AbstractConsumer implements LinksConsumerInterface
 {
 
+    private $items = array();
+
+    private $url = 'https://api.twitter.com/1.1/';
+
+    private $pageLength = 200;
+
     /**
      * { @inheritdoc }
      */
@@ -26,36 +32,65 @@ class TwitterConsumer extends AbstractConsumer implements LinksConsumerInterface
                 continue;
             }
 
-            $url = 'https://api.twitter.com/1.1/statuses/user_timeline.json?count=20';
+            $this->url .= 'statuses/user_timeline.json';
+            $this->url .= '?count=' . $this->pageLength;
+            $this->url .= '&trim_user=true';
+            $this->url .= '&exclude_replies=true';
+            $this->url .= '&contributor_details=false';
+            $this->url .= '&include_rts=false';
 
-            $userOptions = array(
+            $oauthOptions = array(
+                'legacy'                    => true,
                 'oauth_access_token'        => $user['oauthToken'],
                 'oauth_access_token_secret' => $user['oauthTokenSecret'],
             );
 
-            $oauthData = array_merge($this->options, $userOptions);
+            $this->options = array_merge($this->options, $oauthOptions);
 
             try {
-                $response       = $this->makeRequestJSON($url, $oauthData, true);
-                $links[$user['id']] = $this->formatResponse($response);
+                $this->getLinksByPage();
+
+                $links[$user['id']] = $this->formatResponse();
+
+                return $links;
             } catch (\Exception $e) {
                 throw $e;
             }
         }
+    }
 
-        return $links;
+    private function getLinksByPage($lastItemId = null)
+    {
+
+        $url = $this->url;
+        if ($lastItemId) {
+            $url .= '&since_id=' . $lastItemId;
+        }
+
+        $response = $this->makeRequestJSON($url);
+
+        $this->items = array_merge($this->items, $response);
+
+        $itemsCount = count($response);
+        if ($itemsCount > 0 && $itemsCount > $this->pageLength) {
+            $lastItem = $response[count($response) - 1];
+
+            return call_user_func(array($this, __FUNCTION__), $lastItem['id_str']);
+        }
+
+        return;
     }
 
     /**
      * @param array $response
      * @return array
      */
-    public function formatResponse(array $response = array())
+    public function formatResponse()
     {
 
         $formatted = array();
 
-        foreach ($response as $item) {
+        foreach ($this->items as $item) {
             if (empty($item['entities']) || empty($item['entities']['urls'][0])) {
                 continue;
             }

@@ -39,21 +39,22 @@ abstract class AbstractConsumer
      * Fetch last links from user feed on Facebook
      *
      * @param $url
-     * @param $config array
      * @param $legacy boolean true if Oauth version 1
+     * @throws \Exception
+     * @throws \GuzzleHttp\Exception\RequestException
+     * @internal param array $config
      * @return mixed
-     * @throws RequestException
      */
-    public function makeRequestJSON($url, array $config = array(), $legacy = false)
+    public function makeRequestJSON($url)
     {
 
-        if ($legacy) {
+        if (isset($this->options['legacy']) && $this->options['legacy'] === true) {
             $oauth = new Oauth1(
                 [
-                    'consumer_key'    => $config['oauth_consumer_key'],
-                    'consumer_secret' => $config['oauth_consumer_secret'],
-                    'token'           => $config['oauth_access_token'],
-                    'token_secret'    => $config['oauth_access_token_secret']
+                    'consumer_key'    => $this->options['oauth_consumer_key'],
+                    'consumer_secret' => $this->options['oauth_consumer_secret'],
+                    'token'           => $this->options['oauth_access_token'],
+                    'token_secret'    => $this->options['oauth_access_token_secret']
                 ]
             );
 
@@ -61,7 +62,7 @@ abstract class AbstractConsumer
 
             $response = $this->httpClient->get($url, array('auth' => 'oauth'));
         } else {
-            $clientConfig = isset($config['headers'])?array('headers' => $config['headers']):array();
+            $clientConfig = isset($this->options['headers'])?array('headers' => $this->options['headers']):array();
             $response = $this->httpClient->get($url, $clientConfig);
         }
 

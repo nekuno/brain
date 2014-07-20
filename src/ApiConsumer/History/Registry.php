@@ -22,19 +22,14 @@ class Registry
         $this->entityManager = $entityManager;
     }
 
-    public function recordFetchAttempt($userId, $resource, $pointer = null)
+    public function recordFetchAttempt(FetchRegistry $registry)
     {
 
-        $pointerFieldName = $this->getPointerFieldName($resource);
-
-        $logEntry = new FetchRegistry();
-        $logEntry->setUserId($userId);
-        $logEntry->setResource($resource);
-        $logEntry->setPointerFieldName($pointerFieldName);
-        $logEntry->setPointer($pointer);
+        $pointerFieldName = $this->getPointerFieldName($registry->getResource());
+        $registry->setPointerFieldName($pointerFieldName);
 
         try {
-            $this->entityManager->persist($logEntry);
+            $this->entityManager->persist($registry);
             $this->entityManager->flush();
         } catch (\Exception $e) {
             throw $e;

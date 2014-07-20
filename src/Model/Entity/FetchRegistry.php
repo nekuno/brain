@@ -20,7 +20,7 @@ class FetchRegistry
 
     const STATUS_SUCCESS = 'success';
 
-    const STATUS_ERROR = 'error';
+    const STATUS_ERROR = 'fail';
 
     /**
      * @Id()
