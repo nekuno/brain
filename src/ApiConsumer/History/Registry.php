@@ -11,17 +11,33 @@ namespace ApiConsumer\History;
 use Doctrine\ORM\EntityManager;
 use Model\Entity\FetchRegistry;
 
+/**
+ * Class Registry
+ *
+ * @package ApiConsumer\History
+ */
 class Registry
 {
 
+    /**
+     * @var \Doctrine\ORM\EntityManager
+     */
     private $entityManager;
 
+    /**
+     * @param EntityManager $entityManager
+     */
     public function __construct(EntityManager $entityManager)
     {
 
         $this->entityManager = $entityManager;
     }
 
+    /**
+     * @param FetchRegistry $registry
+     * @return $this
+     * @throws \Exception
+     */
     public function recordFetchAttempt(FetchRegistry $registry)
     {
 

@@ -102,7 +102,6 @@ class FetchController
      * @param Application $app
      * @param $resource
      * @return \ApiConsumer\Restful\Consumer\LinksConsumerInterface
-     * @throws \Exception
      */
     private function getConsumer(Application $app, $resource)
     {

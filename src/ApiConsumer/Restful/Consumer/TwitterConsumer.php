@@ -5,15 +5,24 @@ namespace ApiConsumer\Restful\Consumer;
 /**
  * Class TwitterConsumer
  *
- * @package Social\API\Consumer
+ * @package ApiConsumer\Restful\Consumer
  */
 class TwitterConsumer extends AbstractConsumer implements LinksConsumerInterface
 {
 
+    /**
+     * @var array
+     */
     private $items = array();
 
+    /**
+     * @var string
+     */
     private $url = 'https://api.twitter.com/1.1/';
 
+    /**
+     * @var int
+     */
     private $pageLength = 200;
 
     /**
@@ -59,6 +68,10 @@ class TwitterConsumer extends AbstractConsumer implements LinksConsumerInterface
         }
     }
 
+    /**
+     * @param null $lastItemId
+     * @return mixed
+     */
     private function getLinksByPage($lastItemId = null)
     {
 
@@ -82,7 +95,6 @@ class TwitterConsumer extends AbstractConsumer implements LinksConsumerInterface
     }
 
     /**
-     * @param array $response
      * @return array
      */
     public function formatResponse()
