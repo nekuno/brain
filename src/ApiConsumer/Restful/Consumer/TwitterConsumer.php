@@ -28,12 +28,13 @@ class TwitterConsumer extends AbstractConsumer implements LinksConsumerInterface
 
             $url = 'https://api.twitter.com/1.1/statuses/user_timeline.json?count=20';
 
-            $userOptions = array(
+            $oauthOptions = array(
+                'legacy'                    => true,
                 'oauth_access_token'        => $user['oauthToken'],
                 'oauth_access_token_secret' => $user['oauthTokenSecret'],
             );
 
-            $oauthData = array_merge($this->options, $userOptions);
+            $this->options = array_merge($this->options, $oauthOptions);
 
             try {
                 $response       = $this->makeRequestJSON($url, $oauthData, true);

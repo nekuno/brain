@@ -29,18 +29,17 @@ class SpotifyConsumer extends AbstractConsumer implements LinksConsumerInterface
 
             $url = 'https://api.spotify.com/v1/users/'. $user['spotifyID'] . '/playlists/';
             $headers = array('Authorization' => 'Bearer ' . $user['oauthToken']);
-
+            $this->options['headers'] = $headers;
             try {
-                $playlists = $this->makeRequestJSON($url, array('headers' => $headers));
+                $playlists = $this->makeRequestJSON($url);
 
                 $allTracks = array();
                 if (isset($playlists['items'])) {
                     foreach ($playlists['items'] as $playlist) {
                         $url = 'https://api.spotify.com/v1/users/'. $user['spotifyID'] . '/playlists/'. $playlist['id'].'/tracks';
-                        $headers = array('Authorization' => 'Bearer ' . $user['oauthToken']);
 
                         try {
-                            $tracks = $this->makeRequestJSON($url, array('headers' => $headers));
+                            $tracks = $this->makeRequestJSON($url);
                             $currentPlaylistTracks = $this->formatResponse($tracks);
                             $allTracks = array_merge($currentPlaylistTracks, $allTracks);
                         } catch (\Exception $e) {
