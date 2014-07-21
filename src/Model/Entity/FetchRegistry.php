@@ -45,33 +45,14 @@ class FetchRegistry
     protected $resource;
 
     /**
-     * @Column(name="pointer", type="string", nullable=true)
+     * @Column(name="last_item_id", type="string", nullable=true)
      */
-    protected $pointer;
-
-    /**
-     * @Column(name="pointer_field_name", type="string", nullable=true)
-     */
-    protected $pointerFieldName;
+    protected $lastItemId;
 
     /**
      * @Column(name="status", type="string", nullable=false)
      */
     protected $status = self::STATUS_SUCCESS;
-
-    /**
-     * Set id
-     *
-     * @param integer $id
-     * @return FetchRegistry
-     */
-    public function setId($id)
-    {
-
-        $this->id = $id;
-
-        return $this;
-    }
 
     /**
      * Get id
@@ -84,7 +65,16 @@ class FetchRegistry
         return $this->id;
     }
 
+    /**
+     * Get fetchAt
+     *
+     * @return \DateTime
+     */
+    public function getFetchAt()
+    {
 
+        return $this->fetchAt;
+    }
 
     /**
      * Set fetchAt
@@ -103,14 +93,14 @@ class FetchRegistry
     }
 
     /**
-     * Get fetchAt
+     * Get userId
      *
-     * @return \DateTime
+     * @return integer
      */
-    public function getFetchAt()
+    public function getUserId()
     {
 
-        return $this->fetchAt;
+        return $this->userId;
     }
 
     /**
@@ -128,14 +118,14 @@ class FetchRegistry
     }
 
     /**
-     * Get userId
+     * Get resource
      *
-     * @return integer
+     * @return string
      */
-    public function getUserId()
+    public function getResource()
     {
 
-        return $this->userId;
+        return $this->resource;
     }
 
     /**
@@ -153,60 +143,14 @@ class FetchRegistry
     }
 
     /**
-     * Get resource
+     * Get status
      *
      * @return string
      */
-    public function getResource()
+    public function getStatus()
     {
 
-        return $this->resource;
-    }
-
-    /**
-     * Set pointer
-     *
-     * @param string $pointer
-     * @return FetchRegistry
-     */
-    public function setPointer($pointer)
-    {
-        $this->pointer = $pointer;
-
-        return $this;
-    }
-
-    /**
-     * Get pointer
-     *
-     * @return string 
-     */
-    public function getPointer()
-    {
-        return $this->pointer;
-    }
-
-    /**
-     * Set pointerFieldName
-     *
-     * @param string $pointerFieldName
-     * @return FetchRegistry
-     */
-    public function setPointerFieldName($pointerFieldName)
-    {
-        $this->pointerFieldName = $pointerFieldName;
-
-        return $this;
-    }
-
-    /**
-     * Get pointerFieldName
-     *
-     * @return string 
-     */
-    public function getPointerFieldName()
-    {
-        return $this->pointerFieldName;
+        return $this->status;
     }
 
     /**
@@ -217,18 +161,34 @@ class FetchRegistry
      */
     public function setStatus($status)
     {
+
         $this->status = $status;
 
         return $this;
     }
 
     /**
-     * Get status
+     * Get lastItemId
      *
-     * @return string 
+     * @return integer
      */
-    public function getStatus()
+    public function getLastItemId()
     {
-        return $this->status;
+
+        return $this->lastItemId;
+    }
+
+    /**
+     * Set lastItemId
+     *
+     * @param integer $lastItemId
+     * @return FetchRegistry
+     */
+    public function setLastItemId($lastItemId)
+    {
+
+        $this->lastItemId = $lastItemId;
+
+        return $this;
     }
 }

@@ -3,11 +3,11 @@
 namespace Controller;
 
 use ApiConsumer\Auth\DBUserProvider;
-use ApiConsumer\History\Registry;
+use ApiConsumer\Registry\Registry;
 use ApiConsumer\Restful\Consumer\ConsumerFactory;
 use ApiConsumer\Storage\DBStorage;
-use Model\Entity\FetchRegistry;
 use Model\LinkModel;
+use Monolog\Logger;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -61,41 +61,48 @@ class FetchController
             return $app->json('User not found', 404);
         }
 
-        $logger  = $app['monolog'];
-        $storage = new DBStorage($app['links.model']);
+        /** @var $logger Logger */
+        $logger        = $app['monolog'];
+        $entityManager = $app['orm.ems']['mysql_brain'];
+        $registry      = new Registry($entityManager);
+        $storage       = new DBStorage($app['links.model']);
 
         $consumer = $this->getConsumer($app, $resource);
 
-        $registry = new Registry($app['orm.ems']['mysql_brain']);
-
-        $registryEntry = new FetchRegistry();
-        $registryEntry->setUserId($userId);
-        $registryEntry->setResource($resource);
+        $linksGroupByUser = array();
 
         try {
             $linksGroupByUser = $consumer->fetchLinks($userId);
 
-            $storage->storeLinks($linksGroupByUser);
-
-            $errors = $storage->getErrors();
-            if (array() !== $errors) {
-                foreach ($errors as $error) {
-                    $logger->addError($error);
-                }
-            }
-
-            $registry->recordFetchAttempt($registryEntry);
+            $registry->registerFetchAttempt(
+                $userId,
+                $resource,
+                $linksGroupByUser[$userId],
+                false
+            );
 
         } catch (\Exception $e) {
-            $logger->addError(sprintf('Error fetching links for user %d from resource %s', $userId, $resource));
 
-            $registryEntry->setStatus($registryEntry::STATUS_ERROR);
-            $registry->recordFetchAttempt($registryEntry);
+            $registry->registerFetchAttempt(
+                $userId,
+                $resource,
+                $linksGroupByUser[$userId],
+                true
+            );
 
-            return $app->json($this->getError($e), 500);
+            return $app->json(array(), 500);
         }
 
-        return $app->json($linksGroupByUser);
+        $storage->storeLinks($linksGroupByUser);
+
+        $errors = $storage->getErrors();
+        if (array() !== $errors) {
+            foreach ($errors as $error) {
+                $logger->addDebug($error);
+            }
+        }
+
+        return $app->json($linksGroupByUser, 200);
     }
 
     /**
@@ -120,7 +127,6 @@ class FetchController
 
         return ConsumerFactory::create($resource, $userProvider, $httpClient, $options);
     }
-
 
     /**
      * @param $e
