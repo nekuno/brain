@@ -58,6 +58,7 @@ class FetchLinksCommand extends ApplicationAwareCommand
         } catch (\Exception $e) {
             $logger->addError(sprintf('Error fetching from resource %s', $resource));
             $output->writeln($e->getMessage());
+            exit;
         }
 
         $storage->storeLinks($linksGroupByUser);
