@@ -72,19 +72,21 @@ class SpotifyConsumer extends AbstractConsumer implements LinksConsumerInterface
         $parsed = array();
 
         foreach ($response['items'] as $item) {
-            $link['url']         = $item['track']['external_urls']['spotify'];
-            $link['title']       = $item['track']['name'];
-            
-            $artistList = array();
-            foreach ($item['track']['artists'] as $artist) {
-                $artistList[] = $artist['name'];
+            if (null !== $item['track']['id']) {
+                $link['url']         = $item['track']['external_urls']['spotify'];
+                $link['title']       = $item['track']['name'];
+                
+                $artistList = array();
+                foreach ($item['track']['artists'] as $artist) {
+                    $artistList[] = $artist['name'];
+                }
+
+                $link['description'] = $item['track']['album']['name'] . ' : ' .implode(', ', $artistList);
+                $link['resourceItemId'] =  $item['track']['id'];
+                $link['resource']       = 'spotify';
+
+                $parsed[] = $link;
             }
-
-            $link['description'] = $item['track']['album']['name'] . ' : ' .implode(', ', $artistList);
-            $link['resourceItemId'] =  $item['track']['id'];
-            $link['resource']       = 'spotify';
-
-            $parsed[] = $link;
         }
 
         return $parsed;
