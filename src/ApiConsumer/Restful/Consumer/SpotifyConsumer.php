@@ -36,7 +36,7 @@ class SpotifyConsumer extends AbstractConsumer implements LinksConsumerInterface
                 $allTracks = array();
                 if (isset($playlists['items'])) {
                     foreach ($playlists['items'] as $playlist) {
-                        $url = 'https://api.spotify.com/v1/users/'. $user['spotifyID'] . '/playlists/'. $playlist['id'].'/tracks';
+                        $url = $playlist['href'] . '/tracks';
 
                         try {
                             $tracks = $this->makeRequestJSON($url);
