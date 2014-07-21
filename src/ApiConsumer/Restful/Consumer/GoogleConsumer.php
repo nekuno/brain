@@ -5,15 +5,24 @@ namespace ApiConsumer\Restful\Consumer;
 /**
  * Class GoogleConsumer
  *
- * @package Social\API\Consumer
+ * @package ApiConsumer\Restful\Consumer
  */
 class GoogleConsumer extends AbstractConsumer implements LinksConsumerInterface
 {
 
+    /**
+     * @var array
+     */
     private $items = array();
 
+    /**
+     * @var string
+     */
     private $url = 'https://www.googleapis.com/plus/v1/people/';
 
+    /**
+     * @var int
+     */
     private $pageLength = 20;
 
     /**
@@ -50,6 +59,10 @@ class GoogleConsumer extends AbstractConsumer implements LinksConsumerInterface
 
     }
 
+    /**
+     * @param null $nextPageToken
+     * @return mixed
+     */
     private function getLinksByPage($nextPageToken = null)
     {
 
@@ -69,6 +82,9 @@ class GoogleConsumer extends AbstractConsumer implements LinksConsumerInterface
         return;
     }
 
+    /**
+     * @return array
+     */
     protected function formatResponse()
     {
 

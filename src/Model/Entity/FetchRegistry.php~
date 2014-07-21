@@ -20,7 +20,7 @@ class FetchRegistry
 
     const STATUS_SUCCESS = 'success';
 
-    const STATUS_ERROR = 'error';
+    const STATUS_ERROR = 'fail';
 
     /**
      * @Id()
@@ -45,14 +45,9 @@ class FetchRegistry
     protected $resource;
 
     /**
-     * @Column(name="pointer", type="string", nullable=true)
+     * @Column(name="last_item_id", type="integer", nullable=false)
      */
-    protected $pointer;
-
-    /**
-     * @Column(name="pointer_field_name", type="string", nullable=true)
-     */
-    protected $pointerFieldName;
+    protected $lastItemId;
 
     /**
      * @Column(name="status", type="string", nullable=false)

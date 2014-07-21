@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: adridev
- * Date: 6/26/14
- * Time: 1:30 PM
- */
 
 namespace ApiConsumer\Restful\Consumer;
 
@@ -13,6 +7,11 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Subscriber\Oauth\Oauth1;
 
+/**
+ * Class AbstractConsumer
+ *
+ * @package ApiConsumer\Restful\Consumer
+ */
 abstract class AbstractConsumer
 {
 
@@ -25,6 +24,11 @@ abstract class AbstractConsumer
     /** @var array Configuration */
     protected $options = array();
 
+    /**
+     * @param UserProviderInterface $userProvider
+     * @param Client $httpClient
+     * @param array $options
+     */
     public function __construct(UserProviderInterface $userProvider, Client $httpClient, array $options = array())
     {
 
@@ -39,10 +43,7 @@ abstract class AbstractConsumer
      * Fetch last links from user feed on Facebook
      *
      * @param $url
-     * @param $legacy boolean true if Oauth version 1
-     * @throws \Exception
      * @throws \GuzzleHttp\Exception\RequestException
-     * @internal param array $config
      * @return mixed
      */
     public function makeRequestJSON($url)

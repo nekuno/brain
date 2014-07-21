@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: adridev
- * Date: 8/07/14
- * Time: 18:13
- */
 
 namespace ApiConsumer\Restful\Consumer;
 

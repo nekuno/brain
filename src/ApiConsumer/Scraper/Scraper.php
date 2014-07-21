@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: adridev
- * Date: 11/07/14
- * Time: 14:31
- */
 
 namespace ApiConsumer\Scraper;
 

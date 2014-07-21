@@ -3,7 +3,7 @@
 namespace ApiConsumer\Restful\Consumer;
 
 /**
- * Class FacebookConsumer
+ * Class SpotifyConsumer
  *
  * @package Social
  */
