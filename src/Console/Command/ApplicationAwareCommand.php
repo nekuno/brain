@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: adridev
- * Date: 6/26/14
- * Time: 11:58 AM
- */
 
 namespace Console\Command;
 

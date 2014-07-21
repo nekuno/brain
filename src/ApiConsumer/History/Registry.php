@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: adridev
- * Date: 7/18/14
- * Time: 3:16 PM
- */
 
 namespace ApiConsumer\History;
 

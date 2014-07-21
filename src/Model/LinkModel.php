@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: adridev
- * Date: 6/17/14
- * Time: 6:44 PM
- */
 
 namespace Model;
 
@@ -31,7 +25,7 @@ class LinkModel
             $stringQuery = "MATCH (u:User) " .
                 "WHERE u.qnoow_id = {userId}"
                 . " CREATE "
-                . " (l:Link {url: {url}, title: {title}, description: {description}})"
+                . " (l:Link {url: {url}, title: {title}, description: {description}, processed: 0})"
                 . ", (l)-[r:SHARED_BY]->(u) "
                 . " RETURN l;";
         } else {
