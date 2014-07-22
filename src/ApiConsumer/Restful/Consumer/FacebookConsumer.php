@@ -2,6 +2,8 @@
 
 namespace ApiConsumer\Restful\Consumer;
 
+use ApiConsumer\Auth\ResourceOwnerNotConnectedException;
+
 /**
  * Class FacebookConsumer
  *
@@ -30,8 +32,8 @@ class FacebookConsumer extends AbstractConsumer implements LinksConsumerInterfac
 
             if (!$user['facebookID']) {
 
-                continue;
-            }
+            throw new ResourceOwnerNotConnectedException;
+        }
 
             $this->url .= $user['facebookID'];
             $this->url .= '/links';

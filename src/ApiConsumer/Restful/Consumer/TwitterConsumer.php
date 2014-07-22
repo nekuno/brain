@@ -2,6 +2,8 @@
 
 namespace ApiConsumer\Restful\Consumer;
 
+use ApiConsumer\Auth\ResourceOwnerNotConnectedException;
+
 /**
  * Class TwitterConsumer
  *
@@ -37,9 +39,9 @@ class TwitterConsumer extends AbstractConsumer implements LinksConsumerInterface
 
         foreach ($users as $user) {
 
-            if (!$user['twitterID']) {
-                continue;
-            }
+        if (!$user['twitterID']) {
+            throw new ResourceOwnerNotConnectedException;
+        }
 
             $this->url .= 'statuses/user_timeline.json';
             $this->url .= '?count=' . $this->pageLength;

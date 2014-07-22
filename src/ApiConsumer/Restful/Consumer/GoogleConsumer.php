@@ -2,6 +2,8 @@
 
 namespace ApiConsumer\Restful\Consumer;
 
+use ApiConsumer\Auth\ResourceOwnerNotConnectedException;
+
 /**
  * Class GoogleConsumer
  *
@@ -35,9 +37,9 @@ class GoogleConsumer extends AbstractConsumer implements LinksConsumerInterface
 
         foreach ($users as $user) {
 
-            if (!$user['googleID']) {
-                continue;
-            }
+        if (!$user['googleID']) {
+            throw new ResourceOwnerNotConnectedException;
+        }
 
             $this->url .= $user['googleID'];
             $this->url .= '/activities/public';
