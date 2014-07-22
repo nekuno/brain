@@ -6,8 +6,9 @@ interface StorageInterface
 {
 
     /**
-     * @param array $linksGroupByUser
+     * @param $userId
+     * @param array $links
      * @return mixed
      */
-    function storeLinks(array $linksGroupByUser);
+    public function storeLinks($userId, array $links);
 }

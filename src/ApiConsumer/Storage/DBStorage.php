@@ -30,22 +30,20 @@ class DBStorage implements StorageInterface
     }
 
     /**
-     * @param array $linksGroupByUser
+     * @param $userId
+     * @param array $links
      * @return array
      */
-    public function storeLinks(array $linksGroupByUser)
+    public function storeLinks($userId, array $links)
     {
 
-        foreach ($linksGroupByUser as $user => $userLinks) {
-
-            foreach ($userLinks as $link) {
-                $link['userId'] = $user;
-                try {
-                    $this->model->addLink($link);
-                } catch (\Exception $e) {
-                    $this->errors[] = $this->getFormattedError($link);
-                    continue;
-                }
+        foreach ($links as $link) {
+            $link['userId'] = $userId;
+            try {
+                $this->model->addLink($link);
+            } catch (\Exception $e) {
+                $this->errors[] = $this->getFormattedError($link);
+                continue;
             }
         }
 
