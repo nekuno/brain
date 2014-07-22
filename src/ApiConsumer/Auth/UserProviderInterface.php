@@ -12,5 +12,14 @@ interface UserProviderInterface
      * @param $userId
      * @return mixed
      */
-    function getUsersByResource($resource, $userId = null);
+    public function getUsersByResource($resource, $userId = null);
+
+    /**
+     * Get an User by Id
+     *
+     * @param $userId
+     * @return mixed
+     */
+    public function getUserById($userId);
+
 }
