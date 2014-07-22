@@ -297,7 +297,7 @@ class UserModel
                     max_popul,
                     collect(popul_comm) AS popul_comm_collection
                 WITH
-                    reduce(num = 0.0, c IN popul_comm_collection | num + (1 - (c*1.0 / (max_popul+0.001)))^3 ) as dividend,
+                    reduce(num = 0.0, c IN popul_comm_collection | num + (1 - (c*1.0 / (max_popul+0.1)))^3 ) as dividend,
                     max_popul
                 RETURN
                     collect(distinct dividend) AS dividend;
@@ -328,8 +328,8 @@ class UserModel
                 collect(num_likes_dislikes)[0] AS max_likes_dislikes
 
                 MATCH
-                (u1:User {qnoow_id: ".$id1."}),
-                (u2:User {qnoow_id: ".$id2."})
+                (u1:User {qnoow_id: " . $id1 . "}),
+                (u2:User {qnoow_id: " . $id2 . "})
                 OPTIONAL MATCH
                 (u1)-[:LIKES]->(commonLikes:Link)<-[:LIKES]-(u2)
                 OPTIONAL MATCH
@@ -347,13 +347,13 @@ class UserModel
                 max_likes_dislikes AS max_popul
 
                 MATCH
-                (u1:User {qnoow_id: ".$id1."})
+                (u1:User {qnoow_id: " . $id1 . "})
                 OPTIONAL MATCH
-                (u1)-[:LIKES|DISLIKES]->(contentU1)
+                (u1)-[:LIKES|DISLIKES]->(content)
                 OPTIONAL MATCH
-                (anyUser)-[r:LIKES|DISLIKES]->(contentU1)
+                (anyUser)-[r:LIKES|DISLIKES]->(content)
                 WITH
-                collect(distinct contentU1) AS c1,
+                collect(distinct content) AS c1,
                 collect(common) AS common,
                 max_popul,
                 r
@@ -362,11 +362,14 @@ class UserModel
                 WHERE
                 n IN c1 AND NOT(n IN common)
                 WITH
-                n as not_common_u1,
-                count(distinct r) AS popul_not_common_u1,
+                n as not_common,
+                count(distinct r) AS popul_not_common,
                 max_popul
                 WITH
-                reduce(num = 0.0, c IN collect(popul_not_common_u1) | num + ( (c*1.0 / max_popul))^3 ) as divisor1,
+                collect(popul_not_common) AS popul_not_common_collection,
+                max_popul
+                WITH
+                reduce(num = 0.0, c IN popul_not_common_collection | num + ( (c*1.0 / max_popul + 0.1))^3 ) as divisor1,
                 max_popul
 
                 RETURN
@@ -397,8 +400,8 @@ class UserModel
                 collect(num_likes_dislikes)[0] AS max_likes_dislikes
 
                 MATCH
-                (u1:User {qnoow_id: ".$id1."}),
-                (u2:User {qnoow_id: ".$id2."})
+                (u1:User {qnoow_id: 2}),
+                (u2:User {qnoow_id: 1})
                 OPTIONAL MATCH
                 (u1)-[:LIKES]->(commonLikes:Link)<-[:LIKES]-(u2)
                 OPTIONAL MATCH
@@ -416,27 +419,31 @@ class UserModel
                 max_likes_dislikes AS max_popul
 
                 MATCH
-                (u2:User {qnoow_id: ".$id2."})
+                (u1:User {qnoow_id: 2})
                 OPTIONAL MATCH
-                (u2)-[:LIKES|DISLIKES]->(contentU2)
+                (u1)-[:LIKES|DISLIKES]->(content)
                 OPTIONAL MATCH
-                (anyUser)-[r:LIKES|DISLIKES]->(contentU2)
+                (anyUser)-[r:LIKES|DISLIKES]->(content)
                 WITH
-                collect(distinct contentU2) AS c2,
+                collect(distinct content) AS c1,
                 collect(common) AS common,
                 max_popul,
                 r
                 MATCH
                 (n)
                 WHERE
-                n IN c2 AND NOT(n IN common)
+                n IN c1 AND NOT(n IN common)
                 WITH
-                n as not_common_u2,
-                count(distinct r) AS popul_not_common_u2,
+                n as not_common,
+                count(distinct r) AS popul_not_common,
                 max_popul
                 WITH
-                reduce(num = 0.0, c IN collect(popul_not_common_u2) | num + ( (c*1.0 / max_popul))^3 ) as divisor2,
+                collect(popul_not_common) AS popul_not_common_collection,
                 max_popul
+                WITH
+                reduce(num = 0.0, c IN popul_not_common_collection | num + ( (c*1.0 / max_popul + 0.1))^3 ) as divisor2,
+                max_popul
+
                 RETURN
                 divisor2;
             ";    
