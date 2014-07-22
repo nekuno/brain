@@ -2,6 +2,8 @@
 
 namespace ApiConsumer\Restful\Consumer;
 
+use ApiConsumer\Auth\ResourceOwnerNotConnectedException;
+
 /**
  * Class SpotifyConsumer
  *
@@ -16,49 +18,43 @@ class SpotifyConsumer extends AbstractConsumer implements LinksConsumerInterface
     public function fetchLinksFromUserFeed($userId = null)
     {
 
-        $users = $this->userProvider->getUsersByResource('spotify', $userId);
+        $user = $this->userProvider->getUsersByResource('spotify', $userId);
 
-        $links = array();
+        if (!$user['spotifyID']) {
+            throw new ResourceOwnerNotConnectedException;
+        }
 
-        foreach ($users as $user) {
+        $url                      = 'https://api.spotify.com/v1/users/' . $user['spotifyID'] . '/playlists/';
+        $headers                  = array('Authorization' => 'Bearer ' . $user['oauthToken']);
+        $this->options['headers'] = $headers;
+        try {
+            $playlists = $this->makeRequestJSON($url);
 
-            if (!$user['spotifyID']) {
+            $allTracks = array();
+            if (isset($playlists['items'])) {
+                foreach ($playlists['items'] as $playlist) {
+                    if ($playlist['owner']['id'] == $user['spotifyID']) {
+                        $url = $playlist['href'] . '/tracks';
 
-                continue;
-            }
-
-            $url = 'https://api.spotify.com/v1/users/'. $user['spotifyID'] . '/playlists/';
-            $headers = array('Authorization' => 'Bearer ' . $user['oauthToken']);
-            $this->options['headers'] = $headers;
-            try {
-                $playlists = $this->makeRequestJSON($url);
-
-                $allTracks = array();
-                if (isset($playlists['items'])) {
-                    foreach ($playlists['items'] as $playlist) {
-                        if ($playlist['owner']['id'] == $user['spotifyID'] ) {
-                            $url = $playlist['href'] . '/tracks';
-
-                            try {
-                                $tracks = $this->makeRequestJSON($url);
-                                $currentPlaylistTracks = $this->formatResponse($tracks);
-                                $allTracks = array_merge($currentPlaylistTracks, $allTracks);
-                            } catch (\Exception $e) {
-                                continue;
-                            }
+                        try {
+                            $tracks                = $this->makeRequestJSON($url);
+                            $currentPlaylistTracks = $this->formatResponse($tracks);
+                            $allTracks             = array_merge($currentPlaylistTracks, $allTracks);
+                        } catch (\Exception $e) {
+                            continue;
                         }
                     }
                 }
-
-                $url = 'https://api.spotify.com/v1/users/'. $user['spotifyID'] . '/starred/tracks';
-                $starredTracks = $this->makeRequestJSON($url);
-                $starredPlaylistTracks = $this->formatResponse($starredTracks);
-                $allTracks = array_merge($starredPlaylistTracks, $allTracks);
-
-                $links[$user['id']] = $allTracks;
-            } catch (\Exception $e) {
-                throw $e;
             }
+
+            $url                   = 'https://api.spotify.com/v1/users/' . $user['spotifyID'] . '/starred/tracks';
+            $starredTracks         = $this->makeRequestJSON($url);
+            $starredPlaylistTracks = $this->formatResponse($starredTracks);
+            $allTracks             = array_merge($starredPlaylistTracks, $allTracks);
+
+            $links = $allTracks;
+        } catch (\Exception $e) {
+            throw $e;
         }
 
         return $links;
@@ -69,20 +65,21 @@ class SpotifyConsumer extends AbstractConsumer implements LinksConsumerInterface
      */
     protected function formatResponse(array $response = array())
     {
+
         $parsed = array();
 
         foreach ($response['items'] as $item) {
             if (null !== $item['track']['id']) {
-                $link['url']         = $item['track']['external_urls']['spotify'];
-                $link['title']       = $item['track']['name'];
+                $link['url']   = $item['track']['external_urls']['spotify'];
+                $link['title'] = $item['track']['name'];
 
                 $artistList = array();
                 foreach ($item['track']['artists'] as $artist) {
                     $artistList[] = $artist['name'];
                 }
 
-                $link['description'] = $item['track']['album']['name'] . ' : ' .implode(', ', $artistList);
-                $link['resourceItemId'] =  $item['track']['id'];
+                $link['description']    = $item['track']['album']['name'] . ' : ' . implode(', ', $artistList);
+                $link['resourceItemId'] = $item['track']['id'];
                 $link['resource']       = 'spotify';
 
                 $parsed[] = $link;
