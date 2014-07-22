@@ -12,10 +12,14 @@ use ApiConsumer\Auth\ResourceOwnerNotConnectedException;
 class FacebookConsumer extends AbstractConsumer implements LinksConsumerInterface
 {
 
-    private $items = array();
-
+    /**
+     * @var string API base url
+     */
     private $url = 'https://graph.facebook.com/v2.0/';
 
+    /**
+     * @var int
+     */
     private $pageLength = 20;
 
     /**
@@ -24,35 +28,30 @@ class FacebookConsumer extends AbstractConsumer implements LinksConsumerInterfac
     public function fetchLinksFromUserFeed($userId = null)
     {
 
-        $users = $this->userProvider->getUsersByResource('facebook', $userId);
+        $user = $this->userProvider->getUsersByResource('facebook', $userId);
 
-        $links = array();
-
-        foreach ($users as $user) {
-
-            if (!$user['facebookID']) {
-
+        if (!$user['facebookID']) {
             throw new ResourceOwnerNotConnectedException;
         }
 
-            $this->url .= $user['facebookID'];
-            $this->url .= '/links';
-            $this->url .= '?access_token=' . $user['oauthToken'];
-            $this->url .= '&limit=' . $this->pageLength;
+        $this->url .= $user['facebookID'];
+        $this->url .= '/links';
+        $this->url .= '?access_token=' . $user['oauthToken'];
+        $this->url .= '&limit=' . $this->pageLength;
 
-            try {
-                $this->getLinksByPage();
+        try {
+            $rawFeed = $this->fetchFeed();
 
-                $links[$user['id']] = $this->formatResponse();
-            } catch (\Exception $e) {
-                throw $e;
-            }
+            $links = $this->parseLinks($rawFeed);
+
+        } catch (\Exception $e) {
+            throw $e;
         }
 
         return $links;
     }
 
-    private function getLinksByPage($lastItemToken = null)
+    private function fetchFeed($lastItemToken = null)
     {
 
         $url = $this->url;
@@ -62,7 +61,7 @@ class FacebookConsumer extends AbstractConsumer implements LinksConsumerInterfac
 
         $response = $this->makeRequestJSON($url);
 
-        $this->items = array_merge($this->items, $response['data']);
+        $this->rawFeed = array_merge($this->rawFeed, $response['data']);
 
         if (array_key_exists('paging', $response)) {
             if (array_key_exists('cursors', $response['paging'])) {
@@ -70,18 +69,18 @@ class FacebookConsumer extends AbstractConsumer implements LinksConsumerInterfac
             }
         }
 
-        return;
+        return $this->rawFeed;
     }
 
     /**
      * { @inheritdoc }
      */
-    protected function formatResponse()
+    protected function parseLinks(array $rawFeed)
     {
 
         $parsed = array();
 
-        foreach ($this->items as $item) {
+        foreach ($rawFeed as $item) {
             $link['url']            = $item['link'];
             $link['title']          = array_key_exists('name', $item) ? $item['name'] : null;
             $link['description']    = array_key_exists('description', $item) ? $item['description'] : null;

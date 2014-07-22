@@ -41,33 +41,13 @@ class DBUserProvider implements UserProviderInterface
         $sql .= ";";
 
         try {
-            $users = $this->driver->fetchAll($sql, $params);
+            if ($userId) {
+                return $this->driver->fetchAssoc($sql, $params);
+            } else {
+                return $this->driver->fetchAll($sql, $params);
+            }
         } catch (\Exception $e) {
             throw $e;
         }
-
-        return $users;
-    }
-
-    public function getUserById($userId)
-    {
-        $sql = "SELECT * " .
-            " FROM users AS u" .
-            " INNER JOIN user_access_tokens AS ut ON u.id = ut.user_id" .
-            " WHERE u.id = :userId";
-
-        $params = array(
-            ':userId' => $userId
-        );
-
-        $sql .= ";";
-
-        try {
-            $user = $this->driver->fetchAssoc($sql, $params);
-        } catch (\Exception $e) {
-            throw $e;
-        }
-
-        return $user;
     }
 }

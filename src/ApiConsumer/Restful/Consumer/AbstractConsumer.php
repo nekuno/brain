@@ -15,6 +15,11 @@ use GuzzleHttp\Subscriber\Oauth\Oauth1;
 abstract class AbstractConsumer
 {
 
+    /**
+     * @var array
+     */
+    protected $rawFeed = array();
+
     /** @var UserProviderInterface */
     protected $userProvider;
 

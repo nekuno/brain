@@ -13,11 +13,6 @@ class GoogleConsumer extends AbstractConsumer implements LinksConsumerInterface
 {
 
     /**
-     * @var array
-     */
-    private $items = array();
-
-    /**
      * @var string
      */
     private $url = 'https://www.googleapis.com/plus/v1/people/';
@@ -33,32 +28,29 @@ class GoogleConsumer extends AbstractConsumer implements LinksConsumerInterface
     public function fetchLinksFromUserFeed($userId)
     {
 
-        $users = $this->userProvider->getUsersByResource('google', $userId);
-
-        foreach ($users as $user) {
+        $user = $this->userProvider->getUsersByResource('google', $userId);
 
         if (!$user['googleID']) {
             throw new ResourceOwnerNotConnectedException;
         }
 
-            $this->url .= $user['googleID'];
-            $this->url .= '/activities/public';
-            $this->url .= '?access_token=' . $user['oauthToken'];
-            $this->url .= '&maxResults=' . $this->pageLength;
-            $this->url .= '&fields=items(object(attachments(content,displayName,id,objectType,url)),title),nextPageToken';
+        $this->url .= $user['googleID'];
+        $this->url .= '/activities/public';
+        $this->url .= '?access_token=' . $user['oauthToken'];
+        $this->url .= '&maxResults=' . $this->pageLength;
+        $this->url .= '&fields=items(object(attachments(content,displayName,id,objectType,url)),title),nextPageToken';
 
-            try {
+        try {
 
-                $this->getLinksByPage();
+            $rawFeed = $this->getLinksByPage();
 
-                $links[$user['id']] = $this->formatResponse();
+            $links = $this->parseLinks($rawFeed);
 
-                return $links;
-            } catch (\Exception $e) {
-                throw $e;
-            }
+        } catch (\Exception $e) {
+            throw $e;
         }
 
+        return $links;
     }
 
     /**
@@ -75,24 +67,24 @@ class GoogleConsumer extends AbstractConsumer implements LinksConsumerInterface
 
         $response = $this->makeRequestJSON($url);
 
-        $this->items = array_merge($this->items, $response['items']);
+        $this->rawFeed = array_merge($this->rawFeed, $response['items']);
 
         if (array_key_exists('nextPageToken', $response)) {
             return call_user_func(array($this, __FUNCTION__), $response['nextPageToken']);
         }
 
-        return;
+        return $this->rawFeed;
     }
 
     /**
-     * @return array
+     * { @inheritdoc }
      */
-    protected function formatResponse()
+    protected function parseLinks(array $rawFeed)
     {
 
         $parsed = array();
 
-        foreach ($this->items as $item) {
+        foreach ($rawFeed as $item) {
             if (!array_key_exists('object', $item) || !array_key_exists('attachments', $item['object'])) {
                 continue;
             }

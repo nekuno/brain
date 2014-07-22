@@ -13,11 +13,6 @@ class TwitterConsumer extends AbstractConsumer implements LinksConsumerInterface
 {
 
     /**
-     * @var array
-     */
-    private $items = array();
-
-    /**
      * @var string
      */
     private $url = 'https://api.twitter.com/1.1/';
@@ -33,41 +28,38 @@ class TwitterConsumer extends AbstractConsumer implements LinksConsumerInterface
     public function fetchLinksFromUserFeed($userId = null)
     {
 
-        $users = $this->userProvider->getUsersByResource('twitter', $userId);
-
-        $links = array();
-
-        foreach ($users as $user) {
+        $user = $this->userProvider->getUsersByResource('twitter', $userId);
 
         if (!$user['twitterID']) {
             throw new ResourceOwnerNotConnectedException;
         }
 
-            $this->url .= 'statuses/user_timeline.json';
-            $this->url .= '?count=' . $this->pageLength;
-            $this->url .= '&trim_user=true';
-            $this->url .= '&exclude_replies=true';
-            $this->url .= '&contributor_details=false';
-            $this->url .= '&include_rts=false';
+        $this->url .= 'statuses/user_timeline.json';
+        $this->url .= '?count=' . $this->pageLength;
+        $this->url .= '&trim_user=true';
+        $this->url .= '&exclude_replies=true';
+        $this->url .= '&contributor_details=false';
+        $this->url .= '&include_rts=false';
 
-            $oauthOptions = array(
-                'legacy'                    => true,
-                'oauth_access_token'        => $user['oauthToken'],
-                'oauth_access_token_secret' => $user['oauthTokenSecret'],
-            );
+        $oauthOptions = array(
+            'legacy'                    => true,
+            'oauth_access_token'        => $user['oauthToken'],
+            'oauth_access_token_secret' => $user['oauthTokenSecret'],
+        );
 
-            $this->options = array_merge($this->options, $oauthOptions);
+        $this->options = array_merge($this->options, $oauthOptions);
 
-            try {
-                $this->getLinksByPage();
+        try {
 
-                $links[$user['id']] = $this->formatResponse();
+            $rawFeed = $this->getLinksByPage();
 
-                return $links;
-            } catch (\Exception $e) {
-                throw $e;
-            }
+            $links = $this->parseLinks($rawFeed);
+
+        } catch (\Exception $e) {
+            throw $e;
         }
+
+        return $links;
     }
 
     /**
@@ -84,7 +76,7 @@ class TwitterConsumer extends AbstractConsumer implements LinksConsumerInterface
 
         $response = $this->makeRequestJSON($url);
 
-        $this->items = array_merge($this->items, $response);
+        $this->rawFeed = array_merge($this->rawFeed, $response);
 
         $itemsCount = count($response);
         if ($itemsCount > 0 && $itemsCount > $this->pageLength) {
@@ -93,18 +85,18 @@ class TwitterConsumer extends AbstractConsumer implements LinksConsumerInterface
             return call_user_func(array($this, __FUNCTION__), $lastItem['id_str']);
         }
 
-        return;
+        return $this->rawFeed;
     }
 
     /**
      * @return array
      */
-    public function formatResponse()
+    public function parseLinks(array $rawFeed)
     {
 
         $formatted = array();
 
-        foreach ($this->items as $item) {
+        foreach ($rawFeed as $item) {
             if (empty($item['entities']) || empty($item['entities']['urls'][0])) {
                 continue;
             }

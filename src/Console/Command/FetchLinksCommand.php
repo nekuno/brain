@@ -39,38 +39,47 @@ class FetchLinksCommand extends ApplicationAwareCommand
 
         /** @var $logger Logger */
         $logger = $this->app['monolog'];
-        $entityManager = $this->app['orm.ems']['mysql_brain'];
-        $registry = new Registry($entityManager);
+
+        $registry = new Registry($this->app['orm.ems']['mysql_brain']);
         $storage  = new DBStorage($this->app['links.model']);
         $consumer = $this->getConsumer($this->app, $resource);
 
-        try {
-            $linksGroupByUser = $consumer->fetchLinks();
+        $userProvider = new DBUserProvider($this->app['dbs']['mysql_social']);
+        $users        = $userProvider->getUsersByResource($resource);
 
-            foreach ($linksGroupByUser as $userId => $userLinks) {
+        foreach ($users as $user) {
+            try {
+                $logger->debug(sprintf('Fetch attempt for user %d, resource %s', $user['id'], $resource));
+
+                $userSharedLinks = $consumer->fetchLinksFromUserFeed($user['id']);
+
+                $storage->storeLinks($user['id'], $userSharedLinks);
+                foreach ($storage->getErrors() as $error) {
+                    $logger->error(sprintf('Error saving link: ' . $error));
+                }
+
+                $lastItemId = $userSharedLinks[count($userSharedLinks) - 1]['resourceItemId'];
                 $registry->registerFetchAttempt(
-                    $userId,
+                    $user['id'],
                     $resource,
-                    $userLinks,
+                    $lastItemId,
                     false
                 );
+                $output->writeln('Success!');
+
+            } catch (\Exception $e) {
+                $logger->addError(sprintf('Error fetching from resource %s', $resource));
+                $logger->error(sprintf('%s', $e->getMessage()));
+
+                $registry->registerFetchAttempt(
+                    $user['id'],
+                    $resource,
+                    null,
+                    true
+                );
+                $output->writeln($e->getMessage());
             }
-        } catch (\Exception $e) {
-            $logger->addError(sprintf('Error fetching from resource %s', $resource));
-            $output->writeln($e->getMessage());
-            exit;
         }
-
-        $storage->storeLinks($linksGroupByUser);
-
-        $errors = $storage->getErrors();
-        if (array() !== $errors) {
-            foreach ($errors as $error) {
-                $logger->addError(sprintf('Error: %s', $error));
-            }
-        }
-
-        $output->writeln('Success!');
     }
 
     /**
