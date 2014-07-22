@@ -188,7 +188,8 @@ class UserModel
                 CREATE UNIQUE
                     (u1)-[m:MATCHES]-(u2)
                 SET
-                    m.matching_questions = match_user1_user2
+                    m.matching_questions = match_user1_user2,
+                    m.timestamp_questions = timestamp()
                 RETURN
                     m;";
 
@@ -471,7 +472,8 @@ class UserModel
                 CREATE UNIQUE
             (u1)-[m:MATCHES]-(u2)
                 SET
-                    m.matching_content = $matching
+                    m.matching_content = $matching ,
+                    m.timestamp_content = timestamp()
                 RETURN
                     m;
             */
