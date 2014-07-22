@@ -5,17 +5,33 @@ namespace Model;
 use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
 
+/**
+ * Class LinkModel
+ *
+ * @package Model
+ */
 class LinkModel
 {
 
+    /**
+     * @var \Everyman\Neo4j\Client
+     */
     protected $client;
 
+    /**
+     * @param Client $client
+     */
     public function __construct(Client $client)
     {
 
         $this->client = $client;
     }
 
+    /**
+     * @param array $data
+     * @return \Everyman\Neo4j\Query\ResultSet
+     * @throws \Exception
+     */
     public function addLink(array $data)
     {
 
@@ -44,7 +60,7 @@ class LinkModel
                 'title'       => $data['title'],
                 'description' => $data['description'],
                 'url'         => $data['url'],
-                'userId'      => $data['userId']
+                'userId'      => (integer) $data['userId']
             )
         );
 
@@ -58,6 +74,10 @@ class LinkModel
 
     }
 
+    /**
+     * @param $url
+     * @return array
+     */
     private function getDuplicate($url)
     {
 
