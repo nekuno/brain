@@ -113,7 +113,7 @@ class LinkModel
 
     }
 
-    public function updateLink(array $link)
+    public function updateLink(array $link, $processed = false)
     {
 
         $template = "MATCH (link:Link)"
@@ -121,7 +121,7 @@ class LinkModel
             . " SET link.url = { url }"
             . " , link.title = { title }"
             . " , link.description = { description }"
-            . " , link.processed = 1"
+            . " , link.processed = " . (integer)$processed
             . " RETURN link;";
 
         $query = new Query($this->client, $template, $link);

@@ -44,9 +44,10 @@ class ScrapLinksMetadataCommand extends ApplicationAwareCommand
                     $processor     = new LinkProcessor($scraper);
                     $processedLink = $processor->processLink($linkData);
                     $output->writeln(sprintf('Link %s processed', $linkData['url']));
-                    $linksModel->updateLink($processedLink);
+                    $linksModel->updateLink($processedLink, true);
                     $output->writeln(sprintf('Link %s saved', $processedLink['url']));
                 } catch (\Exception $e) {
+                    $linksModel->updateLink($linkData, true);
                     continue;
                 }
             }
