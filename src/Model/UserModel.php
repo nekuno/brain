@@ -400,8 +400,8 @@ class UserModel
                 collect(num_likes_dislikes)[0] AS max_likes_dislikes
 
                 MATCH
-                (u1:User {qnoow_id: 2}),
-                (u2:User {qnoow_id: 1})
+                (u1:User {qnoow_id: " . $id2 . "}),
+                (u2:User {qnoow_id: " . $id1 . "})
                 OPTIONAL MATCH
                 (u1)-[:LIKES]->(commonLikes:Link)<-[:LIKES]-(u2)
                 OPTIONAL MATCH
@@ -419,7 +419,7 @@ class UserModel
                 max_likes_dislikes AS max_popul
 
                 MATCH
-                (u1:User {qnoow_id: 2})
+                (u1:User {qnoow_id: " . $id2 . "})
                 OPTIONAL MATCH
                 (u1)-[:LIKES|DISLIKES]->(content)
                 OPTIONAL MATCH
@@ -446,7 +446,8 @@ class UserModel
 
                 RETURN
                 divisor2;
-            ";    
+            ";
+
             //Create the Neo4j query object
             $neoQuery = new Query(
                 $this->client,
@@ -458,6 +459,7 @@ class UserModel
             } catch (\Exception $e) {
                 throw $e;
             }
+
             foreach ($result as $row) {
                 $popularityOfUser2ExclusiveContent = $row['divisor2'];
             }
@@ -520,19 +522,23 @@ class UserModel
         /* TODO: execute this query and get response. In the response, each row has a qnoow_id (ids) and its corresponding matching_questions (matchings_questions).
          *   TODO: construct $response with the previous data returned by Neo4j
          *  NOTE: LIMIT can be a variable, it has been set to 10, but can take any value
-MATCH
-(u:User {qnoow_id: 1})
-MATCH
-(u)-[r:MATCHES]-(anyUser:User)
-WITH
-r.matching_questions AS m, anyUser.qnoow_id AS users, r
-RETURN
-users AS ids, m AS matchings_questions
-ORDER BY
-m DESC
-LIMIT 10
-;
+         *
          */
+
+        $query = "
+            MATCH
+            (u:User {qnoow_id: " . $id . "})
+            MATCH
+            (u)-[r:MATCHES]-(anyUser:User)
+            WITH
+            r.matching_questions AS m, anyUser.qnoow_id AS users, r
+            RETURN
+            users AS ids, m AS matchings_questions
+            ORDER BY
+            m DESC
+            LIMIT 10
+            ;
+         ";
 
         $response = array(
             1 => array(
@@ -554,22 +560,26 @@ LIMIT 10
     {
         $this->calculateAllMatchingsBasedOnContent($id);
 
-        /* TODO: execute this query and get response. In the response, each row has a qnoow_id (ids) and its corresponding matching_questions (matchings_questions).
+        /* TODO: execute this query and get response. In the response, each row has a qnoow_id (ids) and its corresponding matching_questions (matchings_content).
          * TODO: construct $response with the previous data returned by Neo4j
          *  NOTE: LIMIT can be a variable, it has been set to 10, but can take any value
-MATCH
-(u:User {qnoow_id: 1})
-MATCH
-(u)-[r:MATCHES]-(anyUser:User)
-WITH
-r.matching_content AS m, anyUser.qnoow_id AS users, r
-RETURN
-users AS ids, m AS matchings_content
-ORDER BY
-m DESC
-LIMIT 10
-;
-          */
+         *
+         */
+
+        $query = "
+            MATCH
+            (u:User {qnoow_id: " . $id . "})
+            MATCH
+            (u)-[r:MATCHES]-(anyUser:User)
+            WITH
+            r.matching_content AS m, anyUser.qnoow_id AS users, r
+            RETURN
+            users AS ids, m AS matchings_content
+            ORDER BY
+            m DESC
+            LIMIT 10
+            ;
+        ";
 
         $response = array(
             1 => array(
@@ -589,14 +599,20 @@ LIMIT 10
      */
     public function getContentRecommendations($id)
     {
+
+
         if($this->getNumberOfSharedContent($id) > (2 * $this->getNumberOfAnsweredQuestions($id)) ){
 
             $this->getUserRecommendationsBasedOnSharedContent($id);
+
+            //TODO: read ids from the response of this function and execute query for those ids
 
         }
         else{
 
             $this->getUserRecommendationsBasedOnAnswers($id);
+
+            //TODO: read ids from the response of this function and execute query for those ids
 
         }
 
@@ -617,12 +633,26 @@ LIMIT 10
      */
     public function getNumberOfAnsweredQuestions($id){
 
+        $query = "
+            MATCH
+            (u:User {qnoow_id: " . $id . "})-[r:RATES]->(q:Question)
+            RETURN
+            count(distinct r) AS quantity;
+        ";
+
     }
 
     /**
      * @param $id id of the user for which we want to know how many contents he or she has shared
      */
     public function  getNumberOfSharedContent($id){
+
+        $query = "
+            MATCH
+            (u:User {qnoow_id: " . $id . "})-[r:LIKES|DISLIKES]->(q:Link)
+            RETURN
+            count(distinct r) AS quantity;
+        ";
 
     }
 
@@ -658,16 +688,34 @@ LIMIT 10
 
     public function getAllUserIdsExceptTheOneOfTheUser($id){
 
-        /*
-MATCH
-(u:User)
-WHERE
-NOT(u.qnoow_id = 'user-test1')
-RETURN
-collect(u.qnoow_id);
-         */
+        $query = "
+            MATCH
+            (u:User)
+            WHERE
+            NOT(u.qnoow_id = " . $id . ")
+            RETURN
+            collect(u.qnoow_id) AS ids;
+        ";
 
-        //TODO: execute the query above and return the array returned by the query as the array returned by this function
+        //TODO: check function behavior at php level
+
+        //Create the Neo4j query object
+        $neoQuery = new Query(
+            $this->client,
+            $query
+        );
+
+        try {
+            $result = $neoQuery->getResultSet();
+        } catch (\Exception $e) {
+            throw $e;
+        }
+
+        foreach ($result as $row) {
+            $response = $row['ids'];
+        }
+
+        return $response;
 
     }
 
