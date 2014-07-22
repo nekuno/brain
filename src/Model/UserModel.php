@@ -462,8 +462,8 @@ class UserModel
                 $popularityOfUser2ExclusiveContent = $row['divisor2'];
             }
 
-            $response['matching'] = sqrt(
-                $unpopularityOfCommonContent^2 / 
+            $matchingValue = sqrt(
+                $unpopularityOfCommonContent^2 /
                 (
                     ($unpopularityOfCommonContent + $popularityOfUser1ExclusiveContent)
                     *
@@ -471,19 +471,34 @@ class UserModel
                 )
             );
 
-            /*
-             * TODO: execute this query after matching calculated:
+            $response['matching'] = $matchingValue;
+
+            //Construct query to store matching
+            $match = "
             MATCH
             (u1:User {qnoow_id: '" . $id1 . "'}),
                     (u2:User {qnoow_id: '" . $id2 . "'})
                 CREATE UNIQUE
             (u1)-[m:MATCHES]-(u2)
                 SET
-                    m.matching_content = $matching ,
+                    m.matching_content = " . $matchingValue . " ,
                     m.timestamp_content = timestamp()
                 RETURN
                     m;
-            */
+            ";
+
+            //Create the Neo4j query object
+            $matchQuery = new Query(
+                $this->client,
+                $match
+            );
+
+            //Execute query
+            try {
+                $matchResult = $matchQuery->getResultSet();
+            } catch (\Exception $e) {
+                throw $e;
+            }
 
         } else {
             $response['matching'] = 0;
