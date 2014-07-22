@@ -22,10 +22,8 @@ class Registry
         $this->entityManager = $entityManager;
     }
 
-    public function registerFetchAttempt($userId, $resource, $links, $error)
+    public function registerFetchAttempt($userId, $resource, $lastItemId = null, $error = false)
     {
-
-        $lastItemId = $links[count($links) - 1]['resourceItemId'];
 
         $registryEntry = new FetchRegistry();
         $registryEntry->setUserId($userId);
