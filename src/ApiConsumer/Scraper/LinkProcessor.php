@@ -14,33 +14,20 @@ class LinkProcessor
     }
 
     /**
-     * @param $linksGroupedByUser
+     * @param array $link
      * @return array
      */
-    public function processLinks(array $linksGroupedByUser = array())
+    public function processLink(array $link)
     {
 
-        $processedLinks = array();
-
-        foreach ($linksGroupedByUser as $user => $userLinks) {
-
-            foreach ($userLinks as $link) {
-
-                $userProcessedLinks[] = $this->hydrateLinkFromScrapedMetadata($link);
-            }
-
-            $processedLinks[$user] = $userProcessedLinks;
-
-        }
-
-        return $processedLinks;
+        return $this->scrapMetadataAndOverrideLinkData($link);
     }
 
     /**
      * @param $link
      * @return array
      */
-    private function hydrateLinkFromScrapedMetadata($link)
+    private function scrapMetadataAndOverrideLinkData($link)
     {
 
         $metadata = $this->getMetadata($link['url']);

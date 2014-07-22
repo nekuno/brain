@@ -38,15 +38,15 @@ class LinkModel
         $duplicate = $this->getDuplicate($data['url']);
 
         if (array() === $duplicate) {
-            $stringQuery = "MATCH (u:User) " .
+            $template = "MATCH (u:User) " .
                 "WHERE u.qnoow_id = {userId}"
                 . " CREATE "
                 . " (l:Link {url: {url}, title: {title}, description: {description}, processed: 0})"
                 . ", (l)-[r:SHARED_BY]->(u) "
                 . " RETURN l;";
         } else {
-            $stringQuery = "MATCH (u:User)" .
-                ", (l:Link) "
+            $template = "MATCH (u:User)"
+                . ", (l:Link) "
                 . " WHERE u.qnoow_id = {userId} AND l.url = {url}"
                 . " CREATE UNIQUE (l)-[r:SHARED_BY]->(u)"
                 . " RETURN l;
@@ -55,12 +55,12 @@ class LinkModel
 
         $query = new Query(
             $this->client,
-            $stringQuery,
+            $template,
             array(
                 'title'       => $data['title'],
                 'description' => $data['description'],
                 'url'         => $data['url'],
-                'userId'      => (integer) $data['userId']
+                'userId'      => (integer)$data['userId']
             )
         );
 
@@ -110,6 +110,92 @@ class LinkModel
         }
 
         return $duplicates;
+
+    }
+
+    public function updateLink(array $link)
+    {
+
+        $template = "MATCH (link:Link)"
+            . " WHERE link.url = { tempId } "
+            . " SET link.url = { url }"
+            . " , link.title = { title }"
+            . " , link.description = { description }"
+            . " , link.processed = 1"
+            . " RETURN link;";
+
+        $query = new Query($this->client, $template, $link);
+
+        return $query->getResultSet();
+
+    }
+
+    public function addMultipleLinks(array $links)
+    {
+
+        $transaction = $this->client->beginTransaction();
+
+        try {
+            foreach ($links as $data) {
+                $duplicate = $this->getDuplicate($data['url']);
+
+                if (array() === $duplicate) {
+                    $template = "MATCH (u:User) " .
+                        "WHERE u.qnoow_id = {userId}"
+                        . " CREATE "
+                        . " (l:Link {url: {url}, title: {title}, description: {description}, processed: 0})"
+                        . ", (l)-[r:SHARED_BY]->(u) "
+                        . " RETURN l;";
+                } else {
+                    $template = "MATCH (u:User)"
+                        . ", (l:Link) "
+                        . " WHERE u.qnoow_id = {userId} AND l.url = {url}"
+                        . " CREATE UNIQUE (l)-[r:SHARED_BY]->(u)"
+                        . " RETURN l;";
+                }
+
+                $query = new Query(
+                    $this->client,
+                    $template,
+                    array(
+                        'title'       => $data['title'],
+                        'description' => $data['description'],
+                        'url'         => $data['url'],
+                        'userId'      => (integer)$data['userId']
+                    )
+                );
+
+                $transaction->addStatements($query);
+            }
+
+            $transaction->commit();
+        } catch (\Exception $e) {
+            throw $e;
+        }
+
+    }
+
+    public function getUnprocessedLinks()
+    {
+
+        $template = "MATCH (link:Link) WHERE link.processed = 0 RETURN link LIMIT 20";
+
+        $query = new Query($this->client, $template);
+
+        $resultSet = $query->getResultSet();
+
+        $unprocessedLinks = array();
+
+        foreach ($resultSet as $row) {
+            $unprocessedLinks[] = array(
+                'url'         => $row['link']->getProperty('url'),
+                'description' => $row['link']->getProperty('description'),
+                'title'       => $row['link']->getProperty('title'),
+                'tempId'          => $row['link']->getProperty('url')
+            );
+        }
+
+        return $unprocessedLinks;
 
     }
 }
