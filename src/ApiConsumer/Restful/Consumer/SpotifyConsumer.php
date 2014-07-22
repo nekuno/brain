@@ -13,7 +13,7 @@ class SpotifyConsumer extends AbstractConsumer implements LinksConsumerInterface
     /**
      * { @inheritdoc }
      */
-    public function fetchLinks($userId = null)
+    public function fetchLinksFromUserFeed($userId = null)
     {
 
         $users = $this->userProvider->getUsersByResource('spotify', $userId);
@@ -49,11 +49,11 @@ class SpotifyConsumer extends AbstractConsumer implements LinksConsumerInterface
                         }
                     }
                 }
-                
+
                 $url = 'https://api.spotify.com/v1/users/'. $user['spotifyID'] . '/starred/tracks';
                 $starredTracks = $this->makeRequestJSON($url);
                 $starredPlaylistTracks = $this->formatResponse($starredTracks);
-                $allTracks = array_merge($starredPlaylistTracks, $allTracks);                
+                $allTracks = array_merge($starredPlaylistTracks, $allTracks);
 
                 $links[$user['id']] = $allTracks;
             } catch (\Exception $e) {
@@ -75,7 +75,7 @@ class SpotifyConsumer extends AbstractConsumer implements LinksConsumerInterface
             if (null !== $item['track']['id']) {
                 $link['url']         = $item['track']['external_urls']['spotify'];
                 $link['title']       = $item['track']['name'];
-                
+
                 $artistList = array();
                 foreach ($item['track']['artists'] as $artist) {
                     $artistList[] = $artist['name'];

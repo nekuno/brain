@@ -19,7 +19,7 @@ class FacebookConsumer extends AbstractConsumer implements LinksConsumerInterfac
     /**
      * { @inheritdoc }
      */
-    public function fetchLinks($userId = null)
+    public function fetchLinksFromUserFeed($userId = null)
     {
 
         $users = $this->userProvider->getUsersByResource('facebook', $userId);

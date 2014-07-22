@@ -28,7 +28,7 @@ class GoogleConsumer extends AbstractConsumer implements LinksConsumerInterface
     /**
      * { @inheritdoc }
      */
-    public function fetchLinks($userId = null)
+    public function fetchLinksFromUserFeed($userId)
     {
 
         $users = $this->userProvider->getUsersByResource('google', $userId);

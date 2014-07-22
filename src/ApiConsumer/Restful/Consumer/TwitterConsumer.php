@@ -28,7 +28,7 @@ class TwitterConsumer extends AbstractConsumer implements LinksConsumerInterface
     /**
      * { @inheritdoc }
      */
-    public function fetchLinks($userId = null)
+    public function fetchLinksFromUserFeed($userId = null)
     {
 
         $users = $this->userProvider->getUsersByResource('twitter', $userId);

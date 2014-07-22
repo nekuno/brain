@@ -11,5 +11,5 @@ interface LinksConsumerInterface
      * @param $userId
      * @return mixed
      */
-    public function fetchLinks($userId = null);
+    public function fetchLinksFromUserFeed($userId);
 }
