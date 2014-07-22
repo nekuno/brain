@@ -6,7 +6,9 @@ use ApiConsumer\Auth\DBUserProvider;
 use ApiConsumer\Registry\Registry;
 use ApiConsumer\Restful\Consumer\ConsumerFactory;
 use ApiConsumer\Storage\DBStorage;
+use Doctrine\ORM\EntityManager;
 use Model\LinkModel;
+use Model\UserModel;
 use Monolog\Logger;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
@@ -55,54 +57,53 @@ class FetchController
             return $app->json(array(), 400);
         }
 
+        /** @var UserModel $userModel */
         $userModel = $app['users.model'];
 
-        if (count($userModel->getById($userId)) === 0) {
+        $hasUser = count($userModel->getById($userId)) > 0;
+        if (false === $hasUser) {
             return $app->json('User not found', 404);
         }
 
-        /** @var $logger Logger */
-        $logger        = $app['monolog'];
-        $entityManager = $app['orm.ems']['mysql_brain'];
-        $registry      = new Registry($entityManager);
-        $storage       = new DBStorage($app['links.model']);
+        /** @var Logger $logger */
+        $logger = $app['monolog'];
 
         $consumer = $this->getConsumer($app, $resource);
-
-        $linksGroupByUser = array();
+        $storage  = new DBStorage($app['links.model']);
+        $registry = new Registry($app['orm.ems']['mysql_brain']);
 
         try {
-            $linksGroupByUser = $consumer->fetchLinks($userId);
+            $logger->debug(sprintf('Fetch attempt for user %d, resource %s', $userId, $resource));
+            $userSharedLinks = $consumer->fetchLinksFromUserFeed($userId);
 
+            $storage->storeLinks($userId, $userSharedLinks);
+            foreach ($storage->getErrors() as $error) {
+                $logger->error(sprintf('Error saving link: ' . $error));
+            }
+
+            $lastItemId = $userSharedLinks[count($userSharedLinks) - 1]['resourceItemId'];
             $registry->registerFetchAttempt(
                 $userId,
                 $resource,
-                $linksGroupByUser[$userId],
+                $lastItemId,
                 false
             );
 
         } catch (\Exception $e) {
+            $logger->addError(sprintf('Error fetching from resource %s', $resource));
+            $logger->error(sprintf('%s', $e->getMessage()));
 
             $registry->registerFetchAttempt(
                 $userId,
                 $resource,
-                $linksGroupByUser[$userId],
+                null,
                 true
             );
 
-            return $app->json(array(), 500);
+            return $app->json('Error', 500);
         }
 
-        $storage->storeLinks($linksGroupByUser);
-
-        $errors = $storage->getErrors();
-        if (array() !== $errors) {
-            foreach ($errors as $error) {
-                $logger->addDebug($error);
-            }
-        }
-
-        return $app->json($linksGroupByUser, 200);
+        return $app->json($userSharedLinks, 200);
     }
 
     /**
