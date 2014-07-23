@@ -42,13 +42,13 @@ class LinkModel
                 "WHERE u.qnoow_id = {userId}"
                 . " CREATE "
                 . " (l:Link {url: {url}, title: {title}, description: {description}, processed: 0})"
-                . ", (l)-[r:LIKES]->(u) "
+                . ", (l)<-[r:LIKES]-(u) "
                 . " RETURN l;";
         } else {
             $stringQuery = "MATCH (u:User)" .
                 ", (l:Link) "
                 . " WHERE u.qnoow_id = {userId} AND l.url = {url}"
-                . " CREATE UNIQUE (l)-[r:LIKES]->(u)"
+                . " CREATE UNIQUE (l)<-[r:LIKES]-(u)"
                 . " RETURN l;
             ";
         }
@@ -83,7 +83,7 @@ class LinkModel
 
         $stringQuery = "
             MATCH
-                (l:Link)-[r:LIKES]->(u)
+                (l:Link)<-[r:LIKES]-(u)
             WHERE l.url = {url}
             RETURN l, u
             LIMIT 1";
