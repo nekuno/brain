@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: adridev
- * Date: 11/07/14
- * Time: 14:31
- */
 
 namespace ApiConsumer\Scraper;
 
@@ -41,11 +35,17 @@ class Scraper
     /**
      * @param $url
      * @param string $method
+     * @throws \Exception
+     * @return $this
      */
     public function initCrawler($url, $method = 'GET')
     {
 
-        $this->crawler = $this->client->request($method, $url);
+        try {
+            $this->crawler = $this->client->request($method, $url);
+        } catch (\Exception $e) {
+            throw $e;
+        }
 
         return $this;
     }

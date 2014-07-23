@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: adridev
- * Date: 28/06/14
- * Time: 18:34
- */
 
 namespace ApiConsumer\Auth;
 
@@ -47,11 +41,13 @@ class DBUserProvider implements UserProviderInterface
         $sql .= ";";
 
         try {
-            $users = $this->driver->fetchAll($sql, $params);
+            if ($userId) {
+                return $this->driver->fetchAssoc($sql, $params);
+            } else {
+                return $this->driver->fetchAll($sql, $params);
+            }
         } catch (\Exception $e) {
             throw $e;
         }
-
-        return $users;
     }
 }

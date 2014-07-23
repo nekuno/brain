@@ -2,60 +2,101 @@
 
 namespace ApiConsumer\Restful\Consumer;
 
+use ApiConsumer\Auth\ResourceOwnerNotConnectedException;
+
 /**
  * Class TwitterConsumer
  *
- * @package Social\API\Consumer
+ * @package ApiConsumer\Restful\Consumer
  */
 class TwitterConsumer extends AbstractConsumer implements LinksConsumerInterface
 {
 
     /**
+     * @var string
+     */
+    private $url = 'https://api.twitter.com/1.1/';
+
+    /**
+     * @var int
+     */
+    private $pageLength = 200;
+
+    /**
      * { @inheritdoc }
      */
-    public function fetchLinks($userId = null)
+    public function fetchLinksFromUserFeed($userId = null)
     {
 
-        $users = $this->userProvider->getUsersByResource('twitter', $userId);
+        $user = $this->userProvider->getUsersByResource('twitter', $userId);
 
-        $links = array();
+        if (!$user['twitterID']) {
+            throw new ResourceOwnerNotConnectedException;
+        }
 
-        foreach ($users as $user) {
+        $this->url .= 'statuses/user_timeline.json';
+        $this->url .= '?count=' . $this->pageLength;
+        $this->url .= '&trim_user=true';
+        $this->url .= '&exclude_replies=true';
+        $this->url .= '&contributor_details=false';
+        $this->url .= '&include_rts=false';
 
-            if (!$user['twitterID']) {
-                continue;
-            }
+        $oauthOptions = array(
+            'legacy'                    => true,
+            'oauth_access_token'        => $user['oauthToken'],
+            'oauth_access_token_secret' => $user['oauthTokenSecret'],
+        );
 
-            $url = 'https://api.twitter.com/1.1/statuses/user_timeline.json';
+        $this->options = array_merge($this->options, $oauthOptions);
 
-            $userOptions = array(
-                'oauth_access_token'        => $user['oauthToken'],
-                'oauth_access_token_secret' => $user['oauthTokenSecret'],
-            );
+        try {
 
-            $oauthData = array_merge($this->options, $userOptions);
+            $rawFeed = $this->getLinksByPage();
 
-            try {
-                $response       = $this->makeRequestJSON($url, $oauthData, true);
-                $links[$userId] = $this->formatResponse($response);
-            } catch (\Exception $e) {
-                throw $e;
-            }
+            $links = $this->parseLinks($rawFeed);
+
+        } catch (\Exception $e) {
+            throw $e;
         }
 
         return $links;
     }
 
     /**
-     * @param array $response
+     * @param null $lastItemId
+     * @return mixed
+     */
+    private function getLinksByPage($lastItemId = null)
+    {
+
+        $url = $this->url;
+        if ($lastItemId) {
+            $url .= '&since_id=' . $lastItemId;
+        }
+
+        $response = $this->makeRequestJSON($url);
+
+        $this->rawFeed = array_merge($this->rawFeed, $response);
+
+        $itemsCount = count($response);
+        if ($itemsCount > 0 && $itemsCount > $this->pageLength) {
+            $lastItem = $response[count($response) - 1];
+
+            return call_user_func(array($this, __FUNCTION__), $lastItem['id_str']);
+        }
+
+        return $this->rawFeed;
+    }
+
+    /**
      * @return array
      */
-    public function formatResponse(array $response = array())
+    public function parseLinks(array $rawFeed)
     {
 
         $formatted = array();
 
-        foreach ($response as $item) {
+        foreach ($rawFeed as $item) {
             if (empty($item['entities']) || empty($item['entities']['urls'][0])) {
                 continue;
             }
@@ -64,10 +105,12 @@ class TwitterConsumer extends AbstractConsumer implements LinksConsumerInterface
                 ? $item['entities']['urls'][0]['expanded_url']
                 : $item['entities']['urls'][0]['url'];
 
-            $link                = array();
-            $link['url']         = $url;
-            $link['title']       = array_key_exists('text', $item) ? $item['text'] : '';
-            $link['description'] = '';
+            $link                   = array();
+            $link['url']            = $url;
+            $link['title']          = array_key_exists('text', $item) ? $item['text'] : null;
+            $link['description']    = null;
+            $link['resourceItemId'] = array_key_exists('id', $item) ? $item['id'] : null;
+            $link['resource']       = 'twitter';
 
             $formatted[] = $link;
         }

@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: adridev
- * Date: 6/26/14
- * Time: 1:30 PM
- */
 
 namespace ApiConsumer\Restful\Consumer;
 
@@ -13,8 +7,18 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Subscriber\Oauth\Oauth1;
 
-class AbstractConsumer
+/**
+ * Class AbstractConsumer
+ *
+ * @package ApiConsumer\Restful\Consumer
+ */
+abstract class AbstractConsumer
 {
+
+    /**
+     * @var array
+     */
+    protected $rawFeed = array();
 
     /** @var UserProviderInterface */
     protected $userProvider;
@@ -25,6 +29,11 @@ class AbstractConsumer
     /** @var array Configuration */
     protected $options = array();
 
+    /**
+     * @param UserProviderInterface $userProvider
+     * @param Client $httpClient
+     * @param array $options
+     */
     public function __construct(UserProviderInterface $userProvider, Client $httpClient, array $options = array())
     {
 
@@ -39,21 +48,19 @@ class AbstractConsumer
      * Fetch last links from user feed on Facebook
      *
      * @param $url
-     * @param $config array
-     * @param $legacy boolean true if Oauth version 1
+     * @throws \GuzzleHttp\Exception\RequestException
      * @return mixed
-     * @throws RequestException
      */
-    public function makeRequestJSON($url, array $config = array(), $legacy = false)
+    public function makeRequestJSON($url)
     {
 
-        if ($legacy) {
+        if (isset($this->options['legacy']) && $this->options['legacy'] === true) {
             $oauth = new Oauth1(
                 [
-                    'consumer_key'    => $config['oauth_consumer_key'],
-                    'consumer_secret' => $config['oauth_consumer_secret'],
-                    'token'           => $config['oauth_access_token'],
-                    'token_secret'    => $config['oauth_access_token_secret']
+                    'consumer_key'    => $this->options['oauth_consumer_key'],
+                    'consumer_secret' => $this->options['oauth_consumer_secret'],
+                    'token'           => $this->options['oauth_access_token'],
+                    'token_secret'    => $this->options['oauth_access_token_secret']
                 ]
             );
 
@@ -61,7 +68,8 @@ class AbstractConsumer
 
             $response = $this->httpClient->get($url, array('auth' => 'oauth'));
         } else {
-            $response = $this->httpClient->get($url);
+            $clientConfig = isset($this->options['headers'])?array('headers' => $this->options['headers']):array();
+            $response = $this->httpClient->get($url, $clientConfig);
         }
 
         try {

@@ -20,9 +20,9 @@ $app['answers.controller'] = $app->share(function () {
     return new Controller\AnswerController;
 });
 
-$app['social.controller'] = $app->share(function () {
+$app['fetch.controller'] = $app->share(function () {
 
-    return new Controller\ContentController;
+    return new Controller\FetchController;
 });
 
 /**

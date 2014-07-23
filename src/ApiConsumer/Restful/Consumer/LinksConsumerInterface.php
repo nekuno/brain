@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: adridev
- * Date: 6/27/14
- * Time: 11:57 AM
- */
 
 namespace ApiConsumer\Restful\Consumer;
 
@@ -17,5 +11,5 @@ interface LinksConsumerInterface
      * @param $userId
      * @return mixed
      */
-    public function fetchLinks($userId = null);
+    public function fetchLinksFromUserFeed($userId);
 }

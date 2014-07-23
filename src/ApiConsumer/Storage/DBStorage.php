@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: adridev
- * Date: 28/06/14
- * Time: 18:27
- */
 
 namespace ApiConsumer\Storage;
 
@@ -36,22 +30,20 @@ class DBStorage implements StorageInterface
     }
 
     /**
-     * @param array $linksGroupedByUser
+     * @param $userId
+     * @param array $links
      * @return array
      */
-    public function storeLinks(array $linksGroupedByUser)
+    public function storeLinks($userId, array $links)
     {
 
-        foreach ($linksGroupedByUser as $user => $userLinks) {
-
-            foreach ($userLinks as $link) {
-                $link['userId'] = $user;
-                try {
-                    $this->model->addLink($link);
-                } catch (\Exception $e) {
-                    $this->errors[] = $this->getFormattedError($link);
-                    continue;
-                }
+        foreach ($links as $link) {
+            $link['userId'] = $userId;
+            try {
+                $this->model->addLink($link);
+            } catch (\Exception $e) {
+                $this->errors[] = $this->getFormattedError($link);
+                continue;
             }
         }
 
@@ -65,6 +57,6 @@ class DBStorage implements StorageInterface
     protected function getFormattedError(array $link)
     {
 
-        return sprintf('Error: adding link with url: %s to DDBB.', $link['url']);
+        return sprintf('Adding link with url: %s to DDBB.', $link['url']);
     }
 }

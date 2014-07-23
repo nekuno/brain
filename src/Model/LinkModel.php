@@ -1,27 +1,37 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: adridev
- * Date: 6/17/14
- * Time: 6:44 PM
- */
 
 namespace Model;
 
 use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
 
+/**
+ * Class LinkModel
+ *
+ * @package Model
+ */
 class LinkModel
 {
 
+    /**
+     * @var \Everyman\Neo4j\Client
+     */
     protected $client;
 
+    /**
+     * @param Client $client
+     */
     public function __construct(Client $client)
     {
 
         $this->client = $client;
     }
 
+    /**
+     * @param array $data
+     * @return \Everyman\Neo4j\Query\ResultSet
+     * @throws \Exception
+     */
     public function addLink(array $data)
     {
 
@@ -31,7 +41,7 @@ class LinkModel
             $stringQuery = "MATCH (u:User) " .
                 "WHERE u.qnoow_id = {userId}"
                 . " CREATE "
-                . " (l:Link {url: {url}, title: {title}, description: {description}})"
+                . " (l:Link {url: {url}, title: {title}, description: {description}, processed: 0})"
                 . ", (l)-[r:LIKES]->(u) "
                 . " RETURN l;";
         } else {
@@ -50,7 +60,7 @@ class LinkModel
                 'title'       => $data['title'],
                 'description' => $data['description'],
                 'url'         => $data['url'],
-                'userId'      => $data['userId']
+                'userId'      => (integer) $data['userId']
             )
         );
 
@@ -64,6 +74,10 @@ class LinkModel
 
     }
 
+    /**
+     * @param $url
+     * @return array
+     */
     private function getDuplicate($url)
     {
 

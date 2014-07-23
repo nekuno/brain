@@ -6,6 +6,11 @@ use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
 use Exception\QueryErrorException;
 
+/**
+ * Class UserModel
+ *
+ * @package Model
+ */
 class UserModel
 {
 
@@ -27,6 +32,7 @@ class UserModel
      * Creates an new User and returns the query result
      *
      * @param array $user
+     * @throws \Exception
      * @return \Everyman\Neo4j\Query\ResultSet
      */
     public function create(array $user = array())
@@ -52,6 +58,10 @@ class UserModel
         return $this->parseResultSet($result);
     }
 
+    /**
+     * @param $resultSet
+     * @return array
+     */
     private function parseResultSet($resultSet)
     {
 
@@ -70,11 +80,19 @@ class UserModel
 
     }
 
+    /**
+     * @param array $user
+     */
     public function update(array $user = array())
     {
         // TODO: do your magic here
     }
 
+    /**
+     * @param null $id
+     * @return array
+     * @throws \Exception
+     */
     public function remove($id = null)
     {
 
@@ -90,6 +108,10 @@ class UserModel
         return $this->parseResultSet($result);
     }
 
+    /**
+     * @return array
+     * @throws \Exception
+     */
     public function getAll()
     {
 
@@ -106,6 +128,11 @@ class UserModel
 
     }
 
+    /**
+     * @param null $id
+     * @return array
+     * @throws \Exception
+     */
     public function getById($id = null)
     {
 
@@ -122,6 +149,12 @@ class UserModel
 
     }
 
+    /**
+     * @param $id1
+     * @param $id2
+     * @return array
+     * @throws \Exception
+     */
     public function getMatchingBetweenTwoUsersBasedOnAnswers($id1, $id2)
     {
 
@@ -217,6 +250,12 @@ class UserModel
 
     }
 
+    /**
+     * @param $id1
+     * @param $id2
+     * @return array
+     * @throws \Exception
+     */
     public function getMatchingBetweenTwoUsersBasedOnSharedContent($id1, $id2)
     {
 

@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: adridev
- * Date: 28/06/14
- * Time: 18:33
- */
 
 namespace ApiConsumer\Auth;
 
@@ -18,5 +12,6 @@ interface UserProviderInterface
      * @param $userId
      * @return mixed
      */
-    function getUsersByResource($resource, $userId = null);
+    public function getUsersByResource($resource, $userId = null);
+
 }

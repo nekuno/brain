@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: adridev
- * Date: 8/07/14
- * Time: 18:13
- */
 
 namespace ApiConsumer\Restful\Consumer;
 
@@ -38,6 +32,9 @@ class ConsumerFactory
                 break;
             case 'google':
                 $consumer = new GoogleConsumer($userProvider, $httpClient);
+                break;
+            case 'spotify':
+                $consumer = new SpotifyConsumer($userProvider, $httpClient);
                 break;
             default:
                 throw new \Exception('Invalid consumer name given');
