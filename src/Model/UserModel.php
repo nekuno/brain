@@ -201,8 +201,7 @@ class UserModel
                     (u2)-[:ACCEPTS]->(commonanswer2:Answer)<-[:ANSWERS]-(u1),
                     (commonanswer2)-[:IS_ANSWER_OF]->(commonquestion2)<-[r2:RATES]-(u2)
                 OPTIONAL MATCH
-                    (u1)-[:ANSWERS]->(:Answer)-[:IS_ANSWER_OF]->(commonquestion:Question)<-[:IS_ANSWER_OF]-(:Answer)<-[:ANSWERS]-(u2),
-                    (u1)-[r3:RATES]->(commonquestion)<-[r4:RATES]-(u2)
+                    (u1)-[r3:RATES]->(:Question)<-[r4:RATES]-(u2)
                 WITH
                     [n1 IN collect(distinct r1) |n1.rating] AS little1_elems,
                     [n2 IN collect(distinct r2) |n2.rating] AS little2_elems,
@@ -582,13 +581,28 @@ class UserModel
             ;
          ";
 
-        $response = array(
-            1 => array(
-                'id' => '1',
-                'matching' => '0.89'
-            )
+        //Create the Neo4j query object
+        $topUsersQuery = new Query(
+            $this->client,
+            $query
         );
 
+        //Execute query
+        try {
+            $topUsersResult = $topUsersQuery->getResultSet();
+        } catch (\Exception $e) {
+            throw $e;
+        }
+
+        $response = array();
+        foreach ($topUsersResult as $row)  {
+            $user    = array(
+                'id' => $row['ids'],
+                'matching' => $row['matchings_questions'],
+            );
+            $response[] = $user;
+        }
+        
         return $response;
     }
 
