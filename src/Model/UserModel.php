@@ -339,6 +339,7 @@ class UserModel
                 RETURN
                     collect(distinct dividend) AS dividend;
             ";
+
             //Create the Neo4j query object
             $neoQuery = new Query(
                 $this->client,
@@ -352,7 +353,7 @@ class UserModel
                 throw $e;
             }
             foreach ($result as $row) {
-                $unpopularityOfCommonContent = $row['dividend'];
+                $unpopularityOfCommonContent = $row['dividend'][0];
             }
 
             $queryPopularityOfUser1ExclusiveContent = "
@@ -412,6 +413,7 @@ class UserModel
                 RETURN
                 divisor1;
             ";
+
             //Create the Neo4j query object
             $neoQuery = new Query(
                 $this->client,
@@ -423,6 +425,8 @@ class UserModel
             } catch (\Exception $e) {
                 throw $e;
             }
+
+            $popularityOfUser1ExclusiveContent = 0;
             foreach ($result as $row) {
                 $popularityOfUser1ExclusiveContent = $row['divisor1'];
             }
@@ -497,6 +501,7 @@ class UserModel
                 throw $e;
             }
 
+            $popularityOfUser2ExclusiveContent = 0;
             foreach ($result as $row) {
                 $popularityOfUser2ExclusiveContent = $row['divisor2'];
             }
