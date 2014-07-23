@@ -43,18 +43,22 @@ class ScrapLinksMetadataCommand extends ApplicationAwareCommand
                     $scraper       = new Scraper($goutte);
                     $processor     = new LinkProcessor($scraper);
                     $processedLink = $processor->processLink($linkData);
-                    $output->writeln(sprintf('Link %s processed', $linkData['url']));
-                    $linksModel->updateLink($processedLink, true);
-                    $output->writeln(sprintf('Link %s saved', $processedLink['url']));
+                    $output->writeln(sprintf('Success: Link %s processed', $linkData['url']));
                 } catch (\Exception $e) {
+                    $output->writeln(sprintf('Error: Link %s not processed', $linkData['url']));
                     $linksModel->updateLink($linkData, true);
                     continue;
                 }
+
+                try {
+                    $linksModel->updateLink($processedLink, true);
+                    $output->writeln(sprintf('Success: Link %s saved', $processedLink['url']));
+                } catch (\Exception $e) {
+                    $output->writeln(sprintf('Error: Link %s not saved', $processedLink['url']));
+                }
+
             }
             call_user_func_array(array($this, 'execute'), array($input, $output));
         }
-
-        $output->writeln('Success!');
     }
-
 }
