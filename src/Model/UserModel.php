@@ -518,11 +518,11 @@ class UserModel
 
             //Construct query to store matching
             $match = "
-            MATCH
-            (u1:User {qnoow_id: '" . $id1 . "'}),
-                    (u2:User {qnoow_id: '" . $id2 . "'})
+                MATCH
+                    (u1:User {qnoow_id: " . $id1 . "}),
+                    (u2:User {qnoow_id: " . $id2 . "})
                 CREATE UNIQUE
-            (u1)-[m:MATCHES]-(u2)
+                    (u1)-[m:MATCHES]-(u2)
                 SET
                     m.matching_content = " . $matchingValue . " ,
                     m.timestamp_content = timestamp()
@@ -560,17 +560,12 @@ class UserModel
     {
         $this->calculateAllMatchingsBasedOnAnswers($id);
 
-        /* TODO: execute this query and get response. In the response, each row has a qnoow_id (ids) and its corresponding matching_questions (matchings_questions).
-         *   TODO: construct $response with the previous data returned by Neo4j
-         *  NOTE: LIMIT can be a variable, it has been set to 10, but can take any value
-         *
-         */
-
         $query = "
             MATCH
             (u:User {qnoow_id: " . $id . "})
             MATCH
             (u)-[r:MATCHES]-(anyUser:User)
+            WHERE r.matching_questions > 0
             WITH
             r.matching_questions AS m, anyUser.qnoow_id AS users, r
             RETURN
@@ -602,7 +597,7 @@ class UserModel
             );
             $response[] = $user;
         }
-        
+
         return $response;
     }
 
@@ -616,17 +611,12 @@ class UserModel
     {
         $this->calculateAllMatchingsBasedOnContent($id);
 
-        /* TODO: execute this query and get response. In the response, each row has a qnoow_id (ids) and its corresponding matching_questions (matchings_content).
-         * TODO: construct $response with the previous data returned by Neo4j
-         *  NOTE: LIMIT can be a variable, it has been set to 10, but can take any value
-         *
-         */
-
         $query = "
             MATCH
             (u:User {qnoow_id: " . $id . "})
             MATCH
             (u)-[r:MATCHES]-(anyUser:User)
+            WHERE r.matching_content > 0
             WITH
             r.matching_content AS m, anyUser.qnoow_id AS users, r
             RETURN
@@ -637,12 +627,27 @@ class UserModel
             ;
         ";
 
-        $response = array(
-            1 => array(
-                'id' => '1',
-                'matching' => '0.89'
-            )
+        //Create the Neo4j query object
+        $topUsersQuery = new Query(
+            $this->client,
+            $query
         );
+
+        //Execute query
+        try {
+            $topUsersResult = $topUsersQuery->getResultSet();
+        } catch (\Exception $e) {
+            throw $e;
+        }
+
+        $response = array();
+        foreach ($topUsersResult as $row)  {
+            $user    = array(
+                'id' => $row['ids'],
+                'matching' => $row['matchings_content'],
+            );
+            $response[] = $user;
+        }
 
         return $response;
     }
