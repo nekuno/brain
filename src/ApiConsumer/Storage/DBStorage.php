@@ -37,7 +37,7 @@ class DBStorage implements StorageInterface
     public function storeLinks($userId, array $links)
     {
 
-        foreach ($links as $link) {
+        foreach ($links as &$link) {
             $link['userId'] = $userId;
             try {
                 $this->model->addLink($link);
