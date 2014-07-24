@@ -660,33 +660,68 @@ class UserModel
      */
     public function getContentRecommendations($id)
     {
-
-
         if($this->getNumberOfSharedContent($id) > (2 * $this->getNumberOfAnsweredQuestions($id)) ){
 
-            $this->getUserRecommendationsBasedOnSharedContent($id);
+            $query = "
+                MATCH
+                (u:User {qnoow_id: " . $id . "})-[m:MATCHES]-(v:User)
+                WHERE
+                has(m.matching_content)
+                MATCH
+                (v)-[:LIKES]->(c:Link)
+                WHERE
+                NOT (u)-[:LIKES]->(c)
+                RETURN
+                c AS content,
+                m.matching_content AS match,
+                v AS users
+                ORDER BY
+                match;
+            ";
 
-            //TODO: read ids from the response of this function and execute query for those ids
+        } else {
 
+            $query = "
+                MATCH
+                (u:User {qnoow_id: " . $id . "})-[m:MATCHES]-(v:User)
+                WHERE
+                has(m.matching_questions)
+                MATCH
+                (v)-[:LIKES]->(c:Link)
+                WHERE
+                NOT (u)-[:LIKES]->(c)
+                RETURN
+                c AS content,
+                m.matching_questions AS match,
+                v AS users
+                ORDER BY
+                match;
+            ";
         }
-        else{
 
-            $this->getUserRecommendationsBasedOnAnswers($id);
-
-            //TODO: read ids from the response of this function and execute query for those ids
-
-        }
-
-
-        $response = array(
-            1 => array(
-                'title' => 'Google',
-                'url' => 'http://google.com',
-                'description' => 'Web search engine'
-            )
+        $neoQuery = new Query(
+            $this->client,
+            $query
         );
 
-        return $response;
+        //Execute query
+        try {
+            $result = $neoQuery->getResultSet();
+        } catch (\Exception $e) {
+            throw $e;
+        }
+
+        $contentRecommendations = array();
+        foreach ($result as $row)  {
+            $link = array();
+            $link['url'] = $row['content']->getProperty('url');
+            $link['title'] = $row['content']->getProperty('title');
+            $link['description'] = $row['content']->getProperty('description');
+            
+            $contentRecommendations[] = $link;
+        }
+
+        return $contentRecommendations;
     }
 
     /**
@@ -701,6 +736,24 @@ class UserModel
             count(distinct r) AS quantity;
         ";
 
+        $neoQuery = new Query(
+            $this->client,
+            $query
+        );
+
+        //Execute query
+        try {
+            $result = $neoQuery->getResultSet();
+        } catch (\Exception $e) {
+            throw $e;
+        }
+
+        $numberOfAnsweredQuestions = 0;
+        foreach ($result as $row)  {
+            $numberOfAnsweredQuestions = $row['quantity'];
+        }
+
+        return $numberOfAnsweredQuestions;
     }
 
     /**
@@ -715,6 +768,24 @@ class UserModel
             count(distinct r) AS quantity;
         ";
 
+        $neoQuery = new Query(
+            $this->client,
+            $query
+        );
+
+        //Execute query
+        try {
+            $result = $neoQuery->getResultSet();
+        } catch (\Exception $e) {
+            throw $e;
+        }
+
+        $numberOfSharedQuestions = 0;
+        foreach ($result as $row)  {
+            $numberOfSharedQuestions = $row['quantity'];
+        }
+
+        return $numberOfSharedQuestions;
     }
 
     /**
