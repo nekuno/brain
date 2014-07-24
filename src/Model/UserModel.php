@@ -660,8 +660,6 @@ class UserModel
      */
     public function getContentRecommendations($id)
     {
-
-
         if($this->getNumberOfSharedContent($id) > (2 * $this->getNumberOfAnsweredQuestions($id)) ){
 
             $query = "
@@ -681,8 +679,7 @@ class UserModel
                 match;
             ";
 
-        }
-        else{
+        } else {
 
             $query = "
                 MATCH
@@ -700,20 +697,31 @@ class UserModel
                 ORDER BY
                 match;
             ";
-
         }
 
-        //TODO: execute appropriate query and build response with content - ONLY the content
-        
-        $response = array(
-            1 => array(
-                'title' => 'Google',
-                'url' => 'http://google.com',
-                'description' => 'Web search engine'
-            )
+        $neoQuery = new Query(
+            $this->client,
+            $query
         );
 
-        return $response;
+        //Execute query
+        try {
+            $result = $neoQuery->getResultSet();
+        } catch (\Exception $e) {
+            throw $e;
+        }
+
+        $contentRecommendations = array();
+        foreach ($result as $row)  {
+            $link = array();
+            $link['url'] = $row['content']->getProperty('url');
+            $link['title'] = $row['content']->getProperty('title');
+            $link['description'] = $row['content']->getProperty('description');
+            
+            $contentRecommendations[] = $link;
+        }
+
+        return $contentRecommendations;
     }
 
     /**
@@ -728,6 +736,24 @@ class UserModel
             count(distinct r) AS quantity;
         ";
 
+        $neoQuery = new Query(
+            $this->client,
+            $query
+        );
+
+        //Execute query
+        try {
+            $result = $neoQuery->getResultSet();
+        } catch (\Exception $e) {
+            throw $e;
+        }
+
+        $numberOfAnsweredQuestions = 0;
+        foreach ($result as $row)  {
+            $numberOfAnsweredQuestions = $row['quantity'];
+        }
+
+        return $numberOfAnsweredQuestions;
     }
 
     /**
@@ -742,6 +768,24 @@ class UserModel
             count(distinct r) AS quantity;
         ";
 
+        $neoQuery = new Query(
+            $this->client,
+            $query
+        );
+
+        //Execute query
+        try {
+            $result = $neoQuery->getResultSet();
+        } catch (\Exception $e) {
+            throw $e;
+        }
+
+        $numberOfSharedQuestions = 0;
+        foreach ($result as $row)  {
+            $numberOfSharedQuestions = $row['quantity'];
+        }
+
+        return $numberOfSharedQuestions;
     }
 
     /**
