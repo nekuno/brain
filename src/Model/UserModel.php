@@ -664,20 +664,47 @@ class UserModel
 
         if($this->getNumberOfSharedContent($id) > (2 * $this->getNumberOfAnsweredQuestions($id)) ){
 
-            $this->getUserRecommendationsBasedOnSharedContent($id);
-
-            //TODO: read ids from the response of this function and execute query for those ids
+            $query = "
+                MATCH
+                (u:User {qnoow_id: " . $id . "})-[m:MATCHES]-(v:User)
+                WHERE
+                has(m.matching_content)
+                MATCH
+                (v)-[:LIKES]->(c:Link)
+                WHERE
+                NOT (u)-[:LIKES]->(c)
+                RETURN
+                c AS content,
+                m.matching_content AS match,
+                v AS users
+                ORDER BY
+                match;
+            ";
 
         }
         else{
 
-            $this->getUserRecommendationsBasedOnAnswers($id);
-
-            //TODO: read ids from the response of this function and execute query for those ids
+            $query = "
+                MATCH
+                (u:User {qnoow_id: " . $id . "})-[m:MATCHES]-(v:User)
+                WHERE
+                has(m.matching_questions)
+                MATCH
+                (v)-[:LIKES]->(c:Link)
+                WHERE
+                NOT (u)-[:LIKES]->(c)
+                RETURN
+                c AS content,
+                m.matching_questions AS match,
+                v AS users
+                ORDER BY
+                match;
+            ";
 
         }
 
-
+        //TODO: execute appropriate query and build response with content - ONLY the content
+        
         $response = array(
             1 => array(
                 'title' => 'Google',
