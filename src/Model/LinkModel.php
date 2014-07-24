@@ -38,8 +38,8 @@ class LinkModel
         $duplicate = $this->getDuplicate($data['url']);
 
         if (array() === $duplicate) {
-            $template = "MATCH (u:User) " .
-                "WHERE u.qnoow_id = {userId}"
+            $template = "MATCH (u:User)"
+                . " WHERE u.qnoow_id = {userId}"
                 . " CREATE "
                 . " (l:Link {url: {url}, title: {title}, description: {description}, processed: 0})"
                 . ", (u)-[r:LIKES]->(l) "
@@ -96,20 +96,20 @@ class LinkModel
 
         $result = $query->getResultSet();
 
-        $duplicates = array();
+        $duplicate = array();
 
         foreach ($result as $row) {
-            $duplicate            = array();
-            $duplicate['userId']  = $row['u']->getProperty('qnoow_id');
-            $duplicate['linkUrl'] = $row['l']->getProperty('url');
-            $duplicates[]         = $duplicate;
+            $link            = array();
+            $link['userId']  = $row['u']->getProperty('qnoow_id');
+            $link['linkUrl'] = $row['l']->getProperty('url');
+            $duplicate[]         = $link;
         }
 
-        if (count($duplicates) > 0) {
-            return $duplicates[0];
+        if (count($duplicate) > 0) {
+            return $duplicate[0];
         }
 
-        return $duplicates;
+        return $duplicate;
 
     }
 
@@ -140,8 +140,8 @@ class LinkModel
                 $duplicate = $this->getDuplicate($data['url']);
 
                 if (array() === $duplicate) {
-                    $template = "MATCH (u:User) " .
-                        "WHERE u.qnoow_id = {userId}"
+                    $template = "MATCH (u:User)"
+                        . " WHERE u.qnoow_id = {userId}"
                         . " CREATE "
                         . " (l:Link {url: {url}, title: {title}, description: {description}, processed: 0})"
                         . ", (l)<-[r:LIKES]-(u) "
