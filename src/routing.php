@@ -19,5 +19,5 @@ $app->post('/questions/answers', 'questions.controller:answerAction');
 $app->post('/questions', 'questions.controller:addAction');
 
 // Content routes
-$app->post('/add/links', 'fetch.controller:addLink');
+$app->post('/add/links', 'fetch.controller:addLinkAction');
 $app->get('/fetch/links', 'fetch.controller:fetchLinksAction')->value('userId', null)->value('resource', null);
