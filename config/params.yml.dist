@@ -21,3 +21,10 @@ db.neo4j.pass: 'jgysJFcDujHaVrdP2DC2'
 ## Twitter
 twitter.consumer_key: 'm9NY9ZghlVeYFVk8fbPp8pp1g'
 twitter.consumer_secret: 'yQ5XBabTj1vzCCBVeJoqX9Bli4zcjVWsF6FxHvPtZwkAJseu1l'
+
+## Facebook App
+facebook.app_id: '525923770862645'
+facebook.app_secret: '1b5ed9309224e67f698848d85f7660a5'
+facebook.verify_token: 'toChangeRandomString'
+facebook.base_url: 'https://graph.facebook.com/v2.0'
+
