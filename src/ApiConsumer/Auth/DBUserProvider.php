@@ -29,9 +29,7 @@ class DBUserProvider implements UserProviderInterface
             " INNER JOIN user_access_tokens AS ut ON u.id = ut.user_id" .
             " WHERE ut.resourceOwner = :resource";
 
-        $params = array(
-            ':resource' => $resource
-        );
+        $params[':resource'] = $resource;
 
         if (null !== $userId) {
             $sql .= " AND u.id = :userId";

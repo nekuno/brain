@@ -6,7 +6,6 @@ use ApiConsumer\Auth\DBUserProvider;
 use ApiConsumer\Registry\Registry;
 use ApiConsumer\Restful\Consumer\ConsumerFactory;
 use ApiConsumer\Storage\DBStorage;
-use Doctrine\ORM\EntityManager;
 use Model\LinkModel;
 use Model\UserModel;
 use Monolog\Logger;
@@ -24,7 +23,7 @@ class FetchController
     /**
      * Add link action
      */
-    public function addLink(Request $request, Application $app)
+    public function addLinkAction(Request $request, Application $app)
     {
 
         $data = $request->request->all();

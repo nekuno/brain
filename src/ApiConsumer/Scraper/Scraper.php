@@ -35,17 +35,12 @@ class Scraper
     /**
      * @param $url
      * @param string $method
-     * @throws \Exception
      * @return $this
      */
     public function initCrawler($url, $method = 'GET')
     {
 
-        try {
-            $this->crawler = $this->client->request($method, $url);
-        } catch (\Exception $e) {
-            throw $e;
-        }
+        $this->crawler = $this->client->request($method, $url);
 
         return $this;
     }
