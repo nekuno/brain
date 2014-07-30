@@ -15,7 +15,12 @@ class TwitterConsumer extends AbstractConsumer implements LinksConsumerInterface
     /**
      * @var string
      */
-    private $url = 'https://api.twitter.com/1.1/';
+    private $baseUrl = 'https://api.twitter.com/1.1/';
+
+    /**
+     * @var string
+     */
+    private $url = null;
 
     /**
      * @var int
@@ -34,6 +39,7 @@ class TwitterConsumer extends AbstractConsumer implements LinksConsumerInterface
             throw new ResourceOwnerNotConnectedException;
         }
 
+        $this->url = $this->baseUrl;
         $this->url .= 'statuses/user_timeline.json';
         $this->url .= '?count=' . $this->pageLength;
         $this->url .= '&trim_user=true';

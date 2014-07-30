@@ -15,7 +15,12 @@ class GoogleConsumer extends AbstractConsumer implements LinksConsumerInterface
     /**
      * @var string
      */
-    private $url = 'https://www.googleapis.com/plus/v1/people/';
+    private $baseUrl = 'https://www.googleapis.com/plus/v1/people/';
+
+    /**
+     * @var string
+     */
+    private $url = null;
 
     /**
      * @var int
@@ -66,6 +71,7 @@ class GoogleConsumer extends AbstractConsumer implements LinksConsumerInterface
             $user['oauthToken'] = $this->refreshAcessToken($user);
         }
 
+        $this->url = $this->baseUrl;
         $this->url .= $user['googleID'];
         $this->url .= '/activities/public';
         $this->url .= '?access_token=' . $user['oauthToken'];
