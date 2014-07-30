@@ -3,6 +3,7 @@
 namespace ApiConsumer\Auth;
 
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\DBALException;
 
 class DBUserProvider implements UserProviderInterface
 {
@@ -33,7 +34,7 @@ class DBUserProvider implements UserProviderInterface
 
         if (null !== $userId) {
             $sql .= " AND u.id = :userId";
-            $params[':userId'] = $userId;
+            $params[':userId'] = (int) $userId;
         }
 
         $sql .= ";";
@@ -44,7 +45,7 @@ class DBUserProvider implements UserProviderInterface
             } else {
                 return $this->driver->fetchAll($sql, $params);
             }
-        } catch (\Exception $e) {
+        } catch (DBALException $e) {
             throw $e;
         }
     }

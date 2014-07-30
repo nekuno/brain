@@ -80,7 +80,13 @@ class FetchController
                 $logger->error(sprintf('Error saving link: ' . $error));
             }
 
-            $lastItemId = $userSharedLinks[count($userSharedLinks) - 1]['resourceItemId'];
+            $numLinks = count($userSharedLinks);
+            if ($numLinks) {
+                $lastItemId = $userSharedLinks[$numLinks - 1]['resourceItemId'];
+            } else {
+                $lastItemId = null;
+            }
+
             $registry->registerFetchAttempt(
                 $userId,
                 $resource,
@@ -89,8 +95,7 @@ class FetchController
             );
 
         } catch (\Exception $e) {
-            $logger->addError(sprintf('Error fetching from resource %s', $resource));
-            $logger->error(sprintf('%s', $e->getMessage()));
+            $logger->error(sprintf('Error fetching from resource %s with message: %s', $resource, $e->getMessage()));
 
             $registry->registerFetchAttempt(
                 $userId,
@@ -99,7 +104,7 @@ class FetchController
                 true
             );
 
-            return $app->json('Error', 500);
+            return $app->json("An error occurred", 500);
         }
 
         return $app->json($userSharedLinks, 200);
