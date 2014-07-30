@@ -35,7 +35,7 @@ google:
 
 ## Facebook App
 facebook:
-	app_id: '525923770862645'
-	app_secret: '1b5ed9309224e67f698848d85f7660a5'
-	verify_token: 'toChangeRandomString'
-	base_url: 'https://graph.facebook.com/v2.0'
+    app_id: '525923770862645'
+    app_secret: '1b5ed9309224e67f698848d85f7660a5'
+    verify_token: 'toChangeRandomString'
+    base_url: 'https://graph.facebook.com/v2.0'
