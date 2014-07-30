@@ -19,5 +19,16 @@ db.neo4j.user: 'qnoow'
 db.neo4j.pass: 'jgysJFcDujHaVrdP2DC2'
 
 ## Twitter
-twitter.consumer_key: 'm9NY9ZghlVeYFVk8fbPp8pp1g'
-twitter.consumer_secret: 'yQ5XBabTj1vzCCBVeJoqX9Bli4zcjVWsF6FxHvPtZwkAJseu1l'
+twitter:
+    consumer_key: 'm9NY9ZghlVeYFVk8fbPp8pp1g'
+    consumer_secret: 'yQ5XBabTj1vzCCBVeJoqX9Bli4zcjVWsF6FxHvPtZwkAJseu1l'
+
+##Spotify
+spotify:
+    consumer_key: '2cc22e2706704d39998c990457530a9a'
+    consumer_secret: '47189c30d7f84d7ca4c4436309c0dc3c'
+
+##Google
+google:
+    consumer_key: '556826433000.apps.googleusercontent.com'
+    consumer_secret: 'oNAbbRwxxZD9Ntyj7D4yXq1f'

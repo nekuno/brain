@@ -118,12 +118,8 @@ class FetchController
         $httpClient   = $app['guzzle.client'];
 
         $options = array();
-
-        if ($resource == 'twitter') {
-            $options = array(
-                'oauth_consumer_key'    => $app['twitter.consumer_key'],
-                'oauth_consumer_secret' => $app['twitter.consumer_secret'],
-            );
+        if (isset($app[$resource])) {
+            $options = $app[$resource];
         }
 
         return ConsumerFactory::create($resource, $userProvider, $httpClient, $options);

@@ -28,13 +28,13 @@ class ConsumerFactory
                 $consumer = new TwitterConsumer($userProvider, $httpClient, $options);
                 break;
             case 'facebook':
-                $consumer = new FacebookConsumer($userProvider, $httpClient);
+                $consumer = new FacebookConsumer($userProvider, $httpClient, $options);
                 break;
             case 'google':
-                $consumer = new GoogleConsumer($userProvider, $httpClient);
+                $consumer = new GoogleConsumer($userProvider, $httpClient, $options);
                 break;
             case 'spotify':
-                $consumer = new SpotifyConsumer($userProvider, $httpClient);
+                $consumer = new SpotifyConsumer($userProvider, $httpClient, $options);
                 break;
             default:
                 throw new \Exception('Invalid consumer name given');

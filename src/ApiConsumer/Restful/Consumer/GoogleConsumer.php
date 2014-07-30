@@ -23,6 +23,34 @@ class GoogleConsumer extends AbstractConsumer implements LinksConsumerInterface
     private $pageLength = 20;
 
     /**
+     * Refresh Access Token
+     *
+     * @param $user
+     * @return string newAccessToken
+     */
+    private function refreshAcessToken($user)
+    {
+        $url = 'https://accounts.google.com/o/oauth2/token';
+        $parameters = array(
+            'refresh_token' => $user['refreshToken'],
+            'grant_type' => 'refresh_token',
+            'client_id' => $this->options['consumer_key'],
+            'client_secret' => $this->options['consumer_secret'],
+        );
+
+        $response = $this->httpClient->post($url, array('body' => $parameters));
+        $data = $response->json();
+
+        $userId  = $user['id'];
+        $accessToken = $data['access_token'];
+        $creationTime = time();
+        $expirationTime = time() + $data['expires_in'];
+        $this->userProvider->updateAccessToken('google', $userId, $accessToken, $creationTime, $expirationTime);
+
+        return $accessToken;
+    }
+
+    /**
      * { @inheritdoc }
      */
     public function fetchLinksFromUserFeed($userId)
@@ -32,6 +60,10 @@ class GoogleConsumer extends AbstractConsumer implements LinksConsumerInterface
 
         if (!$user['googleID']) {
             throw new ResourceOwnerNotConnectedException;
+        }
+
+        if ($user['expireTime'] <= time()) {
+            $user['oauthToken'] = $this->refreshAcessToken($user);
         }
 
         $this->url .= $user['googleID'];

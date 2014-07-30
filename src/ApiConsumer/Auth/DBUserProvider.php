@@ -50,4 +50,34 @@ class DBUserProvider implements UserProviderInterface
             throw $e;
         }
     }
+
+    /**
+     * { @inheritdoc }
+     */
+    public function updateAccessToken($resource, $userId, $acessToken, $creationTime, $expirationTime )
+    {
+
+        $sql = "UPDATE  user_access_tokens " .
+            " SET oauthToken = :accessToken, " .
+                " createdTime = :creationTime, " .
+                " expireTime = :expirationTime " .
+            " WHERE resourceOwner = :resource AND " .
+                "user_id = :userId;";
+
+        $params = array(
+            ':accessToken' => $acessToken,
+            ':creationTime' => $creationTime,
+            ':expirationTime' => $expirationTime,
+            ':resource' => $resource,
+            ':userId' => $userId,
+        );
+
+        try {
+
+            return $this->driver->executeUpdate($sql, $params);
+            
+        } catch (\Exception $e) {
+            throw $e;
+        }
+    }
 }
