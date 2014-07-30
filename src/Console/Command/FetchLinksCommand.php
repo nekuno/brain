@@ -40,8 +40,8 @@ class FetchLinksCommand extends ApplicationAwareCommand
         /** @var $logger Logger */
         $logger = $this->app['monolog'];
 
-        $registry = new Registry($this->app['orm.ems']['mysql_brain']);
-        $storage  = new DBStorage($this->app['links.model']);
+        $registry     = new Registry($this->app['orm.ems']['mysql_brain']);
+        $storage      = new DBStorage($this->app['links.model']);
         $consumer = $this->getConsumer($this->app, $resource);
 
         $userProvider = new DBUserProvider($this->app['dbs']['mysql_social']);
@@ -49,6 +49,8 @@ class FetchLinksCommand extends ApplicationAwareCommand
 
         foreach ($users as $user) {
             try {
+                $consumer = $this->getConsumer($this->app, $resource);
+
                 $logger->debug(sprintf('Fetch attempt for user %d, resource %s', $user['id'], $resource));
 
                 $userSharedLinks = $consumer->fetchLinksFromUserFeed($user['id']);
