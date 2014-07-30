@@ -19,16 +19,16 @@ class FetchLinksCommand extends ApplicationAwareCommand
     {
 
         $this->setName('fetch:links')
-            ->setDescription("Fetch links from given resource owner")
-            ->setDefinition(
-                array(
-                    new InputOption(
-                        'resource',
-                        null,
-                        InputOption::VALUE_REQUIRED,
-                        'The resource owner which should fetch links'
-                    ),
-                )
+             ->setDescription("Fetch links from given resource owner")
+             ->setDefinition(
+             array(
+                 new InputOption(
+                     'resource',
+                     null,
+                     InputOption::VALUE_REQUIRED,
+                     'The resource owner which should fetch links'
+                 ),
+             )
             );
     }
 
@@ -38,14 +38,12 @@ class FetchLinksCommand extends ApplicationAwareCommand
         $resource = $input->getOption('resource');
 
         /** @var $logger Logger */
-        $logger = $this->app['monolog'];
-
+        $logger       = $this->app['monolog'];
+        $userProvider = new DBUserProvider($this->app['dbs']['mysql_social']);
         $registry     = new Registry($this->app['orm.ems']['mysql_brain']);
         $storage      = new DBStorage($this->app['links.model']);
-        $consumer = $this->getConsumer($this->app, $resource);
 
-        $userProvider = new DBUserProvider($this->app['dbs']['mysql_social']);
-        $users        = $userProvider->getUsersByResource($resource);
+        $users = $userProvider->getUsersByResource($resource);
 
         foreach ($users as $user) {
             try {
@@ -55,33 +53,48 @@ class FetchLinksCommand extends ApplicationAwareCommand
 
                 $userSharedLinks = $consumer->fetchLinksFromUserFeed($user['id']);
 
+                $output->writeln(sprintf('Fetched links for user %s from resource %s', $user['id'], $resource));
+
                 $storage->storeLinks($user['id'], $userSharedLinks);
                 foreach ($storage->getErrors() as $error) {
                     $logger->error(sprintf('Error saving link: ' . $error));
                 }
 
-                $lastItemId = $userSharedLinks[count($userSharedLinks) - 1]['resourceItemId'];
+                $numLinks = count($userSharedLinks);
+                if ($numLinks) {
+                    $lastItemId = $userSharedLinks[$numLinks - 1]['resourceItemId'];
+                } else {
+                    $lastItemId = null;
+                }
                 $registry->registerFetchAttempt(
-                    $user['id'],
-                    $resource,
-                    $lastItemId,
-                    false
+                         $user['id'],
+                         $resource,
+                         $lastItemId,
+                         false
                 );
-                $output->writeln('Success!');
 
             } catch (\Exception $e) {
                 $logger->addError(sprintf('Error fetching from resource %s', $resource));
                 $logger->error(sprintf('%s', $e->getMessage()));
 
                 $registry->registerFetchAttempt(
-                    $user['id'],
-                    $resource,
-                    null,
-                    true
+                         $user['id'],
+                         $resource,
+                         null,
+                         true
                 );
-                $output->writeln($e->getMessage());
+                $output->writeln(
+                       sprintf(
+                           'Error fetching links for user %s with message: ' . $e->getMessage(),
+                           $user['id']
+                       )
+                );
+                continue;
             }
         }
+
+        $output->writeln('Success!');
+
     }
 
     /**
