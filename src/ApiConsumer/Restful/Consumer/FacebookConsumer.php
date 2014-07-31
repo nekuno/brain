@@ -15,7 +15,12 @@ class FacebookConsumer extends AbstractConsumer implements LinksConsumerInterfac
     /**
      * @var string API base url
      */
-    private $url = 'https://graph.facebook.com/v2.0/';
+    private $baseUrl = 'https://graph.facebook.com/v2.0/';
+
+    /**
+     * @var string current user feed url
+     */
+    private $url;
 
     /**
      * @var int
@@ -34,6 +39,7 @@ class FacebookConsumer extends AbstractConsumer implements LinksConsumerInterfac
             throw new ResourceOwnerNotConnectedException;
         }
 
+        $this->url = $this->baseUrl;
         $this->url .= $user['facebookID'];
         $this->url .= '/links';
         $this->url .= '?access_token=' . $user['oauthToken'];
