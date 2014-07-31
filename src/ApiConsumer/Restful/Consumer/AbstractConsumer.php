@@ -57,8 +57,8 @@ abstract class AbstractConsumer
         if (isset($this->options['legacy']) && $this->options['legacy'] === true) {
             $oauth = new Oauth1(
                 [
-                    'consumer_key'    => $this->options['oauth_consumer_key'],
-                    'consumer_secret' => $this->options['oauth_consumer_secret'],
+                    'consumer_key'    => $this->options['consumer_key'],
+                    'consumer_secret' => $this->options['consumer_secret'],
                     'token'           => $this->options['oauth_access_token'],
                     'token_secret'    => $this->options['oauth_access_token_secret']
                 ]
