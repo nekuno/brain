@@ -35,9 +35,7 @@ class LinkModel
     public function addLink(array $data)
     {
 
-        $duplicate = $this->getDuplicate($data['url']);
-
-        if (array() === $duplicate) {
+        if (false === $this->isAlreadySaved($data['url'])) {
             $template = "MATCH (u:User)"
                 . " WHERE u.qnoow_id = {userId}"
                 . " CREATE "
@@ -64,24 +62,17 @@ class LinkModel
             )
         );
 
-        try {
-            $resultSet = $query->getResultSet();
-        } catch (\Exception $e) {
-            throw $e;
-        }
-
-        return $resultSet;
-
+        return $query->getResultSet();
     }
 
     /**
      * @param $url
      * @return array
      */
-    private function getDuplicate($url)
+    private function isAlreadySaved($url)
     {
 
-        $stringQuery = "
+        $template = "
             MATCH
                 (u:User)-[:LIKES]->(l:Link)
             WHERE l.url = {url}
@@ -90,30 +81,20 @@ class LinkModel
 
         $query = new Query(
             $this->client,
-            $stringQuery,
+            $template,
             array('url' => $url)
         );
 
         $result = $query->getResultSet();
 
-        $duplicate = array();
-
         foreach ($result as $row) {
-            $link            = array();
-            $link['userId']  = $row['u']->getProperty('qnoow_id');
-            $link['linkUrl'] = $row['l']->getProperty('url');
-            $duplicate[]         = $link;
+            return true;
         }
 
-        if (count($duplicate) > 0) {
-            return $duplicate[0];
-        }
-
-        return $duplicate;
-
+        return false;
     }
 
-    public function updateLink(array $link, $processed = false)
+    public function updateLink(array $data, $processed = false)
     {
 
         $template = "MATCH (link:Link)"
@@ -124,7 +105,52 @@ class LinkModel
             . " , link.processed = " . (integer)$processed
             . " RETURN link;";
 
-        $query = new Query($this->client, $template, $link);
+        $query = new Query($this->client, $template, $data);
+
+        try {
+            return $query->getResultSet();
+        } catch (\Exception $e) {
+            throw $e;
+        }
+
+    }
+
+    public function createTag(array $tag)
+    {
+
+        $template = "MATCH (tag:Tag) WHERE tag.name = { name } RETURN tag LIMIT 1";
+
+        $query = new Query($this->client, $template, $tag);
+
+        $result = $query->getResultSet();
+
+        foreach ($result as $row) {
+            return $result;
+        }
+
+        $template = "CREATE (tag:Tag)"
+            . "SET tag.name = { name }"
+            . "RETURN tag";
+
+        $query = new Query($this->client, $template, $tag);
+
+        return $query->getResultSet();
+
+    }
+
+    public function addTag($link, $tag)
+    {
+
+        $template = "MATCH (link:Link)"
+            . ", (tag:Tag)"
+            . " WHERE link.url = { url } AND tag.name = { tag }"
+            . " CREATE (link)-[:TAGGED]->(tag)";
+
+        $params = array(
+            'url' => $link['url'],
+            'tag' => $tag['name'],
+        );
+        $query  = new Query($this->client, $template, $params);
 
         return $query->getResultSet();
 
@@ -137,9 +163,7 @@ class LinkModel
 
         try {
             foreach ($links as $data) {
-                $duplicate = $this->getDuplicate($data['url']);
-
-                if (array() === $duplicate) {
+                if (false === $this->isAlreadySaved($data['url'])) {
                     $template = "MATCH (u:User)"
                         . " WHERE u.qnoow_id = {userId}"
                         . " CREATE "
@@ -191,7 +215,7 @@ class LinkModel
                 'url'         => $row['link']->getProperty('url'),
                 'description' => $row['link']->getProperty('description'),
                 'title'       => $row['link']->getProperty('title'),
-                'tempId'          => $row['link']->getProperty('url')
+                'tempId'      => $row['link']->getProperty('url')
             );
         }
 

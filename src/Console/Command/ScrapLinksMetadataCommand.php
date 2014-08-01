@@ -22,10 +22,10 @@ class ScrapLinksMetadataCommand extends ApplicationAwareCommand
     {
 
         $this->setName('scrap:links')
-            ->setDescription("Scrap links metadata")
-            ->setDefinition(
-                array()
-            );
+             ->setDescription("Scrap links metadata")
+             ->setDefinition(
+                 array()
+             );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -52,6 +52,12 @@ class ScrapLinksMetadataCommand extends ApplicationAwareCommand
 
                 try {
                     $linksModel->updateLink($processedLink, true);
+                    foreach ($processedLink['tags'] as $tag) {
+                        $tag = array('name' => $tag);
+                        $linksModel->createTag($tag);
+                        $linksModel->addTag($processedLink, $tag);
+                    }
+
                     $output->writeln(sprintf('Success: Link %s saved', $processedLink['url']));
                 } catch (\Exception $e) {
                     $output->writeln(sprintf('Error: Link %s not saved', $processedLink['url']));

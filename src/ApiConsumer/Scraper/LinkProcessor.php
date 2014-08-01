@@ -45,6 +45,11 @@ class LinkProcessor
             }
         }
 
+        $link['tags'] = array();
+
+        $link['tags'] = array_merge($link['tags'], $metadata->extractTagsFromKeywords($metaTags));
+        $link['tags'] = array_merge($link['tags'], $metadata->extractTagsFromFacebookMetadata($metaTags));
+
         return $link;
     }
 
