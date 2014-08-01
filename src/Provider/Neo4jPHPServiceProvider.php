@@ -19,25 +19,17 @@ class Neo4jPHPServiceProvider implements ServiceProviderInterface
         $app['neo4j.client'] = $app->share(
             function ($app) {
 
-                $client = new Client($app['db.neo4j.host'], $app['db.neo4j.port']);
+                $client = new Client($app['neo4j.options']['host'], $app['neo4j.options']['port']);
+                
+                if (isset($app['neo4j.options']['auth']) && $app['neo4j.options']['auth']) {
+                    $client
+                        ->getTransport()
+                        ->setAuth($app['neo4j.options']['user'], $app['neo4j.options']['pass']);
+                }
 
                 return $client;
             }
         );
-
-        if (isset($app['db.neo4j.auth']) && $app['db.neo4j.auth']) {
-            $app['neo4j.client'] = $app->extend(
-                'neo4j.client',
-                function ($client, $app) {
-
-                    $client
-                        ->getTransport()
-                        ->setAuth($app['db.neo4j.user'], $app['db.neo4j.pass']);
-
-                    return $client;
-                }
-            );
-        }
     }
 
     /**

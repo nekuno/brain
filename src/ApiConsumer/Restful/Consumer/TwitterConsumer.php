@@ -32,7 +32,6 @@ class TwitterConsumer extends AbstractConsumer implements LinksConsumerInterface
      */
     public function fetchLinksFromUserFeed($userId = null)
     {
-
         $user = $this->userProvider->getUsersByResource('twitter', $userId);
 
         if (!$user['twitterID']) {

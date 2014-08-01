@@ -1,0 +1,4 @@
+api_consumer.config:
+    resource_owner:
+        twitter:
+            class: ApiConsumer\Restful\Consumer\TwitterConsumer

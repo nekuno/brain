@@ -110,8 +110,8 @@ class FetchLinksCommand extends ApplicationAwareCommand
         $httpClient   = $app['guzzle.client'];
 
         $options = array();
-        if (isset($app[$resource])) {
-            $options = $app[$resource];
+        if (isset($app['api_consumer.config']['resource_owner'][$resource])) {
+            $options = $app['api_consumer.config']['resource_owner'][$resource];
         }
 
         return ConsumerFactory::create($resource, $userProvider, $httpClient, $options);
