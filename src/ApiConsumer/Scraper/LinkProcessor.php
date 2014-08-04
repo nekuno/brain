@@ -2,6 +2,9 @@
 
 namespace ApiConsumer\Scraper;
 
+use ApiConsumer\Scraper\Metadata\BasicMetadata;
+use ApiConsumer\Scraper\Metadata\FacebookMetadata;
+
 class LinkProcessor
 {
 
