@@ -3,6 +3,7 @@
 namespace ApiConsumer\Restful\Consumer;
 
 use ApiConsumer\Auth\ResourceOwnerNotConnectedException;
+use Security\OAuth\SpotifyResourceOwner;
 
 /**
  * Class SpotifyConsumer
@@ -12,33 +13,15 @@ use ApiConsumer\Auth\ResourceOwnerNotConnectedException;
 class SpotifyConsumer extends AbstractConsumer implements LinksConsumerInterface
 {
 
+    /**
+     * @var string
+     */
     private $baseUrl = 'https://api.spotify.com/v1';
 
-    private $url = null;
-
     /**
-     * Refresh Access Token
-     *
-     * @param $user
-     * @return string newAccessToken
+     * @var null|string
      */
-    private function refreshAcessToken($user)
-    {
-        $url = "https://accounts.spotify.com/api/token?grant_type=refresh_token&refresh_token=" . $user['refreshToken'];
-        $authorization = base64_encode($this->options['consumer_key'] . ":" . $this->options['consumer_secret']);
-        $headers = array('Authorization' => 'Basic ' . $authorization);
-
-        $response = $this->httpClient->post($url, array('headers' => $headers));
-        $data = $response->json();
-
-        $userId  = $user['id'];
-        $accessToken = $data['access_token'];
-        $creationTime = time();
-        $expirationTime = time() + $data['expires_in'];
-        $this->userProvider->updateAccessToken('spotify', $userId, $accessToken, $creationTime, $expirationTime);
-
-        return $accessToken;
-    }
+    private $url = null;
 
     /**
      * { @inheritdoc }
@@ -53,7 +36,8 @@ class SpotifyConsumer extends AbstractConsumer implements LinksConsumerInterface
         }
 
         if ($user['expireTime'] <= time()) {
-            $user['oauthToken'] = $this->refreshAcessToken($user);
+            $resourceOwner = new SpotifyResourceOwner($this->httpClient, $this->userProvider, $this->options);
+            $user['oauthToken'] = $resourceOwner->refreshAccessToken($user);
         }
 
         $this->url = $this->baseUrl;
