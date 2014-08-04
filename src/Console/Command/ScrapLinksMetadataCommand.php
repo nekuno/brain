@@ -36,17 +36,17 @@ class ScrapLinksMetadataCommand extends ApplicationAwareCommand
         $unprocessedLinks = $linksModel->getUnprocessedLinks();
 
         if (count($unprocessedLinks) > 0) {
-            foreach ($unprocessedLinks as &$linkData) {
+            foreach ($unprocessedLinks as $link) {
 
                 try {
-                    $goutte        = new Client();
-                    $scraper       = new Scraper($goutte);
-                    $processor     = new LinkProcessor($scraper);
-                    $processedLink = $processor->processLink($linkData);
-                    $output->writeln(sprintf('Success: Link %s processed', $linkData['url']));
+                    /** @var LinkProcessor $processor */
+                    $processor = $this->app['link_processor'];
+                    $processedLink = $processor->processLink($link);
+                    $output->writeln(sprintf('Success: Link %s processed', $link['url']));
                 } catch (\Exception $e) {
-                    $output->writeln(sprintf('Error: Link %s not processed', $linkData['url']));
-                    $linksModel->updateLink($linkData, true);
+                    $output->writeln(sprintf('Error: %s', $e->getMessage()));
+                    $output->writeln(sprintf('Error: Link %s not processed', $link['url']));
+                    $linksModel->updateLink($link, true);
                     continue;
                 }
 

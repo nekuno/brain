@@ -68,6 +68,7 @@ $app->register(
 
 $app->register(new Neo4jPHPServiceProvider());
 $app->register(new GuzzleServiceProvider());
+$app->register(new \Provider\LinkProcessorServiceProvider());
 
 $app['twig'] = $app->share(
     $app->extend(
