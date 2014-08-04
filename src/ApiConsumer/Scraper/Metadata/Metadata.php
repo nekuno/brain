@@ -1,6 +1,6 @@
 <?php
 
-namespace ApiConsumer\Scraper;
+namespace ApiConsumer\Scraper\Metadata;
 
 class Metadata
 {
