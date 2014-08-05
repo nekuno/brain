@@ -2,8 +2,6 @@
 
 namespace ApiConsumer\Fetcher;
 
-use ApiConsumer\ResourceOwner\ResourceOwnerInterface;
-
 class SpotifyFetcher extends AbstractFetcher
 {
     /**
@@ -18,7 +16,7 @@ class SpotifyFetcher extends AbstractFetcher
     {
         $this->user = $user;
         $this->rawFeed = array();
-        
+
         $this->url .= 'users/' . $user['spotifyID'].'/playlists/';
 
         try {

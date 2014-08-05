@@ -1,6 +1,6 @@
 <?php
 
-namespace ApiConsumer\ResourceOwner;
+namespace Http\OAuth\ResourceOwner;
 
 use GuzzleHttp\Subscriber\Oauth\Oauth1;
 

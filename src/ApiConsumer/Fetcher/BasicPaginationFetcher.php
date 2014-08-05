@@ -2,8 +2,6 @@
 
 namespace ApiConsumer\Fetcher;
 
-use ApiConsumer\ResourceOwner\ResourceOwnerInterface;
-
 abstract class BasicPaginationFetcher extends AbstractFetcher
 {
     /**
@@ -45,7 +43,7 @@ abstract class BasicPaginationFetcher extends AbstractFetcher
     {
         $this->user = $user;
         $this->rawFeed = array();
-        
+
         try {
             $rawFeed = $this->getLinksByPage();
             $links = $this->parseLinks($rawFeed);

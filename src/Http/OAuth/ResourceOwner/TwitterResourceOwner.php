@@ -1,17 +1,17 @@
 <?php
 
-namespace ApiConsumer\ResourceOwner;
+namespace Http\OAuth\ResourceOwner;
 
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
 
 /**
- * Class FacebookResourceOwner
+ * Class TwitterResourceOwner
  *
  * @package ApiConsumer\ResourceOwner
  */
-class FacebookResourceOwner extends Oauth2GenericResourceOwner
+class TwitterResourceOwner extends Oauth1GenericResourceOwner
 {
-    protected $name = 'facebook';
+    protected $name = 'twitter';
 
     /**
      * {@inheritDoc}
@@ -21,7 +21,7 @@ class FacebookResourceOwner extends Oauth2GenericResourceOwner
         parent::configureOptions($resolver);
 
         $resolver->setDefaults(array(
-            'base_url' => 'https://graph.facebook.com/v2.0/',
+            'base_url' => 'https://api.twitter.com/1.1/',
         ));
     }
 }
