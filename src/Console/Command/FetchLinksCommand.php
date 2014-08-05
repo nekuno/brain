@@ -37,14 +37,23 @@ class FetchLinksCommand extends ApplicationAwareCommand
 
         $resource = $input->getOption('resource');
 
+        if (!isset($this->app['api_consumer.config']['fetcher'][$resource])) {
+            $output->writeln(
+                   sprintf(
+                       'Fetcher: %s not found',
+                       $resource
+                   )
+            );
+            return;
+        }
+
         $userProvider = new DBUserProvider($this->app['dbs']['mysql_social']);
-        $users = $userProvider->getUsersByResource($resource);
+        $users = $userProvider->getUsersByResource($this->app['api_consumer.config']['fetcher'][$resource]['resourceOwner']);
 
         $fetcher = $this->app['api_consumer.fetcher'];
         
         foreach ($users as $user) {
-            try {
-                
+            try {      
                 $fetcher->fetch($user['id'], $resource);
                 $output->writeln(sprintf('Fetched links for user %s from resource %s', $user['id'], $resource));
 
