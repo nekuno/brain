@@ -2,17 +2,15 @@
 
 namespace ApiConsumer\ResourceOwner;
 
-use Symfony\Component\OptionsResolver\OptionsResolver;
-use Symfony\Component\OptionsResolver\OptionsResolverInterface;
-use Symfony\Component\EventDispatcher\EventDispatcher;
-
+use ApiConsumer\Event\FilterTokenEvent;
+use ApiConsumer\Event\TokenEvents;
 use GuzzleHttp\Client;
 use GuzzleHttp\ClientInterface;
-use Guzzle\Http\Message\RequestInterface;
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Message\ResponseInterface;
-
-use ApiConsumer\Event\TokenEvents;
-use ApiConsumer\Event\FilterTokenEvent;
+use Symfony\Component\EventDispatcher\EventDispatcher;
+use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\OptionsResolver\OptionsResolverInterface;
 
 /**
  * Class AbstractResourceOwner
@@ -21,24 +19,26 @@ use ApiConsumer\Event\FilterTokenEvent;
  */
 abstract class AbstractResourceOwner implements ResourceOwnerInterface
 {
-    protected $name='generic';
+    protected $name = 'generic';
 
-    /** 
-    * @var Client 
-    */
+    /**
+     * @var Client
+     */
     protected $httpClient;
 
-    /** 
-    * @var EventDispatcher 
-    */
+    /**
+     * @var EventDispatcher
+     */
     protected $dispatcher;
 
-    /** 
-    * @var array Configuration 
-    */
+    /**
+     * @var array Configuration
+     */
     protected $options = array();
 
     /**
+     * @param \GuzzleHttp\ClientInterface $httpClient
+     * @param \Symfony\Component\EventDispatcher\EventDispatcher $dispatcher
      * @param array $options
      */
     public function __construct(ClientInterface $httpClient, EventDispatcher $dispatcher, array $options = array())
@@ -84,36 +84,6 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
     }
 
     /**
-     * Performs an HTTP request
-     *
-     * @param string $url     The url to fetch
-     * @param string $method  The HTTP method to use
-     * @param array  $query The query of the request
-     * @param array  $headers The headers of the request
-     * @param string|array $body The body of the request
-     *
-     * @return ResponseInterface The response content
-     */
-    protected function httpRequest($url, $method = 'GET', $query = array(), $headers = array(), $body = null)
-    {
-        $clientConfig = array(
-            'query' => $query,
-            'headers' => $headers,
-            'body' => $body,
-        );
-
-        $request = $client->createRequest($method, $url, $clientConfig);
-
-        try {
-            $response = $this->httpClient->send($request);
-        } catch (RequestException $e) {
-            throw $e;
-        }
-
-        return $response;
-    }
-
-    /**
      * Get the 'parsed' content based on the response headers.
      *
      * @param ResponseInterface $response
@@ -128,7 +98,7 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
     /**
      * {@inheritDoc}
      */
-    protected function getAuthorizedRequest ($url, array $query = array(), array $token = array())
+    protected function getAuthorizedRequest($url, array $query = array(), array $token = array())
     {
         $clientConfig = array(
             'query' => $query,
@@ -140,10 +110,13 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
     /**
      * Performs an authorized HTTP request
      *
-     * @param string $url     The url to fetch
-     * @param array  $query The query of the request
-     * @param array  $token The token values as an array
+     * @param string $url The url to fetch
+     * @param array $query The query of the request
+     * @param array $token The token values as an array
      *
+     * @throws RequestException
+     * @throws \Exception
+     * @throws \Exception
      * @return array
      */
     public function authorizedHttpRequest($url, array $query = array(), array $token = array())
@@ -161,7 +134,7 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
             $this->dispatcher->dispatch(TokenEvents::TOKEN_REFRESHED, $event);
         }
 
-        $request = $this->getAuthorizedRequest($this->options['base_url'].$url, $query, $token);
+        $request = $this->getAuthorizedRequest($this->options['base_url'] . $url, $query, $token);
 
         try {
             $response = $this->httpClient->send($request);
@@ -175,14 +148,14 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
     /**
      * Refresh an access token using a refresh token.
      *
-     * @param string $refreshToken    Refresh token
-     * @param array  $extraParameters An array of parameters to add to the url
+     * @param string $refreshToken Refresh token
+     * @param array $extraParameters An array of parameters to add to the url
      *
+     * @throws \Exception
      * @return array Array containing the access token and it's 'expires_in' value,
      *               along with any other parameters returned from the authentication
      *               provider.
      *
-     * @throws AuthenticationException If an OAuth error occurred or no access token is found
      */
     public function refreshAccessToken($refreshToken, array $extraParameters = array())
     {
@@ -196,11 +169,13 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
      */
     protected function configureOptions(OptionsResolverInterface $resolver)
     {
-        $resolver->setRequired(array(
-            'consumer_key',
-            'consumer_secret',
-            'class'
-        ));
+        $resolver->setRequired(
+            array(
+                'consumer_key',
+                'consumer_secret',
+                'class'
+            )
+        );
     }
 
 }

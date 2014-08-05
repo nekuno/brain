@@ -4,11 +4,6 @@ namespace ApiConsumer\ResourceOwner;
 
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
 
-use GuzzleHttp\Client;
-use GuzzleHttp\ClientInterface;
-use GuzzleHttp\Message\ResponseInterface;
-use GuzzleHttp\Subscriber\Oauth\Oauth1;
-
 /**
  * Class TwitterResourceOwner
  *
