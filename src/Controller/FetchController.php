@@ -2,13 +2,6 @@
 
 namespace Controller;
 
-use ApiConsumer\Auth\DBUserProvider;
-use ApiConsumer\Registry\Registry;
-use ApiConsumer\Restful\Consumer\ConsumerFactory;
-use ApiConsumer\Storage\DBStorage;
-use Model\LinkModel;
-use Model\UserModel;
-use Monolog\Logger;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -64,69 +57,16 @@ class FetchController
             return $app->json('User not found', 404);
         }
 
-        /** @var Logger $logger */
-        $logger = $app['monolog'];
-
-        $consumer = $this->getConsumer($app, $resource);
-        $storage  = new DBStorage($app['links.model']);
-        $registry = new Registry($app['orm.ems']['mysql_brain']);
+        $fetcher = $app['api_consumer.fetcher'];
 
         try {
-            $logger->debug(sprintf('Fetch attempt for user %d, resource %s', $userId, $resource));
-            $userSharedLinks = $consumer->fetchLinksFromUserFeed($userId);
-
-            $storage->storeLinks($userId, $userSharedLinks);
-            foreach ($storage->getErrors() as $error) {
-                $logger->error(sprintf('Error saving link: ' . $error));
-            }
-
-            $numLinks = count($userSharedLinks);
-            if ($numLinks) {
-                $lastItemId = $userSharedLinks[$numLinks - 1]['resourceItemId'];
-            } else {
-                $lastItemId = null;
-            }
-
-            $registry->registerFetchAttempt(
-                $userId,
-                $resource,
-                $lastItemId,
-                false
-            );
+            $userSharedLinks = $fetcher->fetch($userId, $resource);
 
         } catch (\Exception $e) {
-            $logger->error(sprintf('Error fetching from resource %s with message: %s', $resource, $e->getMessage()));
-
-            $registry->registerFetchAttempt(
-                $userId,
-                $resource,
-                null,
-                true
-            );
-
             return $app->json("An error occurred", 500);
         }
 
         return $app->json($userSharedLinks, 200);
-    }
-
-    /**
-     * @param Application $app
-     * @param $resource
-     * @return \ApiConsumer\Restful\Consumer\LinksConsumerInterface
-     */
-    private function getConsumer(Application $app, $resource)
-    {
-
-        $userProvider = new DBUserProvider($app['dbs']['mysql_social']);
-        $httpClient   = $app['guzzle.client'];
-
-        $options = array();
-        if (isset($app['api_consumer.config']['resource_owner'][$resource])) {
-            $options = $app['api_consumer.config']['resource_owner'][$resource];
-        }
-
-        return ConsumerFactory::create($resource, $userProvider, $httpClient, $options);
     }
 
     /**
