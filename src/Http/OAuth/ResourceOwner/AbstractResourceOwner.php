@@ -2,15 +2,17 @@
 
 namespace Http\OAuth\ResourceOwner;
 
-use ApiConsumer\Event\FilterTokenEvent;
-use ApiConsumer\Event\TokenEvents;
-use GuzzleHttp\Client;
-use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Message\ResponseInterface;
-use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
+use Symfony\Component\EventDispatcher\EventDispatcher;
+
+use GuzzleHttp\Client;
+use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Message\ResponseInterface;
+
+use ApiConsumer\Event\TokenEvents;
+use ApiConsumer\Event\FilterTokenEvent;
 
 /**
  * Class AbstractResourceOwner
