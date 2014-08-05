@@ -1,13 +1,13 @@
 api_consumer.config:
     resource_owner:
         twitter:
-            class: ApiConsumer\ResourceOwner\TwitterResourceOwner
+            class: Http\OAuth\ResourceOwner\TwitterResourceOwner
         facebook:
-            class: ApiConsumer\ResourceOwner\FacebookResourceOwner
+            class: Http\OAuth\ResourceOwner\FacebookResourceOwner
         google:
-            class: ApiConsumer\ResourceOwner\GoogleResourceOwner
+            class: Http\OAuth\ResourceOwner\GoogleResourceOwner
         spotify:
-            class: ApiConsumer\ResourceOwner\SpotifyResourceOwner
+            class: Http\OAuth\ResourceOwner\SpotifyResourceOwner
     fetcher:
         twitter:
             class: ApiConsumer\Fetcher\TwitterFetcher

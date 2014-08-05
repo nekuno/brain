@@ -1,6 +1,6 @@
 <?php
 
-namespace ApiConsumer\ResourceOwner;
+namespace Http\OAuth\ResourceOwner;
 
 interface ResourceOwnerInterface
 {

@@ -2,7 +2,7 @@
 
 namespace ApiConsumer\Fetcher;
 
-use ApiConsumer\ResourceOwner\ResourceOwnerInterface;
+use Http\OAuth\ResourceOwner\ResourceOwnerInterface;
 
 abstract class AbstractFetcher implements FetcherInterface
 {
@@ -16,13 +16,13 @@ abstract class AbstractFetcher implements FetcherInterface
      */
     protected $rawFeed = array();
 
-    /** 
-    * @var resourceOwnerInterface 
+    /**
+    * @var \Http\OAuth\ResourceOwner\resourceOwnerInterface
     */
     protected $resourceOwner;
 
-    /** 
-    * @var array 
+    /**
+    * @var array
     */
     protected $user;
 
