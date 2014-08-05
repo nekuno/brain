@@ -3,10 +3,8 @@
 namespace Console\Command;
 
 use ApiConsumer\Auth\DBUserProvider;
-use ApiConsumer\Registry\Registry;
+use ApiConsumer\Fetcher\FetcherService;
 use ApiConsumer\Restful\Consumer\ConsumerFactory;
-use ApiConsumer\Storage\DBStorage;
-use Monolog\Logger;
 use Silex\Application;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -50,10 +48,11 @@ class FetchLinksCommand extends ApplicationAwareCommand
         $userProvider = new DBUserProvider($this->app['dbs']['mysql_social']);
         $users = $userProvider->getUsersByResource($this->app['api_consumer.config']['fetcher'][$resource]['resourceOwner']);
 
+        /** @var FetcherService $fetcher */
         $fetcher = $this->app['api_consumer.fetcher'];
-        
+
         foreach ($users as $user) {
-            try {      
+            try {
                 $fetcher->fetch($user['id'], $resource);
                 $output->writeln(sprintf('Fetched links for user %s from resource %s', $user['id'], $resource));
 
