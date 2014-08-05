@@ -12,13 +12,14 @@ if (isset($_SERVER['HTTP_CLIENT_IP'])
     exit('You are not allowed to access this file. Check '.basename(__FILE__).' for more information.');
 }
 
+putenv("APP_ENV=dev");
+
 require_once __DIR__.'/../vendor/autoload.php';
 
 Debug::enable();
 
 $app = require __DIR__.'/../src/app.php';
 
-require __DIR__.'/../config/dev.php';
 require __DIR__.'/../src/controllers.php';
 require __DIR__.'/../src/models.php';
 require __DIR__.'/../src/routing.php';
