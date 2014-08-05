@@ -18,6 +18,16 @@ db.neo4j.auth: false
 db.neo4j.user: 'qnoow'
 db.neo4j.pass: 'jgysJFcDujHaVrdP2DC2'
 
+## Swiftmailer
+swiftmailer.options:
+    host: '127.0.0.1'
+    port: '25'
+    username: 'root'
+    password: ''
+    encryption: null
+    auth_mode: null
+
+
 ## Twitter
 twitter:
     consumer_key: 'm9NY9ZghlVeYFVk8fbPp8pp1g'

@@ -66,6 +66,8 @@ $app->register(
     )
 );
 
+$app->register(new Silex\Provider\SwiftmailerServiceProvider());
+
 $app->register(new Neo4jPHPServiceProvider());
 $app->register(new GuzzleServiceProvider());
 $app->register(new \Provider\LinkProcessorServiceProvider());
