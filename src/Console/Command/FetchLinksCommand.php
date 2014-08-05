@@ -37,52 +37,27 @@ class FetchLinksCommand extends ApplicationAwareCommand
 
         $resource = $input->getOption('resource');
 
-        /** @var $logger Logger */
-        $logger       = $this->app['monolog'];
+        if (!isset($this->app['api_consumer.config']['fetcher'][$resource])) {
+            $output->writeln(
+                   sprintf(
+                       'Fetcher: %s not found',
+                       $resource
+                   )
+            );
+            return;
+        }
+
         $userProvider = new DBUserProvider($this->app['dbs']['mysql_social']);
-        $registry     = new Registry($this->app['orm.ems']['mysql_brain']);
-        $storage      = new DBStorage($this->app['links.model']);
+        $users = $userProvider->getUsersByResource($this->app['api_consumer.config']['fetcher'][$resource]['resourceOwner']);
 
-        $users = $userProvider->getUsersByResource($resource);
-
+        $fetcher = $this->app['api_consumer.fetcher'];
+        
         foreach ($users as $user) {
-            try {
-                $consumer = $this->getConsumer($this->app, $resource);
-
-                $logger->debug(sprintf('Fetch attempt for user %d, resource %s', $user['id'], $resource));
-
-                $userSharedLinks = $consumer->fetchLinksFromUserFeed($user['id']);
-
+            try {      
+                $fetcher->fetch($user['id'], $resource);
                 $output->writeln(sprintf('Fetched links for user %s from resource %s', $user['id'], $resource));
 
-                $storage->storeLinks($user['id'], $userSharedLinks);
-                foreach ($storage->getErrors() as $error) {
-                    $logger->error(sprintf('Error saving link: ' . $error));
-                }
-
-                $numLinks = count($userSharedLinks);
-                if ($numLinks) {
-                    $lastItemId = $userSharedLinks[$numLinks - 1]['resourceItemId'];
-                } else {
-                    $lastItemId = null;
-                }
-                $registry->registerFetchAttempt(
-                         $user['id'],
-                         $resource,
-                         $lastItemId,
-                         false
-                );
-
             } catch (\Exception $e) {
-                $logger->addError(sprintf('Error fetching from resource %s', $resource));
-                $logger->error(sprintf('%s', $e->getMessage()));
-
-                $registry->registerFetchAttempt(
-                         $user['id'],
-                         $resource,
-                         null,
-                         true
-                );
                 $output->writeln(
                        sprintf(
                            'Error fetching links for user %s with message: ' . $e->getMessage(),
@@ -94,27 +69,5 @@ class FetchLinksCommand extends ApplicationAwareCommand
         }
 
         $output->writeln('Success!');
-
     }
-
-    /**
-     * @param Application $app
-     * @param $resource
-     * @return \ApiConsumer\Restful\Consumer\LinksConsumerInterface
-     * @throws \Exception
-     */
-    private function getConsumer(Application $app, $resource)
-    {
-
-        $userProvider = new DBUserProvider($app['dbs']['mysql_social']);
-        $httpClient   = $app['guzzle.client'];
-
-        $options = array();
-        if (isset($app[$resource])) {
-            $options = $app[$resource];
-        }
-
-        return ConsumerFactory::create($resource, $userProvider, $httpClient, $options);
-    }
-
 }

@@ -1,51 +1,26 @@
 <?php
 
-namespace ApiConsumer\Restful\Consumer;
+namespace ApiConsumer\Fetcher;
 
-use ApiConsumer\Auth\ResourceOwnerNotConnectedException;
-use Security\OAuth\SpotifyResourceOwner;
+use ApiConsumer\ResourceOwner\ResourceOwnerInterface;
 
-/**
- * Class SpotifyConsumer
- *
- * @package Social
- */
-class SpotifyConsumer extends AbstractConsumer implements LinksConsumerInterface
+class SpotifyFetcher extends AbstractFetcher
 {
-
     /**
-     * @var string
+     * @var array
      */
-    private $baseUrl = 'https://api.spotify.com/v1';
-
-    /**
-     * @var null|string
-     */
-    private $url = null;
+    protected $rawFeed = array();
 
     /**
      * { @inheritdoc }
      */
-    public function fetchLinksFromUserFeed($userId)
+    public function fetchLinksFromUserFeed($user)
     {
+        $this->user = $user;
+        $this->rawFeed = array();
+        
+        $this->url .= 'users/' . $user['spotifyID'].'/playlists/';
 
-        $user = $this->userProvider->getUsersByResource('spotify', $userId);
-
-        if (!$user['spotifyID']) {
-            throw new ResourceOwnerNotConnectedException;
-        }
-
-        if ($user['expireTime'] <= time()) {
-            $resourceOwner = new SpotifyResourceOwner($this->httpClient, $this->userProvider, $this->options);
-            $user['oauthToken'] = $resourceOwner->refreshAccessToken($user);
-        }
-
-        $this->url = $this->baseUrl;
-        $this->url .= '/users/' . $user['spotifyID'];
-        $this->url .= '/playlists/';
-
-        $headers                  = array('Authorization' => 'Bearer ' . $user['oauthToken']);
-        $this->options['headers'] = $headers;
         try {
             $playlists = $this->makeRequestJSON($this->url);
 
@@ -53,7 +28,8 @@ class SpotifyConsumer extends AbstractConsumer implements LinksConsumerInterface
             if (isset($playlists['items'])) {
                 foreach ($playlists['items'] as $playlist) {
                     if ($playlist['owner']['id'] == $user['spotifyID']) {
-                        $this->url = $playlist['href'] . '/tracks';
+
+                        $this->url = 'users/' .  $user['spotifyID'] . '/playlists/' . $playlist['id'] . '/tracks';
 
                         try {
                             $tracks                = $this->makeRequestJSON($this->url);
@@ -66,7 +42,7 @@ class SpotifyConsumer extends AbstractConsumer implements LinksConsumerInterface
                 }
             }
 
-            $this->url             = 'https://api.spotify.com/v1/users/' . $user['spotifyID'] . '/starred/tracks';
+            $this->url             = 'users/' . $user['spotifyID'] . '/starred/tracks';
             $starredTracks         = $this->makeRequestJSON($this->url);
             $starredPlaylistTracks = $this->formatResponse($starredTracks);
             $allTracks             = array_merge($starredPlaylistTracks, $allTracks);

@@ -1,0 +1,2 @@
+debug: true
+monolog.logfile: "%app_root_dir%/../var/logs/silex_dev.log"

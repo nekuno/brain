@@ -1,0 +1,26 @@
+api_consumer.config:
+    resource_owner:
+        twitter:
+            class: ApiConsumer\ResourceOwner\TwitterResourceOwner
+        facebook:
+            class: ApiConsumer\ResourceOwner\FacebookResourceOwner
+        google:
+            class: ApiConsumer\ResourceOwner\GoogleResourceOwner
+        spotify:
+            class: ApiConsumer\ResourceOwner\SpotifyResourceOwner
+    fetcher:
+        twitter:
+            class: ApiConsumer\Fetcher\TwitterFetcher
+            resourceOwner: twitter
+        facebook:
+            class: ApiConsumer\Fetcher\FacebookFetcher
+            resourceOwner: facebook
+        google:
+            class: ApiConsumer\Fetcher\GoogleFetcher
+            resourceOwner: google
+        youtube:
+            class: ApiConsumer\Fetcher\YoutubeFetcher
+            resourceOwner: google
+        spotify:
+            class: ApiConsumer\Fetcher\SpotifyFetcher
+            resourceOwner: spotify
