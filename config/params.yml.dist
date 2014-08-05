@@ -19,6 +19,15 @@ params:
     db.neo4j.user: 'qnoow'
     db.neo4j.pass: 'jgysJFcDujHaVrdP2DC2'
 
+    ## Swiftmailer
+    swiftmailer.host: '127.0.0.1'
+    swiftmailer.port: '25'
+    swiftmailer.username: 'adridev'
+    swiftmailer.password: ''
+    swiftmailer.encryption: null
+    swiftmailer.auth_mode: null
+
+
     ## Twitter
     twitter.consumer_key: 'm9NY9ZghlVeYFVk8fbPp8pp1g'
     twitter.consumer_secret: 'yQ5XBabTj1vzCCBVeJoqX9Bli4zcjVWsF6FxHvPtZwkAJseu1l'

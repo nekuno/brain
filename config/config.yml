@@ -33,6 +33,15 @@ neo4j.options:
     user: %db.neo4j.user%
     pass: %db.neo4j.pass%
 
+swiftmailer.options:
+    host: %swiftmailer.host%
+    port: %swiftmailer.port%
+    username: %swiftmailer.username%
+    password: %swiftmailer.password%
+    encryption: %swiftmailer.encryption%
+    auth_mode: %swiftmailer.auth_mode%
+
+
 api_consumer.config:
     resource_owner:
         twitter:
