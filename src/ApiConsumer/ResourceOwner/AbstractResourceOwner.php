@@ -2,15 +2,17 @@
 
 namespace ApiConsumer\ResourceOwner;
 
-use ApiConsumer\Event\FilterTokenEvent;
-use ApiConsumer\Event\TokenEvents;
-use GuzzleHttp\Client;
-use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Message\ResponseInterface;
-use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
+use Symfony\Component\EventDispatcher\EventDispatcher;
+
+use GuzzleHttp\Client;
+use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Message\ResponseInterface;
+
+use ApiConsumer\Event\TokenEvents;
+use ApiConsumer\Event\FilterTokenEvent;
 
 /**
  * Class AbstractResourceOwner
@@ -19,21 +21,21 @@ use Symfony\Component\OptionsResolver\OptionsResolverInterface;
  */
 abstract class AbstractResourceOwner implements ResourceOwnerInterface
 {
-    protected $name = 'generic';
+    protected $name='generic';
 
     /**
-     * @var Client
-     */
+    * @var Client
+    */
     protected $httpClient;
 
     /**
-     * @var EventDispatcher
-     */
+    * @var EventDispatcher
+    */
     protected $dispatcher;
 
     /**
-     * @var array Configuration
-     */
+    * @var array Configuration
+    */
     protected $options = array();
 
     /**
@@ -98,7 +100,7 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
     /**
      * {@inheritDoc}
      */
-    protected function getAuthorizedRequest($url, array $query = array(), array $token = array())
+    protected function getAuthorizedRequest ($url, array $query = array(), array $token = array())
     {
         $clientConfig = array(
             'query' => $query,
@@ -114,19 +116,21 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
      * @param array $query The query of the request
      * @param array $token The token values as an array
      *
-     * @throws RequestException
      * @throws \Exception
+     * @throws \GuzzleHttp\Exception\RequestException
      * @throws \Exception
      * @return array
      */
     public function authorizedHttpRequest($url, array $query = array(), array $token = array())
     {
         if (isset($token['expireTime']) && $token['expireTime'] <= time()) {
+
             try {
                 $data = $this->refreshAccessToken($token['refreshToken']);
             } catch (\Exception $e) {
                 throw $e;
             }
+
             $token['oauthToken'] = $data['access_token'];
             $token['createdTime'] = time();
             $token['expireTime'] = $token['createdTime'] + $data['expires_in'];
@@ -134,7 +138,7 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
             $this->dispatcher->dispatch(TokenEvents::TOKEN_REFRESHED, $event);
         }
 
-        $request = $this->getAuthorizedRequest($this->options['base_url'] . $url, $query, $token);
+        $request = $this->getAuthorizedRequest($this->options['base_url'].$url, $query, $token);
 
         try {
             $response = $this->httpClient->send($request);
@@ -169,13 +173,11 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
      */
     protected function configureOptions(OptionsResolverInterface $resolver)
     {
-        $resolver->setRequired(
-            array(
-                'consumer_key',
-                'consumer_secret',
-                'class'
-            )
-        );
+        $resolver->setRequired(array(
+            'consumer_key',
+            'consumer_secret',
+            'class'
+        ));
     }
 
 }
