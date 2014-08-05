@@ -8,7 +8,7 @@ params:
 
     dbs.mysql_brain.driver: pdo_mysql
     dbs.mysql_brain.host: localhost
-    dbs.mysql_brain.dbname: qnoow_brain
+    dbs.mysql_brain.dbname: qnoow
     dbs.mysql_brain.user: root
     dbs.mysql_brain.pass: root
 
