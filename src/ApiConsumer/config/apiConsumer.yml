@@ -18,6 +18,9 @@ api_consumer.config:
         google:
             class: ApiConsumer\Fetcher\GoogleFetcher
             resourceOwner: google
+        youtube:
+            class: ApiConsumer\Fetcher\YoutubeFetcher
+            resourceOwner: google
         spotify:
             class: ApiConsumer\Fetcher\SpotifyFetcher
             resourceOwner: spotify
