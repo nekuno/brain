@@ -121,7 +121,7 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
      */
     public function authorizedHttpRequest($url, array $query = array(), array $token = array())
     {
-        if (isset($token['expireTime']) && $token['expireTime'] <= time()) {
+        if (isset($token['expireTime']) && ($token['expireTime'] <= time() && $token['expireTime'] != 0)) {
 
             try {
                 $data = $this->refreshAccessToken($token['refreshToken']);
