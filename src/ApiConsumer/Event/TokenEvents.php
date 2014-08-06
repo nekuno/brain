@@ -8,9 +8,14 @@ final class TokenEvents
      * refreshed in the system.
      *
      * The event listener receives an
-     * ApiConsumer\Event\FilterTokenEvent instance.
+     * ApiConsumer\Event\FilterTokenRefreshedEvent instance.
      *
      * @var string
      */
     const TOKEN_REFRESHED = 'token.refreshed';
+
+    /**
+     * Fired when detect that current token is expired
+     */
+    const TOKEN_EXPIRED = 'token.expired';
 }

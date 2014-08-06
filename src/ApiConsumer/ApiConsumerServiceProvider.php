@@ -7,7 +7,7 @@ use ApiConsumer\Auth\DBUserProvider;
 use ApiConsumer\Event\EventManager;
 use ApiConsumer\Registry\Registry;
 use ApiConsumer\Storage\DBStorage;
-use ApiConsumer\Listener\TokenRefreshedSubscriber;
+use ApiConsumer\Listener\OAuthTokenSubscriber;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
 
@@ -53,7 +53,7 @@ class ApiConsumerServiceProvider implements ServiceProviderInterface
                 return $registry;
             }
         );
-        
+
         //Storage
         $app['api_consumer.storage'] = $app->share(
             function ($app) {
@@ -69,9 +69,9 @@ class ApiConsumerServiceProvider implements ServiceProviderInterface
             function ($app) {
 
                 $fetcher = new FetcherService(
-                    $app['monolog'], 
-                    $app['api_consumer.user_provider'], 
-                    $app['api_consumer.registry'], 
+                    $app['monolog'],
+                    $app['api_consumer.user_provider'],
+                    $app['api_consumer.registry'],
                     $app['api_consumer.storage'],
                     $app['api_consumer.get_resource_owner_by_name'],
                     $app['api_consumer.config']['fetcher']
