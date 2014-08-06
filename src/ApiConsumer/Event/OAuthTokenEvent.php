@@ -1,11 +1,15 @@
 <?php
+
+
 namespace ApiConsumer\Event;
+
 
 use Symfony\Component\EventDispatcher\Event;
 
-class FilterTokenEvent extends Event
+class OAuthTokenEvent extends Event
 {
-    protected $user;
+
+    private $user;
 
     public function __construct($user)
     {
