@@ -4,7 +4,7 @@ use Dflydev\Silex\Provider\DoctrineOrm\DoctrineOrmServiceProvider;
 use Provider\GuzzleServiceProvider;
 use Provider\Neo4jPHPServiceProvider;
 use ApiConsumer\ApiConsumerServiceProvider;
-use ApiConsumer\Listener\TokenRefreshedSubscriber;
+use ApiConsumer\Listener\OAuthTokenSubscriber;
 use Silex\Application;
 use Silex\Provider\DoctrineServiceProvider;
 use Silex\Provider\ServiceControllerServiceProvider;
@@ -38,7 +38,7 @@ $app->register(new Igorw\Silex\ConfigServiceProvider(__DIR__ . "/../config/confi
 $app->register(new Igorw\Silex\ConfigServiceProvider(__DIR__ . "/../config/config_{$app['env']}.yml", $replacements));
 
 //Listeners
-$tokenRefreshedSubscriber = new TokenRefreshedSubscriber($app['api_consumer.user_provider']);
+$tokenRefreshedSubscriber = new OAuthTokenSubscriber($app['api_consumer.user_provider'], $app['mailer'], $app['monolog']);
 $app['dispatcher']->addSubscriber($tokenRefreshedSubscriber);
 
 return $app;

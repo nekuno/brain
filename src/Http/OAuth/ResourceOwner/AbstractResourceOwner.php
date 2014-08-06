@@ -2,6 +2,7 @@
 
 namespace Http\OAuth\ResourceOwner;
 
+use ApiConsumer\Event\OAuthTokenEvent;
 use GuzzleHttp\Exception\RequestException;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
@@ -12,7 +13,7 @@ use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Message\ResponseInterface;
 
 use ApiConsumer\Event\TokenEvents;
-use ApiConsumer\Event\FilterTokenEvent;
+use ApiConsumer\Event\FilterTokenRefreshedEvent;
 
 /**
  * Class AbstractResourceOwner
@@ -125,16 +126,23 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
     {
         if (isset($token['expireTime']) && $token['expireTime'] <= time()) {
 
+
             try {
                 $data = $this->refreshAccessToken($token['refreshToken']);
             } catch (\Exception $e) {
+                // The resource owner not implements the method refreshAccessToken
+                $this->notifyUserByEmail($token);
                 throw $e;
+            }
+
+            if(!$data['access_token']) {
+                $this->notifyUserByEmail($token);
             }
 
             $token['oauthToken'] = $data['access_token'];
             $token['createdTime'] = time();
             $token['expireTime'] = $token['createdTime'] + $data['expires_in'];
-            $event = new FilterTokenEvent($token);
+            $event = new OAuthTokenEvent($token);
             $this->dispatcher->dispatch(TokenEvents::TOKEN_REFRESHED, $event);
         }
 
@@ -178,6 +186,15 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
             'consumer_secret',
             'class'
         ));
+    }
+
+    /**
+     * @param array $token
+     */
+    protected function notifyUserByEmail(array $token)
+    {
+        $event = new OAuthTokenEvent($token);
+        $this->dispatcher->dispatch(TokenEvents::TOKEN_EXPIRED, $event);
     }
 
 }
