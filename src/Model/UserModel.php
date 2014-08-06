@@ -323,15 +323,18 @@ class UserModel
                 collect(distinct c1) AS c1,
                 collect(distinct c2) AS c2,
                 max_popul, common
-                UNWIND common AS common_nodes
-                UNWIND c1 AS c1_nodes
-                UNWIND c2 AS c2_nodes
                 OPTIONAL MATCH
                 (:User)-[r1:LIKES|DISLIKES]->(common_nodes)
+                WHERE
+                common_nodes IN common
                 OPTIONAL MATCH
                 (:User)-[r2:LIKES|DISLIKES]->(c1_nodes)
+                WHERE
+                c1_nodes IN c1
                 OPTIONAL MATCH
                 (:User)-[r3:LIKES|DISLIKES]->(c2_nodes)
+                WHERE
+                c2_nodes IN c2
                 WITH
                 count(distinct r1) AS popul_common,
                 count(distinct r2) AS popul_c1,
@@ -347,7 +350,7 @@ class UserModel
                 reduce(num = 0.0, b IN p_c1_coll | num + ( (b*1.0 / max_popul + 0.1))^3 ) as divisor1,
                 reduce(num = 0.0, c IN p_c2_coll | num + ( (c*1.0 / max_popul + 0.1))^3 ) as divisor2
                 RETURN
-                DISTINCT dividend, divisor1, divisor2;
+                DISTINCT dividend, divisor1, divisor2
             ";
 
             //Create the Neo4j query object
