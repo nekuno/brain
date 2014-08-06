@@ -362,6 +362,7 @@ class UserModel
             } catch (\Exception $e) {
                 throw $e;
             }
+
             foreach ($result as $row) {
                 $unpopularityOfCommonContent = $row['dividend'];
                 $popularityOfUser1ExclusiveContent = $row['divisor1'];
@@ -369,7 +370,7 @@ class UserModel
             }
 
             $matchingValue = sqrt(
-                $unpopularityOfCommonContent^2 /
+                pow($unpopularityOfCommonContent,2) /
                 (
                     ($unpopularityOfCommonContent + $popularityOfUser1ExclusiveContent)
                     *
