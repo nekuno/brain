@@ -22,10 +22,10 @@ class ScrapLinksMetadataCommand extends ApplicationAwareCommand
     {
 
         $this->setName('scrap:links')
-            ->setDescription("Scrap links metadata")
-            ->setDefinition(
-                array()
-            );
+             ->setDescription("Scrap links metadata")
+             ->setDefinition(
+                 array()
+             );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -36,25 +36,35 @@ class ScrapLinksMetadataCommand extends ApplicationAwareCommand
         $unprocessedLinks = $linksModel->getUnprocessedLinks();
 
         if (count($unprocessedLinks) > 0) {
-            foreach ($unprocessedLinks as &$linkData) {
+            foreach ($unprocessedLinks as $link) {
 
                 try {
-                    $goutte        = new Client();
-                    $scraper       = new Scraper($goutte);
-                    $processor     = new LinkProcessor($scraper);
-                    $processedLink = $processor->processLink($linkData);
-                    $output->writeln(sprintf('Link %s processed', $linkData['url']));
-                    $linksModel->updateLink($processedLink, true);
-                    $output->writeln(sprintf('Link %s saved', $processedLink['url']));
+                    /** @var LinkProcessor $processor */
+                    $processor = $this->app['link_processor'];
+                    $processedLink = $processor->processLink($link);
+                    $output->writeln(sprintf('Success: Link %s processed', $link['url']));
                 } catch (\Exception $e) {
-                    $linksModel->updateLink($linkData, true);
+                    $output->writeln(sprintf('Error: %s', $e->getMessage()));
+                    $output->writeln(sprintf('Error: Link %s not processed', $link['url']));
+                    $linksModel->updateLink($link, true);
                     continue;
                 }
+
+                try {
+                    $linksModel->updateLink($processedLink, true);
+                    foreach ($processedLink['tags'] as $tag) {
+                        $tag = array('name' => $tag);
+                        $linksModel->createTag($tag);
+                        $linksModel->addTag($processedLink, $tag);
+                    }
+
+                    $output->writeln(sprintf('Success: Link %s saved', $processedLink['url']));
+                } catch (\Exception $e) {
+                    $output->writeln(sprintf('Error: Link %s not saved', $processedLink['url']));
+                }
+
             }
             call_user_func_array(array($this, 'execute'), array($input, $output));
         }
-
-        $output->writeln('Success!');
     }
-
 }

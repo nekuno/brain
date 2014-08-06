@@ -1,23 +1,45 @@
-## Doctrine
-dbs.mysql_social.dbname: 'qnoow'
-dbs.mysql_social.user: 'qnoowdev'
-dbs.mysql_social.pass: 'qnoow2014'
-dbs.mysql_social.host: '127.0.0.1'
-dbs.mysql_social.driver: 'pdo_mysql'
+params:
+    ## Doctrine
+    dbs.mysql_social.driver: pdo_mysql
+    dbs.mysql_social.host: localhost
+    dbs.mysql_social.dbname: qnoow
+    dbs.mysql_social.user: root
+    dbs.mysql_social.pass: root
 
-dbs.mysql_brain.dbname: 'brain'
-dbs.mysql_brain.user: 'root'
-dbs.mysql_brain.pass: 'socket'
-dbs.mysql_brain.host: '127.0.0.1'
-dbs.mysql_brain.driver: 'pdo_mysql'
+    dbs.mysql_brain.driver: pdo_mysql
+    dbs.mysql_brain.host: localhost
+    dbs.mysql_brain.dbname: qnoow_brain
+    dbs.mysql_brain.user: root
+    dbs.mysql_brain.pass: root
 
-## Neo4j
-db.neo4j.host: 127.0.0.1
-db.neo4j.port: 7474
-db.neo4j.auth: false
-db.neo4j.user: 'qnoow'
-db.neo4j.pass: 'jgysJFcDujHaVrdP2DC2'
+    ## Neo4j
+    db.neo4j.host: 127.0.0.1
+    db.neo4j.port: 7474
+    db.neo4j.auth: false
+    db.neo4j.user: 'qnoow'
+    db.neo4j.pass: 'jgysJFcDujHaVrdP2DC2'
 
-## Twitter
-twitter.consumer_key: 'm9NY9ZghlVeYFVk8fbPp8pp1g'
-twitter.consumer_secret: 'yQ5XBabTj1vzCCBVeJoqX9Bli4zcjVWsF6FxHvPtZwkAJseu1l'
+    ## Swiftmailer
+    swiftmailer.host: '127.0.0.1'
+    swiftmailer.port: '25'
+    swiftmailer.username: 'adridev'
+    swiftmailer.password: ''
+    swiftmailer.encryption: null
+    swiftmailer.auth_mode: null
+
+
+    ## Twitter
+    twitter.consumer_key: 'm9NY9ZghlVeYFVk8fbPp8pp1g'
+    twitter.consumer_secret: 'yQ5XBabTj1vzCCBVeJoqX9Bli4zcjVWsF6FxHvPtZwkAJseu1l'
+
+    ##Spotify
+    spotify.consumer_key: '2cc22e2706704d39998c990457530a9a'
+    spotify.consumer_secret: '47189c30d7f84d7ca4c4436309c0dc3c'
+
+    ##Google
+    google.consumer_key: '556826433000.apps.googleusercontent.com'
+    google.consumer_secret: 'oNAbbRwxxZD9Ntyj7D4yXq1f'
+
+    ## Facebook App
+    facebook.consumer_key: '525923770862645'
+    facebook.consumer_secret: '1b5ed9309224e67f698848d85f7660a5'

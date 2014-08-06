@@ -1,0 +1,61 @@
+dbs.options:
+    mysql_social:
+        driver: %dbs.mysql_social.driver%
+        host: %dbs.mysql_social.host%
+        dbname: %dbs.mysql_social.dbname%
+        user: %dbs.mysql_social.user%
+        password: %dbs.mysql_social.pass%
+        charset: utf8
+    mysql_brain:
+        driver: %dbs.mysql_brain.driver%
+        host: %dbs.mysql_brain.host%
+        dbname: %dbs.mysql_brain.dbname%
+        user: %dbs.mysql_brain.user%
+        password: %dbs.mysql_brain.pass%
+        charset: utf8
+
+orm.proxies_dir: "%app_root_dir%/../cache/DoctrineProxy"
+orm.ems.default: mysql_brain
+orm.ems.options:
+    mysql_brain:
+        connection: mysql_brain
+        mappings:
+            0:
+                type: annotation
+                namespace: Model\Entity
+                path:  "%app_root_dir%/Model/Entity"
+        use_simple_annotation_reader: false
+
+neo4j.options:
+    host: %db.neo4j.host%
+    port: %db.neo4j.port%
+    auth: %db.neo4j.auth%
+    user: %db.neo4j.user%
+    pass: %db.neo4j.pass%
+
+swiftmailer.options:
+    host: %swiftmailer.host%
+    port: %swiftmailer.port%
+    username: %swiftmailer.username%
+    password: %swiftmailer.password%
+    encryption: %swiftmailer.encryption%
+    auth_mode: %swiftmailer.auth_mode%
+
+
+api_consumer.config:
+    resource_owner:
+        twitter:
+            consumer_key: %twitter.consumer_key%
+            consumer_secret: %twitter.consumer_secret%
+
+        google:
+            consumer_key: %google.consumer_key%
+            consumer_secret: %google.consumer_secret%
+
+        spotify:
+            consumer_key: %spotify.consumer_key%
+            consumer_secret: %spotify.consumer_secret%
+
+        facebook:
+            consumer_key: %facebook.consumer_key%
+            consumer_secret: %facebook.consumer_secret%

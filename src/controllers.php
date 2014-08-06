@@ -45,7 +45,6 @@ $app->before(
             $data = json_decode(utf8_encode($request->getContent()), true);
             $request->request->replace(is_array($data) ? $data : array());
         }
-
     }
 );
 
@@ -54,20 +53,22 @@ $app->before(
  */
 $app->error(
     function (\Exception $e, $code) use ($app) {
-
-        if ($app['debug']) {
-            return;
-        }
-
-        // 404.html, or 40x.html, or 4xx.html, or error.html
-        $templates = array(
-            'errors/' . $code . '.html',
-            'errors/' . substr($code, 0, 2) . 'x.html',
-            'errors/' . substr($code, 0, 1) . 'xx.html',
-            'errors/default.html',
+        $response = array (
+            "error" => array(
+                "code" => $code,
+                "text" => "An error ocurred",
+            )
         );
 
-        return new Response($app['twig']->resolveTemplate($templates)->render(array('code' => $code)), $code);
+        if ($app['debug']) {
+            $response['error']['code'] = $e->getCode();
+            $response['error']['text'] = $e->getMessage();
+            $response['error']['file'] = $e->getFile();
+            $response['error']['line'] = $e->getLine();
+            $response['error']['trace'] = $e->getTrace();
+        }
+
+        return $app->json($response, $code);
     }
 
 );

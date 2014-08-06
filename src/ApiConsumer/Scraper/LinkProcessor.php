@@ -2,11 +2,18 @@
 
 namespace ApiConsumer\Scraper;
 
+use ApiConsumer\Scraper\Metadata\BasicMetadata;
+use ApiConsumer\Scraper\Metadata\FacebookMetadata;
+
 class LinkProcessor
 {
 
+    /** @var \ApiConsumer\Scraper\Scraper */
     private $scraper;
 
+    /**
+     * @param Scraper $scraper
+     */
     public function __construct(Scraper $scraper)
     {
 
@@ -20,28 +27,88 @@ class LinkProcessor
     public function processLink(array $link)
     {
 
-        return $this->scrapMetadataAndOverrideLinkData($link);
+        $url = $link['url'];
+
+        $basicMetadata = $this->scrapBasicMetadata($url);
+        if (array() !== $basicMetadata) {
+            $link = $this->overrideLinkDataWithScrapedData($basicMetadata, $link);
+        }
+
+        $fbMetadata = $this->scrapFacebookMetadata($url);
+        if (array() !== $fbMetadata) {
+            $link = $this->overrideLinkDataWithScrapedData($fbMetadata, $link);
+        }
+
+        return $link;
     }
 
     /**
-     * @param $link
-     * @return array
+     * @param $url
+     * @return array|mixed
      */
-    private function scrapMetadataAndOverrideLinkData($link)
+    public function scrapBasicMetadata($url)
     {
 
-        $metadata = $this->getMetadata($link['url']);
+        $crawler = $this->getCrawler($url);
 
-        $metaTags = $metadata->getMetaTags();
+        $basicMetadata = new BasicMetadata($crawler);
 
-        $metaOgData = $metadata->extractOgMetadata($metaTags);
+        $metaTags = $basicMetadata->getMetaTags();
 
-        if (array() !== $metaOgData) {
-            $link = $metadata->mergeLinkMetadata($metaOgData, $link);
-        } else {
-            $metaDefaultData = $metadata->extractDefaultMetadata($metaTags);
-            if (array() !== $metaDefaultData) {
-                $link = $metadata->mergeLinkMetadata($metaDefaultData, $link);
+        $metadata = $basicMetadata->extractDefaultMetadata($metaTags);
+        $metadata[]['tags'] = $basicMetadata->extractTagsFromKeywords($metaTags);
+
+        return $metadata;
+    }
+
+    /**
+     * @param $url
+     * @return array|mixed
+     */
+    public function scrapFacebookMetadata($url)
+    {
+
+        $crawler = $this->getCrawler($url);
+
+        $fbMetadata = new FacebookMetadata($crawler);
+        $metaTags = $fbMetadata->getMetaTags();
+
+        $metadata = $fbMetadata->extractOgMetadata($metaTags);
+        $metadata[]['tags'] = $fbMetadata->extractTagsFromFacebookMetadata($metaTags);
+
+        return $metadata;
+    }
+
+    /**
+     * @param $scrapedData
+     * @param $link
+     * @return mixed
+     */
+    private function overrideLinkDataWithScrapedData(array $scrapedData, array $link)
+    {
+
+        foreach ($scrapedData as $meta) {
+            if (array_key_exists('title', $meta) && null !== $meta['title']) {
+                $link['title'] = $meta['title'];
+            }
+
+            if (false === array_key_exists('description', $link)) {
+                $link['description'] = "";
+            }
+
+            if (array_key_exists('description', $meta) && null !== $meta['description']) {
+                $link['description'] = $meta['description'];
+            }
+
+            if (array_key_exists('canonical', $meta) && null !== $meta['canonical']) {
+                $link['url'] = $meta['canonical'];
+            }
+
+            if (array_key_exists('tags', $meta)) {
+                if (!array_key_exists('tags', $link)) {
+                    $link['tags'] = array();
+                }
+                $link['tags'] = array_merge($link['tags'], $meta['tags']);
             }
         }
 
@@ -51,15 +118,13 @@ class LinkProcessor
     /**
      * @param $url
      * @throws \Exception
-     * @return \ApiConsumer\Scraper\Metadata
+     * @return \Symfony\Component\DomCrawler\Crawler
      */
-    private function getMetadata($url)
+    protected function getCrawler($url)
     {
-
         try {
             $crawler = $this->scraper->initCrawler($url)->scrap('//meta | //title');
-
-            return new Metadata($crawler);
+            return $crawler;
         } catch (\Exception $e) {
             throw $e;
         }
