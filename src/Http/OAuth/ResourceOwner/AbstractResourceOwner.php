@@ -3,17 +3,15 @@
 namespace Http\OAuth\ResourceOwner;
 
 use ApiConsumer\Event\OAuthTokenEvent;
+use ApiConsumer\Event\TokenEvents;
 use GuzzleHttp\Exception\RequestException;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
-
 use GuzzleHttp\Client;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Message\ResponseInterface;
 
-use ApiConsumer\Event\TokenEvents;
-use ApiConsumer\Event\FilterTokenRefreshedEvent;
 
 /**
  * Class AbstractResourceOwner
@@ -124,7 +122,7 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
      */
     public function authorizedHttpRequest($url, array $query = array(), array $token = array())
     {
-        if (isset($token['expireTime']) && $token['expireTime'] <= time()) {
+        if (isset($token['expireTime']) && ($token['expireTime'] <= time() && $token['expireTime'] != 0)) {
 
 
             try {

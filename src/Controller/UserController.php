@@ -123,7 +123,6 @@ class UserController
             /** @var UserModel $model */
             $model = $app['users.model'];
             if ($basedOn == 'answers') {
-                // TODO: check that users has one answered question at least
                 $result = $model->getMatchingBetweenTwoUsersBasedOnAnswers($id1, $id2);
             }
             if ($basedOn == 'content') {

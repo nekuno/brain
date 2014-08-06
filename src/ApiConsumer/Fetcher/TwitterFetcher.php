@@ -34,6 +34,8 @@ class TwitterFetcher extends BasicPaginationFetcher
         if ($itemsCount > 0 && $itemsCount > $this->pageLength) {
             $lastItem = $response[count($response) - 1];
             $paginationId = $lastItem['id_str'];
+        } else {
+            return null;
         }
 
         return $lastItem['id_str'];
