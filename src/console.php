@@ -1,9 +1,6 @@
 <?php
 
 use Symfony\Component\Console\Application;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 
 $console = new Application('My Silex Application', 'n/a');
@@ -11,7 +8,9 @@ $console->getDefinition()->addOption(new InputOption('--env', '-e', InputOption:
 $console->setDispatcher($app['dispatcher']);
 
 $console->addCommands(array(
-    new \Console\Command\SocialFetchLinksCommand($app),
+    new \Console\Command\FetchLinksCommand($app),
+    new \Console\Command\ScrapLinksMetadataCommand($app),
+    new \Console\Command\Neo4jConstraintsCommand($app),
 ));
 
 return $console;

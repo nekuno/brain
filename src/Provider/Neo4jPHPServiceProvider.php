@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: adridev
- * Date: 6/9/14
- * Time: 8:40 PM
- */
 
 namespace Provider;
 
@@ -20,27 +14,22 @@ class Neo4jPHPServiceProvider implements ServiceProviderInterface
      */
     public function register(Application $app)
     {
+
         // Initialize neo4j
         $app['neo4j.client'] = $app->share(
             function ($app) {
-                $client = new Client($app['db.neo4j.host'], $app['db.neo4j.port']);
+
+                $client = new Client($app['neo4j.options']['host'], $app['neo4j.options']['port']);
+                
+                if (isset($app['neo4j.options']['auth']) && $app['neo4j.options']['auth']) {
+                    $client
+                        ->getTransport()
+                        ->setAuth($app['neo4j.options']['user'], $app['neo4j.options']['pass']);
+                }
 
                 return $client;
             }
         );
-
-        if (getenv('APP_ENV') === 'prod') {
-            $app['neo4j.client'] = $app->extend(
-                'neo4j.client',
-                function ($client, $app) {
-                    $client
-                        ->getTransport()
-                        ->setAuth($app['db.neo4j.user'], $app['db.neo4j.pass']);
-
-                    return $client;
-                }
-            );
-        }
     }
 
     /**

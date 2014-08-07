@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: adridev
- * Date: 6/9/14
- * Time: 3:12 PM
- */
 
 namespace Controller;
 
@@ -45,8 +39,9 @@ class UserController
                 return $app->json(array(), 400);
             }
 
-            if (!is_int($request->request->get('id')))
+            if (!is_int($request->request->get('id'))) {
                 return $app->json(array(), 400);
+            }
         } else {
             return $app->json(array(), 400);
         }
@@ -110,16 +105,15 @@ class UserController
         }
 
         return $app->json(array(), 200);
-
     }
 
     public function getMatchingAction(Request $request, Application $app)
     {
 
         // Get params
+        $id1     = $request->get('id1');
+        $id2     = $request->get('id2');
         $basedOn = $request->get('type');
-        $id1 = $request->query->get('id1');
-        $id2 = $request->query->get('id2');
 
         if (null === $id1 || null === $id2) {
             return $app->json(array(), 400);
@@ -129,7 +123,6 @@ class UserController
             /** @var UserModel $model */
             $model = $app['users.model'];
             if ($basedOn == 'answers') {
-                // TODO: check that users has one answered question at least
                 $result = $model->getMatchingBetweenTwoUsersBasedOnAnswers($id1, $id2);
             }
             if ($basedOn == 'content') {
@@ -144,9 +137,67 @@ class UserController
             return $app->json(array(), 500);
         }
 
-        //return $query;
         return $app->json($result, !empty($result) ? 201 : 200);
-
     }
 
+    public function getUserRecommendationAction(Request $request, Application $app)
+    {
+
+        // Get params
+        $id      = $request->get('id');
+        $basedOn = $request->get('type');
+
+        if (null === $id) {
+            return $app->json(array(), 400);
+        }
+
+        try {
+            /** @var UserModel $model */
+            $model = $app['users.model'];
+            if ($basedOn == 'answers') {
+                // TODO: check that users has one answered question at least
+                $result = $model->getUserRecommendationsBasedOnAnswers($id);
+            }
+            if ($basedOn == 'content') {
+                $result = $model->getUserRecommendationsBasedOnSharedContent($id);
+            }
+
+        } catch (\Exception $e) {
+            if ($app['env'] == 'dev') {
+                throw $e;
+            }
+
+            return $app->json(array(), 500);
+        }
+
+        return $app->json($result, !empty($result) ? 201 : 200);
+    }
+
+    public function getContentRecommendationAction(Request $request, Application $app)
+    {
+
+        // Get params
+        $id      = $request->get('id');
+        $basedOn = $request->get('type');
+
+        if (null === $id) {
+            return $app->json(array(), 400);
+        }
+
+        try {
+
+            /** @var UserModel $model */
+            $model = $app['users.model'];
+            $result = $model->getContentRecommendations($id);
+
+        } catch (\Exception $e) {
+            if ($app['env'] == 'dev') {
+                throw $e;
+            }
+
+            return $app->json(array(), 500);
+        }
+
+        return $app->json($result, !empty($result) ? 201 : 200);
+    }
 } 
