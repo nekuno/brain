@@ -83,18 +83,12 @@ class YoutubeFetcher extends BasicPaginationFetcher
                 break;
 
             case 'like':
-                $activity = 'like';
             case 'favorite':
-                $activity = 'favorite';
             case 'subscription':
-                $activity = 'subscription';
             case 'playlistItem':
-                $activity = 'playlistItem';
             case 'recommendation':
-                $activity = 'recommendation';
             case 'social':
-                $activity = 'social';
-
+                $activity = $item['snippet']['type'];
                 if (isset($item['contentDetails'][$activity]['resourceId'])) {
                     $url = $this->getYoutubeUrlFromResourceId($item['contentDetails'][$activity]['resourceId']);
                 }
