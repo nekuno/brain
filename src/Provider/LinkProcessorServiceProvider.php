@@ -18,12 +18,12 @@ class LinkProcessorServiceProvider implements ServiceProviderInterface
     public function register(Application $app)
     {
 
-        $app['link_processor'] = function () {
+        $app['link_processor'] = function () use ($app) {
 
-            $goutte  = new Client();
+            $goutte = new Client();
             $scraper = new Scraper($goutte);
 
-            return new LinkProcessor($scraper);
+            return new LinkProcessor($scraper, $app['api_consumer.get_resource_owner_by_name']);
         };
 
     }

@@ -51,6 +51,7 @@ api_consumer.config:
         google:
             consumer_key: %google.consumer_key%
             consumer_secret: %google.consumer_secret%
+            api_key: %google.api_key%
 
         spotify:
             consumer_key: %spotify.consumer_key%

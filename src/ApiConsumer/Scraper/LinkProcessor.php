@@ -4,20 +4,28 @@ namespace ApiConsumer\Scraper;
 
 use ApiConsumer\Scraper\Metadata\BasicMetadata;
 use ApiConsumer\Scraper\Metadata\FacebookMetadata;
+use Http\OAuth\ResourceOwner\GoogleResourceOwner;
 
 class LinkProcessor
 {
 
-    /** @var \ApiConsumer\Scraper\Scraper */
+    /** @var Scraper */
     private $scraper;
+
+    /**
+     * @var \Closure
+     */
+    protected $getResourceOwnerByName;
 
     /**
      * @param Scraper $scraper
      */
-    public function __construct(Scraper $scraper)
+    public function __construct(Scraper $scraper, \Closure $getResourceOwnerByName)
     {
 
         $this->scraper = $scraper;
+        $this->getResourceOwnerByName = $getResourceOwnerByName;
+
     }
 
     /**
@@ -38,6 +46,11 @@ class LinkProcessor
         if (array() !== $fbMetadata) {
             $link = $this->overrideLinkDataWithScrapedData($fbMetadata, $link);
         }
+
+        if (strpos($link['url'], 'youtube.com') !== false) {
+            $this->scrapYoutubeMetadata($link);
+        }
+
 
         return $link;
     }
@@ -77,6 +90,27 @@ class LinkProcessor
         $metadata[]['tags'] = $fbMetadata->extractTagsFromFacebookMetadata($metaTags);
 
         return $metadata;
+    }
+
+    public function scrapYoutubeMetadata($link)
+    {
+
+        $url = $link['url'];
+
+        // TODO: Extract video id from $url
+        $id = 'zLgY05beCnY';
+
+        $getResourceOwnerByName = $this->getResourceOwnerByName;
+        $resourceOwner = $getResourceOwnerByName('google');
+        /* @var $resourceOwner GoogleResourceOwner */
+        $url = 'youtube/v3/videos';
+        $query = array(
+            'part' => 'snippet,statistics,topicDetails',
+            'id' => $id,
+        );
+        $response = $resourceOwner->authorizedAPIRequest($url, $query);
+        var_dump($response);
+        die;
     }
 
     /**

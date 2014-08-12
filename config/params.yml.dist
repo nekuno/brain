@@ -39,6 +39,7 @@ params:
     ##Google
     google.consumer_key: '556826433000.apps.googleusercontent.com'
     google.consumer_secret: 'oNAbbRwxxZD9Ntyj7D4yXq1f'
+    google.api_key: 'AIzaSyD-FATpKY396h_bGxRiAg7wSgiGiCr5Prs'
 
     ## Facebook App
     facebook.consumer_key: '525923770862645'
