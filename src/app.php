@@ -29,6 +29,7 @@ $app->register(new ServiceControllerServiceProvider());
 $app->register(new ApiConsumerServiceProvider());
 $app->register(new \Provider\LinkProcessorServiceProvider());
 $app->register(new \Silex\Provider\SwiftmailerServiceProvider());
+$app->register(new \Provider\AMQPServiceProvider());
 
 //Config
 $app->register(new Igorw\Silex\ConfigServiceProvider(__DIR__ . "/../config/params.yml"));

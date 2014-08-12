@@ -27,6 +27,11 @@ params:
     swiftmailer.encryption: null
     swiftmailer.auth_mode: null
 
+    ## RabbitMQ
+    rabbitmq.host: 127.0.0.1
+    rabbitmq.port: 5672
+    rabbitmq.user: guest
+    rabbitmq.pass: guest
 
     ## Twitter
     twitter.consumer_key: 'm9NY9ZghlVeYFVk8fbPp8pp1g'
