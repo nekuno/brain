@@ -38,26 +38,62 @@ class YoutubeFetcher extends BasicPaginationFetcher
         return $paginationId;
     }
 
-    protected function getYoutubeResourceId($contentDetails)
-    {
-        foreach ($contentDetails as $activity => $resources) {
-            return $resources['resourceId'];
-        }
-    }
-
-    protected function generateYoutubeUrl($resourceId)
+    protected function getYoutubeUrlFromResourceId($resourceId)
     {
         $url = "";
-        switch ($resourceId['kind']) {
-            case 'youtube#video':
-                $url = 'https://www.youtube.com/watch?v='.$resourceId['videoId'];
+        if (isset($resourceId['kind'])) {
+            switch ($resourceId['kind']) {
+                
+                case 'youtube#video':
+                    if (isset($resourceId['videoId'])) { 
+                        $url = 'https://www.youtube.com/watch?v='.$resourceId['videoId'];
+                    }
+                    break;
+
+                case 'youtube#channel':
+                    if (isset($resourceId['channelId'])) { 
+                        $url = 'https://www.youtube.com/channel/'.$resourceId['channelId'];
+                    }
+                    break;
+
+                case 'youtube#playlist':
+                    if (isset($resourceId['playlistId'])) { 
+                        $url = 'https://www.youtube.com/playlist?list='.$resourceId['playlistId'];
+                    }
+                    break;                
+            }
+        }
+
+        return $url;
+    }
+
+    protected function generateYoutubeUrl($item)
+    {
+        $url = "";
+        switch ($item['snippet']['type']) {
+            case 'upload':
+                if (isset($item['contentDetails']['upload']['videoId'])) {
+                    $url = $this->getYoutubeUrlFromResourceId(array('kind' => 'youtube#video', 'videoId' => $item['contentDetails']['upload']['videoId']));
+                }
                 break;
-            case 'youtube#channel':
-                $url = 'https://www.youtube.com/channel/'.$resourceId['channelId'];
+
+            case 'like':
+                $activity = 'like';
+            case 'favorite':
+                $activity = 'favorite';
+            case 'subscription':
+                $activity = 'subscription';
+            case 'playlistItem':
+                $activity = 'playlistItem';
+            case 'recommendation':
+                $activity = 'recommendation';
+            case 'social':
+                $activity = 'social';
+
+                if (isset($item['contentDetails'][$activity]['resourceId'])) {
+                    $url = $this->getYoutubeUrlFromResourceId($item['contentDetails'][$activity]['resourceId']);
+                }
                 break;
-            default:
-                var_dump($resourceId);
-                die();
         }
 
         return $url;
@@ -75,8 +111,7 @@ class YoutubeFetcher extends BasicPaginationFetcher
                 continue;
             }
 
-            $resourceId = $this->getYoutubeResourceId($item['contentDetails']);
-            $url = $this->generateYoutubeUrl($resourceId);
+            $url = $this->generateYoutubeUrl($item);
             if (!$url) {
                 continue;
             }
