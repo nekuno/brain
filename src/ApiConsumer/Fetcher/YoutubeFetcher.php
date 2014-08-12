@@ -73,7 +73,12 @@ class YoutubeFetcher extends BasicPaginationFetcher
         switch ($item['snippet']['type']) {
             case 'upload':
                 if (isset($item['contentDetails']['upload']['videoId'])) {
-                    $url = $this->getYoutubeUrlFromResourceId(array('kind' => 'youtube#video', 'videoId' => $item['contentDetails']['upload']['videoId']));
+                    $url = $this->getYoutubeUrlFromResourceId(
+                        array(
+                            'kind' => 'youtube#video', 
+                            'videoId' => $item['contentDetails']['upload']['videoId']
+                        )
+                    );
                 }
                 break;
 
@@ -93,6 +98,11 @@ class YoutubeFetcher extends BasicPaginationFetcher
                 if (isset($item['contentDetails'][$activity]['resourceId'])) {
                     $url = $this->getYoutubeUrlFromResourceId($item['contentDetails'][$activity]['resourceId']);
                 }
+                break;
+
+            case 'bulletin':
+            case 'channelItem':
+            default:
                 break;
         }
 
