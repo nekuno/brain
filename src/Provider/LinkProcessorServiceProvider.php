@@ -3,9 +3,10 @@
 
 namespace Provider;
 
+use ApiConsumer\LinkProcessor\LinkAnalyzer;
 use ApiConsumer\LinkProcessor\LinkProcessor;
-use ApiConsumer\LinkProcessor\Scrapper\Scraper;
-use Goutte\Client;
+use ApiConsumer\LinkProcessor\Processor\ScrapperProcessor;
+use ApiConsumer\LinkProcessor\Processor\YoutubeProcessor;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
 
@@ -18,13 +19,29 @@ class LinkProcessorServiceProvider implements ServiceProviderInterface
     public function register(Application $app)
     {
 
-        $app['link_processor'] = function () use ($app) {
+        $app['api_consumer.link_processor.processor.scrapper'] = $app->share(
+            function () {
+                return new ScrapperProcessor();
+            }
+        );
 
-            $goutte = new Client();
-            $scraper = new Scraper($goutte);
+        $app['api_consumer.link_processor.processor.youtube'] = $app->share(
+            function ($app) {
+                return new YoutubeProcessor($app['api_consumer.resource_owner.google']);
+            }
+        );
 
-            return new LinkProcessor($scraper, $app['api_consumer.get_resource_owner_by_name']);
-        };
+        $app['api_consumer.link_processor.link_analyzer'] = $app->share(
+            function ($app) {
+                return new LinkAnalyzer($app['api_consumer.link_processor.processor.scrapper'], $app['api_consumer.link_processor.processor.youtube']);
+            }
+        );
+
+        $app['api_consumer.link_processor'] = $app->share(
+            function ($app) {
+                return new LinkProcessor($app['api_consumer.link_processor.link_analyzer']);
+            }
+        );
 
     }
 

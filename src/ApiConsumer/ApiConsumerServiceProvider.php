@@ -44,6 +44,13 @@ class ApiConsumerServiceProvider implements ServiceProviderInterface
             }
         );
 
+        $app['api_consumer.resource_owner.google'] = $app->share(
+            function ($app) {
+                $getResourceOwnerByName = $app['api_consumer.get_resource_owner_by_name'];
+                return $getResourceOwnerByName('google');
+            }
+        );
+
         //Registry
         $app['api_consumer.registry'] = $app->share(
             function ($app) {

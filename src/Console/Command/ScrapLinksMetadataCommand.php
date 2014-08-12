@@ -32,8 +32,8 @@ class ScrapLinksMetadataCommand extends ApplicationAwareCommand
 
                 try {
                     /** @var LinkProcessor $processor */
-                    $processor = $this->app['link_processor'];
-                    $processedLink = $processor->processLink($link);
+                    $processor = $this->app['api_consumer.link_processor'];
+                    $processedLink = $processor->process($link);
                     $output->writeln(sprintf('Success: Link %s processed', $link['url']));
                 } catch (\Exception $e) {
                     $output->writeln(sprintf('Error: %s', $e->getMessage()));
