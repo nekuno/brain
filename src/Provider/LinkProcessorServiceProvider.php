@@ -3,8 +3,8 @@
 
 namespace Provider;
 
-use ApiConsumer\Scraper\LinkProcessor;
-use ApiConsumer\Scraper\Scraper;
+use ApiConsumer\LinkProcessor\LinkProcessor;
+use ApiConsumer\LinkProcessor\Scrapper\Scraper;
 use Goutte\Client;
 use Silex\Application;
 use Silex\ServiceProviderInterface;

@@ -1,6 +1,6 @@
 <?php
 
-namespace ApiConsumer\Scraper;
+namespace ApiConsumer\LinkProcessor\Scrapper;
 
 use Goutte\Client;
 use Symfony\Component\DomCrawler\Crawler;

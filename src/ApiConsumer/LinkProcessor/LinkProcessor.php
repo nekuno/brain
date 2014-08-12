@@ -1,9 +1,10 @@
 <?php
 
-namespace ApiConsumer\Scraper;
+namespace ApiConsumer\LinkProcessor;
 
-use ApiConsumer\Scraper\Metadata\BasicMetadata;
-use ApiConsumer\Scraper\Metadata\FacebookMetadata;
+use ApiConsumer\LinkProcessor\Scrapper\Metadata\BasicMetadata;
+use ApiConsumer\LinkProcessor\Scrapper\Metadata\FacebookMetadata;
+use ApiConsumer\LinkProcessor\Scrapper\Scraper;
 use Http\OAuth\ResourceOwner\GoogleResourceOwner;
 
 class LinkProcessor
