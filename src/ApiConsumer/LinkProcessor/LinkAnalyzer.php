@@ -2,54 +2,31 @@
 
 namespace ApiConsumer\LinkProcessor;
 
-use ApiConsumer\LinkProcessor\Processor\ProcessorInterface;
-use ApiConsumer\LinkProcessor\Processor\ScrapperProcessor;
-use ApiConsumer\LinkProcessor\Processor\SpotifyProcessor;
-use ApiConsumer\LinkProcessor\Processor\YoutubeProcessor;
-
 /**
  * @author Juan Luis Martínez <juanlu@comakai.com>
  */
 class LinkAnalyzer
 {
 
-    /**
-     * @var ScrapperProcessor
-     */
-    protected $scrapperProcessor;
-
-    /**
-     * @var YoutubeProcessor
-     */
-    protected $youtubeProcessor;
-
-    /**
-     * @var SpotifyProcessor
-     */
-    protected $spotifyProcessor;
-
-    public function __construct(ScrapperProcessor $scrapperProcessor, YoutubeProcessor $youtubeProcessor, SpotifyProcessor $spotifyProcessor)
-    {
-        $this->scrapperProcessor = $scrapperProcessor;
-        $this->youtubeProcessor = $youtubeProcessor;
-        $this->spotifyProcessor = $spotifyProcessor;
-    }
+    const YOUTUBE = 'youtube';
+    const SPOTIFY = 'spotify';
+    const SCRAPPER = 'scrapper';
 
     /**
      * @param $link
-     * @return ProcessorInterface
+     * @return string
      */
     public function getProcessor($link)
     {
 
         if (strpos($link['url'], 'youtube.com') !== false) {
-            return $this->youtubeProcessor;
+            return self::YOUTUBE;
         }
 
         if (strpos($link['url'], 'spotify.com') !== false) {
-            return $this->spotifyProcessor;
+            return self::SPOTIFY;
         }
 
-        return $this->scrapperProcessor;
+        return self::SCRAPPER;
     }
 } 

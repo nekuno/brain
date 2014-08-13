@@ -2,6 +2,10 @@
 
 namespace ApiConsumer\LinkProcessor;
 
+use ApiConsumer\LinkProcessor\Processor\ScrapperProcessor;
+use ApiConsumer\LinkProcessor\Processor\SpotifyProcessor;
+use ApiConsumer\LinkProcessor\Processor\YoutubeProcessor;
+
 class LinkProcessor
 {
 
@@ -10,11 +14,29 @@ class LinkProcessor
      */
     protected $analyzer;
 
+    /**
+     * @var ScrapperProcessor
+     */
+    protected $scrapperProcessor;
 
-    public function __construct(LinkAnalyzer $linkAnalyzer)
+    /**
+     * @var YoutubeProcessor
+     */
+    protected $youtubeProcessor;
+
+    /**
+     * @var SpotifyProcessor
+     */
+    protected $spotifyProcessor;
+
+
+    public function __construct(LinkAnalyzer $linkAnalyzer, ScrapperProcessor $scrapperProcessor, YoutubeProcessor $youtubeProcessor, SpotifyProcessor $spotifyProcessor)
     {
 
         $this->analyzer = $linkAnalyzer;
+        $this->scrapperProcessor = $scrapperProcessor;
+        $this->youtubeProcessor = $youtubeProcessor;
+        $this->spotifyProcessor = $spotifyProcessor;
     }
 
     /**
@@ -24,8 +46,23 @@ class LinkProcessor
     public function process(array $link)
     {
 
-        $processor = $this->analyzer->getProcessor($link);
+        $processor = $this->scrapperProcessor;
+        $processorName = $this->analyzer->getProcessor($link);
+
+        switch ($processorName) {
+            case LinkAnalyzer::YOUTUBE:
+                $processor = $this->youtubeProcessor;
+                break;
+            case LinkAnalyzer::SPOTIFY:
+                $processor = $this->spotifyProcessor;
+                break;
+            case LinkAnalyzer::SCRAPPER:
+                $processor = $this->scrapperProcessor;
+                break;
+        }
+
         $processedLink = $processor->process($link);
+        
         return $processedLink;
     }
 
