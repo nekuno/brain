@@ -41,6 +41,12 @@ swiftmailer.options:
     encryption: %swiftmailer.encryption%
     auth_mode: %swiftmailer.auth_mode%
 
+amqp.options:
+    host: %rabbitmq.host%
+    port: %rabbitmq.port%
+    user: %rabbitmq.user%
+    pass: %rabbitmq.pass%
+    vhost: %rabbitmq.vhost%
 
 api_consumer.config:
     resource_owner:
