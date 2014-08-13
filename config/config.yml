@@ -56,6 +56,7 @@ api_consumer.config:
         spotify:
             consumer_key: %spotify.consumer_key%
             consumer_secret: %spotify.consumer_secret%
+            api_key: %spotify.api_key%
 
         facebook:
             consumer_key: %facebook.consumer_key%

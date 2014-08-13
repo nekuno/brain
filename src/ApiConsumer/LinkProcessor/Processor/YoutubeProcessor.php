@@ -28,7 +28,7 @@ class YoutubeProcessor implements ProcessorInterface
     {
         /*
          * TODO: 1 Decidir el tipo de enlace, de video o de canal
-         * TODO: 2 Extraer los datos necearios del enlace
+         * TODO: 2 Extraer los datos necesarios del enlace
          * TODO: 3 Llamar a la API
          * TODO: 4 Procesar la respuesta
          * TODO: 5 Extraer la información
