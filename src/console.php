@@ -9,7 +9,7 @@ $console->setDispatcher($app['dispatcher']);
 
 $console->addCommands(array(
     new \Console\Command\FetchLinksCommand($app),
-    new \Console\Command\FetchLinksQueueCommand($app),
+    new \Console\Command\RabbitMqWorkersUpCommand($app),
     new \Console\Command\ScrapLinksMetadataCommand($app),
     new \Console\Command\Neo4jConstraintsCommand($app),
 ));

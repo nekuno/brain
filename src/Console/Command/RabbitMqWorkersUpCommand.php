@@ -10,7 +10,7 @@ use Silex\Application;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class FetchLinksQueueCommand extends ApplicationAwareCommand
+class RabbitMqWorkersUpCommand extends ApplicationAwareCommand
 {
 
     protected function configure()
