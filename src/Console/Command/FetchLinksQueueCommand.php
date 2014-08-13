@@ -16,8 +16,8 @@ class FetchLinksQueueCommand extends ApplicationAwareCommand
     protected function configure()
     {
 
-        $this->setName('fetch:links:queue')
-            ->setDescription("Process fetch-links queue")
+        $this->setName('workers:rabbitmq:up')
+            ->setDescription("Start RabbitMQ workers")
             ->setDefinition(
                 array()
             );
@@ -37,11 +37,11 @@ class FetchLinksQueueCommand extends ApplicationAwareCommand
 
         $channel->queue_bind($queueName, $exchange);
 
-        $output->writeln('[*] Waiting for messages. To exit press CTRL+C');
-
         $channel->basic_qos(null, 1, null);
 
-        $channel->basic_consume($queueName, '', false, false, false, false, array($this, 'processQueuedMessage'));
+        $channel->basic_consume($queueName, '', false, false, false, false, array($this, 'processMessage'));
+
+        $output->writeln('[*] Waiting for messages. To exit press CTRL+C');
 
         while (count($channel->callbacks)) {
             $channel->wait();
@@ -52,7 +52,7 @@ class FetchLinksQueueCommand extends ApplicationAwareCommand
 
     }
 
-    public function processQueuedMessage(AMQPMessage $message)
+    public function processMessage(AMQPMessage $message)
     {
         $messageBody = unserialize($message->body);
         $resourceOwner = $messageBody['resourceOwner'];
@@ -60,7 +60,7 @@ class FetchLinksQueueCommand extends ApplicationAwareCommand
 
         $userProvider = new DBUserProvider($this->app['dbs']['mysql_social']);
         $user = $userProvider->getUsersByResource(
-            $this->app['api_consumer.config']['fetcher'][$resourceOwner]['resourceOwner'],
+            $resourceOwner,
             $userId
         );
 
