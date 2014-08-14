@@ -1,6 +1,6 @@
 <?php
 
-namespace ApiConsumer\LinkProcessor\Parser;
+namespace ApiConsumer\LinkProcessor\UrlParser;
 
 /**
  * @author Juan Luis Martínez <juanlu@comakai.com>

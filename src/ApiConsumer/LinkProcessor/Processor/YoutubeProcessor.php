@@ -3,7 +3,7 @@
 namespace ApiConsumer\LinkProcessor\Processor;
 
 use Http\OAuth\ResourceOwner\GoogleResourceOwner;
-use ApiConsumer\LinkProcessor\Parser\YoutubeUrlParser;
+use ApiConsumer\LinkProcessor\UrlParser\YoutubeUrlParser;
 
 /**
  * @author Juan Luis Martínez <juanlu@comakai.com>
