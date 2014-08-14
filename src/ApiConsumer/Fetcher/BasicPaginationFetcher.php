@@ -9,6 +9,9 @@ abstract class BasicPaginationFetcher extends AbstractFetcher
      */
     protected $paginationField;
 
+    /**
+     * @var int Number of items by page
+     */
     protected $pageLength = 200;
 
     /**
