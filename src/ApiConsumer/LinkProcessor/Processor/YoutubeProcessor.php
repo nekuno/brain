@@ -3,15 +3,13 @@
 namespace ApiConsumer\LinkProcessor\Processor;
 
 use Http\OAuth\ResourceOwner\GoogleResourceOwner;
+use ApiConsumer\LinkProcessor\Parser\YoutubeUrlParser;
 
 /**
  * @author Juan Luis Martínez <juanlu@comakai.com>
  */
 class YoutubeProcessor implements ProcessorInterface
 {
-
-    const VIDEO_URL = 'video';
-    const CHANNEL_URL = 'channel';
 
     /**
      * @var GoogleResourceOwner
@@ -21,6 +19,7 @@ class YoutubeProcessor implements ProcessorInterface
     public function __construct(GoogleResourceOwner $resourceOwner)
     {
         $this->resourceOwner = $resourceOwner;
+        $this->parser = new YoutubeUrlParser();
     }
 
     /**
@@ -33,13 +32,13 @@ class YoutubeProcessor implements ProcessorInterface
          * TODO: Extract tags from freebase (topicIds)
         */
 
-        $type = $this->getUrlType($link['url']);
+        $type = $this->parser->getUrlType($link['url']);
 
         switch ($type) {
-            case self::VIDEO_URL:
+            case YoutubeUrlParser::VIDEO_URL:
                 $link = $this->processVideo($link);
                 break;
-            case self::CHANNEL_URL:
+            case YoutubeUrlParser::CHANNEL_URL:
                 $link = $this->processChannel($link);
                 break;
             default:
@@ -53,7 +52,7 @@ class YoutubeProcessor implements ProcessorInterface
     protected function processVideo($link)
     {
 
-        $id = $this->getYoutubeIdFromUrl($link['url']);
+        $id = $this->parser->getYoutubeIdFromUrl($link['url']);
 
         $url = 'youtube/v3/videos';
         $query = array(
@@ -78,7 +77,7 @@ class YoutubeProcessor implements ProcessorInterface
     protected function processChannel($link)
     {
 
-        $id = $this->getChannelIdFromUrl($link['url']);
+        $id = $this->parser->getChannelIdFromUrl($link['url']);
 
         $url = 'youtube/v3/channels';
         $query = array(
@@ -108,68 +107,4 @@ class YoutubeProcessor implements ProcessorInterface
         return $link;
     }
 
-    protected function getUrlType($url)
-    {
-        if ($this->getYoutubeIdFromUrl($url)) {
-            return self::VIDEO_URL;
-        }
-
-        if ($this->getChannelIdFromUrl($url)) {
-            return self::CHANNEL_URL;
-        }
-
-        return false;
-    }
-
-    /**
-     * Get Youtube video ID from URL
-     *
-     * @param string $url
-     * @return mixed Youtube video ID or FALSE if not found
-     */
-    protected function getYoutubeIdFromUrl($url)
-    {
-
-        $parts = parse_url($url);
-
-        if (isset($parts['query'])) {
-            parse_str($parts['query'], $qs);
-            if (isset($qs['v'])) {
-                return $qs['v'];
-            } else if (isset($qs['vi'])) {
-                return $qs['vi'];
-            }
-        }
-
-        if (isset($parts['path'])) {
-            $path = explode('/', trim($parts['path'], '/'));
-            if (count($path) >= 2 && in_array($path[0], array('v', 'vi'))) {
-                return $path[1];
-            }
-            if (count($path) === 1) {
-                return $path[0];
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Get Youtube channel ID from URL
-     *
-     * @param string $url
-     * @return mixed
-     */
-    protected function getChannelIdFromUrl($url)
-    {
-
-        $parts = parse_url($url);
-
-        $path = explode('/', trim($parts['path'], '/'));
-        if (!empty($path) && $path[0] === 'channel' && $path[1]) {
-            return $path[1];
-        }
-
-        return false;
-    }
 }
