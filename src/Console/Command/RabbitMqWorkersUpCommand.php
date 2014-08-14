@@ -2,7 +2,6 @@
 
 namespace Console\Command;
 
-use ApiConsumer\Auth\DBUserProvider;
 use ApiConsumer\Fetcher\FetcherService;
 use PhpAmqpLib\Connection\AMQPConnection;
 use PhpAmqpLib\Message\AMQPMessage;

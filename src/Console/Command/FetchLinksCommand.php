@@ -2,7 +2,6 @@
 
 namespace Console\Command;
 
-use ApiConsumer\Auth\DBUserProvider;
 use ApiConsumer\Fetcher\FetcherService;
 use Silex\Application;
 use Symfony\Component\Console\Input\InputInterface;
