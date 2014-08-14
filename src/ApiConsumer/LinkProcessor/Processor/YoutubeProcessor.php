@@ -33,14 +33,6 @@ class YoutubeProcessor implements ProcessorInterface
          * TODO: Extract tags from freebase (topicIds)
         */
 
-        /**
-         * Types of urls:
-         *
-         * https://www.youtube.com/channel/UCLbjQpHFa_x40v-uY88y4Qw
-         * https://www.youtube.com/watch?v=MkucGqDt1gI
-         * http://youtu.be/dQw4w9WgXcQ?feature=youtube_gdata_player
-         */
-
         $type = $this->getUrlType($link['url']);
 
         switch ($type) {
@@ -51,7 +43,7 @@ class YoutubeProcessor implements ProcessorInterface
                 $link = $this->processChannel($link);
                 break;
             default:
-                $link['tags'] = array();
+                return false;
                 break;
         }
 

@@ -9,7 +9,7 @@ interface ProcessorInterface
 {
     /**
      * @param $link
-     * @return array
+     * @return array|false Returns the processed link as array or false if the processer can not process the link
      */
     public function process(array $link);
 } 
