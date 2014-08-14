@@ -41,6 +41,9 @@ class YoutubeProcessor implements ProcessorInterface
             case YoutubeUrlParser::CHANNEL_URL:
                 $link = $this->processChannel($link);
                 break;
+            case YoutubeUrlParser::PLAYLIST_URL:
+                $link = $this->processPlaylist($link);
+                break;
             default:
                 return false;
                 break;
@@ -102,6 +105,32 @@ class YoutubeProcessor implements ProcessorInterface
                     $link['tags'] = $results[0];
                 }
             }
+        }
+
+        return $link;
+    }
+
+    protected function processPlaylist($link)
+    {
+
+        $id = $this->parser->getPlaylistIdFromUrl($link['url']);
+
+        $url = 'youtube/v3/playlists';
+        $query = array(
+            'part' => 'snippet,status',
+            'id' => $id,
+        );
+        $response = $this->resourceOwner->authorizedAPIRequest($url, $query);
+
+        $items = $response['items'];
+
+        $link['tags'] = array();
+
+        if ($items) {
+            $info = $items[0];
+            $link['title'] = $info['snippet']['title'];
+            $link['description'] = $info['snippet']['description'];
+
         }
 
         return $link;
