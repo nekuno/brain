@@ -62,7 +62,11 @@ class LinkProcessor
         }
 
         $processedLink = $processor->process($link);
-        
+
+        if (!$processedLink) {
+            $processedLink = $this->scrapperProcessor->process($link);
+        }
+
         return $processedLink;
     }
 
