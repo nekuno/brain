@@ -29,4 +29,4 @@ class LinkAnalyzer
 
         return self::SCRAPPER;
     }
-} 
+}

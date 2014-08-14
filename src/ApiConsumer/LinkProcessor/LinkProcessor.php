@@ -62,7 +62,7 @@ class LinkProcessor
         }
 
         $processedLink = $processor->process($link);
-        
+
         return $processedLink;
     }
 

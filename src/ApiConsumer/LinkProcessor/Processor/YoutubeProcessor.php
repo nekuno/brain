@@ -10,6 +10,9 @@ use Http\OAuth\ResourceOwner\GoogleResourceOwner;
 class YoutubeProcessor implements ProcessorInterface
 {
 
+    const VIDEO_URL = 'video';
+    const CHANNEL_URL = 'channel';
+
     /**
      * @var GoogleResourceOwner
      */
@@ -27,15 +30,39 @@ class YoutubeProcessor implements ProcessorInterface
     public function process(array $link)
     {
         /*
-         * TODO: 1 Decidir el tipo de enlace, de video o de canal
-         * TODO: 2 Extraer los datos necesarios del enlace
-         * TODO: 3 Llamar a la API
-         * TODO: 4 Procesar la respuesta
-         * TODO: 5 Extraer la información
-         * TODO: 6 Devolver el enlace procesado
+         * TODO: Extract tags from freebase (topicIds)
         */
 
-        $id = 'zLgY05beCnY';
+        /**
+         * Types of urls:
+         *
+         * https://www.youtube.com/channel/UCLbjQpHFa_x40v-uY88y4Qw
+         * https://www.youtube.com/watch?v=MkucGqDt1gI
+         * http://youtu.be/dQw4w9WgXcQ?feature=youtube_gdata_player
+         */
+
+        $type = $this->getUrlType($link['url']);
+
+        switch ($type) {
+            case self::VIDEO_URL:
+                $link = $this->processVideo($link);
+                break;
+            case self::CHANNEL_URL:
+                $link = $this->processChannel($link);
+                break;
+            default:
+                $link['tags'] = array();
+                break;
+        }
+
+        return $link;
+    }
+
+    protected function processVideo($link)
+    {
+
+        $id = $this->getYoutubeIdFromUrl($link['url']);
+
         $url = 'youtube/v3/videos';
         $query = array(
             'part' => 'snippet,statistics,topicDetails',
@@ -54,5 +81,103 @@ class YoutubeProcessor implements ProcessorInterface
         }
 
         return $link;
+    }
+
+    protected function processChannel($link)
+    {
+
+        $id = $this->getChannelIdFromUrl($link['url']);
+
+        $url = 'youtube/v3/channels';
+        $query = array(
+            'part' => 'snippet,brandingSettings,contentDetails,invideoPromotion,statistics,topicDetails',
+            'id' => $id,
+        );
+        $response = $this->resourceOwner->authorizedAPIRequest($url, $query);
+
+        $items = $response['items'];
+
+        $link['tags'] = array();
+
+        if ($items) {
+            $info = $items[0];
+            $link['title'] = $info['snippet']['title'];
+            $link['description'] = $info['snippet']['description'];
+
+            if (isset($info['brandingSettings']['channel']['keywords'])) {
+                $tags = $info['brandingSettings']['channel']['keywords'];
+                preg_match_all('/".*?"|\w+/', $tags, $results);
+                if ($results) {
+                    $link['tags'] = $results[0];
+                }
+            }
+        }
+
+        return $link;
+    }
+
+    protected function getUrlType($url)
+    {
+        if ($this->getYoutubeIdFromUrl($url)) {
+            return self::VIDEO_URL;
+        }
+
+        if ($this->getChannelIdFromUrl($url)) {
+            return self::CHANNEL_URL;
+        }
+
+        return false;
+    }
+
+    /**
+     * Get Youtube video ID from URL
+     *
+     * @param string $url
+     * @return mixed Youtube video ID or FALSE if not found
+     */
+    protected function getYoutubeIdFromUrl($url)
+    {
+
+        $parts = parse_url($url);
+
+        if (isset($parts['query'])) {
+            parse_str($parts['query'], $qs);
+            if (isset($qs['v'])) {
+                return $qs['v'];
+            } else if (isset($qs['vi'])) {
+                return $qs['vi'];
+            }
+        }
+
+        if (isset($parts['path'])) {
+            $path = explode('/', trim($parts['path'], '/'));
+            if (count($path) >= 2 && in_array($path[0], array('v', 'vi'))) {
+                return $path[1];
+            }
+            if (count($path) === 1) {
+                return $path[0];
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Get Youtube channel ID from URL
+     *
+     * @param string $url
+     * @return mixed
+     */
+    protected function getChannelIdFromUrl($url)
+    {
+
+        $parts = parse_url($url);
+
+        $path = explode('/', trim($parts['path'], '/'));
+        if (!empty($path) && $path[0] === 'channel' && $path[1]) {
+            return $path[1];
+        }
+
+        return false;
     }
 }
