@@ -33,22 +33,43 @@ class SpotifyProcessor implements ProcessorInterface
 
             if (isset($album['genres'])) {
                 foreach ($album['genres'] as $genre) {
-                    $link['tags'][] = "GENRE: ".$genre;
+                    $tag = array();
+                    $tag['name'] = $genre;
+                    $tag['aditionalLabels'][] = 'MusicalGenre';
+                    $link['tags'][] = $tag;
                 }
 
+                $artistList = array();
                 foreach ($track['artists'] as $artist) {
-                    $link['tags'][] = "ARTIST: ".$artist['name'];
+                    $tag = array();
+                    $tag['name'] = $artist['name'];
+                    $tag['aditionalLabels'][] = 'Artist';
+                    $tag['aditionalFields']['spotifyId'] = $artist['id'];
+                    $link['tags'][] = $tag;
+
                     $artistList[] = $artist['name'];
                 }
 
-                $link['tags'][] = "ALBUM: ".$track['album']['name'];
-                $link['tags'][] = "SONG: ".$track['name'];
+                $tag = array();
+                $tag['name'] = $track['album']['name'];
+                $tag['aditionalLabels'][] = 'Album';
+                $tag['aditionalFields']['spotifyId'] = $track['album']['id'];
+                $link['tags'][] = $tag;
+
+                $tag = array();
+                $tag['name'] = $track['name'];
+                $tag['aditionalLabels'][] = 'Song';
+                $tag['aditionalFields']['spotifyId'] = $track['id'];
+                if (isset($track['external_ids']['isrc'])) {
+                    $tag['aditionalFields']['isrc'] = $track['external_ids']['isrc'];
+                }
+                $link['tags'][] = $tag;
 
                 $link['title'] = $track['name'];
                 $link['description'] = $track['album']['name'] . ' : ' . implode(', ', $artistList);
             }
         } 
-        
+
         return $link;
     }
 
@@ -61,15 +82,27 @@ class SpotifyProcessor implements ProcessorInterface
 
         if (isset($album['name']) && isset($album['genres']) && isset($album['artists'])) {
             foreach ($album['genres'] as $genre) {
-                $link['tags'][] = "GENRE: ".$genre;
+                $tag = array();
+                $tag['name'] = $genre;
+                $tag['aditionalLabels'][] = 'MusicalGenre';
+                $link['tags'][] = $tag;
             }
 
             foreach ($album['artists'] as $artist) {
-                $link['tags'][] = "ARTIST: ".$artist['name'];
+                $tag = array();
+                $tag['name'] = $artist['name'];
+                $tag['aditionalLabels'][] = 'Artist';
+                $tag['aditionalFields']['spotifyId'] = $artist['id'];
+                $link['tags'][] = $tag;
+
                 $artistList[] = $artist['name'];
             }
-
-            $link['tags'][] = "ALBUM: ".$album['name'];
+                
+            $tag = array();
+            $tag['name'] = $album['name'];
+            $tag['aditionalLabels'][] = 'Album';
+            $tag['aditionalFields']['spotifyId'] = $album['id'];
+            $link['tags'][] = $tag;
 
             $link['title'] = $album['name'];
             $link['description'] = 'By: ' . implode(', ', $artistList);
@@ -87,9 +120,17 @@ class SpotifyProcessor implements ProcessorInterface
 
         if (isset($artist['name']) && isset($artist['genres'])) {
             foreach ($artist['genres'] as $genre) {
-                $link['tags'][] = "GENRE: ".$genre;
+                $tag = array();
+                $tag['name'] = $genre;
+                $tag['aditionalLabels'][] = 'MusicalGenre';
+                $link['tags'][] = $tag;
             }
-            $link['tags'][] = "ARTIST: ".$artist['name'];
+
+            $tag = array();
+            $tag['name'] = $artist['name'];
+            $tag['aditionalLabels'][] = 'Artist';
+            $tag['aditionalFields']['spotifyId'] = $artist['id'];
+            $link['tags'][] = $tag;
             
             $link['title'] = $artist['name'];
         } 
@@ -103,41 +144,6 @@ class SpotifyProcessor implements ProcessorInterface
      */
     public function process(array $link)
     {
-        /*
-         * TODO 1: Añadir isrc y spotify id
-         * TODO 2: Labels propias
-        */
-
-        /*
-Tracks => Se obtienen Tags de los Genres de su álbum (:MusicalGenre), y se añade Tag por el álbum (:Album), por cada artist (:Artist) y de canción (:Song) añadir ISRC.
-Álbum => Se obtienen Tags de los Genres del álbum, y se añade Tag por el álbum y por cada Artist.
-Artist => Se añade Tag de Artist, MusicalGenre.
-Playlist => Se ignoran y se dejan como enlace por defecto.
-
-
-        tracks: https://api.spotify.com/v1/tracks/{id}
-        album.href -> url api albums
-        album.name -> nombre del album
-        album.id -> id del album
-        artists[].name -> nombre del artista
-        artists[].id -> id del artista
-        external_ids.isrc -> isrc del track
-        (https://developer.spotify.com/web-api/get-track/)
-
-        album: https://api.spotify.com/v1/albums/{id}
-        genres[] -> generos
-        artists[].name -> nombre del artista
-        artists[].id -> id del artista
-        id -> id del album
-        name -> nombre del album
-        (https://developer.spotify.com/web-api/get-album/)
-
-        artist: https://api.spotify.com/v1/artists/
-        {id}
-        id -> id del artista
-        name -> nombre del artista
-        genres[] -> generos
-        */
         $kind = 'none';
         $id = '0';
 
@@ -157,6 +163,9 @@ Playlist => Se ignoran y se dejan como enlace por defecto.
                 break;
             case 'artist':
                 $link = $this->processArtist($link, $id);
+                break;
+            default:
+                $link = FALSE;
                 break;
         }
 
