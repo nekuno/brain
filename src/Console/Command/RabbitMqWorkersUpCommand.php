@@ -58,7 +58,7 @@ class RabbitMqWorkersUpCommand extends ApplicationAwareCommand
         $resourceOwner = $messageBody['resourceOwner'];
         $userId = $messageBody['userId'];
 
-        $userProvider = new DBUserProvider($this->app['dbs']['mysql_social']);
+        $userProvider = $this->app['api_consumer.user_provider'];
         $user = $userProvider->getUsersByResource(
             $resourceOwner,
             $userId

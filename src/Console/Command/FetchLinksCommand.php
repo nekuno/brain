@@ -44,7 +44,7 @@ class FetchLinksCommand extends ApplicationAwareCommand
             return;
         }
 
-        $userProvider = new DBUserProvider($this->app['dbs']['mysql_social']);
+        $userProvider = $this->app['api_consumer.user_provider'];
         $users = $userProvider->getUsersByResource($this->app['api_consumer.config']['fetcher'][$resource]['resourceOwner']);
 
         /** @var FetcherService $fetcher */
