@@ -27,9 +27,7 @@ abstract class AbstractFetcher implements FetcherInterface
     protected $user;
 
     /**
-     * @param UserProviderInterface $userProvider
-     * @param Client $httpClient
-     * @param array $options
+     * @param ResourceOwnerInterface $resourceOwner
      */
     public function __construct(ResourceOwnerInterface $resourceOwner)
     {
