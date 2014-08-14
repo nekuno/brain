@@ -16,10 +16,10 @@ class YoutubeProcessor implements ProcessorInterface
      */
     protected $resourceOwner;
 
-    public function __construct(GoogleResourceOwner $resourceOwner)
+    public function __construct(GoogleResourceOwner $resourceOwner, YoutubeUrlParser $parser)
     {
         $this->resourceOwner = $resourceOwner;
-        $this->parser = new YoutubeUrlParser();
+        $this->parser = $parser;
     }
 
     /**
