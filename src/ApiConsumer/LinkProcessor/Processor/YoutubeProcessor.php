@@ -28,9 +28,6 @@ class YoutubeProcessor implements ProcessorInterface
      */
     public function process(array $link)
     {
-        /*
-         * TODO: Extract tags from freebase (topicIds)
-        */
 
         $type = $this->parser->getUrlType($link['url']);
 
@@ -73,7 +70,12 @@ class YoutubeProcessor implements ProcessorInterface
             $link['title'] = $info['snippet']['title'];
             $link['description'] = $info['snippet']['description'];
             if (isset($info['topicDetails']['topicIds'])) {
-                $link['tags'] = $info['topicDetails']['topicIds'];
+                foreach ($info['topicDetails']['topicIds'] as $tagName) {
+                    $link['tags'][] = array(
+                        'name' => $tagName,
+                        'aditionalLabels' => array('Freebase'),
+                    );
+                }
             }
         }
 
@@ -105,7 +107,11 @@ class YoutubeProcessor implements ProcessorInterface
                 $tags = $info['brandingSettings']['channel']['keywords'];
                 preg_match_all('/".*?"|\w+/', $tags, $results);
                 if ($results) {
-                    $link['tags'] = $results[0];
+                    foreach ($results[0] as $tagName) {
+                        $link['tags'][] = array(
+                            'name' => $tagName,
+                        );
+                    }
                 }
             }
         }
@@ -134,9 +140,13 @@ class YoutubeProcessor implements ProcessorInterface
             $link['title'] = $info['snippet']['title'];
             $link['description'] = $info['snippet']['description'];
             if (isset($info['topicDetails']['topicIds'])) {
-                $link['tags'] = $info['topicDetails']['topicIds'];
+                foreach ($info['topicDetails']['topicIds'] as $tagName) {
+                    $link['tags'][] = array(
+                        'name' => $tagName,
+                        'aditionalLabels' => array('Freebase'),
+                    );
+                }
             }
-
         }
 
         return $link;

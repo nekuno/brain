@@ -17,7 +17,6 @@ class YoutubeUrlParser
         if ($this->getYoutubeIdFromUrl($url)) {
             return self::VIDEO_URL;
         }
-
         if ($this->getChannelIdFromUrl($url)) {
             return self::CHANNEL_URL;
         }
