@@ -7,7 +7,7 @@ use ApiConsumer\LinkProcessor\UrlParser\YoutubeUrlParser;
 /**
  * @author Juan Luis Martínez <juanlu@comakai.com>
  */
-class YoutubeProcessorTest extends \PHPUnit_Framework_TestCase
+class YoutubeUrlParserTest extends \PHPUnit_Framework_TestCase
 {
 
     /**
