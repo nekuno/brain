@@ -123,16 +123,34 @@ class LinkModel
         $query = new Query($this->client, $template, $tag);
 
         $result = $query->getResultSet();
-
+        
         foreach ($result as $row) {
             return $result;
         }
 
-        $template = "CREATE (tag:Tag)"
-            . "SET tag.name = { name }"
+        $aditionalLabels = "";
+        if (isset($tag['aditionalLabels'])) {
+            foreach ($tag['aditionalLabels'] as $label) {
+                $aditionalLabels .= ":".$label;
+            }    
+        }
+
+        $aditionalFields = "";
+        if (isset($tag['aditionalFields'])) {
+            foreach ($tag['aditionalFields'] as $field => $value) {
+                $aditionalFields .= ", tag.".$field." = '".$value."'";
+            }    
+        }
+
+        $params = array(
+            'name' => $tag['name'],
+        );
+        
+        $template = "CREATE (tag:Tag".$aditionalLabels.")"
+            . "SET tag.name = { name }".$aditionalFields
             . "RETURN tag";
 
-        $query = new Query($this->client, $template, $tag);
+        $query = new Query($this->client, $template, $params);
 
         return $query->getResultSet();
 

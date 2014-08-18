@@ -85,7 +85,7 @@ class FacebookMetadata extends Metadata
             }
 
             if (strstr($nodeMetadata['property'], 'article:tag')) {
-                $tags[] = $nodeMetadata['content'];
+                $tags[]['name'] = $nodeMetadata['content'];
             }
         }
 

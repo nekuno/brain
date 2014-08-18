@@ -20,54 +20,154 @@ class SpotifyProcessor implements ProcessorInterface
         $this->resourceOwner = $resourceOwner;
     }
 
+    protected function processTrack($link, $id)
+    {
+        $urlTrack = 'tracks/' . $id;
+        $querytrack = array();
+        $track = $this->resourceOwner->authorizedAPIRequest($urlTrack, $querytrack);
+
+        if (isset($track['name']) && isset($track['album']) && isset($track['artists'])) {
+            $urlAlbum = 'albums/' . $track['album']['id'];
+            $queryAlbum = array();
+            $album = $this->resourceOwner->authorizedAPIRequest($urlAlbum, $queryAlbum);
+
+            if (isset($album['genres'])) {
+                foreach ($album['genres'] as $genre) {
+                    $tag = array();
+                    $tag['name'] = $genre;
+                    $tag['aditionalLabels'][] = 'MusicalGenre';
+                    $link['tags'][] = $tag;
+                }
+
+                $artistList = array();
+                foreach ($track['artists'] as $artist) {
+                    $tag = array();
+                    $tag['name'] = $artist['name'];
+                    $tag['aditionalLabels'][] = 'Artist';
+                    $tag['aditionalFields']['spotifyId'] = $artist['id'];
+                    $link['tags'][] = $tag;
+
+                    $artistList[] = $artist['name'];
+                }
+
+                $tag = array();
+                $tag['name'] = $track['album']['name'];
+                $tag['aditionalLabels'][] = 'Album';
+                $tag['aditionalFields']['spotifyId'] = $track['album']['id'];
+                $link['tags'][] = $tag;
+
+                $tag = array();
+                $tag['name'] = $track['name'];
+                $tag['aditionalLabels'][] = 'Song';
+                $tag['aditionalFields']['spotifyId'] = $track['id'];
+                if (isset($track['external_ids']['isrc'])) {
+                    $tag['aditionalFields']['isrc'] = $track['external_ids']['isrc'];
+                }
+                $link['tags'][] = $tag;
+
+                $link['title'] = $track['name'];
+                $link['description'] = $track['album']['name'] . ' : ' . implode(', ', $artistList);
+            }
+        } 
+
+        return $link;
+    }
+
+    protected function processAlbum($link, $id)
+    {
+
+        $urlAlbum = 'albums/' . $id;
+        $queryAlbum = array();
+        $album = $this->resourceOwner->authorizedAPIRequest($urlAlbum, $queryAlbum);
+
+        if (isset($album['name']) && isset($album['genres']) && isset($album['artists'])) {
+            foreach ($album['genres'] as $genre) {
+                $tag = array();
+                $tag['name'] = $genre;
+                $tag['aditionalLabels'][] = 'MusicalGenre';
+                $link['tags'][] = $tag;
+            }
+
+            foreach ($album['artists'] as $artist) {
+                $tag = array();
+                $tag['name'] = $artist['name'];
+                $tag['aditionalLabels'][] = 'Artist';
+                $tag['aditionalFields']['spotifyId'] = $artist['id'];
+                $link['tags'][] = $tag;
+
+                $artistList[] = $artist['name'];
+            }
+                
+            $tag = array();
+            $tag['name'] = $album['name'];
+            $tag['aditionalLabels'][] = 'Album';
+            $tag['aditionalFields']['spotifyId'] = $album['id'];
+            $link['tags'][] = $tag;
+
+            $link['title'] = $album['name'];
+            $link['description'] = 'By: ' . implode(', ', $artistList);
+        } 
+        
+        return $link;
+    }
+
+    protected function processArtist($link, $id)
+    {
+
+        $urlArtist = 'artists/' . $id;
+        $queryArtist = array();
+        $artist= $this->resourceOwner->authorizedAPIRequest($urlArtist, $queryArtist);
+
+        if (isset($artist['name']) && isset($artist['genres'])) {
+            foreach ($artist['genres'] as $genre) {
+                $tag = array();
+                $tag['name'] = $genre;
+                $tag['aditionalLabels'][] = 'MusicalGenre';
+                $link['tags'][] = $tag;
+            }
+
+            $tag = array();
+            $tag['name'] = $artist['name'];
+            $tag['aditionalLabels'][] = 'Artist';
+            $tag['aditionalFields']['spotifyId'] = $artist['id'];
+            $link['tags'][] = $tag;
+            
+            $link['title'] = $artist['name'];
+        } 
+        
+        return $link;
+    }
+
     /**
      * @param array $link
      * @return array
      */
     public function process(array $link)
     {
-        /*
-         * TODO: 1 Decidir el tipo de enlace
-         * TODO: 2 Extraer los datos necesarios del enlace
-         * TODO: 3 Llamar a la API
-         * TODO: 4 Procesar la respuesta
-         * TODO: 5 Extraer la información
-         * TODO: 6 Devolver el enlace procesado
-        */
+        $kind = 'none';
+        $id = '0';
 
-        /*
-        tracks: https://api.spotify.com/v1/tracks/{id}
-        album.href -> url api albums
-        album.name -> nombre del album
-        album.id -> id del album
-        artists[].name -> nombre del artista
-        artists[].id -> id del artista
-        external_ids.isrc -> isrc del track
-        (https://developer.spotify.com/web-api/get-track/)
+        $parsedUrl = parse_url($link['url']);
+        $path = explode('/', $parsedUrl['path']);
+        if (count($path) === 3) {
+            $kind = $path[1];
+            $id = $path[2];
+        }
 
-        album: https://api.spotify.com/v1/albums/{id}
-        genres[] -> generos
-        artists[].name -> nombre del artista
-        artists[].id -> id del artista
-        id -> id del album
-        name -> nombre del album
-        (https://developer.spotify.com/web-api/get-album/)
-        artist: https://api.spotify.com/v1/artists/
-        {id}
-        id -> id del artista
-        name -> nombre del artista
-        genres[] -> generos
-        */
-
-        $id = '7DhnBXTRbyW3JRueLlOmLm';
-        $url = 'tracks/' . $id;
-        $query = array();
-        $response = $this->resourceOwner->authorizedAPIRequest($url, $query);
-        var_dump($response);
-
-        $link['tags'] = array();
-        $link['title'] = '';
-        $link['description'] = '';
+        switch ($kind) {
+            case 'track':
+                $link = $this->processTrack($link, $id);
+                break;
+            case 'album':
+                $link = $this->processAlbum($link, $id);
+                break;
+            case 'artist':
+                $link = $this->processArtist($link, $id);
+                break;
+            default:
+                $link = FALSE;
+                break;
+        }
 
         return $link;
     }
