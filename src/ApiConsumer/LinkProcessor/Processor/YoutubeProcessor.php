@@ -72,6 +72,9 @@ class YoutubeProcessor implements ProcessorInterface
             $info = $items[0];
             $link['title'] = $info['snippet']['title'];
             $link['description'] = $info['snippet']['description'];
+            if (isset($info['topicDetails']['topicIds'])) {
+                $link['tags'] = $info['topicDetails']['topicIds'];
+            }
         }
 
         return $link;
@@ -130,6 +133,9 @@ class YoutubeProcessor implements ProcessorInterface
             $info = $items[0];
             $link['title'] = $info['snippet']['title'];
             $link['description'] = $info['snippet']['description'];
+            if (isset($info['topicDetails']['topicIds'])) {
+                $link['tags'] = $info['topicDetails']['topicIds'];
+            }
 
         }
 
