@@ -1,6 +1,6 @@
 <?php
 
-namespace ApiConsumer\LinkProcessor\Parser;
+namespace ApiConsumer\LinkProcessor\UrlParser;
 
 /**
  * @author Juan Luis Martínez <juanlu@comakai.com>
@@ -39,11 +39,14 @@ class YoutubeUrlParser
 
         $parts = parse_url($url);
 
-        $path = explode('/', trim($parts['path'], '/'));
+        if (isset($parts['path'])) {
 
-        if (!empty($path)) {
-            if (in_array($path[0], array('channel', 'playlist', 'view_play_list'))) {
-                return false;
+            $path = explode('/', trim($parts['path'], '/'));
+
+            if (!empty($path)) {
+                if (in_array($path[0], array('channel', 'playlist', 'view_play_list'))) {
+                    return false;
+                }
             }
         }
 
@@ -80,10 +83,13 @@ class YoutubeUrlParser
 
         $parts = parse_url($url);
 
-        $path = explode('/', trim($parts['path'], '/'));
+        if (isset($parts['path'])) {
 
-        if (!empty($path) && $path[0] === 'channel' && $path[1]) {
-            return $path[1];
+            $path = explode('/', trim($parts['path'], '/'));
+
+            if (!empty($path) && $path[0] === 'channel' && $path[1]) {
+                return $path[1];
+            }
         }
 
         return false;
@@ -100,22 +106,19 @@ class YoutubeUrlParser
 
         $parts = parse_url($url);
 
-        $path = explode('/', trim($parts['path'], '/'));
+        if (isset($parts['path'])) {
 
-        if (!empty($path) && $path[0] === 'playlist') {
-            if (isset($parts['query'])) {
-                parse_str($parts['query'], $qs);
-                if (isset($qs['list'])) {
-                    return $qs['list'];
-                }
-            }
-        }
+            $path = explode('/', trim($parts['path'], '/'));
 
-        if (!empty($path) && $path[0] === 'view_play_list') {
-            if (isset($parts['query'])) {
-                parse_str($parts['query'], $qs);
-                if (isset($qs['p'])) {
-                    return $qs['p'];
+            if (!empty($path) && in_array($path[0], array('playlist', 'view_play_list'))) {
+                if (isset($parts['query'])) {
+                    parse_str($parts['query'], $qs);
+                    if (isset($qs['list'])) {
+                        return $qs['list'];
+                    }
+                    if (isset($qs['p'])) {
+                        return $qs['p'];
+                    }
                 }
             }
         }

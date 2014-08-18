@@ -5,6 +5,7 @@ namespace Provider;
 
 use ApiConsumer\LinkProcessor\LinkAnalyzer;
 use ApiConsumer\LinkProcessor\LinkProcessor;
+use ApiConsumer\LinkProcessor\UrlParser\YoutubeUrlParser;
 use ApiConsumer\LinkProcessor\Processor\ScrapperProcessor;
 use ApiConsumer\LinkProcessor\Processor\SpotifyProcessor;
 use ApiConsumer\LinkProcessor\Processor\YoutubeProcessor;
@@ -28,7 +29,7 @@ class LinkProcessorServiceProvider implements ServiceProviderInterface
 
         $app['api_consumer.link_processor.processor.youtube'] = $app->share(
             function ($app) {
-                return new YoutubeProcessor($app['api_consumer.resource_owner.google']);
+                return new YoutubeProcessor($app['api_consumer.resource_owner.google'], new YoutubeUrlParser());
             }
         );
 

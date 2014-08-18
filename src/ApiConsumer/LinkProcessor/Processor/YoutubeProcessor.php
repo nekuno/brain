@@ -3,7 +3,7 @@
 namespace ApiConsumer\LinkProcessor\Processor;
 
 use Http\OAuth\ResourceOwner\GoogleResourceOwner;
-use ApiConsumer\LinkProcessor\Parser\YoutubeUrlParser;
+use ApiConsumer\LinkProcessor\UrlParser\YoutubeUrlParser;
 
 /**
  * @author Juan Luis Martínez <juanlu@comakai.com>
@@ -16,10 +16,10 @@ class YoutubeProcessor implements ProcessorInterface
      */
     protected $resourceOwner;
 
-    public function __construct(GoogleResourceOwner $resourceOwner)
+    public function __construct(GoogleResourceOwner $resourceOwner, YoutubeUrlParser $parser)
     {
         $this->resourceOwner = $resourceOwner;
-        $this->parser = new YoutubeUrlParser();
+        $this->parser = $parser;
     }
 
     /**
@@ -72,6 +72,9 @@ class YoutubeProcessor implements ProcessorInterface
             $info = $items[0];
             $link['title'] = $info['snippet']['title'];
             $link['description'] = $info['snippet']['description'];
+            if (isset($info['topicDetails']['topicIds'])) {
+                $link['tags'] = $info['topicDetails']['topicIds'];
+            }
         }
 
         return $link;
@@ -130,6 +133,9 @@ class YoutubeProcessor implements ProcessorInterface
             $info = $items[0];
             $link['title'] = $info['snippet']['title'];
             $link['description'] = $info['snippet']['description'];
+            if (isset($info['topicDetails']['topicIds'])) {
+                $link['tags'] = $info['topicDetails']['topicIds'];
+            }
 
         }
 

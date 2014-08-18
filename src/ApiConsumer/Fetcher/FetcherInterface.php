@@ -14,7 +14,7 @@ interface FetcherInterface
     /**
      * Fetch links from user feed
      *
-     * @param $userId
+     * @param $user
      * @return mixed
      */
     public function fetchLinksFromUserFeed($user);
