@@ -3,9 +3,12 @@
 
 namespace Provider;
 
-use ApiConsumer\Scraper\LinkProcessor;
-use ApiConsumer\Scraper\Scraper;
-use Goutte\Client;
+use ApiConsumer\LinkProcessor\LinkAnalyzer;
+use ApiConsumer\LinkProcessor\LinkProcessor;
+use ApiConsumer\LinkProcessor\UrlParser\YoutubeUrlParser;
+use ApiConsumer\LinkProcessor\Processor\ScrapperProcessor;
+use ApiConsumer\LinkProcessor\Processor\SpotifyProcessor;
+use ApiConsumer\LinkProcessor\Processor\YoutubeProcessor;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
 
@@ -18,13 +21,35 @@ class LinkProcessorServiceProvider implements ServiceProviderInterface
     public function register(Application $app)
     {
 
-        $app['link_processor'] = function () {
+        $app['api_consumer.link_processor.processor.scrapper'] = $app->share(
+            function () {
+                return new ScrapperProcessor();
+            }
+        );
 
-            $goutte  = new Client();
-            $scraper = new Scraper($goutte);
+        $app['api_consumer.link_processor.processor.youtube'] = $app->share(
+            function ($app) {
+                return new YoutubeProcessor($app['api_consumer.resource_owner.google'], new YoutubeUrlParser());
+            }
+        );
 
-            return new LinkProcessor($scraper);
-        };
+        $app['api_consumer.link_processor.processor.spotify'] = $app->share(
+            function ($app) {
+                return new SpotifyProcessor($app['api_consumer.resource_owner.spotify']);
+            }
+        );
+
+        $app['api_consumer.link_processor.link_analyzer'] = $app->share(
+            function () {
+                return new LinkAnalyzer();
+            }
+        );
+
+        $app['api_consumer.link_processor'] = $app->share(
+            function ($app) {
+                return new LinkProcessor($app['api_consumer.link_processor.link_analyzer'], $app['api_consumer.link_processor.processor.scrapper'], $app['api_consumer.link_processor.processor.youtube'], $app['api_consumer.link_processor.processor.spotify']);
+            }
+        );
 
     }
 

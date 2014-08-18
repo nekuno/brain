@@ -14,7 +14,7 @@ class Oauth2GenericResourceOwner extends AbstractResourceOwner
     /**
      * { @inheritdoc }
      */
-    protected function getAuthorizedRequest ($url, array $query = array(), array $token = array())
+    protected function getAuthorizedRequest($url, array $query = array(), array $token = array())
     {
         $query = array_merge($query, array('access_token' => $token['oauthToken']));
 
