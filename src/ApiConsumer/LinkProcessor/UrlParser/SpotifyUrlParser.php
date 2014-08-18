@@ -11,11 +11,14 @@ class SpotifyUrlParser
     public function getUrlType($url)
     {
         $parsedUrl = parse_url($url);
-        $path = explode('/', trim($parsedUrl['path'], '/'));
 
-        if (count($path) === 2) {
-            if ($path[0] === self::TRACK_URL || $path[0] === self::ALBUM_URL || $path[0] === self::ARTIST_URL) {
-                return $path[0];
+        if (isset($parsedUrl['path'])) {
+            $path = explode('/', trim($parsedUrl['path'], '/'));
+
+            if (count($path) === 2) {
+                if ($path[0] === self::TRACK_URL || $path[0] === self::ALBUM_URL || $path[0] === self::ARTIST_URL) {
+                    return $path[0];
+                }
             }
         }
 
@@ -31,10 +34,13 @@ class SpotifyUrlParser
     public function getSpotifyIdFromUrl($url)
     {
         $parsedUrl = parse_url($url);
-        $path = explode('/', trim($parsedUrl['path'], '/'));
-        
-        if (count($path) === 2) {
-            return $path[1];
+
+        if (isset($parsedUrl['path'])) {
+            $path = explode('/', trim($parsedUrl['path'], '/'));
+            
+            if (count($path) === 2) {
+                return $path[1];
+            }
         }
 
         return false;
