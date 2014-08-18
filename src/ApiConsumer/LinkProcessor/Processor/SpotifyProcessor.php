@@ -3,25 +3,60 @@
 namespace ApiConsumer\LinkProcessor\Processor;
 
 use Http\OAuth\ResourceOwner\SpotifyResourceOwner;
+use ApiConsumer\LinkProcessor\UrlParser\SpotifyUrlParser;
 
-/**
- * @author Juan Luis Martínez <juanlu@comakai.com>
- */
 class SpotifyProcessor implements ProcessorInterface
 {
-
     /**
      * @var SpotifyResourceOwner
      */
     protected $resourceOwner;
 
-    public function __construct(SpotifyResourceOwner $resourceOwner)
+    /**
+     * @var SpotifyUrlParser
+     */
+    protected $parser;
+
+    public function __construct(SpotifyResourceOwner $resourceOwner, SpotifyUrlParser $parser)
     {
         $this->resourceOwner = $resourceOwner;
+        $this->parser = $parser;
     }
 
-    protected function processTrack($link, $id)
+    /**
+     * @param array $link
+     * @return array
+     */
+    public function process(array $link)
     {
+        $type = $this->parser->getUrlType($link['url']);
+
+        switch ($type) {
+            case SpotifyUrlParser::TRACK_URL:
+                $link = $this->processTrack($link);
+                break;
+            case SpotifyUrlParser::ALBUM_URL:
+                $link = $this->processAlbum($link);
+                break;
+            case SpotifyUrlParser::ARTIST_URL:
+                $link = $this->processArtist($link);
+                break;
+            default:
+                return false;
+                break;
+        }
+
+        return $link;
+    }
+
+    protected function processTrack($link)
+    {
+        $id = $this->parser->getSpotifyIdFromUrl($link['url']);
+
+        if (!$id) {
+            return false;
+        }
+
         $urlTrack = 'tracks/' . $id;
         $querytrack = array();
         $track = $this->resourceOwner->authorizedAPIRequest($urlTrack, $querytrack);
@@ -73,8 +108,13 @@ class SpotifyProcessor implements ProcessorInterface
         return $link;
     }
 
-    protected function processAlbum($link, $id)
+    protected function processAlbum($link)
     {
+        $id = $this->parser->getSpotifyIdFromUrl($link['url']);
+
+        if (!$id) {
+            return false;
+        }
 
         $urlAlbum = 'albums/' . $id;
         $queryAlbum = array();
@@ -111,8 +151,13 @@ class SpotifyProcessor implements ProcessorInterface
         return $link;
     }
 
-    protected function processArtist($link, $id)
+    protected function processArtist($link)
     {
+        $id = $this->parser->getSpotifyIdFromUrl($link['url']);
+
+        if (!$id) {
+            return false;
+        }
 
         $urlArtist = 'artists/' . $id;
         $queryArtist = array();
@@ -135,40 +180,6 @@ class SpotifyProcessor implements ProcessorInterface
             $link['title'] = $artist['name'];
         } 
         
-        return $link;
-    }
-
-    /**
-     * @param array $link
-     * @return array
-     */
-    public function process(array $link)
-    {
-        $kind = 'none';
-        $id = '0';
-
-        $parsedUrl = parse_url($link['url']);
-        $path = explode('/', $parsedUrl['path']);
-        if (count($path) === 3) {
-            $kind = $path[1];
-            $id = $path[2];
-        }
-
-        switch ($kind) {
-            case 'track':
-                $link = $this->processTrack($link, $id);
-                break;
-            case 'album':
-                $link = $this->processAlbum($link, $id);
-                break;
-            case 'artist':
-                $link = $this->processArtist($link, $id);
-                break;
-            default:
-                $link = FALSE;
-                break;
-        }
-
         return $link;
     }
 }
