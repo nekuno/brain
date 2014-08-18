@@ -78,10 +78,10 @@ class OAuthTokenSubscriber implements EventSubscriberInterface
 
         $exchange = 'notifications';
         $queue = 'notification';
-        $channel->exchange_declare($exchange, 'direct', false, true);
+        $channel->exchange_declare($exchange, 'direct', false, true, false);
 
         $routing_key = 'notification.token_expire';
-        $channel->queue_declare($queue, false, true);
+        $channel->queue_declare($queue, false, true, false, false);
         $channel->queue_bind('notification', 'notifications', $routing_key);
 
         $messageData = array(
@@ -90,7 +90,7 @@ class OAuthTokenSubscriber implements EventSubscriberInterface
             'message' => 'Token for ' . $user['resourceOwner'] . ' is expired.'
         );
 
-        $message = new AMQPMessage(serialize($messageData));
+        $message = new AMQPMessage(serialize($messageData), array('delivery_mode' => 2));
         $channel->basic_publish($message, 'notifications', $routing_key);
 
 
