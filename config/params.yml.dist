@@ -40,10 +40,12 @@ params:
     ##Spotify
     spotify.consumer_key: '2cc22e2706704d39998c990457530a9a'
     spotify.consumer_secret: '47189c30d7f84d7ca4c4436309c0dc3c'
+    spotify.api_key: ''
 
     ##Google
     google.consumer_key: '556826433000.apps.googleusercontent.com'
     google.consumer_secret: 'oNAbbRwxxZD9Ntyj7D4yXq1f'
+    google.api_key: 'AIzaSyD-FATpKY396h_bGxRiAg7wSgiGiCr5Prs'
 
     ## Facebook App
     facebook.consumer_key: '525923770862645'

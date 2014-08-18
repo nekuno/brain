@@ -1,32 +1,33 @@
 <?php
 
-namespace ApiConsumer\Scraper;
+namespace ApiConsumer\LinkProcessor\Processor;
 
-use ApiConsumer\Scraper\Metadata\BasicMetadata;
-use ApiConsumer\Scraper\Metadata\FacebookMetadata;
+use ApiConsumer\LinkProcessor\Scrapper\Metadata\BasicMetadata;
+use ApiConsumer\LinkProcessor\Scrapper\Metadata\FacebookMetadata;
+use Goutte\Client;
+use Symfony\Component\DomCrawler\Crawler;
 
-class LinkProcessor
+/**
+ * @author Juan Luis Martínez <juanlu@comakai.com>
+ */
+class ScrapperProcessor implements ProcessorInterface
 {
-
-    /** @var \ApiConsumer\Scraper\Scraper */
-    private $scraper;
-
     /**
-     * @param Scraper $scraper
+     * @var Client
      */
-    public function __construct(Scraper $scraper)
-    {
+    protected $client;
 
-        $this->scraper = $scraper;
+    public function __construct()
+    {
+        $this->client = new Client();
     }
 
     /**
      * @param array $link
      * @return array
      */
-    public function processLink(array $link)
+    public function process(array $link)
     {
-
         $url = $link['url'];
 
         $basicMetadata = $this->scrapBasicMetadata($url);
@@ -118,15 +119,15 @@ class LinkProcessor
     /**
      * @param $url
      * @throws \Exception
-     * @return \Symfony\Component\DomCrawler\Crawler
+     * @return Crawler
      */
     protected function getCrawler($url)
     {
         try {
-            $crawler = $this->scraper->initCrawler($url)->scrap('//meta | //title');
+            $crawler = $this->client->request('GET', $url)->filterXPath('//meta | //title');
             return $crawler;
         } catch (\Exception $e) {
             throw $e;
         }
     }
-}
+} 

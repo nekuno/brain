@@ -5,6 +5,7 @@ namespace Http\OAuth\ResourceOwner;
 use ApiConsumer\Event\OAuthTokenEvent;
 use ApiConsumer\Event\TokenEvents;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Message\Request;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
@@ -20,25 +21,25 @@ use GuzzleHttp\Message\ResponseInterface;
  */
 abstract class AbstractResourceOwner implements ResourceOwnerInterface
 {
-    protected $name='generic';
+    protected $name = 'generic';
 
     /**
-    * @var Client
-    */
+     * @var Client
+     */
     protected $httpClient;
 
     /**
-    * @var EventDispatcher
-    */
+     * @var EventDispatcher
+     */
     protected $dispatcher;
 
     /**
-    * @var array Configuration
-    */
+     * @var array Configuration
+     */
     protected $options = array();
 
     /**
-     * @param \GuzzleHttp\ClientInterface $httpClient
+     * @param ClientInterface $httpClient
      * @param \Symfony\Component\EventDispatcher\EventDispatcher $dispatcher
      * @param array $options
      */
@@ -99,7 +100,7 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
     /**
      * {@inheritDoc}
      */
-    protected function getAuthorizedRequest ($url, array $query = array(), array $token = array())
+    protected function getAuthorizedRequest($url, array $query = array(), array $token = array())
     {
         $clientConfig = array(
             'query' => $query,
@@ -133,7 +134,7 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
                 throw $e;
             }
 
-            if(!$data['access_token']) {
+            if (!$data['access_token']) {
                 $this->notifyUserByEmail($token);
             }
 
@@ -144,7 +145,36 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
             $this->dispatcher->dispatch(TokenEvents::TOKEN_REFRESHED, $event);
         }
 
-        $request = $this->getAuthorizedRequest($this->options['base_url'].$url, $query, $token);
+        $request = $this->getAuthorizedRequest($this->options['base_url'] . $url, $query, $token);
+
+        try {
+            $response = $this->httpClient->send($request);
+        } catch (RequestException $e) {
+            throw $e;
+        }
+
+        return $this->getResponseContent($response);
+    }
+
+    /**
+     * @param $url
+     * @param array $query
+     * @param array $token
+     * @return Request
+     */
+    public function getAPIRequest($url, array $query = array(), array $token = array())
+    {
+        $clientConfig = array(
+            'query' => $query,
+        );
+
+        return $this->httpClient->createRequest('GET', $url, $clientConfig);
+    }
+
+    public function authorizedAPIRequest($url, array $query = array(), array $token = array())
+    {
+
+        $request = $this->getAPIRequest($this->options['base_url'] . $url, $query, $token);
 
         try {
             $response = $this->httpClient->send($request);
@@ -183,6 +213,9 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
             'consumer_key',
             'consumer_secret',
             'class'
+        ));
+        $resolver->setOptional(array(
+            'api_key',
         ));
     }
 

@@ -1,7 +1,7 @@
 <?php
 
 
-namespace ApiConsumer\Scraper\Metadata;
+namespace ApiConsumer\LinkProcessor\Scrapper\Metadata;
 
 use Symfony\Component\DomCrawler\Crawler;
 
