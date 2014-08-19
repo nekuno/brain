@@ -19,7 +19,7 @@ class LinkAnalyzer
     public function getProcessor($link)
     {
 
-        if (strpos($link['url'], 'youtube.com') !== false) {
+        if (strpos($link['url'], 'youtube.com') !== false || strpos($link['url'], 'youtu.be') !== false) {
             return self::YOUTUBE;
         }
 
