@@ -20,40 +20,79 @@ class YoutubeUrlParserTest extends \PHPUnit_Framework_TestCase
         $this->parser = new YoutubeUrlParser();
     }
 
+    public function testTypeIsFalseWhenBadUrlFormat()
+    {
+        $url = 'This is not an url';
+        $this->assertEquals(false, $this->parser->getUrlType($url), 'Asserting that ' . $url . ' is not valid format');
+    }
+
+    public function testTypeIsFalseWhenNotYoutubeUrl()
+    {
+        $url = 'http://www.google.es';
+        $this->assertEquals(false, $this->parser->getUrlType($url), 'Asserting that ' . $url . ' is not valid');
+    }
+
+    public function testTypeIsFalseWhenUrlIsNotAValidType()
+    {
+        $url = 'http://www.youtube.com/notvalidpath/dQw4w9WgXcQ';
+        $this->assertEquals(false, $this->parser->getUrlType($url), 'Asserting that ' . $url . ' is not valid');
+    }
+
     /**
-     * @param $video
-     * @param $id
-     * @param $type
+     * @param string $url The url of the video
      * @dataProvider getVideos
      */
-    public function testVideo($video, $id, $type)
+    public function testTypeIsVideo($url)
     {
-        $this->assertEquals($id, $this->parser->getYoutubeIdFromUrl($video), 'Extracting id ' . $id . ' from ' . $video);
-        $this->assertEquals($type, $this->parser->getUrlType($video), 'Asserting that ' . $video . ' is a video');
+        $this->assertEquals(YoutubeUrlParser::VIDEO_URL, $this->parser->getUrlType($url), 'Asserting that ' . $url . ' is a video');
     }
 
     /**
-     * @param $channel
-     * @param $id
-     * @param $type
+     * @param string $url The url of the channel
      * @dataProvider getChannels
      */
-    public function testChannel($channel, $id, $type)
+    public function testTypeIsChannel($url)
     {
-        $this->assertEquals($id, $this->parser->getChannelIdFromUrl($channel), 'Extracting id ' . $id . ' from ' . $channel);
-        $this->assertEquals($type, $this->parser->getUrlType($channel), 'Asserting that ' . $channel . ' is a channel');
+        $this->assertEquals(YoutubeUrlParser::CHANNEL_URL, $this->parser->getUrlType($url), 'Asserting that ' . $url . ' is a channel');
     }
 
     /**
-     * @param $playlist
-     * @param $id
-     * @param $type
+     * @param string $url The url of the playlist
      * @dataProvider getPlaylists
      */
-    public function testPlaylist($playlist, $id, $type)
+    public function testTypeIsPlaylist($url)
     {
-        $this->assertEquals($id, $this->parser->getPlaylistIdFromUrl($playlist), 'Extracting id ' . $id . ' from ' . $playlist);
-        $this->assertEquals($type, $this->parser->getUrlType($playlist), 'Asserting that ' . $playlist . ' is a playlist');
+        $this->assertEquals(YoutubeUrlParser::PLAYLIST_URL, $this->parser->getUrlType($url), 'Asserting that ' . $url . ' is a playlist');
+    }
+
+    /**
+     * @param string $url The url of the video
+     * @param string $id The id of the video
+     * @dataProvider getVideos
+     */
+    public function testGetIdFromVideoUrl($url, $id)
+    {
+        $this->assertEquals($id, $this->parser->getYoutubeIdFromUrl($url), 'Extracting id ' . $id . ' from ' . $url);
+    }
+
+    /**
+     * @param string $url The url of the channel
+     * @param string $id The id of the channel
+     * @dataProvider getChannels
+     */
+    public function testGetIdFromChannelUrl($url, $id)
+    {
+        $this->assertEquals($id, $this->parser->getChannelIdFromUrl($url), 'Extracting id ' . $id . ' from ' . $url);
+    }
+
+    /**
+     * @param string $url The url of the playlist
+     * @param string $id The id of the playlist
+     * @dataProvider getPlaylists
+     */
+    public function testGetIdFromPlaylistUrl($url, $id)
+    {
+        $this->assertEquals($id, $this->parser->getPlaylistIdFromUrl($url), 'Extracting id ' . $id . ' from ' . $url);
     }
 
     /**
@@ -63,15 +102,14 @@ class YoutubeUrlParserTest extends \PHPUnit_Framework_TestCase
     {
 
         return array(
-            array('http://www.google.es', false, false),
-            array('http://youtube.com/v/dQw4w9WgXcQ?feature=youtube_gdata_player', 'dQw4w9WgXcQ', YoutubeUrlParser::VIDEO_URL),
-            array('http://youtube.com/vi/dQw4w9WgXcQ?feature=youtube_gdata_player', 'dQw4w9WgXcQ', YoutubeUrlParser::VIDEO_URL),
-            array('http://youtube.com/?v=dQw4w9WgXcQ&feature=youtube_gdata_player', 'dQw4w9WgXcQ', YoutubeUrlParser::VIDEO_URL),
-            array('http://www.youtube.com/watch?v=dQw4w9WgXcQ&feature=youtube_gdata_player', 'dQw4w9WgXcQ', YoutubeUrlParser::VIDEO_URL),
-            array('http://youtube.com/?vi=dQw4w9WgXcQ&feature=youtube_gdata_player', 'dQw4w9WgXcQ', YoutubeUrlParser::VIDEO_URL),
-            array('http://youtube.com/watch?v=dQw4w9WgXcQ&feature=youtube_gdata_player', 'dQw4w9WgXcQ', YoutubeUrlParser::VIDEO_URL),
-            array('http://youtube.com/watch?vi=dQw4w9WgXcQ&feature=youtube_gdata_player', 'dQw4w9WgXcQ', YoutubeUrlParser::VIDEO_URL),
-            array('http://youtu.be/dQw4w9WgXcQ?feature=youtube_gdata_player', 'dQw4w9WgXcQ', YoutubeUrlParser::VIDEO_URL),
+            array('http://youtube.com/v/dQw4w9WgXcQ?feature=youtube_gdata_player', 'dQw4w9WgXcQ'),
+            array('http://youtube.com/vi/dQw4w9WgXcQ?feature=youtube_gdata_player', 'dQw4w9WgXcQ'),
+            array('http://youtube.com/?v=dQw4w9WgXcQ&feature=youtube_gdata_player', 'dQw4w9WgXcQ'),
+            array('http://www.youtube.com/watch?v=dQw4w9WgXcQ&feature=youtube_gdata_player', 'dQw4w9WgXcQ'),
+            array('http://youtube.com/?vi=dQw4w9WgXcQ&feature=youtube_gdata_player', 'dQw4w9WgXcQ'),
+            array('http://youtube.com/watch?v=dQw4w9WgXcQ&feature=youtube_gdata_player', 'dQw4w9WgXcQ'),
+            array('http://youtube.com/watch?vi=dQw4w9WgXcQ&feature=youtube_gdata_player', 'dQw4w9WgXcQ'),
+            array('http://youtu.be/dQw4w9WgXcQ?feature=youtube_gdata_player', 'dQw4w9WgXcQ'),
         );
     }
 
@@ -81,8 +119,7 @@ class YoutubeUrlParserTest extends \PHPUnit_Framework_TestCase
     public function getChannels()
     {
         return array(
-            array('http://www.google.es', false, false),
-            array('https://www.youtube.com/channel/UCSi3NhHZWE7xXAs2NDDAxDg', 'UCSi3NhHZWE7xXAs2NDDAxDg', YoutubeUrlParser::CHANNEL_URL),
+            array('https://www.youtube.com/channel/UCSi3NhHZWE7xXAs2NDDAxDg', 'UCSi3NhHZWE7xXAs2NDDAxDg'),
         );
     }
 
@@ -92,11 +129,10 @@ class YoutubeUrlParserTest extends \PHPUnit_Framework_TestCase
     public function getPlaylists()
     {
         return array(
-            array('http://www.google.es', false, false),
-            array('https://www.youtube.com/view_play_list?p=PL55713C70BA91BD6E', 'PL55713C70BA91BD6E', YoutubeUrlParser::PLAYLIST_URL),
-            array('https://www.youtube.com/view_play_list?list=PL55713C70BA91BD6E', 'PL55713C70BA91BD6E', YoutubeUrlParser::PLAYLIST_URL),
-            array('https://www.youtube.com/playlist?p=PL55713C70BA91BD6E', 'PL55713C70BA91BD6E', YoutubeUrlParser::PLAYLIST_URL),
-            array('https://www.youtube.com/playlist?list=PL55713C70BA91BD6E', 'PL55713C70BA91BD6E', YoutubeUrlParser::PLAYLIST_URL),
+            array('https://www.youtube.com/view_play_list?p=PL55713C70BA91BD6E', 'PL55713C70BA91BD6E'),
+            array('https://www.youtube.com/view_play_list?list=PL55713C70BA91BD6E', 'PL55713C70BA91BD6E'),
+            array('https://www.youtube.com/playlist?p=PL55713C70BA91BD6E', 'PL55713C70BA91BD6E'),
+            array('https://www.youtube.com/playlist?list=PL55713C70BA91BD6E', 'PL55713C70BA91BD6E'),
         );
     }
 }

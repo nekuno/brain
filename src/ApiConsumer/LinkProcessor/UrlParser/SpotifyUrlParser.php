@@ -2,7 +2,7 @@
 
 namespace ApiConsumer\LinkProcessor\UrlParser;
 
-class SpotifyUrlParser
+class SpotifyUrlParser extends UrlParser
 {
     const TRACK_URL = 'track';
     const ALBUM_URL = 'album';
@@ -10,6 +10,11 @@ class SpotifyUrlParser
 
     public function getUrlType($url)
     {
+
+        if (!$this->isUrlValid($url)) {
+            return false;
+        }
+
         $parsedUrl = parse_url($url);
 
         if (isset($parsedUrl['path'])) {
@@ -33,11 +38,16 @@ class SpotifyUrlParser
      */
     public function getSpotifyIdFromUrl($url)
     {
+
+        if (!$this->isUrlValid($url)) {
+            return false;
+        }
+        
         $parsedUrl = parse_url($url);
 
         if (isset($parsedUrl['path'])) {
             $path = explode('/', trim($parsedUrl['path'], '/'));
-            
+
             if (count($path) === 2) {
                 return $path[1];
             }

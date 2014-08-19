@@ -17,16 +17,22 @@ class SpotifyUrlParserTest extends \PHPUnit_Framework_TestCase
         $this->parser = new SpotifyUrlParser();
     }
 
+    public function testTypeIsFalseWhenBadUrlFormat()
+    {
+        $url = 'This is not an url';
+        $this->assertEquals(false, $this->parser->getUrlType($url), 'Asserting that ' . $url . ' is not valid format');
+    }
+
     public function testTypeIsFalseWhenUrlHasNoPath()
     {
         $url = 'http://www.google.es';
-        $this->assertEquals(FALSE, $this->parser->getUrlType($url), 'Asserting that ' . $url . ' is not valid');
+        $this->assertEquals(false, $this->parser->getUrlType($url), 'Asserting that ' . $url . ' is not valid');
     }
 
     public function testTypeIsFalseWhenUrlIsNotAValidType()
     {
         $url = 'http://open.spotify.com/book/1g9PysFSHeHjVcACqwduNf';
-        $this->assertEquals(FALSE, $this->parser->getUrlType($url), 'Asserting that ' . $url . ' is not valid');
+        $this->assertEquals(false, $this->parser->getUrlType($url), 'Asserting that ' . $url . ' is not valid');
     }
 
     public function testTypeIsTrack()
