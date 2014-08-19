@@ -106,7 +106,12 @@ class BasicMetadata extends Metadata
 
         $tags = $this->filterTagsByNumOfWords($tags);
 
-        return $tags;
+        $resultTags = array();
+        foreach ($tags as $tag) {
+            $resultTags[]['name'] = $tag;
+        }
+
+        return $resultTags;
     }
 
     /**

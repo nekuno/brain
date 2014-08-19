@@ -47,7 +47,7 @@ class SpotifyResourceOwner extends Oauth2GenericResourceOwner
         $url = 'https://accounts.spotify.com/api/token?grant_type=refresh_token&refresh_token=' . $refreshToken;
         $authorization = base64_encode($this->options['consumer_key'] . ":" . $this->options['consumer_secret']);
         $headers = array('Authorization' => 'Basic ' . $authorization);
-
+        
         $response = $this->httpClient->post($url, array('headers' => $headers));
         $data = $response->json();
 

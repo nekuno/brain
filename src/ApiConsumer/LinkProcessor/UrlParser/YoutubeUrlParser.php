@@ -5,7 +5,7 @@ namespace ApiConsumer\LinkProcessor\UrlParser;
 /**
  * @author Juan Luis Martínez <juanlu@comakai.com>
  */
-class YoutubeUrlParser
+class YoutubeUrlParser extends UrlParser
 {
 
     const VIDEO_URL = 'video';
@@ -17,7 +17,6 @@ class YoutubeUrlParser
         if ($this->getYoutubeIdFromUrl($url)) {
             return self::VIDEO_URL;
         }
-
         if ($this->getChannelIdFromUrl($url)) {
             return self::CHANNEL_URL;
         }
@@ -36,6 +35,10 @@ class YoutubeUrlParser
      */
     public function getYoutubeIdFromUrl($url)
     {
+
+        if (!$this->isUrlValid($url)) {
+            return false;
+        }
 
         $parts = parse_url($url);
 
@@ -81,6 +84,10 @@ class YoutubeUrlParser
     public function getChannelIdFromUrl($url)
     {
 
+        if (!$this->isUrlValid($url)) {
+            return false;
+        }
+
         $parts = parse_url($url);
 
         if (isset($parts['path'])) {
@@ -103,6 +110,10 @@ class YoutubeUrlParser
      */
     public function getPlaylistIdFromUrl($url)
     {
+
+        if (!$this->isUrlValid($url)) {
+            return false;
+        }
 
         $parts = parse_url($url);
 

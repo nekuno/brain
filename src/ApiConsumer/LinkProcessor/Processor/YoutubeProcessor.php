@@ -28,9 +28,6 @@ class YoutubeProcessor implements ProcessorInterface
      */
     public function process(array $link)
     {
-        /*
-         * TODO: Extract tags from freebase (topicIds)
-        */
 
         $type = $this->parser->getUrlType($link['url']);
 
@@ -64,16 +61,21 @@ class YoutubeProcessor implements ProcessorInterface
         );
         $response = $this->resourceOwner->authorizedAPIRequest($url, $query);
 
-        $items = $response['items'];
-
         $link['tags'] = array();
 
-        if ($items) {
+        if (isset($response['items']) && is_array($response['items']) && count($response['items']) > 0) {
+
+            $items = $response['items'];
             $info = $items[0];
             $link['title'] = $info['snippet']['title'];
             $link['description'] = $info['snippet']['description'];
             if (isset($info['topicDetails']['topicIds'])) {
-                $link['tags'] = $info['topicDetails']['topicIds'];
+                foreach ($info['topicDetails']['topicIds'] as $tagName) {
+                    $link['tags'][] = array(
+                        'name' => $tagName,
+                        'aditionalLabels' => array('Freebase'),
+                    );
+                }
             }
         }
 
@@ -92,11 +94,11 @@ class YoutubeProcessor implements ProcessorInterface
         );
         $response = $this->resourceOwner->authorizedAPIRequest($url, $query);
 
-        $items = $response['items'];
-
         $link['tags'] = array();
 
-        if ($items) {
+        if (isset($response['items']) && is_array($response['items']) && count($response['items']) > 0) {
+
+            $items = $response['items'];
             $info = $items[0];
             $link['title'] = $info['snippet']['title'];
             $link['description'] = $info['snippet']['description'];
@@ -105,7 +107,11 @@ class YoutubeProcessor implements ProcessorInterface
                 $tags = $info['brandingSettings']['channel']['keywords'];
                 preg_match_all('/".*?"|\w+/', $tags, $results);
                 if ($results) {
-                    $link['tags'] = $results[0];
+                    foreach ($results[0] as $tagName) {
+                        $link['tags'][] = array(
+                            'name' => $tagName,
+                        );
+                    }
                 }
             }
         }
@@ -125,18 +131,22 @@ class YoutubeProcessor implements ProcessorInterface
         );
         $response = $this->resourceOwner->authorizedAPIRequest($url, $query);
 
-        $items = $response['items'];
-
         $link['tags'] = array();
 
-        if ($items) {
+        if (isset($response['items']) && is_array($response['items']) && count($response['items']) > 0) {
+
+            $items = $response['items'];
             $info = $items[0];
             $link['title'] = $info['snippet']['title'];
             $link['description'] = $info['snippet']['description'];
             if (isset($info['topicDetails']['topicIds'])) {
-                $link['tags'] = $info['topicDetails']['topicIds'];
+                foreach ($info['topicDetails']['topicIds'] as $tagName) {
+                    $link['tags'][] = array(
+                        'name' => $tagName,
+                        'aditionalLabels' => array('Freebase'),
+                    );
+                }
             }
-
         }
 
         return $link;
