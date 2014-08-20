@@ -1,8 +1,8 @@
 <?php
 
-namespace ApiConsumer\LinkProcessor\Scrapper\Metadata;
+namespace ApiConsumer\LinkProcessor\MetadataParser;
 
-class Metadata
+class MetadataParser
 {
 
     /**

@@ -1,11 +1,11 @@
 <?php
 
 
-namespace ApiConsumer\LinkProcessor\Scrapper\Metadata;
+namespace ApiConsumer\LinkProcessor\MetadataParser;
 
 use Symfony\Component\DomCrawler\Crawler;
 
-class FacebookMetadata extends Metadata
+class FacebookMetadataParser extends MetadataParser
 {
 
     /**
