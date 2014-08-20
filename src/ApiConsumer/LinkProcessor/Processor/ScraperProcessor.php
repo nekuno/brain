@@ -30,12 +30,26 @@ class ScraperProcessor implements ProcessorInterface
     {
         $url = $link['url'];
 
-        $basicMetadata = $this->scrapBasicMetadata($url);
+        $crawler = $this->client->request('GET', $url)->filterXPath('//meta | //title');
+
+        $metadataTags = $crawler->each(
+            function (Crawler $node) {
+                return array(
+                    'rel' => $node->attr('rel'),
+                    'name' => $node->attr('name'),
+                    'content' => $node->attr('content'),
+                    'property' => $node->attr('property'),
+                    'content' => $node->attr('content'),
+                );
+            }
+        );
+
+        $basicMetadata = $this->scrapBasicMetadata($metadataTags);
         if (array() !== $basicMetadata) {
             $link = $this->overrideLinkDataWithScrapedData($basicMetadata, $link);
         }
 
-        $fbMetadata = $this->scrapFacebookMetadata($url);
+        $fbMetadata = $this->scrapFacebookMetadata($metadataTags);
         if (array() !== $fbMetadata) {
             $link = $this->overrideLinkDataWithScrapedData($fbMetadata, $link);
         }
@@ -43,39 +57,25 @@ class ScraperProcessor implements ProcessorInterface
         return $link;
     }
 
-    /**
-     * @param $url
-     * @return array|mixed
-     */
-    public function scrapBasicMetadata($url)
+    public function scrapBasicMetadata($metaTags)
     {
 
-        $crawler = $this->getCrawler($url);
 
-        $basicMetadata = new BasicMetadataParser($crawler);
+        $basicMetadata = new BasicMetadataParser();
 
-        $metaTags = $basicMetadata->getMetaTags();
-
-        $metadata = $basicMetadata->extractDefaultMetadata($metaTags);
-        $metadata[]['tags'] = $basicMetadata->extractTagsFromKeywords($metaTags);
+        $metadata = $basicMetadata->extractMetadata($metaTags);
+        $metadata[]['tags'] = $basicMetadata->extractMetadataTags($metaTags);
 
         return $metadata;
     }
 
-    /**
-     * @param $url
-     * @return array|mixed
-     */
-    public function scrapFacebookMetadata($url)
+    public function scrapFacebookMetadata($metaTags)
     {
 
-        $crawler = $this->getCrawler($url);
+        $fbMetadata = new FacebookMetadataParser();
 
-        $fbMetadata = new FacebookMetadataParser($crawler);
-        $metaTags = $fbMetadata->getMetaTags();
-
-        $metadata = $fbMetadata->extractOgMetadata($metaTags);
-        $metadata[]['tags'] = $fbMetadata->extractTagsFromFacebookMetadata($metaTags);
+        $metadata = $fbMetadata->extractMetadata($metaTags);
+        $metadata[]['tags'] = $fbMetadata->extractMetadataTags($metaTags);
 
         return $metadata;
     }
@@ -116,18 +116,4 @@ class ScraperProcessor implements ProcessorInterface
         return $link;
     }
 
-    /**
-     * @param $url
-     * @throws \Exception
-     * @return Crawler
-     */
-    protected function getCrawler($url)
-    {
-        try {
-            $crawler = $this->client->request('GET', $url)->filterXPath('//meta | //title');
-            return $crawler;
-        } catch (\Exception $e) {
-            throw $e;
-        }
-    }
 }

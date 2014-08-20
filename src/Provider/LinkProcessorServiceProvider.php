@@ -10,6 +10,7 @@ use ApiConsumer\LinkProcessor\UrlParser\SpotifyUrlParser;
 use ApiConsumer\LinkProcessor\Processor\ScraperProcessor;
 use ApiConsumer\LinkProcessor\Processor\SpotifyProcessor;
 use ApiConsumer\LinkProcessor\Processor\YoutubeProcessor;
+use Goutte\Client;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
 
@@ -24,7 +25,8 @@ class LinkProcessorServiceProvider implements ServiceProviderInterface
 
         $app['api_consumer.link_processor.processor.scrapper'] = $app->share(
             function () {
-                return new ScraperProcessor();
+                $client = new Client();
+                return new ScraperProcessor($client);
             }
         );
 

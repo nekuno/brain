@@ -5,6 +5,17 @@ namespace ApiConsumer\LinkProcessor\MetadataParser;
 class MetadataParser
 {
 
+
+    /**
+     * @var array
+     */
+    protected $validMetaName = array();
+
+    /**
+     * @var array
+     */
+    protected $validMetaRel = array();
+
     /**
      * @param $metaTagsData
      * @return mixed
@@ -41,6 +52,67 @@ class MetadataParser
         }
 
         return $tags;
+    }
+
+    /**
+     * @param $metaTagsData
+     */
+    protected function removeUseLessTags($metaTagsData)
+    {
+
+        foreach ($metaTagsData as $index => $data) {
+
+            if (false === $this->hasOneUsefulMetaAtLeast($data)) {
+                unset($metaTagsData[$index]);
+                continue;
+            }
+
+            if (null !== $data['rel'] && !$this->isValidRel($data)) {
+                unset($metaTagsData[$index]);
+                continue;
+            }
+
+            if (null !== $data['name'] && !$this->isValidName($data)) {
+                unset($metaTagsData[$index]);
+                continue;
+            }
+
+            if (null === $data['content']) {
+                unset($metaTagsData[$index]);
+            }
+        }
+
+        return $metaTagsData;
+    }
+
+    /**
+     * @param $data
+     * @return bool
+     */
+    protected function hasOneUsefulMetaAtLeast(array $data)
+    {
+
+        return null !== $data['rel'] || null !== $data['name'] || null !== $data['property'];
+    }
+
+    /**
+     * @param $data
+     * @return bool
+     */
+    protected function isValidRel($data)
+    {
+
+        return in_array($data['rel'], $this->validMetaRel);
+    }
+
+    /**
+     * @param $data
+     * @return bool
+     */
+    protected function isValidName($data)
+    {
+
+        return in_array($data['name'], $this->validMetaName);
     }
 
 }
