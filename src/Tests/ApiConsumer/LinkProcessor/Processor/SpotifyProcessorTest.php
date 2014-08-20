@@ -9,14 +9,19 @@ use ApiConsumer\LinkProcessor\UrlParser\SpotifyUrlParser;
 class SpotifyProcessorTest extends \PHPUnit_Framework_TestCase
 {
     /**
-     * @var SpotifyResourceOwner
+     * @var SpotifyResourceOwner|\PHPUnit_Framework_MockObject_MockObject
      */
     protected $resourceOwner;
 
     /**
-     * @var SpotifyUrlParser
+     * @var SpotifyUrlParser|\PHPUnit_Framework_MockObject_MockObject
      */
     protected $parser;
+
+    /**
+     * @var SpotifyProcessor
+     */
+    protected $processor;
 
     public function setUp()
     {
@@ -26,13 +31,13 @@ class SpotifyProcessorTest extends \PHPUnit_Framework_TestCase
 
         $this->parser = $this->getMockBuilder('ApiConsumer\LinkProcessor\UrlParser\SpotifyUrlParser')
             ->getMock();
-        
+
         $this->processor = new SpotifyProcessor($this->resourceOwner, $this->parser);
     }
 
     public function testReturnsFalseWhenUrlTypeIsFalse()
     {
-        $this->parser            
+        $this->parser
             ->expects($this->once())
             ->method('getUrlType')
             ->will($this->returnValue(FALSE));
@@ -42,7 +47,7 @@ class SpotifyProcessorTest extends \PHPUnit_Framework_TestCase
 
     public function testProcessTrackUrl()
     {
-        $this->parser            
+        $this->parser
             ->expects($this->any())
             ->method('getUrlType')
             ->will($this->returnValue(SpotifyUrlParser::TRACK_URL));
@@ -56,10 +61,10 @@ class SpotifyProcessorTest extends \PHPUnit_Framework_TestCase
             ->expects($this->any())
             ->method('authorizedAPIRequest')
             ->will($this->returnCallback(function ($url, $query) {
-                if ($url === 'tracks/'.$this->getTrackId()) {
+                if ($url === 'tracks/' . $this->getTrackId()) {
                     return $this->getTrackResponse();
                 }
-                if ($url === 'albums/'.$this->getAlbumId()) {
+                if ($url === 'albums/' . $this->getAlbumId()) {
                     return $this->getAlbumResponse();
                 }
 
@@ -78,7 +83,7 @@ class SpotifyProcessorTest extends \PHPUnit_Framework_TestCase
 
     public function testProcessAlbumUrl()
     {
-        $this->parser            
+        $this->parser
             ->expects($this->any())
             ->method('getUrlType')
             ->will($this->returnValue(SpotifyUrlParser::ALBUM_URL));
@@ -105,7 +110,7 @@ class SpotifyProcessorTest extends \PHPUnit_Framework_TestCase
 
     public function testProcessArtistUrl()
     {
-        $this->parser            
+        $this->parser
             ->expects($this->any())
             ->method('getUrlType')
             ->will($this->returnValue(SpotifyUrlParser::ARTIST_URL));
@@ -136,7 +141,7 @@ class SpotifyProcessorTest extends \PHPUnit_Framework_TestCase
      */
     public function testDoNotProcessWhenEmptyResponse($url, $type)
     {
-        $this->parser            
+        $this->parser
             ->expects($this->any())
             ->method('getUrlType')
             ->will($this->returnValue($type));
@@ -167,16 +172,16 @@ class SpotifyProcessorTest extends \PHPUnit_Framework_TestCase
 
     public function getTrackResponse()
     {
-        return array (
+        return array(
             'album' => array(
                 'album_type' => 'album',
-                'external_urls' => array (
+                'external_urls' => array(
                     'spotify' => 'https://open.spotify.com/album/4sb0eMpDn3upAFfyi4q2rw',
                 ),
                 'href' => 'https://api.spotify.com/v1/albums/4sb0eMpDn3upAFfyi4q2rw',
                 'id' => '4sb0eMpDn3upAFfyi4q2rw',
-                'images' => array (
-                    0 => array (
+                'images' => array(
+                    0 => array(
                         'height' => 640,
                         'url' => 'https://i.scdn.co/image/d3a5855bc9c50767090e4e29f2d207061114888d',
                         'width' => 640,
@@ -186,9 +191,9 @@ class SpotifyProcessorTest extends \PHPUnit_Framework_TestCase
                 'type' => 'album',
                 'uri' => 'spotify:album:4sb0eMpDn3upAFfyi4q2rw',
             ),
-            'artists' => array (
-                0 => array (
-                    'external_urls' => array (
+            'artists' => array(
+                0 => array(
+                    'external_urls' => array(
                         'spotify' => 'https://open.spotify.com/artist/0kbYTNQb4Pb1rPbbaF0pT4',
                     ),
                     'href' => 'https://api.spotify.com/v1/artists/0kbYTNQb4Pb1rPbbaF0pT4',
@@ -201,10 +206,10 @@ class SpotifyProcessorTest extends \PHPUnit_Framework_TestCase
             'disc_number' => 1,
             'duration_ms' => 562640,
             'explicit' => false,
-            'external_ids' => array (
+            'external_ids' => array(
                 'isrc' => 'USSM15900113',
             ),
-            'external_urls' => array (
+            'external_urls' => array(
                 'spotify' => 'https://open.spotify.com/track/4vLYewWIvqHfKtJDk8c8tq',
             ),
             'href' => 'https://api.spotify.com/v1/tracks/4vLYewWIvqHfKtJDk8c8tq',
@@ -219,7 +224,7 @@ class SpotifyProcessorTest extends \PHPUnit_Framework_TestCase
         );
     }
 
-    public function getTrackTags ()
+    public function getTrackTags()
     {
         return array(
             0 =>
@@ -282,11 +287,11 @@ class SpotifyProcessorTest extends \PHPUnit_Framework_TestCase
 
     public function getAlbumResponse()
     {
-        return array (
+        return array(
             'album_type' => 'album',
-            'artists' => array (
-                0 => array (
-                    'external_urls' => array (
+            'artists' => array(
+                0 => array(
+                    'external_urls' => array(
                         'spotify' => 'https://open.spotify.com/artist/0kbYTNQb4Pb1rPbbaF0pT4',
                     ),
                     'href' => 'https://api.spotify.com/v1/artists/0kbYTNQb4Pb1rPbbaF0pT4',
@@ -296,19 +301,19 @@ class SpotifyProcessorTest extends \PHPUnit_Framework_TestCase
                     'uri' => 'spotify:artist:0kbYTNQb4Pb1rPbbaF0pT4',
                 ),
             ),
-            'external_ids' => array (
+            'external_ids' => array(
                 'upc' => '888880696069',
             ),
-            'external_urls' => array (
+            'external_urls' => array(
                 'spotify' => 'https://open.spotify.com/album/4sb0eMpDn3upAFfyi4q2rw',
             ),
-            'genres' => array (
+            'genres' => array(
                 0 => 'Jazz',
             ),
             'href' => 'https://api.spotify.com/v1/albums/4sb0eMpDn3upAFfyi4q2rw',
             'id' => '4sb0eMpDn3upAFfyi4q2rw',
-            'images' => array (
-                0 => array (
+            'images' => array(
+                0 => array(
                     'height' => 640,
                     'url' => 'https://i.scdn.co/image/d3a5855bc9c50767090e4e29f2d207061114888d',
                     'width' => 640,
@@ -318,13 +323,13 @@ class SpotifyProcessorTest extends \PHPUnit_Framework_TestCase
             'popularity' => 71,
             'release_date' => '1959',
             'release_date_precision' => 'year',
-            'tracks' => array (),
+            'tracks' => array(),
             'type' => 'album',
             'uri' => 'spotify:album:4sb0eMpDn3upAFfyi4q2rw',
         );
     }
 
-    public function getAlbumTags ()
+    public function getAlbumTags()
     {
         return array(
             0 =>
@@ -374,11 +379,11 @@ class SpotifyProcessorTest extends \PHPUnit_Framework_TestCase
 
     public function getArtistResponse()
     {
-        return array (
-            'external_urls' => array (
+        return array(
+            'external_urls' => array(
                 'spotify' => 'https://open.spotify.com/artist/4Ww5mwS7BWYjoZTUIrMHfC',
             ),
-            'genres' => array (
+            'genres' => array(
                 0 => 'Afro-Cuban',
                 1 => 'Afro-Cuban Jazz',
                 2 => 'Big Band',
@@ -386,8 +391,8 @@ class SpotifyProcessorTest extends \PHPUnit_Framework_TestCase
             ),
             'href' => 'https://api.spotify.com/v1/artists/4Ww5mwS7BWYjoZTUIrMHfC',
             'id' => '4Ww5mwS7BWYjoZTUIrMHfC',
-            'images' => array (
-                0 => array (
+            'images' => array(
+                0 => array(
                     'height' => 1198,
                     'url' => 'https://i.scdn.co/image/e2bd9ef3de6d7fa43ed877388249c6415e76a9c4',
                     'width' => 1000,
@@ -400,7 +405,7 @@ class SpotifyProcessorTest extends \PHPUnit_Framework_TestCase
         );
     }
 
-    public function getArtistTags ()
+    public function getArtistTags()
     {
         return array(
             0 =>
@@ -450,7 +455,7 @@ class SpotifyProcessorTest extends \PHPUnit_Framework_TestCase
         );
     }
 
-    public function getUrls ()
+    public function getUrls()
     {
         return array(
             array($this->getTrackUrl(), SpotifyUrlParser::TRACK_URL),
