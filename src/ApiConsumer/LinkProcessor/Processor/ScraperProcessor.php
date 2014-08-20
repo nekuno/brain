@@ -10,7 +10,7 @@ use Symfony\Component\DomCrawler\Crawler;
 /**
  * @author Juan Luis Martínez <juanlu@comakai.com>
  */
-class ScrapperProcessor implements ProcessorInterface
+class ScraperProcessor implements ProcessorInterface
 {
     /**
      * @var Client
