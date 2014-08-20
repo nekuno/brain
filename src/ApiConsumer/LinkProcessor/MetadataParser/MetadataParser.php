@@ -28,7 +28,6 @@ class MetadataParser
     /**
      * @param $tags
      * @param $wordLimit
-     * @return string
      */
     protected function filterTagsByNumOfWords($tags, $wordLimit = 2)
     {
