@@ -13,12 +13,12 @@ class YoutubeProcessorTest extends \PHPUnit_Framework_TestCase
 {
 
     /**
-     * @var GoogleResourceOwner
+     * @var GoogleResourceOwner|\PHPUnit_Framework_MockObject_MockObject
      */
     protected $resourceOwner;
 
     /**
-     * @var YoutubeUrlParser
+     * @var YoutubeUrlParser|\PHPUnit_Framework_MockObject_MockObject
      */
     protected $parser;
 
@@ -121,47 +121,13 @@ class YoutubeProcessorTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($tags, $processed['tags']);
     }
 
-    public function testProcessEmptyResponse1()
+    /**
+     * @param $response
+     * @dataProvider getEmptyResponses
+     */
+    public function testProcessEmptyResponse($response)
     {
 
-        $resourceOwner = $this->getResourceOwnerMock(array());
-
-        $processer = new YoutubeProcessor($resourceOwner, $this->parser);
-        $processed = $processer->process(array(
-            'url' => $this->getVideoUrl(),
-        ));
-        $this->assertEquals($this->getVideoUrl(), $processed['url']);
-        $this->assertEquals(array(), $processed['tags']);
-    }
-
-    public function testProcessEmptyResponse2()
-    {
-
-        $resourceOwner = $this->getResourceOwnerMock(array('items' => ''));
-
-        $processer = new YoutubeProcessor($resourceOwner, $this->parser);
-        $processed = $processer->process(array(
-            'url' => $this->getVideoUrl(),
-        ));
-        $this->assertEquals($this->getVideoUrl(), $processed['url']);
-        $this->assertEquals(array(), $processed['tags']);
-    }
-
-    public function testProcessEmptyResponse3()
-    {
-
-        $resourceOwner = $this->getResourceOwnerMock(array('items' => array()));
-
-        $processer = new YoutubeProcessor($resourceOwner, $this->parser);
-        $processed = $processer->process(array(
-            'url' => $this->getVideoUrl(),
-        ));
-        $this->assertEquals($this->getVideoUrl(), $processed['url']);
-        $this->assertEquals(array(), $processed['tags']);
-    }
-
-    public function getResourceOwnerMock($response)
-    {
         $resourceOwner = $this->getMockBuilder('Http\OAuth\ResourceOwner\GoogleResourceOwner')
             ->disableOriginalConstructor()
             ->getMock();
@@ -173,7 +139,22 @@ class YoutubeProcessorTest extends \PHPUnit_Framework_TestCase
                 return $response;
             }));
 
-        return $resourceOwner;
+        $processer = new YoutubeProcessor($resourceOwner, $this->parser);
+        $processed = $processer->process(array(
+            'url' => $this->getVideoUrl(),
+        ));
+        $this->assertEquals($this->getVideoUrl(), $processed['url']);
+        $this->assertEquals(array(), $processed['tags']);
+    }
+
+    public function getEmptyResponses()
+    {
+        return array(
+            array(array()),
+            array(array('items' => '')),
+            array(array('items' => null)),
+            array(array('items' => array())),
+        );
     }
 
     public function getResponse($id)
