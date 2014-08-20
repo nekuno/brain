@@ -40,9 +40,9 @@ class SpotifyProcessorTest extends \PHPUnit_Framework_TestCase
         $this->parser
             ->expects($this->once())
             ->method('getUrlType')
-            ->will($this->returnValue(FALSE));
+            ->will($this->returnValue(false));
 
-        $this->assertEquals(FALSE, $this->processor->process(array('url' => 'http://www.google.es')), 'Asserting False response from invalid url type');
+        $this->assertEquals(false, $this->processor->process(array('url' => 'http://www.google.es')), 'Asserting False response from invalid url type');
     }
 
     /**
@@ -60,9 +60,9 @@ class SpotifyProcessorTest extends \PHPUnit_Framework_TestCase
         $this->parser
             ->expects($this->any())
             ->method('getSpotifyIdFromUrl')
-            ->will($this->returnValue(FALSE));
+            ->will($this->returnValue(false));
 
-        $this->assertEquals(FALSE, $this->processor->process(array('url' => $url)));
+        $this->assertEquals(false, $this->processor->process(array('url' => $url)));
     }
 
     /**
@@ -114,7 +114,7 @@ class SpotifyProcessorTest extends \PHPUnit_Framework_TestCase
                     return $this->getAlbumResponse();
                 }
 
-                return FALSE;
+                return false;
             }));
 
         $processed = $this->processor->process(array(
