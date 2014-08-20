@@ -40,6 +40,52 @@ class SpotifyProcessorTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(FALSE, $this->processor->process(array('url' => 'http://www.google.es')), 'Asserting False response from invalid url type');
     }
 
+    /**
+     * @param $url
+     * @param $type
+     * @dataProvider getUrls
+     */
+    public function testReturnsFalseWhenThereIsNoId($url, $type)
+    {
+        $this->parser            
+            ->expects($this->any())
+            ->method('getUrlType')
+            ->will($this->returnValue($type));
+
+        $this->parser
+            ->expects($this->any())
+            ->method('getSpotifyIdFromUrl')
+            ->will($this->returnValue(FALSE));
+
+        $this->assertEquals(FALSE, $this->processor->process(array('url' => $url)));
+    }
+
+    /**
+     * @param $url
+     * @param $type
+     * @dataProvider getUrls
+     */
+    public function testDoNotProcessWhenEmptyResponse($url, $type)
+    {
+        $this->parser            
+            ->expects($this->any())
+            ->method('getUrlType')
+            ->will($this->returnValue($type));
+
+        $this->parser
+            ->expects($this->any())
+            ->method('getSpotifyIdFromUrl')
+            ->will($this->returnValue($url));
+
+        $this->resourceOwner
+            ->expects($this->any())
+            ->method('authorizedAPIRequest')
+            ->will($this->returnValue(array()));
+
+        $link = array('url' => $url);
+        $this->assertEquals($link, $this->processor->process($link));
+    }
+
     public function testProcessTrackUrl()
     {
         $this->parser            
@@ -129,30 +175,13 @@ class SpotifyProcessorTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($this->getArtistTags(), $processed['tags']);
     }
 
-    /**
-     * @param $url
-     * @param $type
-     * @dataProvider getUrls
-     */
-    public function testDoNotProcessWhenEmptyResponse($url, $type)
+    public function getUrls ()
     {
-        $this->parser            
-            ->expects($this->any())
-            ->method('getUrlType')
-            ->will($this->returnValue($type));
-
-        $this->parser
-            ->expects($this->any())
-            ->method('getSpotifyIdFromUrl')
-            ->will($this->returnValue($url));
-
-        $this->resourceOwner
-            ->expects($this->any())
-            ->method('authorizedAPIRequest')
-            ->will($this->returnValue(array()));
-
-        $link = array('url' => $url);
-        $this->assertEquals($link, $this->processor->process($link));
+        return array(
+            array($this->getTrackUrl(), SpotifyUrlParser::TRACK_URL),
+            array($this->getAlbumUrl(), SpotifyUrlParser::ALBUM_URL),
+            array($this->getArtistUrl(), SpotifyUrlParser::ARTIST_URL),
+        );
     }
 
     public function getTrackId()
@@ -449,14 +478,4 @@ class SpotifyProcessorTest extends \PHPUnit_Framework_TestCase
                 ),
         );
     }
-
-    public function getUrls ()
-    {
-        return array(
-            array($this->getTrackUrl(), SpotifyUrlParser::TRACK_URL),
-            array($this->getAlbumUrl(), SpotifyUrlParser::ALBUM_URL),
-            array($this->getArtistUrl(), SpotifyUrlParser::ARTIST_URL),
-        );
-    }
-
 }
