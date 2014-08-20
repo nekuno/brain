@@ -52,7 +52,7 @@ class ScrapperProcessor implements ProcessorInterface
 
         $crawler = $this->getCrawler($url);
 
-        $basicMetadata = new BasicMetadata($crawler);
+        $basicMetadata = new BasicMetadataParser($crawler);
 
         $metaTags = $basicMetadata->getMetaTags();
 
@@ -71,7 +71,7 @@ class ScrapperProcessor implements ProcessorInterface
 
         $crawler = $this->getCrawler($url);
 
-        $fbMetadata = new FacebookMetadata($crawler);
+        $fbMetadata = new FacebookMetadataParser($crawler);
         $metaTags = $fbMetadata->getMetaTags();
 
         $metadata = $fbMetadata->extractOgMetadata($metaTags);
