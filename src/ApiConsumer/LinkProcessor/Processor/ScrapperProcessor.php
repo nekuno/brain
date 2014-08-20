@@ -2,8 +2,8 @@
 
 namespace ApiConsumer\LinkProcessor\Processor;
 
-use ApiConsumer\LinkProcessor\Metadata\BasicMetadata;
-use ApiConsumer\LinkProcessor\Metadata\FacebookMetadata;
+use ApiConsumer\LinkProcessor\MetadataParser\BasicMetadata;
+use ApiConsumer\LinkProcessor\MetadataParser\FacebookMetadata;
 use Goutte\Client;
 use Symfony\Component\DomCrawler\Crawler;
 
@@ -17,9 +17,9 @@ class ScrapperProcessor implements ProcessorInterface
      */
     protected $client;
 
-    public function __construct()
+    public function __construct(Client $client)
     {
-        $this->client = new Client();
+        $this->client = $client;
     }
 
     /**
