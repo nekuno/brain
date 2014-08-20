@@ -2,8 +2,8 @@
 
 namespace ApiConsumer\LinkProcessor\Processor;
 
-use ApiConsumer\LinkProcessor\MetadataParser\BasicMetadata;
-use ApiConsumer\LinkProcessor\MetadataParser\FacebookMetadata;
+use ApiConsumer\LinkProcessor\MetadataParser\BasicMetadataParser;
+use ApiConsumer\LinkProcessor\MetadataParser\FacebookMetadataParser;
 use Goutte\Client;
 use Symfony\Component\DomCrawler\Crawler;
 
