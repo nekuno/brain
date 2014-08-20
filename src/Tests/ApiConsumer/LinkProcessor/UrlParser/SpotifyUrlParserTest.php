@@ -59,6 +59,12 @@ class SpotifyUrlParserTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($type, $this->parser->getUrlType($url), 'Asserting that ' . $url . ' is an artist');
     }
 
+    public function testIdIsFalseWhenBadUrlFormat()
+    {
+        $url = 'This is not an url';
+        $this->assertEquals(false, $this->parser->getSpotifyIdFromUrl($url), 'Asserting that ' . $url . ' is not valid format');
+    }
+
     /**
      * @param $url
      * @param $id
