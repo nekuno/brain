@@ -13,7 +13,6 @@ class BasicMetadataParser extends MetadataParser implements MetadataParserInterf
         'description',
         'author',
         'keywords',
-        'title'
     );
 
     /**
@@ -32,18 +31,14 @@ class BasicMetadataParser extends MetadataParser implements MetadataParserInterf
 
         $this->sanitizeMetadataTags($metaTags);
 
-        $validKeywords = array('author', 'title', 'description', 'canonical');
-
         $metadata = array();
 
         foreach ($metaTags as $nodeMetadata) {
 
             if (null === $nodeMetadata['name']) {
                 continue;
-            }
-
-            if (in_array($nodeMetadata['name'], $validKeywords) && null !== $nodeMetadata['content']) {
-                $metadata[] = array($nodeMetadata['name'] => $nodeMetadata['content']);
+            }else{
+                $metadata[] = $nodeMetadata;
             }
         }
 
