@@ -67,7 +67,7 @@ class ScraperProcessor implements ProcessorInterface
     {
 
         $metadata = $this->basicMetadataParser->extractMetadata($metaTags);
-        $metadata[]['tags'] = $this->basicMetadataParser->extractMetadataTags($metaTags);
+        $metadata[]['tags'] = $this->basicMetadataParser->extractTags($metaTags);
 
         return $metadata;
     }
@@ -75,7 +75,7 @@ class ScraperProcessor implements ProcessorInterface
     public function scrapFacebookMetadata($metaTags)
     {
         $metadata = $this->facebookMetadataParser->extractMetadata($metaTags);
-        $metadata[]['tags'] = $this->facebookMetadataParser->extractMetadataTags($metaTags);
+        $metadata[]['tags'] = $this->facebookMetadataParser->extractTags($metaTags);
 
         return $metadata;
     }

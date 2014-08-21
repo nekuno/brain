@@ -8,8 +8,20 @@ namespace ApiConsumer\LinkProcessor\MetadataParser;
 
 interface MetadataParserInterface {
 
-    public function extractMetadataTags(array $metaTags);
+    /**
+     * Extracts possible tags from keywords an other meta tags
+     *
+     * @param array $metaTags
+     * @return mixed
+     */
+    public function extractTags(array $metaTags);
 
+    /**
+     * Parse meta tags and extracts basic data such as title, description and canonical URL
+     *
+     * @param array $metaTags
+     * @return mixed
+     */
     public function extractMetadata(array $metaTags);
-    
+
 }

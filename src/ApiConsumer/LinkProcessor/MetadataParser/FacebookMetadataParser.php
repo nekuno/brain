@@ -7,8 +7,7 @@ class FacebookMetadataParser extends MetadataParser implements MetadataParserInt
 {
 
     /**
-     * @param $metaTags
-     * @return array
+     * { @inheritdoc }
      */
     public function extractMetadata(array $metaTags)
     {
@@ -32,10 +31,9 @@ class FacebookMetadataParser extends MetadataParser implements MetadataParserInt
     }
 
     /**
-     * @param array $metaTags
-     * @return array
+     * { @inheritdoc }
      */
-    public function extractMetadataTags(array $metaTags)
+    public function extractTags(array $metaTags)
     {
 
         $tags = array();
@@ -62,7 +60,7 @@ class FacebookMetadataParser extends MetadataParser implements MetadataParserInt
     public function sanitizeMetadataTags($metadataTags)
     {
 
-        $metadataTags = $this->keysToLowercase($metadataTags);
+        $metadataTags = $this->keysAndValuesNotContentToLowercase($metadataTags);
 
         $metadataTags = $this->removeUseLessTags($metadataTags);
 

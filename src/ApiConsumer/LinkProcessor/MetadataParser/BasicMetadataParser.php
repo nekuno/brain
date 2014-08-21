@@ -9,7 +9,7 @@ class BasicMetadataParser extends MetadataParser implements MetadataParserInterf
     /**
      * @var array
      */
-    protected $validMetaName = array(
+    protected $validNameAttributeValues = array(
         'description',
         'author',
         'keywords',
@@ -19,14 +19,13 @@ class BasicMetadataParser extends MetadataParser implements MetadataParserInterf
     /**
      * @var array
      */
-    protected $validMetaRel = array(
+    protected $validRelAttributeValues = array(
         'author',
         'description'
     );
 
     /**
-     * @param $metaTags
-     * @return array
+     *{ @inheritdoc }
      */
     public function extractMetadata(array $metaTags)
     {
@@ -52,10 +51,9 @@ class BasicMetadataParser extends MetadataParser implements MetadataParserInterf
     }
 
     /**
-     * @param array $metaTags
-     * @return array
+     * { @inheritdoc }
      */
-    public function extractMetadataTags(array $metaTags)
+    public function extractTags(array $metaTags)
     {
 
         $tags = array();
@@ -66,7 +64,7 @@ class BasicMetadataParser extends MetadataParser implements MetadataParserInterf
             }
         }
 
-        $tags = $this->filterTagsByNumOfWords($tags);
+        $tags = $this->removeTagsSorterThanNWords($tags);
 
         $resultTags = array();
         foreach ($tags as $tag) {
@@ -84,7 +82,7 @@ class BasicMetadataParser extends MetadataParser implements MetadataParserInterf
     public function sanitizeMetadataTags($metadataTags)
     {
 
-        $metadataTags = $this->keysToLowercase($metadataTags);
+        $metadataTags = $this->keysAndValuesNotContentToLowercase($metadataTags);
 
         $metadataTags = $this->removeUseLessTags($metadataTags);
 
