@@ -52,6 +52,6 @@ class AuxMetadataParser extends MetadataParser
 
     public function removeTagsSorterThanNWords($tags, $wordLimit = 2)
     {
-        return parent::removeTagsSorterThanNWords($tags, $wordLimit = 2);
+        return parent::removeTagsSorterThanNWords($tags, $wordLimit);
     }
 }
