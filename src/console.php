@@ -12,6 +12,7 @@ $console->addCommands(array(
     new \Console\Command\RabbitMqWorkersUpCommand($app),
     new \Console\Command\ScrapLinksMetadataCommand($app),
     new \Console\Command\Neo4jConstraintsCommand($app),
+    new \Console\Command\Neo4jFixturesCommand($app),
 ));
 
 return $console;
