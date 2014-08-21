@@ -8,4 +8,8 @@ namespace ApiConsumer\LinkProcessor\MetadataParser;
 
 interface MetadataParserInterface {
 
+    public function extractMetadataTags(array $metaTags);
+
+    public function extractMetadata(array $metaTags);
+    
 }

@@ -3,7 +3,7 @@
 
 namespace ApiConsumer\LinkProcessor\MetadataParser;
 
-class FacebookMetadataParser extends MetadataParser
+class FacebookMetadataParser extends MetadataParser implements MetadataParserInterface
 {
 
     /**

@@ -5,6 +5,8 @@ namespace Provider;
 
 use ApiConsumer\LinkProcessor\LinkAnalyzer;
 use ApiConsumer\LinkProcessor\LinkProcessor;
+use ApiConsumer\LinkProcessor\MetadataParser\BasicMetadataParser;
+use ApiConsumer\LinkProcessor\MetadataParser\FacebookMetadataParser;
 use ApiConsumer\LinkProcessor\UrlParser\YoutubeUrlParser;
 use ApiConsumer\LinkProcessor\UrlParser\SpotifyUrlParser;
 use ApiConsumer\LinkProcessor\Processor\ScraperProcessor;
@@ -26,7 +28,9 @@ class LinkProcessorServiceProvider implements ServiceProviderInterface
         $app['api_consumer.link_processor.processor.scrapper'] = $app->share(
             function () {
                 $client = new Client();
-                return new ScraperProcessor($client);
+                $basicMetadataParser = new BasicMetadataParser();
+                $fbMetadataParser = new FacebookMetadataParser();
+                return new ScraperProcessor($client, $basicMetadataParser, $fbMetadataParser);
             }
         );
 

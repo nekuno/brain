@@ -4,6 +4,7 @@ namespace ApiConsumer\LinkProcessor\Processor;
 
 use ApiConsumer\LinkProcessor\MetadataParser\BasicMetadataParser;
 use ApiConsumer\LinkProcessor\MetadataParser\FacebookMetadataParser;
+use ApiConsumer\LinkProcessor\MetadataParser\MetadataParserInterface;
 use Goutte\Client;
 use Symfony\Component\DomCrawler\Crawler;
 
@@ -12,14 +13,19 @@ use Symfony\Component\DomCrawler\Crawler;
  */
 class ScraperProcessor implements ProcessorInterface
 {
+    private $facebookMetadataParser;
+    private $basicMetadataParser;
     /**
      * @var Client
      */
     protected $client;
 
-    public function __construct(Client $client)
+    public function __construct(Client $client, MetadataParserInterface $basicMetadataParser, MetadataParserInterface $facebookMetadataParser)
     {
         $this->client = $client;
+        $this->basicMetadataParser = $basicMetadataParser;
+        $this->facebookMetadataParser = $facebookMetadataParser;
+
     }
 
     /**
@@ -60,22 +66,16 @@ class ScraperProcessor implements ProcessorInterface
     public function scrapBasicMetadata($metaTags)
     {
 
-
-        $basicMetadata = new BasicMetadataParser();
-
-        $metadata = $basicMetadata->extractMetadata($metaTags);
-        $metadata[]['tags'] = $basicMetadata->extractMetadataTags($metaTags);
+        $metadata = $this->basicMetadataParser->extractMetadata($metaTags);
+        $metadata[]['tags'] = $this->basicMetadataParser->extractMetadataTags($metaTags);
 
         return $metadata;
     }
 
     public function scrapFacebookMetadata($metaTags)
     {
-
-        $fbMetadata = new FacebookMetadataParser();
-
-        $metadata = $fbMetadata->extractMetadata($metaTags);
-        $metadata[]['tags'] = $fbMetadata->extractMetadataTags($metaTags);
+        $metadata = $this->facebookMetadataParser->extractMetadata($metaTags);
+        $metadata[]['tags'] = $this->facebookMetadataParser->extractMetadataTags($metaTags);
 
         return $metadata;
     }
