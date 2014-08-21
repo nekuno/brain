@@ -38,6 +38,7 @@ class ScraperProcessor implements ProcessorInterface
 
         $crawler = $this->client->request('GET', $url)->filterXPath('//meta | //title');
 
+        $title = $crawler->filter('title')->text();
         $metadataTags = $crawler->each(
             function (Crawler $node) {
                 return array(
@@ -45,10 +46,13 @@ class ScraperProcessor implements ProcessorInterface
                     'name' => $node->attr('name'),
                     'content' => $node->attr('content'),
                     'property' => $node->attr('property'),
-                    'content' => $node->attr('content'),
                 );
             }
         );
+
+        if($this->isValidTitle($title)){
+            $metadataTags[] = array('title' => $title);
+        }
 
         $basicMetadata = $this->scrapBasicMetadata($metadataTags);
         if (array() !== $basicMetadata) {
@@ -114,6 +118,15 @@ class ScraperProcessor implements ProcessorInterface
         }
 
         return $link;
+    }
+
+    /**
+     * @param $title
+     * @return bool
+     */
+    protected function isValidTitle($title)
+    {
+        return null !== $title && '' !== trim($title);
     }
 
 }
