@@ -8,6 +8,10 @@
 
 namespace Model\Neo4j;
 
+use Everyman\Neo4j\Client;
+use Everyman\Neo4j\Cypher\Query;
+use Exception\QueryErrorException;
+
 
 class Fixtures {
 
@@ -88,11 +92,11 @@ class Fixtures {
 
         $this->createUserDislikesLinkRelationship(3, 4);
         $this->createUserDislikesLinkRelationship(3, 5);
-        $this->createUserDisikesLinkRelationship(3, 6);
+        $this->createUserDislikesLinkRelationship(3, 6);
 
         $this->createUserDislikesLinkRelationship(4, 4);
         $this->createUserDislikesLinkRelationship(4, 5);
-        $this->createUserDisikesLinkRelationship(4, 6);
+        $this->createUserDislikesLinkRelationship(4, 6);
 
         $this->createUserLikesLinkRelationship(5, 1);
         $this->createUserLikesLinkRelationship(5, 7);
@@ -277,7 +281,7 @@ class Fixtures {
     {
         $relationshipQuery =
         "MATCH
-            (l:Link {url: 'testLink " . $link . "'}),
+            (l:Link {url: 'testLink" . $link . "'}),
             (t:Tag {name: 'testTag" . $tag . "'})
         CREATE
             (l)-[r:TAGGED]->(t)
@@ -306,7 +310,7 @@ class Fixtures {
     {
         $relationshipQuery =
         "MATCH
-            (l:Link {url: 'testLink " . $link . "'}),
+            (l:Link {url: 'testLink" . $link . "'}),
             (u:User {qnoow_id: ". $user . "})
         CREATE
             (l)<-[r:LIKES]-(u)
@@ -330,11 +334,11 @@ class Fixtures {
         return;
     }
 
-    public function createUserDisikesLinkRelationship($user, $link)
+    public function createUserDislikesLinkRelationship($user, $link)
     {
         $relationshipQuery =
         "MATCH
-            (l:Link {url: 'testLink " . $link . "'}),
+            (l:Link {url: 'testLink" . $link . "'}),
             (u:User {qnoow_id: ". $user . "})
         CREATE
             (l)<-[r:DISLIKES]-(u)
@@ -436,9 +440,9 @@ class Fixtures {
             (a:Answer {qnoow_id: " . $answer . "}),
             (u:User {qnoow_id: ". $user . "})
         CREATE
-            (u)-[r:ANSWERS]->(q)
+            (u)-[r:ANSWERS]->(a)
         RETURN
-            u, r, q
+            u, r, a
         ;";
 
         $neo4jQuery = new Query(
@@ -464,9 +468,9 @@ class Fixtures {
             (a:Answer {qnoow_id: " . $answer . "}),
             (u:User {qnoow_id: ". $user . "})
         CREATE
-            (u)-[r:ACCEPTS]->(q)
+            (u)-[r:ACCEPTS]->(a)
         RETURN
-            u, r, q
+            u, r, a
         ;";
 
         $neo4jQuery = new Query(

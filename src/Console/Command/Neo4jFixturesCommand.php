@@ -8,6 +8,12 @@
 
 namespace Console\Command;
 
+use Model\Neo4j\Fixtures;
+
+use Silex\Application;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
+
 
 class Neo4jFixturesCommand extends ApplicationAwareCommand
 {
