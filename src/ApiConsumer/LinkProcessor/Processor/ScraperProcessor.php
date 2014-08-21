@@ -4,6 +4,7 @@ namespace ApiConsumer\LinkProcessor\Processor;
 
 use ApiConsumer\LinkProcessor\MetadataParser\BasicMetadataParser;
 use ApiConsumer\LinkProcessor\MetadataParser\FacebookMetadataParser;
+use ApiConsumer\LinkProcessor\MetadataParser\MetadataParserInterface;
 use Goutte\Client;
 use Symfony\Component\DomCrawler\Crawler;
 
@@ -12,14 +13,19 @@ use Symfony\Component\DomCrawler\Crawler;
  */
 class ScraperProcessor implements ProcessorInterface
 {
+    private $facebookMetadataParser;
+    private $basicMetadataParser;
     /**
      * @var Client
      */
     protected $client;
 
-    public function __construct(Client $client)
+    public function __construct(Client $client, MetadataParserInterface $basicMetadataParser, MetadataParserInterface $facebookMetadataParser)
     {
         $this->client = $client;
+        $this->basicMetadataParser = $basicMetadataParser;
+        $this->facebookMetadataParser = $facebookMetadataParser;
+
     }
 
     /**
@@ -30,12 +36,30 @@ class ScraperProcessor implements ProcessorInterface
     {
         $url = $link['url'];
 
-        $basicMetadata = $this->scrapBasicMetadata($url);
+        $crawler = $this->client->request('GET', $url)->filterXPath('//meta | //title');
+
+        $title = $crawler->filter('title')->text();
+        $metadataTags = $crawler->each(
+            function (Crawler $node) {
+                return array(
+                    'rel' => $node->attr('rel'),
+                    'name' => $node->attr('name'),
+                    'content' => $node->attr('content'),
+                    'property' => $node->attr('property'),
+                );
+            }
+        );
+
+        if($this->isValidTitle($title)){
+            $metadataTags[] = array('title' => $title);
+        }
+
+        $basicMetadata = $this->scrapBasicMetadata($metadataTags);
         if (array() !== $basicMetadata) {
             $link = $this->overrideLinkDataWithScrapedData($basicMetadata, $link);
         }
 
-        $fbMetadata = $this->scrapFacebookMetadata($url);
+        $fbMetadata = $this->scrapFacebookMetadata($metadataTags);
         if (array() !== $fbMetadata) {
             $link = $this->overrideLinkDataWithScrapedData($fbMetadata, $link);
         }
@@ -43,39 +67,19 @@ class ScraperProcessor implements ProcessorInterface
         return $link;
     }
 
-    /**
-     * @param $url
-     * @return array|mixed
-     */
-    public function scrapBasicMetadata($url)
+    public function scrapBasicMetadata($metaTags)
     {
 
-        $crawler = $this->getCrawler($url);
-
-        $basicMetadata = new BasicMetadataParser($crawler);
-
-        $metaTags = $basicMetadata->getMetaTags();
-
-        $metadata = $basicMetadata->extractDefaultMetadata($metaTags);
-        $metadata[]['tags'] = $basicMetadata->extractTagsFromKeywords($metaTags);
+        $metadata = $this->basicMetadataParser->extractMetadata($metaTags);
+        $metadata[]['tags'] = $this->basicMetadataParser->extractTags($metaTags);
 
         return $metadata;
     }
 
-    /**
-     * @param $url
-     * @return array|mixed
-     */
-    public function scrapFacebookMetadata($url)
+    public function scrapFacebookMetadata($metaTags)
     {
-
-        $crawler = $this->getCrawler($url);
-
-        $fbMetadata = new FacebookMetadataParser($crawler);
-        $metaTags = $fbMetadata->getMetaTags();
-
-        $metadata = $fbMetadata->extractOgMetadata($metaTags);
-        $metadata[]['tags'] = $fbMetadata->extractTagsFromFacebookMetadata($metaTags);
+        $metadata = $this->facebookMetadataParser->extractMetadata($metaTags);
+        $metadata[]['tags'] = $this->facebookMetadataParser->extractTags($metaTags);
 
         return $metadata;
     }
@@ -117,17 +121,12 @@ class ScraperProcessor implements ProcessorInterface
     }
 
     /**
-     * @param $url
-     * @throws \Exception
-     * @return Crawler
+     * @param $title
+     * @return bool
      */
-    protected function getCrawler($url)
+    protected function isValidTitle($title)
     {
-        try {
-            $crawler = $this->client->request('GET', $url)->filterXPath('//meta | //title');
-            return $crawler;
-        } catch (\Exception $e) {
-            throw $e;
-        }
+        return null !== $title && '' !== trim($title);
     }
+
 }

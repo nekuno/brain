@@ -3,97 +3,52 @@
 
 namespace ApiConsumer\LinkProcessor\MetadataParser;
 
-use Symfony\Component\DomCrawler\Crawler;
-
-class BasicMetadataParser extends MetadataParser
+class BasicMetadataParser extends MetadataParser implements MetadataParserInterface
 {
 
     /**
      * @var array
      */
-    protected $validMetaName = array(
+    protected $validNameAttributeValues = array(
         'description',
         'author',
         'keywords',
-        'title'
     );
 
     /**
      * @var array
      */
-    protected $validMetaRel = array(
+    protected $validRelAttributeValues = array(
         'author',
         'description'
     );
 
     /**
-     * @var Crawler
+     *{ @inheritdoc }
      */
-    private $crawler;
-
-    /**
-     * @param Crawler $crawler
-     */
-    public function __construct(Crawler $crawler)
+    public function extractMetadata(array $metaTags)
     {
 
-        $this->crawler = $crawler;
-    }
+        $this->sanitizeMetadataTags($metaTags);
 
-    /**
-     * @return array
-     */
-    public function getMetaTags()
-    {
-
-        $metaTagsData = $this->crawler->each(
-            function (Crawler $node) {
-
-                return array(
-                    'rel'     => $node->attr('rel'),
-                    'name'    => $node->attr('name'),
-                    'content' => $node->attr('content'),
-                );
-            }
-        );
-
-        $metaTagsData = $this->keysToLowercase($metaTagsData);
-
-        $metaTagsData = $this->removeUseLessTags($metaTagsData);
-
-        return $metaTagsData;
-    }
-
-    /**
-     * @param $metaTags
-     * @return array
-     */
-    public function extractDefaultMetadata(array $metaTags)
-    {
-
-        $validKeywords = array('author', 'title', 'description', 'canonical');
-
-        $defaultMetadata = array();
+        $metadata = array();
 
         foreach ($metaTags as $nodeMetadata) {
 
             if (null === $nodeMetadata['name']) {
                 continue;
-            }
-
-            if (in_array($nodeMetadata['name'], $validKeywords) && null !== $nodeMetadata['content']) {
-                $defaultMetadata[] = array($nodeMetadata['name'] => $nodeMetadata['content']);
+            }else{
+                $metadata[] = $nodeMetadata;
             }
         }
 
-        return $defaultMetadata;
+        return $metadata;
     }
 
     /**
-     * @param array $metaTags
-     * @return array
+     * { @inheritdoc }
      */
-    public function extractTagsFromKeywords(array $metaTags)
+    public function extractTags(array $metaTags)
     {
 
         $tags = array();
@@ -104,7 +59,7 @@ class BasicMetadataParser extends MetadataParser
             }
         }
 
-        $tags = $this->filterTagsByNumOfWords($tags);
+        $tags = $this->removeTagsSorterThanNWords($tags);
 
         $resultTags = array();
         foreach ($tags as $tag) {
@@ -114,64 +69,19 @@ class BasicMetadataParser extends MetadataParser
         return $resultTags;
     }
 
-    /**
-     * @param $data
-     * @return bool
-     */
-    protected function hasOneUsefulMetaAtLeast(array $data)
-    {
-
-        return null !== $data['rel'] || null !== $data['name'];
-    }
 
     /**
-     * @param $metaTagsData
+     * @param $metadataTags
+     * @return mixed
      */
-    private function removeUseLessTags($metaTagsData)
+    public function sanitizeMetadataTags($metadataTags)
     {
 
-        foreach ($metaTagsData as $index => $data) {
+        $metadataTags = $this->keysAndValuesNotContentToLowercase($metadataTags);
 
-            if (false === $this->hasOneUsefulMetaAtLeast($data)) {
-                unset($metaTagsData[$index]);
-                continue;
-            }
+        $metadataTags = $this->removeUseLessTags($metadataTags);
 
-            if (null !== $data['rel'] && !$this->isValidRel($data)) {
-                unset($metaTagsData[$index]);
-                continue;
-            }
-
-            if (null !== $data['name'] && !$this->isValidName($data)) {
-                unset($metaTagsData[$index]);
-                continue;
-            }
-
-            if (null === $data['content']) {
-                unset($metaTagsData[$index]);
-            }
-        }
-
-        return $metaTagsData;
+        return $metadataTags;
     }
 
-    /**
-     * @param $data
-     * @return bool
-     */
-    private function isValidRel($data)
-    {
-
-        return in_array($data['rel'], $this->validMetaRel);
-    }
-
-    /**
-     * @param $data
-     * @return bool
-     */
-    private function isValidName($data)
-    {
-
-        return in_array($data['name'], $this->validMetaName);
-    }
 }

@@ -3,57 +3,18 @@
 
 namespace ApiConsumer\LinkProcessor\MetadataParser;
 
-use Symfony\Component\DomCrawler\Crawler;
-
-class FacebookMetadataParser extends MetadataParser
+class FacebookMetadataParser extends MetadataParser implements MetadataParserInterface
 {
 
     /**
-     * @var Crawler
+     * { @inheritdoc }
      */
-    private $crawler;
-
-    /**
-     * @param Crawler $crawler
-     */
-    public function __construct(Crawler $crawler)
+    public function extractMetadata(array $metaTags)
     {
 
-        $this->crawler = $crawler;
-    }
+        $this->sanitizeMetadataTags($metaTags);
 
-    /**
-     * @return array
-     */
-    public function getMetaTags()
-    {
-
-        $metaTagsData = $this->crawler->each(
-            function (Crawler $node) {
-
-                return array(
-                    'property' => $node->attr('property'),
-                    'content' => $node->attr('content'),
-                );
-            }
-        );
-
-
-        $metaTagsData = $this->keysToLowercase($metaTagsData);
-
-        $metaTagsData = $this->removeUseLessTags($metaTagsData);
-
-        return $metaTagsData;
-    }
-
-    /**
-     * @param $metaTags
-     * @return array
-     */
-    public function extractOgMetadata(array $metaTags)
-    {
-
-        $ogMetadata = array();
+        $metadata = array();
 
         foreach ($metaTags as $nodeMetadata) {
 
@@ -62,18 +23,17 @@ class FacebookMetadataParser extends MetadataParser
             }
 
             if (strstr($nodeMetadata['property'], 'og:')) {
-                $ogMetadata[] = array(ltrim($nodeMetadata['property'], 'og:') => $nodeMetadata['content']);
+                $metadata[] = array(ltrim($nodeMetadata['property'], 'og:') => $nodeMetadata['content']);
             }
         }
 
-        return $ogMetadata;
+        return $metadata;
     }
 
     /**
-     * @param array $metaTags
-     * @return array
+     * { @inheritdoc }
      */
-    public function extractTagsFromFacebookMetadata(array $metaTags)
+    public function extractTags(array $metaTags)
     {
 
         $tags = array();
@@ -92,34 +52,19 @@ class FacebookMetadataParser extends MetadataParser
         return $tags;
     }
 
-    /**
-     * @param $metaTagsData
-     */
-    private function removeUseLessTags($metaTagsData)
-    {
-
-        foreach ($metaTagsData as $index => $data) {
-
-            if (false === $this->hasOneUsefulMetaAtLeast($data)) {
-                unset($metaTagsData[$index]);
-                continue;
-            }
-
-            if (null === $data['content']) {
-                unset($metaTagsData[$index]);
-            }
-        }
-
-        return $metaTagsData;
-    }
 
     /**
-     * @param $data
-     * @return bool
+     * @param $metadataTags
+     * @return mixed
      */
-    private function hasOneUsefulMetaAtLeast(array $data)
+    public function sanitizeMetadataTags($metadataTags)
     {
 
-        return null !== $data['property'];
+        $metadataTags = $this->keysAndValuesNotContentToLowercase($metadataTags);
+
+        $metadataTags = $this->removeUseLessTags($metadataTags);
+
+        return $metadataTags;
     }
+
 }
