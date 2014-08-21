@@ -2,7 +2,7 @@
 
 namespace ApiConsumer\LinkProcessor;
 
-use ApiConsumer\LinkProcessor\Processor\ScrapperProcessor;
+use ApiConsumer\LinkProcessor\Processor\ScraperProcessor;
 use ApiConsumer\LinkProcessor\Processor\SpotifyProcessor;
 use ApiConsumer\LinkProcessor\Processor\YoutubeProcessor;
 
@@ -15,7 +15,7 @@ class LinkProcessor
     protected $analyzer;
 
     /**
-     * @var ScrapperProcessor
+     * @var ScraperProcessor
      */
     protected $scrapperProcessor;
 
@@ -30,7 +30,7 @@ class LinkProcessor
     protected $spotifyProcessor;
 
 
-    public function __construct(LinkAnalyzer $linkAnalyzer, ScrapperProcessor $scrapperProcessor, YoutubeProcessor $youtubeProcessor, SpotifyProcessor $spotifyProcessor)
+    public function __construct(LinkAnalyzer $linkAnalyzer, ScraperProcessor $scrapperProcessor, YoutubeProcessor $youtubeProcessor, SpotifyProcessor $spotifyProcessor)
     {
 
         $this->analyzer = $linkAnalyzer;

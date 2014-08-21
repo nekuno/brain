@@ -5,11 +5,14 @@ namespace Provider;
 
 use ApiConsumer\LinkProcessor\LinkAnalyzer;
 use ApiConsumer\LinkProcessor\LinkProcessor;
+use ApiConsumer\LinkProcessor\MetadataParser\BasicMetadataParser;
+use ApiConsumer\LinkProcessor\MetadataParser\FacebookMetadataParser;
 use ApiConsumer\LinkProcessor\UrlParser\YoutubeUrlParser;
 use ApiConsumer\LinkProcessor\UrlParser\SpotifyUrlParser;
-use ApiConsumer\LinkProcessor\Processor\ScrapperProcessor;
+use ApiConsumer\LinkProcessor\Processor\ScraperProcessor;
 use ApiConsumer\LinkProcessor\Processor\SpotifyProcessor;
 use ApiConsumer\LinkProcessor\Processor\YoutubeProcessor;
+use Goutte\Client;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
 
@@ -24,7 +27,10 @@ class LinkProcessorServiceProvider implements ServiceProviderInterface
 
         $app['api_consumer.link_processor.processor.scrapper'] = $app->share(
             function () {
-                return new ScrapperProcessor();
+                $client = new Client();
+                $basicMetadataParser = new BasicMetadataParser();
+                $fbMetadataParser = new FacebookMetadataParser();
+                return new ScraperProcessor($client, $basicMetadataParser, $fbMetadataParser);
             }
         );
 

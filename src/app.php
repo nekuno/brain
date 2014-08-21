@@ -42,7 +42,7 @@ $app->register(new Igorw\Silex\ConfigServiceProvider(__DIR__ . "/../config/confi
 $app->register(new Igorw\Silex\ConfigServiceProvider(__DIR__ . "/../config/config_{$app['env']}.yml", $replacements));
 
 //Listeners
-$tokenRefreshedSubscriber = new OAuthTokenSubscriber($app['api_consumer.user_provider'], $app['mailer'], $app['monolog']);
+$tokenRefreshedSubscriber = new OAuthTokenSubscriber($app['api_consumer.user_provider'], $app['mailer'], $app['monolog'], $app['amqp']);
 $app['dispatcher']->addSubscriber($tokenRefreshedSubscriber);
 
 return $app;

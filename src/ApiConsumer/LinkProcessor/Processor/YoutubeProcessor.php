@@ -61,11 +61,11 @@ class YoutubeProcessor implements ProcessorInterface
         );
         $response = $this->resourceOwner->authorizedAPIRequest($url, $query);
 
-        $items = $response['items'];
-
         $link['tags'] = array();
 
-        if ($items) {
+        if (isset($response['items']) && is_array($response['items']) && count($response['items']) > 0) {
+
+            $items = $response['items'];
             $info = $items[0];
             $link['title'] = $info['snippet']['title'];
             $link['description'] = $info['snippet']['description'];
@@ -94,11 +94,11 @@ class YoutubeProcessor implements ProcessorInterface
         );
         $response = $this->resourceOwner->authorizedAPIRequest($url, $query);
 
-        $items = $response['items'];
-
         $link['tags'] = array();
 
-        if ($items) {
+        if (isset($response['items']) && is_array($response['items']) && count($response['items']) > 0) {
+
+            $items = $response['items'];
             $info = $items[0];
             $link['title'] = $info['snippet']['title'];
             $link['description'] = $info['snippet']['description'];
@@ -131,11 +131,11 @@ class YoutubeProcessor implements ProcessorInterface
         );
         $response = $this->resourceOwner->authorizedAPIRequest($url, $query);
 
-        $items = $response['items'];
-
         $link['tags'] = array();
 
-        if ($items) {
+        if (isset($response['items']) && is_array($response['items']) && count($response['items']) > 0) {
+
+            $items = $response['items'];
             $info = $items[0];
             $link['title'] = $info['snippet']['title'];
             $link['description'] = $info['snippet']['description'];
