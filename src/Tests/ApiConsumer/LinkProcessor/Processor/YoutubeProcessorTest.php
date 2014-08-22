@@ -99,12 +99,15 @@ class YoutubeProcessorTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($this->getChannelUrl(), $processed['url']);
         $this->assertEquals('Efecto Pasillo', $processed['title']);
         $this->assertEquals('Canal Oficial de Youtube de Efecto Pasillo.', $processed['description']);
+
         $tags = array(
             0 => array('name' => '"efecto pasillo"'),
             1 => array('name' => '"pan y mantequilla"'),
             2 => array('name' => '"no importa que llueva"'),
         );
-        $this->assertEquals($tags, $processed['tags']);
+        $sortedTags = sort($tags);
+        $sortedProcessedTags = sort($processed['tags']);
+        $this->assertEquals($sortedTags, $sortedProcessedTags);
     }
 
     public function testProcesPlaylistUrl()
@@ -117,8 +120,7 @@ class YoutubeProcessorTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($this->getPlaylistUrl(), $processed['url']);
         $this->assertEquals('PelleK plays bad NES-games', $processed['title']);
         $this->assertEquals('', $processed['description']);
-        $tags = array();
-        $this->assertEquals($tags, $processed['tags']);
+        $this->assertEmpty($processed['tags']);
     }
 
     /**

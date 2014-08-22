@@ -124,7 +124,10 @@ class SpotifyProcessorTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($this->getTrackUrl(), $processed['url']);
         $this->assertEquals('So What', $processed['title']);
         $this->assertEquals('Kind Of Blue (Legacy Edition) : Miles Davis', $processed['description']);
-        $this->assertEquals($this->getTrackTags(), $processed['tags']);
+
+        $tags = sort($this->getTrackTags());
+        $resultTags = sort($processed['tags']);
+        $this->assertEquals($tags, $resultTags);
     }
 
     public function testProcessAlbumUrl()
@@ -151,7 +154,10 @@ class SpotifyProcessorTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($this->getAlbumUrl(), $processed['url']);
         $this->assertEquals('Kind Of Blue (Legacy Edition)', $processed['title']);
         $this->assertEquals('By: Miles Davis', $processed['description']);
-        $this->assertEquals($this->getAlbumTags(), $processed['tags']);
+
+        $tags = sort($this->getAlbumTags());
+        $resultTags = sort($processed['tags']);
+        $this->assertEquals($tags, $resultTags);
     }
 
     public function testProcessArtistUrl()
@@ -177,7 +183,10 @@ class SpotifyProcessorTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals($this->getArtistUrl(), $processed['url']);
         $this->assertEquals('Charlie Parker', $processed['title']);
-        $this->assertEquals($this->getArtistTags(), $processed['tags']);
+
+        $tags = sort($this->getArtistTags());
+        $processedTags = sort($processed['tags']);
+        $this->assertEquals($tags, $processedTags);
     }
 
     public function getUrls ()
@@ -258,25 +267,18 @@ class SpotifyProcessorTest extends \PHPUnit_Framework_TestCase
         return array(
             0 =>
                 array(
-                    'name' => 'Jazz',
+                    'name' => 'So What',
                     'aditionalLabels' =>
                         array(
-                            0 => 'MusicalGenre',
-                        ),
-                ),
-            1 =>
-                array(
-                    'name' => 'Miles Davis',
-                    'aditionalLabels' =>
-                        array(
-                            0 => 'Artist',
+                            0 => 'Song',
                         ),
                     'aditionalFields' =>
                         array(
-                            'spotifyId' => '0kbYTNQb4Pb1rPbbaF0pT4',
+                            'spotifyId' => '4vLYewWIvqHfKtJDk8c8tq',
+                            'isrc' => 'USSM15900113',
                         ),
                 ),
-            2 =>
+            1 =>
                 array(
                     'name' => 'Kind Of Blue (Legacy Edition)',
                     'aditionalLabels' =>
@@ -288,17 +290,24 @@ class SpotifyProcessorTest extends \PHPUnit_Framework_TestCase
                             'spotifyId' => '4sb0eMpDn3upAFfyi4q2rw',
                         ),
                 ),
-            3 =>
+            2 =>
                 array(
-                    'name' => 'So What',
+                    'name' => 'Jazz',
                     'aditionalLabels' =>
                         array(
-                            0 => 'Song',
+                            0 => 'MusicalGenre',
+                        ),
+                ),
+            3 =>
+                array(
+                    'name' => 'Miles Davis',
+                    'aditionalLabels' =>
+                        array(
+                            0 => 'Artist',
                         ),
                     'aditionalFields' =>
                         array(
-                            'spotifyId' => '4vLYewWIvqHfKtJDk8c8tq',
-                            'isrc' => 'USSM15900113',
+                            'spotifyId' => '0kbYTNQb4Pb1rPbbaF0pT4',
                         ),
                 ),
         );
@@ -363,13 +372,25 @@ class SpotifyProcessorTest extends \PHPUnit_Framework_TestCase
         return array(
             0 =>
                 array(
+                    'name' => 'Kind Of Blue (Legacy Edition)',
+                    'aditionalLabels' =>
+                        array(
+                            0 => 'Album',
+                        ),
+                    'aditionalFields' =>
+                        array(
+                            'spotifyId' => '4sb0eMpDn3upAFfyi4q2rw',
+                        ),
+                ),
+            1 =>
+                array(
                     'name' => 'Jazz',
                     'aditionalLabels' =>
                         array(
                             0 => 'MusicalGenre',
                         ),
                 ),
-            1 =>
+            2 =>
                 array(
                     'name' => 'Miles Davis',
                     'aditionalLabels' =>
@@ -379,18 +400,6 @@ class SpotifyProcessorTest extends \PHPUnit_Framework_TestCase
                     'aditionalFields' =>
                         array(
                             'spotifyId' => '0kbYTNQb4Pb1rPbbaF0pT4',
-                        ),
-                ),
-            2 =>
-                array(
-                    'name' => 'Kind Of Blue (Legacy Edition)',
-                    'aditionalLabels' =>
-                        array(
-                            0 => 'Album',
-                        ),
-                    'aditionalFields' =>
-                        array(
-                            'spotifyId' => '4sb0eMpDn3upAFfyi4q2rw',
                         ),
                 ),
         );
@@ -439,38 +448,6 @@ class SpotifyProcessorTest extends \PHPUnit_Framework_TestCase
         return array(
             0 =>
                 array(
-                    'name' => 'Afro-Cuban',
-                    'aditionalLabels' =>
-                        array(
-                            0 => 'MusicalGenre',
-                        ),
-                ),
-            1 =>
-                array(
-                    'name' => 'Afro-Cuban Jazz',
-                    'aditionalLabels' =>
-                        array(
-                            0 => 'MusicalGenre',
-                        ),
-                ),
-            2 =>
-                array(
-                    'name' => 'Big Band',
-                    'aditionalLabels' =>
-                        array(
-                            0 => 'MusicalGenre',
-                        ),
-                ),
-            3 =>
-                array(
-                    'name' => 'Bop',
-                    'aditionalLabels' =>
-                        array(
-                            0 => 'MusicalGenre',
-                        ),
-                ),
-            4 =>
-                array(
                     'name' => 'Charlie Parker',
                     'aditionalLabels' =>
                         array(
@@ -479,6 +456,38 @@ class SpotifyProcessorTest extends \PHPUnit_Framework_TestCase
                     'aditionalFields' =>
                         array(
                             'spotifyId' => '4Ww5mwS7BWYjoZTUIrMHfC',
+                        ),
+                ),
+            1 =>
+                array(
+                    'name' => 'Afro-Cuban',
+                    'aditionalLabels' =>
+                        array(
+                            0 => 'MusicalGenre',
+                        ),
+                ),
+            2 =>
+                array(
+                    'name' => 'Afro-Cuban Jazz',
+                    'aditionalLabels' =>
+                        array(
+                            0 => 'MusicalGenre',
+                        ),
+                ),
+            3 =>
+                array(
+                    'name' => 'Big Band',
+                    'aditionalLabels' =>
+                        array(
+                            0 => 'MusicalGenre',
+                        ),
+                ),
+            4 =>
+                array(
+                    'name' => 'Bop',
+                    'aditionalLabels' =>
+                        array(
+                            0 => 'MusicalGenre',
                         ),
                 ),
         );
