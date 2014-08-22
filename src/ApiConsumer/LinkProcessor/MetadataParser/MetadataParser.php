@@ -5,7 +5,6 @@ namespace ApiConsumer\LinkProcessor\MetadataParser;
 class MetadataParser
 {
 
-
     /**
      * @var array
      */
@@ -33,6 +32,19 @@ class MetadataParser
         return $metaTagsData;
     }
 
+    /**
+     * @param $metadataTags
+     * @return mixed
+     */
+    protected function sanitizeMetadataTags($metadataTags)
+    {
+
+        $metadataTags = $this->keysAndValuesNotContentToLowercase($metadataTags);
+
+        $metadataTags = $this->removeUseLessTags($metadataTags);
+
+        return $metadataTags;
+    }
 
     /**
      * @param $tags

@@ -52,19 +52,4 @@ class FacebookMetadataParser extends MetadataParser implements MetadataParserInt
         return $tags;
     }
 
-
-    /**
-     * @param $metadataTags
-     * @return mixed
-     */
-    public function sanitizeMetadataTags($metadataTags)
-    {
-
-        $metadataTags = $this->keysAndValuesNotContentToLowercase($metadataTags);
-
-        $metadataTags = $this->removeUseLessTags($metadataTags);
-
-        return $metadataTags;
-    }
-
 }

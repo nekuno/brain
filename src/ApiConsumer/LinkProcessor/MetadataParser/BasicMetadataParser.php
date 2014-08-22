@@ -69,19 +69,4 @@ class BasicMetadataParser extends MetadataParser implements MetadataParserInterf
         return $resultTags;
     }
 
-
-    /**
-     * @param $metadataTags
-     * @return mixed
-     */
-    public function sanitizeMetadataTags($metadataTags)
-    {
-
-        $metadataTags = $this->keysAndValuesNotContentToLowercase($metadataTags);
-
-        $metadataTags = $this->removeUseLessTags($metadataTags);
-
-        return $metadataTags;
-    }
-
 }
