@@ -17,19 +17,17 @@ abstract class AbstractFetcher implements FetcherInterface
     protected $rawFeed = array();
 
     /**
-    * @var \Http\OAuth\ResourceOwner\resourceOwnerInterface
-    */
+     * @var ResourceOwnerInterface
+     */
     protected $resourceOwner;
 
     /**
-    * @var array
-    */
+     * @var array
+     */
     protected $user;
 
     /**
-     * @param UserProviderInterface $userProvider
-     * @param Client $httpClient
-     * @param array $options
+     * @param ResourceOwnerInterface $resourceOwner
      */
     public function __construct(ResourceOwnerInterface $resourceOwner)
     {
@@ -60,7 +58,7 @@ abstract class AbstractFetcher implements FetcherInterface
      * @param $url
      * @return mixed
      */
-    public function makeRequestJSON($url, array $query=array())
+    public function makeRequestJSON($url, array $query = array())
     {
         return $this->resourceOwner->authorizedHttpRequest($url, $query, $this->user);
     }

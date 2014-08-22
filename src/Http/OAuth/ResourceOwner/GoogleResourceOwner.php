@@ -40,4 +40,16 @@ class GoogleResourceOwner extends Oauth2GenericResourceOwner
 
         return $data;
     }
+
+    public function getAPIRequest($url, array $query = array(), array $token = array())
+    {
+
+        $query = array_merge($query, array('key' => $this->options['api_key']));
+
+        $clientConfig = array(
+            'query' => $query,
+        );
+
+        return $this->httpClient->createRequest('GET', $url, $clientConfig);
+    }
 }

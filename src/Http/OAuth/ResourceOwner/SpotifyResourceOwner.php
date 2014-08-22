@@ -28,14 +28,14 @@ class SpotifyResourceOwner extends Oauth2GenericResourceOwner
     /**
      * { @inheritdoc }
      */
-    protected function getAuthorizedRequest ($url, array $query = array(), array $token = array())
+    protected function getAuthorizedRequest($url, array $query = array(), array $token = array())
     {
         $query = array_merge($query, array('access_token' => $token['oauthToken']));
 
         $headers = array('Authorization' => 'Bearer ' . $token['oauthToken']);
 
         $clientConfig = array(
-            'query'   => $query,
+            'query' => $query,
             'headers' => $headers,
         );
 
@@ -47,10 +47,22 @@ class SpotifyResourceOwner extends Oauth2GenericResourceOwner
         $url = 'https://accounts.spotify.com/api/token?grant_type=refresh_token&refresh_token=' . $refreshToken;
         $authorization = base64_encode($this->options['consumer_key'] . ":" . $this->options['consumer_secret']);
         $headers = array('Authorization' => 'Basic ' . $authorization);
-
+        
         $response = $this->httpClient->post($url, array('headers' => $headers));
         $data = $response->json();
 
         return $data;
+    }
+
+    public function getAPIRequest($url, array $query = array(), array $token = array())
+    {
+        // Spotify seems to allow anonymous calls
+        // $query = array_merge($query, array('key' => $this->options['api_key']));
+
+        $clientConfig = array(
+            'query' => $query,
+        );
+
+        return $this->httpClient->createRequest('GET', $url, $clientConfig);
     }
 }

@@ -41,6 +41,12 @@ swiftmailer.options:
     encryption: %swiftmailer.encryption%
     auth_mode: %swiftmailer.auth_mode%
 
+amqp.options:
+    host: %rabbitmq.host%
+    port: %rabbitmq.port%
+    user: %rabbitmq.user%
+    pass: %rabbitmq.pass%
+    vhost: %rabbitmq.vhost%
 
 api_consumer.config:
     resource_owner:
@@ -51,10 +57,12 @@ api_consumer.config:
         google:
             consumer_key: %google.consumer_key%
             consumer_secret: %google.consumer_secret%
+            api_key: %google.api_key%
 
         spotify:
             consumer_key: %spotify.consumer_key%
             consumer_secret: %spotify.consumer_secret%
+            api_key: %spotify.api_key%
 
         facebook:
             consumer_key: %facebook.consumer_key%

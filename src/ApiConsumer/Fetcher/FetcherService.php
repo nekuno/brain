@@ -30,7 +30,7 @@ class FetcherService
 	protected $storage;
 
 	/**
-	* @var Closure
+	* @var \Closure
 	*/
 	protected $getResourceOwnerByName;
 

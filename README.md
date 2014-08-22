@@ -1,4 +1,4 @@
-Qnoow brain 0.1.0
+Qnoow brain 0.2.0
 ========================
 
 * Initial release

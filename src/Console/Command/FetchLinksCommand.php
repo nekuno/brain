@@ -2,9 +2,7 @@
 
 namespace Console\Command;
 
-use ApiConsumer\Auth\DBUserProvider;
 use ApiConsumer\Fetcher\FetcherService;
-use ApiConsumer\Restful\Consumer\ConsumerFactory;
 use Silex\Application;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -45,7 +43,7 @@ class FetchLinksCommand extends ApplicationAwareCommand
             return;
         }
 
-        $userProvider = new DBUserProvider($this->app['dbs']['mysql_social']);
+        $userProvider = $this->app['api_consumer.user_provider'];
         $users = $userProvider->getUsersByResource($this->app['api_consumer.config']['fetcher'][$resource]['resourceOwner']);
 
         /** @var FetcherService $fetcher */
