@@ -52,7 +52,7 @@ class SpotifyProcessorTest extends \PHPUnit_Framework_TestCase
      */
     public function testReturnsFalseWhenThereIsNoId($url, $type)
     {
-        $this->parser            
+        $this->parser
             ->expects($this->any())
             ->method('getUrlType')
             ->will($this->returnValue($type));
@@ -72,7 +72,7 @@ class SpotifyProcessorTest extends \PHPUnit_Framework_TestCase
      */
     public function testDoNotProcessWhenEmptyResponse($url, $type)
     {
-        $this->parser            
+        $this->parser
             ->expects($this->any())
             ->method('getUrlType')
             ->will($this->returnValue($type));
@@ -125,9 +125,10 @@ class SpotifyProcessorTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('So What', $processed['title']);
         $this->assertEquals('Kind Of Blue (Legacy Edition) : Miles Davis', $processed['description']);
 
-        $tags = sort($this->getTrackTags());
+        $tags = $this->getTrackTags();
+        $sortedTags = sort($tags);
         $resultTags = sort($processed['tags']);
-        $this->assertEquals($tags, $resultTags);
+        $this->assertEquals($sortedTags, $resultTags);
     }
 
     public function testProcessAlbumUrl()
@@ -155,9 +156,10 @@ class SpotifyProcessorTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('Kind Of Blue (Legacy Edition)', $processed['title']);
         $this->assertEquals('By: Miles Davis', $processed['description']);
 
-        $tags = sort($this->getAlbumTags());
+        $tags = $this->getAlbumTags();
+        $sortedTags = sort($tags);
         $resultTags = sort($processed['tags']);
-        $this->assertEquals($tags, $resultTags);
+        $this->assertEquals($sortedTags, $resultTags);
     }
 
     public function testProcessArtistUrl()
@@ -184,12 +186,13 @@ class SpotifyProcessorTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($this->getArtistUrl(), $processed['url']);
         $this->assertEquals('Charlie Parker', $processed['title']);
 
-        $tags = sort($this->getArtistTags());
+        $tags = $this->getArtistTags();
+        $sortedTags = sort($tags);
         $processedTags = sort($processed['tags']);
-        $this->assertEquals($tags, $processedTags);
+        $this->assertEquals($sortedTags, $processedTags);
     }
 
-    public function getUrls ()
+    public function getUrls()
     {
         return array(
             array($this->getTrackUrl(), SpotifyUrlParser::TRACK_URL),
