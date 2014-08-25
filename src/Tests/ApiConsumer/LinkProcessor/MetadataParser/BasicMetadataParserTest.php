@@ -24,7 +24,7 @@ class BasicMetadataParserTest extends \PHPUnit_Framework_TestCase
         $crawler
             ->expects($this->once())
             ->method('filterXPath')
-            ->withAnyParameters()
+            ->with('//title')
             ->will($this->returnSelf());
         $crawler
             ->expects($this->once())
@@ -46,7 +46,7 @@ class BasicMetadataParserTest extends \PHPUnit_Framework_TestCase
         $crawler
             ->expects($this->once())
             ->method('filterXPath')
-            ->withAnyParameters()
+            ->with('//title')
             ->will($this->returnSelf());
         $crawler
             ->expects($this->once())
@@ -83,7 +83,7 @@ class BasicMetadataParserTest extends \PHPUnit_Framework_TestCase
         $crawler
             ->expects($this->once())
             ->method('filterXPath')
-            ->withAnyParameters()
+            ->with('//meta[@name="description"]')
             ->will($this->returnSelf());
         $crawler
             ->expects($this->once())
@@ -106,7 +106,7 @@ class BasicMetadataParserTest extends \PHPUnit_Framework_TestCase
         $crawler
             ->expects($this->once())
             ->method('filterXPath')
-            ->withAnyParameters()
+            ->with('//meta[@name="description"]')
             ->will($this->returnSelf());
         $crawler
             ->expects($this->once())

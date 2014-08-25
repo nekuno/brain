@@ -53,7 +53,7 @@ class BasicMetadataParser implements MetadataParserInterface
     {
 
         try {
-            $title = $crawler->filterXPath('//title"]')->text();
+            $title = $crawler->filterXPath('//title')->text();
         } catch (\InvalidArgumentException $e) {
             $title = null;
         }
@@ -114,7 +114,7 @@ class BasicMetadataParser implements MetadataParserInterface
         return $tags;
     }
 
-    public function isLongTag($tag)
+    private function isLongTag($tag)
     {
 
         return str_word_count($tag) > self::MAX_WORDS;
