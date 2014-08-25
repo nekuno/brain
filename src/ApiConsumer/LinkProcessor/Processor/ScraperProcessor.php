@@ -4,24 +4,40 @@ namespace ApiConsumer\LinkProcessor\Processor;
 
 use ApiConsumer\LinkProcessor\MetadataParser\BasicMetadataParser;
 use ApiConsumer\LinkProcessor\MetadataParser\FacebookMetadataParser;
-use ApiConsumer\LinkProcessor\MetadataParser\MetadataParserInterface;
 use Goutte\Client;
-use Symfony\Component\DomCrawler\Crawler;
 
 /**
  * @author Juan Luis Martínez <juanlu@comakai.com>
  */
 class ScraperProcessor implements ProcessorInterface
 {
-    private $facebookMetadataParser;
-    private $basicMetadataParser;
+
     /**
      * @var Client
      */
     protected $client;
 
-    public function __construct(Client $client, MetadataParserInterface $basicMetadataParser, MetadataParserInterface $facebookMetadataParser)
-    {
+    /**
+     * @var FacebookMetadataParser
+     */
+    private $facebookMetadataParser;
+
+    /**
+     * @var BasicMetadataParser
+     */
+    private $basicMetadataParser;
+
+    /**
+     * @param Client $client
+     * @param \ApiConsumer\LinkProcessor\MetadataParser\BasicMetadataParser $basicMetadataParser
+     * @param \ApiConsumer\LinkProcessor\MetadataParser\FacebookMetadataParser $facebookMetadataParser
+     */
+    public function __construct(
+        Client $client,
+        BasicMetadataParser $basicMetadataParser,
+        FacebookMetadataParser $facebookMetadataParser
+    ) {
+
         $this->client = $client;
         $this->basicMetadataParser = $basicMetadataParser;
         $this->facebookMetadataParser = $facebookMetadataParser;
@@ -34,99 +50,53 @@ class ScraperProcessor implements ProcessorInterface
      */
     public function process(array $link)
     {
+
         $url = $link['url'];
 
-        $crawler = $this->client->request('GET', $url)->filterXPath('//meta | //title');
+        $crawler = $this->client->request('GET', $url);
 
-        $title = $crawler->filter('title')->text();
-        $metadataTags = $crawler->each(
-            function (Crawler $node) {
-                return array(
-                    'rel' => $node->attr('rel'),
-                    'name' => $node->attr('name'),
-                    'content' => $node->attr('content'),
-                    'property' => $node->attr('property'),
-                );
-            }
-        );
+        $basicMetadata = $this->basicMetadataParser->extractMetadata($crawler);
 
-        if($this->isValidTitle($title)){
-            $metadataTags[] = array('title' => $title);
-        }
+        $basicMetadata['tags'] = $this->basicMetadataParser->extractTags($crawler);
 
-        $basicMetadata = $this->scrapBasicMetadata($metadataTags);
-        if (array() !== $basicMetadata) {
-            $link = $this->overrideLinkDataWithScrapedData($basicMetadata, $link);
-        }
-
-        $fbMetadata = $this->scrapFacebookMetadata($metadataTags);
-        if (array() !== $fbMetadata) {
-            $link = $this->overrideLinkDataWithScrapedData($fbMetadata, $link);
-        }
-
-        return $link;
-    }
-
-    public function scrapBasicMetadata($metaTags)
-    {
-
-        $metadata = $this->basicMetadataParser->extractMetadata($metaTags);
-        $metadata[]['tags'] = $this->basicMetadataParser->extractTags($metaTags);
-
-        return $metadata;
-    }
-
-    public function scrapFacebookMetadata($metaTags)
-    {
-        $metadata = $this->facebookMetadataParser->extractMetadata($metaTags);
-        $metadata[]['tags'] = $this->facebookMetadataParser->extractTags($metaTags);
-
-        return $metadata;
-    }
-
-    /**
-     * @param $scrapedData
-     * @param $link
-     * @return mixed
-     */
-    private function overrideLinkDataWithScrapedData(array $scrapedData, array $link)
-    {
-
-        foreach ($scrapedData as $meta) {
-            if (array_key_exists('title', $meta) && null !== $meta['title']) {
-                $link['title'] = $meta['title'];
-            }
-
-            if (false === array_key_exists('description', $link)) {
-                $link['description'] = "";
-            }
-
-            if (array_key_exists('description', $meta) && null !== $meta['description']) {
-                $link['description'] = $meta['description'];
-            }
-
-            if (array_key_exists('canonical', $meta) && null !== $meta['canonical']) {
-                $link['url'] = $meta['canonical'];
-            }
-
-            if (array_key_exists('tags', $meta)) {
-                if (!array_key_exists('tags', $link)) {
-                    $link['tags'] = array();
-                }
-                $link['tags'] = array_merge($link['tags'], $meta['tags']);
-            }
-        }
+        $link = $this->overrideLinkDataWithScrapedData($link, $basicMetadata);
 
         return $link;
     }
 
     /**
-     * @param $title
-     * @return bool
+     * @param array $link
+     * @param array $scrapedData
+     * @return array
      */
-    protected function isValidTitle($title)
+    private function overrideLinkDataWithScrapedData(array $link, array $scrapedData = array())
     {
-        return null !== $title && '' !== trim($title);
-    }
 
+        if (array_key_exists('author', $scrapedData)) {
+            if (null !== $scrapedData['author'] && "" !== $scrapedData['author']) {
+                $link['author'] = $scrapedData['author'];
+            }
+        }
+
+        if (array_key_exists('title', $scrapedData)) {
+            if (null !== $scrapedData['title'] && "" !== $scrapedData['title']) {
+                $link['title'] = $scrapedData['title'];
+            }
+        }
+
+        if (array_key_exists('description', $scrapedData)) {
+            if (null !== $scrapedData['description'] && "" !== $scrapedData['description']) {
+                $link['description'] = $scrapedData['description'];
+            }
+        }
+
+        if (array_key_exists('tags', $scrapedData)) {
+            if (!array_key_exists('tags', $link)) {
+                $link['tags'] = array();
+            }
+            $link['tags'] = array_merge($link['tags'], $scrapedData['tags']);
+        }
+
+        return $link;
+    }
 }
