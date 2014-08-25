@@ -3,7 +3,7 @@
 
 namespace ApiConsumer\LinkProcessor\MetadataParser;
 
-class BasicMetadataParser extends MetadataParser implements MetadataParserInterface
+class BasicMetadataParser implements MetadataParserInterface
 {
 
     /**
