@@ -72,12 +72,6 @@ class ScraperProcessor implements ProcessorInterface
     private function overrideLinkDataWithScrapedData(array $link, array $scrapedData = array())
     {
 
-        if (array_key_exists('author', $scrapedData)) {
-            if (null !== $scrapedData['author'] && "" !== $scrapedData['author']) {
-                $link['author'] = $scrapedData['author'];
-            }
-        }
-
         if (array_key_exists('title', $scrapedData)) {
             if (null !== $scrapedData['title'] && "" !== $scrapedData['title']) {
                 $link['title'] = $scrapedData['title'];

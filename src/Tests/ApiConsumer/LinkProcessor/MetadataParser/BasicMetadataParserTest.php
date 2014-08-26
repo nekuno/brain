@@ -150,7 +150,6 @@ class BasicMetadataParserTest extends \PHPUnit_Framework_TestCase
     public function testExtractMetadata()
     {
 
-        $author = 'My author';
         $title = 'My title';
         $description = 'My description';
 
@@ -161,22 +160,20 @@ class BasicMetadataParserTest extends \PHPUnit_Framework_TestCase
             ->withAnyParameters()
             ->will($this->returnSelf());
         $crawler
-            ->expects($this->at(3))
+            ->expects($this->at(1))
             ->method('text')
             ->will($this->returnValue($title));
         $crawler
-            ->expects($this->exactly(2))
+            ->expects($this->once())
             ->method('attr')
             ->with($this->equalTo('content'))
-            ->will($this->onConsecutiveCalls($author, $description));
+            ->will($this->onConsecutiveCalls($description));
 
         $actual = $this->parser->extractMetadata($crawler);
 
         $this->assertNotEmpty($actual);
         $this->assertArrayHasKey('title', $actual);
-        $this->assertArrayHasKey('author', $actual);
         $this->assertArrayHasKey('description', $actual);
-        $this->assertEquals($author, $actual['author']);
         $this->assertEquals($title, $actual['title']);
         $this->assertEquals($description, $actual['description']);
 
@@ -192,11 +189,11 @@ class BasicMetadataParserTest extends \PHPUnit_Framework_TestCase
             ->withAnyParameters()
             ->will($this->returnSelf());
         $crawler
-            ->expects($this->any())
+            ->expects($this->once())
             ->method('text')
             ->will($this->throwException(new \InvalidArgumentException));
         $crawler
-            ->expects($this->any())
+            ->expects($this->once())
             ->method('attr')
             ->with($this->equalTo('content'))
             ->will($this->throwException(new \InvalidArgumentException));
@@ -205,9 +202,7 @@ class BasicMetadataParserTest extends \PHPUnit_Framework_TestCase
 
         $this->assertNotEmpty($actual);
         $this->assertArrayHasKey('title', $actual);
-        $this->assertArrayHasKey('author', $actual);
         $this->assertArrayHasKey('description', $actual);
-        $this->assertEquals(null, $actual['author']);
         $this->assertEquals(null, $actual['title']);
         $this->assertEquals(null, $actual['description']);
 

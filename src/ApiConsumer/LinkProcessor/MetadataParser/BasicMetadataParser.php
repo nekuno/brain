@@ -22,27 +22,10 @@ class BasicMetadataParser implements MetadataParserInterface
 
         $htmlTagsWithValidMetadata = array();
 
-        $htmlTagsWithValidMetadata['author'] = $this->getMetaAuthorText($crawler);
         $htmlTagsWithValidMetadata['title'] = $this->getTitleTagText($crawler);
         $htmlTagsWithValidMetadata['description'] = $this->getMetaDescriptionText($crawler);
 
         return $htmlTagsWithValidMetadata;
-    }
-
-    /**
-     * @param Crawler $crawler
-     * @return null|string
-     */
-    private function getMetaAuthorText(Crawler $crawler)
-    {
-
-        try {
-            $author = $crawler->filterXPath('//meta[@name="author"]')->attr('content');
-        } catch (\InvalidArgumentException $e) {
-            $author = null;
-        }
-
-        return '' !== trim($author) ? $author : null;
     }
 
     /**
