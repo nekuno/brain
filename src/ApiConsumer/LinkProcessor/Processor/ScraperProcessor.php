@@ -56,10 +56,12 @@ class ScraperProcessor implements ProcessorInterface
         $crawler = $this->client->request('GET', $url);
 
         $basicMetadata = $this->basicMetadataParser->extractMetadata($crawler);
-
         $basicMetadata['tags'] = $this->basicMetadataParser->extractTags($crawler);
-
         $link = $this->overrideLinkDataWithScrapedData($link, $basicMetadata);
+
+        $fbMetadata = $this->facebookMetadataParser->extractMetadata($crawler);
+        $fbMetadata['tags'] = $this->facebookMetadataParser->extractTags($crawler);
+        $link = $this->overrideLinkDataWithScrapedData($link, $fbMetadata);
 
         return $link;
     }
@@ -88,6 +90,15 @@ class ScraperProcessor implements ProcessorInterface
             if (!array_key_exists('tags', $link)) {
                 $link['tags'] = array();
             }
+            foreach ($link['tags'] as $tag) {
+                foreach ($scrapedData['tags'] as $sIndex => $sTag) {
+                    if ($tag['name'] === $sTag['name']) {
+                        unset($scrapedData['tags'][$sIndex]);
+                    }
+                }
+
+            }
+
             $link['tags'] = array_merge($link['tags'], $scrapedData['tags']);
         }
 

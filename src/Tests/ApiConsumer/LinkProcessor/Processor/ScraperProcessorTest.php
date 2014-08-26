@@ -25,9 +25,12 @@ class ScraperProcessorTest extends \PHPUnit_Framework_TestCase
         $crawler->expects($this->any())
             ->method('filterXPath')
             ->will($this->returnSelf());
-
         $crawler->expects($this->any())
             ->method('text');
+        $crawler->expects($this->any())
+            ->method('attr');
+        $crawler->expects($this->any())
+            ->method('each');
 
         $client = $this->getMockBuilder('\Goutte\Client')->getMock();
         $client
@@ -53,6 +56,17 @@ class ScraperProcessorTest extends \PHPUnit_Framework_TestCase
         $fbMetadataParser = $this->getMockBuilder(
             '\ApiConsumer\LinkProcessor\MetadataParser\FacebookMetadataParser'
         )->getMock();
+
+        $fbMetadataParser
+            ->expects($this->once())
+            ->method('extractMetadata')
+            ->with($crawler)
+            ->will($this->returnValue($metadata));
+        $fbMetadataParser
+            ->expects($this->once())
+            ->method('extractTags')
+            ->with($crawler)
+            ->will($this->returnValue($tags));
 
         $scraper = new ScraperProcessor($client, $basicMetadataParser, $fbMetadataParser);
 
