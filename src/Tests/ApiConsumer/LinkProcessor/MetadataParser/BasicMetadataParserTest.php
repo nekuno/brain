@@ -15,6 +15,17 @@ class BasicMetadataParserTest extends \PHPUnit_Framework_TestCase
 {
 
     /**
+     * @var BasicMetadataParser
+     */
+    private $parser;
+
+    public function setUp()
+    {
+
+        $this->parser = new BasicMetadataParser();
+    }
+
+    /**
      * @dataProvider getTitleTagTextData
      */
     public function testGetTitleTagText($expected, $title)
@@ -31,15 +42,14 @@ class BasicMetadataParserTest extends \PHPUnit_Framework_TestCase
             ->method('text')
             ->will($this->returnValue($title));
 
-        $parser = new BasicMetadataParser();
-        $method = new \ReflectionMethod($parser, 'getTitleTagText');
+        $method = new \ReflectionMethod($this->parser, 'getTitleTagText');
         $method->setAccessible(true);
-        $actual = $method->invoke($parser, $crawler);
+        $actual = $method->invoke($this->parser, $crawler);
 
         $this->assertEquals($expected, $actual);
     }
 
-    public function testGetTitleTagTextWithoutNode()
+    public function testGetTitleTagTextWhenIsNotExists()
     {
 
         $crawler = $this->getMockBuilder('Symfony\Component\DomCrawler\Crawler')->getMock();
@@ -53,14 +63,16 @@ class BasicMetadataParserTest extends \PHPUnit_Framework_TestCase
             ->method('text')
             ->will($this->throwException(new \InvalidArgumentException()));
 
-        $parser = new BasicMetadataParser();
-        $method = new \ReflectionMethod($parser, 'getTitleTagText');
+        $method = new \ReflectionMethod($this->parser, 'getTitleTagText');
         $method->setAccessible(true);
-        $actual = $method->invoke($parser, $crawler);
+        $actual = $method->invoke($this->parser, $crawler);
 
         $this->assertEquals(null, $actual);
     }
 
+    /**
+     * @return array
+     */
     public function getTitleTagTextData()
     {
 
@@ -91,15 +103,14 @@ class BasicMetadataParserTest extends \PHPUnit_Framework_TestCase
             ->with($this->equalTo('content'))
             ->will($this->returnValue($description));
 
-        $parser = new BasicMetadataParser();
-        $method = new \ReflectionMethod($parser, 'getMetaDescriptionText');
+        $method = new \ReflectionMethod($this->parser, 'getMetaDescriptionText');
         $method->setAccessible(true);
-        $actual = $method->invoke($parser, $crawler);
+        $actual = $method->invoke($this->parser, $crawler);
 
         $this->assertEquals($expected, $actual);
     }
 
-    public function testGetMetaDescriptionTextWithoutNode()
+    public function testGetMetaDescriptionTextWhenIsNotExists()
     {
 
         $crawler = $this->getMockBuilder('Symfony\Component\DomCrawler\Crawler')->getMock();
@@ -114,14 +125,16 @@ class BasicMetadataParserTest extends \PHPUnit_Framework_TestCase
             ->with($this->equalTo('content'))
             ->will($this->throwException(new \InvalidArgumentException()));
 
-        $parser = new BasicMetadataParser();
-        $method = new \ReflectionMethod($parser, 'getMetaDescriptionText');
+        $method = new \ReflectionMethod($this->parser, 'getMetaDescriptionText');
         $method->setAccessible(true);
-        $actual = $method->invoke($parser, $crawler);
+        $actual = $method->invoke($this->parser, $crawler);
 
         $this->assertEquals(null, $actual);
     }
 
+    /**
+     * @return array
+     */
     public function getMetaDescriptionTextData()
     {
 
@@ -157,9 +170,7 @@ class BasicMetadataParserTest extends \PHPUnit_Framework_TestCase
             ->with($this->equalTo('content'))
             ->will($this->onConsecutiveCalls($author, $description));
 
-        $parser = new BasicMetadataParser();
-
-        $actual = $parser->extractMetadata($crawler);
+        $actual = $this->parser->extractMetadata($crawler);
 
         $this->assertNotEmpty($actual);
         $this->assertArrayHasKey('title', $actual);
@@ -171,7 +182,7 @@ class BasicMetadataParserTest extends \PHPUnit_Framework_TestCase
 
     }
 
-    public function testExtractMetadataWithoutNodes()
+    public function testExtractMetadataWhenIsNotExists()
     {
 
         $crawler = $this->getMockBuilder('Symfony\Component\DomCrawler\Crawler')->getMock();
@@ -190,9 +201,7 @@ class BasicMetadataParserTest extends \PHPUnit_Framework_TestCase
             ->with($this->equalTo('content'))
             ->will($this->throwException(new \InvalidArgumentException));
 
-        $parser = new BasicMetadataParser();
-
-        $actual = $parser->extractMetadata($crawler);
+        $actual = $this->parser->extractMetadata($crawler);
 
         $this->assertNotEmpty($actual);
         $this->assertArrayHasKey('title', $actual);
@@ -222,15 +231,17 @@ class BasicMetadataParserTest extends \PHPUnit_Framework_TestCase
             ->with($this->equalTo('content'))
             ->will($this->returnValue($testData));
 
-        $parser = new BasicMetadataParser();
-        $getMetaDescriptionTextMethod = new \ReflectionMethod($parser, 'extractTags');
+        $getMetaDescriptionTextMethod = new \ReflectionMethod($this->parser, 'extractTags');
         $getMetaDescriptionTextMethod->setAccessible(true);
 
-        $actual = $getMetaDescriptionTextMethod->invoke($parser, $crawler);
+        $actual = $getMetaDescriptionTextMethod->invoke($this->parser, $crawler);
 
         $this->assertEquals($expected, $actual);
     }
 
+    /**
+     * @return array
+     */
     public function testExtractTagsData()
     {
 
@@ -260,7 +271,7 @@ class BasicMetadataParserTest extends \PHPUnit_Framework_TestCase
         );
     }
 
-    public function testExtractTagsWithoutNodes()
+    public function testExtractTagsWhenIsNotExists()
     {
 
         $expected = array();
@@ -277,11 +288,10 @@ class BasicMetadataParserTest extends \PHPUnit_Framework_TestCase
             ->with($this->equalTo('content'))
             ->will($this->throwException(new \InvalidArgumentException));
 
-        $parser = new BasicMetadataParser();
-        $getMetaDescriptionTextMethod = new \ReflectionMethod($parser, 'extractTags');
+        $getMetaDescriptionTextMethod = new \ReflectionMethod($this->parser, 'extractTags');
         $getMetaDescriptionTextMethod->setAccessible(true);
 
-        $actual = $getMetaDescriptionTextMethod->invoke($parser, $crawler);
+        $actual = $getMetaDescriptionTextMethod->invoke($this->parser, $crawler);
 
         $this->assertEquals($expected, $actual);
     }
