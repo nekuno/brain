@@ -231,7 +231,8 @@ class BasicMetadataParserTest extends \PHPUnit_Framework_TestCase
 
         $actual = $getMetaDescriptionTextMethod->invoke($this->parser, $crawler);
 
-        $this->assertEquals($expected, $actual);
+        $this->assertTrue(is_array($actual));
+        $this->assertCount(count($expected), $actual);
     }
 
     /**

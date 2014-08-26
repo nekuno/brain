@@ -12,6 +12,9 @@ use Symfony\Component\DomCrawler\Crawler;
 class BasicMetadataParser implements MetadataParserInterface
 {
 
+    /**
+     *
+     */
     const MAX_WORDS = 2;
 
     /**
@@ -61,45 +64,42 @@ class BasicMetadataParser implements MetadataParserInterface
     }
 
     /**
-     * { @inheritdoc }
+     * Extracts tags form keywords
      */
     public function extractTags(Crawler $crawler)
     {
 
-        $tags = array();
-
         try {
             $keywords = $crawler->filterXPath('//meta[@name="keywords"]')->attr('content');
         } catch (\InvalidArgumentException $e) {
-            return $tags;
+            return array();
         }
 
         if ('' === trim($keywords)) {
-            return $tags;
+            return array();
         }
 
         $keywords = explode(',', $keywords);
 
-        array_walk(
-            $keywords,
-            function (&$keyword, $index) {
-
-                $keyword = strtolower(trim($keyword));
-            }
-        );
-
         foreach ($keywords as $keyword) {
-            if (false === $this->isLongTag($keyword)) {
-                $tags[]['name'] = $keyword;
-            }
+            $scrapedTags[] = array('name' => trim(strtolower($keyword)));
         }
 
-        return $tags;
+        $this->filterTags($scrapedTags);
+
+        return $scrapedTags;
     }
 
-    private function isLongTag($tag)
+    /**
+     * @param $scrapedTags
+     */
+    private function filterTags(array &$scrapedTags)
     {
 
-        return str_word_count($tag) > self::MAX_WORDS;
+        foreach ($scrapedTags as $index => $tag) {
+            if (null === $tag['name'] || '' === $tag['name'] || str_word_count($tag['name']) > self::MAX_WORDS) {
+                unset($scrapedTags[$index]);
+            }
+        }
     }
 }
