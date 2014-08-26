@@ -140,9 +140,31 @@ class UserController
         return $app->json($result, !empty($result) ? 201 : 200);
     }
 
+    public function getUserContentAction(Request $request, Application $app)
+    {
+        $id = $request->get('id');
+
+        if (null === $id) {
+            return $app->json(array(), 400);
+        }
+
+        try {
+            /** @var UserModel $model */
+            $model = $app['users.model'];
+            $result = $model->getUserContent($id);
+        } catch (\Exception $e) {
+            if ($app['env'] == 'dev') {
+                throw $e;
+            }
+
+            return $app->json(array(), 500);
+        }
+
+        return $app->json($result, !empty($result) ? 201 : 200);
+    }
+
     public function getUserRecommendationAction(Request $request, Application $app)
     {
-
         // Get params
         $id      = $request->get('id');
         $basedOn = $request->get('type');
