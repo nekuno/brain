@@ -420,7 +420,8 @@ class UserModel
     /**
      * Get top recommended users based on Answes to Questions
      *
-     * @param    int     $id     id of the user
+     * @param    int $id id of the user
+     * @throws \Exception
      * @return   array           ordered array of users
      */
     public function getUserRecommendationsBasedOnAnswers($id)
@@ -471,7 +472,8 @@ class UserModel
     /**
      * Get top recommended users based on Answes to Questions
      *
-     * @param    int     $id     id of the user
+     * @param    int $id id of the user
+     * @throws \Exception
      * @return   array           ordered array of users
      */
     public function getUserRecommendationsBasedOnSharedContent($id)
@@ -522,7 +524,8 @@ class UserModel
     /**
      * Get top recommended users based on Answes to Questions
      *
-     * @param    int     $id     id of the user
+     * @param    int $id id of the user
+     * @throws \Exception
      * @return   array           ordered array of contents
      */
     public function getContentRecommendations($id)
@@ -593,6 +596,8 @@ class UserModel
 
     /**
      * @param $id id of the user for which we want to know how many questions he or she has answered
+     * @throws \Exception
+     * @return int
      */
     public function getNumberOfAnsweredQuestions($id){
 
@@ -625,6 +630,8 @@ class UserModel
 
     /**
      * @param $id id of the user for which we want to know how many contents he or she has shared
+     * @throws \Exception
+     * @return int
      */
     public function  getNumberOfSharedContent($id){
 
