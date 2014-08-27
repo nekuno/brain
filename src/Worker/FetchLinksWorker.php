@@ -11,6 +11,9 @@ use PhpAmqpLib\Message\AMQPMessage;
 class FetchLinksWorker
 {
 
+    /**
+     * @var array
+     */
     protected $config;
 
     /**
@@ -34,8 +37,12 @@ class FetchLinksWorker
      * @param UserProviderInterface $userProvider
      * @param array $config
      */
-    public function __construct(AMQPChannel $channel, FetcherService $fetcher, UserProviderInterface $userProvider, $config = array())
-    {
+    public function __construct(
+        AMQPChannel $channel,
+        FetcherService $fetcher,
+        UserProviderInterface $userProvider,
+        $config = array()
+    ) {
 
         $this->channel = $channel;
         $this->fetcherBuilder = $fetcher;
@@ -68,10 +75,7 @@ class FetchLinksWorker
                     $userId
                 );
 
-                $fetchers = $this->config['fetcher'][$resourceOwner];
-                foreach ($fetchers as $fetcher) {
-                    $this->fetcherBuilder->fetch($user['id'], $fetcher);
-                }
+                $this->fetcherBuilder->fetch($user['id'], $resourceOwner);
 
                 $message->delivery_info['channel']->basic_ack($message->delivery_info['delivery_tag']);
             }

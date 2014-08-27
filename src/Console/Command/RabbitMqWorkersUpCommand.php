@@ -38,7 +38,7 @@ class RabbitMqWorkersUpCommand extends ApplicationAwareCommand
 
         /** @var AMQPChannel $fetchChannel */
         $fetchChannel = $connection->channel();
-        $fetchLinksWorker = new FetchLinksWorker($fetchChannel, $fetcher, $userProvider, $this->app['api_consumer.config']);
+        $fetchLinksWorker = new FetchLinksWorker($fetchChannel, $fetcher, $userProvider);
         $fetchLinksWorker->consume();
         $fetchChannel->close();
 
