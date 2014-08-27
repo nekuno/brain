@@ -154,7 +154,7 @@ class UserController
 
         $filters = array('id' => $id);
 
-        /** @var ContentPaginatorModel $model */
+        /** @var $model \Model\User\ContentPaginatorModel  */
         $model = $app['users.content.model'];
 
         try {
@@ -204,21 +204,22 @@ class UserController
 
     public function getContentRecommendationAction(Request $request, Application $app)
     {
-
-        // Get params
         $id      = $request->get('id');
-        $basedOn = $request->get('type');
 
         if (null === $id) {
             return $app->json(array(), 400);
         }
 
+        /** @var $paginator \Paginator\Paginator */
+        $paginator = $app['paginator'];
+
+        $filters = array('id' => $id);
+
+        /** @var $model \Model\User\Recommendation\ContentPaginatedModel  */
+        $model = $app['users.recommendation.content.model'];
+
         try {
-
-            /** @var UserModel $model */
-            $model = $app['users.model'];
-            $result = $model->getContentRecommendations($id);
-
+            $result = $paginator->paginate($filters, $model, $request);
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;
