@@ -12,6 +12,9 @@
         <testsuite name="ApiConsumer">
             <directory>src/Tests/ApiConsumer/</directory>
         </testsuite>
+        <testsuite name="Paginator">
+            <directory>src/Tests/Paginator/</directory>
+        </testsuite>
     </testsuites>
 
     <logging>
