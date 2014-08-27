@@ -3,70 +3,103 @@
 
 namespace ApiConsumer\LinkProcessor\MetadataParser;
 
-class BasicMetadataParser extends MetadataParser implements MetadataParserInterface
+use Symfony\Component\DomCrawler\Crawler;
+
+/**
+ * Class BasicMetadataParser
+ * @package ApiConsumer\LinkProcessor\MetadataParser
+ */
+class BasicMetadataParser implements MetadataParserInterface
 {
 
     /**
-     * @var array
+     *
      */
-    protected $validNameAttributeValues = array(
-        'description',
-        'author',
-        'keywords',
-    );
-
-    /**
-     * @var array
-     */
-    protected $validRelAttributeValues = array(
-        'author',
-        'description'
-    );
+    const MAX_WORDS = 2;
 
     /**
      *{ @inheritdoc }
      */
-    public function extractMetadata(array $metaTags)
+    public function extractMetadata(Crawler $crawler)
     {
 
-        $this->sanitizeMetadataTags($metaTags);
+        $htmlTagsWithValidMetadata = array();
 
-        $metadata = array();
+        $htmlTagsWithValidMetadata['title'] = $this->getTitleTagText($crawler);
+        $htmlTagsWithValidMetadata['description'] = $this->getMetaDescriptionText($crawler);
 
-        foreach ($metaTags as $nodeMetadata) {
-
-            if (null === $nodeMetadata['name']) {
-                continue;
-            }else{
-                $metadata[] = $nodeMetadata;
-            }
-        }
-
-        return $metadata;
+        return $htmlTagsWithValidMetadata;
     }
 
     /**
-     * { @inheritdoc }
+     * @param Crawler $crawler
+     * @return null|string
      */
-    public function extractTags(array $metaTags)
+    private function getTitleTagText(Crawler $crawler)
     {
 
-        $tags = array();
-
-        foreach ($metaTags as $nodeMetadata) {
-            if ("keywords" === $nodeMetadata['name'] && null !== $nodeMetadata['content']) {
-                $tags = explode(',', $nodeMetadata['content']);
-            }
+        try {
+            $title = $crawler->filterXPath('//title')->text();
+        } catch (\InvalidArgumentException $e) {
+            $title = null;
         }
 
-        $tags = $this->removeTagsSorterThanNWords($tags);
-
-        $resultTags = array();
-        foreach ($tags as $tag) {
-            $resultTags[]['name'] = $tag;
-        }
-
-        return $resultTags;
+        return '' !== trim($title) ? $title : null;
     }
 
+    /**
+     * @param Crawler $crawler
+     * @return null|string
+     */
+    private function getMetaDescriptionText(Crawler $crawler)
+    {
+
+        try {
+            $description = $crawler->filterXPath('//meta[@name="description"]')->attr('content');
+        } catch (\InvalidArgumentException $e) {
+            $description = null;
+        }
+
+        return '' !== trim($description) ? $description : null;
+    }
+
+    /**
+     * Extracts tags form keywords
+     */
+    public function extractTags(Crawler $crawler)
+    {
+
+        try {
+            $keywords = $crawler->filterXPath('//meta[@name="keywords"]')->attr('content');
+        } catch (\InvalidArgumentException $e) {
+            return array();
+        }
+
+        if ('' === trim($keywords)) {
+            return array();
+        }
+
+        $keywords = explode(',', $keywords);
+
+        foreach ($keywords as $keyword) {
+            $scrapedTags[] = array('name' => trim(strtolower($keyword)));
+        }
+
+        $this->filterTags($scrapedTags);
+
+        return $scrapedTags;
+    }
+
+    /**
+     * @param $scrapedTags
+     */
+    private function filterTags(array &$scrapedTags)
+    {
+
+        foreach ($scrapedTags as $index => $tag) {
+            if (null === $tag['name'] || '' === $tag['name'] || str_word_count($tag['name']) > self::MAX_WORDS) {
+                unset($scrapedTags[$index]);
+            }
+        }
+    }
 }
