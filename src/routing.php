@@ -9,10 +9,12 @@ $app->delete('/users/{id}', 'users.controller:deleteAction')->value('id', null);
 
 $app->get('/users/{id1}/matching/{id2}', 'users.controller:getMatchingAction')
     ->value('type', 'answers');
+
 $app->get('/users/{id}/content', 'users.controller:getUserContentAction');
 
 $app->get('/users/{id}/recommendations/users', 'users.controller:getUserRecommendationAction')
     ->value('type', 'answers');
+
 $app->get('/users/{id}/recommendations/content', 'users.controller:getContentRecommendationAction');
 
 // Question routes

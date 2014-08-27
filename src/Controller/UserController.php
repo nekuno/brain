@@ -3,6 +3,7 @@
 namespace Controller;
 
 use Model\UserModel;
+use Model\User\ContentPaginatorModel;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -148,10 +149,16 @@ class UserController
             return $app->json(array(), 400);
         }
 
+        /** @var $paginator \Paginator\Paginator */
+        $paginator = $app['paginator'];
+
+        $filters = array('id' => $id);
+
+        /** @var ContentPaginatorModel $model */
+        $model = $app['users.content.model'];
+
         try {
-            /** @var UserModel $model */
-            $model = $app['users.model'];
-            $result = $model->getUserContent($id);
+            $result = $paginator->paginate($filters, $model, $request);
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;

@@ -418,61 +418,10 @@ class UserModel
     }
 
     /**
-     * Get the user's content
-     *
-     * @param $id
-     * @throws \Exception
-     * @return array
-     */
-    public function getUserContent($id)
-    {
-        $response = array();
-
-        $query = "
-            MATCH
-            (u:User {qnoow_id: " . $id . "})
-            MATCH
-            (u)-[r:LIKES|DISLIKES]->(content:Link)
-            OPTIONAL MATCH
-            (content)-[:TAGGED]->(tag:Tag)
-            RETURN
-            type(r) as type, content, collect(tag.name) as tags;
-         ";
-
-        //Create the Neo4j query object
-        $contentQuery = new Query(
-            $this->client,
-            $query
-        );
-
-        //Execute query
-        try {
-            $result = $contentQuery->getResultSet();
-
-            foreach ($result as $row) {
-                $content = array();
-                $content['type'] = $row['type'];
-                $content['url'] = $row['content']->getProperty('url');
-                $content['title'] = $row['content']->getProperty('title');
-                $content['description'] = $row['content']->getProperty('description');
-                foreach ($row['tags'] as $tag) {
-                    $content['tags'][] = $tag;
-                }
-
-                $response[] = $content;
-            }
-
-        } catch (\Exception $e) {
-            throw $e;
-        }
-
-        return $response;
-    }
-
-    /**
      * Get top recommended users based on Answes to Questions
      *
-     * @param    int     $id     id of the user
+     * @param    int $id id of the user
+     * @throws \Exception
      * @return   array           ordered array of users
      */
     public function getUserRecommendationsBasedOnAnswers($id)
@@ -523,7 +472,8 @@ class UserModel
     /**
      * Get top recommended users based on Answes to Questions
      *
-     * @param    int     $id     id of the user
+     * @param    int $id id of the user
+     * @throws \Exception
      * @return   array           ordered array of users
      */
     public function getUserRecommendationsBasedOnSharedContent($id)
@@ -574,7 +524,8 @@ class UserModel
     /**
      * Get top recommended users based on Answes to Questions
      *
-     * @param    int     $id     id of the user
+     * @param    int $id id of the user
+     * @throws \Exception
      * @return   array           ordered array of contents
      */
     public function getContentRecommendations($id)
@@ -645,6 +596,8 @@ class UserModel
 
     /**
      * @param $id id of the user for which we want to know how many questions he or she has answered
+     * @throws \Exception
+     * @return int
      */
     public function getNumberOfAnsweredQuestions($id){
 
@@ -677,6 +630,8 @@ class UserModel
 
     /**
      * @param $id id of the user for which we want to know how many contents he or she has shared
+     * @throws \Exception
+     * @return int
      */
     public function  getNumberOfSharedContent($id){
 
