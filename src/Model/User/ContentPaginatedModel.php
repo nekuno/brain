@@ -7,7 +7,7 @@ use Paginator\PaginatedInterface;
 use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
 
-class ContentPaginatorModel implements PaginatedInterface
+class ContentPaginatedModel implements PaginatedInterface
 {
     /**
      * @var \Everyman\Neo4j\Client

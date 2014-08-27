@@ -7,7 +7,7 @@ $app['users.model'] = function ($app) {
 
 $app['users.content.model'] = function ($app) {
 
-    return new \Model\User\ContentPaginatorModel($app['neo4j.client']);
+    return new \Model\User\ContentPaginatedModel($app['neo4j.client']);
 };
 
 $app['questions.model'] = function ($app) {
