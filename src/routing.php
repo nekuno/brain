@@ -7,12 +7,15 @@ $app->post('/users', 'users.controller:addAction');
 $app->get('/users/{id}', 'users.controller:showAction')->value('id', null);
 $app->delete('/users/{id}', 'users.controller:deleteAction')->value('id', null);
 
-$app->get('/users/{id}/matching', 'users.controller:getUserRecommendationAction')
-    ->value('type', 'answers');
 $app->get('/users/{id1}/matching/{id2}', 'users.controller:getMatchingAction')
     ->value('type', 'answers');
 
-$app->get('/users/{id}/content', 'users.controller:getContentRecommendationAction');
+$app->get('/users/{id}/content', 'users.controller:getUserContentAction');
+
+$app->get('/users/{id}/recommendations/users', 'users.controller:getUserRecommendationAction')
+    ->value('type', 'answers');
+
+$app->get('/users/{id}/recommendations/content', 'users.controller:getContentRecommendationAction');
 
 // Question routes
 $app->post('/questions/answers', 'questions.controller:answerAction');
