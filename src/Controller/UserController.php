@@ -205,6 +205,7 @@ class UserController
     public function getContentRecommendationAction(Request $request, Application $app)
     {
         $id      = $request->get('id');
+        $tag     = $request->get('tag', null);
 
         if (null === $id) {
             return $app->json(array(), 400);
@@ -214,6 +215,10 @@ class UserController
         $paginator = $app['paginator'];
 
         $filters = array('id' => $id);
+
+        if ($tag) {
+            $filters['tag'] = urldecode($tag);
+        }
 
         /** @var $model \Model\User\Recommendation\ContentPaginatedModel  */
         $model = $app['users.recommendation.content.model'];

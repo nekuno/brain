@@ -46,6 +46,28 @@ class ContentPaginatedModel implements PaginatedInterface
         $id = $filters['id'];
         $response = array();
 
+        $params = array(
+            'UserId' => (integer)$id,
+            'offset' => (integer)$offset,
+            'limit' => (integer)$limit
+        );
+
+        if (isset($filters['tag'])) {
+            $whereTags = "
+                MATCH
+                (content)-[:TAGGED]->(filterTag:Tag)
+                WHERE filterTag.name = {tag}
+                OPTIONAL MATCH
+                (content)-[:TAGGED]->(tag:Tag)
+            ";
+            $params['tag'] = $filters['tag'];
+        } else {
+            $whereTags = "
+                OPTIONAL MATCH
+                (content)-[:TAGGED]->(tag:Tag)
+            ";
+        }
+
         if($this->getNumberOfSharedContent($id) > (2 * $this->getNumberOfAnsweredQuestions($id)) ){
             $query = "
                 MATCH
@@ -56,8 +78,9 @@ class ContentPaginatedModel implements PaginatedInterface
                 (matching_users)-[:LIKES]->(content:Link)
                 WHERE
                 NOT (user)-[:LIKES]->(content)
-                OPTIONAL MATCH
-                (content)-[:TAGGED]->(tag:Tag)
+            ";
+            $query .= $whereTags;
+            $query .= "
                 RETURN
                 content,
                 match.matching_content AS match,
@@ -78,8 +101,9 @@ class ContentPaginatedModel implements PaginatedInterface
                 (matching_users)-[:LIKES]->(content:Link)
                 WHERE
                 NOT (user)-[:LIKES]->(content)
-                OPTIONAL MATCH
-                (content)-[:TAGGED]->(tag:Tag)
+            ";
+            $query .= $whereTags;
+            $query .= "
                 RETURN
                 content,
                 match.matching_content AS match,
@@ -96,11 +120,7 @@ class ContentPaginatedModel implements PaginatedInterface
         $contentQuery = new Query(
             $this->client,
             $query,
-            array(
-                'UserId' => (integer)$id,
-                'offset' => (integer)$offset,
-                'limit' => (integer)$limit
-            )
+            $params
         );
 
         //Execute query
@@ -140,6 +160,21 @@ class ContentPaginatedModel implements PaginatedInterface
         $id = $filters['id'];
         $count = 0;
 
+        $params = array(
+            'UserId' => (integer)$id,
+        );
+
+        if (isset($filters['tag'])) {
+            $whereTags = "
+                MATCH
+                (content)-[:TAGGED]->(tag:Tag)
+                WHERE tag.name = {tag}
+            ";
+            $params['tag'] = $filters['tag'];
+        } else {
+            $whereTags = " ";
+        }
+
         if($this->getNumberOfSharedContent($id) > (2 * $this->getNumberOfAnsweredQuestions($id)) ){
             $query = "
                 MATCH
@@ -150,8 +185,11 @@ class ContentPaginatedModel implements PaginatedInterface
                 (matching_users)-[r:LIKES]->(content:Link)
                 WHERE
                 NOT (user)-[:LIKES]->(content)
+            ";
+            $query .= $whereTags;
+            $query .= "
                 RETURN
-                count(r) as total;
+                count(distinct r) as total;
             ";
         } else {
             $query = "
@@ -163,8 +201,11 @@ class ContentPaginatedModel implements PaginatedInterface
                 (matching_users)-[r:LIKES]->(content:Link)
                 WHERE
                 NOT (user)-[:LIKES]->(content)
+            ";
+            $query .= $whereTags;
+            $query .= "
                 RETURN
-                count(r) as total;
+                count(distinct r) as total;
             ";
         }
 
@@ -172,9 +213,7 @@ class ContentPaginatedModel implements PaginatedInterface
         $contentQuery = new Query(
             $this->client,
             $query,
-            array(
-                'UserId' => (integer)$id,
-            )
+            $params
         );
 
         //Execute query
