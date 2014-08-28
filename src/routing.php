@@ -16,6 +16,7 @@ $app->get('/users/{id}/recommendations/users', 'users.controller:getUserRecommen
     ->value('type', 'answers');
 
 $app->get('/users/{id}/recommendations/content', 'users.controller:getContentRecommendationAction');
+$app->get('/users/{id}/recommendations/content/tags', 'users.controller:getContentRecommendationTagsAction');
 
 // Question routes
 $app->post('/questions/answers', 'questions.controller:answerAction');

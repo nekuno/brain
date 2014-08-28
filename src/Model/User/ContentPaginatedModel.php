@@ -19,7 +19,6 @@ class ContentPaginatedModel implements PaginatedInterface
      */
     public function __construct(Client $client)
     {
-
         $this->client = $client;
     }
 
@@ -54,7 +53,7 @@ class ContentPaginatedModel implements PaginatedInterface
             OPTIONAL MATCH
             (content)-[:TAGGED]->(tag:Tag)
             RETURN
-            type(r) as type, content, collect(tag.name) as tags
+            type(r) as type, content, collect(distinct tag.name) as tags
             SKIP {offset}
             LIMIT {limit}
             ;
