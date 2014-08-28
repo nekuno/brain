@@ -1,6 +1,6 @@
 <?php
 
-namespace ApiConsumer;
+namespace Provider;
 
 use ApiConsumer\Auth\DBUserProvider;
 use ApiConsumer\Event\EventManager;
@@ -19,7 +19,7 @@ class ApiConsumerServiceProvider implements ServiceProviderInterface
     public function register(Application $app)
     {
 
-        $app->register(new \Igorw\Silex\ConfigServiceProvider(__DIR__ . "/config/apiConsumer.yml"));
+        $app->register(new \Igorw\Silex\ConfigServiceProvider(__DIR__ . "/../ApiConsumer/config/apiConsumer.yml"));
 
         // User Provider
         $app['api_consumer.user_provider'] = $app->share(

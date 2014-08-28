@@ -6,7 +6,7 @@ use Provider\GuzzleServiceProvider;
 use Provider\LinkProcessorServiceProvider;
 use Provider\Neo4jPHPServiceProvider;
 use Provider\PaginatorServiceProvider;
-use ApiConsumer\ApiConsumerServiceProvider;
+use Provider\ApiConsumerServiceProvider;
 use ApiConsumer\Listener\OAuthTokenSubscriber;
 use Silex\Application;
 use Silex\Provider\DoctrineServiceProvider;
