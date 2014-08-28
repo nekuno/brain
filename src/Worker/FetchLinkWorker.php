@@ -8,7 +8,7 @@ use ApiConsumer\Fetcher\FetcherService;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Message\AMQPMessage;
 
-class FetchLinksWorker
+class FetchLinkWorker implements RabbitMQConsumerInterface
 {
 
     /**
