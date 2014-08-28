@@ -40,4 +40,4 @@ class ResourceOwnerFactory
 
         return $resourceOwner;
     }
-} 
+}
