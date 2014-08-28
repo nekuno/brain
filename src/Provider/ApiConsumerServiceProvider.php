@@ -6,6 +6,7 @@ use ApiConsumer\Auth\DBUserProvider;
 use ApiConsumer\Fetcher\FetcherService;
 use ApiConsumer\Registry\Registry;
 use ApiConsumer\Storage\DBStorage;
+use Http\OAuth\Factory\ResourceOwnerFactory;
 use Psr\Log\LoggerAwareInterface;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
@@ -32,32 +33,32 @@ class ApiConsumerServiceProvider implements ServiceProviderInterface
         );
 
         // Resource Owners
-        $app['api_consumer.get_resource_owner_by_name'] = $app->protect(
-            function ($name) use ($app) {
+        $app['api_consumer.resource_owner_factory'] = $app->share(
+            function ($app) {
 
-                $options = $app['api_consumer.config']['resource_owner'][$name];
-                $resourceOwnerClass = $options['class'];
-                $resourceOwner = new $resourceOwnerClass($app['guzzle.client'], $app['dispatcher'], $options);
+                $resourceOwnerFactory = new ResourceOwnerFactory($app['api_consumer.config']['resource_owner'], $app['guzzle.client'], $app['dispatcher']);
 
-                return $resourceOwner;
+                return $resourceOwnerFactory;
             }
         );
 
         $app['api_consumer.resource_owner.google'] = $app->share(
             function ($app) {
 
-                $getResourceOwnerByName = $app['api_consumer.get_resource_owner_by_name'];
+                $resourceOwnerFactory = $app['api_consumer.resource_owner_factory'];
+                /* @var $resourceOwnerFactory ResourceOwnerFactory */
 
-                return $getResourceOwnerByName('google');
+                return $resourceOwnerFactory->build('google');
             }
         );
 
         $app['api_consumer.resource_owner.spotify'] = $app->share(
             function ($app) {
 
-                $getResourceOwnerByName = $app['api_consumer.get_resource_owner_by_name'];
+                $resourceOwnerFactory = $app['api_consumer.resource_owner_factory'];
+                /* @var $resourceOwnerFactory ResourceOwnerFactory */
 
-                return $getResourceOwnerByName('spotify');
+                return $resourceOwnerFactory->build('spotify');
             }
         );
 
@@ -89,7 +90,7 @@ class ApiConsumerServiceProvider implements ServiceProviderInterface
                     $app['api_consumer.user_provider'],
                     $app['api_consumer.link_processor'],
                     $app['api_consumer.storage'],
-                    $app['api_consumer.get_resource_owner_by_name'],
+                    $app['api_consumer.resource_owner_factory'],
                     $app['api_consumer.config']['fetcher']
                 );
 
