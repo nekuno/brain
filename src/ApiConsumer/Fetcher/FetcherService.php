@@ -5,13 +5,14 @@ namespace ApiConsumer\Fetcher;
 use ApiConsumer\Auth\UserProviderInterface;
 use ApiConsumer\LinkProcessor\LinkProcessor;
 use ApiConsumer\Storage\StorageInterface;
-use Monolog\Logger;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerInterface;
 
-class FetcherService
+class FetcherService implements LoggerAwareInterface
 {
 
     /**
-     * @var Logger
+     * @var LoggerInterface
      */
     protected $logger;
 
@@ -41,7 +42,6 @@ class FetcherService
     protected $options;
 
     public function __construct(
-        Logger $logger,
         UserProviderInterface $userProvider,
         LinkProcessor $linkProcessor,
         StorageInterface $storage,
@@ -50,7 +50,6 @@ class FetcherService
     )
     {
 
-        $this->logger = $logger;
         $this->userProvider = $userProvider;
         $this->linkProcessor = $linkProcessor;
         $this->storage = $storage;
@@ -66,6 +65,11 @@ class FetcherService
         } else {
             throw new \Exception('Error ' . $method . ' not defined', 1);
         }
+    }
+
+    public function setLogger(LoggerInterface $logger)
+    {
+        $this->logger = $logger;
     }
 
     public function fetch($userId, $resourceOwner)

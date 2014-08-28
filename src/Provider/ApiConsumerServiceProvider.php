@@ -3,10 +3,10 @@
 namespace Provider;
 
 use ApiConsumer\Auth\DBUserProvider;
-use ApiConsumer\Event\EventManager;
 use ApiConsumer\Fetcher\FetcherService;
 use ApiConsumer\Registry\Registry;
 use ApiConsumer\Storage\DBStorage;
+use Psr\Log\LoggerAwareInterface;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
 
@@ -86,13 +86,16 @@ class ApiConsumerServiceProvider implements ServiceProviderInterface
             function ($app) {
 
                 $fetcher = new FetcherService(
-                    $app['monolog'],
                     $app['api_consumer.user_provider'],
                     $app['api_consumer.link_processor'],
                     $app['api_consumer.storage'],
                     $app['api_consumer.get_resource_owner_by_name'],
                     $app['api_consumer.config']['fetcher']
                 );
+
+                if ($fetcher instanceof LoggerAwareInterface) {
+                    $fetcher->setLogger($app['monolog']);
+                }
 
                 return $fetcher;
             }
