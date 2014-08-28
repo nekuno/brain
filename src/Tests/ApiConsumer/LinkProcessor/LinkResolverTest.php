@@ -73,7 +73,54 @@ class LinkResolverTest extends \PHPUnit_Framework_TestCase
 
     public function testResolveValidUrlWithCanonical()
     {
-        //TODO: Implement this test
+
+        $target = 'http://bit.ly/VN34RV';
+        $resolved = 'http://instagr.am/p/JXcPW9r2LD/';
+        $canonical = 'http://instagram.com/p/JXcPW9r2LD/';
+
+        $crawler = $this->getMockBuilder('Symfony\Component\DomCrawler\Crawler')->getMock();
+
+        $crawler->expects($this->exactly(2))
+            ->method('filterXPath')
+            ->will($this->returnSelf());
+        $crawler->expects($this->exactly(2))
+            ->method('attr')
+            ->will($this->onConsecutiveCalls($canonical, null));
+
+        $response = $this->getMockBuilder('Symfony\Component\BrowserKit\Response')->getMock();
+
+        $response->expects($this->exactly(2))
+            ->method('getStatus')
+            ->will($this->returnValue(200));
+
+        $request = $this->getMockBuilder('Symfony\Component\BrowserKit\Request')
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $request->expects($this->exactly(2))
+            ->method('getUri')
+            ->will($this->onConsecutiveCalls($resolved, $canonical));
+
+        $client = $this->getMockBuilder('Goutte\Client')->getMock();
+
+        $client
+            ->expects($this->exactly(2))
+            ->method('request')
+            ->will($this->returnValue($crawler));
+
+        $client
+            ->expects($this->exactly(2))
+            ->method('getResponse')
+            ->will($this->returnValue($response));
+
+        $client
+            ->expects($this->exactly(2))
+            ->method('getRequest')
+            ->will($this->returnValue($request));
+
+        $linkResolver = new LinkResolver($client);
+
+        $this->assertEquals($canonical, $linkResolver->resolve($target));
     }
 
     public function testResolve404Url()
