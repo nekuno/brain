@@ -88,8 +88,7 @@ class ApiConsumerServiceProvider implements ServiceProviderInterface
                 $fetcher = new FetcherService(
                     $app['monolog'],
                     $app['api_consumer.user_provider'],
-                    $app['api_consumer.registry'],
-                    $app['api_consumer.link_processor.link_resolver'],
+                    $app['api_consumer.link_processor'],
                     $app['api_consumer.storage'],
                     $app['api_consumer.get_resource_owner_by_name'],
                     $app['api_consumer.config']['fetcher']

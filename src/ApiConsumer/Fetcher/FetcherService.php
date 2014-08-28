@@ -3,8 +3,7 @@
 namespace ApiConsumer\Fetcher;
 
 use ApiConsumer\Auth\UserProviderInterface;
-use ApiConsumer\Registry\Registry;
-use ApiConsumer\LinkProcessor\LinkResolver;
+use ApiConsumer\LinkProcessor\LinkProcessor;
 use ApiConsumer\Storage\StorageInterface;
 use Monolog\Logger;
 
@@ -22,9 +21,9 @@ class FetcherService
     protected $userProvider;
 
     /**
-     * @var Registry
+     * @var LinkProcessor
      */
-    protected $registry;
+    protected $linkProcessor;
 
     /**
      * @var StorageInterface
@@ -44,15 +43,16 @@ class FetcherService
     public function __construct(
         Logger $logger,
         UserProviderInterface $userProvider,
-        Registry $registry,
+        LinkProcessor $linkProcessor,
         StorageInterface $storage,
         \Closure $getResourceOwnerByName,
         array $options
-    ) {
+    )
+    {
 
         $this->logger = $logger;
         $this->userProvider = $userProvider;
-        $this->registry = $registry;
+        $this->linkProcessor = $linkProcessor;
         $this->storage = $storage;
         $this->getResourceOwnerByName = $getResourceOwnerByName;
         $this->options = $options;
@@ -73,6 +73,7 @@ class FetcherService
 
         $links = array();
         try {
+
             $this->logger->info(sprintf('Fetch attempt for user %d, fetcherConfig %s', $userId, $resourceOwner));
 
             foreach ($this->options as $fetcherConfig) {
@@ -84,6 +85,9 @@ class FetcherService
                     /** @var FetcherInterface $fetcher */
                     $fetcher = new $fetcherConfig['class']($this->getResourceOwnerByName($resourceOwner));
                     $links = $fetcher->fetchLinksFromUserFeed($user);
+                    foreach ($links as $key => $link) {
+                        $links[$key] = $this->linkProcessor->process($link);
+                    }
                     $this->storage->storeLinks($user['id'], $links);
                     foreach ($this->storage->getErrors() as $error) {
                         $this->logger->error(sprintf('Error saving link: ' . $error));
@@ -91,7 +95,7 @@ class FetcherService
                 }
             }
         } catch (\Exception $e) {
-            throw new \Exception('Error fetching ' . $resourceOwner . ' for user ' . $userId, 1);
+            throw new \Exception('Error fetching ' . $resourceOwner . ' for user ' . $userId . ' (' . $e->getMessage() . ')', 1);
         }
 
         return $links;

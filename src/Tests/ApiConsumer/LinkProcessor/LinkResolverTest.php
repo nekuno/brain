@@ -3,13 +3,13 @@
 namespace Tests\ApiConsumer\LinkProcessor;
 
 use ApiConsumer\LinkProcessor\LinkResolver;
-use MyProject\Proxies\__CG__\stdClass;
 
 /**
  * @author Juan Luis Martínez <juanlu@comakai.com>
  */
 class LinkResolverTest extends \PHPUnit_Framework_TestCase
 {
+
     public function testRevolveValidUrlWithRedirections()
     {
 

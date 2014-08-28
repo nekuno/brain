@@ -62,7 +62,13 @@ class LinkProcessorServiceProvider implements ServiceProviderInterface
 
         $app['api_consumer.link_processor'] = $app->share(
             function ($app) {
-                return new LinkProcessor($app['api_consumer.link_processor.link_analyzer'], $app['api_consumer.link_processor.processor.scrapper'], $app['api_consumer.link_processor.processor.youtube'], $app['api_consumer.link_processor.processor.spotify']);
+                return new LinkProcessor(
+                    $app['api_consumer.link_processor.link_resolver'],
+                    $app['api_consumer.link_processor.link_analyzer'],
+                    $app['api_consumer.link_processor.processor.scrapper'],
+                    $app['api_consumer.link_processor.processor.youtube'],
+                    $app['api_consumer.link_processor.processor.spotify']
+                );
             }
         );
 
