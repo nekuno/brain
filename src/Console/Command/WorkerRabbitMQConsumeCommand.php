@@ -9,15 +9,15 @@ use PhpAmqpLib\Connection\AMQPConnection;
 use Silex\Application;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Worker\FetchLinksWorker;
+use Worker\FetchLinkWorker;
 
-class RabbitMqWorkersUpCommand extends ApplicationAwareCommand
+class WorkerRabbitMQConsumeCommand extends ApplicationAwareCommand
 {
 
     protected function configure()
     {
 
-        $this->setName('workers:rabbitmq:up')
+        $this->setName('worker:rabbitmq:consume')
             ->setDescription("Start RabbitMQ workers")
             ->setDefinition(
                 array()
@@ -38,8 +38,8 @@ class RabbitMqWorkersUpCommand extends ApplicationAwareCommand
 
         /** @var AMQPChannel $fetchChannel */
         $fetchChannel = $connection->channel();
-        $fetchLinksWorker = new FetchLinksWorker($fetchChannel, $fetcher, $userProvider);
-        $fetchLinksWorker->consume();
+        $fetchLinkWorker = new FetchLinkWorker($fetchChannel, $fetcher, $userProvider);
+        $fetchLinkWorker->consume();
         $fetchChannel->close();
 
         $connection->close();
