@@ -7,7 +7,7 @@ use Provider\LinkProcessorServiceProvider;
 use Provider\Neo4jPHPServiceProvider;
 use Provider\PaginatorServiceProvider;
 use Provider\ApiConsumerServiceProvider;
-use ApiConsumer\Listener\OAuthTokenSubscriber;
+use ApiConsumer\EventListener\OAuthTokenSubscriber;
 use Silex\Application;
 use Silex\Provider\DoctrineServiceProvider;
 use Silex\Provider\ServiceControllerServiceProvider;

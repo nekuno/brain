@@ -1,9 +1,8 @@
 <?php
-namespace ApiConsumer\Listener;
+namespace ApiConsumer\EventListener;
 
 use ApiConsumer\Auth\UserProviderInterface;
 use ApiConsumer\Event\OAuthTokenEvent;
-use ApiConsumer\Event\FilterTokenRefreshedEvent;
 use PhpAmqpLib\Connection\AMQPConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 use Psr\Log\LoggerInterface;
