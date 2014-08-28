@@ -2,10 +2,14 @@
 
 namespace Console\Command;
 
-use Console\Worker\FetchLinksWorker;
+use ApiConsumer\Auth\UserProviderInterface;
+use ApiConsumer\Fetcher\FetcherService;
+use PhpAmqpLib\Channel\AMQPChannel;
+use PhpAmqpLib\Connection\AMQPConnection;
 use Silex\Application;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Worker\FetchLinksWorker;
 
 class RabbitMqWorkersUpCommand extends ApplicationAwareCommand
 {
@@ -23,14 +27,22 @@ class RabbitMqWorkersUpCommand extends ApplicationAwareCommand
     protected function execute(InputInterface $input, OutputInterface $output)
     {
 
-        $amqp = $this->app['amqp'];
-        $fetcher = $this->app['api_consumer.fetcher'];
+        /** @var AMQPConnection $connection */
+        $connection = $this->app['amqp'];
+
+        /** @var UserProviderInterface $userProvider */
         $userProvider = $this->app['api_consumer.user_provider'];
 
-        $fetchLinksWorker = new FetchLinksWorker($amqp, $fetcher, $userProvider);
-        $fetchLinksWorker->process();
+        /** @var FetcherService $fetcher */
+        $fetcher = $this->app['api_consumer.fetcher'];
 
-        $amqp->close();
+        /** @var AMQPChannel $fetchChannel */
+        $fetchChannel = $connection->channel();
+        $fetchLinksWorker = new FetchLinksWorker($fetchChannel, $fetcher, $userProvider);
+        $fetchLinksWorker->consume();
+        $fetchChannel->close();
+
+        $connection->close();
 
     }
 

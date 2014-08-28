@@ -2,12 +2,11 @@
 
 namespace ApiConsumer;
 
-use ApiConsumer\Fetcher\FetcherService;
 use ApiConsumer\Auth\DBUserProvider;
 use ApiConsumer\Event\EventManager;
+use ApiConsumer\Fetcher\FetcherService;
 use ApiConsumer\Registry\Registry;
 use ApiConsumer\Storage\DBStorage;
-use ApiConsumer\Listener\OAuthTokenSubscriber;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
 
@@ -46,14 +45,18 @@ class ApiConsumerServiceProvider implements ServiceProviderInterface
 
         $app['api_consumer.resource_owner.google'] = $app->share(
             function ($app) {
+
                 $getResourceOwnerByName = $app['api_consumer.get_resource_owner_by_name'];
+
                 return $getResourceOwnerByName('google');
             }
         );
 
         $app['api_consumer.resource_owner.spotify'] = $app->share(
             function ($app) {
+
                 $getResourceOwnerByName = $app['api_consumer.get_resource_owner_by_name'];
+
                 return $getResourceOwnerByName('spotify');
             }
         );

@@ -5,6 +5,7 @@ use Provider\AMQPServiceProvider;
 use Provider\GuzzleServiceProvider;
 use Provider\LinkProcessorServiceProvider;
 use Provider\Neo4jPHPServiceProvider;
+use Provider\PaginatorServiceProvider;
 use ApiConsumer\ApiConsumerServiceProvider;
 use ApiConsumer\Listener\OAuthTokenSubscriber;
 use Silex\Application;
@@ -31,6 +32,8 @@ $app->register(new ServiceControllerServiceProvider());
 
 $app->register(new ApiConsumerServiceProvider());
 $app->register(new LinkProcessorServiceProvider());
+$app->register(new PaginatorServiceProvider());
+
 $app->register(new SwiftmailerServiceProvider());
 $app->register(new AMQPServiceProvider());
 
