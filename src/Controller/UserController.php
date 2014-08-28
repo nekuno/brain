@@ -121,8 +121,8 @@ class UserController
         }
 
         try {
-            /** @var UserModel $model */
-            $model = $app['users.model'];
+            /** @var $model \Model\User\MatchingModel */
+            $model = $app['users.matching.model'];
             if ($basedOn == 'answers') {
                 $result = $model->getMatchingBetweenTwoUsersBasedOnAnswers($id1, $id2);
             }
@@ -181,8 +181,8 @@ class UserController
         }
 
         try {
-            /** @var UserModel $model */
-            $model = $app['users.model'];
+            /** @var $model \Model\User\Recommendation\UserModel  */
+            $model = $app['users.recommendation.users.model'];
             if ($basedOn == 'answers') {
                 // TODO: check that users has one answered question at least
                 $result = $model->getUserRecommendationsBasedOnAnswers($id);
