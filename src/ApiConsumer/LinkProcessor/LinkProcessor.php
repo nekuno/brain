@@ -10,6 +10,11 @@ class LinkProcessor
 {
 
     /**
+     * @var LinkResolver
+     */
+    protected $resolver;
+
+    /**
      * @var LinkAnalyzer
      */
     protected $analyzer;
@@ -30,9 +35,16 @@ class LinkProcessor
     protected $spotifyProcessor;
 
 
-    public function __construct(LinkAnalyzer $linkAnalyzer, ScraperProcessor $scrapperProcessor, YoutubeProcessor $youtubeProcessor, SpotifyProcessor $spotifyProcessor)
+    public function __construct(
+        LinkResolver $linkResolver,
+        LinkAnalyzer $linkAnalyzer,
+        ScraperProcessor $scrapperProcessor,
+        YoutubeProcessor $youtubeProcessor,
+        SpotifyProcessor $spotifyProcessor
+    )
     {
 
+        $this->resolver = $linkResolver;
         $this->analyzer = $linkAnalyzer;
         $this->scrapperProcessor = $scrapperProcessor;
         $this->youtubeProcessor = $youtubeProcessor;
@@ -45,6 +57,8 @@ class LinkProcessor
      */
     public function process(array $link)
     {
+
+        $link['url'] = $this->resolver->resolve($link['url']);
 
         $processor = $this->scrapperProcessor;
         $processorName = $this->analyzer->getProcessor($link);

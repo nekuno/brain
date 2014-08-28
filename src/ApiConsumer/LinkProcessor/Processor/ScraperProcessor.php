@@ -5,6 +5,7 @@ namespace ApiConsumer\LinkProcessor\Processor;
 use ApiConsumer\LinkProcessor\MetadataParser\BasicMetadataParser;
 use ApiConsumer\LinkProcessor\MetadataParser\FacebookMetadataParser;
 use Goutte\Client;
+use GuzzleHttp\Exception\RequestException;
 
 /**
  * @author Juan Luis Martínez <juanlu@comakai.com>
@@ -36,7 +37,8 @@ class ScraperProcessor implements ProcessorInterface
         Client $client,
         BasicMetadataParser $basicMetadataParser,
         FacebookMetadataParser $facebookMetadataParser
-    ) {
+    )
+    {
 
         $this->client = $client;
         $this->basicMetadataParser = $basicMetadataParser;
@@ -53,7 +55,11 @@ class ScraperProcessor implements ProcessorInterface
 
         $url = $link['url'];
 
-        $crawler = $this->client->request('GET', $url);
+        try {
+            $crawler = $this->client->request('GET', $url);
+        } catch (RequestException $e) {
+            return $link;
+        }
 
         $basicMetadata = $this->basicMetadataParser->extractMetadata($crawler);
         $basicMetadata['tags'] = $this->basicMetadataParser->extractTags($crawler);
