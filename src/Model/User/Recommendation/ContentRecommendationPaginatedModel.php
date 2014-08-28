@@ -3,6 +3,7 @@
 namespace Model\User\Recommendation;
 
 use Paginator\PaginatedInterface;
+use Model\User\MatchingModel;
 
 use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
@@ -15,12 +16,18 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
     protected $client;
 
     /**
-     * @param \Everyman\Neo4j\Client $client
+     * @var \Model\User\MatchingModel
      */
-    public function __construct(Client $client)
-    {
+    protected $matchingModel;
 
+    /**
+     * @param \Everyman\Neo4j\Client $client
+     * @param \Model\User\MatchingModel $matchingModel
+     */
+    public function __construct(Client $client, MatchingModel $matchingModel)
+    {
         $this->client = $client;
+        $this->matchingModel = $matchingModel;
     }
 
     /**
@@ -52,69 +59,47 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
             'limit' => (integer)$limit
         );
 
+        $tagQuery = '';
         if (isset($filters['tag'])) {
-            $whereTags = "
+            $tagQuery = "
                 MATCH
                 (content)-[:TAGGED]->(filterTag:Tag)
                 WHERE filterTag.name = {tag}
-                OPTIONAL MATCH
-                (content)-[:TAGGED]->(tag:Tag)
             ";
             $params['tag'] = $filters['tag'];
-        } else {
-            $whereTags = "
-                OPTIONAL MATCH
-                (content)-[:TAGGED]->(tag:Tag)
-            ";
         }
 
-        if($this->getNumberOfSharedContent($id) > (2 * $this->getNumberOfAnsweredQuestions($id)) ){
-            $query = "
-                MATCH
-                (user:User {qnoow_id: {UserId}})-[match:MATCHES]-(matching_users:User)
-                WHERE
-                has(match.matching_content)
-                MATCH
-                (matching_users)-[:LIKES]->(content:Link)
-                WHERE
-                NOT (user)-[:LIKES]->(content)
-            ";
-            $query .= $whereTags;
-            $query .= "
-                RETURN
-                content,
-                match.matching_content AS match,
-                matching_users AS via,
-                collect(distinct tag.name) as tags
-                ORDER BY
-                match
-                SKIP {offset}
-                LIMIT {limit};
-            ";
-        } else {
-            $query = "
-                MATCH
-                (user:User {qnoow_id: {UserId})-[match:MATCHES]-(matching_users:User)
-                WHERE
-                has(match.matching_questions)
-                MATCH
-                (matching_users)-[:LIKES]->(content:Link)
-                WHERE
-                NOT (user)-[:LIKES]->(content)
-            ";
-            $query .= $whereTags;
-            $query .= "
-                RETURN
-                content,
-                match.matching_content AS match,
-                matching_users AS via,
-                collect(distinct tag.name) as tags
-                ORDER BY
-                match;
-                SKIP {offset}
-                LIMIT {limit}
-            ";
+        $typeQuery = 'has(match.matching_questions)';
+        if($this->matchingModel->getPreferredMatchingType($id) == MatchingModel::PREFERRED_MATCHING_CONTENT) {
+            $typeQuery = "has(match.matching_content)";
         }
+
+        $query = "
+            MATCH
+            (user:User {qnoow_id: {UserId}})-[match:MATCHES]-(matching_users:User)
+            WHERE
+        ";
+        $query .= $typeQuery;
+        $query .= "
+            MATCH
+            (matching_users)-[:LIKES]->(content:Link)
+            WHERE
+            NOT (user)-[:LIKES]->(content)
+        ";
+        $query .= $tagQuery;
+        $query .= "
+            OPTIONAL MATCH
+            (content)-[:TAGGED]->(tag:Tag)
+            RETURN
+            content,
+            match.matching_content AS match,
+            matching_users AS via,
+            collect(distinct tag.name) as tags
+            ORDER BY
+            match
+            SKIP {offset}
+            LIMIT {limit};
+        ";
 
         //Create the Neo4j query object
         $contentQuery = new Query(
@@ -164,50 +149,38 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
             'UserId' => (integer)$id,
         );
 
+        $tagQuery = '';
         if (isset($filters['tag'])) {
-            $whereTags = "
+            $tagQuery = "
                 MATCH
-                (content)-[:TAGGED]->(tag:Tag)
-                WHERE tag.name = {tag}
+                (content)-[:TAGGED]->(filterTag:Tag)
+                WHERE filterTag.name = {tag}
             ";
             $params['tag'] = $filters['tag'];
-        } else {
-            $whereTags = " ";
         }
 
-        if($this->getNumberOfSharedContent($id) > (2 * $this->getNumberOfAnsweredQuestions($id)) ){
-            $query = "
-                MATCH
-                (user:User {qnoow_id: {UserId}})-[match:MATCHES]-(matching_users:User)
-                WHERE
-                has(match.matching_content)
-                MATCH
-                (matching_users)-[r:LIKES]->(content:Link)
-                WHERE
-                NOT (user)-[:LIKES]->(content)
-            ";
-            $query .= $whereTags;
-            $query .= "
-                RETURN
-                count(distinct r) as total;
-            ";
-        } else {
-            $query = "
-                MATCH
-                (user:User {qnoow_id: {UserId})-[match:MATCHES]-(matching_users:User)
-                WHERE
-                has(match.matching_questions)
-                MATCH
-                (matching_users)-[r:LIKES]->(content:Link)
-                WHERE
-                NOT (user)-[:LIKES]->(content)
-            ";
-            $query .= $whereTags;
-            $query .= "
-                RETURN
-                count(distinct r) as total;
-            ";
+        $typeQuery = 'has(match.matching_questions)';
+        if($this->matchingModel->getPreferredMatchingType($id) == MatchingModel::PREFERRED_MATCHING_CONTENT) {
+            $typeQuery = "has(match.matching_content)";
         }
+
+        $query = "
+            MATCH
+            (user:User {qnoow_id: {UserId}})-[match:MATCHES]-(matching_users:User)
+            WHERE
+        ";
+        $query .= $typeQuery;
+        $query .= "
+            MATCH
+            (matching_users)-[r:LIKES]->(content:Link)
+            WHERE
+            NOT (user)-[:LIKES]->(content)
+        ";
+        $query .= $tagQuery;
+        $query .= "
+            RETURN
+            count(distinct r) as total;
+        ";
 
         //Create the Neo4j query object
         $contentQuery = new Query(
@@ -229,73 +202,5 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
         }
 
         return $count;
-    }
-
-    /**
-     * @param $id id of the user for which we want to know how many questions he or she has answered
-     * @throws \Exception
-     * @return int
-     */
-    private function getNumberOfAnsweredQuestions($id){
-
-        $query = "
-            MATCH
-            (u:User {qnoow_id: " . $id . "})-[r:RATES]->(q:Question)
-            RETURN
-            count(distinct r) AS quantity;
-        ";
-
-        $neoQuery = new Query(
-            $this->client,
-            $query
-        );
-
-        //Execute query
-        try {
-            $result = $neoQuery->getResultSet();
-        } catch (\Exception $e) {
-            throw $e;
-        }
-
-        $numberOfAnsweredQuestions = 0;
-        foreach ($result as $row)  {
-            $numberOfAnsweredQuestions = $row['quantity'];
-        }
-
-        return $numberOfAnsweredQuestions;
-    }
-
-    /**
-     * @param $id id of the user for which we want to know how many contents he or she has shared
-     * @throws \Exception
-     * @return int
-     */
-    private function  getNumberOfSharedContent($id){
-
-        $query = "
-            MATCH
-            (u:User {qnoow_id: " . $id . "})-[r:LIKES|DISLIKES]->(q:Link)
-            RETURN
-            count(distinct r) AS quantity;
-        ";
-
-        $neoQuery = new Query(
-            $this->client,
-            $query
-        );
-
-        //Execute query
-        try {
-            $result = $neoQuery->getResultSet();
-        } catch (\Exception $e) {
-            throw $e;
-        }
-
-        $numberOfSharedQuestions = 0;
-        foreach ($result as $row)  {
-            $numberOfSharedQuestions = $row['quantity'];
-        }
-
-        return $numberOfSharedQuestions;
     }
 } 

@@ -82,7 +82,7 @@ class UserRecommendationModel
     }
 
     /**
-     * Get top recommended users based on Answes to Questions
+     * Get top recommended users based on Answers to Questions
      *
      * @param    int $id id of the user
      * @throws \Exception

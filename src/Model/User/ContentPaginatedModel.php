@@ -19,7 +19,6 @@ class ContentPaginatedModel implements PaginatedInterface
      */
     public function __construct(Client $client)
     {
-
         $this->client = $client;
     }
 

@@ -235,4 +235,34 @@ class UserController
 
         return $app->json($result, !empty($result) ? 201 : 200);
     }
+
+    public function getContentRecommendationTagsAction(Request $request, Application $app)
+    {
+        $id      = $request->get('id');
+        $search     = $request->get('search', '');
+        $limit     = $request->get('limit', 0);
+
+        if (null === $id) {
+            return $app->json(array(), 400);
+        }
+
+        if ($search) {
+            $search = urldecode($search);
+        }
+
+        /** @var $model \Model\User\Recommendation\ContentRecommendationTagModel  */
+        $model = $app['users.recommendation.content.tag.model'];
+
+        try {
+            $result = $model->getRecommendedTags($id, $search, $limit);
+        } catch (\Exception $e) {
+            if ($app['env'] == 'dev') {
+                throw $e;
+            }
+
+            return $app->json(array(), 500);
+        }
+
+        return $app->json($result, !empty($result) ? 201 : 200);
+    }
 } 

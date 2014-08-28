@@ -7,18 +7,46 @@ use Everyman\Neo4j\Cypher\Query;
 
 class MatchingModel
 {
+    const PREFERRED_MATCHING_CONTENT='content';
+    const PREFERRED_MATCHING_ANSWERS='answers';
+
     /**
      * @var \Everyman\Neo4j\Client
      */
     protected $client;
 
     /**
-     * @param \Everyman\Neo4j\Client $client
+     * @var \Model\User\ContentPaginatedModel
      */
-    public function __construct(Client $client)
-    {
+    protected $contentPaginatedModel;
 
+    /**
+     * @var \Model\User\AnswerModel
+     */
+    protected $answerModel;
+
+    /**
+     * @param \Everyman\Neo4j\Client $client
+     * @param \Model\User\ContentPaginatedModel $contentPaginatedModel
+     * @param \Model\User\AnswerModel $answerModel
+     */
+    public function __construct(Client $client, ContentPaginatedModel $contentPaginatedModel, AnswerModel $answerModel)
+    {
         $this->client = $client;
+        $this->contentPaginatedModel = $contentPaginatedModel;
+        $this->answerModel = $answerModel;
+    }
+
+    public function getPreferredMatchingType($id)
+    {
+        $numberOfSharedContent = $this->contentPaginatedModel->countTotal(array('id' => $id));
+        $numberOfAnsweredQuestions = $this->answerModel->countTotal(array('id' => $id));
+
+        if ($numberOfSharedContent > (2 * $numberOfAnsweredQuestions)) {
+            return self::PREFERRED_MATCHING_CONTENT;
+        } else {
+            return self::PREFERRED_MATCHING_ANSWERS;
+        }
     }
 
     /**
