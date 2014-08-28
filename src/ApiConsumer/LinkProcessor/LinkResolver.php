@@ -32,7 +32,7 @@ class LinkResolver
             $crawler = $this->client->request('GET', $url);
             $statusCode = $this->client->getResponse()->getStatus();
         } catch (RequestException $e) {
-            return null;
+            return $url;
         }
 
         if ($statusCode == 200) {
@@ -52,7 +52,7 @@ class LinkResolver
             return $uri;
         }
 
-        return null;
+        return $url;
 
     }
 } 
