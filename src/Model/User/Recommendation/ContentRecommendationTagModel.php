@@ -45,7 +45,7 @@ class ContentRecommendationTagModel
 
         $startingWithQuery = '';
         if ($startingWith != '') {
-            $params['tag'] = $startingWith.".*";
+            $params['tag'] = '(?i)'.$startingWith.'.*';
             $startingWithQuery = 'WHERE tag.name =~ {tag}';
         }
 
