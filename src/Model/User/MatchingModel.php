@@ -312,7 +312,54 @@ class MatchingModel
             $response['matching'] = 0;
         }
 
+        if ($response['matching'] != 0) {
+            $maxMatching = $this->getMaxMatchingBasedOnContent();
+
+            $response['matching'] /= $maxMatching;
+        }
+
         return $response;
+    }
+
+    /**
+     * Get the maximum matching based on content
+     */
+    public function getMaxMatchingBasedOnContent()
+    {
+        $maxMatching = 0;
+
+        $query = "
+            MATCH
+            ()-[match:MATCHES]-()
+            WHERE
+            has(match.matching_content)
+            RETURN
+            match.matching_content as max
+            ORDER BY
+            match.matching_content DESC
+            LIMIT 1
+            ;
+            ";
+
+        //Create the Neo4j query object
+        $neoQuery = new Query(
+            $this->client,
+            $query
+        );
+
+        //Execute query
+        try {
+            $result = $neoQuery->getResultSet();
+
+        } catch (\Exception $e) {
+            throw $e;
+        }
+
+        foreach ($result as $row) {
+            $maxMatching = $row['max'];
+        }
+
+        return $maxMatching;
     }
 
     /**
