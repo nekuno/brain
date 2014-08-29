@@ -5,6 +5,7 @@ namespace ApiConsumer\Fetcher;
 use ApiConsumer\Auth\UserProviderInterface;
 use ApiConsumer\LinkProcessor\LinkProcessor;
 use ApiConsumer\Storage\StorageInterface;
+use Http\OAuth\Factory\ResourceOwnerFactory;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 
@@ -32,9 +33,9 @@ class FetcherService implements LoggerAwareInterface
     protected $storage;
 
     /**
-     * @var \Closure
+     * @var ResourceOwnerFactory
      */
-    protected $getResourceOwnerByName;
+    protected $resourceOwnerFactory;
 
     /**
      * @var array
@@ -45,7 +46,7 @@ class FetcherService implements LoggerAwareInterface
         UserProviderInterface $userProvider,
         LinkProcessor $linkProcessor,
         StorageInterface $storage,
-        \Closure $getResourceOwnerByName,
+        ResourceOwnerFactory $resourceOwnerFactory,
         array $options
     )
     {
@@ -53,7 +54,7 @@ class FetcherService implements LoggerAwareInterface
         $this->userProvider = $userProvider;
         $this->linkProcessor = $linkProcessor;
         $this->storage = $storage;
-        $this->getResourceOwnerByName = $getResourceOwnerByName;
+        $this->resourceOwnerFactory = $resourceOwnerFactory;
         $this->options = $options;
     }
 
@@ -87,7 +88,7 @@ class FetcherService implements LoggerAwareInterface
                         throw new \Exception('User not found');
                     }
                     /** @var FetcherInterface $fetcher */
-                    $fetcher = new $fetcherConfig['class']($this->getResourceOwnerByName($resourceOwner));
+                    $fetcher = new $fetcherConfig['class']($this->resourceOwnerFactory->build($resourceOwner));
                     $links = $fetcher->fetchLinksFromUserFeed($user);
                     foreach ($links as $key => $link) {
                         $links[$key] = $this->linkProcessor->process($link);
