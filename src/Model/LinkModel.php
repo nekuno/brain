@@ -162,7 +162,7 @@ class LinkModel
         $template = "MATCH (link:Link)"
             . ", (tag:Tag)"
             . " WHERE link.url = { url } AND tag.name = { tag }"
-            . " CREATE (link)-[:TAGGED]->(tag)";
+            . " CREATE UNIQUE (link)-[:TAGGED]->(tag)";
 
         $params = array(
             'url' => $link['url'],
