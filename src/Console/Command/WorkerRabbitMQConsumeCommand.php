@@ -12,10 +12,16 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Worker\FetchLinkWorker;
 
+/**
+ * Class WorkerRabbitMQConsumeCommand
+ * @package Console\Command
+ */
 class WorkerRabbitMQConsumeCommand extends ApplicationAwareCommand
 {
 
-
+    protected $validConsumers = array(
+        'fetching',
+    );
 
     protected function configure()
     {
@@ -32,6 +38,11 @@ class WorkerRabbitMQConsumeCommand extends ApplicationAwareCommand
     protected function execute(InputInterface $input, OutputInterface $output)
     {
 
+        $consumer = $input->getArgument('consumer');
+
+        if (!in_array($consumer, $this->validConsumers)) {
+            throw new \Exception('Invalid consumer name');
+        }
 
         /** @var UserProviderInterface $userProvider */
         $userProvider = $this->app['api_consumer.user_provider'];
@@ -41,8 +52,7 @@ class WorkerRabbitMQConsumeCommand extends ApplicationAwareCommand
         /** @var AMQPConnection $connection */
         $connection = $this->app['amqp'];
 
-        $consumer = $input->getArgument('consumer');
-        switch($consumer){
+        switch ($consumer) {
             case 'fetching':
                 $output->writeln(sprintf('Starting fetching consumer'));
                 /** @var AMQPChannel $channel */
