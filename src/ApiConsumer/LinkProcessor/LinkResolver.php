@@ -25,7 +25,7 @@ class LinkResolver
         $this->client = $client;
     }
 
-    public function resolve($url)
+    public function resolve($url, array $visited = array())
     {
 
         try {
@@ -33,6 +33,10 @@ class LinkResolver
             $statusCode = $this->client->getResponse()->getStatus();
         } catch (RequestException $e) {
             return $this->client->getRequest()->getUri();
+        }
+
+        if (!in_array($url, $visited)) {
+            $visited[] = $url;
         }
 
         if ($statusCode == 200) {
@@ -46,7 +50,14 @@ class LinkResolver
             $uri = $this->client->getRequest()->getUri();
 
             if ($canonical && $uri !== $canonical) {
-                return $this->resolve($canonical);
+
+                if (in_array($uri, $visited)) {
+                    return $canonical;
+                }
+
+                $visited[] = $uri;
+
+                return $this->resolve($canonical, $visited);
             }
 
             return $uri;
