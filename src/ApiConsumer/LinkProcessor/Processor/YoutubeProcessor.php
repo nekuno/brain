@@ -69,11 +69,12 @@ class YoutubeProcessor implements ProcessorInterface
             $info = $items[0];
             $link['title'] = $info['snippet']['title'];
             $link['description'] = $info['snippet']['description'];
+            $link['additionalLabels'] = array('Video');
             if (isset($info['topicDetails']['topicIds'])) {
                 foreach ($info['topicDetails']['topicIds'] as $tagName) {
                     $link['tags'][] = array(
                         'name' => $tagName,
-                        'aditionalLabels' => array('Freebase'),
+                        'additionalLabels' => array('Freebase'),
                     );
                 }
             }

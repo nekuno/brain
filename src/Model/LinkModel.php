@@ -128,17 +128,17 @@ class LinkModel
             return $result;
         }
 
-        $aditionalLabels = "";
-        if (isset($tag['aditionalLabels'])) {
-            foreach ($tag['aditionalLabels'] as $label) {
-                $aditionalLabels .= ":".$label;
+        $additionalLabels = "";
+        if (isset($tag['additionalLabels'])) {
+            foreach ($tag['additionalLabels'] as $label) {
+                $additionalLabels .= ":".$label;
             }    
         }
 
-        $aditionalFields = "";
-        if (isset($tag['aditionalFields'])) {
-            foreach ($tag['aditionalFields'] as $field => $value) {
-                $aditionalFields .= ", tag.".$field." = '".$value."'";
+        $additionalFields = "";
+        if (isset($tag['additionalFields'])) {
+            foreach ($tag['additionalFields'] as $field => $value) {
+                $additionalFields .= ", tag.".$field." = '".$value."'";
             }    
         }
 
@@ -146,8 +146,8 @@ class LinkModel
             'name' => $tag['name'],
         );
         
-        $template = "CREATE (tag:Tag".$aditionalLabels.")"
-            . "SET tag.name = { name }".$aditionalFields
+        $template = "CREATE (tag:Tag".$additionalLabels.")"
+            . "SET tag.name = { name }".$additionalFields
             . "RETURN tag";
 
         $query = new Query($this->client, $template, $params);

@@ -70,7 +70,7 @@ class SpotifyProcessor implements ProcessorInterface
                 foreach ($album['genres'] as $genre) {
                     $tag = array();
                     $tag['name'] = $genre;
-                    $tag['aditionalLabels'][] = 'MusicalGenre';
+                    $tag['additionalLabels'][] = 'MusicalGenre';
                     $link['tags'][] = $tag;
                 }
 
@@ -78,8 +78,8 @@ class SpotifyProcessor implements ProcessorInterface
                 foreach ($track['artists'] as $artist) {
                     $tag = array();
                     $tag['name'] = $artist['name'];
-                    $tag['aditionalLabels'][] = 'Artist';
-                    $tag['aditionalFields']['spotifyId'] = $artist['id'];
+                    $tag['additionalLabels'][] = 'Artist';
+                    $tag['additionalFields']['spotifyId'] = $artist['id'];
                     $link['tags'][] = $tag;
 
                     $artistList[] = $artist['name'];
@@ -87,16 +87,16 @@ class SpotifyProcessor implements ProcessorInterface
 
                 $tag = array();
                 $tag['name'] = $track['album']['name'];
-                $tag['aditionalLabels'][] = 'Album';
-                $tag['aditionalFields']['spotifyId'] = $track['album']['id'];
+                $tag['additionalLabels'][] = 'Album';
+                $tag['additionalFields']['spotifyId'] = $track['album']['id'];
                 $link['tags'][] = $tag;
 
                 $tag = array();
                 $tag['name'] = $track['name'];
-                $tag['aditionalLabels'][] = 'Song';
-                $tag['aditionalFields']['spotifyId'] = $track['id'];
+                $tag['additionalLabels'][] = 'Song';
+                $tag['additionalFields']['spotifyId'] = $track['id'];
                 if (isset($track['external_ids']['isrc'])) {
-                    $tag['aditionalFields']['isrc'] = $track['external_ids']['isrc'];
+                    $tag['additionalFields']['isrc'] = $track['external_ids']['isrc'];
                 }
                 $link['tags'][] = $tag;
 
@@ -124,15 +124,15 @@ class SpotifyProcessor implements ProcessorInterface
             foreach ($album['genres'] as $genre) {
                 $tag = array();
                 $tag['name'] = $genre;
-                $tag['aditionalLabels'][] = 'MusicalGenre';
+                $tag['additionalLabels'][] = 'MusicalGenre';
                 $link['tags'][] = $tag;
             }
 
             foreach ($album['artists'] as $artist) {
                 $tag = array();
                 $tag['name'] = $artist['name'];
-                $tag['aditionalLabels'][] = 'Artist';
-                $tag['aditionalFields']['spotifyId'] = $artist['id'];
+                $tag['additionalLabels'][] = 'Artist';
+                $tag['additionalFields']['spotifyId'] = $artist['id'];
                 $link['tags'][] = $tag;
 
                 $artistList[] = $artist['name'];
@@ -140,8 +140,8 @@ class SpotifyProcessor implements ProcessorInterface
                 
             $tag = array();
             $tag['name'] = $album['name'];
-            $tag['aditionalLabels'][] = 'Album';
-            $tag['aditionalFields']['spotifyId'] = $album['id'];
+            $tag['additionalLabels'][] = 'Album';
+            $tag['additionalFields']['spotifyId'] = $album['id'];
             $link['tags'][] = $tag;
 
             $link['title'] = $album['name'];
@@ -167,14 +167,14 @@ class SpotifyProcessor implements ProcessorInterface
             foreach ($artist['genres'] as $genre) {
                 $tag = array();
                 $tag['name'] = $genre;
-                $tag['aditionalLabels'][] = 'MusicalGenre';
+                $tag['additionalLabels'][] = 'MusicalGenre';
                 $link['tags'][] = $tag;
             }
 
             $tag = array();
             $tag['name'] = $artist['name'];
-            $tag['aditionalLabels'][] = 'Artist';
-            $tag['aditionalFields']['spotifyId'] = $artist['id'];
+            $tag['additionalLabels'][] = 'Artist';
+            $tag['additionalFields']['spotifyId'] = $artist['id'];
             $link['tags'][] = $tag;
             
             $link['title'] = $artist['name'];

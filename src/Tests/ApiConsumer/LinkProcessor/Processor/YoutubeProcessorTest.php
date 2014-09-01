@@ -80,7 +80,7 @@ class YoutubeProcessorTest extends \PHPUnit_Framework_TestCase
             0 =>
                 array(
                     'name' => '/m/0xgt51b',
-                    'aditionalLabels' =>
+                    'additionalLabels' =>
                         array(
                             0 => 'Freebase',
                         ),
