@@ -44,9 +44,12 @@ class ScrapLinksMetadataCommand extends ApplicationAwareCommand
 
                 try {
                     $linksModel->updateLink($processedLink, true);
-                    foreach ($processedLink['tags'] as $tag) {
-                        $linksModel->createTag($tag);
-                        $linksModel->addTag($processedLink, $tag);
+
+                    if (isset($processedLink['tags'])) {
+                        foreach ($processedLink['tags'] as $tag) {
+                            $linksModel->createTag($tag);
+                            $linksModel->addTag($processedLink, $tag);
+                        }
                     }
 
                     $output->writeln(sprintf('Success: Link %s saved', $processedLink['url']));

@@ -41,9 +41,12 @@ class DBStorage implements StorageInterface
             $link['userId'] = $userId;
             try {
                 $this->model->addLink($link);
-                foreach ($link['tags'] as $tag) {
-                    $this->model->createTag($tag);
-                    $this->model->addTag($link, $tag);
+
+                if (isset($link['tags'])) {
+                    foreach ($link['tags'] as $tag) {
+                        $this->model->createTag($tag);
+                        $this->model->addTag($link, $tag);
+                    }
                 }
             } catch (\Exception $e) {
                 $this->errors[] = $this->getFormattedError($link);
