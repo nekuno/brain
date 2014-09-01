@@ -32,11 +32,17 @@ class ScraperProcessorTest extends \PHPUnit_Framework_TestCase
         $crawler->expects($this->any())
             ->method('each');
 
+        $response = $this->getMockBuilder('\Symfony\Component\BrowserKit\Response')->getMock();
+
         $client = $this->getMockBuilder('\Goutte\Client')->getMock();
         $client
             ->expects($this->once())
             ->method('request')
             ->will($this->returnValue($crawler));
+        $client
+            ->expects($this->any())
+            ->method('getResponse')
+            ->will($this->returnValue($response));
 
         $basicMetadataParser = $this->getMockBuilder(
             '\ApiConsumer\LinkProcessor\MetadataParser\BasicMetadataParser'
