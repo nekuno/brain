@@ -45,7 +45,7 @@ class GoogleFetcher extends BasicPaginationFetcher
         $parsed = array();
 
         foreach ($rawFeed as $item) {
-            if (!array_key_exists('object', $item) || !array_key_exists('attachments', $item['object'])) {
+            if (!isset($item['object']['attachments'][0]['url'])) {
                 continue;
             }
 
