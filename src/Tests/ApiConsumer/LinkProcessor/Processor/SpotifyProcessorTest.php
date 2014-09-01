@@ -124,6 +124,9 @@ class SpotifyProcessorTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($this->getTrackUrl(), $processed['url']);
         $this->assertEquals('So What', $processed['title']);
         $this->assertEquals('Kind Of Blue (Legacy Edition) : Miles Davis', $processed['description']);
+        $this->assertEquals(array('Audio'), $processed['additionalLabels']);
+        $this->assertEquals('spotify', $processed['additionalFields']['embed_type']);
+        $this->assertEquals('4vLYewWIvqHfKtJDk8c8tq', $processed['additionalFields']['embed_id']);
 
         $tags = $this->getTrackTags();
         sort($tags);
@@ -156,6 +159,9 @@ class SpotifyProcessorTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($this->getAlbumUrl(), $processed['url']);
         $this->assertEquals('Kind Of Blue (Legacy Edition)', $processed['title']);
         $this->assertEquals('By: Miles Davis', $processed['description']);
+        $this->assertEquals(array('Audio'), $processed['additionalLabels']);
+        $this->assertEquals('spotify_album', $processed['additionalFields']['embed_type']);
+        $this->assertEquals('4sb0eMpDn3upAFfyi4q2rw', $processed['additionalFields']['embed_id']);
 
         $tags = $this->getAlbumTags();
         sort($tags);
