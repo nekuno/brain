@@ -95,7 +95,7 @@ class FetcherService implements LoggerAwareInterface
                     }
                     $this->storage->storeLinks($user['id'], $links);
                     foreach ($this->storage->getErrors() as $error) {
-                        $this->logger->error(sprintf('Error saving link: ' . $error));
+                        $this->logger->error(sprintf('Error saving link: %s', $error));
                     }
                 }
             }
