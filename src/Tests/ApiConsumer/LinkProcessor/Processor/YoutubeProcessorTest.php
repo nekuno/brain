@@ -76,6 +76,9 @@ class YoutubeProcessorTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($this->getVideoUrl(), $processed['url']);
         $this->assertEquals('Tu peor error', $processed['title']);
         $this->assertEquals('En Mawi', $processed['description']);
+        $this->assertEquals(array('Video'), $processed['additionalLabels']);
+        $this->assertEquals('youtube', $processed['additionalFields']['embed_type']);
+        $this->assertEquals('zLgY05beCnY', $processed['additionalFields']['embed_id']);
         $tags = array(
             0 =>
                 array(
@@ -120,6 +123,9 @@ class YoutubeProcessorTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($this->getPlaylistUrl(), $processed['url']);
         $this->assertEquals('PelleK plays bad NES-games', $processed['title']);
         $this->assertEquals('', $processed['description']);
+        $this->assertEquals(array('Video'), $processed['additionalLabels']);
+        $this->assertEquals('youtube_playlist', $processed['additionalFields']['embed_type']);
+        $this->assertEquals('PLcB-8ayo3tzddinO3ob7cEHhUtyyo66mN', $processed['additionalFields']['embed_id']);
         $this->assertEmpty($processed['tags']);
     }
 
