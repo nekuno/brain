@@ -419,4 +419,75 @@ class MatchingModel
 
         return $response;
     }
-} 
+
+    public function recalculateMatchingOfUserByAnswersWhenNewQuestionsAreAnswered($id, array $questions)
+    {
+
+        $query = "
+        MATCH
+        (u:User)-[:RATES]->(q:Question)
+        WHERE
+        q.qnoow_id IN [ ";
+
+        foreach ($questions as $q){
+            $query .= $q . ",";
+        }
+
+        rtrim($query, ",");
+
+        $query .= " ]";
+
+        $query .= "
+        AND NOT u.qnoow_id = " . $id . "
+        RETURN
+        u.qnoow_id AS u;";
+
+        //Create the Neo4j query object
+        $neoQuery = new Query(
+            $this->client,
+            $query
+        );
+
+        try {
+            $result = $neoQuery->getResultSet();
+        } catch (\Exception $e) {
+            throw $e;
+        }
+
+        //TODO: check that the execution and integration of this function actually works :/
+        //TODO: enqueue the calculation of these matchings instead of calculating them in a loop (launch workers?) I didn't do it myself because I don't really know how the queues work :(
+        foreach ($result as $row) {
+            $this->getMatchingBetweenTwoUsersBasedOnAnswers($id,  $row['u']);
+        }
+    }
+
+        public function recalculateMatchingByContentOfUserWhenNewContentIsAdded($id)
+    {
+        //This query is for version 1.1 of the algorithm, which is the one currently being used in Brain
+        //For
+        $query = "
+        MATCH
+        (u:User {qnoow_id: " . $id . " })-[:LIKES|DISLIKES]->(:Link)<-[:LIKES|DISLIKES]-(v:User)
+        RETURN
+        v.qnoow_id AS id;";
+
+        //Create the Neo4j query object
+        $neoQuery = new Query(
+            $this->client,
+            $query
+        );
+
+        try {
+            $result = $neoQuery->getResultSet();
+        } catch (\Exception $e) {
+            throw $e;
+        }
+
+        //TODO: check that the execution and integration of this function actually works :/
+        //TODO: enqueue the calculation of these matchings instead of calculating them in a loop (launch workers?) I didn't do it myself because I don't really know how the queues work :(
+        foreach($result as $row) {
+            $this->getMatchingBetweenTwoUsersBasedOnSharedContent($id, $row['id']);
+        }
+    }
+    
+}
