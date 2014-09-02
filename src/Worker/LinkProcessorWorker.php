@@ -12,7 +12,7 @@ use PhpAmqpLib\Message\AMQPMessage;
  * Class LinkProcessorWorker
  * @package Worker
  */
-class LinkProcessorWorker
+class LinkProcessorWorker implements RabbitMQConsumerInterface
 {
 
     /**
@@ -55,7 +55,7 @@ class LinkProcessorWorker
     }
 
     /**
-     * Consume brain.fetching queue
+     * { @inheritdoc }
      */
     public function consume()
     {
