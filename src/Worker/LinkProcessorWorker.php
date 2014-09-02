@@ -59,6 +59,7 @@ class LinkProcessorWorker implements RabbitMQConsumerInterface
      */
     public function consume()
     {
+
         $exchangeName = 'brain.direct';
         $exchangeType = 'direct';
         $routingKey = 'brain.fetching.links';
@@ -66,15 +67,8 @@ class LinkProcessorWorker implements RabbitMQConsumerInterface
         $this->channel->exchange_declare($exchangeName, $exchangeType, false, true, false);
         $this->channel->queue_declare($queueName, false, true, false, false);
         $this->channel->queue_bind($queueName, $exchangeName, $routingKey);
-        $this->channel->basic_consume(
-            $queueName,
-            '',
-            false,
-            false,
-            false,
-            false,
-            array($this, 'callback')
-        );
+
+        $this->channel->basic_consume($queueName, '', false, false, false, false, array($this, 'callback'));
 
         while (count($this->channel->callbacks)) {
             $this->channel->wait();
@@ -83,8 +77,7 @@ class LinkProcessorWorker implements RabbitMQConsumerInterface
     }
 
     /**
-     * @param AMQPMessage $message
-     * @throws \Exception
+     * { @inheritdoc }
      */
     public function callback(AMQPMessage $message)
     {
