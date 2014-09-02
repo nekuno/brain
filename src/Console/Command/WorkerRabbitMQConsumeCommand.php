@@ -10,7 +10,8 @@ use Silex\Application;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Worker\FetchLinkWorker;
+use Worker\LinkProcessorWorker;
+use Worker\MatchingCalculatorWorker;
 
 /**
  * Class WorkerRabbitMQConsumeCommand
@@ -21,6 +22,7 @@ class WorkerRabbitMQConsumeCommand extends ApplicationAwareCommand
 
     protected $validConsumers = array(
         'fetching',
+        'matching',
     );
 
     protected function configure()
@@ -52,12 +54,19 @@ class WorkerRabbitMQConsumeCommand extends ApplicationAwareCommand
         /** @var AMQPConnection $connection */
         $connection = $this->app['amqp'];
 
+        $output->writeln(sprintf('Starting fetching consumer'));
         switch ($consumer) {
             case 'fetching':
-                $output->writeln(sprintf('Starting fetching consumer'));
                 /** @var AMQPChannel $channel */
                 $channel = $connection->channel();
-                $worker = new FetchLinkWorker($channel, $fetcher, $userProvider);
+                $worker = new LinkProcessorWorker($channel, $fetcher, $userProvider);
+                $worker->consume();
+                $channel->close();
+                break;
+            case 'matching':
+                /** @var AMQPChannel $channel */
+                $channel = $connection->channel();
+                $worker = new MatchingCalculatorWorker($channel);
                 $worker->consume();
                 $channel->close();
                 break;
