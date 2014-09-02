@@ -16,4 +16,9 @@ final class AppEvents
      * Fired when detect that current token is expired
      */
     const TOKEN_EXPIRED = 'token.expired';
+
+    /**
+     * Fired when link process is finished
+     */
+    const PROCESS_FINISH = 'process.finish';
 }
