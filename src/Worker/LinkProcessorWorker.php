@@ -66,7 +66,6 @@ class LinkProcessorWorker
         $this->channel->exchange_declare($exchangeName, $exchangeType, false, true, false);
         $this->channel->queue_declare($queueName, false, true, false, false);
         $this->channel->queue_bind($queueName, $exchangeName, $routingKey);
-        $this->channel->basic_qos(null, 1, null);
         $this->channel->basic_consume(
             $queueName,
             '',
