@@ -3,11 +3,13 @@
 namespace ApiConsumer\Fetcher;
 
 use ApiConsumer\Auth\UserProviderInterface;
+use ApiConsumer\Event\MatchingEvent;
 use ApiConsumer\LinkProcessor\LinkProcessor;
 use ApiConsumer\Storage\StorageInterface;
 use Http\OAuth\Factory\ResourceOwnerFactory;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 class FetcherService implements LoggerAwareInterface
 {
@@ -38,6 +40,11 @@ class FetcherService implements LoggerAwareInterface
     protected $resourceOwnerFactory;
 
     /**
+     * @var EventDispatcher
+     */
+    protected $dispatcher;
+
+    /**
      * @var array
      */
     protected $options;
@@ -47,6 +54,7 @@ class FetcherService implements LoggerAwareInterface
         LinkProcessor $linkProcessor,
         StorageInterface $storage,
         ResourceOwnerFactory $resourceOwnerFactory,
+        EventDispatcher $dispatcher,
         array $options
     )
     {
@@ -55,6 +63,7 @@ class FetcherService implements LoggerAwareInterface
         $this->linkProcessor = $linkProcessor;
         $this->storage = $storage;
         $this->resourceOwnerFactory = $resourceOwnerFactory;
+        $this->dispatcher = $dispatcher;
         $this->options = $options;
     }
 
@@ -81,7 +90,7 @@ class FetcherService implements LoggerAwareInterface
 
             $this->logger->info(sprintf('Fetch attempt for user %d, fetcherConfig %s', $userId, $resourceOwner));
 
-            foreach ($this->options as $fetcherConfig) {
+            foreach ($this->options as $service => $fetcherConfig) {
                 if ($fetcherConfig['resourceOwner'] === $resourceOwner) {
                     $user = $this->userProvider->getUsersByResource($resourceOwner, $userId);
                     if (!$user) {
@@ -97,6 +106,15 @@ class FetcherService implements LoggerAwareInterface
                     foreach ($this->storage->getErrors() as $error) {
                         $this->logger->error(sprintf('Error saving link: %s', $error));
                     }
+
+                    // Dispatch event for enqueue new matching re-calculate task
+                    $data = array(
+                        'userId' => $user['id'],
+                        'service' => $service,
+                        'type' => 'process',
+                    );
+                    $event = new MatchingEvent($data);
+                    $this->dispatcher->dispatch(\AppEvents::PROCESS_FINISH, $event);
                 }
             }
         } catch (\Exception $e) {
