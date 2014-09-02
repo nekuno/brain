@@ -105,7 +105,7 @@ class SpotifyProcessor implements ProcessorInterface
                 $link['additionalLabels'] = array('Audio');
                 $link['additionalFields'] = array(
                     'embed_type' => 'spotify',
-                    'embed_id' => $track['id']);
+                    'embed_id' => $track['uri']);
             }
         } 
 
@@ -152,8 +152,8 @@ class SpotifyProcessor implements ProcessorInterface
             $link['description'] = 'By: ' . implode(', ', $artistList);
             $link['additionalLabels'] = array('Audio');
             $link['additionalFields'] = array(
-                'embed_type' => 'spotify_album',
-                'embed_id' => $album['id']);
+                'embed_type' => 'spotify',
+                'embed_id' => $album['uri']);
         } 
         
         return $link;
