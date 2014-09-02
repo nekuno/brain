@@ -9,10 +9,10 @@ use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Message\AMQPMessage;
 
 /**
- * Class FetchLinkWorker
+ * Class LinkProcessorWorker
  * @package Worker
  */
-class FetchLinkWorker
+class LinkProcessorWorker
 {
 
     /**
