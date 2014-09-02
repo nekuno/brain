@@ -11,6 +11,11 @@ use Everyman\Neo4j\Cypher\Query;
 class ContentRecommendationPaginatedModel implements PaginatedInterface
 {
     /**
+     * @var array
+     */
+    private static $validTypes = array('Audio', 'Video', 'Image');
+
+    /**
      * @var \Everyman\Neo4j\Client
      */
     protected $client;
@@ -30,6 +35,11 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
         $this->matchingModel = $matchingModel;
     }
 
+    public function getValidTypes()
+    {
+        return Self::$validTypes;
+    }
+
     /**
      * Hook point for validating the query.
      * @param array $filters
@@ -37,7 +47,17 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
      */
     public function validateFilters(array $filters)
     {
-        return isset($filters['id']);
+        $hasId = isset($filters['id']);
+
+        if (isset($filters['type'])) {
+            $hasValidType = in_array($filters['type'], $this->getValidTypes());
+        } else {
+            $hasValidType = true;
+        }
+
+        $isValid = $hasId && $hasValidType;
+
+        return $isValid;
     }
 
     /**
