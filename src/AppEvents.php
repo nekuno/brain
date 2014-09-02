@@ -1,7 +1,5 @@
 <?php
-namespace ApiConsumer\Event;
-
-final class TokenEvents
+final class AppEvents
 {
     /**
      * The token.refreshed event is thrown each time an oauth token is successfully
