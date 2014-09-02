@@ -111,7 +111,7 @@ class FetcherService implements LoggerAwareInterface
                     $data = array(
                         'userId' => $user['id'],
                         'service' => $service,
-                        'type' => 'process',
+                        'type' => 'process_finished',
                     );
                     $event = new MatchingEvent($data);
                     $this->dispatcher->dispatch(\AppEvents::PROCESS_FINISH, $event);
