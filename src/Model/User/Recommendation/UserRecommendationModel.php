@@ -14,16 +14,11 @@ class UserRecommendationModel
      */
     protected $client;
 
-    /**
-     * @var \Model\User\MatchingModel
-     */
-    protected $matchingModel;
 
     /**
      * @param \Everyman\Neo4j\Client $client
-     * @param \Model\User\MatchingModel $matchingModel
      */
-    public function __construct(Client $client, MatchingModel $matchingModel)
+    public function __construct(Client $client)
     {
         $this->client = $client;
         $this->matchingModel = $matchingModel;
@@ -38,8 +33,6 @@ class UserRecommendationModel
      */
     public function getUserRecommendationsBasedOnAnswers($id)
     {
-        $this->matchingModel->calculateAllMatchingsBasedOnAnswers($id);
-
         $query = "
             MATCH
             (u:User {qnoow_id: " . $id . "})
@@ -90,8 +83,6 @@ class UserRecommendationModel
      */
     public function getUserRecommendationsBasedOnSharedContent($id)
     {
-        $this->matchingModel->calculateAllMatchingsBasedOnContent($id);
-
         $query = "
             MATCH
             (u:User {qnoow_id: " . $id . "})
