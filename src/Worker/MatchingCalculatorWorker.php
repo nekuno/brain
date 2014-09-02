@@ -69,7 +69,6 @@ class MatchingCalculatorWorker implements RabbitMQConsumerInterface
                     $data['userId'],
                     array($data['questionId'])
                 );
-                // TODO: handle this event
                 break;
             case 'content_rated':
 
