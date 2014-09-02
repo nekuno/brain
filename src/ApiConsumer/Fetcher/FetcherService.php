@@ -100,7 +100,17 @@ class FetcherService implements LoggerAwareInterface
                 }
             }
         } catch (\Exception $e) {
-            throw new \Exception('Error fetching ' . $resourceOwner . ' for user ' . $userId . ' (' . $e->getMessage() . ')', 1);
+            throw new \Exception(
+                sprintf(
+                    'Error fetching %s for user %d. Message: %s on file %s in line %d',
+                    ucfirst($resourceOwner),
+                    $userId,
+                    $e->getMessage(),
+                    $e->getFile(),
+                    $e->getLine()
+                ),
+                1
+            );
         }
 
         return $links;
