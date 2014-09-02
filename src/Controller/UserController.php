@@ -206,6 +206,7 @@ class UserController
     {
         $id      = $request->get('id');
         $tag     = $request->get('tag', null);
+        $type     = $request->get('type', null);
 
         if (null === $id) {
             return $app->json(array(), 400);
@@ -218,6 +219,10 @@ class UserController
 
         if ($tag) {
             $filters['tag'] = urldecode($tag);
+        }
+
+        if ($type) {
+            $filters['type'] = urldecode($type);
         }
 
         /** @var $model \Model\User\Recommendation\ContentPaginatedModel  */

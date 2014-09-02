@@ -69,6 +69,11 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
             $params['tag'] = $filters['tag'];
         }
 
+        $linkType = 'Link';
+        if (isset($filters['type'])) {
+            $linkType = $filters['type'];
+        }
+
         $typeQuery = 'has(match.matching_questions)';
         if($this->matchingModel->getPreferredMatchingType($id) == MatchingModel::PREFERRED_MATCHING_CONTENT) {
             $typeQuery = "has(match.matching_content)";
@@ -82,7 +87,7 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
         $query .= $typeQuery;
         $query .= "
             MATCH
-            (matching_users)-[:LIKES]->(content:Link)
+            (matching_users)-[:LIKES]->(content:" . $linkType .")
             WHERE
             NOT (user)-[:LIKES]->(content)
         ";
@@ -94,7 +99,8 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
             content,
             match.matching_content AS match,
             matching_users AS via,
-            collect(distinct tag.name) as tags
+            collect(distinct tag.name) as tags,
+            labels(content) as types
             ORDER BY
             match
             SKIP {offset}
@@ -119,6 +125,13 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
                 $content['description'] = $row['content']->getProperty('description');
                 foreach ($row['tags'] as $tag) {
                     $content['tags'][] = $tag;
+                }
+                foreach ($row['types'] as $type) {
+                    $content['types'][] = $type;
+                }
+                if ($row['content']->getProperty('embed_type')) {
+                    $content['embed']['type'] = $row['content']->getProperty('embed_type');
+                    $content['embed']['id'] = $row['content']->getProperty('embed_id');
                 }
                 $content['match'] = $row['match'];
                 $content['via']['qnoow_id'] = $row['via']->getProperty('qnoow_id');
@@ -159,6 +172,11 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
             $params['tag'] = $filters['tag'];
         }
 
+        $linkType = 'Link';
+        if (isset($filters['type'])) {
+            $linkType = $filters['type'];
+        }
+
         $typeQuery = 'has(match.matching_questions)';
         if($this->matchingModel->getPreferredMatchingType($id) == MatchingModel::PREFERRED_MATCHING_CONTENT) {
             $typeQuery = "has(match.matching_content)";
@@ -172,7 +190,7 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
         $query .= $typeQuery;
         $query .= "
             MATCH
-            (matching_users)-[r:LIKES]->(content:Link)
+            (matching_users)-[r:LIKES]->(content:" . $linkType . ")
             WHERE
             NOT (user)-[:LIKES]->(content)
         ";
