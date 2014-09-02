@@ -44,8 +44,14 @@ $replacements = array_merge($app['params'], array('app_root_dir' => __DIR__));
 $app->register(new Igorw\Silex\ConfigServiceProvider(__DIR__ . "/../config/config.yml", $replacements));
 $app->register(new Igorw\Silex\ConfigServiceProvider(__DIR__ . "/../config/config_{$app['env']}.yml", $replacements));
 
-//Listeners
+// Listeners
+
+/** @var \Symfony\Component\EventDispatcher\EventDispatcher $dispatcher */
+$dispatcher = $app['dispatcher'];
 $tokenRefreshedSubscriber = new OAuthTokenSubscriber($app['api_consumer.user_provider'], $app['mailer'], $app['monolog'], $app['amqp']);
-$app['dispatcher']->addSubscriber($tokenRefreshedSubscriber);
+$dispatcher->addSubscriber($tokenRefreshedSubscriber);
+
+$linkProcessSubscriber = new \ApiConsumer\EventListener\LinkProcessSubscriber($app['amqp']);
+$dispatcher->addSubscriber($linkProcessSubscriber);
 
 return $app;
