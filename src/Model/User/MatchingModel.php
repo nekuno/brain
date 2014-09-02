@@ -271,7 +271,7 @@ class MatchingModel
             }
 
             $matchingValue = sqrt(
-                pow($unpopularityOfCommonContent,2) /
+                pow($unpopularityOfCommonContent, 2) /
                 (
                     ($unpopularityOfCommonContent + $popularityOfUser1ExclusiveContent)
                     *
@@ -363,29 +363,29 @@ class MatchingModel
     }
 
     /**
-     * Calculate matchings of the user with any other user, based on Answers to Questions
+     * Calculate matching of the user with any other user, based on Answers to Questions
      *
      * @param   int $id id of the user
      */
-    public function calculateAllMatchingsBasedOnAnswers($id)
+    public function calculateAllMatchingBasedOnAnswers($id)
     {
         $users = $this->getAllUserIdsExceptTheOneOfTheUser($id);
 
-        foreach ($users as $u){
+        foreach ($users as $u) {
             $this->getMatchingBetweenTwoUsersBasedOnAnswers($id, $u);
         }
     }
 
     /**
-     * Calculate matchings of the user with any other user, based on shared Content
+     * Calculate matching of the user with any other user, based on shared Content
      *
      * @param   int $id id of the user
      */
-    public function calculateAllMatchingsBasedOnContent($id)
+    public function calculateAllMatchingBasedOnContent($id)
     {
         $users = $this->getAllUserIdsExceptTheOneOfTheUser($id);
 
-        foreach ($users as $u){
+        foreach ($users as $u) {
             $this->getMatchingBetweenTwoUsersBasedOnSharedContent($id, $u);
         }
     }
@@ -429,7 +429,7 @@ class MatchingModel
         WHERE
         q.qnoow_id IN [ ";
 
-        foreach ($questions as $q){
+        foreach ($questions as $q) {
             $query .= $q . ",";
         }
 
@@ -455,14 +455,15 @@ class MatchingModel
         }
 
         //TODO: check that the execution and integration of this function actually works :/
-        //TODO: enqueue the calculation of these matchings instead of calculating them in a loop (launch workers?) I didn't do it myself because I don't really know how the queues work :(
+        //TODO: enqueue the calculation of these matching instead of calculating them in a loop (launch workers?) I didn't do it myself because I don't really know how the queues work :(
         foreach ($result as $row) {
-            $this->getMatchingBetweenTwoUsersBasedOnAnswers($id,  $row['u']);
+            $this->getMatchingBetweenTwoUsersBasedOnAnswers($id, $row['u']);
         }
     }
 
-        public function recalculateMatchingByContentOfUserWhenNewContentIsAdded($id)
+    public function recalculateMatchingByContentOfUserWhenNewContentIsAdded($id)
     {
+
         //This query is for version 1.1 of the algorithm, which is the one currently being used in Brain
         //For
         $query = "
@@ -484,10 +485,10 @@ class MatchingModel
         }
 
         //TODO: check that the execution and integration of this function actually works :/
-        //TODO: enqueue the calculation of these matchings instead of calculating them in a loop (launch workers?) I didn't do it myself because I don't really know how the queues work :(
-        foreach($result as $row) {
+        //TODO: enqueue the calculation of these matching instead of calculating them in a loop (launch workers?) I didn't do it myself because I don't really know how the queues work :(
+        foreach ($result as $row) {
             $this->getMatchingBetweenTwoUsersBasedOnSharedContent($id, $row['id']);
         }
     }
-    
+
 }
