@@ -3,6 +3,7 @@
 
 namespace Worker;
 
+use Model\User\MatchingModel;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Message\AMQPMessage;
 
@@ -18,10 +19,13 @@ class MatchingCalculatorWorker implements RabbitMQConsumerInterface
      */
     protected $channel;
 
-    public function __construct(AMQPChannel $channel)
+    protected $model;
+
+    public function __construct(AMQPChannel $channel, MatchingModel $model)
     {
 
         $this->channel = $channel;
+        $this->model = $model;
     }
 
     /**
@@ -58,14 +62,16 @@ class MatchingCalculatorWorker implements RabbitMQConsumerInterface
 
         switch ($eventType) {
             case 'process_finished':
-
-                // TODO: handle this event
+                $this->model->recalculateMatchingByContentOfUserWhenNewContentIsAdded($data['userId']);
                 break;
             case 'question_answered':
-
+                $this->model->recalculateMatchingOfUserByAnswersWhenNewQuestionsAreAnswered(
+                    $data['userId'],
+                    array($data['questionId'])
+                );
                 // TODO: handle this event
                 break;
-            case 'content_vote':
+            case 'content_rated':
 
                 // TODO: handle this event
                 break;
