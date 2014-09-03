@@ -22,6 +22,9 @@ class SpotifyUrlParser extends UrlParser
 
             if (count($path) > 1) {
                 if ($path[0] === self::TRACK_URL || $path[0] === self::ALBUM_URL || $path[0] === self::ARTIST_URL) {
+                    if ($path[0] === self::ALBUM_URL && count($path) == 3) {
+                        return self::TRACK_URL;
+                    }
                     return $path[0];
                 }
             }
@@ -49,6 +52,9 @@ class SpotifyUrlParser extends UrlParser
             $path = explode('/', trim($parsedUrl['path'], '/'));
 
             if (count($path) > 1) {
+                if ($path[0] === self::ALBUM_URL && count($path) == 3) {
+                    return $path[2];
+                }
                 return $path[1];
             }
         }
