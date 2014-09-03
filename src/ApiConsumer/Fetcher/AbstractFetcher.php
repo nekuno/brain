@@ -53,17 +53,6 @@ abstract class AbstractFetcher implements FetcherInterface
     }
 
     /**
-     * Fetch links from user feed
-     *
-     * @param $url
-     * @return mixed
-     */
-    public function makeRequestJSON($url, array $query = array())
-    {
-        return $this->resourceOwner->authorizedHttpRequest($url, $query, $this->user);
-    }
-
-    /**
      * {@inheritDoc}
      */
     abstract public function fetchLinksFromUserFeed($user);

@@ -4,7 +4,7 @@ namespace ApiConsumer\Fetcher;
 
 interface FetcherInterface
 {
-	/**
+    /**
      * Get ResourceOwner Name
      *
      * @return string
@@ -15,7 +15,7 @@ interface FetcherInterface
      * Fetch links from user feed
      *
      * @param $user
-     * @return mixed
+     * @return array
      */
     public function fetchLinksFromUserFeed($user);
 }

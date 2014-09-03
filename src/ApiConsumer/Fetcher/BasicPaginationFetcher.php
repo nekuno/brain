@@ -75,7 +75,7 @@ abstract class BasicPaginationFetcher extends AbstractFetcher
                 $query = array_merge($query, array($this->getPaginationField() => $paginationId));
             }
 
-            $response = $this->makeRequestJSON($this->getUrl(), $query);
+            $response = $this->resourceOwner->authorizedHttpRequest($this->getUrl(), $query, $this->user);
 
             $this->rawFeed = array_merge($this->rawFeed, $this->getItemsFromResponse($response));
 

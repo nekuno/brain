@@ -17,22 +17,22 @@ class SpotifyFetcher extends AbstractFetcher
         $this->user = $user;
         $this->rawFeed = array();
 
-        $this->url .= 'users/' . $user['spotifyID'].'/playlists/';
+        $this->url .= 'users/' . $user['spotifyID'] . '/playlists/';
 
         try {
-            $playlists = $this->makeRequestJSON($this->url);
+            $playlists = $this->resourceOwner->authorizedHttpRequest($this->url, array(), $this->user);
 
             $allTracks = array();
             if (isset($playlists['items'])) {
                 foreach ($playlists['items'] as $playlist) {
                     if ($playlist['owner']['id'] == $user['spotifyID']) {
 
-                        $this->url = 'users/' .  $user['spotifyID'] . '/playlists/' . $playlist['id'] . '/tracks';
+                        $this->url = 'users/' . $user['spotifyID'] . '/playlists/' . $playlist['id'] . '/tracks';
 
                         try {
-                            $tracks                = $this->makeRequestJSON($this->url);
+                            $tracks = $this->resourceOwner->authorizedHttpRequest($this->url, array(), $this->user);
                             $currentPlaylistTracks = $this->formatResponse($tracks);
-                            $allTracks             = array_merge($currentPlaylistTracks, $allTracks);
+                            $allTracks = array_merge($currentPlaylistTracks, $allTracks);
                         } catch (\Exception $e) {
                             continue;
                         }
@@ -40,10 +40,10 @@ class SpotifyFetcher extends AbstractFetcher
                 }
             }
 
-            $this->url             = 'users/' . $user['spotifyID'] . '/starred/tracks';
-            $starredTracks         = $this->makeRequestJSON($this->url);
+            $this->url = 'users/' . $user['spotifyID'] . '/starred/tracks';
+            $starredTracks = $this->resourceOwner->authorizedHttpRequest($this->url, array(), $this->user);
             $starredPlaylistTracks = $this->formatResponse($starredTracks);
-            $allTracks             = array_merge($starredPlaylistTracks, $allTracks);
+            $allTracks = array_merge($starredPlaylistTracks, $allTracks);
 
             $links = $allTracks;
         } catch (\Exception $e) {
@@ -63,7 +63,7 @@ class SpotifyFetcher extends AbstractFetcher
 
         foreach ($response['items'] as $item) {
             if (null !== $item['track']['id']) {
-                $link['url']   = $item['track']['external_urls']['spotify'];
+                $link['url'] = $item['track']['external_urls']['spotify'];
                 $link['title'] = $item['track']['name'];
 
                 $artistList = array();
@@ -71,9 +71,9 @@ class SpotifyFetcher extends AbstractFetcher
                     $artistList[] = $artist['name'];
                 }
 
-                $link['description']    = $item['track']['album']['name'] . ' : ' . implode(', ', $artistList);
+                $link['description'] = $item['track']['album']['name'] . ' : ' . implode(', ', $artistList);
                 $link['resourceItemId'] = $item['track']['id'];
-                $link['resource']       = 'spotify';
+                $link['resource'] = 'spotify';
 
                 $parsed[] = $link;
             }
