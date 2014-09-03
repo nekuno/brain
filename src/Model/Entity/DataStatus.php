@@ -12,16 +12,14 @@ use Doctrine\ORM\Mapping\Table;
  * @Entity(repositoryClass="UserDataStatusRepository")
  * @Table(name="user_data_status")
  */
-class UserDataStatus
+class DataStatus
 {
-
-    protected $id;
 
     /**
      * @Id()
-     * @Column(name="user", type="integer")
+     * @Column(name="user_id", type="integer")
      */
-    protected $user;
+    protected $userId;
 
     /**
      * @Id()
@@ -54,22 +52,22 @@ class UserDataStatus
      *
      * @return integer
      */
-    public function getUser()
+    public function getUserId()
     {
 
-        return $this->user;
+        return $this->userId;
     }
 
     /**
      * Set user
      *
      * @param integer $user
-     * @return UserDataStatus
+     * @return DataStatus
      */
-    public function setUser($user)
+    public function setUserId($user)
     {
 
-        $this->user = $user;
+        $this->userId = $user;
 
         return $this;
     }
@@ -89,7 +87,7 @@ class UserDataStatus
      * Set resourceOwner
      *
      * @param string $resourceOwner
-     * @return UserDataStatus
+     * @return DataStatus
      */
     public function setResourceOwner($resourceOwner)
     {
@@ -114,7 +112,7 @@ class UserDataStatus
      * Set connected
      *
      * @param boolean $connected
-     * @return UserDataStatus
+     * @return DataStatus
      */
     public function setConnected($connected)
     {
@@ -139,7 +137,7 @@ class UserDataStatus
      * Set fetched
      *
      * @param boolean $fetched
-     * @return UserDataStatus
+     * @return DataStatus
      */
     public function setFetched($fetched)
     {
@@ -164,7 +162,7 @@ class UserDataStatus
      * Set processed
      *
      * @param boolean $processed
-     * @return UserDataStatus
+     * @return DataStatus
      */
     public function setProcessed($processed)
     {

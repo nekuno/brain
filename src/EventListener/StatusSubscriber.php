@@ -5,7 +5,7 @@ namespace EventListener;
 
 use Doctrine\ORM\EntityManager;
 use Event\StatusEvent;
-use Model\Entity\UserDataStatus;
+use Model\Entity\DataStatus;
 use PhpAmqpLib\Connection\AMQPConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -56,7 +56,7 @@ class StatusSubscriber implements EventSubscriberInterface
 
     /**
      * @param StatusEvent $event
-     * @return \Model\Entity\UserDataStatus
+     * @return \Model\Entity\DataStatus
      */
     public function getStatus(StatusEvent $event)
     {
@@ -68,8 +68,8 @@ class StatusSubscriber implements EventSubscriberInterface
         $status = $repository->findOneBy(array('userId' => $user['id'], 'resourceOwner' => $resourceOwner));
 
         if (!$status) {
-            $status = new UserDataStatus();
-            $status->setUser($user['id']);
+            $status = new DataStatus();
+            $status->setUserId($user['id']);
             $status->setResourceOwner($resourceOwner);
         }
 
