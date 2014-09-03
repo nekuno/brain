@@ -31,6 +31,5 @@ $app->get('/fetch/links', 'fetch.controller:fetchLinksAction')
     ->value('resource', null);
 
 // Status controller
-$app->get('/user/{userId}/data/status', 'data.status.controller:getStatusAction')
-    ->value('step', null)
+$app->get('/users/{userId}/data/status', 'users.data.controller:getStatusAction')
     ->value('resourceOwner', null);

@@ -11,6 +11,13 @@ $app['users.controller'] = $app->share(
     }
 );
 
+$app['users.data.controller'] = $app->share(
+    function () {
+
+        return new \Controller\User\DataController();
+    }
+);
+
 $app['questions.controller'] = $app->share(
     function () {
 
@@ -29,13 +36,6 @@ $app['fetch.controller'] = $app->share(
     function () {
 
         return new Controller\FetchController;
-    }
-);
-
-$app['data.status.controller'] = $app->share(
-    function () {
-
-        return new \Controller\Data\StatusController();
     }
 );
 
