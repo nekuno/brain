@@ -26,4 +26,11 @@ $app->post('/questions', 'questions.controller:addAction');
 
 // Content routes
 $app->post('/add/links', 'fetch.controller:addLinkAction');
-$app->get('/fetch/links', 'fetch.controller:fetchLinksAction')->value('userId', null)->value('resource', null);
+$app->get('/fetch/links', 'fetch.controller:fetchLinksAction')
+    ->value('userId', null)
+    ->value('resource', null);
+
+// Status controller
+$app->get('/user/{userId}/data/status', 'data.status.controller:getStatusAction')
+    ->value('step', null)
+    ->value('resourceOwner', null);
