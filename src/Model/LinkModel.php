@@ -154,7 +154,7 @@ class LinkModel
         $query = new Query($this->client, $template, $tag);
 
         $result = $query->getResultSet();
-        
+
         foreach ($result as $row) {
             return $result;
         }
@@ -163,20 +163,20 @@ class LinkModel
         if (isset($tag['additionalLabels'])) {
             foreach ($tag['additionalLabels'] as $label) {
                 $additionalLabels .= ":".$label;
-            }    
+            }
         }
 
         $additionalFields = "";
         if (isset($tag['additionalFields'])) {
             foreach ($tag['additionalFields'] as $field => $value) {
                 $additionalFields .= ", tag.".$field." = '".$value."'";
-            }    
+            }
         }
 
         $params = array(
             'name' => $tag['name'],
         );
-        
+
         $template = "CREATE (tag:Tag".$additionalLabels.")"
             . "SET tag.name = { name }".$additionalFields
             . "RETURN tag";
@@ -205,12 +205,12 @@ class LinkModel
 
     }
 
-    public function getUnprocessedLinks()
+    public function getUnprocessedLinks($limit = 100)
     {
 
-        $template = "MATCH (link:Link) WHERE link.processed = 0 RETURN link LIMIT 20";
+        $template = "MATCH (link:Link) WHERE link.processed = 0 RETURN link LIMIT {limit}";
 
-        $query = new Query($this->client, $template);
+        $query = new Query($this->client, $template, array('limit' => (integer) $limit));
 
         $resultSet = $query->getResultSet();
 
@@ -221,7 +221,7 @@ class LinkModel
                 'url'         => $row['link']->getProperty('url'),
                 'description' => $row['link']->getProperty('description'),
                 'title'       => $row['link']->getProperty('title'),
-                'tempId'      => $row['link']->getProperty('url')
+                'tempId'      => $row['link']->getProperty('url'),
             );
         }
 
