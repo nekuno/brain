@@ -5,12 +5,14 @@ namespace Model\Entity;
 
 use Doctrine\ORM\Mapping\Column;
 use Doctrine\ORM\Mapping\Entity;
+use Doctrine\ORM\Mapping\HasLifecycleCallbacks;
 use Doctrine\ORM\Mapping\Id;
 use Doctrine\ORM\Mapping\Table;
 
 /**
- * @Entity(repositoryClass="UserDataStatusRepository")
- * @Table(name="user_data_status")
+ * @Entity(repositoryClass="DataStatusRepository")
+ * @Table(name="data_status")
+ * @HasLifecycleCallbacks()
  */
 class DataStatus
 {
@@ -28,19 +30,14 @@ class DataStatus
     protected $resourceOwner;
 
     /**
-     * @Column(name="connected", type="boolean", nullable=false, options={"default":false})
+     * @Column(name="fetched", type="boolean", nullable=false)
      */
-    protected $connected;
+    protected $fetched = false;
 
     /**
-     * @Column(name="fetched", type="boolean", nullable=false, options={"default":false})
+     * @Column(name="processed", type="boolean", nullable=false)
      */
-    protected $fetched;
-
-    /**
-     * @Column(name="processed", type="boolean", nullable=false, options={"default":false})
-     */
-    protected $processed;
+    protected $processed = false;
 
     /**
      * @Column(name="update_at", type="datetime")
@@ -93,31 +90,6 @@ class DataStatus
     {
 
         $this->resourceOwner = $resourceOwner;
-
-        return $this;
-    }
-
-    /**
-     * Get connected
-     *
-     * @return boolean
-     */
-    public function getConnected()
-    {
-
-        return $this->connected;
-    }
-
-    /**
-     * Set connected
-     *
-     * @param boolean $connected
-     * @return DataStatus
-     */
-    public function setConnected($connected)
-    {
-
-        $this->connected = $connected;
 
         return $this;
     }
@@ -183,6 +155,9 @@ class DataStatus
         return $this->updateAt;
     }
 
+    /**
+     * @prePersist
+     */
     public function setUpdateAt()
     {
 
