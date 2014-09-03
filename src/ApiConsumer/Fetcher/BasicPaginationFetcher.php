@@ -67,20 +67,21 @@ abstract class BasicPaginationFetcher extends AbstractFetcher
      */
     protected function getLinksByPage($paginationId = null)
     {
-        $query = $this->getQuery();
 
-        if ($paginationId) {
-            $query = array_merge($query, array($this->getPaginationField() => $paginationId));
-        }
+        do {
+            $query = $this->getQuery();
 
-        $response = $this->makeRequestJSON($this->getUrl(), $query);
+            if ($paginationId) {
+                $query = array_merge($query, array($this->getPaginationField() => $paginationId));
+            }
 
-        $this->rawFeed = array_merge($this->rawFeed, $this->getItemsFromResponse($response));
+            $response = $this->makeRequestJSON($this->getUrl(), $query);
 
-        $nextPaginationId = $this->getPaginationIdFromResponse($response);
-        if (null !== $nextPaginationId) {
-            return call_user_func(array($this, __FUNCTION__), $nextPaginationId);
-        }
+            $this->rawFeed = array_merge($this->rawFeed, $this->getItemsFromResponse($response));
+
+            $nextPaginationId = $this->getPaginationIdFromResponse($response);
+
+        } while (null !== $nextPaginationId);
 
         return $this->rawFeed;
     }

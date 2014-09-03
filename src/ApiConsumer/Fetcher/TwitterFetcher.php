@@ -38,7 +38,7 @@ class TwitterFetcher extends BasicPaginationFetcher
             return null;
         }
 
-        return $lastItem['id_str'];
+        return $paginationId;
     }
 
     /**
@@ -57,12 +57,12 @@ class TwitterFetcher extends BasicPaginationFetcher
                 ? $item['entities']['urls'][0]['expanded_url']
                 : $item['entities']['urls'][0]['url'];
 
-            $link                   = array();
-            $link['url']            = $url;
-            $link['title']          = array_key_exists('text', $item) ? $item['text'] : null;
-            $link['description']    = null;
+            $link = array();
+            $link['url'] = $url;
+            $link['title'] = array_key_exists('text', $item) ? $item['text'] : null;
+            $link['description'] = null;
             $link['resourceItemId'] = array_key_exists('id', $item) ? $item['id'] : null;
-            $link['resource']       = 'twitter';
+            $link['resource'] = 'twitter';
 
             $formatted[] = $link;
         }

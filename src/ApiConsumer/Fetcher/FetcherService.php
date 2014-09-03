@@ -67,16 +67,6 @@ class FetcherService implements LoggerAwareInterface
         $this->options = $options;
     }
 
-    public function __call($method, $args)
-    {
-
-        if (is_callable(array($this, $method))) {
-            return call_user_func_array($this->$method, $args);
-        } else {
-            throw new \Exception('Error ' . $method . ' not defined', 1);
-        }
-    }
-
     public function setLogger(LoggerInterface $logger)
     {
         $this->logger = $logger;
@@ -101,6 +91,7 @@ class FetcherService implements LoggerAwareInterface
                     $links = $fetcher->fetchLinksFromUserFeed($user);
                     foreach ($links as $key => $link) {
                         $links[$key] = $this->linkProcessor->process($link);
+                        print_r($link);
                     }
                     $this->storage->storeLinks($user['id'], $links);
                     foreach ($this->storage->getErrors() as $error) {
