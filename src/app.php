@@ -60,7 +60,7 @@ $tokenRefreshedSubscriber = new OAuthTokenSubscriber(
 );
 $dispatcher->addSubscriber($tokenRefreshedSubscriber);
 
-$statusSubscriber = new \EventListener\StatusSubscriber($app['doctrine'], $app['amqp']);
+$statusSubscriber = new \EventListener\StatusSubscriber($app['orm.ems']['mysql_brain'], $app['amqp']);
 $dispatcher->addSubscriber($statusSubscriber);
 
 return $app;
