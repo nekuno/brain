@@ -21,7 +21,6 @@ class UserRecommendationModel
     public function __construct(Client $client)
     {
         $this->client = $client;
-        $this->matchingModel = $matchingModel;
     }
 
     /**
