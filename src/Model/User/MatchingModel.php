@@ -192,63 +192,47 @@ class MatchingModel
 
         if ($checkValueLikes > 0 || $checkValueDislikes > 0) {
             $query = "
-                MATCH
+
+              	MATCH
                 (u:User)-[r:LIKES|DISLIKES]->(l:Link)
                 WITH
                 l, count(distinct r) AS num_likes_dislikes
                 ORDER BY num_likes_dislikes DESC
                 WITH
-                collect(num_likes_dislikes)[0] AS max_popul
-                MATCH
+                collect(num_likes_dislikes)[0]+0.1 AS max_popul
+
+		        MATCH
                 (u1:User {qnoow_id: ".$id1."}),
                 (u2:User {qnoow_id: ".$id2."})
+
                 OPTIONAL MATCH
-                (u1)-[:LIKES]->(common_likes:Link)<-[:LIKES]-(u2)
-                OPTIONAL MATCH
-                (u1)-[:DISLIKES]->(common_dislikes:Link)<-[:DISLIKES]-(u2)
+                (u1)-[r1:LIKES|DISLIKES]->(common:Link)<-[r2:LIKES|DISLIKES]-(u2)
+		        WHERE
+		        type(r1)=type(r2)
+		        OPTIONAL MATCH (:User)-[r:LIKES|DISLIKES]->(common)
+         	    WITH u1, u2, common, max_popul, count(distinct r) AS total_common
                 WITH
-                collect(distinct common_likes) + collect(distinct common_dislikes) AS common,
-                max_popul, u1, u2
+                u1, u2, max_popul, SUM((1 - (total_common*1.0 / max_popul))^3) AS dividend
+
                 OPTIONAL MATCH
-                (u1)-[:LIKES|DISLIKES]->(c1:Link)
-                WHERE
-                NOT c1 IN common
-                OPTIONAL MATCH
-                (u2)-[:LIKES|DISLIKES]->(c2:Link)
-                WHERE
-                NOT c2 IN common
+		        (u1)-[:LIKES|DISLIKES]->(c1:Link)
+		        WHERE
+		        NOT (u2)-[:LIKES|DISLIKES]->(c1)
+		        OPTIONAL MATCH (:User)-[r:LIKES|DISLIKES]->(c1)
+                WITH u1, u2, max_popul, c1, dividend, count(distinct r) AS total_c1
                 WITH
-                collect(distinct c1) AS c1,
-                collect(distinct c2) AS c2,
-                max_popul, common
+                u1, u2, max_popul, dividend, SUM( (total_c1*1.0 / max_popul)^3 ) AS divisor1
+
                 OPTIONAL MATCH
-                (:User)-[r1:LIKES|DISLIKES]->(common_nodes)
-                WHERE
-                common_nodes IN common
-                OPTIONAL MATCH
-                (:User)-[r2:LIKES|DISLIKES]->(c1_nodes)
-                WHERE
-                c1_nodes IN c1
-                OPTIONAL MATCH
-                (:User)-[r3:LIKES|DISLIKES]->(c2_nodes)
-                WHERE
-                c2_nodes IN c2
-                WITH
-                count(distinct r1) AS popul_common,
-                count(distinct r2) AS popul_c1,
-                count(distinct r3) AS popul_c2,
-                common_nodes, c1_nodes, c2_nodes, max_popul
-                WITH
-                common_nodes, collect(popul_common) AS p_common_coll,
-                c1_nodes, collect(popul_c1) AS p_c1_coll,
-                c2_nodes, collect(popul_c2) AS p_c2_coll,
-                max_popul
-                WITH
-                reduce(num = 0.0, a IN p_common_coll | num + (1 - (a*1.0 / (max_popul+0.1)))^3 ) as dividend,
-                reduce(num = 0.0, b IN p_c1_coll | num + ( (b*1.0 / max_popul + 0.1))^3 ) as divisor1,
-                reduce(num = 0.0, c IN p_c2_coll | num + ( (c*1.0 / max_popul + 0.1))^3 ) as divisor2
+		        (u2)-[:LIKES|DISLIKES]->(c2:Link)
+		        WHERE
+		        NOT (u1)-[:LIKES|DISLIKES]->(c2)
+		        OPTIONAL MATCH (:User)-[r:LIKES|DISLIKES]->(c2)
+         	    WITH u1, u2, max_popul, c2, dividend, divisor1, count(distinct r) AS total_c2
+		        WITH dividend, divisor1, SUM( (total_c2*1.0 / max_popul)^3 ) AS divisor2
+
                 RETURN
-                DISTINCT dividend, divisor1, divisor2
+                dividend, divisor1, divisor2
             ";
 
             //Create the Neo4j query object
