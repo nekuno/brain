@@ -37,19 +37,28 @@ class StatusSubscriber implements EventSubscriberInterface
     {
 
         return array(
-            \AppEvents::USER_DATA_FETCH_START => array('onUserDataFetchStart'),
-            \AppEvents::USER_DATA_FETCH_FINISH => array('onUserDataFetchFinish'),
-            \AppEvents::USER_DATA_PROCESS_START => array('onUserDataProcessStart'),
-            \AppEvents::USER_DATA_PROCESS_FINISH => array('onUserDataProcessFinish'),
+            \StatusEvents::USER_DATA_FETCHING_START => array('onUserDataFetchStart'),
+            \StatusEvents::USER_DATA_FETCHING_FINISH => array('onUserDataFetchFinish'),
+            \StatusEvents::USER_DATA_PROCESS_START => array('onUserDataProcessStart'),
+            \StatusEvents::USER_DATA_PROCESS_FINISH => array('onUserDataProcessFinish'),
         );
     }
 
     public function onUserDataFetchStart(StatusEvent $event)
     {
 
+        $status = $this->getStatus($event);
+
+        $status->setFetched(false);
+
+        $this->saveStatus($status);
     }
 
-    public function onUserDataFetchFinish(StatusEvent $event)
+    /**
+     * @param StatusEvent $event
+     * @return \Model\Entity\UserDataStatus
+     */
+    public function getStatus(StatusEvent $event)
     {
 
         $user = $event->getUser();
@@ -64,20 +73,39 @@ class StatusSubscriber implements EventSubscriberInterface
             $status->setResourceOwner($resourceOwner);
         }
 
-        $status->setFetched(true);
-
-        $this->entityManager->persist($status);
-        $this->entityManager->flush();
-
-        $this->enqueueMatchingCalculation($user, $resourceOwner);
+        return $status;
     }
 
     /**
-     * @param $user
-     * @param $resourceOwner
+     * @param $status
      */
-    private function enqueueMatchingCalculation($user, $resourceOwner)
+    public function saveStatus($status)
     {
+
+        $this->entityManager->persist($status);
+        $this->entityManager->flush();
+    }
+
+    public function onUserDataFetchFinish(StatusEvent $event)
+    {
+
+        $status = $this->getStatus($event);
+
+        $status->setFetched(true);
+
+        $this->saveStatus($status);
+
+        $this->enqueueMatchingCalculation($event);
+    }
+
+    /**
+     * @param StatusEvent $event
+     */
+    private function enqueueMatchingCalculation(StatusEvent $event)
+    {
+
+        $user = $event->getUser();
+        $resourceOwner = $event->getResourceOwner();
 
         $data = array(
             'userId' => $user['id'],
@@ -102,11 +130,22 @@ class StatusSubscriber implements EventSubscriberInterface
 
     public function onUserDataProcessStart(StatusEvent $event)
     {
+
+        $status = $this->getStatus($event);
+
+        $status->setProcessed(false);
+
+        $this->saveStatus($status);
     }
 
     public function onUserDataProcessFinish(StatusEvent $event)
     {
 
+        $status = $this->getStatus($event);
+
+        $status->setProcessed(true);
+
+        $this->saveStatus($status);
     }
 
 }
