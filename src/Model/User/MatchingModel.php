@@ -252,7 +252,7 @@ class MatchingModel
 
             $currentTimeInMillis = time()*1000;
             $lastUpdatePlusOneDay = $matchingUpdatedMillis + (1000 * 60 * 60 * 24);
-            if ($response['matching'] === 'TBA' || $lastUpdatePlusOneDay > $currentTimeInMillis) {
+            if ($response['matching'] === 'TBA' || $lastUpdatePlusOneDay < $currentTimeInMillis) {
                 //TODO: queued the calculus
                 $response['matching'] = $this->calculateMatchingBetweenTwoUsersBasedOnSharedContent($id1, $id2);
             }
