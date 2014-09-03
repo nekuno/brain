@@ -31,7 +31,7 @@ class SpotifyFetcher extends AbstractFetcher
 
                         try {
                             $tracks = $this->resourceOwner->authorizedHttpRequest($this->url, array(), $this->user);
-                            $currentPlaylistTracks = $this->formatResponse($tracks);
+                            $currentPlaylistTracks = $this->parseLinks($tracks);
                             $allTracks = array_merge($currentPlaylistTracks, $allTracks);
                         } catch (\Exception $e) {
                             continue;
@@ -42,7 +42,7 @@ class SpotifyFetcher extends AbstractFetcher
 
             $this->url = 'users/' . $user['spotifyID'] . '/starred/tracks';
             $starredTracks = $this->resourceOwner->authorizedHttpRequest($this->url, array(), $this->user);
-            $starredPlaylistTracks = $this->formatResponse($starredTracks);
+            $starredPlaylistTracks = $this->parseLinks($starredTracks);
             $allTracks = array_merge($starredPlaylistTracks, $allTracks);
 
             $links = $allTracks;
@@ -56,7 +56,7 @@ class SpotifyFetcher extends AbstractFetcher
     /**
      * { @inheritdoc }
      */
-    protected function formatResponse(array $response = array())
+    protected function parseLinks(array $response = array())
     {
 
         $parsed = array();
