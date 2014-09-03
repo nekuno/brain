@@ -3,11 +3,15 @@
 namespace Console\Command;
 
 use ApiConsumer\Auth\DBUserProvider;
+use ApiConsumer\EventListener\FetchLinksSubscriber;
 use ApiConsumer\Fetcher\FetcherService;
+use Psr\Log\LogLevel;
 use Silex\Application;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 class FetchLinksCommand extends ApplicationAwareCommand
 {
@@ -24,6 +28,12 @@ class FetchLinksCommand extends ApplicationAwareCommand
                         null,
                         InputOption::VALUE_REQUIRED,
                         'The resource owner which should fetch links'
+                    ),
+                    new InputOption(
+                        'debug',
+                        null,
+                        InputOption::VALUE_NONE,
+                        'Debug the process to the console'
                     ),
                 )
             );
@@ -53,10 +63,24 @@ class FetchLinksCommand extends ApplicationAwareCommand
         /** @var FetcherService $fetcher */
         $fetcher = $this->app['api_consumer.fetcher'];
 
+        if ($input->getOption('debug')) {
+            $verbosityLevelMap = array(
+                LogLevel::NOTICE => OutputInterface::VERBOSITY_NORMAL,
+                LogLevel::INFO => OutputInterface::VERBOSITY_NORMAL,
+            );
+            $logger = new ConsoleLogger($output, $verbosityLevelMap);
+            $fetcher->setLogger($logger);
+
+            $fetchLinksSubscriber = new FetchLinksSubscriber($output);
+            $dispatcher = $this->app['dispatcher'];
+            /* @var $dispatcher EventDispatcher */
+            $dispatcher->addSubscriber($fetchLinksSubscriber);
+        }
+
         foreach ($users as $user) {
             try {
+
                 $fetcher->fetch($user['id'], $resource);
-                $output->writeln(sprintf('Fetched links for user %s from resource %s', $user['id'], $resource));
 
             } catch (\Exception $e) {
                 $output->writeln(

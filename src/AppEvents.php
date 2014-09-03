@@ -1,4 +1,5 @@
 <?php
+
 final class AppEvents
 {
     /**
@@ -18,7 +19,18 @@ final class AppEvents
     const TOKEN_EXPIRED = 'token.expired';
 
     /**
+     * Fired before link process starts
+     */
+    const PROCESS_LINKS = 'process.links';
+
+    /**
+     * Fired with each link process
+     */
+    const PROCESS_LINK = 'process.link';
+
+    /**
      * Fired when link process is finished
      */
     const PROCESS_FINISH = 'process.finish';
+
 }

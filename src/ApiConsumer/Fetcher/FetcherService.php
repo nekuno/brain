@@ -3,6 +3,8 @@
 namespace ApiConsumer\Fetcher;
 
 use ApiConsumer\Auth\UserProviderInterface;
+use ApiConsumer\Event\LinkEvent;
+use ApiConsumer\Event\LinksEvent;
 use ApiConsumer\Event\MatchingEvent;
 use ApiConsumer\Factory\FetcherFactory;
 use ApiConsumer\LinkProcessor\LinkProcessor;
@@ -78,7 +80,7 @@ class FetcherService implements LoggerAwareInterface
         $links = array();
         try {
 
-            $this->logger->info(sprintf('Fetch attempt for user %d, fetcherConfig %s', $userId, $resourceOwner));
+            $this->logger->info(sprintf('Fetching links for user %s from resource owner %s', $userId, $resourceOwner));
 
             $user = $this->userProvider->getUsersByResource($resourceOwner, $userId);
             if (!$user) {
@@ -92,10 +94,22 @@ class FetcherService implements LoggerAwareInterface
                     /** @var FetcherInterface $fetcher */
                     $fetcher = $this->fetcherFactory->build($fetcherName);
                     $links = $fetcher->fetchLinksFromUserFeed($user);
+
+                    $event = array(
+                        'userId' => $userId,
+                        'resourceOwner' => $resourceOwner,
+                        'fetcherName' => $fetcherName,
+                        'links' => count($links),
+                    );
+                    $this->dispatcher->dispatch(\AppEvents::PROCESS_LINKS, new LinksEvent($event));
+
                     foreach ($links as $key => $link) {
+
                         $links[$key] = $this->linkProcessor->process($link);
-                        print_r($link);
+                        $event['link'] = $link;
+                        $this->dispatcher->dispatch(\AppEvents::PROCESS_LINK, new LinkEvent($event));
                     }
+
                     $this->storage->storeLinks($user['id'], $links);
                     foreach ($this->storage->getErrors() as $error) {
                         $this->logger->error(sprintf('Error saving link: %s', $error));
