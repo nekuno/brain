@@ -44,16 +44,32 @@ class StatusSubscriber implements EventSubscriberInterface
         );
     }
 
+    public function onUserDataFetchStart(StatusEvent $event)
+    {
+
+    }
+
     public function onUserDataFetchFinish(StatusEvent $event)
     {
 
         $user = $event->getUser();
         $resourceOwner = $event->getResourceOwner();
 
-        
+        $repository = $this->entityManager->getRepository('\Model\Entity\UserDataStatus');
+        $status = $repository->findOneBy(array('userId' => $user['id'], 'resourceOwner' => $resourceOwner));
+
+        if (!$status) {
+            $status = new UserDataStatus();
+            $status->setUser($user['id']);
+            $status->setResourceOwner($resourceOwner);
+        }
+
+        $status->setFetched(true);
+
+        $this->entityManager->persist($status);
+        $this->entityManager->flush();
 
         $this->enqueueMatchingCalculation($user, $resourceOwner);
-
     }
 
     /**
@@ -82,6 +98,15 @@ class StatusSubscriber implements EventSubscriberInterface
         $channel->queue_declare($queueName, false, true, false, false);
         $channel->queue_bind($queueName, $exchangeName, $topic);
         $channel->basic_publish($message, $exchangeName, $routingKey);
+    }
+
+    public function onUserDataProcessStart(StatusEvent $event)
+    {
+    }
+
+    public function onUserDataProcessFinish(StatusEvent $event)
+    {
+
     }
 
 }
