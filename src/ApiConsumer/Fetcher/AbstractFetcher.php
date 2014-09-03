@@ -35,14 +35,6 @@ abstract class AbstractFetcher implements FetcherInterface
     }
 
     /**
-     * {@inheritDoc}
-     */
-    public function getResourceOwnerName()
-    {
-        return $this->resourceOwner->getName();
-    }
-
-    /**
      * Get url
      *
      * @return string

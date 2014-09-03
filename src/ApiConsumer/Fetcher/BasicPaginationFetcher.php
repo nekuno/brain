@@ -40,30 +40,8 @@ abstract class BasicPaginationFetcher extends AbstractFetcher
     }
 
     /**
-     * { @inheritdoc }
-     */
-    public function fetchLinksFromUserFeed($user)
-    {
-        $this->user = $user;
-        $this->rawFeed = array();
-
-        try {
-            $rawFeed = $this->getLinksByPage();
-            $links = $this->parseLinks($rawFeed);
-        } catch (\Exception $e) {
-            throw $e;
-        }
-
-        return $links;
-    }
-
-    abstract protected function getItemsFromResponse($response);
-
-    abstract protected function getPaginationIdFromResponse($response);
-
-    /**
      * @param null $paginationId
-     * @return mixed
+     * @return array
      */
     protected function getLinksByPage($paginationId = null)
     {
@@ -85,6 +63,24 @@ abstract class BasicPaginationFetcher extends AbstractFetcher
 
         return $this->rawFeed;
     }
+
+    /**
+     * { @inheritdoc }
+     */
+    public function fetchLinksFromUserFeed($user)
+    {
+        $this->user = $user;
+        $this->rawFeed = array();
+
+        $rawFeed = $this->getLinksByPage();
+        $links = $this->parseLinks($rawFeed);
+
+        return $links;
+    }
+
+    abstract protected function getItemsFromResponse($response);
+
+    abstract protected function getPaginationIdFromResponse($response);
 
     abstract protected function parseLinks(array $rawFeed);
 }
