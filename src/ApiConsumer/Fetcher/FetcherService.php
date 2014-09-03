@@ -4,9 +4,9 @@ namespace ApiConsumer\Fetcher;
 
 use ApiConsumer\Auth\UserProviderInterface;
 use ApiConsumer\Event\MatchingEvent;
+use ApiConsumer\Factory\FetcherFactory;
 use ApiConsumer\LinkProcessor\LinkProcessor;
 use ApiConsumer\Storage\StorageInterface;
-use Http\OAuth\Factory\ResourceOwnerFactory;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
@@ -35,9 +35,9 @@ class FetcherService implements LoggerAwareInterface
     protected $storage;
 
     /**
-     * @var ResourceOwnerFactory
+     * @var FetcherFactory
      */
-    protected $resourceOwnerFactory;
+    protected $fetcherFactory;
 
     /**
      * @var EventDispatcher
@@ -53,7 +53,7 @@ class FetcherService implements LoggerAwareInterface
         UserProviderInterface $userProvider,
         LinkProcessor $linkProcessor,
         StorageInterface $storage,
-        ResourceOwnerFactory $resourceOwnerFactory,
+        FetcherFactory $fetcherFactory,
         EventDispatcher $dispatcher,
         array $options
     )
@@ -62,7 +62,7 @@ class FetcherService implements LoggerAwareInterface
         $this->userProvider = $userProvider;
         $this->linkProcessor = $linkProcessor;
         $this->storage = $storage;
-        $this->resourceOwnerFactory = $resourceOwnerFactory;
+        $this->fetcherFactory = $fetcherFactory;
         $this->dispatcher = $dispatcher;
         $this->options = $options;
     }
@@ -80,14 +80,17 @@ class FetcherService implements LoggerAwareInterface
 
             $this->logger->info(sprintf('Fetch attempt for user %d, fetcherConfig %s', $userId, $resourceOwner));
 
-            foreach ($this->options as $service => $fetcherConfig) {
+            $user = $this->userProvider->getUsersByResource($resourceOwner, $userId);
+            if (!$user) {
+                throw new \Exception('User not found');
+            }
+
+            foreach ($this->options as $fetcherName => $fetcherConfig) {
+
                 if ($fetcherConfig['resourceOwner'] === $resourceOwner) {
-                    $user = $this->userProvider->getUsersByResource($resourceOwner, $userId);
-                    if (!$user) {
-                        throw new \Exception('User not found');
-                    }
+
                     /** @var FetcherInterface $fetcher */
-                    $fetcher = new $fetcherConfig['class']($this->resourceOwnerFactory->build($resourceOwner));
+                    $fetcher = $this->fetcherFactory->build($fetcherName);
                     $links = $fetcher->fetchLinksFromUserFeed($user);
                     foreach ($links as $key => $link) {
                         $links[$key] = $this->linkProcessor->process($link);
@@ -101,7 +104,7 @@ class FetcherService implements LoggerAwareInterface
                     // Dispatch event for enqueue new matching re-calculate task
                     $data = array(
                         'userId' => $user['id'],
-                        'service' => $service,
+                        'service' => $fetcherName,
                         'type' => 'process_finished',
                     );
                     $event = new MatchingEvent($data);

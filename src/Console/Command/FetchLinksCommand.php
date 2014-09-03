@@ -2,6 +2,7 @@
 
 namespace Console\Command;
 
+use ApiConsumer\Auth\DBUserProvider;
 use ApiConsumer\Fetcher\FetcherService;
 use Silex\Application;
 use Symfony\Component\Console\Input\InputInterface;
@@ -15,16 +16,16 @@ class FetchLinksCommand extends ApplicationAwareCommand
     {
 
         $this->setName('fetch:links')
-             ->setDescription("Fetch links from given resource owner")
-             ->setDefinition(
-             array(
-                 new InputOption(
-                     'resource',
-                     null,
-                     InputOption::VALUE_REQUIRED,
-                     'The resource owner which should fetch links'
-                 ),
-             )
+            ->setDescription("Fetch links from given resource owner")
+            ->setDefinition(
+                array(
+                    new InputOption(
+                        'resource',
+                        null,
+                        InputOption::VALUE_REQUIRED,
+                        'The resource owner which should fetch links'
+                    ),
+                )
             );
     }
 
@@ -32,19 +33,22 @@ class FetchLinksCommand extends ApplicationAwareCommand
     {
 
         $resource = $input->getOption('resource');
+        $resourceOwners = $this->app['api_consumer.config']['resource_owner'];
+        $availableResourceOwners = implode(', ', array_keys($resourceOwners));
 
-        if (!isset($this->app['api_consumer.config']['fetcher'][$resource])) {
-            $output->writeln(
-                   sprintf(
-                       'Fetcher: %s not found',
-                       $resource
-                   )
-            );
+        if (!$resource) {
+            $output->writeln(sprintf('Resource owner is needed, available resource owners: %s.', $availableResourceOwners));
+            return;
+        }
+
+        if (!isset($resourceOwners[$resource])) {
+            $output->writeln(sprintf('Resource ownner %s not found, available resource owners: %s.', $resource, $availableResourceOwners));
             return;
         }
 
         $userProvider = $this->app['api_consumer.user_provider'];
-        $users = $userProvider->getUsersByResource($this->app['api_consumer.config']['fetcher'][$resource]['resourceOwner']);
+        /* @var $userProvider DBUserProvider */
+        $users = $userProvider->getUsersByResource($resource);
 
         /** @var FetcherService $fetcher */
         $fetcher = $this->app['api_consumer.fetcher'];
@@ -56,10 +60,11 @@ class FetchLinksCommand extends ApplicationAwareCommand
 
             } catch (\Exception $e) {
                 $output->writeln(
-                       sprintf(
-                           'Error fetching links for user %s with message: ' . $e->getMessage(),
-                           $user['id']
-                       )
+                    sprintf(
+                        'Error fetching links for user %s with message: %s',
+                        $user['id'],
+                        $e->getMessage()
+                    )
                 );
                 continue;
             }
