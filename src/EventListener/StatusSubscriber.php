@@ -10,6 +10,10 @@ use PhpAmqpLib\Connection\AMQPConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
+/**
+ * Class StatusSubscriber
+ * @package EventListener
+ */
 class StatusSubscriber implements EventSubscriberInterface
 {
 
@@ -23,6 +27,10 @@ class StatusSubscriber implements EventSubscriberInterface
      */
     protected $connection;
 
+    /**
+     * @param EntityManager $entityManager
+     * @param AMQPConnection $connection
+     */
     public function __construct(EntityManager $entityManager, AMQPConnection $connection)
     {
 
@@ -44,10 +52,13 @@ class StatusSubscriber implements EventSubscriberInterface
         );
     }
 
+    /**
+     * @param StatusEvent $event
+     */
     public function onUserDataFetchStart(StatusEvent $event)
     {
 
-        $status = $this->getStatus($event);
+        $status = $this->getCurrentDataStatus($event);
 
         $status->setFetched(false);
 
@@ -56,44 +67,15 @@ class StatusSubscriber implements EventSubscriberInterface
 
     /**
      * @param StatusEvent $event
-     * @return \Model\Entity\DataStatus
      */
-    public function getStatus(StatusEvent $event)
-    {
-
-        $user = $event->getUser();
-        $resourceOwner = $event->getResourceOwner();
-
-        $repository = $this->entityManager->getRepository('\Model\Entity\UserDataStatus');
-        $status = $repository->findOneBy(array('userId' => $user['id'], 'resourceOwner' => $resourceOwner));
-
-        if (!$status) {
-            $status = new DataStatus();
-            $status->setUserId($user['id']);
-            $status->setResourceOwner($resourceOwner);
-        }
-
-        return $status;
-    }
-
-    /**
-     * @param $status
-     */
-    public function saveStatus($status)
-    {
-
-        $this->entityManager->persist($status);
-        $this->entityManager->flush();
-    }
-
     public function onUserDataFetchFinish(StatusEvent $event)
     {
 
-        $status = $this->getStatus($event);
+        $dataStatus = $this->getCurrentDataStatus($event);
 
-        $status->setFetched(true);
+        $dataStatus->setFetched(true);
 
-        $this->saveStatus($status);
+        $this->saveStatus($dataStatus);
 
         $this->enqueueMatchingCalculation($event);
     }
@@ -128,24 +110,61 @@ class StatusSubscriber implements EventSubscriberInterface
         $channel->basic_publish($message, $exchangeName, $routingKey);
     }
 
+    /**
+     * @param StatusEvent $event
+     */
     public function onUserDataProcessStart(StatusEvent $event)
     {
 
-        $status = $this->getStatus($event);
+        $status = $this->getCurrentDataStatus($event);
 
         $status->setProcessed(false);
 
         $this->saveStatus($status);
     }
 
+    /**
+     * @param StatusEvent $event
+     */
     public function onUserDataProcessFinish(StatusEvent $event)
     {
 
-        $status = $this->getStatus($event);
+        $status = $this->getCurrentDataStatus($event);
 
         $status->setProcessed(true);
 
         $this->saveStatus($status);
     }
 
+    /**
+     * @param StatusEvent $event
+     * @return \Model\Entity\DataStatus
+     */
+    public function getCurrentDataStatus(StatusEvent $event)
+    {
+
+        $user = $event->getUser();
+        $resourceOwner = $event->getResourceOwner();
+
+        $repository = $this->entityManager->getRepository('\Model\Entity\DataStatus');
+        $dataStatus = $repository->findOneBy(array('userId' => $user['id'], 'resourceOwner' => $resourceOwner));
+
+        if (null === $dataStatus) {
+            $dataStatus = new DataStatus();
+            $dataStatus->setUserId($user['id']);
+            $dataStatus->setResourceOwner($resourceOwner);
+        }
+
+        return $dataStatus;
+    }
+
+    /**
+     * @param $status
+     */
+    public function saveStatus($status)
+    {
+
+        $this->entityManager->persist($status);
+        $this->entityManager->flush();
+    }
 }
