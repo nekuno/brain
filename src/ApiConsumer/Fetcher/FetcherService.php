@@ -130,6 +130,9 @@ class FetcherService implements LoggerAwareInterface
                         $this->logger->error(sprintf('Error saving link: %s', $error));
                     }
 
+                    $event = new StatusEvent($user, $resourceOwner, 'process', true);
+                    $this->dispatcher->dispatch(\StatusEvents::USER_DATA_PROCESS_FINISH, $event);
+
                     // Dispatch event for enqueue new matching re-calculate task
                     $data = array(
                         'userId' => $user['id'],
