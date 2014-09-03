@@ -1,20 +1,20 @@
 <?php
 
+use ApiConsumer\EventListener\OAuthTokenSubscriber;
 use Dflydev\Silex\Provider\DoctrineOrm\DoctrineOrmServiceProvider;
 use Provider\AMQPServiceProvider;
+use Provider\ApiConsumerServiceProvider;
 use Provider\GuzzleServiceProvider;
 use Provider\LinkProcessorServiceProvider;
 use Provider\Neo4jPHPServiceProvider;
 use Provider\PaginatorServiceProvider;
-use Provider\ApiConsumerServiceProvider;
-use ApiConsumer\EventListener\OAuthTokenSubscriber;
 use Silex\Application;
 use Silex\Provider\DoctrineServiceProvider;
+use Silex\Provider\MonologServiceProvider;
 use Silex\Provider\ServiceControllerServiceProvider;
 use Silex\Provider\SwiftmailerServiceProvider;
 use Silex\Provider\UrlGeneratorServiceProvider;
 use Silex\Provider\ValidatorServiceProvider;
-use Silex\Provider\MonologServiceProvider;
 
 $app = new Application();
 
@@ -48,10 +48,15 @@ $app->register(new Igorw\Silex\ConfigServiceProvider(__DIR__ . "/../config/confi
 
 /** @var \Symfony\Component\EventDispatcher\EventDispatcher $dispatcher */
 $dispatcher = $app['dispatcher'];
-$tokenRefreshedSubscriber = new OAuthTokenSubscriber($app['api_consumer.user_provider'], $app['mailer'], $app['monolog'], $app['amqp']);
+$tokenRefreshedSubscriber = new OAuthTokenSubscriber(
+    $app['api_consumer.user_provider'],
+    $app['mailer'],
+    $app['monolog'],
+    $app['amqp']
+);
 $dispatcher->addSubscriber($tokenRefreshedSubscriber);
 
-$linkProcessSubscriber = new \ApiConsumer\EventListener\LinkProcessSubscriber($app['amqp']);
-$dispatcher->addSubscriber($linkProcessSubscriber);
+$statusSubscriber = new \EventListener\StatusSubscriber($app['doctrine'], $app['amqp']);
+$dispatcher->addSubscriber($statusSubscriber);
 
 return $app;

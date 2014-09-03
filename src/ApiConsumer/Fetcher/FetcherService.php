@@ -9,6 +9,7 @@ use ApiConsumer\Event\MatchingEvent;
 use ApiConsumer\Factory\FetcherFactory;
 use ApiConsumer\LinkProcessor\LinkProcessor;
 use ApiConsumer\Storage\StorageInterface;
+use Event\StatusEvent;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
@@ -90,8 +91,24 @@ class FetcherService implements LoggerAwareInterface
             foreach ($this->options as $fetcher => $fetcherConfig) {
 
                 if ($fetcherConfig['resourceOwner'] === $resourceOwner) {
+                    $user = $this->userProvider->getUsersByResource($resourceOwner, $userId);
+                    if (!$user) {
+                        throw new \Exception('User not found');
+                    }
+
+                    /** @var FetcherInterface $fetcher */
+                    $fetcher = new $fetcherConfig['class']($this->resourceOwnerFactory->build($resourceOwner));
+
+                    $event = new StatusEvent($user, $resourceOwner, 'process', true);
+                    $this->dispatcher->dispatch(\StatusEvents::USER_DATA_FETCHING_START, $event);
 
                     $links = $this->fetcherFactory->build($fetcher)->fetchLinksFromUserFeed($user);
+
+                    $event = new StatusEvent($user, $resourceOwner, 'process', true);
+                    $this->dispatcher->dispatch(\StatusEvents::USER_DATA_FETCHING_FINISH, $event);
+
+                    $event = new StatusEvent($user, $resourceOwner, 'process', true);
+                    $this->dispatcher->dispatch(\StatusEvents::USER_DATA_PROCESS_START, $event);
 
                     $event = array(
                         'userId' => $userId,
