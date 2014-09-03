@@ -46,7 +46,7 @@ class FetchLinksSubscriber implements EventSubscriberInterface
     public function onProcessLinks(LinksEvent $event)
     {
         $data = $event->getData();
-        $this->output->writeln(sprintf('Fetching links for user %s from resource %s with fetcher %s', $data['userId'], $data['resourceOwner'], $data['fetcherName']));
+        $this->output->writeln(sprintf('Processing links for user %s from resource owner %s with fetcher %s', $data['userId'], $data['resourceOwner'], $data['fetcher']));
         $this->progress = new ProgressBar($this->output, $data['links']);
         $this->progress->start();
     }

@@ -87,18 +87,16 @@ class FetcherService implements LoggerAwareInterface
                 throw new \Exception('User not found');
             }
 
-            foreach ($this->options as $fetcherName => $fetcherConfig) {
+            foreach ($this->options as $fetcher => $fetcherConfig) {
 
                 if ($fetcherConfig['resourceOwner'] === $resourceOwner) {
 
-                    /** @var FetcherInterface $fetcher */
-                    $fetcher = $this->fetcherFactory->build($fetcherName);
-                    $links = $fetcher->fetchLinksFromUserFeed($user);
+                    $links = $this->fetcherFactory->build($fetcher)->fetchLinksFromUserFeed($user);
 
                     $event = array(
                         'userId' => $userId,
                         'resourceOwner' => $resourceOwner,
-                        'fetcherName' => $fetcherName,
+                        'fetcher' => $fetcher,
                         'links' => count($links),
                     );
                     $this->dispatcher->dispatch(\AppEvents::PROCESS_LINKS, new LinksEvent($event));
@@ -118,7 +116,7 @@ class FetcherService implements LoggerAwareInterface
                     // Dispatch event for enqueue new matching re-calculate task
                     $data = array(
                         'userId' => $user['id'],
-                        'service' => $fetcherName,
+                        'service' => $fetcher,
                         'type' => 'process_finished',
                     );
                     $event = new MatchingEvent($data);
