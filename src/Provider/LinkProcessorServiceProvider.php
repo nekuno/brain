@@ -5,6 +5,7 @@ namespace Provider;
 
 use ApiConsumer\LinkProcessor\LinkAnalyzer;
 use ApiConsumer\LinkProcessor\LinkProcessor;
+use ApiConsumer\LinkProcessor\LinkResolver;
 use ApiConsumer\LinkProcessor\MetadataParser\BasicMetadataParser;
 use ApiConsumer\LinkProcessor\MetadataParser\FacebookMetadataParser;
 use ApiConsumer\LinkProcessor\UrlParser\YoutubeUrlParser;
@@ -52,9 +53,22 @@ class LinkProcessorServiceProvider implements ServiceProviderInterface
             }
         );
 
+        $app['api_consumer.link_processor.link_resolver'] = $app->share(
+            function () {
+                $client = new Client();
+                return new LinkResolver($client);
+            }
+        );
+
         $app['api_consumer.link_processor'] = $app->share(
             function ($app) {
-                return new LinkProcessor($app['api_consumer.link_processor.link_analyzer'], $app['api_consumer.link_processor.processor.scrapper'], $app['api_consumer.link_processor.processor.youtube'], $app['api_consumer.link_processor.processor.spotify']);
+                return new LinkProcessor(
+                    $app['api_consumer.link_processor.link_resolver'],
+                    $app['api_consumer.link_processor.link_analyzer'],
+                    $app['api_consumer.link_processor.processor.scrapper'],
+                    $app['api_consumer.link_processor.processor.youtube'],
+                    $app['api_consumer.link_processor.processor.spotify']
+                );
             }
         );
 

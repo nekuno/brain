@@ -11,4 +11,6 @@ interface StorageInterface
      * @return mixed
      */
     public function storeLinks($userId, array $links);
+
+    public function getErrors();
 }

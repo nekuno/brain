@@ -1,13 +1,14 @@
 <?php
 
-namespace ApiConsumer;
+namespace Provider;
 
-use ApiConsumer\Fetcher\FetcherService;
 use ApiConsumer\Auth\DBUserProvider;
-use ApiConsumer\Event\EventManager;
+use ApiConsumer\Factory\FetcherFactory;
+use ApiConsumer\Fetcher\FetcherService;
 use ApiConsumer\Registry\Registry;
 use ApiConsumer\Storage\DBStorage;
-use ApiConsumer\Listener\OAuthTokenSubscriber;
+use Http\OAuth\Factory\ResourceOwnerFactory;
+use Psr\Log\LoggerAwareInterface;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
 
@@ -20,7 +21,7 @@ class ApiConsumerServiceProvider implements ServiceProviderInterface
     public function register(Application $app)
     {
 
-        $app->register(new \Igorw\Silex\ConfigServiceProvider(__DIR__ . "/config/apiConsumer.yml"));
+        $app->register(new \Igorw\Silex\ConfigServiceProvider(__DIR__ . "/../ApiConsumer/config/apiConsumer.yml"));
 
         // User Provider
         $app['api_consumer.user_provider'] = $app->share(
@@ -33,28 +34,32 @@ class ApiConsumerServiceProvider implements ServiceProviderInterface
         );
 
         // Resource Owners
-        $app['api_consumer.get_resource_owner_by_name'] = $app->protect(
-            function ($name) use ($app) {
+        $app['api_consumer.resource_owner_factory'] = $app->share(
+            function ($app) {
 
-                $options = $app['api_consumer.config']['resource_owner'][$name];
-                $resourceOwnerClass = $options['class'];
-                $resourceOwner = new $resourceOwnerClass($app['guzzle.client'], $app['dispatcher'], $options);
+                $resourceOwnerFactory = new ResourceOwnerFactory($app['api_consumer.config']['resource_owner'], $app['guzzle.client'], $app['dispatcher']);
 
-                return $resourceOwner;
+                return $resourceOwnerFactory;
             }
         );
 
         $app['api_consumer.resource_owner.google'] = $app->share(
             function ($app) {
-                $getResourceOwnerByName = $app['api_consumer.get_resource_owner_by_name'];
-                return $getResourceOwnerByName('google');
+
+                $resourceOwnerFactory = $app['api_consumer.resource_owner_factory'];
+                /* @var $resourceOwnerFactory ResourceOwnerFactory */
+
+                return $resourceOwnerFactory->build('google');
             }
         );
 
         $app['api_consumer.resource_owner.spotify'] = $app->share(
             function ($app) {
-                $getResourceOwnerByName = $app['api_consumer.get_resource_owner_by_name'];
-                return $getResourceOwnerByName('spotify');
+
+                $resourceOwnerFactory = $app['api_consumer.resource_owner_factory'];
+                /* @var $resourceOwnerFactory ResourceOwnerFactory */
+
+                return $resourceOwnerFactory->build('spotify');
             }
         );
 
@@ -79,17 +84,30 @@ class ApiConsumerServiceProvider implements ServiceProviderInterface
         );
 
         // Fetcher Service
+        $app['api_consumer.fetcher_factory'] = $app->share(
+            function ($app) {
+
+                $resourceOwnerFactory = new FetcherFactory($app['api_consumer.config']['fetcher'], $app['api_consumer.resource_owner_factory']);
+
+                return $resourceOwnerFactory;
+            }
+        );
+
         $app['api_consumer.fetcher'] = $app->share(
             function ($app) {
 
                 $fetcher = new FetcherService(
-                    $app['monolog'],
                     $app['api_consumer.user_provider'],
-                    $app['api_consumer.registry'],
+                    $app['api_consumer.link_processor'],
                     $app['api_consumer.storage'],
-                    $app['api_consumer.get_resource_owner_by_name'],
+                    $app['api_consumer.fetcher_factory'],
+                    $app['dispatcher'],
                     $app['api_consumer.config']['fetcher']
                 );
+
+                if ($fetcher instanceof LoggerAwareInterface) {
+                    $fetcher->setLogger($app['monolog']);
+                }
 
                 return $fetcher;
             }

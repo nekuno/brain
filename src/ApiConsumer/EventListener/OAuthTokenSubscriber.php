@@ -1,9 +1,8 @@
 <?php
-namespace ApiConsumer\Listener;
+namespace ApiConsumer\EventListener;
 
 use ApiConsumer\Auth\UserProviderInterface;
 use ApiConsumer\Event\OAuthTokenEvent;
-use ApiConsumer\Event\FilterTokenRefreshedEvent;
 use PhpAmqpLib\Connection\AMQPConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 use Psr\Log\LoggerInterface;
@@ -76,13 +75,14 @@ class OAuthTokenSubscriber implements EventSubscriberInterface
 
         $channel = $this->amqp->channel();
 
-        $exchange = 'notifications';
-        $queue = 'notification';
-        $channel->exchange_declare($exchange, 'direct', false, true, false);
+        $exchangeName = 'social.notification.direct';
+        $exchangeType = 'direct';
+        $queueName = 'social.notification';
+        $routing_key = 'social.notification.token_expire';
 
-        $routing_key = 'notification.token_expire';
-        $channel->queue_declare($queue, false, true, false, false);
-        $channel->queue_bind('notification', 'notifications', $routing_key);
+        $channel->exchange_declare($exchangeName, $exchangeType, false, true, false);
+        $channel->queue_declare($queueName, false, true, false, false);
+        $channel->queue_bind($queueName, $exchangeName, $routing_key);
 
         $messageData = array(
             'user' => $user['id'],
@@ -91,7 +91,7 @@ class OAuthTokenSubscriber implements EventSubscriberInterface
         );
 
         $message = new AMQPMessage(json_encode($messageData), array('delivery_mode' => 2));
-        $channel->basic_publish($message, 'notifications', $routing_key);
+        $channel->basic_publish($message, $exchangeName, $routing_key);
 
 
         $channel->close();

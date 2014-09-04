@@ -8,6 +8,8 @@ class YoutubeFetcher extends BasicPaginationFetcher
 
     protected $pageLength = 20;
 
+    protected $paginationId = null;
+
     public function getUrl()
     {
         return 'youtube/v3/activities';
@@ -24,16 +26,22 @@ class YoutubeFetcher extends BasicPaginationFetcher
 
     protected function getItemsFromResponse($response)
     {
-        return $response['items']?:array();
+        return $response['items'] ? : array();
     }
 
     protected function getPaginationIdFromResponse($response)
     {
         $paginationId = null;
 
-        if (array_key_exists('nextPageToken', $response)) {
+        if (isset($response['nextPageToken'])) {
             $paginationId = $response['nextPageToken'];
         }
+
+        if ($this->paginationId === $paginationId) {
+            return null;
+        }
+
+        $this->paginationId = $paginationId;
 
         return $paginationId;
     }
@@ -43,24 +51,24 @@ class YoutubeFetcher extends BasicPaginationFetcher
         $url = "";
         if (isset($resourceId['kind'])) {
             switch ($resourceId['kind']) {
-                
+
                 case 'youtube#video':
-                    if (isset($resourceId['videoId'])) { 
-                        $url = 'https://www.youtube.com/watch?v='.$resourceId['videoId'];
+                    if (isset($resourceId['videoId'])) {
+                        $url = 'https://www.youtube.com/watch?v=' . $resourceId['videoId'];
                     }
                     break;
 
                 case 'youtube#channel':
-                    if (isset($resourceId['channelId'])) { 
-                        $url = 'https://www.youtube.com/channel/'.$resourceId['channelId'];
+                    if (isset($resourceId['channelId'])) {
+                        $url = 'https://www.youtube.com/channel/' . $resourceId['channelId'];
                     }
                     break;
 
                 case 'youtube#playlist':
-                    if (isset($resourceId['playlistId'])) { 
-                        $url = 'https://www.youtube.com/playlist?list='.$resourceId['playlistId'];
+                    if (isset($resourceId['playlistId'])) {
+                        $url = 'https://www.youtube.com/playlist?list=' . $resourceId['playlistId'];
                     }
-                    break;                
+                    break;
             }
         }
 
@@ -75,7 +83,7 @@ class YoutubeFetcher extends BasicPaginationFetcher
                 if (isset($item['contentDetails']['upload']['videoId'])) {
                     $url = $this->getYoutubeUrlFromResourceId(
                         array(
-                            'kind' => 'youtube#video', 
+                            'kind' => 'youtube#video',
                             'videoId' => $item['contentDetails']['upload']['videoId']
                         )
                     );
@@ -120,11 +128,11 @@ class YoutubeFetcher extends BasicPaginationFetcher
                 continue;
             }
 
-            $link['url']            = $url;
-            $link['title']          = array_key_exists('title', $item['snippet'])?$item['snippet']['title']:'';
-            $link['description']    = array_key_exists('description', $item['snippet'])?$item['snippet']['description']:'';
+            $link['url'] = $url;
+            $link['title'] = array_key_exists('title', $item['snippet']) ? $item['snippet']['title'] : '';
+            $link['description'] = array_key_exists('description', $item['snippet']) ? $item['snippet']['description'] : '';
             $link['resourceItemId'] = array_key_exists('id', $item) ? $item['id'] : null;
-            $link['resource']       = 'google';
+            $link['resource'] = 'google';
 
             $parsed[] = $link;
         }

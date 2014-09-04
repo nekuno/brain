@@ -4,24 +4,42 @@ namespace ApiConsumer\LinkProcessor\Processor;
 
 use ApiConsumer\LinkProcessor\MetadataParser\BasicMetadataParser;
 use ApiConsumer\LinkProcessor\MetadataParser\FacebookMetadataParser;
-use ApiConsumer\LinkProcessor\MetadataParser\MetadataParserInterface;
 use Goutte\Client;
-use Symfony\Component\DomCrawler\Crawler;
+use GuzzleHttp\Exception\RequestException;
 
 /**
  * @author Juan Luis Martínez <juanlu@comakai.com>
  */
 class ScraperProcessor implements ProcessorInterface
 {
-    private $facebookMetadataParser;
-    private $basicMetadataParser;
+
     /**
      * @var Client
      */
     protected $client;
 
-    public function __construct(Client $client, MetadataParserInterface $basicMetadataParser, MetadataParserInterface $facebookMetadataParser)
+    /**
+     * @var FacebookMetadataParser
+     */
+    private $facebookMetadataParser;
+
+    /**
+     * @var BasicMetadataParser
+     */
+    private $basicMetadataParser;
+
+    /**
+     * @param Client $client
+     * @param \ApiConsumer\LinkProcessor\MetadataParser\BasicMetadataParser $basicMetadataParser
+     * @param \ApiConsumer\LinkProcessor\MetadataParser\FacebookMetadataParser $facebookMetadataParser
+     */
+    public function __construct(
+        Client $client,
+        BasicMetadataParser $basicMetadataParser,
+        FacebookMetadataParser $facebookMetadataParser
+    )
     {
+
         $this->client = $client;
         $this->basicMetadataParser = $basicMetadataParser;
         $this->facebookMetadataParser = $facebookMetadataParser;
@@ -34,99 +52,69 @@ class ScraperProcessor implements ProcessorInterface
      */
     public function process(array $link)
     {
+
         $url = $link['url'];
 
-        $crawler = $this->client->request('GET', $url)->filterXPath('//meta | //title');
+        try {
+            $crawler = $this->client->request('GET', $url);
+        } catch (RequestException $e) {
+            return $link;
+        }
 
-        $title = $crawler->filter('title')->text();
-        $metadataTags = $crawler->each(
-            function (Crawler $node) {
-                return array(
-                    'rel' => $node->attr('rel'),
-                    'name' => $node->attr('name'),
-                    'content' => $node->attr('content'),
-                    'property' => $node->attr('property'),
-                );
+        $responseHeaders =$this->client->getResponse()->getHeaders();
+        if ($responseHeaders) {
+            if (isset($responseHeaders['Content-Type'][0]) && false !== strpos($responseHeaders['Content-Type'][0], "image/")) {
+                $link['additionalLabels'] = array('Image');
             }
-        );
-
-        if($this->isValidTitle($title)){
-            $metadataTags[] = array('title' => $title);
         }
 
-        $basicMetadata = $this->scrapBasicMetadata($metadataTags);
-        if (array() !== $basicMetadata) {
-            $link = $this->overrideLinkDataWithScrapedData($basicMetadata, $link);
-        }
+        $basicMetadata = $this->basicMetadataParser->extractMetadata($crawler);
+        $basicMetadata['tags'] = $this->basicMetadataParser->extractTags($crawler);
+        $link = $this->overrideLinkDataWithScrapedData($link, $basicMetadata);
 
-        $fbMetadata = $this->scrapFacebookMetadata($metadataTags);
-        if (array() !== $fbMetadata) {
-            $link = $this->overrideLinkDataWithScrapedData($fbMetadata, $link);
-        }
+        $fbMetadata = $this->facebookMetadataParser->extractMetadata($crawler);
+        $fbMetadata['tags'] = $this->facebookMetadataParser->extractTags($crawler);
+        $link = $this->overrideLinkDataWithScrapedData($link, $fbMetadata);
 
         return $link;
     }
 
-    public function scrapBasicMetadata($metaTags)
-    {
-
-        $metadata = $this->basicMetadataParser->extractMetadata($metaTags);
-        $metadata[]['tags'] = $this->basicMetadataParser->extractTags($metaTags);
-
-        return $metadata;
-    }
-
-    public function scrapFacebookMetadata($metaTags)
-    {
-        $metadata = $this->facebookMetadataParser->extractMetadata($metaTags);
-        $metadata[]['tags'] = $this->facebookMetadataParser->extractTags($metaTags);
-
-        return $metadata;
-    }
-
     /**
-     * @param $scrapedData
-     * @param $link
-     * @return mixed
+     * @param array $link
+     * @param array $scrapedData
+     * @return array
      */
-    private function overrideLinkDataWithScrapedData(array $scrapedData, array $link)
+    private function overrideLinkDataWithScrapedData(array $link, array $scrapedData = array())
     {
 
-        foreach ($scrapedData as $meta) {
-            if (array_key_exists('title', $meta) && null !== $meta['title']) {
-                $link['title'] = $meta['title'];
+        if (array_key_exists('title', $scrapedData)) {
+            if (null !== $scrapedData['title'] && "" !== $scrapedData['title']) {
+                $link['title'] = $scrapedData['title'];
             }
+        }
 
-            if (false === array_key_exists('description', $link)) {
-                $link['description'] = "";
+        if (array_key_exists('description', $scrapedData)) {
+            if (null !== $scrapedData['description'] && "" !== $scrapedData['description']) {
+                $link['description'] = $scrapedData['description'];
             }
+        }
 
-            if (array_key_exists('description', $meta) && null !== $meta['description']) {
-                $link['description'] = $meta['description'];
+        if (array_key_exists('tags', $scrapedData)) {
+            if (!array_key_exists('tags', $link)) {
+                $link['tags'] = array();
             }
-
-            if (array_key_exists('canonical', $meta) && null !== $meta['canonical']) {
-                $link['url'] = $meta['canonical'];
-            }
-
-            if (array_key_exists('tags', $meta)) {
-                if (!array_key_exists('tags', $link)) {
-                    $link['tags'] = array();
+            foreach ($link['tags'] as $tag) {
+                foreach ($scrapedData['tags'] as $sIndex => $sTag) {
+                    if ($tag['name'] === $sTag['name']) {
+                        unset($scrapedData['tags'][$sIndex]);
+                    }
                 }
-                $link['tags'] = array_merge($link['tags'], $meta['tags']);
+
             }
+
+            $link['tags'] = array_merge($link['tags'], $scrapedData['tags']);
         }
 
         return $link;
     }
-
-    /**
-     * @param $title
-     * @return bool
-     */
-    protected function isValidTitle($title)
-    {
-        return null !== $title && '' !== trim($title);
-    }
-
 }

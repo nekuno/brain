@@ -43,6 +43,14 @@ class SpotifyUrlParserTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($type, $this->parser->getUrlType($url), 'Asserting that ' . $url . ' is a track');
     }
 
+    public function testTypeIsTrackWithAlbumUrl()
+    {
+        $url = 'https://open.spotify.com/album/02dncVzAWXSAI3e8oJnoug/6BEocXyX92zZ2vLc4yxewo';
+        $type = SpotifyUrlParser::TRACK_URL;
+
+        $this->assertEquals($type, $this->parser->getUrlType($url), 'Asserting that ' . $url . ' is a track');
+    }
+
     public function testTypeIsAlbum()
     {
         $url = 'http://open.spotify.com/album/4sb0eMpDn3upAFfyi4q2rw';
@@ -86,6 +94,7 @@ class SpotifyUrlParserTest extends \PHPUnit_Framework_TestCase
             array('http://open.spotify.com/track/1g9PysFSHeHjVcACqwduNf', '1g9PysFSHeHjVcACqwduNf'),
             array('http://open.spotify.com/album/00m9T7kq5EyN6g3gEzgTQN', '00m9T7kq5EyN6g3gEzgTQN'),
             array('http://open.spotify.com/artist/0Y5ldP4uHArYLgHdljfmAu', '0Y5ldP4uHArYLgHdljfmAu'),
+            array('https://open.spotify.com/album/677iOjr78hYvgKJjYnCNts/2DYGoXvsFXSwZCoUlkIEDH', '2DYGoXvsFXSwZCoUlkIEDH'),
         );
     }
 }

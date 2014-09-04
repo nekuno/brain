@@ -3,6 +3,7 @@
 namespace Controller;
 
 use Model\UserModel;
+use Model\User\ContentPaginatorModel;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -120,8 +121,8 @@ class UserController
         }
 
         try {
-            /** @var UserModel $model */
-            $model = $app['users.model'];
+            /** @var $model \Model\User\MatchingModel */
+            $model = $app['users.matching.model'];
             if ($basedOn == 'answers') {
                 $result = $model->getMatchingBetweenTwoUsersBasedOnAnswers($id1, $id2);
             }
@@ -140,9 +141,37 @@ class UserController
         return $app->json($result, !empty($result) ? 201 : 200);
     }
 
+    public function getUserContentAction(Request $request, Application $app)
+    {
+        $id = $request->get('id');
+
+        if (null === $id) {
+            return $app->json(array(), 400);
+        }
+
+        /** @var $paginator \Paginator\Paginator */
+        $paginator = $app['paginator'];
+
+        $filters = array('id' => $id);
+
+        /** @var $model \Model\User\ContentPaginatorModel  */
+        $model = $app['users.content.model'];
+
+        try {
+            $result = $paginator->paginate($filters, $model, $request);
+        } catch (\Exception $e) {
+            if ($app['env'] == 'dev') {
+                throw $e;
+            }
+
+            return $app->json(array(), 500);
+        }
+
+        return $app->json($result, !empty($result) ? 201 : 200);
+    }
+
     public function getUserRecommendationAction(Request $request, Application $app)
     {
-
         // Get params
         $id      = $request->get('id');
         $basedOn = $request->get('type');
@@ -152,8 +181,8 @@ class UserController
         }
 
         try {
-            /** @var UserModel $model */
-            $model = $app['users.model'];
+            /** @var $model \Model\User\Recommendation\UserModel  */
+            $model = $app['users.recommendation.users.model'];
             if ($basedOn == 'answers') {
                 // TODO: check that users has one answered question at least
                 $result = $model->getUserRecommendationsBasedOnAnswers($id);
@@ -175,21 +204,62 @@ class UserController
 
     public function getContentRecommendationAction(Request $request, Application $app)
     {
-
-        // Get params
         $id      = $request->get('id');
-        $basedOn = $request->get('type');
+        $tag     = $request->get('tag', null);
+        $type     = $request->get('type', null);
 
         if (null === $id) {
             return $app->json(array(), 400);
         }
 
+        /** @var $paginator \Paginator\Paginator */
+        $paginator = $app['paginator'];
+
+        $filters = array('id' => $id);
+
+        if ($tag) {
+            $filters['tag'] = urldecode($tag);
+        }
+
+        if ($type) {
+            $filters['type'] = urldecode($type);
+        }
+
+        /** @var $model \Model\User\Recommendation\ContentPaginatedModel  */
+        $model = $app['users.recommendation.content.model'];
+
         try {
+            $result = $paginator->paginate($filters, $model, $request);
+        } catch (\Exception $e) {
+            if ($app['env'] == 'dev') {
+                throw $e;
+            }
 
-            /** @var UserModel $model */
-            $model = $app['users.model'];
-            $result = $model->getContentRecommendations($id);
+            return $app->json(array(), 500);
+        }
 
+        return $app->json($result, !empty($result) ? 201 : 200);
+    }
+
+    public function getContentRecommendationTagsAction(Request $request, Application $app)
+    {
+        $id      = $request->get('id');
+        $search     = $request->get('search', '');
+        $limit     = $request->get('limit', 0);
+
+        if (null === $id) {
+            return $app->json(array(), 400);
+        }
+
+        if ($search) {
+            $search = urldecode($search);
+        }
+
+        /** @var $model \Model\User\Recommendation\ContentRecommendationTagModel  */
+        $model = $app['users.recommendation.content.tag.model'];
+
+        try {
+            $result = $model->getRecommendedTags($id, $search, $limit);
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;
