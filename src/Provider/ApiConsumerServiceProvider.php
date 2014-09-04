@@ -3,6 +3,7 @@
 namespace Provider;
 
 use ApiConsumer\Auth\DBUserProvider;
+use ApiConsumer\Factory\FetcherFactory;
 use ApiConsumer\Fetcher\FetcherService;
 use ApiConsumer\Registry\Registry;
 use ApiConsumer\Storage\DBStorage;
@@ -83,6 +84,15 @@ class ApiConsumerServiceProvider implements ServiceProviderInterface
         );
 
         // Fetcher Service
+        $app['api_consumer.fetcher_factory'] = $app->share(
+            function ($app) {
+
+                $resourceOwnerFactory = new FetcherFactory($app['api_consumer.config']['fetcher'], $app['api_consumer.resource_owner_factory']);
+
+                return $resourceOwnerFactory;
+            }
+        );
+
         $app['api_consumer.fetcher'] = $app->share(
             function ($app) {
 
@@ -90,7 +100,7 @@ class ApiConsumerServiceProvider implements ServiceProviderInterface
                     $app['api_consumer.user_provider'],
                     $app['api_consumer.link_processor'],
                     $app['api_consumer.storage'],
-                    $app['api_consumer.resource_owner_factory'],
+                    $app['api_consumer.fetcher_factory'],
                     $app['dispatcher'],
                     $app['api_consumer.config']['fetcher']
                 );

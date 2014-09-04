@@ -3,10 +3,12 @@
 namespace ApiConsumer\Fetcher;
 
 use ApiConsumer\Auth\UserProviderInterface;
+use ApiConsumer\Event\LinkEvent;
+use ApiConsumer\Event\LinksEvent;
 use ApiConsumer\Event\MatchingEvent;
+use ApiConsumer\Factory\FetcherFactory;
 use ApiConsumer\LinkProcessor\LinkProcessor;
 use ApiConsumer\Storage\StorageInterface;
-use Http\OAuth\Factory\ResourceOwnerFactory;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
@@ -35,9 +37,9 @@ class FetcherService implements LoggerAwareInterface
     protected $storage;
 
     /**
-     * @var ResourceOwnerFactory
+     * @var FetcherFactory
      */
-    protected $resourceOwnerFactory;
+    protected $fetcherFactory;
 
     /**
      * @var EventDispatcher
@@ -53,7 +55,7 @@ class FetcherService implements LoggerAwareInterface
         UserProviderInterface $userProvider,
         LinkProcessor $linkProcessor,
         StorageInterface $storage,
-        ResourceOwnerFactory $resourceOwnerFactory,
+        FetcherFactory $fetcherFactory,
         EventDispatcher $dispatcher,
         array $options
     )
@@ -62,19 +64,9 @@ class FetcherService implements LoggerAwareInterface
         $this->userProvider = $userProvider;
         $this->linkProcessor = $linkProcessor;
         $this->storage = $storage;
-        $this->resourceOwnerFactory = $resourceOwnerFactory;
+        $this->fetcherFactory = $fetcherFactory;
         $this->dispatcher = $dispatcher;
         $this->options = $options;
-    }
-
-    public function __call($method, $args)
-    {
-
-        if (is_callable(array($this, $method))) {
-            return call_user_func_array($this->$method, $args);
-        } else {
-            throw new \Exception('Error ' . $method . ' not defined', 1);
-        }
     }
 
     public function setLogger(LoggerInterface $logger)
@@ -88,20 +80,34 @@ class FetcherService implements LoggerAwareInterface
         $links = array();
         try {
 
-            $this->logger->info(sprintf('Fetch attempt for user %d, fetcherConfig %s', $userId, $resourceOwner));
+            $this->logger->info(sprintf('Fetching links for user %s from resource owner %s', $userId, $resourceOwner));
 
-            foreach ($this->options as $service => $fetcherConfig) {
+            $user = $this->userProvider->getUsersByResource($resourceOwner, $userId);
+            if (!$user) {
+                throw new \Exception('User not found');
+            }
+
+            foreach ($this->options as $fetcher => $fetcherConfig) {
+
                 if ($fetcherConfig['resourceOwner'] === $resourceOwner) {
-                    $user = $this->userProvider->getUsersByResource($resourceOwner, $userId);
-                    if (!$user) {
-                        throw new \Exception('User not found');
-                    }
-                    /** @var FetcherInterface $fetcher */
-                    $fetcher = new $fetcherConfig['class']($this->resourceOwnerFactory->build($resourceOwner));
-                    $links = $fetcher->fetchLinksFromUserFeed($user);
+
+                    $links = $this->fetcherFactory->build($fetcher)->fetchLinksFromUserFeed($user);
+
+                    $event = array(
+                        'userId' => $userId,
+                        'resourceOwner' => $resourceOwner,
+                        'fetcher' => $fetcher,
+                        'links' => count($links),
+                    );
+                    $this->dispatcher->dispatch(\AppEvents::PROCESS_LINKS, new LinksEvent($event));
+
                     foreach ($links as $key => $link) {
+
                         $links[$key] = $this->linkProcessor->process($link);
+                        $event['link'] = $link;
+                        $this->dispatcher->dispatch(\AppEvents::PROCESS_LINK, new LinkEvent($event));
                     }
+
                     $this->storage->storeLinks($user['id'], $links);
                     foreach ($this->storage->getErrors() as $error) {
                         $this->logger->error(sprintf('Error saving link: %s', $error));
@@ -110,7 +116,7 @@ class FetcherService implements LoggerAwareInterface
                     // Dispatch event for enqueue new matching re-calculate task
                     $data = array(
                         'userId' => $user['id'],
-                        'service' => $service,
+                        'service' => $fetcher,
                         'type' => 'process_finished',
                     );
                     $event = new MatchingEvent($data);

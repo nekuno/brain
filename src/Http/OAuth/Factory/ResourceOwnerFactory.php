@@ -3,6 +3,7 @@
 namespace Http\OAuth\Factory;
 
 use GuzzleHttp\Client;
+use Http\OAuth\ResourceOwner\ResourceOwnerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
 /**
@@ -32,9 +33,13 @@ class ResourceOwnerFactory
         $this->dispatcher = $dispatcher;
     }
 
-    public function build($resourceOwner)
+    /**
+     * @param $resourceOwnerName
+     * @return ResourceOwnerInterface
+     */
+    public function build($resourceOwnerName)
     {
-        $options = $this->options[$resourceOwner];
+        $options = $this->options[$resourceOwnerName];
         $resourceOwnerClass = $options['class'];
         $resourceOwner = new $resourceOwnerClass($this->client, $this->dispatcher, $options);
 

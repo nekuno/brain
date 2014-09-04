@@ -35,14 +35,6 @@ abstract class AbstractFetcher implements FetcherInterface
     }
 
     /**
-     * {@inheritDoc}
-     */
-    public function getResourceOwnerName()
-    {
-        return $this->resourceOwner->getName();
-    }
-
-    /**
      * Get url
      *
      * @return string
@@ -50,17 +42,6 @@ abstract class AbstractFetcher implements FetcherInterface
     public function getUrl()
     {
         return $this->url;
-    }
-
-    /**
-     * Fetch links from user feed
-     *
-     * @param $url
-     * @return mixed
-     */
-    public function makeRequestJSON($url, array $query = array())
-    {
-        return $this->resourceOwner->authorizedHttpRequest($url, $query, $this->user);
     }
 
     /**

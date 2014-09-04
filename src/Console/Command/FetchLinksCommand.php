@@ -2,11 +2,16 @@
 
 namespace Console\Command;
 
+use ApiConsumer\Auth\DBUserProvider;
+use ApiConsumer\EventListener\FetchLinksSubscriber;
 use ApiConsumer\Fetcher\FetcherService;
+use Psr\Log\LogLevel;
 use Silex\Application;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 class FetchLinksCommand extends ApplicationAwareCommand
 {
@@ -15,16 +20,22 @@ class FetchLinksCommand extends ApplicationAwareCommand
     {
 
         $this->setName('fetch:links')
-             ->setDescription("Fetch links from given resource owner")
-             ->setDefinition(
-             array(
-                 new InputOption(
-                     'resource',
-                     null,
-                     InputOption::VALUE_REQUIRED,
-                     'The resource owner which should fetch links'
-                 ),
-             )
+            ->setDescription("Fetch links from given resource owner")
+            ->setDefinition(
+                array(
+                    new InputOption(
+                        'resource',
+                        null,
+                        InputOption::VALUE_REQUIRED,
+                        'The resource owner which should fetch links'
+                    ),
+                    new InputOption(
+                        'debug',
+                        null,
+                        InputOption::VALUE_NONE,
+                        'Debug the process to the console'
+                    ),
+                )
             );
     }
 
@@ -32,34 +43,52 @@ class FetchLinksCommand extends ApplicationAwareCommand
     {
 
         $resource = $input->getOption('resource');
+        $resourceOwners = $this->app['api_consumer.config']['resource_owner'];
+        $availableResourceOwners = implode(', ', array_keys($resourceOwners));
 
-        if (!isset($this->app['api_consumer.config']['fetcher'][$resource])) {
-            $output->writeln(
-                   sprintf(
-                       'Fetcher: %s not found',
-                       $resource
-                   )
-            );
+        if (!$resource) {
+            $output->writeln(sprintf('Resource owner is needed, available resource owners: %s.', $availableResourceOwners));
+            return;
+        }
+
+        if (!isset($resourceOwners[$resource])) {
+            $output->writeln(sprintf('Resource ownner %s not found, available resource owners: %s.', $resource, $availableResourceOwners));
             return;
         }
 
         $userProvider = $this->app['api_consumer.user_provider'];
-        $users = $userProvider->getUsersByResource($this->app['api_consumer.config']['fetcher'][$resource]['resourceOwner']);
+        /* @var $userProvider DBUserProvider */
+        $users = $userProvider->getUsersByResource($resource);
 
         /** @var FetcherService $fetcher */
         $fetcher = $this->app['api_consumer.fetcher'];
 
+        if ($input->getOption('debug')) {
+            $verbosityLevelMap = array(
+                LogLevel::NOTICE => OutputInterface::VERBOSITY_NORMAL,
+                LogLevel::INFO => OutputInterface::VERBOSITY_NORMAL,
+            );
+            $logger = new ConsoleLogger($output, $verbosityLevelMap);
+            $fetcher->setLogger($logger);
+
+            $fetchLinksSubscriber = new FetchLinksSubscriber($output);
+            $dispatcher = $this->app['dispatcher'];
+            /* @var $dispatcher EventDispatcher */
+            $dispatcher->addSubscriber($fetchLinksSubscriber);
+        }
+
         foreach ($users as $user) {
             try {
+
                 $fetcher->fetch($user['id'], $resource);
-                $output->writeln(sprintf('Fetched links for user %s from resource %s', $user['id'], $resource));
 
             } catch (\Exception $e) {
                 $output->writeln(
-                       sprintf(
-                           'Error fetching links for user %s with message: ' . $e->getMessage(),
-                           $user['id']
-                       )
+                    sprintf(
+                        'Error fetching links for user %s with message: %s',
+                        $user['id'],
+                        $e->getMessage()
+                    )
                 );
                 continue;
             }
