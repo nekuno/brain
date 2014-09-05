@@ -30,13 +30,15 @@ class DataController
         $dataStatus = $dataStatusRepository->findBy($criteria);
 
         if (null === $dataStatus) {
-            return $app->json(array(), 404);
+            return $app->json(null, 404);
         }
 
         $responseData = array();
-
         foreach ($dataStatus as $row) {
-            $responseData[$row->getUserId()][$row->getResourceOwner()] = array('fetched' => $row->getFetched(), 'processed' => $row->getProcessed());
+            $responseData[$row->getResourceOwner()] = array(
+                'fetched' => $row->getFetched(),
+                'processed' => $row->getProcessed()
+            );
         }
 
         return $app->json($responseData, 200);
