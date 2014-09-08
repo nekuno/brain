@@ -15,6 +15,11 @@ $app['users.content.model'] = function ($app) {
     return new \Model\User\ContentPaginatedModel($app['neo4j.client']);
 };
 
+$app['users.content.tag.model'] = function ($app) {
+
+    return new \Model\User\ContentTagModel($app['neo4j.client']);
+};
+
 $app['users.matching.model'] = function ($app) {
 
     return new \Model\User\MatchingModel($app['neo4j.client'], $app['users.content.model'], $app['users.answer.model']);

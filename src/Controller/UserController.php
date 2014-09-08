@@ -143,7 +143,9 @@ class UserController
 
     public function getUserContentAction(Request $request, Application $app)
     {
-        $id = $request->get('id');
+        $id   = $request->get('id');
+        $tag  = $request->get('tag', null);
+        $type = $request->get('type', null);
 
         if (null === $id) {
             return $app->json(array(), 400);
@@ -154,11 +156,49 @@ class UserController
 
         $filters = array('id' => $id);
 
+        if ($tag) {
+            $filters['tag'] = urldecode($tag);
+        }
+
+        if ($type) {
+            $filters['type'] = urldecode($type);
+        }
+
         /** @var $model \Model\User\ContentPaginatorModel  */
         $model = $app['users.content.model'];
 
         try {
             $result = $paginator->paginate($filters, $model, $request);
+        } catch (\Exception $e) {
+            if ($app['env'] == 'dev') {
+                throw $e;
+            }
+
+            return $app->json(array(), 500);
+        }
+
+        return $app->json($result, !empty($result) ? 201 : 200);
+    }
+
+    public function getUserContentTagsAction(Request $request, Application $app)
+    {
+        $id     = $request->get('id');
+        $search = $request->get('search', '');
+        $limit  = $request->get('limit', 0);
+
+        if (null === $id) {
+            return $app->json(array(), 400);
+        }
+
+        if ($search) {
+            $search = urldecode($search);
+        }
+
+        /** @var $model \Model\User\ContentTagModel  */
+        $model = $app['users.content.tag.model'];
+
+        try {
+            $result = $model->getContentTags($id, $search, $limit);
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;

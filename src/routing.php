@@ -12,6 +12,8 @@ $app->get('/users/{id1}/matching/{id2}', 'users.controller:getMatchingAction')
 
 $app->get('/users/{id}/content', 'users.controller:getUserContentAction');
 
+$app->get('/users/{id}/content/tags', 'users.controller:getUserContentTagsAction');
+
 $app->get('/users/{id}/recommendations/users', 'users.controller:getUserRecommendationAction')
     ->value('type', 'answers');
 
