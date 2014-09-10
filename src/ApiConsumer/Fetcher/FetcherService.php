@@ -121,8 +121,8 @@ class FetcherService implements LoggerAwareInterface
                     foreach ($links as $key => $link) {
                         try {
                             $links[$key] = $this->linkProcessor->process($link);
-                        	$event['link'] = $link;
-                        	$this->dispatcher->dispatch(\AppEvents::PROCESS_LINK, new LinkEvent($event));
+                            $event['link'] = $link;
+                            $this->dispatcher->dispatch(\AppEvents::PROCESS_LINK, new LinkEvent($event));
                         } catch (\Exception $e) {
                             $this->logger->error(
                                 sprintf(
@@ -142,15 +142,6 @@ class FetcherService implements LoggerAwareInterface
 
                     $event = new StatusEvent($user, $resourceOwner, 'process', true);
                     $this->dispatcher->dispatch(\StatusEvents::USER_DATA_PROCESS_FINISH, $event);
-
-                    // Dispatch event for enqueue new matching re-calculate task
-                    $data = array(
-                        'userId' => $user['id'],
-                        'service' => $fetcher,
-                        'type' => 'process_finished',
-                    );
-                    $event = new MatchingEvent($data);
-                    $this->dispatcher->dispatch(\AppEvents::PROCESS_FINISH, $event);
                 }
             }
         } catch (\Exception $e) {
