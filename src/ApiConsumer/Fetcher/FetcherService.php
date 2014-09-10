@@ -59,8 +59,7 @@ class FetcherService implements LoggerAwareInterface
         FetcherFactory $fetcherFactory,
         EventDispatcher $dispatcher,
         array $options
-    )
-    {
+    ) {
 
         $this->userProvider = $userProvider;
         $this->linkProcessor = $linkProcessor;
@@ -72,6 +71,7 @@ class FetcherService implements LoggerAwareInterface
 
     public function setLogger(LoggerInterface $logger)
     {
+
         $this->logger = $logger;
     }
 
@@ -119,10 +119,20 @@ class FetcherService implements LoggerAwareInterface
                     $this->dispatcher->dispatch(\AppEvents::PROCESS_LINKS, new LinksEvent($event));
 
                     foreach ($links as $key => $link) {
+                        try {
+                            $links[$key] = $this->linkProcessor->process($link);
+                        	$event['link'] = $link;
+                        	$this->dispatcher->dispatch(\AppEvents::PROCESS_LINK, new LinkEvent($event));
+                        } catch (\Exception $e) {
+                            $this->logger->error(
+                                sprintf(
+                                    'Fetcher: Error processing link %s from resource %s',
+                                    $link['url'],
+                                    $resourceOwner
+                                )
+                            );
+                        }
 
-                        $links[$key] = $this->linkProcessor->process($link);
-                        $event['link'] = $link;
-                        $this->dispatcher->dispatch(\AppEvents::PROCESS_LINK, new LinkEvent($event));
                     }
 
                     $this->storage->storeLinks($user['id'], $links);
@@ -146,7 +156,7 @@ class FetcherService implements LoggerAwareInterface
         } catch (\Exception $e) {
             throw new \Exception(
                 sprintf(
-                    'Error fetching %s for user %d. Message: %s on file %s in line %d',
+                    'Fetcher: Error fetching %s for user %d. Message: %s on file %s in line %d',
                     ucfirst($resourceOwner),
                     $userId,
                     $e->getMessage(),

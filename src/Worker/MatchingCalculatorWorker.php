@@ -6,13 +6,20 @@ namespace Worker;
 use Model\User\MatchingModel;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Message\AMQPMessage;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerInterface;
 
 /**
  * Class MatchingCalculatorWorker
  * @package Worker
  */
-class MatchingCalculatorWorker implements RabbitMQConsumerInterface
+class MatchingCalculatorWorker implements RabbitMQConsumerInterface, LoggerAwareInterface
 {
+
+    /**
+     * @var LoggerInterface
+     */
+    protected $logger;
 
     /**
      * @var AMQPChannel
@@ -62,13 +69,39 @@ class MatchingCalculatorWorker implements RabbitMQConsumerInterface
 
         switch ($eventType) {
             case 'process_finished':
-                $this->model->recalculateMatchingByContentOfUserWhenNewContentIsAdded($data['userId']);
+                try {
+                    $this->model->recalculateMatchingByContentOfUserWhenNewContentIsAdded($data['userId']);
+                } catch (\Exception $e) {
+                    $this->logger->debug(
+                        sprintf(
+                            'Worker: Error calculating matching for user %d with message %s on file %s, line %d',
+                            $data['userId'],
+                            $e->getMessage(),
+                            $e->getFile(),
+                            $e->getLine()
+                        )
+                    );
+                }
+
                 break;
             case 'question_answered':
-                $this->model->recalculateMatchingOfUserByAnswersWhenNewQuestionsAreAnswered(
-                    $data['userId'],
-                    array($data['questionId'])
-                );
+                try {
+
+                    $this->model->recalculateMatchingOfUserByAnswersWhenNewQuestionsAreAnswered(
+                        $data['userId'],
+                        array($data['questionId'])
+                    );
+                } catch (\Exception $e) {
+                    $this->logger->debug(
+                        sprintf(
+                            'Worker: Error calculating matching for user %d with message %s on file %s, line %d',
+                            $data['userId'],
+                            $e->getMessage(),
+                            $e->getFile(),
+                            $e->getLine()
+                        )
+                    );
+                }
                 break;
             case 'content_rated':
 
@@ -79,4 +112,15 @@ class MatchingCalculatorWorker implements RabbitMQConsumerInterface
         $message->delivery_info['channel']->basic_ack($message->delivery_info['delivery_tag']);
     }
 
+    /**
+     * Sets a logger instance on the object
+     *
+     * @param LoggerInterface $logger
+     * @return null
+     */
+    public function setLogger(LoggerInterface $logger)
+    {
+
+        $this->logger = $logger;
+    }
 }

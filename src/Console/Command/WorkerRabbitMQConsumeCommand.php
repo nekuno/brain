@@ -60,6 +60,7 @@ class WorkerRabbitMQConsumeCommand extends ApplicationAwareCommand
                 /** @var AMQPChannel $channel */
                 $channel = $connection->channel();
                 $worker = new LinkProcessorWorker($channel, $fetcher, $userProvider);
+                $worker->setLogger($this->app['monolog']);
                 $worker->consume();
                 $channel->close();
                 break;
@@ -67,6 +68,7 @@ class WorkerRabbitMQConsumeCommand extends ApplicationAwareCommand
                 /** @var AMQPChannel $channel */
                 $channel = $connection->channel();
                 $worker = new MatchingCalculatorWorker($channel, $this->app['users.matching.model']);
+                $worker->setLogger($this->app['monolog']);
                 $worker->consume();
                 $channel->close();
                 break;

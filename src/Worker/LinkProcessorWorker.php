@@ -7,13 +7,20 @@ use ApiConsumer\Auth\UserProviderInterface;
 use ApiConsumer\Fetcher\FetcherService;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Message\AMQPMessage;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerInterface;
 
 /**
  * Class LinkProcessorWorker
  * @package Worker
  */
-class LinkProcessorWorker implements RabbitMQConsumerInterface
+class LinkProcessorWorker implements RabbitMQConsumerInterface, LoggerAwareInterface
 {
+
+    /**
+     * @var LoggerInterface
+     */
+    protected $logger;
 
     /**
      * @var AMQPChannel
@@ -95,8 +102,30 @@ class LinkProcessorWorker implements RabbitMQConsumerInterface
             // TODO: handle this
         }
 
-        $this->fetcherService->fetch($userId, $resourceOwner);
+        try {
+            $this->fetcherService->fetch($userId, $resourceOwner);
+            $message->delivery_info['channel']->basic_ack($message->delivery_info['delivery_tag']);
+        } catch (\Exception $e) {
+            $this->logger->debug(
+                sprintf(
+                    'Worker: Error fetching feed for user %d and resource %s with message: %s',
+                    $user['id'],
+                    $resourceOwner,
+                    $e->getMessage()
+                )
+            );
+        }
+    }
 
-        $message->delivery_info['channel']->basic_ack($message->delivery_info['delivery_tag']);
+    /**
+     * Sets a logger instance on the object
+     *
+     * @param LoggerInterface $logger
+     * @return null
+     */
+    public function setLogger(LoggerInterface $logger)
+    {
+
+        $this->logger = $logger;
     }
 }
