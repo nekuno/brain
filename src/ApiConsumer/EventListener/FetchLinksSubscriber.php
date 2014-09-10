@@ -5,7 +5,6 @@ namespace ApiConsumer\EventListener;
 
 use ApiConsumer\Event\LinkEvent;
 use ApiConsumer\Event\LinksEvent;
-use ApiConsumer\Event\MatchingEvent;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -27,9 +26,9 @@ class FetchLinksSubscriber implements EventSubscriberInterface
      */
     protected $progress;
 
-
     public function __construct(OutputInterface $output)
     {
+
         $this->output = $output;
     }
 
@@ -45,19 +44,29 @@ class FetchLinksSubscriber implements EventSubscriberInterface
 
     public function onProcessLinks(LinksEvent $event)
     {
+
         $data = $event->getData();
-        $this->output->writeln(sprintf('Processing links for user %s from resource owner %s with fetcher %s', $data['userId'], $data['resourceOwner'], $data['fetcher']));
+        $this->output->writeln(
+            sprintf(
+                'Processing links for user %s from resource owner %s with fetcher %s',
+                $data['userId'],
+                $data['resourceOwner'],
+                $data['fetcher']
+            )
+        );
         $this->progress = new ProgressBar($this->output, $data['links']);
         $this->progress->start();
     }
 
     public function onProcessLink(LinkEvent $event)
     {
+
         $this->progress->advance();
     }
 
-    public function onProcessFinish(MatchingEvent $event)
+    public function onProcessFinish()
     {
+
         $this->progress->finish();
         $this->output->writeln('');
     }
