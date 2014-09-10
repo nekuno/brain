@@ -106,7 +106,7 @@ class LinkProcessorWorker implements RabbitMQConsumerInterface, LoggerAwareInter
             $this->fetcherService->fetch($userId, $resourceOwner);
             $message->delivery_info['channel']->basic_ack($message->delivery_info['delivery_tag']);
         } catch (\Exception $e) {
-            $this->logger->debug(
+            $this->logger->error(
                 sprintf(
                     'Worker: Error fetching feed for user %d and resource %s with message: %s',
                     $user['id'],
@@ -114,6 +114,7 @@ class LinkProcessorWorker implements RabbitMQConsumerInterface, LoggerAwareInter
                     $e->getMessage()
                 )
             );
+            return;
         }
     }
 
