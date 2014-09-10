@@ -12,7 +12,7 @@ class StatusEvent extends Event
 
     protected $resourceOwner;
 
-    public function __construct($user, $resourceOwner, $step, $status)
+    public function __construct($user, $resourceOwner)
     {
 
         $this->user = $user;
