@@ -27,7 +27,7 @@ $app['users.matching.model'] = function ($app) {
 
 $app['users.recommendation.users.model'] = function ($app) {
 
-    return new \Model\User\Recommendation\UserRecommendationModel($app['neo4j.client']);
+    return new \Model\User\Recommendation\UserRecommendationModel($app['neo4j.client'], $app['users.matching.model']);
 };
 
 $app['users.recommendation.content.model'] = function ($app) {

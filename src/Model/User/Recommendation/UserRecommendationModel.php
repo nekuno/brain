@@ -14,13 +14,19 @@ class UserRecommendationModel
      */
     protected $client;
 
+    /**
+     * @var \Model\User\MatchingModel
+     */
+    protected $matchingModel;
 
     /**
      * @param \Everyman\Neo4j\Client $client
+     * @param \Model\User\MatchingModel $matchingModel
      */
-    public function __construct(Client $client)
+    public function __construct(Client $client, MatchingModel $matchingModel)
     {
         $this->client = $client;
+        $this->matchingModel = $matchingModel;
     }
 
     /**
@@ -113,12 +119,15 @@ class UserRecommendationModel
 
         $response = array();
         foreach ($topUsersResult as $row)  {
+            $matching = $this->matchingModel->applyMatchingBasedOnContentCorrectionFactor($row['matchings_content']);
             $user    = array(
                 'id' => $row['ids'],
-                'matching' => $row['matchings_content'],
+                'matching' => $matching,
             );
             $response[] = $user;
         }
+
+
 
         return $response;
     }

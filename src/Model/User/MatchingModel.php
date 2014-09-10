@@ -148,6 +148,17 @@ class MatchingModel
 
     }
 
+    public function applyMatchingBasedOnContentCorrectionFactor($matching)
+    {
+        if ($matching != 0) {
+            $maxMatching = $this->getMaxMatchingBasedOnContent();
+
+            $matching /= $maxMatching;
+        }
+
+        return $matching;
+    }
+
     /**
      * @param $id1
      * @param $id2
@@ -260,11 +271,7 @@ class MatchingModel
             $response['matching'] = 0;
         }
 
-        if ($response['matching'] != 0) {
-            $maxMatching = $this->getMaxMatchingBasedOnContent();
-
-            $response['matching'] /= $maxMatching;
-        }
+        $response['matching'] = $this->applyMatchingBasedOnContentCorrectionFactor($response['matching']);
 
         return $response;
     }
