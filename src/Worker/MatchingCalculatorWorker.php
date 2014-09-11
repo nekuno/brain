@@ -88,8 +88,8 @@ class MatchingCalculatorWorker implements RabbitMQConsumerInterface, LoggerAware
                 try {
 
                     $this->model->recalculateMatchingOfUserByAnswersWhenNewQuestionsAreAnswered(
-                        $data['userId'],
-                        array($data['questionId'])
+                        $data['user_id'],
+                        array($data['question_id'])
                     );
                 } catch (\Exception $e) {
                     $this->logger->debug(
