@@ -75,7 +75,7 @@ class OAuthTokenSubscriber implements EventSubscriberInterface
 
         $channel = $this->amqp->channel();
 
-        $exchangeName = 'social.notification.direct';
+        $exchangeName = 'social.direct';
         $exchangeType = 'direct';
         $queueName = 'social.notification';
         $routing_key = 'social.notification.token_expire';

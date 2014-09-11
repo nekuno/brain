@@ -12,6 +12,8 @@ $app->get('/users/{id1}/matching/{id2}', 'users.controller:getMatchingAction')
 
 $app->get('/users/{id}/content', 'users.controller:getUserContentAction');
 
+$app->get('/users/{id}/content/tags', 'users.controller:getUserContentTagsAction');
+
 $app->get('/users/{id}/recommendations/users', 'users.controller:getUserRecommendationAction')
     ->value('type', 'answers');
 
@@ -24,4 +26,10 @@ $app->post('/questions', 'questions.controller:addAction');
 
 // Content routes
 $app->post('/add/links', 'fetch.controller:addLinkAction');
-$app->get('/fetch/links', 'fetch.controller:fetchLinksAction')->value('userId', null)->value('resource', null);
+$app->get('/fetch/links', 'fetch.controller:fetchLinksAction')
+    ->value('userId', null)
+    ->value('resource', null);
+
+// Status controller
+$app->get('/users/{userId}/data/status', 'users.data.controller:getStatusAction')
+    ->value('resourceOwner', null);

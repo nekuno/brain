@@ -1,20 +1,21 @@
 <?php
 
+use ApiConsumer\EventListener\OAuthTokenSubscriber;
 use Dflydev\Silex\Provider\DoctrineOrm\DoctrineOrmServiceProvider;
+use EventListener\StatusSubscriber;
 use Provider\AMQPServiceProvider;
+use Provider\ApiConsumerServiceProvider;
 use Provider\GuzzleServiceProvider;
 use Provider\LinkProcessorServiceProvider;
 use Provider\Neo4jPHPServiceProvider;
 use Provider\PaginatorServiceProvider;
-use Provider\ApiConsumerServiceProvider;
-use ApiConsumer\EventListener\OAuthTokenSubscriber;
 use Silex\Application;
 use Silex\Provider\DoctrineServiceProvider;
+use Silex\Provider\MonologServiceProvider;
 use Silex\Provider\ServiceControllerServiceProvider;
 use Silex\Provider\SwiftmailerServiceProvider;
 use Silex\Provider\UrlGeneratorServiceProvider;
 use Silex\Provider\ValidatorServiceProvider;
-use Silex\Provider\MonologServiceProvider;
 
 $app = new Application();
 
@@ -44,14 +45,23 @@ $replacements = array_merge($app['params'], array('app_root_dir' => __DIR__));
 $app->register(new Igorw\Silex\ConfigServiceProvider(__DIR__ . "/../config/config.yml", $replacements));
 $app->register(new Igorw\Silex\ConfigServiceProvider(__DIR__ . "/../config/config_{$app['env']}.yml", $replacements));
 
-// Listeners
+
+/**
+ * Event system configuration. Initialize the listeners and subscribers below.
+ */
 
 /** @var \Symfony\Component\EventDispatcher\EventDispatcher $dispatcher */
 $dispatcher = $app['dispatcher'];
-$tokenRefreshedSubscriber = new OAuthTokenSubscriber($app['api_consumer.user_provider'], $app['mailer'], $app['monolog'], $app['amqp']);
+
+$tokenRefreshedSubscriber = new OAuthTokenSubscriber(
+    $app['api_consumer.user_provider'],
+    $app['mailer'],
+    $app['monolog'],
+    $app['amqp']
+);
 $dispatcher->addSubscriber($tokenRefreshedSubscriber);
 
-$linkProcessSubscriber = new \ApiConsumer\EventListener\LinkProcessSubscriber($app['amqp']);
-$dispatcher->addSubscriber($linkProcessSubscriber);
+$statusSubscriber = new StatusSubscriber($app['orm.ems']['mysql_brain'], $app['amqp']);
+$dispatcher->addSubscriber($statusSubscriber);
 
 return $app;

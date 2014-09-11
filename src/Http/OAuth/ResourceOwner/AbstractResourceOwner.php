@@ -124,12 +124,12 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
     {
         if (isset($token['expireTime']) && ($token['expireTime'] <= time() && $token['expireTime'] != 0)) {
 
-
             try {
                 $data = $this->refreshAccessToken($token['refreshToken']);
             } catch (\Exception $e) {
                 // The resource owner not implements the method refreshAccessToken
-                $this->notifyUserByEmail($token);
+                $event = new OAuthTokenEvent($token);
+                $this->dispatcher->dispatch(AppEvents::TOKEN_EXPIRED, $event);
                 throw $e;
             }
 
@@ -217,14 +217,4 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
             'api_key',
         ));
     }
-
-    /**
-     * @param array $token
-     */
-    protected function notifyUserByEmail(array $token)
-    {
-        $event = new OAuthTokenEvent($token);
-        $this->dispatcher->dispatch(AppEvents::TOKEN_EXPIRED, $event);
-    }
-
 }

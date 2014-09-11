@@ -7,8 +7,9 @@ use Everyman\Neo4j\Cypher\Query;
 
 class MatchingModel
 {
-    const PREFERRED_MATCHING_CONTENT='content';
-    const PREFERRED_MATCHING_ANSWERS='answers';
+
+    const PREFERRED_MATCHING_CONTENT = 'content';
+    const PREFERRED_MATCHING_ANSWERS = 'answers';
 
     /**
      * @var \Everyman\Neo4j\Client
@@ -32,6 +33,7 @@ class MatchingModel
      */
     public function __construct(Client $client, ContentPaginatedModel $contentPaginatedModel, AnswerModel $answerModel)
     {
+
         $this->client = $client;
         $this->contentPaginatedModel = $contentPaginatedModel;
         $this->answerModel = $answerModel;
@@ -39,6 +41,7 @@ class MatchingModel
 
     public function getPreferredMatchingType($id)
     {
+
         $numberOfSharedContent = $this->contentPaginatedModel->countTotal(array('id' => $id));
         $numberOfAnsweredQuestions = $this->answerModel->countTotal(array('id' => $id));
 
@@ -55,163 +58,14 @@ class MatchingModel
      * @return array
      * @throws \Exception
      */
-    public function getMatchingBetweenTwoUsersBasedOnAnswers($id1, $id2)
-    {
-        $response = array();
-
-        //Check that both users have at least one question in common
-        $check =
-            "MATCH
-                (u1:User {qnoow_id: " . $id1 . "}),
-                (u2:User {qnoow_id: " . $id2 . "})
-            OPTIONAL MATCH
-                (u1)-[:RATES]->(commonquestion:Question)<-[:RATES]-(u2)
-            RETURN
-                count(distinct commonquestion) AS n;";
-
-        //Create the Neo4j query object
-        $checkQuery = new Query(
-            $this->client,
-            $check
-        );
-
-        try {
-            $checkResult = $checkQuery->getResultSet();
-        } catch (\Exception $e) {
-            throw $e;
-        }
-
-        $checkValue = 0;
-        foreach ($checkResult as $checkRow) {
-            $checkValue = $checkRow['n'];
-        }
-
-        if ($checkValue > 0) {
-
-            //Construct the query string
-            $query =
-                "MATCH
-                    (u1:User {qnoow_id: " . $id1 . "}),
-                    (u2:User {qnoow_id: " . $id2 . "})
-                OPTIONAL MATCH
-                    (u1)-[:ACCEPTS]->(commonanswer1:Answer)<-[:ANSWERS]-(u2),
-                    (commonanswer1)-[:IS_ANSWER_OF]->(commonquestion1)<-[r1:RATES]-(u1)
-                OPTIONAL MATCH
-                    (u2)-[:ACCEPTS]->(commonanswer2:Answer)<-[:ANSWERS]-(u1),
-                    (commonanswer2)-[:IS_ANSWER_OF]->(commonquestion2)<-[r2:RATES]-(u2)
-                OPTIONAL MATCH
-                    (u1)-[r3:RATES]->(:Question)<-[r4:RATES]-(u2)
-                WITH
-                    [n1 IN collect(distinct r1) |n1.rating] AS little1_elems,
-                    [n2 IN collect(distinct r2) |n2.rating] AS little2_elems,
-                    [n3 IN collect(distinct r3) |n3.rating] AS CIT1_elems,
-                    [n4 IN collect(distinct r4) |n4.rating] AS CIT2_elems
-                WITH
-                    reduce(little1 = 0, n1 IN little1_elems | little1 + n1) AS little1,
-                    reduce(little2 = 0, n2 IN little2_elems | little2 + n2) AS little2,
-                    reduce(CIT1 = 0, n3 IN CIT1_elems | CIT1 + n3) AS CIT1,
-                    reduce(CIT1 = 0, n4 IN CIT2_elems | CIT1 + n4) AS CIT2
-                WITH
-                    sqrt( (little1*1.0/CIT1) * (little2*1.0/CIT2) ) AS match_user1_user2
-                MATCH
-                    (u1:User {qnoow_id: " . $id1 . "}),
-                    (u2:User {qnoow_id: " . $id2 . "})
-                CREATE UNIQUE
-                    (u1)-[m:MATCHES]-(u2)
-                SET
-                    m.matching_questions = match_user1_user2,
-                    m.timestamp_questions = timestamp()
-                RETURN
-                    m;";
-
-            //Create the Neo4j query object
-            $neoQuery = new Query(
-                $this->client,
-                $query
-            );
-
-            //Execute query and get the return
-            try {
-                $result = $neoQuery->getResultSet();
-            } catch (\Exception $e) {
-                throw $e;
-            }
-
-            foreach ($result as $row) {
-                $response['matching'] = $row['m']->getProperty('matching_questions');
-            }
-        } else {
-            $response['matching'] = 0;
-        }
-
-        return $response;
-
-    }
-
-    /**
-     * @param $id1
-     * @param $id2
-     * @return array
-     * @throws \Exception
-     */
-    public function hasContentInCommon($id1, $id2)
-    {
-        $response = array();
-
-        $params = array(
-            'id1' => (int) $id1,
-            'id2' => (int) $id2
-        );
-
-        //Check that both users have at least one url in common
-        $check =
-            "MATCH
-                (u1:User {qnoow_id: {id1}}),
-                (u2:User {qnoow_id: {id2}})
-            OPTIONAL MATCH
-                (u1)-[:LIKES]->(l:Link)<-[:LIKES]-(u2)
-            OPTIONAL MATCH
-                (u1)-[:DISLIKES]->(d:Link)<-[:DISLIKES]-(u2)
-            RETURN
-                count(l) AS l,
-                count(d) AS d;";
-
-        //Create the Neo4j query object
-        $checkQuery = new Query(
-            $this->client,
-            $check,
-            $params
-        );
-
-        try {
-            $checkResult = $checkQuery->getResultSet();
-        } catch (\Exception $e) {
-            throw $e;
-        }
-
-        $checkValueLikes    = 0;
-        $checkValueDislikes = 0;
-        foreach ($checkResult as $checkRow) {
-            $checkValueLikes    = $checkRow['l'];
-            $checkValueDislikes = $checkRow['d'];
-        }
-
-        return ($checkValueLikes > 0) || ($checkValueDislikes > 0);
-    }
-
-    /**
-     * @param $id1
-     * @param $id2
-     * @return array
-     * @throws \Exception
-     */
     public function getMatchingBetweenTwoUsersBasedOnSharedContent($id1, $id2)
     {
+
         $response = array();
 
         $params = array(
-            'id1' => (int) $id1,
-            'id2' => (int) $id2
+            'id1' => (int)$id1,
+            'id2' => (int)$id2
         );
 
         if ($this->hasContentInCommon($id1, $id2)) {
@@ -242,15 +96,15 @@ class MatchingModel
             $matching = null;
             $matchingUpdatedMillis = 0;
             foreach ($matchingResult as $match) {
-                if ($match['m']){
+                if ($match['m']) {
                     $matching = $match['m']->getProperty('matching_content');
                     $matchingUpdatedMillis = $match['m']->getProperty('timestamp_content');
                 }
             }
 
-            $response['matching'] = $matching?$matching:'TBA';
+            $response['matching'] = $matching ? $matching : 'TBA';
 
-            $currentTimeInMillis = time()*1000;
+            $currentTimeInMillis = time() * 1000;
             $lastUpdatePlusOneDay = $matchingUpdatedMillis + (1000 * 60 * 60 * 24);
             if ($response['matching'] === 'TBA' || $lastUpdatePlusOneDay < $currentTimeInMillis) {
                 //TODO: queued the calculus
@@ -260,11 +114,7 @@ class MatchingModel
             $response['matching'] = 0;
         }
 
-        if ($response['matching'] != 0) {
-            $maxMatching = $this->getMaxMatchingBasedOnContent();
-
-            $response['matching'] /= $maxMatching;
-        }
+        $response['matching'] = $this->applyMatchingBasedOnContentCorrectionFactor($response['matching']);
 
         return $response;
     }
@@ -275,11 +125,64 @@ class MatchingModel
      * @return array
      * @throws \Exception
      */
+    public function hasContentInCommon($id1, $id2)
+    {
+
+        $response = array();
+
+        $params = array(
+            'id1' => (int)$id1,
+            'id2' => (int)$id2
+        );
+
+        //Check that both users have at least one url in common
+        $check =
+            "MATCH
+                (u1:User {qnoow_id: {id1}}),
+                (u2:User {qnoow_id: {id2}})
+            OPTIONAL MATCH
+                (u1)-[:LIKES]->(l:Link)<-[:LIKES]-(u2)
+            OPTIONAL MATCH
+                (u1)-[:DISLIKES]->(d:Link)<-[:DISLIKES]-(u2)
+            RETURN
+                count(l) AS l,
+                count(d) AS d;";
+
+        //Create the Neo4j query object
+        $checkQuery = new Query(
+            $this->client,
+            $check,
+            $params
+        );
+
+        try {
+            $checkResult = $checkQuery->getResultSet();
+        } catch (\Exception $e) {
+            throw $e;
+        }
+
+        $checkValueLikes = 0;
+        $checkValueDislikes = 0;
+        foreach ($checkResult as $checkRow) {
+            $checkValueLikes = $checkRow['l'];
+            $checkValueDislikes = $checkRow['d'];
+        }
+
+        return ($checkValueLikes > 0) || ($checkValueDislikes > 0);
+    }
+
+    /**
+     * @param $id1
+     * @param $id2
+     * @return array
+     * @throws \Exception
+     */
     public function calculateMatchingBetweenTwoUsersBasedOnSharedContent($id1, $id2)
     {
+
         $params = array(
-            'id1' => (int) $id1,
-            'id2' => (int) $id2
+            'id1' => (int)$id1,
+            'id2' => (int)$id2
         );
 
         if ($this->hasContentInCommon($id1, $id2)) {
@@ -391,11 +294,24 @@ class MatchingModel
         return $matchingValue;
     }
 
+    public function applyMatchingBasedOnContentCorrectionFactor($matching)
+    {
+
+        if ($matching != 0) {
+            $maxMatching = $this->getMaxMatchingBasedOnContent();
+
+            $matching /= $maxMatching;
+        }
+
+        return $matching;
+    }
+
     /**
      * Get the maximum matching based on content
      */
     public function getMaxMatchingBasedOnContent()
     {
+
         $maxMatching = 0;
 
         $query = "
@@ -432,36 +348,37 @@ class MatchingModel
         return $maxMatching;
     }
 
-    public function recalculateMatchingOfUserByAnswersWhenNewQuestionsAreAnswered($id, array $questions)
+    /**
+     * @param $userId
+     * @param array $questions
+     * @throws \Exception
+     */
+    public function recalculateMatchingOfUserByAnswersWhenNewQuestionsAreAnswered($userId, array $questions)
     {
 
-        $query = "
+        $data = array(
+            'questions' => implode(',', $questions),
+            'userId' => $userId,
+        );
+
+        $template = "
         MATCH
         (u:User)-[:RATES]->(q:Question)
         WHERE
-        q.qnoow_id IN [ ";
-
-        foreach ($questions as $q) {
-            $query .= $q . ",";
-        }
-
-        rtrim($query, ",");
-
-        $query .= " ]";
-
-        $query .= "
-        AND NOT u.qnoow_id = " . $id . "
+        q.qnoow_id IN [ { questions } ]
+        AND NOT u.qnoow_id = { userId }
         RETURN
         u.qnoow_id AS u;";
 
-        //Create the Neo4j query object
-        $neoQuery = new Query(
+        //Create the Neo4j template object
+        $query = new Query(
             $this->client,
-            $query
+            $template,
+            $data
         );
 
         try {
-            $result = $neoQuery->getResultSet();
+            $result = $query->getResultSet();
         } catch (\Exception $e) {
             throw $e;
         }
@@ -469,8 +386,108 @@ class MatchingModel
         //TODO: check that the execution and integration of this function actually works :/
         //TODO: enqueue the calculation of these matching instead of calculating them in a loop (launch workers?) I didn't do it myself because I don't really know how the queues work :(
         foreach ($result as $row) {
-            $this->getMatchingBetweenTwoUsersBasedOnAnswers($id, $row['u']);
+            $this->getMatchingBetweenTwoUsersBasedOnAnswers($userId, $row['u']);
         }
+    }
+
+    /**
+     * @param $id1
+     * @param $id2
+     * @return array
+     * @throws \Exception
+     */
+    public function getMatchingBetweenTwoUsersBasedOnAnswers($id1, $id2)
+    {
+
+        $response = array();
+
+        //Check that both users have at least one question in common
+        $check =
+            "MATCH
+                (u1:User {qnoow_id: " . $id1 . "}),
+                (u2:User {qnoow_id: " . $id2 . "})
+            OPTIONAL MATCH
+                (u1)-[:RATES]->(commonquestion:Question)<-[:RATES]-(u2)
+            RETURN
+                count(distinct commonquestion) AS n;";
+
+        //Create the Neo4j query object
+        $checkQuery = new Query(
+            $this->client,
+            $check
+        );
+
+        try {
+            $checkResult = $checkQuery->getResultSet();
+        } catch (\Exception $e) {
+            throw $e;
+        }
+
+        $checkValue = 0;
+        foreach ($checkResult as $checkRow) {
+            $checkValue = $checkRow['n'];
+        }
+
+        if ($checkValue > 0) {
+
+            //Construct the query string
+            $query =
+                "MATCH
+                    (u1:User {qnoow_id: " . $id1 . "}),
+                    (u2:User {qnoow_id: " . $id2 . "})
+                OPTIONAL MATCH
+                    (u1)-[:ACCEPTS]->(commonanswer1:Answer)<-[:ANSWERS]-(u2),
+                    (commonanswer1)-[:IS_ANSWER_OF]->(commonquestion1)<-[r1:RATES]-(u1)
+                OPTIONAL MATCH
+                    (u2)-[:ACCEPTS]->(commonanswer2:Answer)<-[:ANSWERS]-(u1),
+                    (commonanswer2)-[:IS_ANSWER_OF]->(commonquestion2)<-[r2:RATES]-(u2)
+                OPTIONAL MATCH
+                    (u1)-[r3:RATES]->(:Question)<-[r4:RATES]-(u2)
+                WITH
+                    [n1 IN collect(distinct r1) |n1.rating] AS little1_elems,
+                    [n2 IN collect(distinct r2) |n2.rating] AS little2_elems,
+                    [n3 IN collect(distinct r3) |n3.rating] AS CIT1_elems,
+                    [n4 IN collect(distinct r4) |n4.rating] AS CIT2_elems
+                WITH
+                    reduce(little1 = 0, n1 IN little1_elems | little1 + n1) AS little1,
+                    reduce(little2 = 0, n2 IN little2_elems | little2 + n2) AS little2,
+                    reduce(CIT1 = 0, n3 IN CIT1_elems | CIT1 + n3) AS CIT1,
+                    reduce(CIT1 = 0, n4 IN CIT2_elems | CIT1 + n4) AS CIT2
+                WITH
+                    sqrt( (little1*1.0/CIT1) * (little2*1.0/CIT2) ) AS match_user1_user2
+                MATCH
+                    (u1:User {qnoow_id: " . $id1 . "}),
+                    (u2:User {qnoow_id: " . $id2 . "})
+                CREATE UNIQUE
+                    (u1)-[m:MATCHES]-(u2)
+                SET
+                    m.matching_questions = match_user1_user2,
+                    m.timestamp_questions = timestamp()
+                RETURN
+                    m;";
+
+            //Create the Neo4j query object
+            $neoQuery = new Query(
+                $this->client,
+                $query
+            );
+
+            //Execute query and get the return
+            try {
+                $result = $neoQuery->getResultSet();
+            } catch (\Exception $e) {
+                throw $e;
+            }
+
+            foreach ($result as $row) {
+                $response['matching'] = $row['m']->getProperty('matching_questions');
+            }
+        } else {
+            $response['matching'] = 0;
+        }
+
+        return $response;
+
     }
 
     public function recalculateMatchingByContentOfUserWhenNewContentIsAdded($id)

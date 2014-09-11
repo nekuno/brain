@@ -40,17 +40,18 @@ abstract class BasicPaginationFetcher extends AbstractFetcher
     }
 
     /**
-     * @param null $paginationId
      * @return array
      */
-    protected function getLinksByPage($paginationId = null)
+    protected function getLinksByPage()
     {
+
+        $nextPaginationId = null;
 
         do {
             $query = $this->getQuery();
 
-            if ($paginationId) {
-                $query = array_merge($query, array($this->getPaginationField() => $paginationId));
+            if ($nextPaginationId) {
+                $query = array_merge($query, array($this->getPaginationField() => $nextPaginationId));
             }
 
             $response = $this->resourceOwner->authorizedHttpRequest($this->getUrl(), $query, $this->user);
