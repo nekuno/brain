@@ -172,19 +172,44 @@ class Fixtures {
 
     public function loadUsers($numberOfUsers)
     {
+        $userToCheck = array();
+        for ($i = 1; $i<=$numberOfUsers; $i++) {
+            $userToCheck[] = $i;
+        }
+        $queryUserToCheck = implode(',', $userToCheck);
+        $existingUsersQuery =
+            "
+            MATCH
+            (u:User)
+            WHERE
+            u.qnoow_id IN [" . $queryUserToCheck ."]
+            RETURN
+            distinct u.qnoow_id;";
+
+        $neo4jQuery = new Query(
+            $this->client,
+            $existingUsersQuery
+        );
+        $result = $neo4jQuery->getResultSet();
+
+        $existingUsers = array();
+        foreach ($result as $row) {
+            $existingUsers[] = $row['qnoow_id'];
+        }
 
         //Create queries in loop
         $userQuery = array();
-        for ($i = 1; $i<=$numberOfUsers; $i++)
-        {
-            $userQuery[] =
-            "CREATE (u:User {
-                status: 'active',
-                qnoow_id: " . $i . ",
-                username: 'user" . $i . "',
-                email: 'testuser" . $i . "@test.test'
-            })
-            RETURN u;";
+        for ($i = 1; $i<=$numberOfUsers; $i++) {
+            if (!in_array($i,$existingUsers)) {
+                $userQuery[] =
+                    "CREATE (u:User {
+                        status: 'active',
+                        qnoow_id: " . $i . ",
+                        username: 'user" . $i . "',
+                        email: 'testuser" . $i . "@test.test'
+                    })
+                    RETURN u;";
+            }
         }
 
         //Execute queries in loop
@@ -283,7 +308,7 @@ class Fixtures {
         "MATCH
             (l:Link {url: 'testLink" . $link . "'}),
             (t:Tag {name: 'testTag" . $tag . "'})
-        CREATE
+        CREATE UNIQUE
             (l)-[r:TAGGED]->(t)
         RETURN
             l, r, t
@@ -312,7 +337,7 @@ class Fixtures {
         "MATCH
             (l:Link {url: 'testLink" . $link . "'}),
             (u:User {qnoow_id: ". $user . "})
-        CREATE
+        CREATE UNIQUE
             (l)<-[r:LIKES]-(u)
         RETURN
             l, r, u
@@ -340,7 +365,7 @@ class Fixtures {
         "MATCH
             (l:Link {url: 'testLink" . $link . "'}),
             (u:User {qnoow_id: ". $user . "})
-        CREATE
+        CREATE UNIQUE
             (l)<-[r:DISLIKES]-(u)
         RETURN
             l, r, u
@@ -364,25 +389,51 @@ class Fixtures {
 
     public function loadQuestionsWithAnswers($numberOfQuestions, $numberOfAnswersPerQuestion)
     {
+        $questionToCheck = array();
+        for ($i = 1; $i<=$numberOfQuestions; $i++) {
+            $questionToCheck[] = $i;
+        }
+        $queryQuestionToCheck = implode(',', $questionToCheck);
+        $existingQuestionsQuery =
+            "
+            MATCH
+            (q:Question)
+            WHERE
+            q.qnoow_id IN [". $queryQuestionToCheck. "]
+            RETURN
+            distinct q.qnoow_id;";
+
+        $neo4jQuery = new Query(
+            $this->client,
+            $existingQuestionsQuery
+        );
+        $result = $neo4jQuery->getResultSet();
+
+        $existingQuestions = array();
+        foreach ($result as $row) {
+            $existingQuestions[] = $row['qnoow_id'];
+        }
+
         //Create queries in loop
         $questionsQuery = array();
-        for ($i = 1; $i<=$numberOfQuestions; $i++)
-        {
-            $questionsQueryString =
-            "CREATE
-                (q:Question {qnoow_id: " . $i . ", text: 'question " . $i . "'})
-            ";
+        for ($i = 1; $i<=$numberOfQuestions; $i++) {
+            if (!in_array($i,$existingQuestions)) {
+                $questionsQueryString =
+                "CREATE
+                    (q:Question {qnoow_id: " . $i . ", text: 'question " . $i . "'})
+                ";
 
-            for($j = 1; $j<=$numberOfAnswersPerQuestion; $j++)
-            {
-                $questionsQueryString .=
-                ", (:Answer {qnoow_id: " . $i . $j . ", text: 'answer " . $i . "-" . $j . "'})
-                -[:IS_ANSWER_OF]->(q)";
+                for($j = 1; $j<=$numberOfAnswersPerQuestion; $j++)
+                {
+                    $questionsQueryString .=
+                    ", (:Answer {qnoow_id: " . $i . $j . ", text: 'answer " . $i . "-" . $j . "'})
+                    -[:IS_ANSWER_OF]->(q)";
+                }
+
+                $questionsQueryString .= " RETURN q;";
+
+                $questionsQuery[] = $questionsQueryString;
             }
-
-            $questionsQueryString .= " RETURN q;";
-
-            $questionsQuery[] = $questionsQueryString;
         }
 
         //Execute queries in loop
@@ -411,7 +462,7 @@ class Fixtures {
         "MATCH
             (q:Question {qnoow_id: " . $question . "}),
             (u:User {qnoow_id: ". $user . "})
-        CREATE
+        CREATE UNIQUE
             (u)-[r:RATES {rating: " . $rating . "}]->(q)
         RETURN
             u, r, q
@@ -439,7 +490,7 @@ class Fixtures {
         "MATCH
             (a:Answer {qnoow_id: " . $answer . "}),
             (u:User {qnoow_id: ". $user . "})
-        CREATE
+        CREATE UNIQUE
             (u)-[r:ANSWERS]->(a)
         RETURN
             u, r, a
@@ -467,7 +518,7 @@ class Fixtures {
         "MATCH
             (a:Answer {qnoow_id: " . $answer . "}),
             (u:User {qnoow_id: ". $user . "})
-        CREATE
+        CREATE UNIQUE
             (u)-[r:ACCEPTS]->(a)
         RETURN
             u, r, a
