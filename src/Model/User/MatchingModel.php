@@ -98,9 +98,16 @@ class MatchingModel
             match_user1_user2
         ";
 
-        $queryDataArray = array('id1' => $id1, 'id2' => $id2);
+        $queryDataArray = array(
+            'id1' => $id1,
+            'id2' => $id2
+        );
 
-        $query = new Query($this->client, $queryString, $queryDataArray);
+        $query = new Query(
+            $this->client,
+            $queryString,
+            $queryDataArray
+        );
 
         try {
             $result = $query->getResultSet();
