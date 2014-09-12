@@ -59,60 +59,60 @@ class MatchingModel
     {
         $response = array();
 
-        //Check that both users have at least one question in common
-        $check =
-            "MATCH
-                (u1:User {qnoow_id: " . $id1 . "}),
-                (u2:User {qnoow_id: " . $id2 . "})
-            OPTIONAL MATCH
-                (u1)-[:RATES]->(commonquestion:Question)<-[:RATES]-(u2)
-            RETURN
-                count(distinct commonquestion) AS n;";
+        $queryString = "
+        MATCH
+            (u1:User),
+            (u2:User)
+        WHERE
+            u1.qnoow_id = {id1} AND
+            u2.qnoow_id = {id2}
+        OPTIONAL MATCH
+            (u1)-[:ACCEPTS]->(commonanswer1:Answer)<-[:ANSWERS]-(u2),
+            (commonanswer1)-[:IS_ANSWER_OF]->(commonquestion1)<-[r1:RATES]-(u1)
+        OPTIONAL MATCH
+            (u2)-[:ACCEPTS]->(commonanswer2:Answer)<-[:ANSWERS]-(u1),
+            (commonanswer2)-[:IS_ANSWER_OF]->(commonquestion2)<-[r2:RATES]-(u2)
+        OPTIONAL MATCH
+            (u1)-[r3:RATES]->(:Question)<-[r4:RATES]-(u2)
+        WITH
+            [n1 IN collect(distinct r1) |n1.rating] AS little1_elems,
+            [n2 IN collect(distinct r2) |n2.rating] AS little2_elems,
+            [n3 IN collect(distinct r3) |n3.rating] AS CIT1_elems,
+            [n4 IN collect(distinct r4) |n4.rating] AS CIT2_elems
+        WITH
+            tofloat( reduce(little1 = 0, n1 IN little1_elems | little1 + n1) ) AS little1,
+            tofloat( reduce(little2 = 0, n2 IN little2_elems | little2 + n2) ) AS little2,
+            tofloat( reduce(CIT1 = 0, n3 IN CIT1_elems | CIT1 + n3) ) AS CIT1,
+            tofloat( reduce(CIT1 = 0, n4 IN CIT2_elems | CIT1 + n4) ) AS CIT2
+        WITH
+        CASE
+        WHEN
+            CIT1 > 0 AND CIT2 > 0
+        THEN
+            sqrt( tofloat( little1/CIT1 ) * tofloat( little2/CIT2 ) )
+        ELSE
+            0
+        END
+        AS match_user1_user2
+        RETURN
+            match_user1_user2
+        ";
 
-        //Create the Neo4j query object
-        $checkQuery = new Query(
-            $this->client,
-            $check
-        );
+        $queryDataArray = array('id1' => $id1, 'id2' => $id2);
+
+        $query = new Query($this->client, $queryString, $queryDataArray);
 
         try {
-            $checkResult = $checkQuery->getResultSet();
+            $result = $query->getResultSet();
         } catch (\Exception $e) {
             throw $e;
         }
 
-        $checkValue = 0;
-        foreach ($checkResult as $checkRow) {
-            $checkValue = $checkRow['n'];
+        foreach($result as $row){
+            $response['matching'] = $row['match_user1_user2'];
         }
 
-        if ($checkValue > 0) {
-
-            //Construct the query string
-            $query =
-                "MATCH
-                    (u1:User {qnoow_id: " . $id1 . "}),
-                    (u2:User {qnoow_id: " . $id2 . "})
-                OPTIONAL MATCH
-                    (u1)-[:ACCEPTS]->(commonanswer1:Answer)<-[:ANSWERS]-(u2),
-                    (commonanswer1)-[:IS_ANSWER_OF]->(commonquestion1)<-[r1:RATES]-(u1)
-                OPTIONAL MATCH
-                    (u2)-[:ACCEPTS]->(commonanswer2:Answer)<-[:ANSWERS]-(u1),
-                    (commonanswer2)-[:IS_ANSWER_OF]->(commonquestion2)<-[r2:RATES]-(u2)
-                OPTIONAL MATCH
-                    (u1)-[r3:RATES]->(:Question)<-[r4:RATES]-(u2)
-                WITH
-                    [n1 IN collect(distinct r1) |n1.rating] AS little1_elems,
-                    [n2 IN collect(distinct r2) |n2.rating] AS little2_elems,
-                    [n3 IN collect(distinct r3) |n3.rating] AS CIT1_elems,
-                    [n4 IN collect(distinct r4) |n4.rating] AS CIT2_elems
-                WITH
-                    reduce(little1 = 0, n1 IN little1_elems | little1 + n1) AS little1,
-                    reduce(little2 = 0, n2 IN little2_elems | little2 + n2) AS little2,
-                    reduce(CIT1 = 0, n3 IN CIT1_elems | CIT1 + n3) AS CIT1,
-                    reduce(CIT1 = 0, n4 IN CIT2_elems | CIT1 + n4) AS CIT2
-                WITH
-                    sqrt( (little1*1.0/CIT1) * (little2*1.0/CIT2) ) AS match_user1_user2
+        /*
                 MATCH
                     (u1:User {qnoow_id: " . $id1 . "}),
                     (u2:User {qnoow_id: " . $id2 . "})
@@ -123,26 +123,7 @@ class MatchingModel
                     m.timestamp_questions = timestamp()
                 RETURN
                     m;";
-
-            //Create the Neo4j query object
-            $neoQuery = new Query(
-                $this->client,
-                $query
-            );
-
-            //Execute query and get the return
-            try {
-                $result = $neoQuery->getResultSet();
-            } catch (\Exception $e) {
-                throw $e;
-            }
-
-            foreach ($result as $row) {
-                $response['matching'] = $row['m']->getProperty('matching_questions');
-            }
-        } else {
-            $response['matching'] = 0;
-        }
+        */
 
         return $response;
 
