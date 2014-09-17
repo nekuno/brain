@@ -144,6 +144,7 @@ class UserController
     public function getUserContentAction(Request $request, Application $app)
     {
         $id   = $request->get('id');
+        $commonWithId  = $request->get('commonWithId', null);
         $tag  = $request->get('tag', null);
         $type = $request->get('type', null);
 
@@ -155,6 +156,10 @@ class UserController
         $paginator = $app['paginator'];
 
         $filters = array('id' => $id);
+
+        if ($commonWithId) {
+            $filters['commonWithId'] = (int)$commonWithId;
+        }
 
         if ($tag) {
             $filters['tag'] = urldecode($tag);

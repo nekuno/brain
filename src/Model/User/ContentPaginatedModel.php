@@ -71,6 +71,16 @@ class ContentPaginatedModel implements PaginatedInterface
             'limit' => (integer)$limit
         );
 
+        $commonQuery = '';
+        if (isset($filters['commonWithId'])) {
+            $commonQuery = "
+                MATCH
+                (u2)-[:LIKES|DISLIKES]->(content)
+                WHERE u2.qnoow_id = {id2}
+            ";
+            $params['id2'] = $filters['commonWithId'];
+        }
+
         $tagQuery = '';
         if (isset($filters['tag'])) {
             $tagQuery = "
@@ -93,6 +103,7 @@ class ContentPaginatedModel implements PaginatedInterface
             MATCH
             (u)-[r:LIKES|DISLIKES]->(content:" . $linkType .")
         ";
+        $query .= $commonQuery;
         $query .= $tagQuery;
         $query .= "
             OPTIONAL MATCH
@@ -160,6 +171,16 @@ class ContentPaginatedModel implements PaginatedInterface
             'UserId' => (integer)$id,
         );
 
+        $commonQuery = '';
+        if (isset($filters['commonWithId'])) {
+            $commonQuery = "
+                MATCH
+                (u2)-[:LIKES|DISLIKES]->(content)
+                WHERE u2.qnoow_id = {id2}
+            ";
+            $params['id2'] = $filters['commonWithId'];
+        }
+
         $tagQuery = '';
         if (isset($filters['tag'])) {
             $tagQuery = "
@@ -182,6 +203,7 @@ class ContentPaginatedModel implements PaginatedInterface
             MATCH
             (u)-[r:LIKES|DISLIKES]->(content:" . $linkType . ")
         ";
+        $query .= $commonQuery;
         $query .= $tagQuery;
         $query .= "
             RETURN
