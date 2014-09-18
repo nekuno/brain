@@ -141,6 +141,35 @@ class UserController
         return $app->json($result, !empty($result) ? 201 : 200);
     }
 
+    public function getUserQuestionsAction(Request $request, Application $app)
+    {
+        $id   = $request->get('id');
+
+        if (null === $id) {
+            return $app->json(array(), 400);
+        }
+
+        /** @var $paginator \Paginator\Paginator */
+        $paginator = $app['paginator'];
+
+        $filters = array('id' => $id);
+
+        /** @var $model \Model\User\QuestionPaginatedModel  */
+        $model = $app['users.questions.model'];
+
+        try {
+            $result = $paginator->paginate($filters, $model, $request);
+        } catch (\Exception $e) {
+            if ($app['env'] == 'dev') {
+                throw $e;
+            }
+
+            return $app->json(array(), 500);
+        }
+
+        return $app->json($result, !empty($result) ? 201 : 200);
+    }
+
     public function getUserContentAction(Request $request, Application $app)
     {
         $id   = $request->get('id');
