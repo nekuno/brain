@@ -7,7 +7,7 @@ use Paginator\PaginatedInterface;
 use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
 
-class QuestionPaginatedModel implements PaginatedInterface
+class QuestionComparePaginatedModel implements PaginatedInterface
 {
     /**
      * @var \Everyman\Neo4j\Client
@@ -29,9 +29,9 @@ class QuestionPaginatedModel implements PaginatedInterface
      */
     public function validateFilters(array $filters)
     {
-        $hasId = isset($filters['id']);
+        $hasIds = isset($filters['id']) && isset($filters['id2']);
 
-        return $hasId;
+        return $hasIds;
     }
 
     /**
@@ -45,18 +45,20 @@ class QuestionPaginatedModel implements PaginatedInterface
     public function slice(array $filters, $offset, $limit)
     {
         $id = $filters['id'];
+        $id2 = $filters['id2'];
         $response = array();
 
         $params = array(
             'UserId' => (integer)$id,
+            'UserId2' => (integer)$id2,
             'offset' => (integer)$offset,
             'limit' => (integer)$limit
         );
 
         $query = "
             MATCH
-            (u:User)
-            WHERE u.qnoow_id = {UserId}
+            (u:User), (u2:User)
+            WHERE u.qnoow_id = {UserId} AND u2.qnoow_id = {UserId2}
             MATCH
             (u)-[:ANSWERS]->(answer:Answer)-[:IS_ANSWER_OF]->(question:Question)
             OPTIONAL MATCH
@@ -65,12 +67,26 @@ class QuestionPaginatedModel implements PaginatedInterface
             (u)-[:ACCEPTS]-(accepted_answers:Answer)-[:IS_ANSWER_OF]->(question)
             OPTIONAL MATCH
             (u)-[rate:RATES]->(question)
+
+            OPTIONAL MATCH
+            (u2)-[:ANSWERS]->(answer2:Answer)-[:IS_ANSWER_OF]->(question)
+            OPTIONAL MATCH
+            (u2)-[:ACCEPTS]-(accepted_answers2:Answer)-[:IS_ANSWER_OF]->(question)
+            OPTIONAL MATCH
+            (u2)-[rate2:RATES]->(question)
+
             RETURN
             question,
             collect(distinct possible_answers) as possible_answers,
+
             answer.qnoow_id as answer,
             collect(distinct accepted_answers.qnoow_id) as accepted_answers,
-            rate.rating AS rating
+            rate.rating AS rating,
+
+            answer2.qnoow_id as answer2,
+            collect(distinct accepted_answers2.qnoow_id) as accepted_answers2,
+            rate2.rating AS rating2
+
             SKIP {offset}
             LIMIT {limit}
             ;
@@ -101,14 +117,25 @@ class QuestionPaginatedModel implements PaginatedInterface
                 }
                 $content['question'] = $question;
 
-                $user = array();
-                $user['id'] = $id;
-                $user['answer'] = $row['answer'];
+                $user1 = array();
+                $user1['user']['id'] = $id;
+                $user1['answer'] = $row['answer'];
                 foreach ($row['accepted_answers'] as $acceptedAnswer) {
-                    $user['accepted_answers'][] = $acceptedAnswer;
+                    $user1['accepted_answers'][] = $acceptedAnswer;
                 }
-                $user['rating'] = $row['rating'];
-                $content['user_answers'] = $user;
+                $user1['rating'] = $row['rating'];
+                $content['user_answers'][] = $user1;
+
+                if (null != $row['answer2']) {
+                    $user2 = array();
+                    $user2['user']['id'] = $id2;
+                    $user2['answer'] = $row['answer2'];
+                    foreach ($row['accepted_answers2'] as $acceptedAnswer) {
+                        $user2['accepted_answers'][] = $acceptedAnswer;
+                    }
+                    $user2['rating'] = $row['rating2'];
+                    $content['user_answers'][] = $user2;
+                }
 
                 $response[] = $content;
             }
