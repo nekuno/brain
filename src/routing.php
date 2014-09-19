@@ -10,6 +10,9 @@ $app->delete('/users/{id}', 'users.controller:deleteAction')->value('id', null);
 $app->get('/users/{id1}/matching/{id2}', 'users.controller:getMatchingAction')
     ->value('type', 'answers');
 
+$app->get('/users/{id}/questions', 'users.controller:getUserQuestionsAction');
+$app->get('/users/{id}/questions/compare/{id2}', 'users.controller:getUserQuestionsCompareAction');
+
 $app->get('/users/{id}/content', 'users.controller:getUserContentAction');
 
 $app->get('/users/{id}/content/tags', 'users.controller:getUserContentTagsAction');
