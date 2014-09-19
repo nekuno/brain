@@ -174,6 +174,7 @@ class UserController
     {
         $id   = $request->get('id');
         $id2   = $request->get('id2');
+        $showOnlyCommon   = $request->get('showOnlyCommon', 0);
 
         if (null === $id || null === $id2) {
             return $app->json(array(), 400);
@@ -182,7 +183,7 @@ class UserController
         /** @var $paginator \Paginator\Paginator */
         $paginator = $app['paginator'];
 
-        $filters = array('id' => $id, 'id2' => $id2);
+        $filters = array('id' => $id, 'id2' => $id2, 'showOnlyCommon' => $showOnlyCommon);
 
         /** @var $model \Model\User\QuestionComparePaginatedModel  */
         $model = $app['users.questions.compare.model'];

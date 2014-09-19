@@ -58,13 +58,13 @@ class QuestionPaginatedModel implements PaginatedInterface
             (u:User)
             WHERE u.qnoow_id = {UserId}
             MATCH
-            (u)-[:ANSWERS]->(answer:Answer)-[:IS_ANSWER_OF]->(question:Question)
+            (u)-[:ANSWERS]-(answer:Answer)-[:IS_ANSWER_OF]-(question:Question)
             OPTIONAL MATCH
-            (possible_answers:Answer)-[:IS_ANSWER_OF]->(question)
+            (possible_answers:Answer)-[:IS_ANSWER_OF]-(question)
             OPTIONAL MATCH
-            (u)-[:ACCEPTS]-(accepted_answers:Answer)-[:IS_ANSWER_OF]->(question)
+            (u)-[:ACCEPTS]-(accepted_answers:Answer)-[:IS_ANSWER_OF]-(question)
             OPTIONAL MATCH
-            (u)-[rate:RATES]->(question)
+            (u)-[rate:RATES]-(question)
             RETURN
             question,
             collect(distinct possible_answers) as possible_answers,
@@ -140,7 +140,7 @@ class QuestionPaginatedModel implements PaginatedInterface
             (u:User)
             WHERE u.qnoow_id = {UserId}
             MATCH
-            (u)-[:ANSWERS]->(answer:Answer)-[:IS_ANSWER_OF]->(question:Question)
+            (u)-[:ANSWERS]-(answer:Answer)-[:IS_ANSWER_OF]-(question:Question)
             RETURN
             count(distinct question) as total
             ;

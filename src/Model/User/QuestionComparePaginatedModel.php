@@ -44,9 +44,15 @@ class QuestionComparePaginatedModel implements PaginatedInterface
      */
     public function slice(array $filters, $offset, $limit)
     {
+        $response = array();
+
         $id = $filters['id'];
         $id2 = $filters['id2'];
-        $response = array();
+
+        $showOnlyCommon = false;
+        if (isset($filters['showOnlyCommon'])) {
+            $showOnlyCommon = $filters['showOnlyCommon'];
+        }
 
         $params = array(
             'UserId' => (integer)$id,
@@ -55,25 +61,37 @@ class QuestionComparePaginatedModel implements PaginatedInterface
             'limit' => (integer)$limit
         );
 
+        $commonQuery = "
+            OPTIONAL MATCH
+            (u2)-[:ANSWERS]-(answer2:Answer)-[:IS_ANSWER_OF]-(question)
+        ";
+        if ($showOnlyCommon) {
+            $commonQuery = "
+                MATCH
+                (u2)-[:ANSWERS]-(answer2:Answer)-[:IS_ANSWER_OF]-(question)
+            ";
+        }
+
         $query = "
             MATCH
             (u:User), (u2:User)
             WHERE u.qnoow_id = {UserId} AND u2.qnoow_id = {UserId2}
             MATCH
-            (u)-[:ANSWERS]->(answer:Answer)-[:IS_ANSWER_OF]->(question:Question)
+            (u)-[:ANSWERS]-(answer:Answer)-[:IS_ANSWER_OF]-(question:Question)
+        ";
+        $query .= $commonQuery;
+        $query .= "
             OPTIONAL MATCH
-            (possible_answers:Answer)-[:IS_ANSWER_OF]->(question)
+            (possible_answers:Answer)-[:IS_ANSWER_OF]-(question)
             OPTIONAL MATCH
-            (u)-[:ACCEPTS]-(accepted_answers:Answer)-[:IS_ANSWER_OF]->(question)
+            (u)-[:ACCEPTS]-(accepted_answers:Answer)-[:IS_ANSWER_OF]-(question)
             OPTIONAL MATCH
-            (u)-[rate:RATES]->(question)
+            (u)-[rate:RATES]-(question)
 
             OPTIONAL MATCH
-            (u2)-[:ANSWERS]->(answer2:Answer)-[:IS_ANSWER_OF]->(question)
+            (u2)-[:ACCEPTS]-(accepted_answers2:Answer)-[:IS_ANSWER_OF]-(question)
             OPTIONAL MATCH
-            (u2)-[:ACCEPTS]-(accepted_answers2:Answer)-[:IS_ANSWER_OF]->(question)
-            OPTIONAL MATCH
-            (u2)-[rate2:RATES]->(question)
+            (u2)-[rate2:RATES]-(question)
 
             RETURN
             question,
@@ -155,19 +173,36 @@ class QuestionComparePaginatedModel implements PaginatedInterface
      */
     public function countTotal(array $filters)
     {
-        $id = $filters['id'];
         $count = 0;
+
+        $id = $filters['id'];
 
         $params = array(
             'UserId' => (integer)$id,
         );
+
+        $commonQuery = "";
+        if (isset($filters['showOnlyCommon'])) {
+            $id2 = $filters['id2'];
+            if ($filters['showOnlyCommon']) {
+                $commonQuery = "
+                    MATCH
+                    (u2)-[:ANSWERS]-(answer2:Answer)-[:IS_ANSWER_OF]-(question)
+                    WHERE u2.qnoow_id = {UserId2}
+                ";
+                $params['UserId2'] = (integer)$id2;
+            }
+        }
 
         $query = "
             MATCH
             (u:User)
             WHERE u.qnoow_id = {UserId}
             MATCH
-            (u)-[:ANSWERS]->(answer:Answer)-[:IS_ANSWER_OF]->(question:Question)
+            (u)-[:ANSWERS]-(answer:Answer)-[:IS_ANSWER_OF]-(question:Question)
+        ";
+        $query .= $commonQuery;
+        $query .= "
             RETURN
             count(distinct question) as total
             ;
