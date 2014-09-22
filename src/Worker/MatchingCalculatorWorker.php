@@ -70,7 +70,7 @@ class MatchingCalculatorWorker implements RabbitMQConsumerInterface, LoggerAware
         switch ($eventType) {
             case 'process_finished':
                 try {
-                    $this->model->recalculateMatchingByContentOfUserWhenNewContentIsAdded($data['userId']);
+                    $this->model->calculateMatchingByContentOfUserWhenNewContentIsAdded($data['userId']);
                 } catch (\Exception $e) {
                     $this->logger->debug(
                         sprintf(
@@ -82,12 +82,10 @@ class MatchingCalculatorWorker implements RabbitMQConsumerInterface, LoggerAware
                         )
                     );
                 }
-
                 break;
             case 'question_answered':
                 try {
-
-                    $this->model->recalculateMatchingOfUserByAnswersWhenNewQuestionsAreAnswered(
+                    $this->model->calculateMatchingOfUserByAnswersWhenNewQuestionsAreAnswered(
                         $data['user_id'],
                         array($data['question_id'])
                     );
