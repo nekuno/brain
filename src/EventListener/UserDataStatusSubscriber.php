@@ -5,6 +5,7 @@ namespace EventListener;
 
 use AppEvents;
 use Doctrine\ORM\EntityManager;
+use Event\MatchingExpiredEvent;
 use Event\UserDataEvent;
 use Model\Entity\DataStatus;
 use PhpAmqpLib\Connection\AMQPConnection;
@@ -50,6 +51,7 @@ class UserDataStatusSubscriber implements EventSubscriberInterface
             AppEvents::USER_DATA_FETCHING_FINISH => array('onUserDataFetchFinish'),
             AppEvents::USER_DATA_PROCESS_START => array('onUserDataProcessStart'),
             AppEvents::USER_DATA_PROCESS_FINISH => array('onUserDataProcessFinish'),
+            AppEvents::USER_MATCHING_EXPIRED => array('onUserMatchingExpired'),
         );
     }
 
@@ -68,6 +70,38 @@ class UserDataStatusSubscriber implements EventSubscriberInterface
 
     /**
      * @param UserDataEvent $event
+     * @return \Model\Entity\DataStatus
+     */
+    public function getCurrentDataStatus(UserDataEvent $event)
+    {
+
+        $user = $event->getUser();
+        $resourceOwner = $event->getResourceOwner();
+
+        $repository = $this->entityManager->getRepository('\Model\Entity\DataStatus');
+        $dataStatus = $repository->findOneBy(array('userId' => $user['id'], 'resourceOwner' => $resourceOwner));
+
+        if (null === $dataStatus) {
+            $dataStatus = new DataStatus();
+            $dataStatus->setUserId($user['id']);
+            $dataStatus->setResourceOwner($resourceOwner);
+        }
+
+        return $dataStatus;
+    }
+
+    /**
+     * @param $status
+     */
+    public function saveStatus($status)
+    {
+
+        $this->entityManager->persist($status);
+        $this->entityManager->flush();
+    }
+
+    /**
+     * @param UserDataEvent $event
      */
     public function onUserDataFetchFinish(UserDataEvent $event)
     {
@@ -78,29 +112,29 @@ class UserDataStatusSubscriber implements EventSubscriberInterface
 
         $this->saveStatus($dataStatus);
 
-        $this->enqueueMatchingCalculation($event);
-    }
-
-    /**
-     * @param UserDataEvent $event
-     */
-    private function enqueueMatchingCalculation(UserDataEvent $event)
-    {
-
         $user = $event->getUser();
         $resourceOwner = $event->getResourceOwner();
 
         $data = array(
             'userId' => $user['id'],
             'resourceOwner' => $resourceOwner,
-            'type' => 'process_finished',
+            'trigger' => 'process_finished',
         );
+
+        $this->enqueueMatchingCalculation($data, 'brain.matching.process');
+    }
+
+    /**
+     * @param $data
+     * @param $routingKey
+     */
+    private function enqueueMatchingCalculation($data, $routingKey)
+    {
 
         $message = new AMQPMessage(json_encode($data, JSON_UNESCAPED_UNICODE));
 
         $exchangeName = 'brain.topic';
         $exchangeType = 'topic';
-        $routingKey = 'brain.matching.process';
         $topic = 'brain.matching.*';
         $queueName = 'brain.matching';
 
@@ -138,34 +172,20 @@ class UserDataStatusSubscriber implements EventSubscriberInterface
     }
 
     /**
-     * @param UserDataEvent $event
-     * @return \Model\Entity\DataStatus
+     * @param MatchingExpiredEvent $event
      */
-    public function getCurrentDataStatus(UserDataEvent $event)
+    public function onUserMatchingExpired(MatchingExpiredEvent $event)
     {
 
-        $user = $event->getUser();
-        $resourceOwner = $event->getResourceOwner();
+        $data = array(
+            'trigger' => 'matching_expired',
+            'user_1_id' => $event->getUser1(),
+            'user_2_id' => $event->getUser2(),
+            'matching_type' => $event->getType(),
+        );
 
-        $repository = $this->entityManager->getRepository('\Model\Entity\DataStatus');
-        $dataStatus = $repository->findOneBy(array('userId' => $user['id'], 'resourceOwner' => $resourceOwner));
+        $this->enqueueMatchingCalculation($data, 'brain.matching.matching_expired');
 
-        if (null === $dataStatus) {
-            $dataStatus = new DataStatus();
-            $dataStatus->setUserId($user['id']);
-            $dataStatus->setResourceOwner($resourceOwner);
-        }
-
-        return $dataStatus;
     }
 
-    /**
-     * @param $status
-     */
-    public function saveStatus($status)
-    {
-
-        $this->entityManager->persist($status);
-        $this->entityManager->flush();
-    }
 }

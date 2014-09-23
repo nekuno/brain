@@ -2,8 +2,10 @@
 
 namespace Model\User;
 
+use Event\MatchingExpiredEvent;
 use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 /**
  * Class MatchingModel
@@ -15,6 +17,11 @@ class MatchingModel
     const PREFERRED_MATCHING_CONTENT = 'content';
 
     const PREFERRED_MATCHING_ANSWERS = 'answers';
+
+    /**
+     * @var EventDispatcher
+     */
+    protected $dispatcher;
 
     /**
      * @var \Everyman\Neo4j\Client
@@ -32,13 +39,19 @@ class MatchingModel
     protected $answerModel;
 
     /**
+     * @param EventDispatcher $dispatcher
      * @param \Everyman\Neo4j\Client $client
      * @param \Model\User\ContentPaginatedModel $contentPaginatedModel
      * @param \Model\User\AnswerModel $answerModel
      */
-    public function __construct(Client $client, ContentPaginatedModel $contentPaginatedModel, AnswerModel $answerModel)
-    {
+    public function __construct(
+        EventDispatcher $dispatcher,
+        Client $client,
+        ContentPaginatedModel $contentPaginatedModel,
+        AnswerModel $answerModel
+    ) {
 
+        $this->dispatcher = $dispatcher;
         $this->client = $client;
         $this->contentPaginatedModel = $contentPaginatedModel;
         $this->answerModel = $answerModel;
@@ -77,7 +90,8 @@ class MatchingModel
             $rawMatching = $this->getMatchingBetweenTwoUsers($id1, $id2);
 
             if ($this->isNecessaryToRecalculateIt($rawMatching, 'timestamp_content', 'matching_content')) {
-                // TODO: recalculate it
+                $event = new MatchingExpiredEvent($id1, $id2, 'content');
+                $this->dispatcher->dispatch(\AppEvents::USER_MATCHING_EXPIRED, $event);
             }
 
             $matching = $rawMatching['matching_questions'] ? $rawMatching['matching_questions'] : 0;
@@ -189,17 +203,17 @@ class MatchingModel
 
         if ($haveMatching) {
 
+            $matching['matching_content'] = null;
+            $matching['timestamp_content'] = null;
+            $matching['matching_questions'] = null;
+            $matching['timestamp_questions'] = null;
+
             foreach ($result as $match) {
                 if ($match['m']) {
                     $matching['matching_content'] = $match['m']->getProperty('matching_content');
                     $matching['timestamp_content'] = $match['m']->getProperty('timestamp_content');
                     $matching['matching_questions'] = $match['m']->getProperty('matching_questions');
                     $matching['timestamp_questions'] = $match['m']->getProperty('timestamp_questions');
-                } else {
-                    $matching['matching_content'] = null;
-                    $matching['timestamp_content'] = null;
-                    $matching['matching_questions'] = null;
-                    $matching['timestamp_questions'] = null;
                 }
             }
 
@@ -217,14 +231,16 @@ class MatchingModel
     public function isNecessaryToRecalculateIt($rawMatching, $tsIndex, $matchingIndex)
     {
 
-        $matchingUpdatedAt = $rawMatching[$tsIndex] ? $rawMatching[$tsIndex] : 0;
-        $currentTimeInMillis = time() * 1000;
-        $lastUpdatePlusOneDay = $matchingUpdatedAt + (1000 * 60 * 60 * 24);
-        if ($rawMatching[$matchingIndex] === null || $lastUpdatePlusOneDay < $currentTimeInMillis) {
-            return true;
-        } else {
-            return false;
+        if ($rawMatching[$matchingIndex] !== null) {
+            $matchingUpdatedAt = $rawMatching[$tsIndex] ? $rawMatching[$tsIndex] : 0;
+            $currentTimeInMillis = time() * 1000;
+            $lastUpdatePlusOneDay = $matchingUpdatedAt + (1000 * 60 * 60 * 24);
+            if ($lastUpdatePlusOneDay < $currentTimeInMillis) {
+                return true;
+            }
         }
+
+        return false;
     }
 
     /**
@@ -298,7 +314,8 @@ class MatchingModel
         $rawMatching = $this->getMatchingBetweenTwoUsers($id1, $id2);
 
         if ($this->isNecessaryToRecalculateIt($rawMatching, 'timestamp_questions', 'matching_questions')) {
-            // TODO: recalculate it
+            $event = new MatchingExpiredEvent($id1, $id2, 'answer');
+            $this->dispatcher->dispatch(\AppEvents::USER_MATCHING_EXPIRED, $event);
         }
 
         $response['matching'] = $rawMatching['matching_questions'] ? $rawMatching['matching_questions'] : 0;

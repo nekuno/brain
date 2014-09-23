@@ -54,7 +54,7 @@ class WorkerRabbitMQConsumeCommand extends ApplicationAwareCommand
         /** @var AMQPConnection $connection */
         $connection = $this->app['amqp'];
 
-        $output->writeln(sprintf('Starting fetching consumer'));
+        $output->writeln(sprintf('Starting %s consumer', $consumer));
         switch ($consumer) {
             case 'fetching':
                 /** @var AMQPChannel $channel */
