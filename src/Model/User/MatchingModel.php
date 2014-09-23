@@ -203,17 +203,15 @@ class MatchingModel
 
         if ($haveMatching) {
 
-            $matching['matching_content'] = null;
-            $matching['timestamp_content'] = null;
-            $matching['matching_questions'] = null;
-            $matching['timestamp_questions'] = null;
+            $matching = null;
 
             foreach ($result as $match) {
                 if ($match['m']) {
-                    $matching['matching_content'] = $match['m']->getProperty('matching_content');
-                    $matching['timestamp_content'] = $match['m']->getProperty('timestamp_content');
-                    $matching['matching_questions'] = $match['m']->getProperty('matching_questions');
-                    $matching['timestamp_questions'] = $match['m']->getProperty('timestamp_questions');
+                    $currentTimeInMillis = time() * 1000;
+                    $matching['matching_content'] = $match['m']->getProperty('matching_content') ? : 0;
+                    $matching['timestamp_content'] = $match['m']->getProperty('timestamp_content') ? : $currentTimeInMillis;
+                    $matching['matching_questions'] = $match['m']->getProperty('matching_questions') ? : 0;
+                    $matching['timestamp_questions'] = $match['m']->getProperty('timestamp_questions') ? : $currentTimeInMillis;
                 }
             }
 
