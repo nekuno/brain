@@ -8,7 +8,8 @@ use ApiConsumer\Event\LinksEvent;
 use ApiConsumer\Factory\FetcherFactory;
 use ApiConsumer\LinkProcessor\LinkProcessor;
 use ApiConsumer\Storage\StorageInterface;
-use Event\StatusEvent;
+use AppEvents;
+use Event\UserDataEvent;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
@@ -115,8 +116,8 @@ class FetcherService implements LoggerAwareInterface
 
                 if ($fetcherConfig['resourceOwner'] === $resourceOwner) {
 
-                    $event = new StatusEvent($user, $resourceOwner);
-                    $this->dispatcher->dispatch(\StatusEvents::USER_DATA_FETCHING_START, $event);
+                    $event = new UserDataEvent($user, $resourceOwner);
+                    $this->dispatcher->dispatch(AppEvents::USER_DATA_FETCHING_START, $event);
 
                     try {
                         $links = $this->fetcherFactory->build($fetcher)->fetchLinksFromUserFeed($user);
@@ -131,11 +132,11 @@ class FetcherService implements LoggerAwareInterface
                         continue;
                     }
 
-                    $event = new StatusEvent($user, $resourceOwner);
-                    $this->dispatcher->dispatch(\StatusEvents::USER_DATA_FETCHING_FINISH, $event);
+                    $event = new UserDataEvent($user, $resourceOwner);
+                    $this->dispatcher->dispatch(AppEvents::USER_DATA_FETCHING_FINISH, $event);
 
-                    $event = new StatusEvent($user, $resourceOwner);
-                    $this->dispatcher->dispatch(\StatusEvents::USER_DATA_PROCESS_START, $event);
+                    $event = new UserDataEvent($user, $resourceOwner);
+                    $this->dispatcher->dispatch(AppEvents::USER_DATA_PROCESS_START, $event);
 
                     $event = array(
                         'userId' => $userId,
@@ -168,8 +169,8 @@ class FetcherService implements LoggerAwareInterface
 
                     $this->dispatcher->dispatch(\AppEvents::PROCESS_FINISH);
 
-                    $event = new StatusEvent($user, $resourceOwner);
-                    $this->dispatcher->dispatch(\StatusEvents::USER_DATA_PROCESS_FINISH, $event);
+                    $event = new UserDataEvent($user, $resourceOwner);
+                    $this->dispatcher->dispatch(AppEvents::USER_DATA_PROCESS_FINISH, $event);
                 }
             }
         } catch (\Exception $e) {

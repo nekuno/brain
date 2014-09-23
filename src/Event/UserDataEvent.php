@@ -5,7 +5,7 @@ namespace Event;
 
 use Symfony\Component\EventDispatcher\Event;
 
-class StatusEvent extends Event
+class UserDataEvent extends Event
 {
 
     protected $user;

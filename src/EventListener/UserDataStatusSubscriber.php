@@ -3,18 +3,19 @@
 
 namespace EventListener;
 
+use AppEvents;
 use Doctrine\ORM\EntityManager;
-use Event\StatusEvent;
+use Event\UserDataEvent;
 use Model\Entity\DataStatus;
 use PhpAmqpLib\Connection\AMQPConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * Class StatusSubscriber
+ * Class UserDataStatusSubscriber
  * @package EventListener
  */
-class StatusSubscriber implements EventSubscriberInterface
+class UserDataStatusSubscriber implements EventSubscriberInterface
 {
 
     /**
@@ -45,17 +46,17 @@ class StatusSubscriber implements EventSubscriberInterface
     {
 
         return array(
-            \StatusEvents::USER_DATA_FETCHING_START => array('onUserDataFetchStart'),
-            \StatusEvents::USER_DATA_FETCHING_FINISH => array('onUserDataFetchFinish'),
-            \StatusEvents::USER_DATA_PROCESS_START => array('onUserDataProcessStart'),
-            \StatusEvents::USER_DATA_PROCESS_FINISH => array('onUserDataProcessFinish'),
+            AppEvents::USER_DATA_FETCHING_START => array('onUserDataFetchStart'),
+            AppEvents::USER_DATA_FETCHING_FINISH => array('onUserDataFetchFinish'),
+            AppEvents::USER_DATA_PROCESS_START => array('onUserDataProcessStart'),
+            AppEvents::USER_DATA_PROCESS_FINISH => array('onUserDataProcessFinish'),
         );
     }
 
     /**
-     * @param StatusEvent $event
+     * @param UserDataEvent $event
      */
-    public function onUserDataFetchStart(StatusEvent $event)
+    public function onUserDataFetchStart(UserDataEvent $event)
     {
 
         $status = $this->getCurrentDataStatus($event);
@@ -66,9 +67,9 @@ class StatusSubscriber implements EventSubscriberInterface
     }
 
     /**
-     * @param StatusEvent $event
+     * @param UserDataEvent $event
      */
-    public function onUserDataFetchFinish(StatusEvent $event)
+    public function onUserDataFetchFinish(UserDataEvent $event)
     {
 
         $dataStatus = $this->getCurrentDataStatus($event);
@@ -81,9 +82,9 @@ class StatusSubscriber implements EventSubscriberInterface
     }
 
     /**
-     * @param StatusEvent $event
+     * @param UserDataEvent $event
      */
-    private function enqueueMatchingCalculation(StatusEvent $event)
+    private function enqueueMatchingCalculation(UserDataEvent $event)
     {
 
         $user = $event->getUser();
@@ -111,9 +112,9 @@ class StatusSubscriber implements EventSubscriberInterface
     }
 
     /**
-     * @param StatusEvent $event
+     * @param UserDataEvent $event
      */
-    public function onUserDataProcessStart(StatusEvent $event)
+    public function onUserDataProcessStart(UserDataEvent $event)
     {
 
         $status = $this->getCurrentDataStatus($event);
@@ -124,9 +125,9 @@ class StatusSubscriber implements EventSubscriberInterface
     }
 
     /**
-     * @param StatusEvent $event
+     * @param UserDataEvent $event
      */
-    public function onUserDataProcessFinish(StatusEvent $event)
+    public function onUserDataProcessFinish(UserDataEvent $event)
     {
 
         $status = $this->getCurrentDataStatus($event);
@@ -137,10 +138,10 @@ class StatusSubscriber implements EventSubscriberInterface
     }
 
     /**
-     * @param StatusEvent $event
+     * @param UserDataEvent $event
      * @return \Model\Entity\DataStatus
      */
-    public function getCurrentDataStatus(StatusEvent $event)
+    public function getCurrentDataStatus(UserDataEvent $event)
     {
 
         $user = $event->getUser();
