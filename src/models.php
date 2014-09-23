@@ -25,6 +25,11 @@ $app['users.questions.compare.model'] = function ($app) {
     return new \Model\User\QuestionComparePaginatedModel($app['neo4j.client']);
 };
 
+$app['users.rate.model'] = function ($app) {
+
+    return new \Model\User\RateModel($app['neo4j.client']);
+};
+
 $app['users.content.tag.model'] = function ($app) {
 
     return new \Model\User\ContentTagModel($app['neo4j.client']);
