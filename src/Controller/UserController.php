@@ -275,6 +275,30 @@ class UserController
         return $app->json($result, !empty($result) ? 201 : 200);
     }
 
+    public function rateContentAction(Request $request, Application $app)
+    {
+        $id = $request->get('id');
+        $url = $request->request->get('url');
+        $rate = $request->request->get('rate');
+
+        if (null == $id || null == $url || null == $rate) {
+            return $app->json(array('text' => 'aaa', 'id'=> $id, 'url' => $url), 400);
+        }
+
+        try {
+            $model  = $app['users.rate.model'];
+            $result = $model->userRateLink($id, $url, $rate);
+        } catch (\Exception $e) {
+            if ($app['env'] == 'dev') {
+                throw $e;
+            }
+
+            return $app->json(array(), 500);
+        }
+
+        return $app->json($result, !empty($result) ? 201 : 200);
+    }
+
     public function getUserRecommendationAction(Request $request, Application $app)
     {
         // Get params
