@@ -245,6 +245,47 @@ class UserController
         return $app->json($result, !empty($result) ? 201 : 200);
     }
 
+    public function getUserContentCompareAction(Request $request, Application $app)
+    {
+        $id   = $request->get('id');
+        $id2   = $request->get('id2');
+        $tag  = $request->get('tag', null);
+        $type = $request->get('type', null);
+        $showOnlyCommon   = $request->get('showOnlyCommon', 0);
+
+        if (null === $id || null === $id2) {
+            return $app->json(array(), 400);
+        }
+
+        /** @var $paginator \Paginator\Paginator */
+        $paginator = $app['paginator'];
+
+        $filters = array('id' => $id, 'id2' => $id2, 'showOnlyCommon' => $showOnlyCommon);
+
+        if ($tag) {
+            $filters['tag'] = urldecode($tag);
+        }
+
+        if ($type) {
+            $filters['type'] = urldecode($type);
+        }
+
+        /** @var $model \Model\User\ContentComparePaginatedModel  */
+        $model = $app['users.content.compare.model'];
+
+        try {
+            $result = $paginator->paginate($filters, $model, $request);
+        } catch (\Exception $e) {
+            if ($app['env'] == 'dev') {
+                throw $e;
+            }
+
+            return $app->json(array(), 500);
+        }
+
+        return $app->json($result, !empty($result) ? 201 : 200);
+    }
+
     public function getUserContentTagsAction(Request $request, Application $app)
     {
         $id     = $request->get('id');
