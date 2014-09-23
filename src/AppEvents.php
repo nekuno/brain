@@ -62,4 +62,8 @@ final class AppEvents
      */
     const USER_MATCHING_EXPIRED = 'user.matching.expired';
 
+    /**
+     * Fired when user rated content
+     */
+    const USER_DATA_CONTENT_RATED = 'user.data.content.added';
 }

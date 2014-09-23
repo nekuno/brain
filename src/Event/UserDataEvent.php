@@ -12,7 +12,7 @@ class UserDataEvent extends Event
 
     protected $resourceOwner;
 
-    public function __construct($user, $resourceOwner)
+    public function __construct($user, $resourceOwner = null)
     {
 
         $this->user = $user;

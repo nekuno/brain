@@ -68,6 +68,7 @@ class MatchingCalculatorWorker implements RabbitMQConsumerInterface, LoggerAware
         $trigger = $data['trigger'];
 
         switch ($trigger) {
+            case 'content_rated':
             case 'process_finished':
                 try {
                     $this->model->calculateMatchingByContentOfUserWhenNewContentIsAdded($data['userId']);
@@ -100,10 +101,6 @@ class MatchingCalculatorWorker implements RabbitMQConsumerInterface, LoggerAware
                         )
                     );
                 }
-                break;
-            case 'content_rated':
-
-                // TODO: handle this event
                 break;
             case 'matching_expired':
                 try {

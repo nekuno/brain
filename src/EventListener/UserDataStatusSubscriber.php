@@ -52,6 +52,7 @@ class UserDataStatusSubscriber implements EventSubscriberInterface
             AppEvents::USER_DATA_PROCESS_START => array('onUserDataProcessStart'),
             AppEvents::USER_DATA_PROCESS_FINISH => array('onUserDataProcessFinish'),
             AppEvents::USER_MATCHING_EXPIRED => array('onUserMatchingExpired'),
+            AppEvents::USER_DATA_CONTENT_RATED => array('onContentRated'),
         );
     }
 
@@ -186,6 +187,17 @@ class UserDataStatusSubscriber implements EventSubscriberInterface
 
         $this->enqueueMatchingCalculation($data, 'brain.matching.matching_expired');
 
+    }
+
+    public function onContentRated(UserDataEvent $event)
+    {
+
+        $data = array(
+            'trigger' => 'content_rated',
+            'userId' => $event->getUser(),
+        );
+
+        $this->enqueueMatchingCalculation($data, 'brain.matching.content_rated');
     }
 
 }

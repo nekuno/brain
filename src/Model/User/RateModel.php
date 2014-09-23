@@ -2,8 +2,10 @@
 
 namespace Model\User;
 
+use Event\UserDataEvent;
 use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 /**
  * Class RateModel
@@ -17,16 +19,23 @@ class RateModel
     const DISLIKE = 'DISLIKES';
 
     /**
+     * @var EventDispatcher
+     */
+    protected $dispatcher;
+
+    /**
      * @var \Everyman\Neo4j\Client
      */
     protected $client;
 
     /**
+     * @param EventDispatcher $dispatcher
      * @param Client $client
      */
-    public function __construct(Client $client)
+    public function __construct(EventDispatcher $dispatcher, Client $client)
     {
 
+        $this->dispatcher = $dispatcher;
         $this->client = $client;
     }
 
@@ -68,6 +77,10 @@ class RateModel
         );
 
         $result = $query->getResultSet();
+
+        $event = new UserDataEvent($userId);
+        $this->dispatcher->dispatch(\AppEvents::USER_DATA_CONTENT_RATED, $event);
+
         $response = array();
         foreach ($result as $row) {
             $response['id'] = $row['user']->getProperty('qnoow_id');
@@ -78,4 +91,4 @@ class RateModel
         return $response;
     }
 
-} 
+}
