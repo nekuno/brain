@@ -75,28 +75,37 @@ class MatchingModel
         OPTIONAL MATCH
             (u1)-[r3:RATES]->(:Question)<-[r4:RATES]-(u2)
         WITH
+            u1, u2,
             [n1 IN collect(distinct r1) |n1.rating] AS little1_elems,
             [n2 IN collect(distinct r2) |n2.rating] AS little2_elems,
             [n3 IN collect(distinct r3) |n3.rating] AS CIT1_elems,
             [n4 IN collect(distinct r4) |n4.rating] AS CIT2_elems
         WITH
+            u1, u2,
             tofloat( reduce(little1 = 0, n1 IN little1_elems | little1 + n1) ) AS little1,
             tofloat( reduce(little2 = 0, n2 IN little2_elems | little2 + n2) ) AS little2,
             tofloat( reduce(CIT1 = 0, n3 IN CIT1_elems | CIT1 + n3) ) AS CIT1,
             tofloat( reduce(CIT1 = 0, n4 IN CIT2_elems | CIT1 + n4) ) AS CIT2
         WITH
-        CASE
-        WHEN
-            CIT1 > 0 AND CIT2 > 0
-        THEN
-            sqrt( tofloat( little1/CIT1 ) * tofloat( little2/CIT2 ) )
-        ELSE
-            0
-        END
-        AS match_user1_user2
+            u1, u2,
+            CASE
+                WHEN
+                    CIT1 > 0 AND CIT2 > 0
+                THEN
+                    sqrt( tofloat( little1/CIT1 ) * tofloat( little2/CIT2 ) )
+                 ELSE
+                    0
+            END
+            AS match_user1_user2
+        WITH
+            match_user1_user2, u1, u2
+        CREATE UNIQUE
+            (u1)-[m:MATCHES]-(u2)
+        SET
+            m.matching_questions = match_user1_user2,
+            m.timestamp_questions = timestamp()
         RETURN
-            match_user1_user2
-        ";
+            m;";
 
         $queryDataArray = array(
             'id1' => $id1,
@@ -116,21 +125,9 @@ class MatchingModel
         }
 
         foreach($result as $row){
-            $response['matching'] = $row['match_user1_user2'];
+            $response['matching'] = $row['match_user1_user2']->getProperty('matching_questions');
         }
 
-        /*
-                MATCH
-                    (u1:User {qnoow_id: " . $id1 . "}),
-                    (u2:User {qnoow_id: " . $id2 . "})
-                CREATE UNIQUE
-                    (u1)-[m:MATCHES]-(u2)
-                SET
-                    m.matching_questions = match_user1_user2,
-                    m.timestamp_questions = timestamp()
-                RETURN
-                    m;";
-        */
 
         return $response;
 
