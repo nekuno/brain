@@ -14,7 +14,7 @@ class Neo4jTestsCommand extends ApplicationAwareCommand
     protected function configure()
     {
         $this->setName('neo4j:test')
-             ->setDescription("Load test for Neo4j development. Behavior may change. Intended for quick creation of tests only");
+             ->setDescription("Load test for Neo4j development. Intended for quick creation of tests only; behavior may change");
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
