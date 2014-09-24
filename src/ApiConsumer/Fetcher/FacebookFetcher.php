@@ -24,7 +24,7 @@ class FacebookFetcher extends BasicPaginationFetcher
 
     protected function getItemsFromResponse($response)
     {
-        return $response['data'] ? : array();
+        return $response['data'] ?: array();
     }
 
     protected function getPaginationIdFromResponse($response)
@@ -52,7 +52,9 @@ class FacebookFetcher extends BasicPaginationFetcher
         $parsed = array();
 
         foreach ($rawFeed as $item) {
-            $link['url'] = $item['link'];
+            $url = $item['link'];
+            $parts = parse_url($url);
+            $link['url'] = !isset($parts['host']) && isset($parts['path']) ? 'https://www.facebook.com' . $parts['path'] : $url;
             $link['title'] = array_key_exists('name', $item) ? $item['name'] : null;
             $link['description'] = array_key_exists('description', $item) ? $item['description'] : null;
             $link['resourceItemId'] = array_key_exists('id', $item) ? (int)$item['id'] : null;
