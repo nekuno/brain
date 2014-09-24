@@ -94,7 +94,7 @@ class MatchingModel
                 $this->dispatcher->dispatch(\AppEvents::USER_MATCHING_EXPIRED, $event);
             }
 
-            $matching = $rawMatching['matching_questions'] ? $rawMatching['matching_questions'] : 0;
+            $matching = $rawMatching['matching_content'] ? $rawMatching['matching_content'] : 0;
 
             $response['matching'] = $this->applyMatchingBasedOnContentCorrectionFactor($matching);
         }
