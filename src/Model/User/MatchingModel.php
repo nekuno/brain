@@ -229,7 +229,7 @@ class MatchingModel
     public function isNecessaryToRecalculateIt($rawMatching, $tsIndex, $matchingIndex)
     {
 
-        if ($rawMatching[$matchingIndex] !== null) {
+        if (isset($rawMatching[$matchingIndex]) && $rawMatching[$matchingIndex] !== null) {
             $matchingUpdatedAt = $rawMatching[$tsIndex] ? $rawMatching[$tsIndex] : 0;
             $currentTimeInMillis = time() * 1000;
             $lastUpdatePlusOneDay = $matchingUpdatedAt + (1000 * 60 * 60 * 24);
