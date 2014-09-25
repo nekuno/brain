@@ -119,8 +119,8 @@ class MatchingModel
             $stdev = $row['stdev_content'];
         }
 
-        $this->ave_content = $average;
-        $this->stdev_content = $stdev;
+        self::$ave_content = $average;
+        self::$stdev_content = $stdev;
     }
 
     public function updateQuestionsNormalDistributionVariables()
@@ -159,8 +159,8 @@ class MatchingModel
         }
 
         //Set the average and standard deviation for the content Normal Distribution
-        $this->ave_questions = $average;
-        $this->stdev_questions = $stdev;
+        self::$ave_questions = $average;
+        self::$stdev_questions = $stdev;
     }
 
     /************************************************************************************************************
@@ -172,8 +172,8 @@ class MatchingModel
     public function getMatchingBetweenTwoUsersBasedOnAnswers($id1, $id2)
     {
         //Get the values of the parameters for the Normal distribution
-        $ave_questions = $this->ave_questions;
-        $stdev_questions = $this->stdev_questions;
+        $ave_questions = self::$ave_questions;
+        $stdev_questions = self::$stdev_questions;
 
         //Construct query String
         $queryString = "
@@ -306,8 +306,8 @@ class MatchingModel
     public function getMatchingBetweenTwoUsersBasedOnSharedContent ($id1, $id2)
     {
         //Get the values of the parameters for the Normal distribution
-        $ave_content = $this->ave_content;
-        $stdev_content = $this->stdev_content;
+        $ave_content = self::$ave_content;
+        $stdev_content = self::$stdev_content;
 
         //Construct query String
         $queryString = "

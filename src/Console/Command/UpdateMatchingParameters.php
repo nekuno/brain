@@ -33,10 +33,10 @@ class UpdateMatchingParameters extends ApplicationAwareCommand
         }
 
         $output->writeln('Parameters set:');
-        $output->writeln('Average(content) = ' . $modelObject->ave_content);
-        $output->writeln('Standard Deviation(content) = ' . $modelObject->stdev_content);
-        $output->writeln('Average(questions) = ' . $modelObject->ave_questions);
-        $output->writeln('Standard Deviation(questions) = ' . $modelObject->stdev_questions);
+        $output->writeln('Average(content) = ' . MatchingModel::$ave_content);
+        $output->writeln('Standard Deviation(content) = ' . MatchingModel::$stdev_content);
+        $output->writeln('Average(questions) = ' . MatchingModel::$ave_questions);
+        $output->writeln('Standard Deviation(questions) = ' . MatchingModel::$stdev_questions);
 
     }
 }
