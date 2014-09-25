@@ -86,9 +86,9 @@ class MatchingModel
             (u1:User),
             (u2:User)
         OPTIONAL MATCH
-            a=(u1)-[rl1]->(cl1:Link:Content)-[:TAGGED]->(tl1:Tag)
+            a=(u1)-[rl1]->(cl1:Link)-[:TAGGED]->(tl1:Tag)
         OPTIONAL MATCH
-            b=(u2)-[rl2]->(cl2:Link:Content)-[:TAGGED]->(tl2:Tag)
+            b=(u2)-[rl2]->(cl2:Link)-[:TAGGED]->(tl2:Tag)
         WHERE
             type(rl1) = type(rl2) AND
             tl1 = tl2 AND
@@ -163,8 +163,11 @@ class MatchingModel
         $this->stdev_questions = $stdev;
     }
 
-    /**********************************************************************************************************************
-     *
+    /**
+     * @param $id1 qnoow_id of the first user
+     * @param $id2 qnoow_id of the second user
+     * @return float matching by questions between both users
+     * @throws \Exception
      */
     public function getMatchingBetweenTwoUsersBasedOnAnswers($id1, $id2)
     {
@@ -258,13 +261,115 @@ class MatchingModel
         CREATE UNIQUE
             (u1)-[m:MATCHES]-(u2)
         SET
-            m.matching_questions = match_user1_user2,
+            m.matching_questions = {matching},
             m.timestamp_questions = timestamp()
         RETURN
             m
         ";
 
-        //Construct query (queryDataArray is the same as before, so no need to re-set it)
+        //State the value of the variables in the query string
+        $queryDataArray = array(
+            'id1' => $id1,
+            'id2' => $id2,
+            'matching' => $matching
+        );
+
+        //Construct query
+        $query = new Query(
+            $this->client,
+            $queryString,
+            $queryDataArray
+        );
+
+        //Execute query
+        try {
+            $result = $query->getResultSet();
+        } catch (\Exception $e) {
+            throw $e;
+        }
+
+        return $matching;
+    }
+
+    public function getMatchingBetweenTwoUsersBasedOnSharedContent ($id1, $id2)
+    {
+        //Construct query String
+        $queryString = "
+        MATCH
+            (u1:User),
+            (u2:User)
+        WHERE
+            u1.qnoow_id = {id1} AND
+            u2.qnoow_id = {id2}
+        OPTIONAL MATCH
+            a=(u1)-[rl1]->(cl1:Link)-[:TAGGED]->(tl1:Tag)
+        OPTIONAL MATCH
+            b=(u2)-[rl2]->(cl2:Link)-[:TAGGED]->(tl2:Tag)
+        WHERE
+            type(rl1) = type(rl2) AND
+            tl1 = tl2 AND
+            (cl1 = cl2 OR cl1 <> cl2)
+        WITH
+            count(DISTINCT cl2) AS numOfContentsInCommon
+        RETURN
+            numOfContentsInCommon AS numOfCommonContent
+        ";
+
+        //State the value of the variables in the query string
+        $queryDataArray = array(
+            'id1' => $id1,
+            'id2' => $id2
+        );
+
+        //Construct query
+        $query = new Query(
+            $this->client,
+            $queryString,
+            $queryDataArray
+        );
+
+        //Execute query
+        try {
+            $result = $query->getResultSet();
+        } catch (\Exception $e) {
+            throw $e;
+        }
+
+        //Get the wanted results
+        foreach($result as $row){
+            $normal_x = $row['numOfCommonAnswers'];
+        }
+
+        //Calculate the matching
+        $matching = stats_dens_normal($normal_x, $this->ave_content, $this->stdev_content);
+
+        //Query to create the matching relationship with the appropriate value
+
+        //Construct query String
+        $queryString = "
+        MATCH
+            (u1:User),
+            (u2:User)
+        WHERE
+            u1.qnoow_id = {id1} AND
+            u2.qnoow_id = {id2}
+        CREATE UNIQUE
+            (u1)-[m:MATCHES]-(u2)
+        SET
+            m.matching_content = {matching},
+            m.timestamp_content = timestamp()
+        RETURN
+            m
+        ";
+
+        //State the value of the variables in the query string
+        $queryDataArray = array(
+            'id1' => $id1,
+            'id2' => $id2,
+            'matching' => $matching
+        );
+
+        //Construct query
         $query = new Query(
             $this->client,
             $queryString,
