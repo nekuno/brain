@@ -4,6 +4,8 @@ namespace Model\User\Matching;
 
 use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
+use Model\User\ContentPaginatedModel;
+use Model\User\AnswerModel;
 
 class MatchingModel
 {
@@ -13,22 +15,22 @@ class MatchingModel
     /**
      * @var average for the Normal Distribution. Average number of tags between any 2 users.
      */
-    protected $ave_content;
+    public $ave_content;
 
     /**
      * @var standard deviation of the Normal Distribution. Based on number of tags between users
      */
-    protected $stdev_content;
+    public $stdev_content;
 
     /**
      * @var average for the Normal Distribution. Average number of answers answered by any user that are accepted by any other user
      */
-    protected $ave_questions;
+    public $ave_questions;
 
     /**
      * @var standard deviation for the Normal Distribution. Based on the number of answers in common between users.
      */
-    protected $stdev_questions;
+    public $stdev_questions;
 
     /**
      * @var \Everyman\Neo4j\Client
@@ -45,7 +47,7 @@ class MatchingModel
      */
     protected $answerModel;
 
-    /**
+    /**********************************************************************************************************************
      * @param \Everyman\Neo4j\Client $client
      * @param \Model\User\ContentPaginatedModel $contentPaginatedModel
      * @param \Model\User\AnswerModel $answerModel
@@ -57,6 +59,10 @@ class MatchingModel
         $this->answerModel = $answerModel;
     }
 
+    /************************************************************************************************************************
+     * @param $id id of the user
+     * @return string 'content' or 'answers' depending on which is the preferred matching type for the user
+     */
     public function getPreferredMatchingType($id)
     {
         $numberOfSharedContent = $this->contentPaginatedModel->countTotal(array('id' => $id));
@@ -69,5 +75,64 @@ class MatchingModel
         }
     }
 
-    
+    /************************************************************************************************************************
+     *
+     */
+    public function updateContentNormalDistributionVariables()
+    {
+        //Construct query string
+        $queryString = "
+        MATCH
+            (u1:User),
+            (u2:User)
+        OPTIONAL MATCH
+            a=(u1)-[rl1]->(cl1:Link:Content)-[:TAGGED]->(tl1:Tag)
+        OPTIONAL MATCH
+            b=(u2)-[rl2]->(cl2:Link:Content)-[:TAGGED]->(tl2:Tag)
+        WHERE
+            type(rl1) = type(rl2) AND
+            tl1 = tl2 AND
+            (cl1 = cl2 OR cl1 <> cl2)
+        WITH
+            u1, u2, length(collect(DISTINCT cl2)) AS numOfContentsInCommon
+        RETURN
+            avg(numOfContentsInCommon) AS ave_content,
+            stdevp(numOfContentsInCommon) AS stdev_content
+        ";
+
+        //Create the Neo4j query object
+        $query = new Query(
+            $this->client,
+            $queryString
+        );
+
+        //Execute Query
+        try {
+            $result = $query->getResultSet();
+        } catch (\Exception $e) {
+            throw $e;
+        }
+
+        //Get the wanted results
+        foreach ($result as $row) {
+            $average = $row['ave_content'];
+            $stdev = $row['stdev_content'];
+        }
+
+        $this->ave_content = $average;
+        $this->stdev_content = $stdev;
+    }
+
+    public function updateQuestionsNormalDistributionVariables()
+    {
+
+        //Set the average and standard deviation for the content Normal Distribution
+        //$this->ave_questions = $average;
+        //$this->stdev_questions = $stdev;
+    }
+
+    /**********************************************************************************************************************
+     *
+     */
+
 } 
