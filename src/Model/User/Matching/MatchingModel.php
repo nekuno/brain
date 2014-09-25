@@ -171,6 +171,10 @@ class MatchingModel
      */
     public function getMatchingBetweenTwoUsersBasedOnAnswers($id1, $id2)
     {
+        //Get the values of the parameters for the Normal distribution
+        $ave_questions = $this->ave_questions;
+        $stdev_questions = $this->stdev_questions;
+
         //Construct query String
         $queryString = "
         MATCH
@@ -245,7 +249,7 @@ class MatchingModel
         $matching =
             (
                 $ratingForMatching +
-                stats_dens_normal($normal_x, $this->ave_questions, $this->stdev_questions) //function from stats PHP extension
+                stats_dens_normal($normal_x, $ave_questions, $stdev_questions) //function from stats PHP extension
             ) / 2;
 
         //Query to create the matching relationship with the appropriate value
@@ -289,10 +293,16 @@ class MatchingModel
         }
 
         return $matching;
+        //For testing purposes
+        //return $ratingForMatching . ', ' . $normal_x . ', ' . $ave_questions . ', ' . $stdev_questions;
     }
 
     public function getMatchingBetweenTwoUsersBasedOnSharedContent ($id1, $id2)
     {
+        //Get the values of the parameters for the Normal distribution
+        $ave_content = $this->ave_content;
+        $stdev_content = $this->stdev_content;
+
         //Construct query String
         $queryString = "
         MATCH
@@ -341,7 +351,7 @@ class MatchingModel
         }
 
         //Calculate the matching
-        $matching = stats_dens_normal($normal_x, $this->ave_content, $this->stdev_content);
+        $matching = stats_dens_normal($normal_x, $ave_content, $stdev_content);
 
         //Query to create the matching relationship with the appropriate value
 
@@ -384,6 +394,8 @@ class MatchingModel
         }
 
         return $matching;
+        //For testing purposes:
+        //return $normal_x . ', ' . $ave_content . ', ' . $stdev_content;
     }
 
 } 
