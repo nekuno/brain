@@ -32,6 +32,14 @@ class Neo4jTestsCommand extends ApplicationAwareCommand
             return;
         }
 
-        $output->writeln('Tests run. Matching(questions) users 5 and 7: ' . $value1 . ' // Matching(content) users 1 and 2: ' . $value2);
+        $output->writeln('Tests run');
+        $output->writeln('');
+        $output->writeln('Average(content) = ' . $testObject->ave_content);
+        $output->writeln('Standard Deviation(content) = ' . $testObject->stdev_content);
+        $output->writeln('Average(questions) = ' . $testObject->ave_questions);
+        $output->writeln('Standard Deviation(questions) = ' . $testObject->stdev_questions);
+        $output->writeln('');
+        $output->writeln('Matching(questions) users 5 and 7: ' . $value1);
+        $output->writeln('Matching(content) users 1 and 2: ' . $value2);
     }
 }
