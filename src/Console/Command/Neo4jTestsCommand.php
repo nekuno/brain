@@ -23,7 +23,7 @@ class Neo4jTestsCommand extends ApplicationAwareCommand
 
         try {
             $value1 = $testObject->getMatchingBetweenTwoUsersBasedOnAnswers(5, 7);
-            $value2 = $testObject->getMatchingBetweenTwoUsersBasedOnContent(1, 2)
+            $value2 = $testObject->getMatchingBetweenTwoUsersBasedOnContent(1, 2);
         } catch (\Exception $e) {
             $output->writeln(
                'Error trying to execute test with message: ' . $e->getMessage()
