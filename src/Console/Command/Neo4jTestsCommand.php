@@ -2,7 +2,7 @@
 
 namespace Console\Command;
 
-use Model\User\MatchingModelOld;
+use Model\User\Matching\MatchingModel;
 
 use Silex\Application;
 use Symfony\Component\Console\Input\InputInterface;
@@ -19,10 +19,11 @@ class Neo4jTestsCommand extends ApplicationAwareCommand
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $testObject = new MatchingModelOld($this->app['neo4j.client'], $this->app['users.content.model'], $this->app['users.answer.model']);
+        $testObject = new MatchingModel($this->app['neo4j.client'], $this->app['users.content.model'], $this->app['users.answer.model']);
 
         try {
-            $result = $testObject->getMatchingBetweenTwoUsersBasedOnAnswers(5, 7);
+            $value1 = $testObject->getMatchingBetweenTwoUsersBasedOnAnswers(5, 7);
+            $value2 = $testObject->getMatchingBetweenTwoUsersBasedOnContent(1, 2)
         } catch (\Exception $e) {
             $output->writeln(
                'Error trying to execute test with message: ' . $e->getMessage()
@@ -31,6 +32,6 @@ class Neo4jTestsCommand extends ApplicationAwareCommand
             return;
         }
 
-        $output->writeln('Tests run. Matching: ' . array_values($result)[0]);
+        $output->writeln('Tests run. Matching(questions) users 5 and 7: ' . $value1 . ' // Matching(content) users 1 and 2: ' . $value2);
     }
 }
