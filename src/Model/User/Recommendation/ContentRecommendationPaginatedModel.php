@@ -3,7 +3,7 @@
 namespace Model\User\Recommendation;
 
 use Paginator\PaginatedInterface;
-use Model\User\MatchingModel;
+use Model\User\MatchingModelOld;
 
 use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
@@ -24,7 +24,7 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
      * @param \Everyman\Neo4j\Client $client
      * @param \Model\User\MatchingModel $matchingModel
      */
-    public function __construct(Client $client, MatchingModel $matchingModel)
+    public function __construct(Client $client, MatchingModelOld $matchingModel)
     {
         $this->client = $client;
         $this->matchingModel = $matchingModel;
@@ -70,7 +70,7 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
         }
 
         $typeQuery = 'has(match.matching_questions)';
-        if($this->matchingModel->getPreferredMatchingType($id) == MatchingModel::PREFERRED_MATCHING_CONTENT) {
+        if($this->matchingModel->getPreferredMatchingType($id) == MatchingModelOld::PREFERRED_MATCHING_CONTENT) {
             $typeQuery = "has(match.matching_content)";
         }
 
@@ -160,7 +160,7 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
         }
 
         $typeQuery = 'has(match.matching_questions)';
-        if($this->matchingModel->getPreferredMatchingType($id) == MatchingModel::PREFERRED_MATCHING_CONTENT) {
+        if($this->matchingModel->getPreferredMatchingType($id) == MatchingModelOld::PREFERRED_MATCHING_CONTENT) {
             $typeQuery = "has(match.matching_content)";
         }
 
