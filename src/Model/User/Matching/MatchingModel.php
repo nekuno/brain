@@ -15,22 +15,22 @@ class MatchingModel
     /**
      * @var average for the Normal Distribution. Average number of tags between any 2 users.
      */
-    public $ave_content;
+    public static $ave_content;
 
     /**
      * @var standard deviation of the Normal Distribution. Based on number of tags between users
      */
-    public $stdev_content;
+    public static $stdev_content;
 
     /**
      * @var average for the Normal Distribution. Average number of answers answered by any user that are accepted by any other user
      */
-    public $ave_questions;
+    public static $ave_questions;
 
     /**
      * @var standard deviation for the Normal Distribution. Based on the number of answers in common between users.
      */
-    public $stdev_questions;
+    public static $stdev_questions;
 
     /**
      * @var \Everyman\Neo4j\Client
@@ -163,7 +163,7 @@ class MatchingModel
         $this->stdev_questions = $stdev;
     }
 
-    /**
+    /************************************************************************************************************
      * @param $id1 qnoow_id of the first user
      * @param $id2 qnoow_id of the second user
      * @return float matching by questions between both users
@@ -297,6 +297,12 @@ class MatchingModel
         //return $ratingForMatching . ', ' . $normal_x . ', ' . $ave_questions . ', ' . $stdev_questions;
     }
 
+    /**
+     * @param $id1 qnoow_id of the first user
+     * @param $id2 qnoow_id of the second user
+     * @return float matching by content (with tags) between both users
+     * @throws \Exception
+     */
     public function getMatchingBetweenTwoUsersBasedOnSharedContent ($id1, $id2)
     {
         //Get the values of the parameters for the Normal distribution
