@@ -90,9 +90,11 @@ class MatchingModel
         OPTIONAL MATCH
             b=(u2)-[rl2]->(cl2:Link)-[:TAGGED]->(tl2:Tag)
         WHERE
-            type(rl1) = type(rl2) AND
-            tl1 = tl2 AND
-            (cl1 = cl2 OR cl1 <> cl2)
+                type(rl1) = type(rl2)
+            AND
+                tl1 = tl2
+            AND
+                (cl1 = cl2 OR cl1 <> cl2)
         WITH
             u1, u2, length(collect(DISTINCT cl2)) AS numOfContentsInCommon
         RETURN
@@ -192,7 +194,8 @@ class MatchingModel
         OPTIONAL MATCH
             (u1)-[r3:RATES]->(:Question)<-[r4:RATES]-(u2)
         WITH
-            u1, u2, (count(commonanswer1)+count(commonanswer2))/2 AS numOfCommonAnswers,
+            u1, u2,
+            (count(commonanswer1)+count(commonanswer2))/2 AS numOfCommonAnswers,
             [n1 IN collect(distinct r1) |n1.rating] AS little1_elems,
             [n2 IN collect(distinct r2) |n2.rating] AS little2_elems,
             [n3 IN collect(distinct r3) |n3.rating] AS CIT1_elems,
@@ -210,7 +213,7 @@ class MatchingModel
                     CIT1 > 0 AND CIT2 > 0
                 THEN
                     sqrt( tofloat( little1/CIT1 ) * tofloat( little2/CIT2 ) )
-                 ELSE
+                ELSE
                     0
             END
             AS match_user1_user2
@@ -322,9 +325,11 @@ class MatchingModel
         OPTIONAL MATCH
             b=(u2)-[rl2]->(cl2:Link)-[:TAGGED]->(tl2:Tag)
         WHERE
-            type(rl1) = type(rl2) AND
-            tl1 = tl2 AND
-            (cl1 = cl2 OR cl1 <> cl2)
+                type(rl1) = type(rl2)
+            AND
+                tl1 = tl2
+            AND
+                (cl1 = cl2 OR cl1 <> cl2)
         WITH
             count(DISTINCT cl2) AS numOfContentsInCommon
         RETURN
