@@ -102,6 +102,7 @@ class ContentPaginatedModel implements PaginatedInterface
             content,
             collect(distinct tag.name) as tags,
             labels(content) as types
+            ORDER BY content.created DESC
             SKIP {offset}
             LIMIT {limit}
             ;
