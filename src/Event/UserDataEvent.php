@@ -5,14 +5,14 @@ namespace Event;
 
 use Symfony\Component\EventDispatcher\Event;
 
-class StatusEvent extends Event
+class UserDataEvent extends Event
 {
 
     protected $user;
 
     protected $resourceOwner;
 
-    public function __construct($user, $resourceOwner)
+    public function __construct($user, $resourceOwner = null)
     {
 
         $this->user = $user;

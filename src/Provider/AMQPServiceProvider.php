@@ -8,9 +8,16 @@ use PhpAmqpLib\Connection\AMQPConnection;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
 
+/**
+ * Class AMQPServiceProvider
+ * @package Provider
+ */
 class AMQPServiceProvider implements ServiceProviderInterface
 {
 
+    /**
+     * @param Application $app
+     */
     public function register(Application $app)
     {
 
@@ -27,6 +34,9 @@ class AMQPServiceProvider implements ServiceProviderInterface
         );
     }
 
+    /**
+     * @param Application $app
+     */
     public function boot(Application $app)
     {
     }

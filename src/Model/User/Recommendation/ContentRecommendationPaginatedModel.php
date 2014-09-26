@@ -95,8 +95,11 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
         }
 
         $typeQuery = 'has(match.matching_questions)';
-        if($this->matchingModel->getPreferredMatchingType($id) == MatchingModel::PREFERRED_MATCHING_CONTENT) {
+        $getMatchQuery = 'match.matching_questions AS match, ';
+        $preferredMatching = $this->matchingModel->getPreferredMatchingType($id);
+        if($preferredMatching == MatchingModel::PREFERRED_MATCHING_CONTENT) {
             $typeQuery = "has(match.matching_content)";
+            $getMatchQuery = 'match.matching_content AS match, ';
         }
 
         $query = "
@@ -115,14 +118,19 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
         $query .= "
             OPTIONAL MATCH
             (content)-[:TAGGED]->(tag:Tag)
+            OPTIONAL MATCH
+            (user)-[:LIKES]-(:Link)-[commonTags:TAGGED]-(tag)
             RETURN
             content,
-            match.matching_content AS match,
+        ";
+        $query .= $getMatchQuery;
+        $query .= "
+            count(distinct commonTags) AS commonTagsCount,
             matching_users AS via,
             collect(distinct tag.name) as tags,
             labels(content) as types
             ORDER BY
-            match
+            commonTagsCount DESC, match DESC
             SKIP {offset}
             LIMIT {limit};
         ";
@@ -153,7 +161,16 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
                     $content['embed']['type'] = $row['content']->getProperty('embed_type');
                     $content['embed']['id'] = $row['content']->getProperty('embed_id');
                 }
-                $content['match'] = $row['match'];
+                $match = $row['match'];
+                if ($preferredMatching == MatchingModel::PREFERRED_MATCHING_CONTENT) {
+                    $match = $this->matchingModel->applyMatchingBasedOnContentCorrectionFactor($match);
+                }
+                $commonTagsCount = (int)$row['commonTagsCount'];
+                $commonTagsMatch = 0;
+                if ($commonTagsCount > 0) {
+                    $commonTagsMatch = ($commonTagsCount-0.9)/$commonTagsCount;
+                }
+                $content['match'] = $match+((1-$match)*$commonTagsMatch);
                 $content['via']['qnoow_id'] = $row['via']->getProperty('qnoow_id');
                 $content['via']['name'] = $row['via']->getProperty('username');
 

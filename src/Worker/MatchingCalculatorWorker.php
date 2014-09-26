@@ -65,12 +65,13 @@ class MatchingCalculatorWorker implements RabbitMQConsumerInterface, LoggerAware
 
         $data = json_decode($message->body, true);
 
-        $eventType = $data['type'];
+        $trigger = $data['trigger'];
 
-        switch ($eventType) {
+        switch ($trigger) {
+            case 'content_rated':
             case 'process_finished':
                 try {
-                    $this->model->recalculateMatchingByContentOfUserWhenNewContentIsAdded($data['userId']);
+                    $this->model->calculateMatchingByContentOfUserWhenNewContentIsAdded($data['userId']);
                 } catch (\Exception $e) {
                     $this->logger->debug(
                         sprintf(
@@ -82,12 +83,10 @@ class MatchingCalculatorWorker implements RabbitMQConsumerInterface, LoggerAware
                         )
                     );
                 }
-
                 break;
             case 'question_answered':
                 try {
-
-                    $this->model->recalculateMatchingOfUserByAnswersWhenNewQuestionsAreAnswered(
+                    $this->model->calculateMatchingOfUserByAnswersWhenNewQuestionsAreAnswered(
                         $data['user_id'],
                         array($data['question_id'])
                     );
@@ -103,10 +102,31 @@ class MatchingCalculatorWorker implements RabbitMQConsumerInterface, LoggerAware
                     );
                 }
                 break;
-            case 'content_rated':
-
-                // TODO: handle this event
+            case 'matching_expired':
+                try {
+                    switch($data['matching_type']){
+                        case 'content':
+                            $this->model->calculateMatchingBetweenTwoUsersBasedOnSharedContent($data['user_1_id'], $data['user_2_id']);
+                            break;
+                        case 'answer':
+                            $this->model->calculateMatchingBetweenTwoUsersBasedOnAnswers($data['user_1_id'], $data['user_2_id']);
+                            break;
+                    }
+                } catch (\Exception $e) {
+                    $this->logger->debug(
+                        sprintf(
+                            'Worker: Error calculating matching between user %d and user %d with message %s on file %s, line %d',
+                            $data['user_1_id'],
+                            $data['user_2_id'],
+                            $e->getMessage(),
+                            $e->getFile(),
+                            $e->getLine()
+                        )
+                    );
+                }
                 break;
+            default;
+                throw new \Exception('Invalid matching calculation trigger');
         }
 
         $message->delivery_info['channel']->basic_ack($message->delivery_info['delivery_tag']);

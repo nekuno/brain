@@ -7,7 +7,7 @@ use Paginator\PaginatedInterface;
 use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
 
-class ContentPaginatedModel implements PaginatedInterface
+class ContentComparePaginatedModel implements PaginatedInterface
 {
     /**
      * @var array
@@ -39,7 +39,7 @@ class ContentPaginatedModel implements PaginatedInterface
      */
     public function validateFilters(array $filters)
     {
-        $hasId = isset($filters['id']);
+        $hasIds = isset($filters['id']) && isset($filters['id2']);
 
         if (isset($filters['type'])) {
             $hasValidType = in_array($filters['type'], $this->getValidTypes());
@@ -47,7 +47,7 @@ class ContentPaginatedModel implements PaginatedInterface
             $hasValidType = true;
         }
 
-        $isValid = $hasId && $hasValidType;
+        $isValid = $hasIds && $hasValidType;
 
         return $isValid;
     }
@@ -62,11 +62,18 @@ class ContentPaginatedModel implements PaginatedInterface
      */
     public function slice(array $filters, $offset, $limit)
     {
-        $id = $filters['id'];
         $response = array();
+        $id = $filters['id'];
+        $id2 = $filters['id2'];
+
+        $showOnlyCommon = false;
+        if (isset($filters['showOnlyCommon'])) {
+            $showOnlyCommon = $filters['showOnlyCommon'];
+        }
 
         $params = array(
             'UserId' => (integer)$id,
+            'UserId2' => (integer)$id2,
             'offset' => (integer)$offset,
             'limit' => (integer)$limit
         );
@@ -81,6 +88,17 @@ class ContentPaginatedModel implements PaginatedInterface
             $params['tag'] = $filters['tag'];
         }
 
+        $commonQuery = "
+                OPTIONAL MATCH
+                (u2)-[r2:LIKES|DISLIKES]->(content)
+            ";
+        if ($showOnlyCommon) {
+            $commonQuery = "
+                MATCH
+                (u2)-[r2:LIKES|DISLIKES]->(content)
+            ";
+        }
+
         $linkType = 'Link';
         if (isset($filters['type'])) {
             $linkType = $filters['type'];
@@ -88,21 +106,22 @@ class ContentPaginatedModel implements PaginatedInterface
 
         $query = "
             MATCH
-            (u:User)
-            WHERE u.qnoow_id = {UserId}
+            (u:User), (u2:User)
+            WHERE u.qnoow_id = {UserId} AND u2.qnoow_id = {UserId2}
             MATCH
             (u)-[r:LIKES|DISLIKES]->(content:" . $linkType .")
         ";
         $query .= $tagQuery;
+        $query .= $commonQuery;
         $query .= "
             OPTIONAL MATCH
             (content)-[:TAGGED]->(tag:Tag)
             RETURN
-            type(r) as rate,
+            type(r) as rate1,
+            type(r2) as rate2,
             content,
             collect(distinct tag.name) as tags,
             labels(content) as types
-            ORDER BY content.created DESC
             SKIP {offset}
             LIMIT {limit}
             ;
@@ -122,7 +141,6 @@ class ContentPaginatedModel implements PaginatedInterface
             foreach ($result as $row) {
                 $content = array();
 
-                $content['type'] = $row['type'];
                 $content['url'] = $row['content']->getProperty('url');
                 $content['title'] = $row['content']->getProperty('title');
                 $content['description'] = $row['content']->getProperty('description');
@@ -135,10 +153,17 @@ class ContentPaginatedModel implements PaginatedInterface
                     $content['types'][] = $type;
                 }
 
-                $user = array();
-                $user['user']['id'] = $id;
-                $user['rate'] = $row['rate'];
-                $content['user_rates'][] = $user;
+                $user1 = array();
+                $user1['user']['id'] = $id;
+                $user1['rate'] = $row['rate1'];
+                $content['user_rates'][] = $user1;
+
+                if (null != $row['rate2']) {
+                    $user2 = array();
+                    $user2['user']['id'] = $id2;
+                    $user2['rate'] = $row['rate2'];
+                    $content['user_rates'][] = $user2;
+                }
 
                 if ($row['content']->getProperty('embed_type')) {
                     $content['embed']['type'] = $row['content']->getProperty('embed_type');
@@ -170,6 +195,19 @@ class ContentPaginatedModel implements PaginatedInterface
             'UserId' => (integer)$id,
         );
 
+        $commonQuery = '';
+        if (isset($filters['showOnlyCommon'])) {
+            $id2 = $filters['id2'];
+            if ($filters['showOnlyCommon']) {
+                $commonQuery = "
+                    MATCH
+                    (u2)-[:LIKES|DISLIKES]->(content)
+                    WHERE u2.qnoow_id = {UserId2}
+                ";
+                $params['UserId2'] = (integer)$id2;
+            }
+        }
+
         $tagQuery = '';
         if (isset($filters['tag'])) {
             $tagQuery = "
@@ -192,6 +230,7 @@ class ContentPaginatedModel implements PaginatedInterface
             MATCH
             (u)-[r:LIKES|DISLIKES]->(content:" . $linkType . ")
         ";
+        $query .= $commonQuery;
         $query .= $tagQuery;
         $query .= "
             RETURN
