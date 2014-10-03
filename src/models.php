@@ -63,7 +63,12 @@ $app['users.recommendation.content.tag.model'] = function ($app) {
 
 $app['questions.model'] = function ($app) {
 
-    return new \Model\QuestionModel($app['neo4j.client']);
+    return new \Model\Questionnaire\QuestionModel($app['neo4j.client']);
+};
+
+$app['answers.model'] = function ($app) {
+
+    return new \Model\Questionnaire\AnswerModel($app['neo4j.client']);
 };
 
 $app['links.model'] = function ($app) {

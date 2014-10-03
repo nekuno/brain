@@ -1,6 +1,8 @@
 <?php
 
-// User routes
+/**
+ * Users routes
+ */
 $app->get('/users', 'users.controller:indexAction');
 $app->post('/users', 'users.controller:addAction');
 
@@ -25,11 +27,23 @@ $app->get('/users/{id}/recommendations/users', 'users.controller:getUserRecommen
 $app->get('/users/{id}/recommendations/content', 'users.controller:getContentRecommendationAction');
 $app->get('/users/{id}/recommendations/content/tags', 'users.controller:getContentRecommendationTagsAction');
 
-// Question routes
-$app->post('/questions/answers', 'questions.controller:answerAction');
-$app->post('/questions', 'questions.controller:addAction');
+/**
+ * Questionnaire routes
+ */
+$app->get('/questions', 'questions.controller:nextAction');
+$app->post('/questions', 'questions.controller:createAction');
+$app->post('/questions/{id}', 'questions.controller:updateAction');
+$app->post('/questions/{id}/skip', 'questions.controller:skipAction');
+$app->post('/questions/{id}/report', 'questions.controller:reportAction');
 
-// Content routes
+$app->get('/answers/{id}', 'answers.controller:getAction');
+$app->post('/answers', 'answers.controller:createAction');
+$app->post('/answers/{id}', 'answers.controller:updateAction');
+$app->post('/answers/{id}/explain', 'answers.controller:explainAction');
+
+/**
+ * Content routes
+ */
 $app->post('/add/links', 'fetch.controller:addLinkAction');
 $app->get('/fetch/links', 'fetch.controller:fetchLinksAction')
     ->value('userId', null)
