@@ -27,24 +27,21 @@ class QuestionModel
             'userId' => $userId
         );
 
-        $template = "MATCH"
-            . " (u:User)-[:ANSWERS]->(a:Answer)-[:IS_ANSWER_OF]->(q:Question)"
-            . " WITH u, q"
-            . " OPTIONAL MATCH"
-            . " (u)-[:SKIPS]->(q)"
-            . ", (u)-[:REPORTS]->(q)"
+        $template = "MATCH (u:User)-[:ANSWERS]->(a:Answer)-[:IS_ANSWER_OF]->(q:Question)"
             . " WHERE u.qnoow_id = {userId}"
-            . " WITH u AS user, collect(q) AS excluded"
-            . " OPTIONAL MATCH (q2:Question)"
-            . " WHERE NOT q2 IN excluded"
-            . " WITH q2 AS next, excluded"
-            . " OPTIONAL MATCH (next)<-[r:RATES]-(u2:User), (next)<-[:IS_ANSWER_OF]-(a2:Answer)"
-            . " RETURN next, collect(DISTINCT a2) as nextAnswers, sum(r.rating) AS nextRating, excluded";
+            . " WITH u, q"
+            . " OPTIONAL MATCH (u)-[:SKIPS]->(q1), (:User)-[:REPORTS]->(q2)"
+            . " WITH u AS user, collect(q) + collect(q1) + collect(q2) AS excluded"
+            . " OPTIONAL MATCH (q3:Question)"
+            . " WHERE NOT q3 IN excluded"
+            . " WITH q3 AS next, excluded"
+            . " OPTIONAL MATCH (u2:User)-[r:RATES]->(next)<-[:IS_ANSWER_OF]-(a2:Answer)"
+            . " RETURN next, collect(DISTINCT a2) as nextAnswers, sum(r.rating) AS nextRating";
 
         if ($sortByRating && $this->sortByRating()) {
-            $template .= " ORDER BY nextRating";
+            $template .= " ORDER BY nextRating DESC";
         } else {
-            $template .= " ORDER BY next.timestamp";
+            $template .= " ORDER BY next.timestamp DESC";
         }
 
         $template .= " LIMIT 1;";
@@ -85,8 +82,7 @@ class QuestionModel
             . " WHERE u.qnoow_id = {userId}"
             . " CREATE (q:Question)<-[c:CREATED_BY]-(u)"
             . " SET q.text = {text}, q.timestamp = timestamp(), c.timestamp = timestamp()"
-            . " FOREACH (text in {answers}| CREATE (a:Answer {text: text})-[:IS_ANSWER_OF]->(q))"
-        ;
+            . " FOREACH (text in {answers}| CREATE (a:Answer {text: text})-[:IS_ANSWER_OF]->(q))";
 
         $template .= ";";
 
