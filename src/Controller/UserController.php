@@ -47,10 +47,7 @@ class UserController
 
         // Basic data validation
         if (array() !== $request->request->all()) {
-            if (
-                null == $request->request->get('id')
-                || null == $request->request->get('username')
-                || null == $request->request->get('email')
+            if (null == $request->request->get('id') || null == $request->request->get('username')
             ) {
                 return $app->json(array(), 400);
             }
@@ -313,11 +310,11 @@ class UserController
      */
     public function getUserContentCompareAction(Request $request, Application $app)
     {
-        $id   = $request->get('id');
-        $id2   = $request->get('id2');
-        $tag  = $request->get('tag', null);
+        $id = $request->get('id');
+        $id2 = $request->get('id2');
+        $tag = $request->get('tag', null);
         $type = $request->get('type', null);
-        $showOnlyCommon   = $request->get('showOnlyCommon', 0);
+        $showOnlyCommon = $request->get('showOnlyCommon', 0);
 
         if (null === $id || null === $id2) {
             return $app->json(array(), 400);
@@ -336,7 +333,7 @@ class UserController
             $filters['type'] = urldecode($type);
         }
 
-        /** @var $model \Model\User\ContentComparePaginatedModel  */
+        /** @var $model \Model\User\ContentComparePaginatedModel */
         $model = $app['users.content.compare.model'];
 
         try {
@@ -402,11 +399,11 @@ class UserController
         $rate = $request->request->get('rate');
 
         if (null == $id || null == $url || null == $rate) {
-            return $app->json(array('text' => 'aaa', 'id'=> $id, 'url' => $url), 400);
+            return $app->json(array('text' => 'aaa', 'id' => $id, 'url' => $url), 400);
         }
 
         try {
-            $model  = $app['users.rate.model'];
+            $model = $app['users.rate.model'];
             $result = $model->userRateLink($id, $url, $rate);
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
