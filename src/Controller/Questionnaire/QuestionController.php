@@ -29,7 +29,7 @@ class QuestionController
         $model = $app['questions.model'];
         $result = $model->getNextByUser($userId);
 
-        if($result){
+        if(null !== $result){
             $question = $this->buildQuestion($result);
             return $app->json($question, 200);
         } else {

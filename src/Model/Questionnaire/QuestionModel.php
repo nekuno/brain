@@ -24,7 +24,7 @@ class QuestionModel
     {
 
         $data = array(
-            'userId' => $userId
+            'userId' => (integer)$userId
         );
 
         $template = "MATCH (u:User)-[:ANSWERS]->(a:Answer)-[:IS_ANSWER_OF]->(q:Question)"
