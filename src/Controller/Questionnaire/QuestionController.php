@@ -26,7 +26,7 @@ class QuestionController
         }
 
         /** @var QuestionModel $model */
-        $model = $app['questions.model'];
+        $model = $app['questionnaire.questions.model'];
         $result = $model->getNextByUser($userId);
 
         if(null !== $result){
@@ -49,13 +49,16 @@ class QuestionController
         $data = $request->request->all();
 
         if (false === $this->isValidDataForCreateQuestion($data)) {
-            return $app->json(array(), 400);
+            return $app->json(array('Bad data passed'), 400);
         }
 
         try {
             /** @var QuestionModel $model */
-            $model = $app['questions.model'];
+            $model = $app['questionnaire.questions.model'];
             $result = $model->create($data);
+            if(null !== $result){
+                return $app->json(array('Resource created successfully'), 201);
+            }
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;
@@ -64,8 +67,7 @@ class QuestionController
             return $app->json(array($e->getMessage()), 500);
         }
 
-        return $app->json(array('Resource created successful'), null === $result ? 201 : 200);
-
+        $app->json(array(), 200);
     }
 
     private function isValidDataForCreateQuestion(array $data)
@@ -92,7 +94,7 @@ class QuestionController
 
         try {
             /** @var QuestionModel $model */
-            $model = $app['questions.model'];
+            $model = $app['questionnaire.questions.model'];
             $model->skip($data);
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
@@ -113,7 +115,7 @@ class QuestionController
 
         try {
             /** @var QuestionModel $model */
-            $model = $app['questions.model'];
+            $model = $app['questionnaire.questions.model'];
             $model->skip($data, $data['userId'], $data['reason']);
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {

@@ -18,17 +18,17 @@ $app['users.data.controller'] = $app->share(
     }
 );
 
-$app['questions.controller'] = $app->share(
+$app['questionnaire.questions.controller'] = $app->share(
     function () {
 
         return new Controller\Questionnaire\QuestionController;
     }
 );
 
-$app['answers.controller'] = $app->share(
+$app['users.answers.controller'] = $app->share(
     function () {
 
-        return new Controller\Questionnaire\AnswerController;
+        return new \Controller\User\AnswerController;
     }
 );
 

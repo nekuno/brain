@@ -6,7 +6,7 @@
  * Time: 16:40
  */
 
-namespace Controller\Questionnaire;
+namespace Controller\User;
 
 use Model\Questionnaire\AnswerModel;
 use Silex\Application;
@@ -26,7 +26,7 @@ class AnswerController
 
         try {
             /** @var AnswerModel $model */
-            $model = $app['answers.model'];
+            $model = $app['users.answers.model'];
             $model->create($data);
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
@@ -42,13 +42,13 @@ class AnswerController
     public function updateAction(Request $request, Application $app)
     {
 
-        $answerId = (integer) $request->get('id');
+        $answerId = (integer) $request->get('answerId');
         $data = $request->request->all();
         $data['currentId'] = $answerId;
 
         try {
             /** @var AnswerModel $model */
-            $model = $app['answers.model'];
+            $model = $app['users.answers.model'];
             $model->update($data);
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
@@ -66,14 +66,14 @@ class AnswerController
     {
 
         $data = array(
-            'answerId' => (integer) $request->get('id'),
-            'userId' => $request->request->get('userId'),
+            'answerId' => (integer) $request->get('answerId'),
+            'userId' => (integer) $request->get('userId'),
             'explanation' => $request->request->get('explanation'),
         );
 
         try {
             /** @var AnswerModel $model */
-            $model = $app['answers.model'];
+            $model = $app['users.answers.model'];
             $model->explain($data);
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {

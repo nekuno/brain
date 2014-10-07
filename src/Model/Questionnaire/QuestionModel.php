@@ -24,7 +24,7 @@ class QuestionModel
     {
 
         $data = array(
-            'userId' => (integer)$userId
+            'userId' => (integer) $userId
         );
 
         $template = "MATCH (u:User)-[:ANSWERS]->(a:Answer)-[:IS_ANSWER_OF]->(q:Question)"
@@ -82,9 +82,8 @@ class QuestionModel
             . " WHERE u.qnoow_id = {userId}"
             . " CREATE (q:Question)<-[c:CREATED_BY]-(u)"
             . " SET q.text = {text}, q.timestamp = timestamp(), c.timestamp = timestamp()"
-            . " FOREACH (text in {answers}| CREATE (a:Answer {text: text})-[:IS_ANSWER_OF]->(q))";
-
-        $template .= ";";
+            . " FOREACH (text in {answers}| CREATE (a:Answer {text: text})-[:IS_ANSWER_OF]->(q))"
+            . " RETURN q;";
 
         //Create the Neo4j query object
         $query = new  Query(

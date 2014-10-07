@@ -30,16 +30,17 @@ $app->get('/users/{id}/recommendations/content/tags', 'users.controller:getConte
 /**
  * Questionnaire routes
  */
-$app->get('/questions', 'questions.controller:nextAction');
-$app->post('/questions', 'questions.controller:createAction');
-$app->post('/questions/{id}', 'questions.controller:updateAction');
-$app->post('/questions/{id}/skip', 'questions.controller:skipAction');
-$app->post('/questions/{id}/report', 'questions.controller:reportAction');
+$app->get('/questionnaire/questions/next', 'questionnaire.questions.controller:nextAction');
+$app->get('/questionnaire/questions', 'questionnaire.questions.controller:getAnsweredAction');
+$app->post('/questionnaire/questions', 'questionnaire.questions.controller:createAction');
+$app->post('/questionnaire/questions/{id}', 'questionnaire.questions.controller:updateAction');
+$app->post('/questionnaire/questions/{id}/skip', 'questionnaire.questions.controller:skipAction');
+$app->post('/questionnaire/questions/{id}/report', 'questionnaire.questions.controller:reportAction');
 
-$app->get('/answers/{id}', 'answers.controller:getAction');
-$app->post('/answers', 'answers.controller:createAction');
-$app->post('/answers/{id}', 'answers.controller:updateAction');
-$app->post('/answers/{id}/explain', 'answers.controller:explainAction');
+$app->get('/users/{userId}/answers/{answerId}', 'users.answers.controller:getAction');
+$app->post('/users/{userId}/answers', 'users.answers.controller:createAction');
+$app->post('/users/{userId}/answers/{answerId}', 'users.answers.controller:updateAction');
+$app->post('/users/{userId}/answers/{answerId}/explain', 'users.answers.controller:explainAction');
 
 /**
  * Content routes
