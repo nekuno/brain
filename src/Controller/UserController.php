@@ -100,7 +100,7 @@ class UserController
             return $app->json(array(), 500);
         }
 
-        return $app->json($result, !empty($user) ? 200 : 404);
+        return $app->json($result, !empty($result) ? 200 : 404);
     }
 
     /**
