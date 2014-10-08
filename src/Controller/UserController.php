@@ -3,6 +3,7 @@
 namespace Controller;
 
 use Model\User\ContentPaginatorModel;
+use Model\UserModel;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -536,5 +537,52 @@ class UserController
         }
 
         return $app->json($result, !empty($result) ? 201 : 200);
+    }
+
+    /**
+     * @param Request $request
+     * @param Application $app
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @throws \Exception
+     */
+    public function statusAction(Request $request, Application $app)
+    {
+
+        $id = $request->get('id');
+        if (null === $id) {
+            return $app->json(array(), 404);
+        }
+
+        try {
+            /* @var $model UserModel */
+            $model = $app['users.model'];
+            $user = $model->getById($id);
+
+            if (!$user) {
+                return $app->json(array(), 404);
+            }
+        } catch (\Exception $e) {
+
+            if ($app['env'] == 'dev') {
+                throw $e;
+            }
+
+            return $app->json(array(), 500);
+        }
+
+        try {
+
+            $status = $model->getStatus($id);
+
+        } catch (\Exception $e) {
+
+            if ($app['env'] == 'dev') {
+                throw $e;
+            }
+
+            return $app->json(array(), 500);
+        }
+
+        return $app->json($status->getStatus(), 200);
     }
 }

@@ -4,6 +4,7 @@ namespace Model;
 
 use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
+use Model\User\UserStatusModel;
 
 /**
  * Class UserModel
@@ -63,10 +64,10 @@ class UserModel
         $users = array();
 
         foreach ($resultSet as $row) {
-            $user    = array(
+            $user = array(
                 'qnoow_id' => $row['u']->getProperty('qnoow_id'),
                 'username' => $row['u']->getProperty('username'),
-                'email'    => $row['u']->getProperty('email'),
+                'email' => $row['u']->getProperty('email'),
             );
             $users[] = $user;
         }
@@ -91,7 +92,7 @@ class UserModel
     public function remove($id = null)
     {
         $queryString = "MATCH (u:User {qnoow_id:" . $id . "}) DELETE u;";
-        $query       = new Query($this->client, $queryString);
+        $query = new Query($this->client, $queryString);
 
         try {
             $result = $query->getResultSet();
@@ -109,7 +110,7 @@ class UserModel
     public function getAll()
     {
         $queryString = "MATCH (u:User) RETURN u;";
-        $query       = new Query($this->client, $queryString);
+        $query = new Query($this->client, $queryString);
 
         try {
             $result = $query->getResultSet();
@@ -129,7 +130,7 @@ class UserModel
     public function getById($id = null)
     {
         $queryString = "MATCH (u:User { qnoow_id : " . $id . "}) RETURN u;";
-        $query       = new Query($this->client, $queryString);
+        $query = new Query($this->client, $queryString);
 
         try {
             $result = $query->getResultSet();
@@ -139,5 +140,24 @@ class UserModel
 
         return $this->parseResultSet($result);
 
+    }
+
+    /**
+     * @param $id
+     * @return UserStatusModel
+     */
+    public function getStatus($id)
+    {
+        $queryString = "MATCH (u:User {qnoow_id: $id})-[:ANSWERS]->(a:Answer), (u)-[:LIKES]->(l:Link) RETURN COUNT(DISTINCT a) AS answerCount, COUNT(DISTINCT l) AS linkCount";
+        $query = new Query($this->client, $queryString);
+
+        $result = $query->getResultSet();
+
+        /* @var $row \Everyman\Neo4j\Query\Row */
+        $row = $result->current();
+
+        $status = new UserStatusModel($row['answerCount'], $row['linkCount']);
+
+        return $status;
     }
 }
