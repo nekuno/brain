@@ -11,9 +11,10 @@ namespace Model\Neo4j;
 use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
 use Exception\QueryErrorException;
+use Model\User\UserStatusModel;
 
-
-class Fixtures {
+class Fixtures
+{
 
     /**
      * @var \Everyman\Neo4j\Client
@@ -173,7 +174,7 @@ class Fixtures {
     public function loadUsers($numberOfUsers)
     {
         $userToCheck = array();
-        for ($i = 1; $i<=$numberOfUsers; $i++) {
+        for ($i = 1; $i <= $numberOfUsers; $i++) {
             $userToCheck[] = $i;
         }
         $queryUserToCheck = implode(',', $userToCheck);
@@ -182,7 +183,7 @@ class Fixtures {
             MATCH
             (u:User)
             WHERE
-            u.qnoow_id IN [" . $queryUserToCheck ."]
+            u.qnoow_id IN [" . $queryUserToCheck . "]
             RETURN
             distinct u.qnoow_id;";
 
@@ -199,11 +200,11 @@ class Fixtures {
 
         //Create queries in loop
         $userQuery = array();
-        for ($i = 1; $i<=$numberOfUsers; $i++) {
-            if (!in_array($i,$existingUsers)) {
+        for ($i = 1; $i <= $numberOfUsers; $i++) {
+            if (!in_array($i, $existingUsers)) {
                 $userQuery[] =
                     "CREATE (u:User {
-                        status: 'active',
+                        status: '" . UserStatusModel::USER_STATUS_INCOMPLETE . "',
                         qnoow_id: " . $i . ",
                         username: 'user" . $i . "',
                         email: 'testuser" . $i . "@test.test'
@@ -237,10 +238,9 @@ class Fixtures {
 
         //Create queries in loop
         $contentQuery = array();
-        for ($i = 1; $i<=$numberOfContents; $i++)
-        {
+        for ($i = 1; $i <= $numberOfContents; $i++) {
             $contentQuery[] =
-            "CREATE (l:Content:Link {
+                "CREATE (l:Content:Link {
                 url: 'testLink" . $i . "',
                 description: 'test description " . $i . "',
                 processed: 0
@@ -273,10 +273,9 @@ class Fixtures {
 
         //Create queries in loop
         $tagQuery = array();
-        for ($i = 1; $i<=$numberOfTags; $i++)
-        {
+        for ($i = 1; $i <= $numberOfTags; $i++) {
             $tagQuery[] =
-            "CREATE (t:Tag {
+                "CREATE (t:Tag {
                 name: 'testTag" . $i . "'
             })
             RETURN t;";
@@ -305,7 +304,7 @@ class Fixtures {
     public function createLinkTagRelationship($link, $tag)
     {
         $relationshipQuery =
-        "MATCH
+            "MATCH
             (l:Link {url: 'testLink" . $link . "'}),
             (t:Tag {name: 'testTag" . $tag . "'})
         CREATE UNIQUE
@@ -334,9 +333,9 @@ class Fixtures {
     public function createUserLikesLinkRelationship($user, $link)
     {
         $relationshipQuery =
-        "MATCH
+            "MATCH
             (l:Link {url: 'testLink" . $link . "'}),
-            (u:User {qnoow_id: ". $user . "})
+            (u:User {qnoow_id: " . $user . "})
         CREATE UNIQUE
             (l)<-[r:LIKES]-(u)
         RETURN
@@ -362,9 +361,9 @@ class Fixtures {
     public function createUserDislikesLinkRelationship($user, $link)
     {
         $relationshipQuery =
-        "MATCH
+            "MATCH
             (l:Link {url: 'testLink" . $link . "'}),
-            (u:User {qnoow_id: ". $user . "})
+            (u:User {qnoow_id: " . $user . "})
         CREATE UNIQUE
             (l)<-[r:DISLIKES]-(u)
         RETURN
@@ -390,7 +389,7 @@ class Fixtures {
     public function loadQuestionsWithAnswers($numberOfQuestions, $numberOfAnswersPerQuestion)
     {
         $questionToCheck = array();
-        for ($i = 1; $i<=$numberOfQuestions; $i++) {
+        for ($i = 1; $i <= $numberOfQuestions; $i++) {
             $questionToCheck[] = $i;
         }
         $queryQuestionToCheck = implode(',', $questionToCheck);
@@ -399,7 +398,7 @@ class Fixtures {
             MATCH
             (q:Question)
             WHERE
-            q.qnoow_id IN [". $queryQuestionToCheck. "]
+            q.qnoow_id IN [" . $queryQuestionToCheck . "]
             RETURN
             distinct q.qnoow_id;";
 
@@ -416,17 +415,16 @@ class Fixtures {
 
         //Create queries in loop
         $questionsQuery = array();
-        for ($i = 1; $i<=$numberOfQuestions; $i++) {
-            if (!in_array($i,$existingQuestions)) {
+        for ($i = 1; $i <= $numberOfQuestions; $i++) {
+            if (!in_array($i, $existingQuestions)) {
                 $questionsQueryString =
-                "CREATE
+                    "CREATE
                     (q:Question {qnoow_id: " . $i . ", text: 'question " . $i . "'})
                 ";
 
-                for($j = 1; $j<=$numberOfAnswersPerQuestion; $j++)
-                {
+                for ($j = 1; $j <= $numberOfAnswersPerQuestion; $j++) {
                     $questionsQueryString .=
-                    ", (:Answer {qnoow_id: " . $i . $j . ", text: 'answer " . $i . "-" . $j . "'})
+                        ", (:Answer {qnoow_id: " . $i . $j . ", text: 'answer " . $i . "-" . $j . "'})
                     -[:IS_ANSWER_OF]->(q)";
                 }
 
@@ -459,9 +457,9 @@ class Fixtures {
     public function createUserRatesRelationship($user, $question, $rating)
     {
         $relationshipQuery =
-        "MATCH
+            "MATCH
             (q:Question {qnoow_id: " . $question . "}),
-            (u:User {qnoow_id: ". $user . "})
+            (u:User {qnoow_id: " . $user . "})
         CREATE UNIQUE
             (u)-[r:RATES {rating: " . $rating . "}]->(q)
         RETURN
@@ -487,9 +485,9 @@ class Fixtures {
     public function createUserAnswersRelationship($user, $answer)
     {
         $relationshipQuery =
-        "MATCH
+            "MATCH
             (a:Answer {qnoow_id: " . $answer . "}),
-            (u:User {qnoow_id: ". $user . "})
+            (u:User {qnoow_id: " . $user . "})
         CREATE UNIQUE
             (u)-[r:ANSWERS]->(a)
         RETURN
@@ -515,9 +513,9 @@ class Fixtures {
     public function createUserAcceptsRelationship($user, $answer)
     {
         $relationshipQuery =
-        "MATCH
+            "MATCH
             (a:Answer {qnoow_id: " . $answer . "}),
-            (u:User {qnoow_id: ". $user . "})
+            (u:User {qnoow_id: " . $user . "})
         CREATE UNIQUE
             (u)-[r:ACCEPTS]->(a)
         RETURN

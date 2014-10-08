@@ -38,7 +38,7 @@ class UserModel
         $query = new Query(
             $this->client,
             "CREATE (u:User {
-                status: 'active',
+                status: '" . UserStatusModel::USER_STATUS_INCOMPLETE . "',
                 qnoow_id: " . $user['id'] . ",
                 username: '" . $user['username'] . "',
                 email: '" . $user['email'] . "'
@@ -148,15 +148,27 @@ class UserModel
      */
     public function getStatus($id)
     {
-        $queryString = "MATCH (u:User {qnoow_id: $id})-[:ANSWERS]->(a:Answer), (u)-[:LIKES]->(l:Link) RETURN COUNT(DISTINCT a) AS answerCount, COUNT(DISTINCT l) AS linkCount";
+        $queryString = "
+             MATCH (u:User {qnoow_id: $id})
+             OPTIONAL MATCH (u)-[:ANSWERS]->(a:Answer)
+             OPTIONAL MATCH (u)-[:LIKES]->(l:Link)
+             RETURN u.status AS status, COUNT(DISTINCT a) AS answerCount, COUNT(DISTINCT l) AS linkCount";
         $query = new Query($this->client, $queryString);
 
         $result = $query->getResultSet();
 
         /* @var $row \Everyman\Neo4j\Query\Row */
         $row = $result->current();
+        $status = $row['status'];
 
-        $status = new UserStatusModel($row['answerCount'], $row['linkCount']);
+        $status = new UserStatusModel($status, $row['answerCount'], $row['linkCount']);
+
+        if ($status->getStatus() !== $status) {
+            $newStatus = $status->getStatus();
+            $queryString = "MATCH (u:User {qnoow_id: $id}) SET u.status = '$newStatus' RETURN u";
+            $query = new Query($this->client, $queryString);
+            $query->getResultSet();
+        }
 
         return $status;
     }

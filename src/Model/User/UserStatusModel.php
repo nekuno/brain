@@ -7,8 +7,14 @@ namespace Model\User;
  */
 class UserStatusModel
 {
-    const USER_STATUS_INCOMPLETED = 1;
-    const USER_STATUS_COMPLETED = 2;
+    const USER_STATUS_DISABLED = 'disabled';
+    const USER_STATUS_INCOMPLETE = 'incomplete';
+    const USER_STATUS_COMPLETE = 'complete';
+
+    /**
+     * @var string
+     */
+    protected $status;
 
     /**
      * @var int
@@ -20,8 +26,11 @@ class UserStatusModel
      */
     protected $linkCount;
 
-    public function __construct($answerCount = 0, $linkCount = 0)
+    public function __construct($status = null, $answerCount = 0, $linkCount = 0)
     {
+        if (in_array($status, $this->getStatuses())) {
+            $this->status = $status;
+        }
         $this->answerCount = $answerCount;
         $this->linkCount = $linkCount;
     }
@@ -31,6 +40,19 @@ class UserStatusModel
      */
     public function getStatus()
     {
-        return 20 <= $this->answerCount || 100 <= $this->linkCount ? self::USER_STATUS_COMPLETED : self::USER_STATUS_INCOMPLETED;
+        if ($this->status === self::USER_STATUS_DISABLED) {
+            return $this->status;
+        }
+
+        return 20 <= $this->answerCount || 100 <= $this->linkCount ? self::USER_STATUS_COMPLETE : self::USER_STATUS_INCOMPLETE;
+    }
+
+    public function getStatuses()
+    {
+        return array(
+            self::USER_STATUS_DISABLED,
+            self::USER_STATUS_INCOMPLETE,
+            self::USER_STATUS_COMPLETE,
+        );
     }
 } 

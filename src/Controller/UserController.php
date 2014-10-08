@@ -548,9 +548,10 @@ class UserController
     public function statusAction(Request $request, Application $app)
     {
 
+        $response = array('status' => null);
         $id = $request->get('id');
         if (null === $id) {
-            return $app->json(array(), 404);
+            return $app->json($response, 404);
         }
 
         try {
@@ -559,7 +560,7 @@ class UserController
             $user = $model->getById($id);
 
             if (!$user) {
-                return $app->json(array(), 404);
+                return $app->json($response, 404);
             }
         } catch (\Exception $e) {
 
@@ -567,7 +568,7 @@ class UserController
                 throw $e;
             }
 
-            return $app->json(array(), 500);
+            return $app->json($response, 500);
         }
 
         try {
@@ -580,9 +581,11 @@ class UserController
                 throw $e;
             }
 
-            return $app->json(array(), 500);
+            return $app->json($response, 500);
         }
 
-        return $app->json($status->getStatus(), 200);
+        $response['status'] = $status->getStatus();
+
+        return $app->json($response, 200);
     }
 }
