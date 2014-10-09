@@ -17,7 +17,7 @@ $app['users.content.model'] = function ($app) {
 
 $app['users.matching.model'] = function ($app) {
 
-    return new \Model\User\Matching\MatchingModel($app['neo4j.client'], $app['users.content.model'], $app['users.answer.model']);
+    return new \Model\User\MatchingModelOld($app['neo4j.client'], $app['users.content.model'], $app['users.answer.model']);
 };
 
 $app['users.recommendation.users.model'] = function ($app) {

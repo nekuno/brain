@@ -3,7 +3,7 @@
 namespace Model\User\Recommendation;
 
 use Paginator\PaginatedInterface;
-use Model\User\Matching\MatchingModel;
+use Model\User\MatchingModelOld;
 
 use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
@@ -16,15 +16,15 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
     protected $client;
 
     /**
-     * @var \Model\User\Matching\MatchingModel
+     * @var \Model\User\MatchingModel
      */
     protected $matchingModel;
 
     /**
      * @param \Everyman\Neo4j\Client $client
-     * @param \Model\User\\Matching\MatchingModel $matchingModel
+     * @param \Model\User\MatchingModel $matchingModel
      */
-    public function __construct(Client $client, MatchingModel $matchingModel)
+    public function __construct(Client $client, MatchingModelOld $matchingModel)
     {
         $this->client = $client;
         $this->matchingModel = $matchingModel;
