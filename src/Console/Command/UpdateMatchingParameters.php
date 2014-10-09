@@ -22,8 +22,8 @@ class UpdateMatchingParameters extends ApplicationAwareCommand
         $modelObject = new MatchingModel($this->app['neo4j.client'], $this->app['users.content.model'], $this->app['users.answer.model']);
 
         try {
-            $modelObject->updateContentNormalDistributionVariables();
-            $modelObject->updateQuestionsNormalDistributionVariables();
+            $contentData = $modelObject->updateContentNormalDistributionVariables();
+            $questionsData = $modelObject->updateQuestionsNormalDistributionVariables();
         } catch (\Exception $e) {
             $output->writeln(
                'Error trying to update parameters for the Normal Distributions with message: ' . $e->getMessage()
@@ -33,10 +33,10 @@ class UpdateMatchingParameters extends ApplicationAwareCommand
         }
 
         $output->writeln('Parameters set:');
-        $output->writeln('Average(content) = ' . MatchingModel::$ave_content);
-        $output->writeln('Standard Deviation(content) = ' . MatchingModel::$stdev_content);
-        $output->writeln('Average(questions) = ' . MatchingModel::$ave_questions);
-        $output->writeln('Standard Deviation(questions) = ' . MatchingModel::$stdev_questions);
+        $output->writeln('Average(content) = ' . $contentData['average']);
+        $output->writeln('Standard Deviation(content) = ' . $contentData['stdev']);
+        $output->writeln('Average(questions) = ' . $questionsData['average']);
+        $output->writeln('Standard Deviation(questions) = ' . $questionsData['stdev']);
 
     }
 }

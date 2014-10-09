@@ -13,26 +13,6 @@ class MatchingModel
     const PREFERRED_MATCHING_ANSWERS='answers';
 
     /**
-     * @var average for the Normal Distribution. Average number of tags between any 2 users.
-     */
-    public static $ave_content;
-
-    /**
-     * @var standard deviation of the Normal Distribution. Based on number of tags between users
-     */
-    public static $stdev_content;
-
-    /**
-     * @var average for the Normal Distribution. Average number of answers answered by any user that are accepted by any other user
-     */
-    public static $ave_questions;
-
-    /**
-     * @var standard deviation for the Normal Distribution. Based on the number of answers in common between users.
-     */
-    public static $stdev_questions;
-
-    /**
      * @var \Everyman\Neo4j\Client
      */
     protected $client;
@@ -121,8 +101,27 @@ class MatchingModel
             $stdev = $row['stdev_content'];
         }
 
-        self::$ave_content = $average;
-        self::$stdev_content = $stdev;
+        //Persist data
+
+        $date = date("d-m-Y [H:i:s]");
+        $data = array();
+        $data = array("average" => $average, "stdev" => $stdev, "calculationDate" => $date );
+
+        $dataDirectory = "matchingData";
+        if(!file_exists($dataDirectory) && !is_dir($dataDirectory)){
+            mkdir($dataDirectory);
+        }
+
+        $file = "contentNormalDistributionVariables.json";
+        $log = "contentNormalDistributionVariables.log";
+
+        if(file_exists($dataDirectory . "/" . $file)){
+            file_put_contents( $dataDirectory . "/" . $log, file_get_contents($dataDirectory."/".$file)."\n", FILE_APPEND );
+        }
+        file_put_contents( $dataDirectory . "/" . $file, json_encode($data) );
+
+        return $data;
+
     }
 
     public function updateQuestionsNormalDistributionVariables()
@@ -160,9 +159,27 @@ class MatchingModel
             $stdev = $row['stdev_questions'];
         }
 
-        //Set the average and standard deviation for the content Normal Distribution
-        self::$ave_questions = $average;
-        self::$stdev_questions = $stdev;
+        //Persist data
+
+        $date = date("d-m-Y [H:i:s]");
+        $data = array();
+        $data = array("average" => $average, "stdev" => $stdev, "calculationDate" => $date );
+
+        $dataDirectory = "matchingData";
+        if(!file_exists($dataDirectory) && !is_dir($dataDirectory)){
+            mkdir($dataDirectory);
+        }
+
+        $file = "questionsNormalDistributionVariables.json";
+        $log = "questionsNormalDistributionVariables.log";
+
+        if(file_exists($dataDirectory . "/" . $file)){
+            file_put_contents( $dataDirectory . "/" . $log, file_get_contents($dataDirectory."/".$file)."\n", FILE_APPEND );
+        }
+        file_put_contents( $dataDirectory . "/" . $file, json_encode($data) );
+
+        return $data;
+
     }
 
     /************************************************************************************************************
@@ -174,8 +191,12 @@ class MatchingModel
     public function getMatchingBetweenTwoUsersBasedOnAnswers($id1, $id2)
     {
         //Get the values of the parameters for the Normal distribution
-        $ave_questions = self::$ave_questions;
-        $stdev_questions = self::$stdev_questions;
+        $dataDirectory = "matchingData";
+        $file = "questionsNormalDistributionVariables.json";
+        $data = json_decode(file_get_contents($dataDirectory."/".$file, true) ) ;
+
+        $ave_questions = $data->average;
+        $stdev_questions = $data->stdev;
 
         //Construct query String
         $queryString = "
@@ -309,8 +330,12 @@ class MatchingModel
     public function getMatchingBetweenTwoUsersBasedOnSharedContent ($id1, $id2)
     {
         //Get the values of the parameters for the Normal distribution
-        $ave_content = self::$ave_content;
-        $stdev_content = self::$stdev_content;
+        $dataDirectory = "matchingData";
+        $file = "contentNormalDistributionVariables.json";
+        $data = json_decode(file_get_contents($dataDirectory."/".$file, true) ) ;
+
+        $ave_content = $data->average;
+        $stdev_content = $data->stdev;
 
         //Construct query String
         $queryString = "
