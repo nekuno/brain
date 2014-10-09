@@ -450,4 +450,65 @@ class MatchingModel
         //return $normal_x . ', ' . $ave_content . ', ' . $stdev_content;
     }
 
+    /**********************************************************************************
+     *
+     */
+    /**
+     * Calculate matchings of the user with any other user, based on Answers to Questions
+     *
+     * @param   int $id id of the user
+     */
+    public function calculateAllMatchingsBasedOnAnswers($id)
+    {
+        $users = $this->getAllUserIdsExceptTheOneOfTheUser($id);
+
+        foreach ($users as $u){
+            $this->getMatchingBetweenTwoUsersBasedOnAnswers($id, $u);
+        }
+    }
+
+    /**
+     * Calculate matchings of the user with any other user, based on shared Content
+     *
+     * @param   int $id id of the user
+     */
+    public function calculateAllMatchingsBasedOnContent($id)
+    {
+        $users = $this->getAllUserIdsExceptTheOneOfTheUser($id);
+
+        foreach ($users as $u){
+            $this->getMatchingBetweenTwoUsersBasedOnSharedContent($id, $u);
+        }
+    }
+
+    protected function getAllUserIdsExceptTheOneOfTheUser($id)
+    {
+        $query = "
+            MATCH
+            (u:User)
+            WHERE
+            NOT(u.qnoow_id = " . $id . ")
+            RETURN
+            collect(u.qnoow_id) AS ids;
+        ";
+
+        //Create the Neo4j query object
+        $neoQuery = new Query(
+            $this->client,
+            $query
+        );
+
+        try {
+            $result = $neoQuery->getResultSet();
+        } catch (\Exception $e) {
+            throw $e;
+        }
+
+        foreach ($result as $row) {
+            $response = $row['ids'];
+        }
+
+        return $response;
+    }
+
 } 
