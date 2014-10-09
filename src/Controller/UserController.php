@@ -121,7 +121,7 @@ class UserController
         }
 
         try {
-            /** @var $model \Model\User\MatchingModel */
+            /** @var $model \Model\User\Matching\MatchingModel */
             $model = $app['users.matching.model'];
             if ($basedOn == 'answers') {
                 $result = $model->getMatchingBetweenTwoUsersBasedOnAnswers($id1, $id2);
