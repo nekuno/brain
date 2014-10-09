@@ -101,14 +101,6 @@ class MatchingModel
             $stdev = $row['stdev_content'];
         }
 
-        if ($average == null) {
-            $average = 0;
-        }
-        if ($stdev == null){
-            $stdev = 0;
-        }
-
-
         //Persist data
 
         $date = date("d-m-Y [H:i:s]");
@@ -284,10 +276,6 @@ class MatchingModel
                 stats_dens_normal($normal_x, $ave_questions, $stdev_questions) //function from stats PHP extension
             ) / 2;
 
-        if ($matching == false){
-            $matching = 0;
-        }
-
         //Query to create the matching relationship with the appropriate value
 
         //Construct query String
@@ -328,7 +316,7 @@ class MatchingModel
             throw $e;
         }
 
-        return $matching == null ? 0 : $matching ;
+        return $matching;
         //For testing purposes
         //return $ratingForMatching . ', ' . $normal_x . ', ' . $ave_questions . ', ' . $stdev_questions;
     }
@@ -400,10 +388,6 @@ class MatchingModel
 
         //Calculate the matching
         $matching = stats_dens_normal($normal_x, $ave_content, $stdev_content);
-
-        if ($matching == false){
-            $matching = 0;
-        }
 
         //Query to create the matching relationship with the appropriate value
 

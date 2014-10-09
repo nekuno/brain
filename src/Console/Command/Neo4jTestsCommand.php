@@ -22,8 +22,8 @@ class Neo4jTestsCommand extends ApplicationAwareCommand
         $testObject = new MatchingModel($this->app['neo4j.client'], $this->app['users.content.model'], $this->app['users.answer.model']);
 
         try {
-            $value1 = $testObject->getMatchingBetweenTwoUsersBasedOnAnswers(36, 39);
-            $value2 = $testObject->getMatchingBetweenTwoUsersBasedOnSharedContent(36, 39);
+            $value1 = $testObject->getMatchingBetweenTwoUsersBasedOnAnswers(5, 7);
+            $value2 = $testObject->getMatchingBetweenTwoUsersBasedOnSharedContent(1, 2);
         } catch (\Exception $e) {
             $output->writeln(
                'Error trying to execute test with message: ' . $e->getMessage()
@@ -34,7 +34,7 @@ class Neo4jTestsCommand extends ApplicationAwareCommand
 
         $output->writeln('Tests run');
         $output->writeln('');
-        $output->writeln('Matching(questions) users 36 and 39: ' . $value1);
-        $output->writeln('Matching(content) users 36 and 39: ' . $value2);
+        $output->writeln('Matching(questions) users 5 and 7: ' . $value1);
+        $output->writeln('Matching(content) users 1 and 2: ' . $value2);
     }
 }
