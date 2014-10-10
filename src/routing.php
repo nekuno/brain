@@ -27,6 +27,8 @@ $app->get('/users/{id}/recommendations/users', 'users.controller:getUserRecommen
 $app->get('/users/{id}/recommendations/content', 'users.controller:getContentRecommendationAction');
 $app->get('/users/{id}/recommendations/content/tags', 'users.controller:getContentRecommendationTagsAction');
 
+$app->get('/users/{id}/status', 'users.controller:statusAction');
+
 /**
  * Questionnaire routes
  */
