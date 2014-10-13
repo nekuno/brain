@@ -35,6 +35,10 @@ class UserModel
      */
     public function create(array $user = array())
     {
+        if (!isset($user['email'])) {
+            $user['email'] = '';
+        }
+
         $query = new Query(
             $this->client,
             "CREATE (u:User {
