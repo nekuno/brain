@@ -134,8 +134,8 @@ class QuestionModel
     public function report(array $data)
     {
 
-        $data['questionId'] = (integer)$data['questionId'];
-        $data['userId'] = (integer)$data['userId'];
+        $data['questionId'] = (integer) $data['questionId'];
+        $data['userId'] = (integer) $data['userId'];
 
         $template = "MATCH"
             . " (q:Question)"

@@ -39,11 +39,11 @@ $app->post('/questionnaire/questions/{id}/skip', 'questionnaire.questions.contro
 $app->post('/questionnaire/questions/{id}/report', 'questionnaire.questions.controller:reportAction');
 $app->get('/questionnaire/questions/{id}/stats', 'questionnaire.questions.controller:statsAction');
 
-$app->get('/users/{userId}/answers/{answerId}', 'users.answers.controller:getAction');
+$app->post('/users/{userId}/answers/explain', 'users.answers.controller:explainAction');
 $app->get('/users/{userId}/answers', 'users.answers.controller:indexAction');
 $app->post('/users/{userId}/answers', 'users.answers.controller:createAction');
+$app->get('/users/{userId}/answers/{answerId}', 'users.answers.controller:getAction');
 $app->post('/users/{userId}/answers/{answerId}', 'users.answers.controller:updateAction');
-$app->post('/users/{userId}/answers/{answerId}/explain', 'users.answers.controller:explainAction');
 
 /**
  * Content routes

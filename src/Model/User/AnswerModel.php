@@ -79,7 +79,7 @@ class AnswerModel
             . " WHERE user.qnoow_id = {userId} AND id(question) = {questionId} AND id(answer) = {answerId}"
             . " CREATE UNIQUE (user)-[a:ANSWERS]->(answer)"
             . ", (user)-[r:RATES]->(question)"
-            . " SET r.rating = {rating}, a.private = {isPrivate}, a.answerAt = timestamp(), a.explanation = {explanation}"
+            . " SET r.rating = {rating}, a.private = {isPrivate}, a.answeredAt = timestamp(), a.explanation = {explanation}"
             . " WITH user, question, answer"
             . " OPTIONAL MATCH (pa:Answer)-[:IS_ANSWER_OF]->(question)"
             . " WHERE id(pa) IN {acceptedAnswers}"
@@ -117,7 +117,8 @@ class AnswerModel
             . " WITH user, question"
             . " OPTIONAL MATCH (answer:Answer)"
             . " WHERE id(answer) = {answerId}"
-            . " CREATE UNIQUE (user)-[:ANSWERS]->(answer)"
+            . " CREATE UNIQUE (user)-[ua:ANSWERS]->(answer)"
+            . " SET ua.answeredAt = timestamp(), ua.explanation = {explanation}"
             . " WITH user, question, answer"
             . " OPTIONAL MATCH (possibleAnswers:Answer)-[:IS_ANSWER_OF]->(question)"
             . " WHERE id(possibleAnswers) IN {acceptedAnswers}"
@@ -143,9 +144,12 @@ class AnswerModel
     public function explain(array $data)
     {
 
+        $data['userId'] = (integer) $data['userId'];
+        $data['questionId'] = (integer) $data['questionId'];
+
         $template = "MATCH"
-            . " (user:User)-[r:ANSWERS]->(answer:Answer)"
-            . " WHERE user.qnoow_id = {userId} AND id(answer) = {answerId}"
+            . " (user:User)-[r:ANSWERS]->(answer:Answer)-[:IS_ANSWER_OF]->(question:Question)"
+            . " WHERE user.qnoow_id = {userId} AND id(question) = {questionId}"
             . " SET r.explanation = {explanation}"
             . " RETURN answer";
 
@@ -164,9 +168,9 @@ class AnswerModel
             . " WITH u, a, q, ua"
             . " WHERE u.qnoow_id = {userId}"
             . " OPTIONAL MATCH (a2:Answer)-[:IS_ANSWER_OF]->(q)"
-            . " WITH u AS user, a AS answer, ua.answerAt AS answerAt, q AS question, collect(a2) AS answers"
-            . " RETURN user, answer, answerAt, question, answers"
-            . " ORDER BY answerAt DESC;"
+            . " WITH u AS user, a AS answer, ua.answeredAt AS answeredAt, ua.explanation AS explanation, q AS question, collect(a2) AS answers"
+            . " RETURN user, answer, answeredAt, explanation, question, answers"
+            . " ORDER BY answeredAt DESC;"
         ;
 
         $query = new Query($this->client, $template, $data);

@@ -2,8 +2,6 @@
 
 namespace Controller\Questionnaire;
 
-use Everyman\Neo4j\Node;
-use Everyman\Neo4j\Query\Row;
 use Model\Questionnaire\QuestionModel;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;

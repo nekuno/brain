@@ -61,11 +61,7 @@ class AnswerController
     public function explainAction(Request $request, Application $app)
     {
 
-        $data = array(
-            'answerId' => (integer) $request->get('answerId'),
-            'userId' => (integer) $request->get('userId'),
-            'explanation' => $request->request->get('explanation'),
-        );
+        $data = $request->request->all();
 
         try {
             /** @var AnswerModel $model */
@@ -102,15 +98,16 @@ class AnswerController
                     $questionAnswers[$answer->getId()] = array(
                         'id' => $answer->getId(),
                         'text' => $answer->getProperty('text'),
-                        'explanation' => $answer->getProperty('explanation'),
+
                     );
                 }
                 $questions[$row['question']->getId()] = array(
                     'id' => $row['question']->getId(),
                     'text' => $row['question']->getProperty('text'),
+                    'explanation' => $row['explanation'],
                     'answers' => $questionAnswers,
                     'userAnswer' => $row['answer']->getId(),
-                    'answerAt' => $row['answerAt'],
+                    'answeredAt' => $row['answeredAt'] ? floor($row['answeredAt'] / 1000) : time(),
                 );
             }
 
