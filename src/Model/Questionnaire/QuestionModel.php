@@ -28,16 +28,18 @@ class QuestionModel
             'userId' => (integer)$userId
         );
 
-        $template = "MATCH (u:User)-[:ANSWERS]->(a:Answer)-[:IS_ANSWER_OF]->(q:Question)"
+        $template = "OPTIONAL MATCH (u:User)-[:ANSWERS]->(a:Answer)-[:IS_ANSWER_OF]->(q:Question)"
             . " WHERE u.qnoow_id = {userId}"
             . " WITH u, q"
-            . " OPTIONAL MATCH (u)-[:SKIPS]->(q1), (:User)-[:REPORTS]->(q2)"
+            . " OPTIONAL MATCH (u)-[:SKIPS]->(q1:Question), (:User)-[:REPORTS]->(q2:Question)"
             . " WITH u AS user, collect(q) + collect(q1) + collect(q2) AS excluded"
-            . " OPTIONAL MATCH (q3:Question)"
+            . " MATCH (q3:Question)<-[:IS_ANSWER_OF]-(a2:Answer)"
             . " WHERE NOT q3 IN excluded"
-            . " WITH q3 AS next, excluded"
-            . " OPTIONAL MATCH (u2:User)-[r:RATES]->(next)<-[:IS_ANSWER_OF]-(a2:Answer)"
-            . " RETURN next, collect(DISTINCT a2) as nextAnswers, sum(r.rating) AS nextRating";
+            . " WITH q3 AS next, collect(DISTINCT a2) AS nextAnswers"
+            . " OPTIONAL MATCH (u2:User)-[r:RATES]->(next)"
+            . " RETURN next, nextAnswers, sum(r.rating) AS nextRating";
+
+
 
         if ($sortByRating && $this->sortByRating()) {
             $template .= " ORDER BY nextRating DESC";
