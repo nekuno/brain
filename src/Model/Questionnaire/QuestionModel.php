@@ -19,12 +19,13 @@ class QuestionModel
     /**
      * @param $userId
      * @param bool $sortByRating
+     * @return \Everyman\Neo4j\Query\ResultSet
      */
     public function getNextByUser($userId, $sortByRating = true)
     {
 
         $data = array(
-            'userId' => (integer) $userId
+            'userId' => (integer)$userId
         );
 
         $template = "MATCH (u:User)-[:ANSWERS]->(a:Answer)-[:IS_ANSWER_OF]->(q:Question)"
@@ -52,9 +53,7 @@ class QuestionModel
             $data
         );
 
-        foreach ($query->getResultSet() as $row) {
-            return $row;
-        }
+        return $query->getResultSet();
     }
 
     /**
@@ -77,6 +76,10 @@ class QuestionModel
      */
     public function create(array $data)
     {
+
+        $data['userId'] = (integer) $data['userId'];
+
+        $data['answers'] = array_values($data['answers']);
 
         $template = "MATCH (u:User)"
             . " WHERE u.qnoow_id = {userId}"
@@ -104,13 +107,16 @@ class QuestionModel
     public function skip(array $data)
     {
 
+        $data['questionId'] = (integer) $data['questionId'];
+        $data['userId']     = (integer) $data['userId'];
+
         $template = "MATCH"
             . " (q:Question)"
             . ", (u:User)"
             . " WHERE u.qnoow_id = {userId} AND id(q) = {questionId}"
             . " CREATE UNIQUE (u)-[r:SKIPS]->(q)"
             . " SET r.timestamp = timestamp()"
-            . " RETURN r";
+            . " RETURN r;";
 
         $query = new Query($this->client, $template, $data);
 
@@ -126,18 +132,38 @@ class QuestionModel
     public function report(array $data)
     {
 
+        $data['questionId'] = (integer)$data['questionId'];
+        $data['userId'] = (integer)$data['userId'];
+
         $template = "MATCH"
             . " (q:Question)"
             . ", (u:User)"
             . " WHERE u.qnoow_id = {userId} AND id(q) = {questionId}"
             . " CREATE UNIQUE (u)-[r:REPORTS]->(q)"
             . " SET r.reason = {reason}, r.timestamp = timestamp()"
-            . " RETURN r";
+            . " RETURN r;";
 
         $query = new Query($this->client, $template, $data);
 
         foreach ($query->getResultSet() as $row) {
             return $row;
         }
+    }
+
+    public function getQuestionStats($id)
+    {
+
+            $data['id'] = (integer) $id;
+
+            $template = "MATCH (a:Answer)-[:IS_ANSWER_OF]->(q:Question)"
+                . " WHERE id(q) = {id} WITH q, a"
+                . " OPTIONAL MATCH ua = (u:User)-[x:ANSWERS]->(a)"
+                . " WITH id(a) AS answer, count(x)"
+                . " AS nAnswers RETURN answer, nAnswers;"
+            ;
+
+            $query = new Query($this->client, $template, $data);
+
+            return $query->getResultSet();
     }
 }

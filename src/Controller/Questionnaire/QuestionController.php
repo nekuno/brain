@@ -2,6 +2,7 @@
 
 namespace Controller\Questionnaire;
 
+use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Questionnaire\QuestionModel;
 use Silex\Application;
@@ -29,8 +30,18 @@ class QuestionController
         $model = $app['questionnaire.questions.model'];
         $result = $model->getNextByUser($userId);
 
-        if(null !== $result){
-            $question = $this->buildQuestion($result);
+        $question = array();
+
+        foreach ($result as $row) {
+            $question['id'] = $row['next']->getId();
+            $question['text'] = $row['next']->getProperty('text');
+
+            foreach ($row['nextAnswers'] as $answer) {
+                $question['answers'][$answer->getId()] = $answer->getProperty('text');
+            }
+        }
+
+        if(!empty($question)){
             return $app->json($question, 200);
         } else {
             return $app->json(array(), 404);
@@ -90,7 +101,6 @@ class QuestionController
     {
 
         $data = $request->request->all();
-        $data['questionId'] = (integer) $request->get('id');
 
         try {
             /** @var QuestionModel $model */
@@ -111,12 +121,11 @@ class QuestionController
     {
 
         $data = $request->request->all();
-        $data['questionId'] = (integer) $request->get('id');
 
         try {
             /** @var QuestionModel $model */
             $model = $app['questionnaire.questions.model'];
-            $model->skip($data, $data['userId'], $data['reason']);
+            $model->report($data);
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;
@@ -128,16 +137,39 @@ class QuestionController
         return $app->json(array('Question reported successfully'), 200);
     }
 
-    private function buildQuestion(Row $node)
+    public function statsAction(Request $request, Application $app)
     {
 
-        $question['id'] = $node['next']->getId();
-        $question['text'] = $node['next']->getProperty('text');
+        $id = $request->get('id');
 
-        foreach ($node['nextAnswers'] as $answer) {
-            $question['answers'][] = $answer->getProperty('text');
+        try {
+            /** @var QuestionModel $model */
+            $model = $app['questionnaire.questions.model'];
+
+            $stats = array();
+
+            $result = $model->getQuestionStats($id);
+            foreach ($result as $row) {
+                $stats[$id]['answers'][$row['answer']] = array(
+                    'id' => $row['answer'],
+                    'nAnswers' => $row['nAnswers'],
+                );
+                $stats[$id]['totalAnswers'] += $row['nAnswers'];
+                $stats[$id]['id'] = $id;
+            }
+
+            if(empty($stats)){
+                return $app->json('Not question found with that ID', 404);
+            }
+            return $app->json($stats, 200);
+
+        } catch (\Exception $e) {
+            if ($app['env'] == 'dev') {
+                throw $e;
+            }
+
+            return $app->json(array(), 500);
         }
 
-        return $question;
     }
 }

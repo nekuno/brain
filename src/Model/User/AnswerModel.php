@@ -7,6 +7,7 @@ use Everyman\Neo4j\Cypher\Query;
 
 class AnswerModel
 {
+
     /**
      * @var \Everyman\Neo4j\Client
      */
@@ -17,6 +18,7 @@ class AnswerModel
      */
     public function __construct(Client $client)
     {
+
         $this->client = $client;
     }
 
@@ -28,6 +30,7 @@ class AnswerModel
      */
     public function countTotal(array $filters)
     {
+
         $count = 0;
 
         $query = "
@@ -74,15 +77,14 @@ class AnswerModel
 
         $template = "MATCH (user:User), (question:Question), (answer:Answer)"
             . " WHERE user.qnoow_id = {userId} AND id(question) = {questionId} AND id(answer) = {answerId}"
-            . " CREATE UNIQUE (user)-[:ANSWERS]->(answer)"
+            . " CREATE UNIQUE (user)-[a:ANSWERS]->(answer)"
             . ", (user)-[r:RATES]->(question)"
-            . " SET r.rating = {rating}"
+            . " SET r.rating = {rating}, a.private = {isPrivate}, a.answerAt = timestamp(), a.explanation = {explanation}"
             . " WITH user, question, answer"
             . " OPTIONAL MATCH (pa:Answer)-[:IS_ANSWER_OF]->(question)"
             . " WHERE id(pa) IN {acceptedAnswers}"
             . " CREATE UNIQUE (user)-[:ACCEPTS]->(pa)"
-            . " RETURN answer"
-        ;
+            . " RETURN answer";
 
         $template .= ";";
 
@@ -120,8 +122,7 @@ class AnswerModel
             . " OPTIONAL MATCH (possibleAnswers:Answer)-[:IS_ANSWER_OF]->(question)"
             . " WHERE id(possibleAnswers) IN {acceptedAnswers}"
             . " CREATE UNIQUE (user)-[:ACCEPTS]->(possibleAnswers)"
-            . " RETURN answer"
-        ;
+            . " RETURN answer";
 
         $template .= ";";
 
@@ -153,4 +154,23 @@ class AnswerModel
         return $query->getResultSet();
 
     }
-} 
+
+    public function getUserAnswers($userId)
+    {
+
+        $data['userId'] = (integer) $userId;
+
+        $template = "MATCH (a:Answer)<-[ua:ANSWERS]-(u:User), (a)-[:IS_ANSWER_OF]-(q:Question)"
+            . " WITH u, a, q, ua"
+            . " WHERE u.qnoow_id = {userId}"
+            . " OPTIONAL MATCH (a2:Answer)-[:IS_ANSWER_OF]->(q)"
+            . " WITH u AS user, a AS answer, ua.answerAt AS answerAt, q AS question, collect(a2) AS answers"
+            . " RETURN user, answer, answerAt, question, answers"
+            . " ORDER BY answerAt DESC;"
+        ;
+
+        $query = new Query($this->client, $template, $data);
+
+        return $query->getResultSet();
+    }
+}

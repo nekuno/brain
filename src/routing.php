@@ -33,13 +33,14 @@ $app->get('/users/{id}/status', 'users.controller:statusAction');
  * Questionnaire routes
  */
 $app->get('/questionnaire/questions/next', 'questionnaire.questions.controller:nextAction');
-$app->get('/questionnaire/questions', 'questionnaire.questions.controller:getAnsweredAction');
 $app->post('/questionnaire/questions', 'questionnaire.questions.controller:createAction');
 $app->post('/questionnaire/questions/{id}', 'questionnaire.questions.controller:updateAction');
 $app->post('/questionnaire/questions/{id}/skip', 'questionnaire.questions.controller:skipAction');
 $app->post('/questionnaire/questions/{id}/report', 'questionnaire.questions.controller:reportAction');
+$app->get('/questionnaire/questions/{id}/stats', 'questionnaire.questions.controller:statsAction');
 
 $app->get('/users/{userId}/answers/{answerId}', 'users.answers.controller:getAction');
+$app->get('/users/{userId}/answers', 'users.answers.controller:indexAction');
 $app->post('/users/{userId}/answers', 'users.answers.controller:createAction');
 $app->post('/users/{userId}/answers/{answerId}', 'users.answers.controller:updateAction');
 $app->post('/users/{userId}/answers/{answerId}/explain', 'users.answers.controller:explainAction');

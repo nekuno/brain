@@ -1,14 +1,10 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: adridev
- * Date: 1/10/14
- * Time: 16:40
- */
 
 namespace Controller\User;
 
-use Model\Questionnaire\AnswerModel;
+use Everyman\Neo4j\Node;
+use Everyman\Neo4j\Query\Row;
+use Model\User\AnswerModel;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -84,5 +80,52 @@ class AnswerController
         }
 
         return $app->json(array("Resource updated successful"), 200);
+    }
+
+    public function indexAction(Request $request, Application $app)
+    {
+
+        $userId = $request->get('userId');
+
+        try {
+            /** @var AnswerModel $model */
+            $model = $app['users.answers.model'];
+            $userAnswerResult = $model->getUserAnswers($userId);
+
+            $questions = array();
+
+            foreach ($userAnswerResult as $row) {
+                $questionAnswers = array();
+                /** @var Row $row */
+                foreach ($row['answers'] as $answer) {
+                    /** @var Node $answer */
+                    $questionAnswers[$answer->getId()] = array(
+                        'id' => $answer->getId(),
+                        'text' => $answer->getProperty('text'),
+                        'explanation' => $answer->getProperty('explanation'),
+                    );
+                }
+                $questions[$row['question']->getId()] = array(
+                    'id' => $row['question']->getId(),
+                    'text' => $row['question']->getProperty('text'),
+                    'answers' => $questionAnswers,
+                    'userAnswer' => $row['answer']->getId(),
+                    'answerAt' => $row['answerAt'],
+                );
+            }
+
+            if(empty($questions)){
+                return $app->json('The user has not answered to any question', 404);
+            }
+
+            return $app->json($questions, 200);
+
+        } catch (\Exception $e) {
+            if ($app['env'] == 'dev') {
+                throw $e;
+            }
+
+            return $app->json(array($e->getMessage()), 500);
+        }
     }
 }
