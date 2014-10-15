@@ -34,6 +34,7 @@ $app->get('/users/{id}/status', 'users.controller:statusAction');
  */
 $app->get('/questionnaire/questions/next', 'questionnaire.questions.controller:nextAction');
 $app->post('/questionnaire/questions', 'questionnaire.questions.controller:createAction');
+$app->get('/questionnaire/questions/{id}', 'questionnaire.questions.controller:getAction');
 $app->post('/questionnaire/questions/{id}', 'questionnaire.questions.controller:updateAction');
 $app->post('/questionnaire/questions/{id}/skip', 'questionnaire.questions.controller:skipAction');
 $app->post('/questionnaire/questions/{id}/report', 'questionnaire.questions.controller:reportAction');
@@ -42,8 +43,7 @@ $app->get('/questionnaire/questions/{id}/stats', 'questionnaire.questions.contro
 $app->post('/users/{userId}/answers/explain', 'users.answers.controller:explainAction');
 $app->get('/users/{userId}/answers', 'users.answers.controller:indexAction');
 $app->post('/users/{userId}/answers', 'users.answers.controller:createAction');
-$app->get('/users/{userId}/answers/{answerId}', 'users.answers.controller:getAction');
-$app->post('/users/{userId}/answers/{answerId}', 'users.answers.controller:updateAction');
+$app->post('/users/{userId}/answers/{questionId}', 'users.answers.controller:updateAction');
 
 /**
  * Content routes

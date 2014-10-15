@@ -59,6 +59,31 @@ class QuestionModel
     }
 
     /**
+     * @return \Everyman\Neo4j\Query\ResultSet
+     */
+    public function getById($questionId)
+    {
+
+        $data = array(
+            'questionId' => (integer) $questionId,
+        );
+
+        $template = " MATCH (q:Question)<-[:IS_ANSWER_OF]-(a:Answer)"
+            . " WHERE id(q) = {questionId}"
+            . " WITH q AS question, collect(a) AS answers"
+            . " RETURN question, answers"
+            . " LIMIT 1;";
+
+        $query = new Query(
+            $this->client,
+            $template,
+            $data
+        );
+
+        return $query->getResultSet();
+    }
+
+    /**
      * @return bool
      */
     public function sortByRating()

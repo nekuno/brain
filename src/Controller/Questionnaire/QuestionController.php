@@ -39,7 +39,39 @@ class QuestionController
             }
         }
 
-        if(!empty($question)){
+        if (!empty($question)) {
+            return $app->json($question, 200);
+        } else {
+            return $app->json(array(), 404);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @param Application $app
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     */
+    public function getAction(Request $request, Application $app)
+    {
+
+        $questionId = $request->get('id');
+
+        /** @var QuestionModel $model */
+        $model = $app['questionnaire.questions.model'];
+        $result = $model->getById($questionId);
+
+        $question = array();
+
+        foreach ($result as $row) {
+            $question['id'] = $row['next']->getId();
+            $question['text'] = $row['next']->getProperty('text');
+
+            foreach ($row['answers'] as $answer) {
+                $question['answers'][$answer->getId()] = $answer->getProperty('text');
+            }
+        }
+
+        if (!empty($question)) {
             return $app->json($question, 200);
         } else {
             return $app->json(array(), 404);
@@ -65,7 +97,7 @@ class QuestionController
             /** @var QuestionModel $model */
             $model = $app['questionnaire.questions.model'];
             $result = $model->create($data);
-            if(null !== $result){
+            if (null !== $result) {
                 return $app->json(array('Resource created successfully'), 201);
             }
         } catch (\Exception $e) {
@@ -79,6 +111,10 @@ class QuestionController
         $app->json(array(), 200);
     }
 
+    /**
+     * @param array $data
+     * @return bool
+     */
     private function isValidDataForCreateQuestion(array $data)
     {
 
@@ -95,6 +131,12 @@ class QuestionController
         return true;
     }
 
+    /**
+     * @param Request $request
+     * @param Application $app
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @throws \Exception
+     */
     public function skipAction(Request $request, Application $app)
     {
 
@@ -115,6 +157,12 @@ class QuestionController
         return $app->json(array('Question skipped successfully'), 200);
     }
 
+    /**
+     * @param Request $request
+     * @param Application $app
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @throws \Exception
+     */
     public function reportAction(Request $request, Application $app)
     {
 
@@ -135,6 +183,12 @@ class QuestionController
         return $app->json(array('Question reported successfully'), 200);
     }
 
+    /**
+     * @param Request $request
+     * @param Application $app
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @throws \Exception
+     */
     public function statsAction(Request $request, Application $app)
     {
 
@@ -156,9 +210,10 @@ class QuestionController
                 $stats[$id]['id'] = $id;
             }
 
-            if(empty($stats)){
+            if (empty($stats)) {
                 return $app->json('Not question found with that ID', 404);
             }
+
             return $app->json($stats, 200);
 
         } catch (\Exception $e) {

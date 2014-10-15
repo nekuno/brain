@@ -38,9 +38,11 @@ class AnswerController
     public function updateAction(Request $request, Application $app)
     {
 
-        $answerId = (integer) $request->get('answerId');
         $data = $request->request->all();
-        $data['currentId'] = $answerId;
+
+        if($data['userId'] != $request->get('userId')) {
+            return $app->json('Invalid data', 400);
+        }
 
         try {
             /** @var AnswerModel $model */
