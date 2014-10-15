@@ -127,4 +127,37 @@ class AnswerController
             return $app->json(array($e->getMessage()), 500);
         }
     }
+
+    public function countAction(Request $request, Application $app)
+    {
+
+        $userId = $request->get('userId');
+
+        try {
+            /** @var AnswerModel $model */
+            $model = $app['users.answers.model'];
+            $userAnswerResult = $model->getNumberOfUserAnswers($userId);
+
+            $data = array(
+                'userId' => $userId,
+            );
+
+            foreach ($userAnswerResult as $row) {
+                $data['nOfAnswers'] = $row['nOfAnswers'];
+            }
+
+            if(empty($data)){
+                return $app->json('The user has not answered to any question', 404);
+            }
+
+            return $app->json($data, 200);
+
+        } catch (\Exception $e) {
+            if ($app['env'] == 'dev') {
+                throw $e;
+            }
+
+            return $app->json(array($e->getMessage()), 500);
+        }
+    }
 }

@@ -43,6 +43,7 @@ $app->get('/questionnaire/questions/{id}/stats', 'questionnaire.questions.contro
 $app->post('/users/{userId}/answers/explain', 'users.answers.controller:explainAction');
 $app->get('/users/{userId}/answers', 'users.answers.controller:indexAction');
 $app->post('/users/{userId}/answers', 'users.answers.controller:createAction');
+$app->get('/users/{userId}/answers/count', 'users.answers.controller:countAction');
 $app->post('/users/{userId}/answers/{questionId}', 'users.answers.controller:updateAction');
 
 /**

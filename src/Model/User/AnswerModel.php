@@ -179,4 +179,19 @@ class AnswerModel
 
         return $query->getResultSet();
     }
+
+    public function getNumberOfUserAnswers($userId)
+    {
+
+        $data['userId'] = (integer) $userId;
+
+        $template = "MATCH (a:Answer)<-[ua:ANSWERS]-(u:User)"
+            . " WHERE u.qnoow_id = {userId}"
+            . " RETURN count(ua) AS nOfAnswers;"
+        ;
+
+        $query = new Query($this->client, $template, $data);
+
+        return $query->getResultSet();
+    }
 }
