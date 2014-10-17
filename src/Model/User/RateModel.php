@@ -41,12 +41,13 @@ class RateModel
 
     /**
      * @param $userId
-     * @param $url
+     * @param $linkId
      * @param $rate
      * @throws \Exception
+     * @internal param $url
      * @return array
      */
-    public function userRateLink($userId, $url, $rate)
+    public function userRateLink($userId, $linkId, $rate)
     {
         if ($rate !== self::LIKE && $rate != self::DISLIKE) {
             throw new \Exception('"' . $rate . '" is not a valid rate');
@@ -56,14 +57,14 @@ class RateModel
             MATCH
             (user:User), (link:Link)
             WHERE
-            user.qnoow_id = {userId} AND link.url = {url}
+            user.qnoow_id = {userId} AND id(link) = {linkId}
             OPTIONAL MATCH
             (user)-[rate]->(link)
             WHERE type(rate) <> {rate}
             DELETE rate
             CREATE UNIQUE
             (user)-[new_rate:" . $rate . "]->(link)
-            RETURN user,link, type(new_rate) as rate
+            RETURN user,id(link) as linkId, type(new_rate) as rate
         ";
 
         $query = new Query(
@@ -71,7 +72,7 @@ class RateModel
             $template,
             array(
                 'userId'    => (integer)$userId,
-                'url'       => $url,
+                'linkId'    => (integer)$linkId,
                 'rate'      => $rate,
             )
         );
@@ -84,7 +85,7 @@ class RateModel
         $response = array();
         foreach ($result as $row) {
             $response['id'] = $row['user']->getProperty('qnoow_id');
-            $response['url'] = $row['link']->getProperty('url');
+            $response['linkId'] = $row['linkId'];
             $response['rate'] = $row['rate'];
         }
 
