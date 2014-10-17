@@ -131,10 +131,54 @@ class QuestionModel
         OPTIONAL MATCH
             (u:User)-[r:RATES]->(q)
         WITH
+            q,
             ranking,
             (1.0/50) * avg(r.rating) AS rating
-        RETURN
+        WITH
+            q,
             0.9 * ranking + 0.1 * rating AS questionRanking
+        SET
+            q.ranking = questionRanking
+        RETURN
+            q.ranking AS questionRanking
+        ";
+
+        $queryDataArray = array(
+            'questionID' => $questionID
+        );
+
+        $query = new Query(
+            $this->client,
+            $queryString,
+            $queryDataArray
+        );
+
+        try {
+            $result = $query->getResultSet();
+        } catch (\Exception $e) {
+            throw $e;
+        }
+
+        foreach($result as $row){
+            $questionRanking = $row['questionRanking'];
+        }
+
+        $response = $questionRanking;
+
+        return $response;
+
+    }
+
+    public function getRankingForQuestion ($questionID)
+    {
+
+        $queryString = "
+        MATCH
+            (q:Question)
+        WHERE
+            q.qnoow_id = {questionID}
+        RETURN
+            q.ranking AS questionRanking
         ";
 
         $queryDataArray = array(
