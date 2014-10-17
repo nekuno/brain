@@ -106,4 +106,9 @@ class QuestionModel
 
         return;
     }
+
+    public function setOrUpdateRankingForQuestion ($questionID)
+    {
+
+    }
 } 
