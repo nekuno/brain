@@ -121,6 +121,7 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
             OPTIONAL MATCH
             (user)-[:LIKES]-(:Link)-[commonTags:TAGGED]-(tag)
             RETURN
+            id(content) as id,
             content,
         ";
         $query .= $getMatchQuery;
@@ -148,6 +149,7 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
 
             foreach ($result as $row) {
                 $content = array();
+                $content['id'] = $row['id'];
                 $content['url'] = $row['content']->getProperty('url');
                 $content['title'] = $row['content']->getProperty('title');
                 $content['description'] = $row['content']->getProperty('description');

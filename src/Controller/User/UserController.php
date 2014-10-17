@@ -395,17 +395,17 @@ class UserController
      */
     public function rateContentAction(Request $request, Application $app)
     {
-        $id = $request->get('id');
-        $url = $request->request->get('url');
+        $userId = $request->get('id');
+        $linkId = $request->request->get('linkId');
         $rate = $request->request->get('rate');
 
-        if (null == $id || null == $url || null == $rate) {
-            return $app->json(array('text' => 'aaa', 'id' => $id, 'url' => $url), 400);
+        if (null == $userId || null == $linkId || null == $rate) {
+            return $app->json(array('text' => 'Link Not Found', 'id' => $userId, 'linkId' => $linkId), 400);
         }
 
         try {
             $model = $app['users.rate.model'];
-            $result = $model->userRateLink($id, $url, $rate);
+            $result = $model->userRateLink($userId, $linkId, $rate);
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;
