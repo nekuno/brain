@@ -16,6 +16,21 @@ class QuestionModel
         $this->client = $client;
     }
 
+    public function getAll($limit = 20)
+    {
+
+        $data = array('limit' => (integer) $limit);
+
+        $template = "MATCH (q:Question)<-[:IS_ANSWER_OF]-(a:Answer)"
+            . " WITH q, a"
+            . " RETURN q AS question, collect(a) AS answers"
+            . " LIMIT {limit}";
+
+        $query = new Query($this->client, $template, $data);
+
+        return $query->getResultSet();
+    }
+
     /**
      * @param $userId
      * @param bool $sortByRating

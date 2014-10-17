@@ -51,6 +51,40 @@ class QuestionController
      * @param Application $app
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      */
+    public function indexAction(Request $request, Application $app)
+    {
+
+        $limit = $request->query->get('limit');
+
+        /** @var QuestionModel $model */
+        $model = $app['questionnaire.questions.model'];
+        $result = $model->getAll($limit);
+
+        $questions = array();
+
+        foreach ($result as $row) {
+            $question['id'] = $row['next']->getId();
+            $question['text'] = $row['next']->getProperty('text');
+
+            $question['answers'] = array();
+            foreach ($row['answers'] as $answer) {
+                $question['answers'][$answer->getId()] = $answer->getProperty('text');
+            }
+            $questions[] = $question;
+        }
+
+        if (!empty($questions)) {
+            return $app->json($questions, 200);
+        } else {
+            return $app->json(array(), 404);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @param Application $app
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     */
     public function getAction(Request $request, Application $app)
     {
 

@@ -34,6 +34,7 @@ $app->get('/users/{id}/status', 'users.controller:statusAction');
  */
 $app->get('/questionnaire/questions/next', 'questionnaire.questions.controller:nextAction');
 $app->post('/questionnaire/questions', 'questionnaire.questions.controller:createAction');
+$app->get('/questionnaire/questions', 'questionnaire.questions.controller:indexAction')->value('limit', 20);
 $app->get('/questionnaire/questions/{id}', 'questionnaire.questions.controller:getAction');
 $app->post('/questionnaire/questions/{id}', 'questionnaire.questions.controller:updateAction');
 $app->post('/questionnaire/questions/{id}/skip', 'questionnaire.questions.controller:skipAction');
