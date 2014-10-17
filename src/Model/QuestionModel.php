@@ -114,7 +114,7 @@ class QuestionModel
         MATCH
             (q:Question)<-[:IS_ANSWER_OF]-(a:Answer)
         WHERE
-            q.qnoow_id = {questionID}
+            id(q) = {questionID}
         OPTIONAL MATCH
             (u:User)-[:ANSWERS]->(a)
         WITH
@@ -176,7 +176,7 @@ class QuestionModel
         MATCH
             (q:Question)
         WHERE
-            q.qnoow_id = {questionID}
+            id(q) = {questionID}
         RETURN
             q.ranking AS questionRanking
         ";
