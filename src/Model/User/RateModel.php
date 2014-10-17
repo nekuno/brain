@@ -17,6 +17,7 @@ class RateModel
 
     const LIKE = 'LIKES';
     const DISLIKE = 'DISLIKES';
+    const IGNORE = 'IGNORE';
 
     /**
      * @var EventDispatcher
@@ -49,11 +50,11 @@ class RateModel
      */
     public function userRateLink($userId, $linkId, $rate)
     {
-        if ($rate !== self::LIKE && $rate != self::DISLIKE) {
+        if ($rate !== self::LIKE && $rate != self::DISLIKE && $rate != self::IGNORE) {
             throw new \Exception('"' . $rate . '" is not a valid rate');
         }
 
-        $template = "
+        $query = "
             MATCH
             (user:User), (link:Link)
             WHERE
@@ -62,14 +63,23 @@ class RateModel
             (user)-[rate]->(link)
             WHERE type(rate) <> {rate}
             DELETE rate
-            CREATE UNIQUE
-            (user)-[new_rate:" . $rate . "]->(link)
-            RETURN user,id(link) as linkId, type(new_rate) as rate
         ";
+
+        if ($rate == self::LIKE || $rate == self::DISLIKE) {
+            $query .= "
+                CREATE UNIQUE
+                (user)-[new_rate:" . $rate . "]->(link)
+                RETURN user,id(link) as linkId, type(new_rate) as rate
+            ";
+        } else {
+            $query .= "
+                RETURN user,id(link) as linkId, 'IGNORE' as rate
+            ";
+        }
 
         $query = new Query(
             $this->client,
-            $template,
+            $query,
             array(
                 'userId'    => (integer)$userId,
                 'linkId'    => (integer)$linkId,
