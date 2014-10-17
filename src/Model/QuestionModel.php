@@ -110,5 +110,56 @@ class QuestionModel
     public function setOrUpdateRankingForQuestion ($questionID)
     {
 
+        $queryString = "
+        MATCH
+            (q:Question)<-[:IS_ANSWER_OF]-(a:Answer)
+        WHERE
+            q.qnoow_id = {questionID}
+        OPTIONAL MATCH
+            (u:User)-[:ANSWERS]->(a)
+        WITH
+            q,
+            a AS answers,
+            count(DISTINCT u) as numOfUsersThatAnswered
+        WITH
+            q,
+            length(collect(answers)) AS numOfAnswers,
+            stdev(numOfUsersThatAnswered) AS standardDeviation
+        WITH
+            q,
+            1- (standardDeviation*1.0/numOfAnswers) AS ranking
+        OPTIONAL MATCH
+            (u:User)-[r:RATES]->(q)
+        WITH
+            ranking,
+            (1.0/50) * avg(r.rating) AS rating
+        RETURN
+            0.9 * ranking + 0.1 * rating AS questionRanking
+        ";
+
+        $queryDataArray = array(
+            'questionID' => $questionID
+        );
+
+        $query = new Query(
+            $this->client,
+            $queryString,
+            $queryDataArray
+        );
+
+        try {
+            $result = $query->getResultSet();
+        } catch (\Exception $e) {
+            throw $e;
+        }
+
+        foreach($result as $row){
+            $questionRanking = $row['questionRanking'];
+        }
+
+        $response = $questionRanking;
+
+        return $response;
+
     }
 } 
