@@ -438,7 +438,6 @@ class UserController
             /** @var $model \Model\User\Recommendation\UserModel */
             $model = $app['users.recommendation.users.model'];
             if ($basedOn == 'answers') {
-                // TODO: check that users has one answered question at least
                 $result = $model->getUserRecommendationsBasedOnAnswers($id);
             }
             if ($basedOn == 'content') {

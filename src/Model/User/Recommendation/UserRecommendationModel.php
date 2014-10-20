@@ -4,7 +4,7 @@ namespace Model\User\Recommendation;
 
 use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
-use Model\User\MatchingModel;
+use Model\User\Matching\MatchingModel;
 
 class UserRecommendationModel
 {
@@ -15,13 +15,13 @@ class UserRecommendationModel
     protected $client;
 
     /**
-     * @var \Model\User\MatchingModel
+     * @var \Model\User\Matching\MatchingModel
      */
     protected $matchingModel;
 
     /**
      * @param \Everyman\Neo4j\Client $client
-     * @param \Model\User\MatchingModel $matchingModel
+     * @param \Model\User\Matching\MatchingModel $matchingModel
      */
     public function __construct(Client $client, MatchingModel $matchingModel)
     {
