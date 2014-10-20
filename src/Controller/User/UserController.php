@@ -1,6 +1,6 @@
 <?php
 
-namespace Controller;
+namespace Controller\User;
 
 use Model\User\ContentPaginatorModel;
 use Model\UserModel;

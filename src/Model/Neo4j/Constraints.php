@@ -39,8 +39,8 @@ class Constraints
     {
         $constraints = array();
         $constraints[] = "CREATE CONSTRAINT ON (u:User) ASSERT u.qnoow_id IS UNIQUE;";
-        $constraints[] = "CREATE CONSTRAINT ON (q:Question) ASSERT q.qnoow_id IS UNIQUE;";
-        $constraints[] = "CREATE CONSTRAINT ON (a:Answer) ASSERT a.qnoow_id IS UNIQUE;";
+        $constraints[] = "CREATE CONSTRAINT ON (q:Question) ASSERT id(q) IS UNIQUE;";
+        $constraints[] = "CREATE CONSTRAINT ON (a:Answer) ASSERT id(a) IS UNIQUE;";
         
         foreach ($constraints as $query) {
             $neo4jQuery = new Query(
