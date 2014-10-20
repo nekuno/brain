@@ -6,11 +6,17 @@ use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
 use Model\User\ContentPaginatedModel;
 use Model\User\AnswerModel;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 class MatchingModel
 {
     const PREFERRED_MATCHING_CONTENT='content';
     const PREFERRED_MATCHING_ANSWERS='answers';
+
+    /**
+     * @var EventDispatcher
+     */
+    protected $dispatcher;
 
     /**
      * @var \Everyman\Neo4j\Client
@@ -27,24 +33,40 @@ class MatchingModel
      */
     protected $answerModel;
 
-    /**********************************************************************************************************************
+    /**
+     * @var NormalDistributionModel
+     */
+    protected $normalDistributionModel;
+
+    /**
+     * @param EventDispatcher $dispatcher
      * @param \Everyman\Neo4j\Client $client
      * @param \Model\User\ContentPaginatedModel $contentPaginatedModel
      * @param \Model\User\AnswerModel $answerModel
+     * @param NormalDistributionModel $normalDistributionModel
      */
-    public function __construct(Client $client, ContentPaginatedModel $contentPaginatedModel, AnswerModel $answerModel)
-    {
+    public function __construct(
+        EventDispatcher $dispatcher,
+        Client $client,
+        ContentPaginatedModel $contentPaginatedModel,
+        AnswerModel $answerModel,
+        NormalDistributionModel $normalDistributionModel
+    ) {
+        $this->dispatcher = $dispatcher;
         $this->client = $client;
         $this->contentPaginatedModel = $contentPaginatedModel;
         $this->answerModel = $answerModel;
+        $this->normalDistributionModel = $normalDistributionModel;
     }
 
-    /************************************************************************************************************************
-     * @param $id id of the user
-     * @return string 'content' or 'answers' depending on which is the preferred matching type for the user
+    /**
+     * @param $id
+     * @return string
+     * @throws \Exception
      */
     public function getPreferredMatchingType($id)
     {
+
         $numberOfSharedContent = $this->contentPaginatedModel->countTotal(array('id' => $id));
         $numberOfAnsweredQuestions = $this->answerModel->countTotal(array('id' => $id));
 
@@ -55,156 +77,304 @@ class MatchingModel
         }
     }
 
-    /************************************************************************************************************************
-     *
+    /**
+     * @param $id1
+     * @param $id2
+     * @return int
+     * @throws \Exception
      */
-    public function updateContentNormalDistributionVariables()
+    public function getMatchingBetweenTwoUsersBasedOnContent($id1, $id2)
     {
-        //Construct query string
-        $queryString = "
+
+        $response['matching'] = 0;
+
+        if ($this->hasContentInCommon($id1, $id2)) {
+            $rawMatching = $this->getMatchingBetweenTwoUsers($id1, $id2);
+
+            if ($this->isNecessaryToRecalculateIt($rawMatching, 'timestamp_content', 'matching_content')) {
+                $event = new MatchingExpiredEvent($id1, $id2, 'content');
+                $this->dispatcher->dispatch(\AppEvents::USER_MATCHING_EXPIRED, $event);
+            }
+
+            $matching = $rawMatching['matching_content'] ? $rawMatching['matching_content'] : 0;
+
+            $response['matching'] = $this->applyMatchingBasedOnContentCorrectionFactor($matching);
+        }
+
+        return $response;
+    }
+
+    /**
+     * @param $id1
+     * @param $id2
+     * @return array
+     * @throws \Exception
+     */
+    public function hasContentInCommon($id1, $id2)
+    {
+
+        $response = array();
+
+        $params = array(
+            'id1' => (int)$id1,
+            'id2' => (int)$id2
+        );
+
+        //Check that both users have at least one url in common
+        $check =
+            "MATCH
+                (u1:User {qnoow_id: {id1}}),
+                (u2:User {qnoow_id: {id2}})
+            OPTIONAL MATCH
+                (u1)-[:LIKES]->(l:Link)<-[:LIKES]-(u2)
+            OPTIONAL MATCH
+                (u1)-[:DISLIKES]->(d:Link)<-[:DISLIKES]-(u2)
+            RETURN
+                count(l) AS l,
+                count(d) AS d;";
+
+        //Create the Neo4j query object
+        $checkQuery = new Query(
+            $this->client,
+            $check,
+            $params
+        );
+
+        try {
+            $checkResult = $checkQuery->getResultSet();
+        } catch (\Exception $e) {
+            throw $e;
+        }
+
+        $checkValueLikes = 0;
+        $checkValueDislikes = 0;
+        foreach ($checkResult as $checkRow) {
+            $checkValueLikes = $checkRow['l'];
+            $checkValueDislikes = $checkRow['d'];
+        }
+
+        return ($checkValueLikes > 0) || ($checkValueDislikes > 0);
+    }
+
+    /**
+     * @param $id1
+     * @param $id2
+     * @return array
+     * @throws \Exception
+     */
+    public function getMatchingBetweenTwoUsers($id1, $id2)
+    {
+
+        $response = array();
+
+        $params = array(
+            'id1' => (int)$id1,
+            'id2' => (int)$id2,
+        );
+
+        //Check that both users have at least one url in common
+        $query =
+            "MATCH
+                (u1:User {qnoow_id: {id1}}),
+                (u2:User {qnoow_id: {id2}})
+            OPTIONAL MATCH
+                (u1)-[m:MATCHES]-(u2)
+            RETURN
+                m
+            LIMIT 1
+            ;";
+
+        //Create the Neo4j query object
+        $matchingQuery = new Query(
+            $this->client,
+            $query,
+            $params
+        );
+
+        try {
+            $result = $matchingQuery->getResultSet();
+        } catch (\Exception $e) {
+            throw $e;
+        }
+
+        $haveMatching = false;
+
+        foreach ($result as $row) {
+            $haveMatching = true;
+        }
+
+        if ($haveMatching) {
+
+            $matching = null;
+
+            foreach ($result as $match) {
+                if ($match['m']) {
+                    $currentTimeInMillis = time() * 1000;
+                    $matching['matching_content'] = $match['m']->getProperty('matching_content') ? : 0;
+                    $matching['timestamp_content'] = $match['m']->getProperty('timestamp_content') ? : $currentTimeInMillis;
+                    $matching['matching_questions'] = $match['m']->getProperty('matching_questions') ? : 0;
+                    $matching['timestamp_questions'] = $match['m']->getProperty('timestamp_questions') ? : $currentTimeInMillis;
+                }
+            }
+
+            return $matching;
+
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * @param $rawMatching
+     * @return int
+     */
+    public function isNecessaryToRecalculateIt($rawMatching, $tsIndex, $matchingIndex)
+    {
+
+        if (isset($rawMatching[$matchingIndex]) && $rawMatching[$matchingIndex] !== null) {
+            $matchingUpdatedAt = $rawMatching[$tsIndex] ? $rawMatching[$tsIndex] : 0;
+            $currentTimeInMillis = time() * 1000;
+            $lastUpdatePlusOneDay = $matchingUpdatedAt + (1000 * 60 * 60 * 24);
+            if ($lastUpdatePlusOneDay < $currentTimeInMillis) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param $matching
+     * @return int
+     * @throws \Exception
+     */
+    public function applyMatchingBasedOnContentCorrectionFactor($matching)
+    {
+
+        if ($matching != 0) {
+            $maxMatching = $this->getMaxMatchingBasedOnContent();
+
+            $matching /= $maxMatching;
+        }
+
+        return $matching;
+    }
+
+    /**
+     * Get the maximum matching based on content
+     */
+    public function getMaxMatchingBasedOnContent()
+    {
+
+        $maxMatching = 0;
+
+        $query = "
+            MATCH
+            ()-[match:MATCHES]-()
+            WHERE
+            has(match.matching_content)
+            RETURN
+            match.matching_content as max
+            ORDER BY
+            match.matching_content DESC
+            LIMIT 1
+            ;
+            ";
+
+        //Create the Neo4j query object
+        $neoQuery = new Query(
+            $this->client,
+            $query
+        );
+
+        //Execute query
+        try {
+            $result = $neoQuery->getResultSet();
+
+        } catch (\Exception $e) {
+            throw $e;
+        }
+
+        foreach ($result as $row) {
+            $maxMatching = $row['max'];
+        }
+
+        return $maxMatching;
+    }
+
+    /**
+     * @param $id1
+     * @param $id2
+     * @return int
+     * @throws \Exception
+     */
+    public function getMatchingBetweenTwoUsersBasedOnAnswers($id1, $id2)
+    {
+
+        $rawMatching = $this->getMatchingBetweenTwoUsers($id1, $id2);
+
+        if ($this->isNecessaryToRecalculateIt($rawMatching, 'timestamp_questions', 'matching_questions')) {
+            $event = new MatchingExpiredEvent($id1, $id2, 'answer');
+            $this->dispatcher->dispatch(\AppEvents::USER_MATCHING_EXPIRED, $event);
+        }
+
+        $response['matching'] = $rawMatching['matching_questions'] ? $rawMatching['matching_questions'] : 0;
+
+        return $response;
+    }
+
+    /**
+     * @param $userId
+     * @param array $questions
+     * @throws \Exception
+     */
+    public function calculateMatchingOfUserByAnswersWhenNewQuestionsAreAnswered($userId, array $questions)
+    {
+
+        $data = array(
+            'questions' => implode(',', $questions),
+            'userId' => $userId,
+        );
+
+        $template = "
         MATCH
-            (u1:User),
-            (u2:User)
-        OPTIONAL MATCH
-            a=(u1)-[rl1]->(cl1:Link)-[:TAGGED]->(tl1:Tag)
-        OPTIONAL MATCH
-            b=(u2)-[rl2]->(cl2:Link)-[:TAGGED]->(tl2:Tag)
+        (u:User)-[:RATES]->(q:Question)
         WHERE
-                type(rl1) = type(rl2)
-            AND
-                tl1 = tl2
-            AND
-                (cl1 = cl2 OR cl1 <> cl2)
-        WITH
-            u1, u2, length(collect(DISTINCT cl2)) AS numOfContentsInCommon
+        q.qnoow_id IN [ { questions } ]
+        AND NOT u.qnoow_id = { userId }
         RETURN
-            avg(numOfContentsInCommon) AS ave_content,
-            stdevp(numOfContentsInCommon) AS stdev_content
-        ";
+        u.qnoow_id AS u;";
 
-        //Create the Neo4j query object
+        //Create the Neo4j template object
         $query = new Query(
             $this->client,
-            $queryString
+            $template,
+            $data
         );
 
-        //Execute Query
         try {
             $result = $query->getResultSet();
         } catch (\Exception $e) {
             throw $e;
         }
 
-        //Get the wanted results
         foreach ($result as $row) {
-            $average = $row['ave_content'];
-            $stdev = $row['stdev_content'];
+            $this->calculateMatchingBetweenTwoUsersBasedOnAnswers($userId, $row['u']);
         }
-
-        if ($average == null) {
-            $average = 0;
-        }
-        if ($stdev == null){
-            $stdev = 0;
-        }
-
-
-        //Persist data
-
-        $date = date("d-m-Y [H:i:s]");
-        $data = array();
-        $data = array("average" => $average, "stdev" => $stdev, "calculationDate" => $date );
-
-        $dataDirectory = "matchingData";
-        if(!file_exists($dataDirectory) && !is_dir($dataDirectory)){
-            mkdir($dataDirectory);
-        }
-
-        $file = "contentNormalDistributionVariables.json";
-        $log = "contentNormalDistributionVariables.log";
-
-        if(file_exists($dataDirectory . "/" . $file)){
-            file_put_contents( $dataDirectory . "/" . $log, file_get_contents($dataDirectory."/".$file)."\n", FILE_APPEND );
-        }
-        file_put_contents( $dataDirectory . "/" . $file, json_encode($data) );
-
-        return $data;
-
     }
 
-    public function updateQuestionsNormalDistributionVariables()
-    {
-        //Construct query string
-        $queryString = "
-        MATCH
-            (u1:User),
-            (u2:User)
-        OPTIONAL MATCH
-            (u1)-[:ACCEPTS]->(commonanswer:Answer)<-[:ANSWERS]-(u2)
-        WITH
-            u1, u2, count(commonanswer) AS numOfCommonAnswers
-        RETURN
-            avg(numOfCommonAnswers) AS ave_questions,
-            stdevp(numOfCommonAnswers) AS stdev_questions
-        ";
-
-        //Create the Neo4j query object
-        $query = new Query(
-            $this->client,
-            $queryString
-        );
-
-        //Execute Query
-        try {
-            $result = $query->getResultSet();
-        } catch (\Exception $e) {
-            throw $e;
-        }
-
-        //Get the wanted results
-        foreach ($result as $row) {
-            $average = $row['ave_questions'];
-            $stdev = $row['stdev_questions'];
-        }
-
-        //Persist data
-
-        $date = date("d-m-Y [H:i:s]");
-        $data = array();
-        $data = array("average" => $average, "stdev" => $stdev, "calculationDate" => $date );
-
-        $dataDirectory = "matchingData";
-        if(!file_exists($dataDirectory) && !is_dir($dataDirectory)){
-            mkdir($dataDirectory);
-        }
-
-        $file = "questionsNormalDistributionVariables.json";
-        $log = "questionsNormalDistributionVariables.log";
-
-        if(file_exists($dataDirectory . "/" . $file)){
-            file_put_contents( $dataDirectory . "/" . $log, file_get_contents($dataDirectory."/".$file)."\n", FILE_APPEND );
-        }
-        file_put_contents( $dataDirectory . "/" . $file, json_encode($data) );
-
-        return $data;
-
-    }
-
-    /************************************************************************************************************
+    /**
      * @param $id1 qnoow_id of the first user
      * @param $id2 qnoow_id of the second user
      * @return float matching by questions between both users
      * @throws \Exception
      */
-    public function getMatchingBetweenTwoUsersBasedOnAnswers($id1, $id2)
+    public function calculateMatchingBetweenTwoUsersBasedOnAnswers($id1, $id2)
     {
-        //Get the values of the parameters for the Normal distribution
-        $dataDirectory = "matchingData";
-        $file = "questionsNormalDistributionVariables.json";
-        $data = json_decode(file_get_contents($dataDirectory."/".$file, true) ) ;
+        $data = $this->normalDistributionModel->getQuestionsNormalDistributionVariables();
 
-        $ave_questions = $data->average;
-        $stdev_questions = $data->stdev;
+        $questionsAverage = $data->average;
+        $questionsStdev = $data->stdev;
 
         //Construct query String
         $queryString = "
@@ -274,14 +444,14 @@ class MatchingModel
         //Get the wanted results
         foreach($result as $row){
             $ratingForMatching = $row['match_user1_user2'];
-            $normal_x = $row['numOfCommonAnswers'];
+            $normalX = $row['numOfCommonAnswers'];
         }
 
         //Calculate the matching
         $matching =
             (
                 $ratingForMatching +
-                stats_dens_normal($normal_x, $ave_questions, $stdev_questions) //function from stats PHP extension
+                stats_dens_normal($normalX, $questionsAverage, $questionsStdev) //function from stats PHP extension
             ) / 2;
 
         if ($matching == false){
@@ -329,8 +499,38 @@ class MatchingModel
         }
 
         return $matching == null ? 0 : $matching ;
-        //For testing purposes
-        //return $ratingForMatching . ', ' . $normal_x . ', ' . $ave_questions . ', ' . $stdev_questions;
+    }
+
+    /**
+     * @param $id
+     * @throws \Exception
+     */
+    public function calculateMatchingByContentOfUserWhenNewContentIsAdded($id)
+    {
+
+        //This query is for version 1.1 of the algorithm, which is the one currently being used in Brain
+        //For
+        $query = "
+        MATCH
+        (u:User {qnoow_id: " . $id . " })-[:LIKES|DISLIKES]->(:Link)<-[:LIKES|DISLIKES]-(v:User)
+        RETURN
+        v.qnoow_id AS id;";
+
+        //Create the Neo4j query object
+        $neoQuery = new Query(
+            $this->client,
+            $query
+        );
+
+        try {
+            $result = $neoQuery->getResultSet();
+        } catch (\Exception $e) {
+            throw $e;
+        }
+
+        foreach ($result as $row) {
+            $this->calculateMatchingBetweenTwoUsersBasedOnSharedContent($id, $row['id']);
+        }
     }
 
     /**
@@ -339,15 +539,12 @@ class MatchingModel
      * @return float matching by content (with tags) between both users
      * @throws \Exception
      */
-    public function getMatchingBetweenTwoUsersBasedOnSharedContent ($id1, $id2)
+    public function calculateMatchingBetweenTwoUsersBasedOnSharedContent ($id1, $id2)
     {
-        //Get the values of the parameters for the Normal distribution
-        $dataDirectory = "matchingData";
-        $file = "contentNormalDistributionVariables.json";
-        $data = json_decode(file_get_contents($dataDirectory."/".$file, true) ) ;
+        $data = $this->normalDistributionModel->getContentNormalDistributionVariables();
 
-        $ave_content = $data->average;
-        $stdev_content = $data->stdev;
+        $contentAverage = $data->average;
+        $contentStdev = $data->stdev;
 
         //Construct query String
         $queryString = "
@@ -395,11 +592,11 @@ class MatchingModel
 
         //Get the wanted results
         foreach($result as $row){
-            $normal_x = $row['numOfCommonAnswers'];
+            $normalX = $row['numOfCommonAnswers'];
         }
 
         //Calculate the matching
-        $matching = stats_dens_normal($normal_x, $ave_content, $stdev_content);
+        $matching = stats_dens_normal($normalX, $contentAverage, $contentStdev);
 
         if ($matching == false){
             $matching = 0;
@@ -446,8 +643,6 @@ class MatchingModel
         }
 
         return $matching;
-        //For testing purposes:
-        //return $normal_x . ', ' . $ave_content . ', ' . $stdev_content;
     }
 
 } 

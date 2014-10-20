@@ -3,7 +3,7 @@
 namespace Model\User\Recommendation;
 
 use Paginator\PaginatedInterface;
-use Model\User\MatchingModelOld as MatchingModel;
+use Model\User\Matching\MatchingModel;
 
 use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;

@@ -41,9 +41,17 @@ $app['users.rate.model'] = function ($app) {
 };
 
 
+$app['users.matching.normal_distribution.model'] = function ($app) {
+
+    return new \Model\User\Matching\NormalDistributionModel($app['neo4j.client'], $app['dataFile.dir']);
+
+};
+
+
 $app['users.matching.model'] = function ($app) {
 
-    return new \Model\User\MatchingModelOld($app['dispatcher'], $app['neo4j.client'], $app['users.content.model'], $app['users.answer.model']);
+    //return new \Model\User\MatchingModelOld($app['dispatcher'], $app['neo4j.client'], $app['users.content.model'], $app['users.answer.model']);
+    return new \Model\User\Matching\MatchingModel($app['dispatcher'], $app['neo4j.client'], $app['users.content.model'], $app['users.answer.model'], $app['users.matching.normal_distribution.model']);
 
 };
 

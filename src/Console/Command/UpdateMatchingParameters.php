@@ -19,7 +19,7 @@ class UpdateMatchingParameters extends ApplicationAwareCommand
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $modelObject = new MatchingModel($this->app['neo4j.client'], $this->app['users.content.model'], $this->app['users.answer.model']);
+        $modelObject = $this->app['users.matching.normal_distribution.model'];
 
         try {
             $contentData = $modelObject->updateContentNormalDistributionVariables();
