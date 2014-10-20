@@ -43,7 +43,7 @@ $app['users.rate.model'] = function ($app) {
 
 $app['users.matching.model'] = function ($app) {
 
-    return new \Model\User\MatchingModel($app['dispatcher'], $app['neo4j.client'], $app['users.content.model'], $app['users.answer.model']);
+    return new \Model\User\MatchingModel($app['dispatcher'], $app['neo4j.client'], $app['users.content.model'], $app['users.answers.model']);
 };
 
 $app['users.recommendation.users.model'] = function ($app) {

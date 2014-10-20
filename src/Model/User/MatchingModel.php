@@ -331,7 +331,7 @@ class MatchingModel
 
         $data = array(
             'questions' => implode(',', $questions),
-            'userId' => $userId,
+            'userId' => (integer) $userId,
         );
 
         $template = "
