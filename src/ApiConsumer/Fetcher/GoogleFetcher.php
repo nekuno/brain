@@ -8,9 +8,11 @@ class GoogleFetcher extends BasicPaginationFetcher
 
     protected $pageLength = 20;
 
+    protected $paginationId = null;
+
     public function getUrl()
     {
-        return '/plus/v1/people/'.$this->user['googleID'].'/activities/public';
+        return '/plus/v1/people/' . $this->user['googleID'] . '/activities/public';
     }
 
     protected function getQuery()
@@ -23,16 +25,23 @@ class GoogleFetcher extends BasicPaginationFetcher
 
     protected function getItemsFromResponse($response)
     {
-        return $response['items']?:array();
+        return $response['items'] ? : array();
     }
 
     protected function getPaginationIdFromResponse($response)
     {
+
         $paginationId = null;
 
-        if (array_key_exists('nextPageToken', $response)) {
+        if (isset($response['nextPageToken'])) {
             $paginationId = $response['nextPageToken'];
         }
+
+        if ($this->paginationId === $paginationId) {
+            return null;
+        }
+
+        $this->paginationId = $paginationId;
 
         return $paginationId;
     }
@@ -45,17 +54,17 @@ class GoogleFetcher extends BasicPaginationFetcher
         $parsed = array();
 
         foreach ($rawFeed as $item) {
-            if (!array_key_exists('object', $item) || !array_key_exists('attachments', $item['object'])) {
+            if (!isset($item['object']['attachments'][0]['url'])) {
                 continue;
             }
 
             $item = $item['object']['attachments'][0];
 
-            $link['url']            = $item['url'];
-            $link['title']          = array_key_exists('displayName', $item) ? $item['displayName'] : null;
-            $link['description']    = array_key_exists('content', $item) ? $item['content'] : null;
+            $link['url'] = $item['url'];
+            $link['title'] = array_key_exists('displayName', $item) ? $item['displayName'] : null;
+            $link['description'] = array_key_exists('content', $item) ? $item['content'] : null;
             $link['resourceItemId'] = array_key_exists('id', $item) ? $item['id'] : null;
-            $link['resource']       = 'google';
+            $link['resource'] = 'google';
 
             $parsed[] = $link;
         }

@@ -40,6 +40,32 @@ abstract class BasicPaginationFetcher extends AbstractFetcher
     }
 
     /**
+     * @return array
+     */
+    protected function getLinksByPage()
+    {
+
+        $nextPaginationId = null;
+
+        do {
+            $query = $this->getQuery();
+
+            if ($nextPaginationId) {
+                $query = array_merge($query, array($this->getPaginationField() => $nextPaginationId));
+            }
+
+            $response = $this->resourceOwner->authorizedHttpRequest($this->getUrl(), $query, $this->user);
+
+            $this->rawFeed = array_merge($this->rawFeed, $this->getItemsFromResponse($response));
+
+            $nextPaginationId = $this->getPaginationIdFromResponse($response);
+
+        } while (null !== $nextPaginationId);
+
+        return $this->rawFeed;
+    }
+
+    /**
      * { @inheritdoc }
      */
     public function fetchLinksFromUserFeed($user)
@@ -47,12 +73,8 @@ abstract class BasicPaginationFetcher extends AbstractFetcher
         $this->user = $user;
         $this->rawFeed = array();
 
-        try {
-            $rawFeed = $this->getLinksByPage();
-            $links = $this->parseLinks($rawFeed);
-        } catch (\Exception $e) {
-            throw $e;
-        }
+        $rawFeed = $this->getLinksByPage();
+        $links = $this->parseLinks($rawFeed);
 
         return $links;
     }
@@ -60,30 +82,6 @@ abstract class BasicPaginationFetcher extends AbstractFetcher
     abstract protected function getItemsFromResponse($response);
 
     abstract protected function getPaginationIdFromResponse($response);
-
-    /**
-     * @param null $paginationId
-     * @return mixed
-     */
-    protected function getLinksByPage($paginationId = null)
-    {
-        $query = $this->getQuery();
-
-        if ($paginationId) {
-            $query = array_merge($query, array($this->getPaginationField() => $paginationId));
-        }
-
-        $response = $this->makeRequestJSON($this->getUrl(), $query);
-
-        $this->rawFeed = array_merge($this->rawFeed, $this->getItemsFromResponse($response));
-
-        $nextPaginationId = $this->getPaginationIdFromResponse($response);
-        if (null !== $nextPaginationId) {
-            return call_user_func(array($this, __FUNCTION__), $nextPaginationId);
-        }
-
-        return $this->rawFeed;
-    }
 
     abstract protected function parseLinks(array $rawFeed);
 }

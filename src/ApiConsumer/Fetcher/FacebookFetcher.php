@@ -8,9 +8,11 @@ class FacebookFetcher extends BasicPaginationFetcher
 
     protected $pageLength = 20;
 
+    protected $paginationId = null;
+
     public function getUrl()
     {
-        return $this->user['facebookID'].'/links';
+        return $this->user['facebookID'] . '/links';
     }
 
     protected function getQuery()
@@ -22,18 +24,22 @@ class FacebookFetcher extends BasicPaginationFetcher
 
     protected function getItemsFromResponse($response)
     {
-        return $response['data']?:array();
+        return $response['data'] ?: array();
     }
 
     protected function getPaginationIdFromResponse($response)
     {
         $paginationId = null;
 
-        if (array_key_exists('paging', $response)) {
-            if (array_key_exists('cursors', $response['paging'])) {
-                $paginationId = $response['paging']['cursors']['after'];
-            }
+        if (isset($response['paging']['cursors']['after'])) {
+            $paginationId = $response['paging']['cursors']['after'];
         }
+
+        if ($this->paginationId === $paginationId) {
+            return null;
+        }
+
+        $this->paginationId = $paginationId;
 
         return $paginationId;
     }
@@ -46,11 +52,13 @@ class FacebookFetcher extends BasicPaginationFetcher
         $parsed = array();
 
         foreach ($rawFeed as $item) {
-            $link['url']            = $item['link'];
-            $link['title']          = array_key_exists('name', $item) ? $item['name'] : null;
-            $link['description']    = array_key_exists('description', $item) ? $item['description'] : null;
+            $url = $item['link'];
+            $parts = parse_url($url);
+            $link['url'] = !isset($parts['host']) && isset($parts['path']) ? 'https://www.facebook.com' . $parts['path'] : $url;
+            $link['title'] = array_key_exists('name', $item) ? $item['name'] : null;
+            $link['description'] = array_key_exists('description', $item) ? $item['description'] : null;
             $link['resourceItemId'] = array_key_exists('id', $item) ? (int)$item['id'] : null;
-            $link['resource']       = 'facebook';
+            $link['resource'] = 'facebook';
 
             $parsed[] = $link;
         }

@@ -10,6 +10,11 @@ use Everyman\Neo4j\Cypher\Query;
 class ContentPaginatedModel implements PaginatedInterface
 {
     /**
+     * @var array
+     */
+    private static $validTypes = array('Audio', 'Video', 'Image');
+
+    /**
      * @var \Everyman\Neo4j\Client
      */
     protected $client;
@@ -22,6 +27,11 @@ class ContentPaginatedModel implements PaginatedInterface
         $this->client = $client;
     }
 
+    public function getValidTypes()
+    {
+        return Self::$validTypes;
+    }
+
     /**
      * Hook point for validating the query.
      * @param array $filters
@@ -29,7 +39,17 @@ class ContentPaginatedModel implements PaginatedInterface
      */
     public function validateFilters(array $filters)
     {
-        return isset($filters['id']);
+        $hasId = isset($filters['id']);
+
+        if (isset($filters['type'])) {
+            $hasValidType = in_array($filters['type'], $this->getValidTypes());
+        } else {
+            $hasValidType = true;
+        }
+
+        $isValid = $hasId && $hasValidType;
+
+        return $isValid;
     }
 
     /**
@@ -42,18 +62,48 @@ class ContentPaginatedModel implements PaginatedInterface
      */
     public function slice(array $filters, $offset, $limit)
     {
+        $id = $filters['id'];
         $response = array();
+
+        $params = array(
+            'UserId' => (integer)$id,
+            'offset' => (integer)$offset,
+            'limit' => (integer)$limit
+        );
+
+        $tagQuery = '';
+        if (isset($filters['tag'])) {
+            $tagQuery = "
+                MATCH
+                (content)-[:TAGGED]->(filterTag:Tag)
+                WHERE filterTag.name = {tag}
+            ";
+            $params['tag'] = $filters['tag'];
+        }
+
+        $linkType = 'Link';
+        if (isset($filters['type'])) {
+            $linkType = $filters['type'];
+        }
 
         $query = "
             MATCH
             (u:User)
             WHERE u.qnoow_id = {UserId}
             MATCH
-            (u)-[r:LIKES|DISLIKES]->(content:Link)
+            (u)-[r:LIKES|DISLIKES]->(content:" . $linkType .")
+        ";
+        $query .= $tagQuery;
+        $query .= "
             OPTIONAL MATCH
             (content)-[:TAGGED]->(tag:Tag)
             RETURN
-            type(r) as type, content, collect(distinct tag.name) as tags
+            id(content) as id,
+            type(r) as rate,
+            content,
+            collect(distinct tag.name) as tags,
+            labels(content) as types
+            ORDER BY content.created DESC
             SKIP {offset}
             LIMIT {limit}
             ;
@@ -63,11 +113,7 @@ class ContentPaginatedModel implements PaginatedInterface
         $contentQuery = new Query(
             $this->client,
             $query,
-            array(
-                'UserId' => (integer)$filters['id'],
-                'offset' => (integer)$offset,
-                'limit' => (integer)$limit
-            )
+            $params
         );
 
         //Execute query
@@ -76,12 +122,29 @@ class ContentPaginatedModel implements PaginatedInterface
 
             foreach ($result as $row) {
                 $content = array();
+
+                $content['id'] = $row['id'];
                 $content['type'] = $row['type'];
                 $content['url'] = $row['content']->getProperty('url');
                 $content['title'] = $row['content']->getProperty('title');
                 $content['description'] = $row['content']->getProperty('description');
+
                 foreach ($row['tags'] as $tag) {
                     $content['tags'][] = $tag;
+                }
+
+                foreach ($row['types'] as $type) {
+                    $content['types'][] = $type;
+                }
+
+                $user = array();
+                $user['user']['id'] = $id;
+                $user['rate'] = $row['rate'];
+                $content['user_rates'][] = $user;
+
+                if ($row['content']->getProperty('embed_type')) {
+                    $content['embed']['type'] = $row['content']->getProperty('embed_type');
+                    $content['embed']['id'] = $row['content']->getProperty('embed_id');
                 }
 
                 $response[] = $content;
@@ -102,14 +165,37 @@ class ContentPaginatedModel implements PaginatedInterface
      */
     public function countTotal(array $filters)
     {
+        $id = $filters['id'];
         $count = 0;
+
+        $params = array(
+            'UserId' => (integer)$id,
+        );
+
+        $tagQuery = '';
+        if (isset($filters['tag'])) {
+            $tagQuery = "
+                MATCH
+                (content)-[:TAGGED]->(filterTag:Tag)
+                WHERE filterTag.name = {tag}
+            ";
+            $params['tag'] = $filters['tag'];
+        }
+
+        $linkType = 'Link';
+        if (isset($filters['type'])) {
+            $linkType = $filters['type'];
+        }
 
         $query = "
             MATCH
             (u:User)
             WHERE u.qnoow_id = {UserId}
             MATCH
-            (u)-[r:LIKES|DISLIKES]->(content:Link)
+            (u)-[r:LIKES|DISLIKES]->(content:" . $linkType . ")
+        ";
+        $query .= $tagQuery;
+        $query .= "
             RETURN
             count(r) as total
             ;
@@ -119,9 +205,7 @@ class ContentPaginatedModel implements PaginatedInterface
         $contentQuery = new Query(
             $this->client,
             $query,
-            array(
-                'UserId' => (integer)$filters['id'],
-            )
+            $params
         );
 
         //Execute query

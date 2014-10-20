@@ -2,7 +2,7 @@
 
 namespace Model\User\Recommendation;
 
-use Model\User\MatchingModelOld;
+use Model\User\MatchingModelOld as MatchingModel;
 
 use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
@@ -23,7 +23,7 @@ class UserRecommendationModel
      * @param \Everyman\Neo4j\Client $client
      * @param \Model\User\MatchingModel $matchingModel
      */
-    public function __construct(Client $client, MatchingModelOld $matchingModel)
+    public function __construct(Client $client, MatchingModel $matchingModel)
     {
         $this->client = $client;
         $this->matchingModel = $matchingModel;
@@ -38,8 +38,6 @@ class UserRecommendationModel
      */
     public function getUserRecommendationsBasedOnAnswers($id)
     {
-        $this->matchingModel->calculateAllMatchingsBasedOnAnswers($id);
-
         $query = "
             MATCH
             (u:User {qnoow_id: " . $id . "})
@@ -90,8 +88,6 @@ class UserRecommendationModel
      */
     public function getUserRecommendationsBasedOnSharedContent($id)
     {
-        $this->matchingModel->calculateAllMatchingsBasedOnContent($id);
-
         $query = "
             MATCH
             (u:User {qnoow_id: " . $id . "})
@@ -123,12 +119,15 @@ class UserRecommendationModel
 
         $response = array();
         foreach ($topUsersResult as $row)  {
+            $matching = $this->matchingModel->applyMatchingBasedOnContentCorrectionFactor($row['matchings_content']);
             $user    = array(
                 'id' => $row['ids'],
-                'matching' => $row['matchings_content'],
+                'matching' => $matching,
             );
             $response[] = $user;
         }
+
+
 
         return $response;
     }

@@ -3,13 +3,18 @@
 namespace Model\User\Recommendation;
 
 use Paginator\PaginatedInterface;
-use Model\User\MatchingModelOld;
+use Model\User\MatchingModelOld as MatchingModel;
 
 use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
 
 class ContentRecommendationPaginatedModel implements PaginatedInterface
 {
+    /**
+     * @var array
+     */
+    private static $validTypes = array('Audio', 'Video', 'Image');
+
     /**
      * @var \Everyman\Neo4j\Client
      */
@@ -24,10 +29,15 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
      * @param \Everyman\Neo4j\Client $client
      * @param \Model\User\MatchingModel $matchingModel
      */
-    public function __construct(Client $client, MatchingModelOld $matchingModel)
+    public function __construct(Client $client, MatchingModel $matchingModel)
     {
         $this->client = $client;
         $this->matchingModel = $matchingModel;
+    }
+
+    public function getValidTypes()
+    {
+        return Self::$validTypes;
     }
 
     /**
@@ -37,7 +47,17 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
      */
     public function validateFilters(array $filters)
     {
-        return isset($filters['id']);
+        $hasId = isset($filters['id']);
+
+        if (isset($filters['type'])) {
+            $hasValidType = in_array($filters['type'], $this->getValidTypes());
+        } else {
+            $hasValidType = true;
+        }
+
+        $isValid = $hasId && $hasValidType;
+
+        return $isValid;
     }
 
     /**
@@ -69,9 +89,17 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
             $params['tag'] = $filters['tag'];
         }
 
+        $linkType = 'Link';
+        if (isset($filters['type'])) {
+            $linkType = $filters['type'];
+        }
+
         $typeQuery = 'has(match.matching_questions)';
-        if($this->matchingModel->getPreferredMatchingType($id) == MatchingModelOld::PREFERRED_MATCHING_CONTENT) {
+        $getMatchQuery = 'match.matching_questions AS match, ';
+        $preferredMatching = $this->matchingModel->getPreferredMatchingType($id);
+        if($preferredMatching == MatchingModel::PREFERRED_MATCHING_CONTENT) {
             $typeQuery = "has(match.matching_content)";
+            $getMatchQuery = 'match.matching_content AS match, ';
         }
 
         $query = "
@@ -82,7 +110,7 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
         $query .= $typeQuery;
         $query .= "
             MATCH
-            (matching_users)-[:LIKES]->(content:Link)
+            (matching_users)-[:LIKES]->(content:" . $linkType .")
             WHERE
             NOT (user)-[:LIKES]->(content)
         ";
@@ -90,13 +118,20 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
         $query .= "
             OPTIONAL MATCH
             (content)-[:TAGGED]->(tag:Tag)
+            OPTIONAL MATCH
+            (user)-[:LIKES]-(:Link)-[commonTags:TAGGED]-(tag)
             RETURN
+            id(content) as id,
             content,
-            match.matching_content AS match,
+        ";
+        $query .= $getMatchQuery;
+        $query .= "
+            count(distinct commonTags) AS commonTagsCount,
             matching_users AS via,
-            collect(distinct tag.name) as tags
+            collect(distinct tag.name) as tags,
+            labels(content) as types
             ORDER BY
-            match
+            commonTagsCount DESC, match DESC
             SKIP {offset}
             LIMIT {limit};
         ";
@@ -114,13 +149,30 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
 
             foreach ($result as $row) {
                 $content = array();
+                $content['id'] = $row['id'];
                 $content['url'] = $row['content']->getProperty('url');
                 $content['title'] = $row['content']->getProperty('title');
                 $content['description'] = $row['content']->getProperty('description');
                 foreach ($row['tags'] as $tag) {
                     $content['tags'][] = $tag;
                 }
-                $content['match'] = $row['match'];
+                foreach ($row['types'] as $type) {
+                    $content['types'][] = $type;
+                }
+                if ($row['content']->getProperty('embed_type')) {
+                    $content['embed']['type'] = $row['content']->getProperty('embed_type');
+                    $content['embed']['id'] = $row['content']->getProperty('embed_id');
+                }
+                $match = $row['match'];
+                if ($preferredMatching == MatchingModel::PREFERRED_MATCHING_CONTENT) {
+                    $match = $this->matchingModel->applyMatchingBasedOnContentCorrectionFactor($match);
+                }
+                $commonTagsCount = (int)$row['commonTagsCount'];
+                $commonTagsMatch = 0;
+                if ($commonTagsCount > 0) {
+                    $commonTagsMatch = ($commonTagsCount-0.9)/$commonTagsCount;
+                }
+                $content['match'] = $match+((1-$match)*$commonTagsMatch);
                 $content['via']['qnoow_id'] = $row['via']->getProperty('qnoow_id');
                 $content['via']['name'] = $row['via']->getProperty('username');
 
@@ -159,8 +211,13 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
             $params['tag'] = $filters['tag'];
         }
 
+        $linkType = 'Link';
+        if (isset($filters['type'])) {
+            $linkType = $filters['type'];
+        }
+
         $typeQuery = 'has(match.matching_questions)';
-        if($this->matchingModel->getPreferredMatchingType($id) == MatchingModelOld::PREFERRED_MATCHING_CONTENT) {
+        if($this->matchingModel->getPreferredMatchingType($id) == MatchingModel::PREFERRED_MATCHING_CONTENT) {
             $typeQuery = "has(match.matching_content)";
         }
 
@@ -172,7 +229,7 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
         $query .= $typeQuery;
         $query .= "
             MATCH
-            (matching_users)-[r:LIKES]->(content:Link)
+            (matching_users)-[r:LIKES]->(content:" . $linkType . ")
             WHERE
             NOT (user)-[:LIKES]->(content)
         ";

@@ -69,11 +69,15 @@ class YoutubeProcessor implements ProcessorInterface
             $info = $items[0];
             $link['title'] = $info['snippet']['title'];
             $link['description'] = $info['snippet']['description'];
+            $link['additionalLabels'] = array('Video');
+            $link['additionalFields'] = array(
+                'embed_type' => 'youtube',
+                'embed_id' => $id);
             if (isset($info['topicDetails']['topicIds'])) {
                 foreach ($info['topicDetails']['topicIds'] as $tagName) {
                     $link['tags'][] = array(
                         'name' => $tagName,
-                        'aditionalLabels' => array('Freebase'),
+                        'additionalLabels' => array('Freebase'),
                     );
                 }
             }
@@ -102,7 +106,6 @@ class YoutubeProcessor implements ProcessorInterface
             $info = $items[0];
             $link['title'] = $info['snippet']['title'];
             $link['description'] = $info['snippet']['description'];
-
             if (isset($info['brandingSettings']['channel']['keywords'])) {
                 $tags = $info['brandingSettings']['channel']['keywords'];
                 preg_match_all('/".*?"|\w+/', $tags, $results);
@@ -139,6 +142,10 @@ class YoutubeProcessor implements ProcessorInterface
             $info = $items[0];
             $link['title'] = $info['snippet']['title'];
             $link['description'] = $info['snippet']['description'];
+            $link['additionalLabels'] = array('Video');
+            $link['additionalFields'] = array(
+                'embed_type' => 'youtube_playlist',
+                'embed_id' => $id);
             if (isset($info['topicDetails']['topicIds'])) {
                 foreach ($info['topicDetails']['topicIds'] as $tagName) {
                     $link['tags'][] = array(

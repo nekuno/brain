@@ -34,13 +34,29 @@ class LinkModel
      */
     public function addLink(array $data)
     {
+        $additionalLabels = "";
+        if (isset($data['additionalLabels'])) {
+            foreach ($data['additionalLabels'] as $label) {
+                $additionalLabels .= ":".$label;
+            }
+        }
+
+        $additionalFields = "";
+        if (isset($data['additionalFields'])) {
+            foreach ($data['additionalFields'] as $field => $value) {
+                $additionalFields .= ", l.".$field." = '".$value."'";
+            }
+        }
 
         if (false === $this->isAlreadySaved($data['url'])) {
             $template = "MATCH (u:User)"
                 . " WHERE u.qnoow_id = {userId}"
                 . " CREATE "
-                . " (l:Link {url: {url}, title: {title}, description: {description}, processed: 0})"
-                . ", (u)-[r:LIKES]->(l) "
+                . " (l:Link".$additionalLabels.") "
+                ." SET l.url = {url}, l.title = {title}, l.description = {description}, "
+                . " l.processed = 1, l.created =  timestamp() "
+                . $additionalFields
+                . " CREATE (u)-[r:LIKES]->(l) "
                 . " RETURN l;";
         } else {
             $template = "MATCH (u:User)"
@@ -96,6 +112,19 @@ class LinkModel
 
     public function updateLink(array $data, $processed = false)
     {
+        $additionalLabels = "";
+        if (isset($data['additionalLabels'])) {
+            foreach ($data['additionalLabels'] as $label) {
+                $additionalLabels .= ", link:".$label;
+            }
+        }
+
+        $additionalFields = "";
+        if (isset($data['additionalFields'])) {
+            foreach ($data['additionalFields'] as $field => $value) {
+                $additionalFields .= ", link.".$field." = '".$value."'";
+            }
+        }
 
         $template = "MATCH (link:Link)"
             . " WHERE link.url = { tempId } "
@@ -103,6 +132,8 @@ class LinkModel
             . " , link.title = { title }"
             . " , link.description = { description }"
             . " , link.processed = " . (integer)$processed
+            . " , link.updated = timestamp() "
+            . $additionalLabels . $additionalFields
             . " RETURN link;";
 
         $query = new Query($this->client, $template, $data);
@@ -123,31 +154,31 @@ class LinkModel
         $query = new Query($this->client, $template, $tag);
 
         $result = $query->getResultSet();
-        
+
         foreach ($result as $row) {
             return $result;
         }
 
-        $aditionalLabels = "";
-        if (isset($tag['aditionalLabels'])) {
-            foreach ($tag['aditionalLabels'] as $label) {
-                $aditionalLabels .= ":".$label;
-            }    
+        $additionalLabels = "";
+        if (isset($tag['additionalLabels'])) {
+            foreach ($tag['additionalLabels'] as $label) {
+                $additionalLabels .= ":".$label;
+            }
         }
 
-        $aditionalFields = "";
-        if (isset($tag['aditionalFields'])) {
-            foreach ($tag['aditionalFields'] as $field => $value) {
-                $aditionalFields .= ", tag.".$field." = '".$value."'";
-            }    
+        $additionalFields = "";
+        if (isset($tag['additionalFields'])) {
+            foreach ($tag['additionalFields'] as $field => $value) {
+                $additionalFields .= ", tag.".$field." = '".$value."'";
+            }
         }
 
         $params = array(
             'name' => $tag['name'],
         );
-        
-        $template = "CREATE (tag:Tag".$aditionalLabels.")"
-            . "SET tag.name = { name }".$aditionalFields
+
+        $template = "CREATE (tag:Tag".$additionalLabels.")"
+            . "SET tag.name = { name }".$additionalFields
             . "RETURN tag";
 
         $query = new Query($this->client, $template, $params);
@@ -174,55 +205,12 @@ class LinkModel
 
     }
 
-    public function addMultipleLinks(array $links)
+    public function getUnprocessedLinks($limit = 100)
     {
 
-        $transaction = $this->client->beginTransaction();
+        $template = "MATCH (link:Link) WHERE link.processed = 0 RETURN link LIMIT {limit}";
 
-        try {
-            foreach ($links as $data) {
-                if (false === $this->isAlreadySaved($data['url'])) {
-                    $template = "MATCH (u:User)"
-                        . " WHERE u.qnoow_id = {userId}"
-                        . " CREATE "
-                        . " (l:Link {url: {url}, title: {title}, description: {description}, processed: 0})"
-                        . ", (l)<-[r:LIKES]-(u) "
-                        . " RETURN l;";
-                } else {
-                    $template = "MATCH (u:User)"
-                        . ", (l:Link) "
-                        . " WHERE u.qnoow_id = {userId} AND l.url = {url}"
-                        . " CREATE UNIQUE (l)<-[r:LIKES]-(u)"
-                        . " RETURN l;";
-                }
-
-                $query = new Query(
-                    $this->client,
-                    $template,
-                    array(
-                        'title'       => $data['title'],
-                        'description' => $data['description'],
-                        'url'         => $data['url'],
-                        'userId'      => (integer)$data['userId']
-                    )
-                );
-
-                $transaction->addStatements($query);
-            }
-
-            $transaction->commit();
-        } catch (\Exception $e) {
-            throw $e;
-        }
-
-    }
-
-    public function getUnprocessedLinks()
-    {
-
-        $template = "MATCH (link:Link) WHERE link.processed = 0 RETURN link LIMIT 20";
-
-        $query = new Query($this->client, $template);
+        $query = new Query($this->client, $template, array('limit' => (integer) $limit));
 
         $resultSet = $query->getResultSet();
 
@@ -233,7 +221,7 @@ class LinkModel
                 'url'         => $row['link']->getProperty('url'),
                 'description' => $row['link']->getProperty('description'),
                 'title'       => $row['link']->getProperty('title'),
-                'tempId'      => $row['link']->getProperty('url')
+                'tempId'      => $row['link']->getProperty('url'),
             );
         }
 

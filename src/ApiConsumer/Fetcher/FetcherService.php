@@ -3,12 +3,21 @@
 namespace ApiConsumer\Fetcher;
 
 use ApiConsumer\Auth\UserProviderInterface;
+use ApiConsumer\Event\LinkEvent;
+use ApiConsumer\Event\LinksEvent;
+use ApiConsumer\Factory\FetcherFactory;
 use ApiConsumer\LinkProcessor\LinkProcessor;
 use ApiConsumer\Storage\StorageInterface;
-use Http\OAuth\Factory\ResourceOwnerFactory;
+use AppEvents;
+use Event\UserDataEvent;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
+/**
+ * Class FetcherService
+ * @package ApiConsumer\Fetcher
+ */
 class FetcherService implements LoggerAwareInterface
 {
 
@@ -33,74 +42,149 @@ class FetcherService implements LoggerAwareInterface
     protected $storage;
 
     /**
-     * @var ResourceOwnerFactory
+     * @var FetcherFactory
      */
-    protected $resourceOwnerFactory;
+    protected $fetcherFactory;
+
+    /**
+     * @var EventDispatcher
+     */
+    protected $dispatcher;
 
     /**
      * @var array
      */
     protected $options;
 
+    /**
+     * @param UserProviderInterface $userProvider
+     * @param LinkProcessor $linkProcessor
+     * @param StorageInterface $storage
+     * @param FetcherFactory $fetcherFactory
+     * @param EventDispatcher $dispatcher
+     * @param array $options
+     */
     public function __construct(
         UserProviderInterface $userProvider,
         LinkProcessor $linkProcessor,
         StorageInterface $storage,
-        ResourceOwnerFactory $resourceOwnerFactory,
+        FetcherFactory $fetcherFactory,
+        EventDispatcher $dispatcher,
         array $options
-    )
-    {
+    ) {
 
         $this->userProvider = $userProvider;
         $this->linkProcessor = $linkProcessor;
         $this->storage = $storage;
-        $this->resourceOwnerFactory = $resourceOwnerFactory;
+        $this->fetcherFactory = $fetcherFactory;
+        $this->dispatcher = $dispatcher;
         $this->options = $options;
     }
 
-    public function __call($method, $args)
-    {
-
-        if (is_callable(array($this, $method))) {
-            return call_user_func_array($this->$method, $args);
-        } else {
-            throw new \Exception('Error ' . $method . ' not defined', 1);
-        }
-    }
-
+    /**
+     * @param LoggerInterface $logger
+     * @return null|void
+     */
     public function setLogger(LoggerInterface $logger)
     {
+
         $this->logger = $logger;
     }
 
+    /**
+     * @param $userId
+     * @param $resourceOwner
+     * @return array
+     * @throws \Exception
+     */
     public function fetch($userId, $resourceOwner)
     {
 
         $links = array();
         try {
 
-            $this->logger->info(sprintf('Fetch attempt for user %d, fetcherConfig %s', $userId, $resourceOwner));
+            $this->logger->info(
+                sprintf('Fetcher: Fetching links for user %s from resource owner %s', $userId, $resourceOwner)
+            );
 
-            foreach ($this->options as $fetcherConfig) {
+            $user = $this->userProvider->getUsersByResource($resourceOwner, $userId);
+            if (!$user) {
+                throw new \Exception('User not found');
+            }
+
+            foreach ($this->options as $fetcher => $fetcherConfig) {
+
                 if ($fetcherConfig['resourceOwner'] === $resourceOwner) {
-                    $user = $this->userProvider->getUsersByResource($resourceOwner, $userId);
-                    if (!$user) {
-                        throw new \Exception('User not found');
+
+                    $event = new UserDataEvent($user, $resourceOwner);
+                    $this->dispatcher->dispatch(AppEvents::USER_DATA_FETCHING_START, $event);
+
+                    try {
+                        $links = $this->fetcherFactory->build($fetcher)->fetchLinksFromUserFeed($user);
+                    } catch (\Exception $e) {
+                        $this->logger->error(
+                            sprintf(
+                                'Fetcher: Error fetching feed for user %d from resource %s',
+                                $userId,
+                                $resourceOwner
+                            )
+                        );
+                        continue;
                     }
-                    /** @var FetcherInterface $fetcher */
-                    $fetcher = new $fetcherConfig['class']($this->resourceOwnerFactory->build($resourceOwner));
-                    $links = $fetcher->fetchLinksFromUserFeed($user);
+
+                    $event = new UserDataEvent($user, $resourceOwner);
+                    $this->dispatcher->dispatch(AppEvents::USER_DATA_FETCHING_FINISH, $event);
+
+                    $event = new UserDataEvent($user, $resourceOwner);
+                    $this->dispatcher->dispatch(AppEvents::USER_DATA_PROCESS_START, $event);
+
+                    $event = array(
+                        'userId' => $userId,
+                        'resourceOwner' => $resourceOwner,
+                        'fetcher' => $fetcher,
+                        'links' => count($links),
+                    );
+                    $this->dispatcher->dispatch(\AppEvents::PROCESS_LINKS, new LinksEvent($event));
+
                     foreach ($links as $key => $link) {
-                        $links[$key] = $this->linkProcessor->process($link);
+                        try {
+                            $links[$key] = $this->linkProcessor->process($link);
+                            $event['link'] = $link;
+                            $this->dispatcher->dispatch(\AppEvents::PROCESS_LINK, new LinkEvent($event));
+                        } catch (\Exception $e) {
+                            $this->logger->error(
+                                sprintf(
+                                    'Fetcher: Error processing link %s from resource %s',
+                                    $link['url'],
+                                    $resourceOwner
+                                )
+                            );
+                        }
                     }
+
                     $this->storage->storeLinks($user['id'], $links);
                     foreach ($this->storage->getErrors() as $error) {
-                        $this->logger->error(sprintf('Error saving link: ' . $error));
+                        $this->logger->error(sprintf('Error saving link: %s', $error));
                     }
+
+                    $this->dispatcher->dispatch(\AppEvents::PROCESS_FINISH);
+
+                    $event = new UserDataEvent($user, $resourceOwner);
+                    $this->dispatcher->dispatch(AppEvents::USER_DATA_PROCESS_FINISH, $event);
                 }
             }
         } catch (\Exception $e) {
-            throw new \Exception('Error fetching ' . $resourceOwner . ' for user ' . $userId . ' (' . $e->getMessage() . ')', 1);
+            throw new \Exception(
+                sprintf(
+                    'Fetcher: Error fetching %s for user %d. Message: %s on file %s in line %d',
+                    ucfirst($resourceOwner),
+                    $userId,
+                    $e->getMessage(),
+                    $e->getFile(),
+                    $e->getLine()
+                ),
+                1
+            );
         }
 
         return $links;

@@ -61,6 +61,13 @@ class ScraperProcessor implements ProcessorInterface
             return $link;
         }
 
+        $responseHeaders =$this->client->getResponse()->getHeaders();
+        if ($responseHeaders) {
+            if (isset($responseHeaders['Content-Type'][0]) && false !== strpos($responseHeaders['Content-Type'][0], "image/")) {
+                $link['additionalLabels'] = array('Image');
+            }
+        }
+
         $basicMetadata = $this->basicMetadataParser->extractMetadata($crawler);
         $basicMetadata['tags'] = $this->basicMetadataParser->extractTags($crawler);
         $link = $this->overrideLinkDataWithScrapedData($link, $basicMetadata);

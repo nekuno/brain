@@ -1,29 +1,43 @@
 <?php
 
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 
 //Request::setTrustedProxies(array('127.0.0.1'));
 
-$app['users.controller'] = $app->share(function () {
+$app['users.controller'] = $app->share(
+    function () {
 
-    return new Controller\UserController;
-});
+        return new Controller\UserController;
+    }
+);
 
-$app['questions.controller'] = $app->share(function () {
+$app['users.data.controller'] = $app->share(
+    function () {
 
-    return new Controller\QuestionController;
-});
+        return new \Controller\User\DataController();
+    }
+);
 
-$app['answers.controller'] = $app->share(function () {
+$app['questions.controller'] = $app->share(
+    function () {
 
-    return new Controller\AnswerController;
-});
+        return new Controller\QuestionController;
+    }
+);
 
-$app['fetch.controller'] = $app->share(function () {
+$app['answers.controller'] = $app->share(
+    function () {
 
-    return new Controller\FetchController;
-});
+        return new Controller\AnswerController;
+    }
+);
+
+$app['fetch.controller'] = $app->share(
+    function () {
+
+        return new Controller\FetchController;
+    }
+);
 
 /**
  * Middleware for filter some request
@@ -53,7 +67,8 @@ $app->before(
  */
 $app->error(
     function (\Exception $e, $code) use ($app) {
-        $response = array (
+
+        $response = array(
             "error" => array(
                 "code" => $code,
                 "text" => "An error ocurred",

@@ -3,16 +3,15 @@
 namespace Http\OAuth\ResourceOwner;
 
 use ApiConsumer\Event\OAuthTokenEvent;
-use ApiConsumer\Event\TokenEvents;
-use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Message\Request;
-use Symfony\Component\OptionsResolver\OptionsResolver;
-use Symfony\Component\OptionsResolver\OptionsResolverInterface;
-use Symfony\Component\EventDispatcher\EventDispatcher;
 use GuzzleHttp\Client;
 use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Message\Request;
 use GuzzleHttp\Message\ResponseInterface;
-
+use Symfony\Component\EventDispatcher\EventDispatcher;
+use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\OptionsResolver\OptionsResolverInterface;
+use AppEvents;
 
 /**
  * Class AbstractResourceOwner
@@ -125,12 +124,12 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
     {
         if (isset($token['expireTime']) && ($token['expireTime'] <= time() && $token['expireTime'] != 0)) {
 
-
             try {
                 $data = $this->refreshAccessToken($token['refreshToken']);
             } catch (\Exception $e) {
                 // The resource owner not implements the method refreshAccessToken
-                $this->notifyUserByEmail($token);
+                $event = new OAuthTokenEvent($token);
+                $this->dispatcher->dispatch(AppEvents::TOKEN_EXPIRED, $event);
                 throw $e;
             }
 
@@ -142,7 +141,7 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
             $token['createdTime'] = time();
             $token['expireTime'] = $token['createdTime'] + $data['expires_in'];
             $event = new OAuthTokenEvent($token);
-            $this->dispatcher->dispatch(TokenEvents::TOKEN_REFRESHED, $event);
+            $this->dispatcher->dispatch(AppEvents::TOKEN_REFRESHED, $event);
         }
 
         $request = $this->getAuthorizedRequest($this->options['base_url'] . $url, $query, $token);
@@ -218,14 +217,4 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
             'api_key',
         ));
     }
-
-    /**
-     * @param array $token
-     */
-    protected function notifyUserByEmail(array $token)
-    {
-        $event = new OAuthTokenEvent($token);
-        $this->dispatcher->dispatch(TokenEvents::TOKEN_EXPIRED, $event);
-    }
-
 }

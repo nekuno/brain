@@ -32,11 +32,8 @@ class SpotifyResourceOwner extends Oauth2GenericResourceOwner
     {
         $query = array_merge($query, array('access_token' => $token['oauthToken']));
 
-        $headers = array('Authorization' => 'Bearer ' . $token['oauthToken']);
-
         $clientConfig = array(
             'query' => $query,
-            'headers' => $headers,
         );
 
         return $this->httpClient->createRequest('GET', $url, $clientConfig);
@@ -44,11 +41,15 @@ class SpotifyResourceOwner extends Oauth2GenericResourceOwner
 
     public function refreshAccessToken($refreshToken, array $extraParameters = array())
     {
-        $url = 'https://accounts.spotify.com/api/token?grant_type=refresh_token&refresh_token=' . $refreshToken;
+        $url = 'https://accounts.spotify.com/api/token';
         $authorization = base64_encode($this->options['consumer_key'] . ":" . $this->options['consumer_secret']);
         $headers = array('Authorization' => 'Basic ' . $authorization);
-        
-        $response = $this->httpClient->post($url, array('headers' => $headers));
+        $body = array(
+            'grant_type' => 'refresh_token',
+            'refresh_token' => $refreshToken,
+        );
+
+        $response = $this->httpClient->post($url, array('headers' => $headers, 'body' => $body));
         $data = $response->json();
 
         return $data;
