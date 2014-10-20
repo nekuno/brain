@@ -91,11 +91,11 @@ class QuestionPaginatedModel implements PaginatedInterface
                 $content = array();
 
                 $question = array();
-                $question['id'] = $row['question']->getProperty('qnoow_id');
+                $question['id'] = $row['question']->getId();
                 $question['text'] = $row['question']->getProperty('text');
                 foreach ($row['possible_answers'] as $possibleAnswer) {
                     $answer = array();
-                    $answer['id'] = $possibleAnswer->getProperty('qnoow_id');
+                    $answer['id'] = $possibleAnswer->getId();
                     $answer['text'] = $possibleAnswer->getProperty('text');
                     $question['answers'][] = $answer;
                 }
