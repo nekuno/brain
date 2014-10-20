@@ -338,7 +338,7 @@ class MatchingModel
         MATCH
         (u:User)-[:RATES]->(q:Question)
         WHERE
-        q.qnoow_id IN [ { questions } ]
+        id(q) IN [ { questions } ]
         AND NOT u.qnoow_id = { userId }
         RETURN
         u.qnoow_id AS u;";

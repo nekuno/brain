@@ -68,8 +68,8 @@ class QuestionPaginatedModel implements PaginatedInterface
             RETURN
             question,
             collect(distinct possible_answers) as possible_answers,
-            answer.qnoow_id as answer,
-            collect(distinct accepted_answers.qnoow_id) as accepted_answers,
+            id(answer) as answer,
+            collect(distinct id(accepted_answers)) as accepted_answers,
             rate.rating AS rating
             SKIP {offset}
             LIMIT {limit}

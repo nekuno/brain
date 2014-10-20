@@ -97,12 +97,12 @@ class QuestionComparePaginatedModel implements PaginatedInterface
             question,
             collect(distinct possible_answers) as possible_answers,
 
-            answer.qnoow_id as answer,
-            collect(distinct accepted_answers.qnoow_id) as accepted_answers,
+            id(answer) as answer,
+            collect(distinct id(accepted_answers)) as accepted_answers,
             rate.rating AS rating,
 
-            answer2.qnoow_id as answer2,
-            collect(distinct accepted_answers2.qnoow_id) as accepted_answers2,
+            id(answer2) as answer2,
+            collect(distinct id(accepted_answers2)) as accepted_answers2,
             rate2.rating AS rating2
 
             SKIP {offset}
