@@ -240,7 +240,12 @@ class QuestionController
                     'id' => $row['answer'],
                     'nAnswers' => $row['nAnswers'],
                 );
-                $stats[$id]['totalAnswers'] += $row['nAnswers'];
+                if (isset($stats[$id]['totalAnswers'])) {
+                    $stats[$id]['totalAnswers'] += $row['nAnswers'];
+                } else {
+                    $stats[$id]['totalAnswers'] = $row['nAnswers'];
+                }
+
                 $stats[$id]['id'] = $id;
             }
 

@@ -85,47 +85,29 @@ class AnswerController
 
         $userId = $request->get('userId');
 
+
+        if (null === $userId) {
+            return $app->json(array(), 400);
+        }
+
+        /** @var $paginator \Paginator\Paginator */
+        $paginator = $app['paginator'];
+
+        $filters = array('id' => $userId);
+        /** @var $model \Model\User\QuestionPaginatedModel */
+        $model = $app['users.questions.model'];
+
         try {
-            /** @var AnswerModel $model */
-            $model = $app['users.answers.model'];
-            $userAnswerResult = $model->getUserAnswers($userId);
-
-            $questions = array();
-
-            foreach ($userAnswerResult as $row) {
-                $questionAnswers = array();
-                /** @var Row $row */
-                foreach ($row['answers'] as $answer) {
-                    /** @var Node $answer */
-                    $questionAnswers[$answer->getId()] = array(
-                        'id' => $answer->getId(),
-                        'text' => $answer->getProperty('text'),
-
-                    );
-                }
-                $questions[$row['question']->getId()] = array(
-                    'id' => $row['question']->getId(),
-                    'text' => $row['question']->getProperty('text'),
-                    'explanation' => $row['explanation'],
-                    'answers' => $questionAnswers,
-                    'userAnswer' => $row['answer']->getId(),
-                    'answeredAt' => $row['answeredAt'] ? floor($row['answeredAt'] / 1000) : time(),
-                );
-            }
-
-            if(empty($questions)){
-                return $app->json('The user has not answered to any question', 404);
-            }
-
-            return $app->json($questions, 200);
-
+            $result = $paginator->paginate($filters, $model, $request);
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;
             }
 
-            return $app->json(array($e->getMessage()), 500);
+            return $app->json(array(), 500);
         }
+
+        return $app->json($result, !empty($result) ? 201 : 200);
     }
 
     public function countAction(Request $request, Application $app)

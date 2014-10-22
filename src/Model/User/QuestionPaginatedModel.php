@@ -69,6 +69,8 @@ class QuestionPaginatedModel implements PaginatedInterface
             question,
             collect(distinct possible_answers) as possible_answers,
             id(answer) as answer,
+            answer.explanation AS explanation,
+            answer.answeredAt AS answeredAt,
             collect(distinct id(accepted_answers)) as accepted_answers,
             rate.rating AS rating
             SKIP {offset}
@@ -104,6 +106,8 @@ class QuestionPaginatedModel implements PaginatedInterface
                 $user = array();
                 $user['id'] = $id;
                 $user['answer'] = $row['answer'];
+                $user['answeredAt'] = $row['answeredAt'];
+                $user['explanation'] = $row['explanation'];
                 foreach ($row['accepted_answers'] as $acceptedAnswer) {
                     $user['accepted_answers'][] = $acceptedAnswer;
                 }
