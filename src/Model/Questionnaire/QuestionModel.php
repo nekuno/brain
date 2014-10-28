@@ -217,7 +217,7 @@ class QuestionModel
         MATCH
             (q:Question)<-[:IS_ANSWER_OF]-(a:Answer)
         WHERE
-            id(q) = {questionID}
+            id(q) = {questionId}
         OPTIONAL MATCH
             (u:User)-[:ANSWERS]->(a)
         WITH
@@ -279,13 +279,13 @@ class QuestionModel
         MATCH
             (q:Question)
         WHERE
-            id(q) = {questionID}
+            id(q) = {questionId}
         RETURN
             q.ranking AS questionRanking
         ";
 
         $queryDataArray = array(
-            'questionID' => $questionID
+            'questionId' => $questionID
         );
 
         $query = new Query(
