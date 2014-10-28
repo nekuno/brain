@@ -210,7 +210,7 @@ class QuestionModel
     }
 
 
-    public function setOrUpdateRankingForQuestion ($questionID)
+    public function setOrUpdateRankingForQuestion ($questionId)
     {
 
         $queryString = "
@@ -247,7 +247,7 @@ class QuestionModel
         ";
 
         $queryDataArray = array(
-            'questionID' => $questionID
+            'questionId' => $questionId
         );
 
         $query = new Query(
@@ -272,7 +272,7 @@ class QuestionModel
 
     }
 
-    public function getRankingForQuestion ($questionID)
+    public function getRankingForQuestion ($questionId)
     {
 
         $queryString = "
@@ -285,7 +285,7 @@ class QuestionModel
         ";
 
         $queryDataArray = array(
-            'questionId' => $questionID
+            'questionId' => $questionId
         );
 
         $query = new Query(
