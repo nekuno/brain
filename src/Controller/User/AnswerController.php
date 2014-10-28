@@ -4,6 +4,7 @@ namespace Controller\User;
 
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
+use Model\Questionnaire\QuestionModel;
 use Model\User\AnswerModel;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
@@ -24,6 +25,10 @@ class AnswerController
             /** @var AnswerModel $model */
             $model = $app['users.answers.model'];
             $model->create($data);
+
+            /** @var QuestionModel $questionModel */
+            $questionModel = $app['questionnaire.questions.model'];
+            $questionModel->setOrUpdateRankingForQuestion($data['questionId']);
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;
@@ -48,6 +53,10 @@ class AnswerController
             /** @var AnswerModel $model */
             $model = $app['users.answers.model'];
             $model->update($data);
+
+            /** @var QuestionModel $questionModel */
+            $questionModel = $app['questionnaire.questions.model'];
+            $questionModel->setOrUpdateRankingForQuestion($data['questionId']);
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;

@@ -97,7 +97,6 @@ class AnswerModel
         );
 
         return $query->getResultSet();
-
     }
 
     /**

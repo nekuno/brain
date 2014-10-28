@@ -24,7 +24,9 @@ class QuestionModel
         $template = "MATCH (q:Question)<-[:IS_ANSWER_OF]-(a:Answer)"
             . " WITH q, a"
             . " RETURN q AS question, collect(a) AS answers"
-            . " LIMIT {limit}";
+            . " ORDER BY question.ranking DESC"
+            . " LIMIT {limit}"
+        ;
 
         $query = new Query($this->client, $template, $data);
 
@@ -33,10 +35,10 @@ class QuestionModel
 
     /**
      * @param $userId
-     * @param bool $sortByRating
+     * @param bool $sortByRanking
      * @return \Everyman\Neo4j\Query\ResultSet
      */
-    public function getNextByUser($userId, $sortByRating = true)
+    public function getNextByUser($userId, $sortByRanking = true)
     {
 
         $data = array(
@@ -54,10 +56,8 @@ class QuestionModel
             . " OPTIONAL MATCH (u2:User)-[r:RATES]->(next)"
             . " RETURN next, nextAnswers, sum(r.rating) AS nextRating";
 
-
-
-        if ($sortByRating && $this->sortByRating()) {
-            $template .= " ORDER BY nextRating DESC";
+        if ($sortByRanking && $this->sortByRanking()) {
+            $template .= " ORDER BY next.ranking DESC";
         } else {
             $template .= " ORDER BY next.timestamp DESC";
         }
@@ -101,7 +101,7 @@ class QuestionModel
     /**
      * @return bool
      */
-    public function sortByRating()
+    public function sortByRanking()
     {
 
         $rand = rand(1, 10);
@@ -126,7 +126,7 @@ class QuestionModel
         $template = "MATCH (u:User)"
             . " WHERE u.qnoow_id = {userId}"
             . " CREATE (q:Question)<-[c:CREATED_BY]-(u)"
-            . " SET q.text = {text}, q.timestamp = timestamp(), c.timestamp = timestamp()"
+            . " SET q.text = {text}, q.timestamp = timestamp(), q.ranking = 0, c.timestamp = timestamp()"
             . " FOREACH (text in {answers}| CREATE (a:Answer {text: text})-[:IS_ANSWER_OF]->(q))"
             . " RETURN q;";
 
@@ -207,5 +207,106 @@ class QuestionModel
             $query = new Query($this->client, $template, $data);
 
             return $query->getResultSet();
+    }
+
+
+    public function setOrUpdateRankingForQuestion ($questionId)
+    {
+
+        $queryString = "
+        MATCH
+            (q:Question)<-[:IS_ANSWER_OF]-(a:Answer)
+        WHERE
+            id(q) = {questionId}
+        OPTIONAL MATCH
+            (u:User)-[:ANSWERS]->(a)
+        WITH
+            q,
+            a AS answers,
+            count(DISTINCT u) as numOfUsersThatAnswered
+        WITH
+            q,
+            length(collect(answers)) AS numOfAnswers,
+            stdev(numOfUsersThatAnswered) AS standardDeviation
+        WITH
+            q,
+            1- (standardDeviation*1.0/numOfAnswers) AS ranking
+        OPTIONAL MATCH
+            (u:User)-[r:RATES]->(q)
+        WITH
+            q,
+            ranking,
+            (1.0/50) * avg(r.rating) AS rating
+        WITH
+            q,
+            0.9 * ranking + 0.1 * rating AS questionRanking
+        SET
+            q.ranking = questionRanking
+        RETURN
+            q.ranking AS questionRanking
+        ";
+
+        $queryDataArray = array(
+            'questionId' => $questionId
+        );
+
+        $query = new Query(
+            $this->client,
+            $queryString,
+            $queryDataArray
+        );
+
+        try {
+            $result = $query->getResultSet();
+        } catch (\Exception $e) {
+            throw $e;
+        }
+
+        foreach($result as $row){
+            $questionRanking = $row['questionRanking'];
+        }
+
+        $response = $questionRanking;
+
+        return $response;
+
+    }
+
+    public function getRankingForQuestion ($questionId)
+    {
+
+        $queryString = "
+        MATCH
+            (q:Question)
+        WHERE
+            id(q) = {questionId}
+        RETURN
+            q.ranking AS questionRanking
+        ";
+
+        $queryDataArray = array(
+            'questionId' => $questionId
+        );
+
+        $query = new Query(
+            $this->client,
+            $queryString,
+            $queryDataArray
+        );
+
+        try {
+            $result = $query->getResultSet();
+        } catch (\Exception $e) {
+            throw $e;
+        }
+
+        foreach($result as $row){
+            $questionRanking = $row['questionRanking'];
+        }
+
+        $response = $questionRanking;
+
+        return $response;
+
     }
 }
