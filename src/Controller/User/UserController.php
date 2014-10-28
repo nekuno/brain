@@ -1,8 +1,9 @@
 <?php
 
-namespace Controller;
+namespace Controller\User;
 
 use Model\User\ContentPaginatorModel;
+use Model\UserModel;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -47,10 +48,7 @@ class UserController
 
         // Basic data validation
         if (array() !== $request->request->all()) {
-            if (
-                null == $request->request->get('id')
-                || null == $request->request->get('username')
-                || null == $request->request->get('email')
+            if (null == $request->request->get('id') || null == $request->request->get('username')
             ) {
                 return $app->json(array(), 400);
             }
@@ -103,7 +101,7 @@ class UserController
             return $app->json(array(), 500);
         }
 
-        return $app->json($result, !empty($user) ? 200 : 404);
+        return $app->json($result, !empty($result) ? 200 : 404);
     }
 
     /**
@@ -313,11 +311,11 @@ class UserController
      */
     public function getUserContentCompareAction(Request $request, Application $app)
     {
-        $id   = $request->get('id');
-        $id2   = $request->get('id2');
-        $tag  = $request->get('tag', null);
+        $id = $request->get('id');
+        $id2 = $request->get('id2');
+        $tag = $request->get('tag', null);
         $type = $request->get('type', null);
-        $showOnlyCommon   = $request->get('showOnlyCommon', 0);
+        $showOnlyCommon = $request->get('showOnlyCommon', 0);
 
         if (null === $id || null === $id2) {
             return $app->json(array(), 400);
@@ -336,7 +334,7 @@ class UserController
             $filters['type'] = urldecode($type);
         }
 
-        /** @var $model \Model\User\ContentComparePaginatedModel  */
+        /** @var $model \Model\User\ContentComparePaginatedModel */
         $model = $app['users.content.compare.model'];
 
         try {
@@ -397,17 +395,17 @@ class UserController
      */
     public function rateContentAction(Request $request, Application $app)
     {
-        $id = $request->get('id');
-        $url = $request->request->get('url');
+        $userId = $request->get('id');
+        $linkId = $request->request->get('linkId');
         $rate = $request->request->get('rate');
 
-        if (null == $id || null == $url || null == $rate) {
-            return $app->json(array('text' => 'aaa', 'id'=> $id, 'url' => $url), 400);
+        if (null == $userId || null == $linkId || null == $rate) {
+            return $app->json(array('text' => 'Link Not Found', 'id' => $userId, 'linkId' => $linkId), 400);
         }
 
         try {
-            $model  = $app['users.rate.model'];
-            $result = $model->userRateLink($id, $url, $rate);
+            $model = $app['users.rate.model'];
+            $result = $model->userRateLink($userId, $linkId, $rate);
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;
@@ -440,7 +438,6 @@ class UserController
             /** @var $model \Model\User\Recommendation\UserModel */
             $model = $app['users.recommendation.users.model'];
             if ($basedOn == 'answers') {
-                // TODO: check that users has one answered question at least
                 $result = $model->getUserRecommendationsBasedOnAnswers($id);
             }
             if ($basedOn == 'content') {
@@ -539,5 +536,55 @@ class UserController
         }
 
         return $app->json($result, !empty($result) ? 201 : 200);
+    }
+
+    /**
+     * @param Request $request
+     * @param Application $app
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @throws \Exception
+     */
+    public function statusAction(Request $request, Application $app)
+    {
+
+        $response = array('status' => null);
+        $id = $request->get('id');
+        if (null === $id) {
+            return $app->json($response, 404);
+        }
+
+        try {
+            /* @var $model UserModel */
+            $model = $app['users.model'];
+            $user = $model->getById($id);
+
+            if (!$user) {
+                return $app->json($response, 404);
+            }
+        } catch (\Exception $e) {
+
+            if ($app['env'] == 'dev') {
+                throw $e;
+            }
+
+            return $app->json($response, 500);
+        }
+
+        try {
+
+            $status = $model->getStatus($id);
+
+        } catch (\Exception $e) {
+
+            if ($app['env'] == 'dev') {
+                throw $e;
+            }
+
+            return $app->json($response, 500);
+        }
+
+        $response['status'] = $status->getStatus();
+
+        return $app->json($response, 200);
     }
 }

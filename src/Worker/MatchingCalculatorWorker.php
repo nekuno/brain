@@ -94,7 +94,7 @@ class MatchingCalculatorWorker implements RabbitMQConsumerInterface, LoggerAware
                     $this->logger->debug(
                         sprintf(
                             'Worker: Error calculating matching for user %d with message %s on file %s, line %d',
-                            $data['userId'],
+                            $data['user_id'],
                             $e->getMessage(),
                             $e->getFile(),
                             $e->getLine()

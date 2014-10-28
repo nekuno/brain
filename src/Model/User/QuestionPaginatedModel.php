@@ -68,8 +68,10 @@ class QuestionPaginatedModel implements PaginatedInterface
             RETURN
             question,
             collect(distinct possible_answers) as possible_answers,
-            answer.qnoow_id as answer,
-            collect(distinct accepted_answers.qnoow_id) as accepted_answers,
+            id(answer) as answer,
+            answer.explanation AS explanation,
+            answer.answeredAt AS answeredAt,
+            collect(distinct id(accepted_answers)) as accepted_answers,
             rate.rating AS rating
             SKIP {offset}
             LIMIT {limit}
@@ -91,11 +93,11 @@ class QuestionPaginatedModel implements PaginatedInterface
                 $content = array();
 
                 $question = array();
-                $question['id'] = $row['question']->getProperty('qnoow_id');
+                $question['id'] = $row['question']->getId();
                 $question['text'] = $row['question']->getProperty('text');
                 foreach ($row['possible_answers'] as $possibleAnswer) {
                     $answer = array();
-                    $answer['id'] = $possibleAnswer->getProperty('qnoow_id');
+                    $answer['id'] = $possibleAnswer->getId();
                     $answer['text'] = $possibleAnswer->getProperty('text');
                     $question['answers'][] = $answer;
                 }
@@ -104,6 +106,8 @@ class QuestionPaginatedModel implements PaginatedInterface
                 $user = array();
                 $user['id'] = $id;
                 $user['answer'] = $row['answer'];
+                $user['answeredAt'] = $row['answeredAt'];
+                $user['explanation'] = $row['explanation'];
                 foreach ($row['accepted_answers'] as $acceptedAnswer) {
                     $user['accepted_answers'][] = $acceptedAnswer;
                 }

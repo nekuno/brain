@@ -13,6 +13,8 @@ $console->addCommands(array(
     new \Console\Command\ScrapLinksMetadataCommand($app),
     new \Console\Command\Neo4jConstraintsCommand($app),
     new \Console\Command\Neo4jFixturesCommand($app),
+    new \Console\Command\Neo4jTestsCommand($app),
+    new \Console\Command\UpdateMatchingParameters($app),
 ));
 
 return $console;

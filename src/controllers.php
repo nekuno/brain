@@ -7,7 +7,7 @@ use Symfony\Component\HttpFoundation\Request;
 $app['users.controller'] = $app->share(
     function () {
 
-        return new Controller\UserController;
+        return new \Controller\User\UserController;
     }
 );
 
@@ -18,17 +18,17 @@ $app['users.data.controller'] = $app->share(
     }
 );
 
-$app['questions.controller'] = $app->share(
+$app['questionnaire.questions.controller'] = $app->share(
     function () {
 
-        return new Controller\QuestionController;
+        return new Controller\Questionnaire\QuestionController;
     }
 );
 
-$app['answers.controller'] = $app->share(
+$app['users.answers.controller'] = $app->share(
     function () {
 
-        return new Controller\AnswerController;
+        return new \Controller\User\AnswerController;
     }
 );
 
@@ -55,8 +55,11 @@ $app->before(
         }
 
         // Parse request content and populate parameters
-        if ($request->getContentType() === 'json') {
+        if ($request->getContentType() === 'application/json' || $request->getContentType() === 'json') {
             $data = json_decode(utf8_encode($request->getContent()), true);
+            if (json_last_error()) {
+                return $app->json(array('Error parsing JSON data.'), 400);
+            }
             $request->request->replace(is_array($data) ? $data : array());
         }
     }
