@@ -53,30 +53,18 @@ class QuestionPaginatedModel implements PaginatedInterface
             'limit' => (integer)$limit
         );
 
-        $query = "
-            MATCH
-            (u:User)
-            WHERE u.qnoow_id = {UserId}
-            MATCH
-            (u)-[:ANSWERS]-(answer:Answer)-[:IS_ANSWER_OF]-(question:Question)
-            OPTIONAL MATCH
-            (possible_answers:Answer)-[:IS_ANSWER_OF]-(question)
-            OPTIONAL MATCH
-            (u)-[:ACCEPTS]-(accepted_answers:Answer)-[:IS_ANSWER_OF]-(question)
-            OPTIONAL MATCH
-            (u)-[rate:RATES]-(question)
-            RETURN
-            question,
-            collect(distinct possible_answers) as possible_answers,
-            id(answer) as answer,
-            answer.explanation AS explanation,
-            answer.answeredAt AS answeredAt,
-            collect(distinct id(accepted_answers)) as accepted_answers,
-            rate.rating AS rating
-            SKIP {offset}
-            LIMIT {limit}
-            ;
-         ";
+        $query = "MATCH (u:User)"
+            . " WHERE u.qnoow_id = {UserId}"
+            . " MATCH (u)-[r1:ANSWERS]-(answer:Answer)-[:IS_ANSWER_OF]-(question:Question)"
+            . " OPTIONAL MATCH (possible_answers:Answer)-[:IS_ANSWER_OF]-(question)"
+            . " OPTIONAL MATCH (u)-[:ACCEPTS]-(accepted_answers:Answer)-[:IS_ANSWER_OF]-(question)"
+            . " OPTIONAL MATCH (u)-[rate:RATES]-(question)"
+            . " RETURN question, collect(distinct possible_answers) as possible_answers, id(answer) as answer"
+            . ", r1.explanation AS explanation, r1.answeredAt AS answeredAt"
+            . ", collect(distinct id(accepted_answers)) as accepted_answers, rate.rating AS rating"
+            . " ORDER BY answeredAt DESC"
+            . " SKIP {offset}"
+            . " LIMIT {limit};";
 
         //Create the Neo4j query object
         $contentQuery = new Query(
@@ -106,7 +94,7 @@ class QuestionPaginatedModel implements PaginatedInterface
                 $user = array();
                 $user['id'] = $id;
                 $user['answer'] = $row['answer'];
-                $user['answeredAt'] = $row['answeredAt'];
+                $user['answeredAt'] = floor($row['answeredAt'] / 1000);
                 $user['explanation'] = $row['explanation'];
                 foreach ($row['accepted_answers'] as $acceptedAnswer) {
                     $user['accepted_answers'][] = $acceptedAnswer;
@@ -139,16 +127,11 @@ class QuestionPaginatedModel implements PaginatedInterface
             'UserId' => (integer)$id,
         );
 
-        $query = "
-            MATCH
-            (u:User)
-            WHERE u.qnoow_id = {UserId}
-            MATCH
-            (u)-[:ANSWERS]-(answer:Answer)-[:IS_ANSWER_OF]-(question:Question)
-            RETURN
-            count(distinct question) as total
-            ;
-         ";
+        $query = " MATCH (u:User)"
+            . " WHERE u.qnoow_id = {UserId}"
+            . " MATCH (u)-[:ANSWERS]-(answer:Answer)-[:IS_ANSWER_OF]-(question:Question)"
+            . " RETURN count(distinct question) as total;"
+        ;
 
         //Create the Neo4j query object
         $contentQuery = new Query(
