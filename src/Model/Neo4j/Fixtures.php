@@ -10,9 +10,12 @@ namespace Model\Neo4j;
 
 use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
-use Exception\QueryErrorException;
 use Model\User\UserStatusModel;
 
+/**
+ * Class Fixtures
+ * @package Model\Neo4j
+ */
 class Fixtures
 {
 
@@ -32,13 +35,13 @@ class Fixtures
 
     public function load()
     {
-        $this->loadUsers(8);//8 users
 
-        $this->loadContent(19); //Contents are Links. //19 Links
-        $this->loadTags(20);//20 tags
+        $this->loadUsers(8);
 
-        //Content-tag relationships
-        $this->createLinkTagRelationship(1, 6);//Link 1 has tag 6
+        $this->loadContent(19);//Contents are Links.
+        $this->loadTags(20);
+
+        $this->createLinkTagRelationship(1, 6);
         $this->createLinkTagRelationship(1, 7);
 
         $this->createLinkTagRelationship(2, 8);
@@ -171,21 +174,21 @@ class Fixtures
         $this->createUserAcceptsRelationship(7, 42);
     }
 
+    /**
+     * @param $numberOfUsers
+     * @throws \Exception
+     */
     public function loadUsers($numberOfUsers)
     {
+
         $userToCheck = array();
         for ($i = 1; $i <= $numberOfUsers; $i++) {
             $userToCheck[] = $i;
         }
         $queryUserToCheck = implode(',', $userToCheck);
-        $existingUsersQuery =
-            "
-            MATCH
-            (u:User)
-            WHERE
-            u.qnoow_id IN [" . $queryUserToCheck . "]
-            RETURN
-            distinct u.qnoow_id;";
+        $existingUsersQuery = " MATCH (u:User)"
+            . " WHERE u.qnoow_id IN [" . (integer)$queryUserToCheck . "]"
+            . " RETURN distinct u.qnoow_id;";
 
         $neo4jQuery = new Query(
             $this->client,
@@ -202,14 +205,12 @@ class Fixtures
         $userQuery = array();
         for ($i = 1; $i <= $numberOfUsers; $i++) {
             if (!in_array($i, $existingUsers)) {
-                $userQuery[] =
-                    "CREATE (u:User {
-                        status: '" . UserStatusModel::USER_STATUS_INCOMPLETE . "',
-                        qnoow_id: " . $i . ",
-                        username: 'user" . $i . "',
-                        email: 'testuser" . $i . "@test.test'
-                    })
-                    RETURN u;";
+                $userQuery[] = "CREATE (u:User {"
+                    . " status: '" . UserStatusModel::USER_STATUS_INCOMPLETE . "',"
+                    . " qnoow_id: " . $i . ","
+                    . " username: 'user" . $i . "',"
+                    . " email: 'testuser" . $i . "@test.test' })"
+                    . " RETURN u;";
             }
         }
 
@@ -221,11 +222,9 @@ class Fixtures
             );
 
             try {
-                $result = $neo4jQuery->getResultSet();
+                $neo4jQuery->getResultSet();
             } catch (\Exception $e) {
                 throw $e;
-
-                return;
             }
         }
 
@@ -233,19 +232,21 @@ class Fixtures
 
     }
 
+    /**
+     * @param $numberOfContents
+     * @throws \Exception
+     */
     public function loadContent($numberOfContents)
     {
 
         //Create queries in loop
         $contentQuery = array();
         for ($i = 1; $i <= $numberOfContents; $i++) {
-            $contentQuery[] =
-                "CREATE (l:Content:Link {
-                url: 'testLink" . $i . "',
-                description: 'test description " . $i . "',
-                processed: 0
-            })
-            RETURN l;";
+            $contentQuery[] = "CREATE (l:Content:Link {"
+                . " url: 'testLink" . $i . "',"
+                . " description: 'test description " . $i . "',"
+                . " processed: 0 })"
+                . " RETURN l;";
         }
 
         //Execute queries in loop
@@ -256,11 +257,9 @@ class Fixtures
             );
 
             try {
-                $result = $neo4jQuery->getResultSet();
+                $neo4jQuery->getResultSet();
             } catch (\Exception $e) {
                 throw $e;
-
-                return;
             }
         }
 
@@ -268,17 +267,17 @@ class Fixtures
 
     }
 
+    /**
+     * @param $numberOfTags
+     * @throws \Exception
+     */
     public function loadTags($numberOfTags)
     {
 
         //Create queries in loop
         $tagQuery = array();
         for ($i = 1; $i <= $numberOfTags; $i++) {
-            $tagQuery[] =
-                "CREATE (t:Tag {
-                name: 'testTag" . $i . "'
-            })
-            RETURN t;";
+            $tagQuery[] = "CREATE (t:Tag { name: 'testTag" . $i . "' }) RETURN t;";
         }
 
         //Execute queries in loop
@@ -289,11 +288,9 @@ class Fixtures
             );
 
             try {
-                $result = $neo4jQuery->getResultSet();
+                $neo4jQuery->getResultSet();
             } catch (\Exception $e) {
                 throw $e;
-
-                return;
             }
         }
 
@@ -301,17 +298,17 @@ class Fixtures
 
     }
 
+    /**
+     * @param $link
+     * @param $tag
+     * @throws \Exception
+     */
     public function createLinkTagRelationship($link, $tag)
     {
-        $relationshipQuery =
-            "MATCH
-            (l:Link {url: 'testLink" . $link . "'}),
-            (t:Tag {name: 'testTag" . $tag . "'})
-        CREATE UNIQUE
-            (l)-[r:TAGGED]->(t)
-        RETURN
-            l, r, t
-        ;";
+
+        $relationshipQuery = "MATCH (l:Link {url: 'testLink" . $link . "'}), (t:Tag {name: 'testTag" . $tag . "'})"
+            . " CREATE UNIQUE (l)-[r:TAGGED]->(t)"
+            . " RETURN l, r, t ;";
 
         $neo4jQuery = new Query(
             $this->client,
@@ -319,28 +316,26 @@ class Fixtures
         );
 
         try {
-            $result = $neo4jQuery->getResultSet();
+            $neo4jQuery->getResultSet();
         } catch (\Exception $e) {
             throw $e;
-
-            return;
         }
 
         return;
 
     }
 
+    /**
+     * @param $user
+     * @param $link
+     * @throws \Exception
+     */
     public function createUserLikesLinkRelationship($user, $link)
     {
-        $relationshipQuery =
-            "MATCH
-            (l:Link {url: 'testLink" . $link . "'}),
-            (u:User {qnoow_id: " . $user . "})
-        CREATE UNIQUE
-            (l)<-[r:LIKES]-(u)
-        RETURN
-            l, r, u
-        ;";
+
+        $relationshipQuery = "MATCH (l:Link {url: 'testLink" . $link . "'}), (u:User {qnoow_id: " . $user . "})"
+            . " CREATE UNIQUE (l)<-[r:LIKES]-(u)"
+            . " RETURN l, r, u ;";
 
         $neo4jQuery = new Query(
             $this->client,
@@ -348,27 +343,25 @@ class Fixtures
         );
 
         try {
-            $result = $neo4jQuery->getResultSet();
+            $neo4jQuery->getResultSet();
         } catch (\Exception $e) {
             throw $e;
-
-            return;
         }
 
         return;
     }
 
+    /**
+     * @param $user
+     * @param $link
+     * @throws \Exception
+     */
     public function createUserDislikesLinkRelationship($user, $link)
     {
-        $relationshipQuery =
-            "MATCH
-            (l:Link {url: 'testLink" . $link . "'}),
-            (u:User {qnoow_id: " . $user . "})
-        CREATE UNIQUE
-            (l)<-[r:DISLIKES]-(u)
-        RETURN
-            l, r, u
-        ;";
+
+        $relationshipQuery = "MATCH (l:Link {url: 'testLink" . $link . "'}), (u:User {qnoow_id: " . $user . "})"
+            . " CREATE UNIQUE (l)<-[r:DISLIKES]-(u)"
+            . " RETURN l, r, u ;";
 
         $neo4jQuery = new Query(
             $this->client,
@@ -376,31 +369,31 @@ class Fixtures
         );
 
         try {
-            $result = $neo4jQuery->getResultSet();
+            $neo4jQuery->getResultSet();
         } catch (\Exception $e) {
             throw $e;
-
-            return;
         }
 
         return;
     }
 
+    /**
+     * @param $numberOfQuestions
+     * @param $numberOfAnswersPerQuestion
+     * @return $this
+     * @throws \Exception
+     */
     public function loadQuestionsWithAnswers($numberOfQuestions, $numberOfAnswersPerQuestion)
     {
+
         $questionToCheck = array();
         for ($i = 1; $i <= $numberOfQuestions; $i++) {
             $questionToCheck[] = $i;
         }
         $queryQuestionToCheck = implode(',', $questionToCheck);
-        $existingQuestionsQuery =
-            "
-            MATCH
-            (q:Question)
-            WHERE
-            id(q) IN [" . $queryQuestionToCheck . "]
-            RETURN
-            distinct id(q);";
+        $existingQuestionsQuery = " MATCH (q:Question)"
+            . " WHERE id(q) IN [" . $queryQuestionToCheck . "]"
+            . " RETURN distinct id(q);";
 
         $neo4jQuery = new Query(
             $this->client,
@@ -417,15 +410,13 @@ class Fixtures
         $questionsQuery = array();
         for ($i = 1; $i <= $numberOfQuestions; $i++) {
             if (!in_array($i, $existingQuestions)) {
-                $questionsQueryString =
-                    "CREATE
-                    (q:Question {qnoow_id: " . $i . ", text: 'question " . $i . "'})
-                ";
+                $questionsQueryString = "CREATE (q:Question {qnoow_id: " . $i . ", text: 'question " . $i . "'}) ";
 
                 for ($j = 1; $j <= $numberOfAnswersPerQuestion; $j++) {
-                    $questionsQueryString .=
-                        ", (:Answer {qnoow_id: " . $i . $j . ", text: 'answer " . $i . "-" . $j . "'})
-                    -[:IS_ANSWER_OF]->(q)";
+                    $questionsQueryString .= ", (:Answer {"
+                        . "qnoow_id: " . $i . $j . ","
+                        . " text: 'answer " . $i . "-" . $j . "'"
+                        . "})-[:IS_ANSWER_OF]->(q)";
                 }
 
                 $questionsQueryString .= " RETURN q;";
@@ -442,29 +433,28 @@ class Fixtures
             );
 
             try {
-                $result = $neo4jQuery->getResultSet();
+                $neo4jQuery->getResultSet();
             } catch (\Exception $e) {
                 throw $e;
-
-                return;
             }
         }
 
-        return;
+        return $this;
 
     }
 
+    /**
+     * @param $user
+     * @param $question
+     * @param $rating
+     * @throws \Exception
+     */
     public function createUserRatesRelationship($user, $question, $rating)
     {
-        $relationshipQuery =
-            "MATCH
-            (q:Question {qnoow_id: " . $question . "}),
-            (u:User {qnoow_id: " . $user . "})
-        CREATE UNIQUE
-            (u)-[r:RATES {rating: " . $rating . "}]->(q)
-        RETURN
-            u, r, q
-        ;";
+
+        $relationshipQuery = "MATCH (q:Question {qnoow_id: " . $question . "}), (u:User {qnoow_id: " . $user . "})"
+            . " CREATE UNIQUE (u)-[r:RATES {rating: " . $rating . "}]->(q)"
+            . " RETURN u, r, q ;";
 
         $neo4jQuery = new Query(
             $this->client,
@@ -472,27 +462,25 @@ class Fixtures
         );
 
         try {
-            $result = $neo4jQuery->getResultSet();
+            $neo4jQuery->getResultSet();
         } catch (\Exception $e) {
             throw $e;
-
-            return;
         }
 
         return;
     }
 
+    /**
+     * @param $user
+     * @param $answer
+     * @throws \Exception
+     */
     public function createUserAnswersRelationship($user, $answer)
     {
-        $relationshipQuery =
-            "MATCH
-            (a:Answer {qnoow_id: " . $answer . "}),
-            (u:User {qnoow_id: " . $user . "})
-        CREATE UNIQUE
-            (u)-[r:ANSWERS]->(a)
-        RETURN
-            u, r, a
-        ;";
+
+        $relationshipQuery = "MATCH (a:Answer {qnoow_id: " . $answer . "}), (u:User {qnoow_id: " . $user . "})"
+            . " CREATE UNIQUE (u)-[r:ANSWERS]->(a)"
+            . " RETURN u, r, a ;";
 
         $neo4jQuery = new Query(
             $this->client,
@@ -500,27 +488,25 @@ class Fixtures
         );
 
         try {
-            $result = $neo4jQuery->getResultSet();
+            $neo4jQuery->getResultSet();
         } catch (\Exception $e) {
             throw $e;
-
-            return;
         }
 
         return;
     }
 
+    /**
+     * @param $user
+     * @param $answer
+     * @throws \Exception
+     */
     public function createUserAcceptsRelationship($user, $answer)
     {
-        $relationshipQuery =
-            "MATCH
-            (a:Answer {qnoow_id: " . $answer . "}),
-            (u:User {qnoow_id: " . $user . "})
-        CREATE UNIQUE
-            (u)-[r:ACCEPTS]->(a)
-        RETURN
-            u, r, a
-        ;";
+
+        $relationshipQuery = "MATCH (a:Answer {qnoow_id: " . $answer . "}), (u:User {qnoow_id: " . $user . "})"
+            . " CREATE UNIQUE (u)-[r:ACCEPTS]->(a)"
+            . " RETURN u, r, a ;";
 
         $neo4jQuery = new Query(
             $this->client,
@@ -528,11 +514,9 @@ class Fixtures
         );
 
         try {
-            $result = $neo4jQuery->getResultSet();
+            $neo4jQuery->getResultSet();
         } catch (\Exception $e) {
             throw $e;
-
-            return;
         }
 
         return;
