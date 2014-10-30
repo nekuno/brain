@@ -9,6 +9,11 @@ $app->post('/users', 'users.controller:addAction');
 $app->get('/users/{id}', 'users.controller:showAction')->value('id', null);
 $app->delete('/users/{id}', 'users.controller:deleteAction')->value('id', null);
 
+$app->get('/users/{id}/profile', 'users.profile.controller:getAction')->value('id', null);
+$app->post('/users/{id}/profile', 'users.profile.controller:postAction')->value('id', null);
+$app->put('/users/{id}/profile', 'users.profile.controller:putAction')->value('id', null);
+$app->delete('/users/{id}/profile', 'users.profile.controller:deleteAction')->value('id', null);
+
 $app->get('/users/{id1}/matching/{id2}', 'users.controller:getMatchingAction')
     ->value('type', 'answers');
 
