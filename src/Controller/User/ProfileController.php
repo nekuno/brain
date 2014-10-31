@@ -51,11 +51,12 @@ class ProfileController
     {
 
         // TODO: Validate data
+        $id = $request->get('id');
 
         try {
             /* @var $model ProfileModel */
             $model = $app['users.profile.model'];
-            $result = $model->create($request->request->all());
+            $result = $model->create($id, $request->request->all());
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;
