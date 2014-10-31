@@ -109,7 +109,7 @@ class ProfileModel
             return 0; //todo throw Exception profile already exists or user not found
         }
 
-        return $profileNode->getId();
+        return $this->getById($id);
     }
 
     /**
@@ -128,7 +128,7 @@ class ProfileModel
             return 0; //todo throw Exception profile not found
         }
 
-        return $profileNode->getId();
+        return $this->getById($id);
     }
 
     /**
@@ -451,7 +451,7 @@ class ProfileModel
             $specificLabel = $this->client->makeLabel($tagLabelName);
             $tagNode->addLabels(array($genericLabel, $specificLabel));
         } else {
-            $tagNode = $result[0];
+            $tagNode = $result[0]['tag'];
         }
 
         return $tagNode;

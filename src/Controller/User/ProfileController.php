@@ -50,7 +50,6 @@ class ProfileController
     public function postAction(Request $request, Application $app)
     {
 
-        // TODO: Validate data
         $id = $request->get('id');
 
         try {
@@ -77,7 +76,7 @@ class ProfileController
     public function putAction(Request $request, Application $app)
     {
 
-        // TODO: Validate data
+        $id = $request->get('id');
 
         /* @var $profile array */
         $profile = $this->getProfile($request, $app);
@@ -93,7 +92,7 @@ class ProfileController
         try {
             /* @var $model ProfileModel */
             $model = $app['users.profile.model'];
-            $profile = $model->update($request->request->all());
+            $profile = $model->update($id, $request->request->all());
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;
@@ -171,7 +170,7 @@ class ProfileController
     }
 
     /**
-     * @param Request $request
+     * @param Application $app
      * @return JsonResponse
      */
     public function getMetadataAction(Application $app)
