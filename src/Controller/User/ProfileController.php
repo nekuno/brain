@@ -159,7 +159,7 @@ class ProfileController
             $model = $app['users.profile.model'];
             $profile = $model->getById($id);
         } catch (\Exception $e) {
-            
+
             if ($app['env'] == 'dev') {
                 throw $e;
             }
@@ -168,6 +168,20 @@ class ProfileController
         }
 
         return $profile;
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getMetadataAction(Application $app)
+    {
+
+        /* @var $model ProfileModel */
+        $model = $app['users.profile.model'];
+        $metadata = $model->getMetadata();
+
+        return $app->json($metadata);
     }
 
 }
