@@ -180,25 +180,31 @@ class ProfileModel
         $errors = array();
         $metadata = $this->getMetadata();
 
-        foreach ($data as $fieldName => $fieldValue) {
+        foreach ($metadata as $fieldName => $fieldData) {
             $fieldErrors = array();
-            if (isset($metadata[$fieldName])) {
-                $fieldData = $metadata[$fieldName];
+            if (isset($data[$fieldName])) {
+                $fieldValue = $data[$fieldName];
 
                 if (isset($fieldData['type'])) {
                     switch ($fieldData['type']) {
                         case 'string':
-                            if (strlen($fieldValue) <= $fieldData['min'] && strlen($fieldValue) >= $fieldData['max']) {
-                                $error = 'The value must have a length between ' . $fieldData['min'];
-                                $error .= ' and ' . $fieldData['max'];
-                                $fieldErrors[] = $error;
-
+                            if (isset($fieldData['min'])) {
+                                if (strlen($fieldValue) < $fieldData['min']) {
+                                    $fieldErrors[] = 'Must have ' . $fieldData['min'] . ' characters min.';
+                                }
+                            }
+                            if (isset($fieldData['max'])) {
+                                if (strlen($fieldValue) > $fieldData['max']) {
+                                    $fieldErrors[] = 'Must have ' . $fieldData['max'] . ' characters max.';
+                                }
                             }
                             break;
                     }
                 }
             } else {
-                $fieldErrors[] = 'Unknown profile field.';
+                if (isset($fieldData['required']) && $fieldData['required']) {
+                    $fieldErrors[] = 'It\'s required.';
+                }
             }
 
             if (count($fieldErrors) > 0) {
