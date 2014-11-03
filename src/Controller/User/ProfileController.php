@@ -2,10 +2,12 @@
 
 namespace Controller\User;
 
+use Model\Exception\ValidationException;
 use Model\User\ProfileModel;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 /**
  * Class ProfileController
@@ -22,15 +24,15 @@ class ProfileController
     public function getAction(Request $request, Application $app)
     {
 
-        /* @var $profile array */
-        $profile = $this->getProfile($request, $app);
-
-        if ($profile instanceof JsonResponse) {
-            return $profile;
-        }
-
         /* @var $model ProfileModel */
         $model = $app['users.profile.model'];
+
+        try {
+            $profile = $model->getById($request->get('id'));
+        } catch (HttpException $e) {
+            return $app->json(array('error' => $e->getMessage()), $e->getStatusCode(), $e->getHeaders());
+        }
+
         $metadata = $model->getMetadata();
 
         $result = array(
@@ -51,18 +53,22 @@ class ProfileController
     {
 
         $id = $request->get('id');
+        /* @var $model ProfileModel */
+        $model = $app['users.profile.model'];
+        $metadata = $model->getMetadata();
 
         try {
-            /* @var $model ProfileModel */
-            $model = $app['users.profile.model'];
-            $result = $model->create($id, $request->request->all());
-        } catch (\Exception $e) {
-            if ($app['env'] == 'dev') {
-                throw $e;
-            }
-
-            return $app->json(array(), 500);
+            $profile = $model->create($id, $request->request->all());
+        } catch (HttpException $e) {
+            return $app->json(array('error' => $e->getMessage()), $e->getStatusCode(), $e->getHeaders());
+        } catch (ValidationException $e) {
+            return $app->json(array('validationErrors' => $e->getErrors()), 500);
         }
+
+        $result = array(
+            'profile' => $profile,
+            'metadata' => $metadata,
+        );
 
         return $app->json($result, !empty($result) ? 201 : 200);
     }
@@ -77,28 +83,16 @@ class ProfileController
     {
 
         $id = $request->get('id');
-
-        /* @var $profile array */
-        $profile = $this->getProfile($request, $app);
-
-        if ($profile instanceof JsonResponse) {
-            return $profile;
-        }
-
         /* @var $model ProfileModel */
         $model = $app['users.profile.model'];
         $metadata = $model->getMetadata();
 
         try {
-            /* @var $model ProfileModel */
-            $model = $app['users.profile.model'];
             $profile = $model->update($id, $request->request->all());
-        } catch (\Exception $e) {
-            if ($app['env'] == 'dev') {
-                throw $e;
-            }
-
-            return $app->json(array(), 500);
+        } catch (HttpException $e) {
+            return $app->json(array('error' => $e->getMessage()), $e->getStatusCode(), $e->getHeaders());
+        } catch (ValidationException $e) {
+            return $app->json(array('validationErrors' => $e->getErrors()), 500);
         }
 
         $result = array(
@@ -118,55 +112,18 @@ class ProfileController
     public function deleteAction(Request $request, Application $app)
     {
 
-        /* @var $profile array */
-        $profile = $this->getProfile($request, $app);
-
-        if ($profile instanceof JsonResponse) {
-            return $profile;
-        }
+        /* @var $model ProfileModel */
+        $model = $app['users.profile.model'];
 
         try {
-            /* @var $model ProfileModel */
-            $model = $app['users.profile.model'];
             $id = $request->get('id');
+            $profile = $model->getById($id);
             $model->remove($id);
-        } catch (\Exception $e) {
-            if ($app['env'] == 'dev') {
-                throw $e;
-            }
-
-            return $app->json(array(), 500);
+        } catch (HttpException $e) {
+            return $app->json(array('error' => $e->getMessage()), $e->getStatusCode(), $e->getHeaders());
         }
 
         return $app->json(array(), 200);
-    }
-
-    /**
-     * @param Request $request
-     * @return JsonResponse|array
-     * @throws \Exception
-     */
-    protected function getProfile(Request $request, Application $app)
-    {
-        $id = $request->get('id');
-        if (null === $id) {
-            return $app->json(array(), 404);
-        }
-
-        try {
-            /* @var $model ProfileModel */
-            $model = $app['users.profile.model'];
-            $profile = $model->getById($id);
-        } catch (\Exception $e) {
-
-            if ($app['env'] == 'dev') {
-                throw $e;
-            }
-
-            return $app->json(array(), 500);
-        }
-
-        return $profile;
     }
 
     /**

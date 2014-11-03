@@ -5,6 +5,9 @@ namespace Model\User;
 use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
 use Everyman\Neo4j\Node;
+use Model\Exception\ValidationException;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class ProfileModel
 {
@@ -28,6 +31,7 @@ class ProfileModel
     /**
      * @param int $id
      * @return array
+     * @throws NotFoundHttpException
      */
     public function getById($id)
     {
@@ -52,18 +56,20 @@ class ProfileModel
         $result = $query->getResultSet();
 
         if (count($result) < 1) {
-            return array();
+            throw new NotFoundHttpException('Profile not found');
         }
 
         $row = $result[0];
         $profile = $row['profile']->getProperties();
 
         foreach ($row['options'] as $option) {
+            /* @var $option \Everyman\Neo4j\Node */
             $labels = $option->getLabels();
             foreach ($labels as $index => $label) {
                 $labelName = $label->getName();
                 if ($labelName != 'ProfileOption') {
-                    $profile[$labelName] = $option->getProperty('name');
+                    $labelName = lcfirst($labelName);
+                    $profile[$labelName] = $option->getId();
                 }
 
             }
@@ -87,7 +93,7 @@ class ProfileModel
      * @param $id
      * @param array $data
      * @return array
-     * @throws \Exception
+     * @throws ValidationException
      */
     public function create($id, array $data)
     {
@@ -95,19 +101,23 @@ class ProfileModel
 
         list($userNode, $profileNode) = $this->getUserAndProfileNodesById($id);
 
-        if (($userNode instanceof Node) && !($profileNode instanceof Node)) {
-            $profileNode = $this->client->makeNode();
-            $profileNode->save();
-
-            $profileLabel = $this->client->makeLabel('Profile');
-            $profileNode->addLabels(array($profileLabel));
-
-            $profileNode->relateTo($userNode, 'PROFILE_OF')->save();
-
-            $this->saveProfileData($profileNode, $data);
-        } else {
-            return 0; //todo throw Exception profile already exists or user not found
+        if (!($userNode instanceof Node)) {
+            throw new NotFoundHttpException('User not found');
         }
+
+        if ($profileNode instanceof Node) {
+            throw new MethodNotAllowedHttpException(array('PUT'), 'Profile already exists');
+        }
+
+        $profileNode = $this->client->makeNode();
+        $profileNode->save();
+
+        $profileLabel = $this->client->makeLabel('Profile');
+        $profileNode->addLabels(array($profileLabel));
+
+        $profileNode->relateTo($userNode, 'PROFILE_OF')->save();
+
+        $this->saveProfileData($profileNode, $data);
 
         return $this->getById($id);
     }
@@ -115,6 +125,7 @@ class ProfileModel
     /**
      * @param array $data
      * @return array
+     * @throws ValidationException
      */
     public function update($id, array $data)
     {
@@ -123,11 +134,15 @@ class ProfileModel
 
         list($userNode, $profileNode) = $this->getUserAndProfileNodesById($id);
 
-        if ($profileNode instanceof Node) {
-            $this->saveProfileData($profileNode, $data);
-        } else {
-            return 0; //todo throw Exception profile not found
+        if (!($userNode instanceof Node)) {
+            throw new NotFoundHttpException('User not found');
         }
+
+        if (!($profileNode instanceof Node)) {
+            throw new NotFoundHttpException('Profile not found');
+        }
+
+        $this->saveProfileData($profileNode, $data);
 
         return $this->getById($id);
     }
@@ -157,8 +172,8 @@ class ProfileModel
 
     /**
      * @param array $data
-     * @return boolean
-     * @throws /Exception
+     * @return bool
+     * @throws ValidationException
      */
     public function validate(array $data)
     {
@@ -192,7 +207,9 @@ class ProfileModel
         }
 
         if (count($errors) > 0) {
-            throw new \Exception();
+            $e = new ValidationException('Validation error');
+            $e->setErrors($errors);
+            throw $e;
         }
 
         return true;
@@ -370,30 +387,29 @@ class ProfileModel
                     case 'date':
                     case 'integer':
                         $profileNode->setProperty($fieldName, $fieldValue);
-
                         break;
-
                     case 'choice':
                         if (isset($options[$fieldName])) {
                             $options[$fieldName]->delete();
                         }
-                        $optionNode = $this->client->getNode($fieldValue);
-                        $optionNode->relateTo($profileNode, 'OPTION_OF')->save();
+                        if (!is_null($fieldValue)) {
+                            $optionNode = $this->client->getNode($fieldValue);
+                            $optionNode->relateTo($profileNode, 'OPTION_OF')->save();
 
+                        }
                         break;
-
                     case 'tags':
                         if (isset($tags[$fieldName])) {
                             foreach ($tags[$fieldName] as $tagRelation) {
                                 $tagRelation->delete();
                             }
                         }
-
-                        foreach ($fieldValue as $tag) {
-                            $tagNode = $this->getProfileTagNode($tag, $fieldName);
-                            $tagNode->relateTo($profileNode, 'TAGGED')->save();
+                        if (!is_null($fieldValue)) {
+                            foreach ($fieldValue as $tag) {
+                                $tagNode = $this->getProfileTagNode($tag, $fieldName);
+                                $tagNode->relateTo($profileNode, 'TAGGED')->save();
+                            }
                         }
-
                         break;
                 }
             }
