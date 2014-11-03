@@ -199,6 +199,19 @@ class ProfileModel
                                 }
                             }
                             break;
+
+                        case 'date':
+                            $date = \DateTime::createFromFormat('Y-m-d', $fieldValue);
+                            if (! ($date && $date->format('Y-m-d') == $fieldValue)) {
+                                $fieldErrors[] = 'Invalid date format, valid format is "Y-m-d".';
+                            }
+                            break;
+
+                        case 'boolean':
+                            if ($fieldValue !== true && $fieldValue !== false) {
+                                $fieldErrors[] = 'Must be a boolean.';
+                            }
+                            break;
                     }
                 }
             } else {
