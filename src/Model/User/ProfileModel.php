@@ -93,7 +93,7 @@ class ProfileModel
     {
         $this->validate($data);
 
-        list($userNode, $profileNode) =  $this->getUserAndProfileNodesById($id);
+        list($userNode, $profileNode) = $this->getUserAndProfileNodesById($id);
 
         if (($userNode instanceof Node) && !($profileNode instanceof Node)) {
             $profileNode = $this->client->makeNode();
@@ -118,9 +118,10 @@ class ProfileModel
      */
     public function update($id, array $data)
     {
+
         $this->validate($data);
 
-        list($userNode, $profileNode) =  $this->getUserAndProfileNodesById($id);
+        list($userNode, $profileNode) = $this->getUserAndProfileNodesById($id);
 
         if ($profileNode instanceof Node) {
             $this->saveProfileData($profileNode, $data);
@@ -164,7 +165,7 @@ class ProfileModel
         $errors = array();
         $metadata = $this->getMetadata();
 
-        foreach($data as $fieldName => $fieldValue) {
+        foreach ($data as $fieldName => $fieldValue) {
             $fieldErrors = array();
             if (isset($metadata[$fieldName])) {
                 $fieldData = $metadata[$fieldName];
@@ -178,19 +179,19 @@ class ProfileModel
                                 $fieldErrors[] = $error;
 
                             }
-                        break;
+                            break;
                     }
                 }
             } else {
                 $fieldErrors[] = 'Unknown profile field.';
             }
 
-            if (count($fieldErrors)>0) {
+            if (count($fieldErrors) > 0) {
                 $errors[$fieldName] = $fieldErrors;
             }
         }
 
-        if(count($errors)>0) {
+        if (count($errors) > 0) {
             throw new \Exception();
         }
 
@@ -201,11 +202,6 @@ class ProfileModel
     {
         return array(
             'realName' => array(
-                'type' => 'string',
-                'min' => 0,
-                'max' => 255,
-            ),
-            'picture' => array(
                 'type' => 'string',
                 'min' => 0,
                 'max' => 255,
@@ -242,11 +238,6 @@ class ProfileModel
             'wantSons' => array(
                 'type' => 'boolean',
             ),
-            'points' => array(
-                'type' => 'integer',
-                'min' => 0,
-                'max' => 1024,
-            ),
         );
     }
 
@@ -264,12 +255,13 @@ class ProfileModel
         $result = $query->getResultSet();
         $choiceMetadata = array();
         foreach ($result as $row) {
-            $fieldName = lcfirst ($row['type']);
+            $fieldName = lcfirst($row['type']);
             $optionId = $row['id'];
             $optionName = $row['name'];
             if (!isset($choiceMetadata[$fieldName])) {
                 $choiceMetadata[$fieldName] = array(
                     'type' => 'choice',
+                    'label' => $this->getChoiceMetadataLabel($fieldName),
                     'choices' => array(),
                 );
             }
@@ -277,6 +269,40 @@ class ProfileModel
         }
 
         return $choiceMetadata;
+    }
+
+    protected function getChoiceMetadataLabel($fieldName)
+    {
+        $labels = array(
+            'gender' => 'Genre',
+            'hairColor' => 'Hair color',
+            'ethnicGroup' => 'Ethnic group',
+            'complexion' => 'Complexion',
+            'eyeColor' => 'Eyes color',
+            'allergy' => 'Have you any allergy?',
+            'handicap' => 'Have you any handicap?',
+            'civilStatus' => 'Civil status',
+            'nationality' => 'Nationality',
+            'income' => 'Income',
+            'car' => 'Have a car?',
+            'sons' => 'Have sons?',
+            'pets' => 'Have pets?',
+            'smoke' => 'Smoke?',
+            'alcohol' => 'Drink alcohol?',
+            'drugs' => 'Take drugs?',
+            'diet' => 'Have a special diet?',
+            'wantSons' => 'Do you want to have children?',
+            'orientation' => 'Orientation',
+            'relationshipInterest' => 'What are your interests on relations?',
+            'dateSmoker' => 'Would you date a person that smokes?',
+            'dateReligion' => 'Would you date a person with different religious beliefs?',
+            'dateComplexion' => 'Would you date a person with larger body complexion?',
+            'dateAlcohol' => 'Would you date a person that drinks alcohol?',
+            'dateHandicap' => 'Would you date a person with the same disabilities?',
+            'dateChildren' => 'Would you date a person with children?',
+        );
+
+        return isset($labels[$fieldName]) ? $labels[$fieldName] : $fieldName;
     }
 
     protected function getTagsMetadata()
@@ -328,13 +354,13 @@ class ProfileModel
         return array($userNode, $profileNode);
     }
 
-    protected function saveProfileData (Node $profileNode, array $data)
+    protected function saveProfileData(Node $profileNode, array $data)
     {
         $metadata = $this->getMetadata();
         $options = $this->getProfileNodeOptions($profileNode);
         $tags = $this->getProfileNodeTags($profileNode);
 
-        foreach($data as $fieldName => $fieldValue) {
+        foreach ($data as $fieldName => $fieldValue) {
             if (isset($metadata[$fieldName])) {
                 $fieldType = $metadata[$fieldName]['type'];
 
