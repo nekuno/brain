@@ -172,7 +172,6 @@ class ProfileModel
 
     /**
      * @param array $data
-     * @return bool
      * @throws ValidationException
      */
     public function validate(array $data)
@@ -202,7 +201,7 @@ class ProfileModel
 
                         case 'date':
                             $date = \DateTime::createFromFormat('Y-m-d', $fieldValue);
-                            if (! ($date && $date->format('Y-m-d') == $fieldValue)) {
+                            if (!($date && $date->format('Y-m-d') == $fieldValue)) {
                                 $fieldErrors[] = 'Invalid date format, valid format is "Y-m-d".';
                             }
                             break;
@@ -230,8 +229,6 @@ class ProfileModel
             $e->setErrors($errors);
             throw $e;
         }
-
-        return true;
     }
 
     protected function getScalarMetadata()
@@ -239,7 +236,7 @@ class ProfileModel
         return array(
             'realName' => array(
                 'type' => 'string',
-                'min' => 0,
+                'min' => 5,
                 'max' => 255,
             ),
             'description' => array(
@@ -529,7 +526,7 @@ class ProfileModel
     /*
      * Please don't believe in this crap
      */
-    protected function getZodiacSignNonsenseFromDate ($date)
+    protected function getZodiacSignNonsenseFromDate($date)
     {
         $birthday = \DateTime::createFromFormat('Y-m-d', $date);
 
@@ -542,10 +539,10 @@ class ProfileModel
         $zodiac[172] = "Cancer";
         $zodiac[140] = "Gemini";
         $zodiac[111] = "Taurus";
-        $zodiac[78]  = "Aries";
-        $zodiac[51]  = "Pisces";
-        $zodiac[20]  = "Aquarius";
-        $zodiac[0]   = "Capricorn";
+        $zodiac[78] = "Aries";
+        $zodiac[51] = "Pisces";
+        $zodiac[20] = "Aquarius";
+        $zodiac[0] = "Capricorn";
 
         if (!$date) {
             return "";
@@ -557,8 +554,10 @@ class ProfileModel
             $dayOfTheYear = $dayOfTheYear - 1;
         }
 
-        foreach($zodiac as $day => $sign) {
-            if ($dayOfTheYear > $day) break;
+        foreach ($zodiac as $day => $sign) {
+            if ($dayOfTheYear > $day) {
+                break;
+            }
         }
 
         return $sign;

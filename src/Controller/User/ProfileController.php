@@ -140,4 +140,23 @@ class ProfileController
         return $app->json($metadata);
     }
 
+    /**
+     * @param Request $request
+     * @param Application $app
+     * @return JsonResponse
+     */
+    public function validateAction(Request $request, Application $app)
+    {
+        /* @var $model ProfileModel */
+        $model = $app['users.profile.model'];
+
+        try {
+            $model->validate($request->request->all());
+        } catch (ValidationException $e) {
+            return $app->json(array('validationErrors' => $e->getErrors()), 500);
+        }
+
+        return $app->json(array('validationErrors' => array()));
+    }
+
 }

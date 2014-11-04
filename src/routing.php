@@ -14,6 +14,7 @@ $app->post('/users/{id}/profile', 'users.profile.controller:postAction')->value(
 $app->put('/users/{id}/profile', 'users.profile.controller:putAction')->value('id', null);
 $app->delete('/users/{id}/profile', 'users.profile.controller:deleteAction')->value('id', null);
 $app->get('/profile/metadata', 'users.profile.controller:getMetadataAction')->value('id', null);
+$app->post('/profile/validate', 'users.profile.controller:validateAction')->value('id', null);
 
 $app->get('/users/{id1}/matching/{id2}', 'users.controller:getMatchingAction')
     ->value('type', 'answers');
