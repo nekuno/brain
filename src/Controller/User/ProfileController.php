@@ -153,10 +153,10 @@ class ProfileController
         try {
             $model->validate($request->request->all());
         } catch (ValidationException $e) {
-            return $app->json(array('validationErrors' => $e->getErrors()), 500);
+            return $app->json($e->getErrors(), 500);
         }
 
-        return $app->json(array('validationErrors' => array()));
+        return $app->json(array());
     }
 
 }
