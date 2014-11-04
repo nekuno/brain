@@ -403,10 +403,17 @@ class ProfileModel
                 switch ($fieldType) {
                     case 'string':
                     case 'boolean':
-                    case 'date':
                     case 'integer':
                         $profileNode->setProperty($fieldName, $fieldValue);
                         break;
+
+                    case 'date':
+                        if ($fieldName == "birthday") {
+                            $profileNode->setProperty('zodiacSign', $this->getZodiacSignNonsenseFromDate($fieldValue));
+                        }
+                        $profileNode->setProperty($fieldName, $fieldValue);
+                        break;
+
                     case 'choice':
                         if (isset($options[$fieldName])) {
                             $options[$fieldName]->delete();
@@ -417,6 +424,7 @@ class ProfileModel
 
                         }
                         break;
+
                     case 'tags':
                         if (isset($tags[$fieldName])) {
                             foreach ($tags[$fieldName] as $tagRelation) {
@@ -516,6 +524,44 @@ class ProfileModel
         }
 
         return $tagNode;
+    }
+
+    /*
+     * Please don't believe in this crap
+     */
+    protected function getZodiacSignNonsenseFromDate ($date)
+    {
+        $birthday = \DateTime::createFromFormat('Y-m-d', $date);
+
+        $zodiac[356] = "Capricorn";
+        $zodiac[326] = "Sagittarius";
+        $zodiac[296] = "Scorpio";
+        $zodiac[266] = "Libra";
+        $zodiac[235] = "Virgo";
+        $zodiac[203] = "Leo";
+        $zodiac[172] = "Cancer";
+        $zodiac[140] = "Gemini";
+        $zodiac[111] = "Taurus";
+        $zodiac[78]  = "Aries";
+        $zodiac[51]  = "Pisces";
+        $zodiac[20]  = "Aquarius";
+        $zodiac[0]   = "Capricorn";
+
+        if (!$date) {
+            return "";
+        }
+
+        $dayOfTheYear = $birthday->format('z');
+        $isLeapYear = $birthday->format('L');
+        if ($isLeapYear && ($dayOfTheYear > 59)) {
+            $dayOfTheYear = $dayOfTheYear - 1;
+        }
+
+        foreach($zodiac as $day => $sign) {
+            if ($dayOfTheYear > $day) break;
+        }
+
+        return $sign;
     }
 
 } 

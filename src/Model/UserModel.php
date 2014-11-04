@@ -201,18 +201,24 @@ class UserModel implements PaginatedInterface
         $profileQuery = "";
         if (isset($filters['profile'])) {
             $profileQuery = " MATCH (user)-[:PROFILE_OF]-(profile:Profile) ";
+            if (isset($filters['profile']['zodiacSign'])) {
+                $profileQuery .= " WHERE profile.zodiacSign = {zodiacSign} ";
+                $params['zodiacSign'] = $filters['profile']['zodiacSign'];
+            }
             if (isset($filters['profile']['gender'])) {
                 $profileQuery .= "
                     MATCH
                     (profile)-[:OPTION_OF]-(gender:Gender)
-                    WHERE id(gender) = {gender}";
+                    WHERE id(gender) = {gender}
+                ";
                 $params['gender'] = (integer)$filters['profile']['gender'];
             }
             if (isset($filters['profile']['orientation'])) {
                 $profileQuery .= "
                     MATCH
                     (profile)-[:OPTION_OF]-(orientation:Orientation)
-                    WHERE id(orientation) = {orientation}";
+                    WHERE id(orientation) = {orientation}
+                ";
                 $params['orientation'] = (integer)$filters['profile']['orientation'];
             }
         }
