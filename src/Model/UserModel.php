@@ -198,13 +198,27 @@ class UserModel implements PaginatedInterface
             'limit' => (integer)$limit
         );
 
-        $resultQuery = " RETURN user ";
-
+        $profileQuery = "";
         if (isset($filters['profile'])) {
-            //TODO: Profile filters
+            $profileQuery = " MATCH (user)-[:PROFILE_OF]-(profile:Profile) ";
+            if (isset($filters['profile']['gender'])) {
+                $profileQuery .= "
+                    MATCH
+                    (profile)-[:OPTION_OF]-(gender:Gender)
+                    WHERE id(gender) = {gender}";
+                $params['gender'] = (integer)$filters['profile']['gender'];
+            }
+            if (isset($filters['profile']['orientation'])) {
+                $profileQuery .= "
+                    MATCH
+                    (profile)-[:OPTION_OF]-(orientation:Orientation)
+                    WHERE id(orientation) = {orientation}";
+                $params['orientation'] = (integer)$filters['profile']['orientation'];
+            }
         }
 
         $referenceUserQuery = "";
+        $resultQuery = " RETURN user ";
         if (isset($filters['referenceUserId'])) {
             $params['referenceUserId'] = (integer)$filters['referenceUserId'];
             $referenceUserQuery = "
@@ -224,6 +238,7 @@ class UserModel implements PaginatedInterface
             (user:User)
             WHERE
             user.status = 'complete'"
+            . $profileQuery
             . $referenceUserQuery
             . $resultQuery
             . "
