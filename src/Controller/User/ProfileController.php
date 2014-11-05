@@ -24,23 +24,17 @@ class ProfileController
     public function getAction(Request $request, Application $app)
     {
 
+        $id = $request->get('id');
         /* @var $model ProfileModel */
         $model = $app['users.profile.model'];
 
         try {
-            $profile = $model->getById($request->get('id'));
+            $profile = $model->getById($id);
         } catch (HttpException $e) {
             return $app->json(array('error' => $e->getMessage()), $e->getStatusCode(), $e->getHeaders());
         }
 
-        $metadata = $model->getMetadata();
-
-        $result = array(
-            'profile' => $profile,
-            'metadata' => $metadata,
-        );
-
-        return $app->json($result, !empty($result) ? 200 : 404);
+        return $app->json($profile, 200);
     }
 
     /**
@@ -55,7 +49,6 @@ class ProfileController
         $id = $request->get('id');
         /* @var $model ProfileModel */
         $model = $app['users.profile.model'];
-        $metadata = $model->getMetadata();
 
         try {
             $profile = $model->create($id, $request->request->all());
@@ -65,12 +58,7 @@ class ProfileController
             return $app->json(array('validationErrors' => $e->getErrors()), 500);
         }
 
-        $result = array(
-            'profile' => $profile,
-            'metadata' => $metadata,
-        );
-
-        return $app->json($result, !empty($result) ? 201 : 200);
+        return $app->json($profile, 201);
     }
 
     /**
@@ -85,7 +73,6 @@ class ProfileController
         $id = $request->get('id');
         /* @var $model ProfileModel */
         $model = $app['users.profile.model'];
-        $metadata = $model->getMetadata();
 
         try {
             $profile = $model->update($id, $request->request->all());
@@ -95,12 +82,7 @@ class ProfileController
             return $app->json(array('validationErrors' => $e->getErrors()), 500);
         }
 
-        $result = array(
-            'profile' => $profile,
-            'metadata' => $metadata,
-        );
-
-        return $app->json($result, !empty($result) ? 201 : 200);
+        return $app->json($profile, 200);
     }
 
     /**
@@ -112,18 +94,18 @@ class ProfileController
     public function deleteAction(Request $request, Application $app)
     {
 
+        $id = $request->get('id');
         /* @var $model ProfileModel */
         $model = $app['users.profile.model'];
 
         try {
-            $id = $request->get('id');
             $profile = $model->getById($id);
             $model->remove($id);
         } catch (HttpException $e) {
             return $app->json(array('error' => $e->getMessage()), $e->getStatusCode(), $e->getHeaders());
         }
 
-        return $app->json(array(), 200);
+        return $app->json($profile, 200);
     }
 
     /**
@@ -137,7 +119,7 @@ class ProfileController
         $model = $app['users.profile.model'];
         $metadata = $model->getMetadata();
 
-        return $app->json($metadata);
+        return $app->json($metadata, 200);
     }
 
     /**
@@ -156,7 +138,7 @@ class ProfileController
             return $app->json($e->getErrors(), 500);
         }
 
-        return $app->json(array());
+        return $app->json(array(), 200);
     }
 
 }
