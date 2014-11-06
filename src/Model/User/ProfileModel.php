@@ -410,14 +410,12 @@ class ProfileModel
                     case 'string':
                     case 'boolean':
                     case 'integer':
+                    case 'date':
                         $profileNode->setProperty($fieldName, $fieldValue);
                         break;
 
                     case 'birthday':
-                    case 'date':
-                        if ($fieldName == 'birthday') {
-                            $profileNode->setProperty('zodiacSign', $this->getZodiacSignNonsenseFromDate($fieldValue));
-                        }
+                        $profileNode->setProperty('zodiacSign', $this->getZodiacSignNonsenseFromDate($fieldValue));
                         $profileNode->setProperty($fieldName, $fieldValue);
                         break;
 
