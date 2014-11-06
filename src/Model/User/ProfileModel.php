@@ -80,6 +80,7 @@ class ProfileModel
             foreach ($labels as $label) {
                 $labelName = $label->getName();
                 if ($labelName != 'ProfileTag') {
+                    $labelName = lcfirst($labelName);
                     $profile[$labelName][] = $tag->getProperty('name');
                 }
 
