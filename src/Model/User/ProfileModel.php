@@ -206,6 +206,15 @@ class ProfileModel
                             }
                             break;
 
+                        case 'birthday':
+                            $date = \DateTime::createFromFormat('Y-m-d', $fieldValue);
+                            if (!($date && $date->format('Y-m-d') == $fieldValue)) {
+                                $fieldErrors[] = 'Invalid date format, valid format is "Y-m-d".';
+                            } elseif (new \DateTime() < $date) {
+                                $fieldErrors[] = 'Invalid birthday date, can not be on the future.';
+                            }
+                            break;
+
                         case 'boolean':
                             if ($fieldValue !== true && $fieldValue !== false) {
                                 $fieldErrors[] = 'Must be a boolean.';
@@ -245,7 +254,7 @@ class ProfileModel
                 'max' => 1024,
             ),
             'birthday' => array(
-                'type' => 'date',
+                'type' => 'birthday',
             ),
             'height' => array(
                 'type' => 'string',
@@ -404,8 +413,9 @@ class ProfileModel
                         $profileNode->setProperty($fieldName, $fieldValue);
                         break;
 
+                    case 'birthday':
                     case 'date':
-                        if ($fieldName == "birthday") {
+                        if ($fieldName == 'birthday') {
                             $profileNode->setProperty('zodiacSign', $this->getZodiacSignNonsenseFromDate($fieldValue));
                         }
                         $profileNode->setProperty($fieldName, $fieldValue);
