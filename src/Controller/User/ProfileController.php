@@ -140,4 +140,40 @@ class ProfileController
         return $app->json($metadata);
     }
 
+    /**
+     * @param Request $request
+     * @param Application $app
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @throws \Exception
+     */
+    public function getProfileTagsAction(Request $request, Application $app)
+    {
+
+        $type = $request->get('type');
+        $search = $request->get('search', '');
+        $limit = $request->get('limit', 0);
+
+        if (null === $type) {
+            return $app->json(array(), 400);
+        }
+
+        if ($search) {
+            $search = urldecode($search);
+        }
+
+        /** @var $model \Model\User\ProfileTagModel */
+        $model = $app['users.profile.tag.model'];
+
+        try {
+            $result = $model->getProfileTags($type, $search, $limit);
+        } catch (\Exception $e) {
+            if ($app['env'] == 'dev') {
+                throw $e;
+            }
+
+            return $app->json(array(), 500);
+        }
+
+        return $app->json($result, !empty($result) ? 201 : 200);
+    }
 }
