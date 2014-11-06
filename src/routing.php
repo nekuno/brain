@@ -15,6 +15,7 @@ $app->put('/users/{id}/profile', 'users.profile.controller:putAction')->value('i
 $app->delete('/users/{id}/profile', 'users.profile.controller:deleteAction')->value('id', null);
 $app->get('/profile/metadata', 'users.profile.controller:getMetadataAction')->value('id', null);
 $app->get('/profile/tags/{type}', 'users.profile.controller:getProfileTagsAction');
+$app->post('/profile/validate', 'users.profile.controller:validateAction')->value('id', null);
 
 $app->get('/users/{id1}/matching/{id2}', 'users.controller:getMatchingAction')
     ->value('type', 'answers');
