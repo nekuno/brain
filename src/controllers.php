@@ -11,6 +11,13 @@ $app['users.controller'] = $app->share(
     }
 );
 
+$app['users.profile.controller'] = $app->share(
+    function () {
+
+        return new \Controller\User\ProfileController();
+    }
+);
+
 $app['users.data.controller'] = $app->share(
     function () {
 
