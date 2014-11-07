@@ -26,6 +26,8 @@ orm.ems.options:
                 path:  "%app_root_dir%/Model/Entity"
         use_simple_annotation_reader: false
 
+dataFile.dir: "%app_root_dir%/../var"
+
 neo4j.options:
     host: %db.neo4j.host%
     port: %db.neo4j.port%

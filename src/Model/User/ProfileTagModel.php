@@ -1,13 +1,11 @@
 <?php
 
-namespace Model\User\Recommendation;
-
-use Model\User\Matching\MatchingModel;
+namespace Model\User;
 
 use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
 
-class ContentRecommendationTagModel
+class ProfileTagModel
 {
     /**
      * @var \Everyman\Neo4j\Client
@@ -15,33 +13,26 @@ class ContentRecommendationTagModel
     protected $client;
 
     /**
-     * @var \Model\User\MatchingModel
-     */
-    protected $matchingModel;
-
-    /**
      * @param \Everyman\Neo4j\Client $client
-     * @param \Model\User\MatchingModel $matchingModel
      */
-    public function __construct(Client $client, MatchingModel $matchingModel)
+    public function __construct(Client $client)
     {
         $this->client = $client;
-        $this->matchingModel = $matchingModel;
     }
 
     /**
      * Get a list of recommended tag
-     * @param $id
+     * @param $type
      * @param $startingWith
      * @param int $limit
      * @throws \Exception
      * @return array
      */
-    public function getRecommendedTags($id, $startingWith='', $limit=0)
+    public function getProfileTags($type, $startingWith='', $limit=0)
     {
         $response = array();
 
-        $params = array('UserId' => (integer)$id);
+        $params = array();
 
         $startingWithQuery = '';
         if ($startingWith != '') {
@@ -55,29 +46,14 @@ class ContentRecommendationTagModel
             $limitQuery = ' LIMIT {limit}';
         }
 
-        $typeQuery = 'has(match.matching_questions)';
-        if($this->matchingModel->getPreferredMatchingType($id) == MatchingModel::PREFERRED_MATCHING_CONTENT) {
-            $typeQuery = "has(match.matching_content)";
-        }
-
         $query = "
             MATCH
-            (user:User {qnoow_id: {UserId}})-[match:MATCHES]-(matching_users:User)
-            WHERE
-        ";
-        $query .= $typeQuery;
-        $query .= "
-            MATCH
-            (matching_users)-[:LIKES]->(content:Link)
-            WHERE
-            NOT (user)-[:LIKES]->(content)
-            MATCH
-            (content)-[r:TAGGED]->(tag:Tag)
+            (tag:ProfileTag:".ucfirst($type).")
         ";
         $query .= $startingWithQuery;
         $query .= "
             RETURN
-            distinct tag.name as name, count(distinct r) as total
+            distinct tag.name as name
             ORDER BY
             tag.name
         ";
@@ -95,11 +71,7 @@ class ContentRecommendationTagModel
             $result = $contentQuery->getResultSet();
 
             foreach ($result as $row) {
-                $content = array();
-                $content['name'] = $row['name'];
-                $content['count'] = $row['total'];
-
-                $response['items'][] = $content;
+                $response['items'][] = array('name' => $row['name']);
             }
 
         } catch (\Exception $e) {

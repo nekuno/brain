@@ -1,6 +1,6 @@
 <?php
 
-namespace Controller;
+namespace Controller\User;
 
 use Model\User\ContentPaginatorModel;
 use Model\UserModel;
@@ -22,10 +22,25 @@ class UserController
      */
     public function indexAction(Request $request, Application $app)
     {
+        $filters = array();
+
+        $referenceUserId = $request->get('referenceUserId');
+        if (null != $referenceUserId) {
+            $filters['referenceUserId'] = $referenceUserId;
+        }
+
+        $profile = $request->get('profile');
+        if (null != $profile) {
+            $filters['profile'] = $profile;
+        }
+
+        /** @var $paginator \Paginator\Paginator */
+        $paginator = $app['paginator'];
+
+        $model = $app['users.model'];
 
         try {
-            $model = $app['users.model'];
-            $result = $model->getAll();
+            $result = $paginator->paginate($filters, $model, $request);
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;
@@ -34,7 +49,7 @@ class UserController
             return $app->json(array(), 500);
         }
 
-        return $app->json($result, 200);
+        return $app->json($result, !empty($result) ? 201 : 200);
     }
 
     /**
@@ -395,17 +410,17 @@ class UserController
      */
     public function rateContentAction(Request $request, Application $app)
     {
-        $id = $request->get('id');
-        $url = $request->request->get('url');
+        $userId = $request->get('id');
+        $linkId = $request->request->get('linkId');
         $rate = $request->request->get('rate');
 
-        if (null == $id || null == $url || null == $rate) {
-            return $app->json(array('text' => 'aaa', 'id' => $id, 'url' => $url), 400);
+        if (null == $userId || null == $linkId || null == $rate) {
+            return $app->json(array('text' => 'Link Not Found', 'id' => $userId, 'linkId' => $linkId), 400);
         }
 
         try {
             $model = $app['users.rate.model'];
-            $result = $model->userRateLink($id, $url, $rate);
+            $result = $model->userRateLink($userId, $linkId, $rate);
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;
@@ -438,7 +453,6 @@ class UserController
             /** @var $model \Model\User\Recommendation\UserModel */
             $model = $app['users.recommendation.users.model'];
             if ($basedOn == 'answers') {
-                // TODO: check that users has one answered question at least
                 $result = $model->getUserRecommendationsBasedOnAnswers($id);
             }
             if ($basedOn == 'content') {

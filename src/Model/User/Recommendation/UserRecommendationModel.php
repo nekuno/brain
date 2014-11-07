@@ -2,29 +2,30 @@
 
 namespace Model\User\Recommendation;
 
-use Model\User\MatchingModel;
-
 use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
+use Model\User\Matching\MatchingModel;
 
 class UserRecommendationModel
 {
+
     /**
      * @var \Everyman\Neo4j\Client
      */
     protected $client;
 
     /**
-     * @var \Model\User\MatchingModel
+     * @var \Model\User\Matching\MatchingModel
      */
     protected $matchingModel;
 
     /**
      * @param \Everyman\Neo4j\Client $client
-     * @param \Model\User\MatchingModel $matchingModel
+     * @param \Model\User\Matching\MatchingModel $matchingModel
      */
     public function __construct(Client $client, MatchingModel $matchingModel)
     {
+
         $this->client = $client;
         $this->matchingModel = $matchingModel;
     }
@@ -38,6 +39,7 @@ class UserRecommendationModel
      */
     public function getUserRecommendationsBasedOnAnswers($id)
     {
+
         $query = "
             MATCH
             (u:User {qnoow_id: " . $id . "})
@@ -68,8 +70,8 @@ class UserRecommendationModel
         }
 
         $response = array();
-        foreach ($topUsersResult as $row)  {
-            $user    = array(
+        foreach ($topUsersResult as $row) {
+            $user = array(
                 'id' => $row['ids'],
                 'matching' => $row['matchings_questions'],
             );
@@ -88,6 +90,7 @@ class UserRecommendationModel
      */
     public function getUserRecommendationsBasedOnSharedContent($id)
     {
+
         $query = "
             MATCH
             (u:User {qnoow_id: " . $id . "})
@@ -118,16 +121,14 @@ class UserRecommendationModel
         }
 
         $response = array();
-        foreach ($topUsersResult as $row)  {
+        foreach ($topUsersResult as $row) {
             $matching = $this->matchingModel->applyMatchingBasedOnContentCorrectionFactor($row['matchings_content']);
-            $user    = array(
+            $user = array(
                 'id' => $row['ids'],
                 'matching' => $matching,
             );
             $response[] = $user;
         }
-
-
 
         return $response;
     }

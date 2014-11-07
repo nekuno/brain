@@ -32,11 +32,8 @@ class SpotifyResourceOwner extends Oauth2GenericResourceOwner
     {
         $query = array_merge($query, array('access_token' => $token['oauthToken']));
 
-        $headers = array('Authorization' => 'Bearer ' . $token['oauthToken']);
-
         $clientConfig = array(
             'query' => $query,
-            'headers' => $headers,
         );
 
         return $this->httpClient->createRequest('GET', $url, $clientConfig);

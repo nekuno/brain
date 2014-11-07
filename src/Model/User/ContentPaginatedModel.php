@@ -98,6 +98,7 @@ class ContentPaginatedModel implements PaginatedInterface
             OPTIONAL MATCH
             (content)-[:TAGGED]->(tag:Tag)
             RETURN
+            id(content) as id,
             type(r) as rate,
             content,
             collect(distinct tag.name) as tags,
@@ -122,6 +123,7 @@ class ContentPaginatedModel implements PaginatedInterface
             foreach ($result as $row) {
                 $content = array();
 
+                $content['id'] = $row['id'];
                 $content['type'] = $row['type'];
                 $content['url'] = $row['content']->getProperty('url');
                 $content['title'] = $row['content']->getProperty('title');

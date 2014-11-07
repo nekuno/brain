@@ -398,9 +398,9 @@ class Fixtures
             MATCH
             (q:Question)
             WHERE
-            q.qnoow_id IN [" . $queryQuestionToCheck . "]
+            id(q) IN [" . $queryQuestionToCheck . "]
             RETURN
-            distinct q.qnoow_id;";
+            distinct id(q);";
 
         $neo4jQuery = new Query(
             $this->client,

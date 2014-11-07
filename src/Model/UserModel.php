@@ -5,13 +5,14 @@ namespace Model;
 use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
 use Model\User\UserStatusModel;
+use Paginator\PaginatedInterface;
 
 /**
  * Class UserModel
  *
  * @package Model
  */
-class UserModel
+class UserModel implements PaginatedInterface
 {
     /**
      * @var \Everyman\Neo4j\Client
@@ -175,5 +176,164 @@ class UserModel
         }
 
         return $status;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function validateFilters(array $filters)
+    {
+        return true;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function slice(array $filters, $offset, $limit)
+    {
+        $response = array();
+
+        $params = array(
+            'offset' => (integer)$offset,
+            'limit' => (integer)$limit
+        );
+
+        $profileQuery = "";
+        if (isset($filters['profile'])) {
+            $profileQuery = " MATCH (user)-[:PROFILE_OF]-(profile:Profile) ";
+            if (isset($filters['profile']['zodiacSign'])) {
+                $profileQuery .= " WHERE profile.zodiacSign = {zodiacSign} ";
+                $params['zodiacSign'] = $filters['profile']['zodiacSign'];
+            }
+            if (isset($filters['profile']['gender'])) {
+                $profileQuery .= "
+                    MATCH
+                    (profile)-[:OPTION_OF]-(gender:Gender)
+                    WHERE id(gender) = {gender}
+                ";
+                $params['gender'] = (integer)$filters['profile']['gender'];
+            }
+            if (isset($filters['profile']['orientation'])) {
+                $profileQuery .= "
+                    MATCH
+                    (profile)-[:OPTION_OF]-(orientation:Orientation)
+                    WHERE id(orientation) = {orientation}
+                ";
+                $params['orientation'] = (integer)$filters['profile']['orientation'];
+            }
+        }
+
+        $referenceUserQuery = "";
+        $resultQuery = " RETURN user ";
+        if (isset($filters['referenceUserId'])) {
+            $params['referenceUserId'] = (integer)$filters['referenceUserId'];
+            $referenceUserQuery = "
+                MATCH
+                (referenceUser:User)
+                WHERE
+                referenceUser.qnoow_id = {referenceUserId} AND
+                user.qnoow_id <> {referenceUserId}
+                OPTIONAL MATCH
+                (user)-[match:MATCHES]-(referenceUser)
+             ";
+            $resultQuery .= ", match";
+        }
+
+        $query = "
+            MATCH
+            (user:User)
+            WHERE
+            user.status = 'complete'"
+            . $profileQuery
+            . $referenceUserQuery
+            . $resultQuery
+            . "
+            SKIP {offset}
+            LIMIT {limit}
+            ;
+         ";
+
+        //Create the Neo4j query object
+        $contentQuery = new Query(
+            $this->client,
+            $query,
+            $params
+        );
+
+        //Execute query
+        try {
+            $result = $contentQuery->getResultSet();
+
+            foreach ($result as $row) {
+                $user = array();
+
+                $user['id'] = $row['user']->getProperty('qnoow_id');
+                $user['username'] = $row['content']->getProperty('username');
+                $user['email'] = $row['content']->getProperty('email');
+
+                if (isset($row['match'])) {
+                    $matchingByContent = $row['match']->getProperty('matching_content');
+                    $matchingByQuestions = $row['match']->getProperty('matching_questions');
+                    $user['matching']['content'] = null === $matchingByContent ? 0 : $matchingByContent;
+                    $user['matching']['questions'] = null === $matchingByQuestions ? 0 : $matchingByQuestions;
+                }
+
+                $response[] = $user;
+            }
+
+        } catch (\Exception $e) {
+            throw $e;
+        }
+
+        return $response;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function countTotal(array $filters)
+    {
+        $params = array();
+
+        $queryWhere = " WHERE user.status = 'complete' ";
+        if (isset($filters['referenceUserId'])) {
+            $params['referenceUserId'] = (integer)$filters['referenceUserId'];
+            $queryWhere .= " AND user.qnoow_id <> {referenceUserId} ";
+        }
+
+        if (isset($filters['profile'])) {
+            //TODO: Profile filters
+        }
+
+        $query = "
+            MATCH
+            (user:User)
+            " . $queryWhere . "
+            RETURN
+            count(user) as total
+            ;
+        ";
+
+        //Create the Neo4j query object
+        $contentQuery = new Query(
+            $this->client,
+            $query,
+            $params
+        );
+
+        $count = 0;
+        //Execute query
+        try {
+            $result = $contentQuery->getResultSet();
+
+            foreach ($result as $row) {
+                $count = $row['total'];
+            }
+
+        } catch (\Exception $e) {
+            throw $e;
+        }
+
+        return $count;
     }
 }
