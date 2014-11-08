@@ -3,7 +3,7 @@
 
 namespace Worker;
 
-use Model\User\MatchingModel;
+use Model\User\Matching\MatchingModel;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Message\AMQPMessage;
 use Psr\Log\LoggerAwareInterface;
