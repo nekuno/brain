@@ -270,6 +270,8 @@ class UserModel implements PaginatedInterface
                 $user['id'] = $row['user']->getProperty('qnoow_id');
                 $user['username'] = $row['content']->getProperty('username');
                 $user['email'] = $row['content']->getProperty('email');
+                $user['matching']['content'] = 0;
+                $user['matching']['questions'] = 0;
 
                 if (isset($row['match'])) {
                     $matchingByContent = $row['match']->getProperty('matching_content');
