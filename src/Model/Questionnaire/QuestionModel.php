@@ -45,16 +45,16 @@ class QuestionModel
             'userId' => (integer)$userId
         );
 
-        $template = "OPTIONAL MATCH (u:User)-[:ANSWERS]->(a:Answer)-[:IS_ANSWER_OF]->(q:Question)"
-            . " WHERE u.qnoow_id = {userId}"
-            . " WITH u, q"
-            . " OPTIONAL MATCH (u)-[:SKIPS]->(q1:Question), (:User)-[:REPORTS]->(q2:Question)"
-            . " WITH u AS user, collect(q) + collect(q1) + collect(q2) AS excluded"
+        $template = "MATCH (user:User)"
+            . " WHERE user.qnoow_id = {userId}"
+            . " OPTIONAL MATCH (u:User)-[:ANSWERS]->(a:Answer)-[:IS_ANSWER_OF]->(answered:Question)"
+            . " OPTIONAL MATCH (u)-[:SKIPS]->(skip:Question)"
+            . " OPTIONAL MATCH (:User)-[:REPORTS]->(report:Question)"
+            . " WITH user, collect(answered) + collect(skip) + collect(report) AS excluded"
             . " MATCH (q3:Question)<-[:IS_ANSWER_OF]-(a2:Answer)"
             . " WHERE NOT q3 IN excluded"
             . " WITH q3 AS next, collect(DISTINCT a2) AS nextAnswers"
-            . " OPTIONAL MATCH (u2:User)-[r:RATES]->(next)"
-            . " RETURN next, nextAnswers, sum(r.rating) AS nextRating";
+            . " RETURN next, nextAnswers ";
 
         if ($sortByRanking && $this->sortByRanking()) {
             $template .= " ORDER BY next.ranking DESC";
