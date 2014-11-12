@@ -125,7 +125,7 @@ class QuestionModel
 
         $template = "MATCH (u:User)"
             . " WHERE u.qnoow_id = {userId}"
-            . " CREATE (q:Question)<-[c:CREATED_BY]-(u)"
+            . " CREATE (q:Question)-[c:CREATED_BY]->(u)"
             . " SET q.text = {text}, q.timestamp = timestamp(), q.ranking = 0, c.timestamp = timestamp()"
             . " FOREACH (text in {answers}| CREATE (a:Answer {text: text})-[:IS_ANSWER_OF]->(q))"
             . " RETURN q;";
