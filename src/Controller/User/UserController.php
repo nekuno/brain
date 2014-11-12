@@ -22,10 +22,25 @@ class UserController
      */
     public function indexAction(Request $request, Application $app)
     {
+        $filters = array();
+
+        $referenceUserId = $request->get('referenceUserId');
+        if (null != $referenceUserId) {
+            $filters['referenceUserId'] = $referenceUserId;
+        }
+
+        $profile = $request->get('profile');
+        if (null != $profile) {
+            $filters['profile'] = $profile;
+        }
+
+        /** @var $paginator \Paginator\Paginator */
+        $paginator = $app['paginator'];
+
+        $model = $app['users.model'];
 
         try {
-            $model = $app['users.model'];
-            $result = $model->getAll();
+            $result = $paginator->paginate($filters, $model, $request);
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;
@@ -34,7 +49,7 @@ class UserController
             return $app->json(array(), 500);
         }
 
-        return $app->json($result, 200);
+        return $app->json($result, !empty($result) ? 201 : 200);
     }
 
     /**

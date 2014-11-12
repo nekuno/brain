@@ -5,6 +5,16 @@ $app['users.model'] = function ($app) {
     return new \Model\UserModel($app['neo4j.client']);
 };
 
+$app['users.profile.model'] = function ($app) {
+
+    return new \Model\User\ProfileModel($app['neo4j.client']);
+};
+
+$app['users.profile.tag.model'] = function ($app) {
+
+    return new \Model\User\ProfileTagModel($app['neo4j.client']);
+};
+
 $app['users.answers.model'] = function ($app) {
 
     return new \Model\User\AnswerModel($app['neo4j.client']);
