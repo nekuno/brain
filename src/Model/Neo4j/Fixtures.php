@@ -28,6 +28,10 @@ class Fixtures
      */
     protected $client;
 
+    private $users = array();
+
+    private $questions = array();
+
     /**
      * @param \Everyman\Neo4j\Client $client
      */
@@ -127,10 +131,105 @@ class Fixtures
         //Questions
         for ($i = 1; $i <= self::NUM_OF_QUESTIONS; $i++) {
             $userId = rand(1, self::NUM_OF_USERS);
-            $numOfAnswers = rand(2, 5);
+            $numOfAnswers = 3;
             $text = 'Question ' . $i;
             $this->loadQuestions($text, $numOfAnswers, $userId); //4 questions, 3 answers each
         }
+
+        /**
+         * User 3, answer to StoredQuestion 1 with Answer 1 and accepts as others answer [1,2]
+         */
+        $userId = 4;
+        $storedQuestionsIndex = 0;
+        $rating = 1;
+        $questionId = $this->questions[$storedQuestionsIndex]['id'];
+        $answerId = $this->questions[$storedQuestionsIndex]['answers'][0];
+        $acceptsIds = array(
+            $this->questions[$storedQuestionsIndex]['answers'][0],
+        );
+        $this->userAnswerQuestion($userId, $questionId, $answerId, $acceptsIds, $rating);
+
+        $userId = 4;
+        $storedQuestionsIndex = 1;
+        $rating = 1;
+        $questionId = $this->questions[$storedQuestionsIndex]['id'];
+        $answerId = $this->questions[$storedQuestionsIndex]['answers'][0];
+        $acceptsIds = array(
+            $this->questions[$storedQuestionsIndex]['answers'][1]
+        );
+        $this->userAnswerQuestion($userId, $questionId, $answerId, $acceptsIds, $rating);
+
+        $userId = 5;
+        $storedQuestionsIndex = 1;
+        $rating = 1;
+        $questionId = $this->questions[$storedQuestionsIndex]['id'];
+        $answerId = $this->questions[$storedQuestionsIndex]['answers'][0];
+        $acceptsIds = array(
+            $this->questions[$storedQuestionsIndex]['answers'][0],
+        );
+        $this->userAnswerQuestion($userId, $questionId, $answerId, $acceptsIds, $rating);
+
+        $userId = 5;
+        $storedQuestionsIndex = 3;
+        $rating = 1;
+        $questionId = $this->questions[$storedQuestionsIndex]['id'];
+        $answerId = $this->questions[$storedQuestionsIndex]['answers'][1];
+        $acceptsIds = array(
+            $this->questions[$storedQuestionsIndex]['answers'][1],
+        );
+        $this->userAnswerQuestion($userId, $questionId, $answerId, $acceptsIds, $rating);
+
+        $userId = 6;
+        $storedQuestionsIndex = 1;
+        $rating = 1;
+        $questionId = $this->questions[$storedQuestionsIndex]['id'];
+        $answerId = $this->questions[$storedQuestionsIndex]['answers'][0];
+        $acceptsIds = array(
+            $this->questions[$storedQuestionsIndex]['answers'][1],
+        );
+        $this->userAnswerQuestion($userId, $questionId, $answerId, $acceptsIds, $rating);
+
+        $userId = 6;
+        $storedQuestionsIndex = 2;
+        $rating = 3;
+        $questionId = $this->questions[$storedQuestionsIndex]['id'];
+        $answerId = $this->questions[$storedQuestionsIndex]['answers'][1];
+        $acceptsIds = array(
+            $this->questions[$storedQuestionsIndex]['answers'][1],
+            $this->questions[$storedQuestionsIndex]['answers'][2],
+        );
+        $this->userAnswerQuestion($userId, $questionId, $answerId, $acceptsIds, $rating);
+
+        $userId = 7;
+        $storedQuestionsIndex = 1;
+        $rating = 3;
+        $questionId = $this->questions[$storedQuestionsIndex]['id'];
+        $answerId = $this->questions[$storedQuestionsIndex]['answers'][1];
+        $acceptsIds = array(
+            $this->questions[$storedQuestionsIndex]['answers'][0],
+        );
+        $this->userAnswerQuestion($userId, $questionId, $answerId, $acceptsIds, $rating);
+
+        $userId = 7;
+        $storedQuestionsIndex = 2;
+        $rating = 3;
+        $questionId = $this->questions[$storedQuestionsIndex]['id'];
+        $answerId = $this->questions[$storedQuestionsIndex]['answers'][1];
+        $acceptsIds = array(
+            $this->questions[$storedQuestionsIndex]['answers'][0],
+            $this->questions[$storedQuestionsIndex]['answers'][1],
+        );
+        $this->userAnswerQuestion($userId, $questionId, $answerId, $acceptsIds, $rating);
+
+        $userId = 7;
+        $storedQuestionsIndex = 3;
+        $rating = 1;
+        $questionId = $this->questions[$storedQuestionsIndex]['id'];
+        $answerId = $this->questions[$storedQuestionsIndex]['answers'][1];
+        $acceptsIds = array(
+            $this->questions[$storedQuestionsIndex]['answers'][1],
+        );
+        $this->userAnswerQuestion($userId, $questionId, $answerId, $acceptsIds, $rating);
     }
 
     /**
@@ -364,8 +463,10 @@ class Fixtures
             . " WHERE u.qnoow_id = {userId}"
             . " CREATE (q:Question)-[c:CREATED_BY]->(u)"
             . " SET q.text = {text}, q.timestamp = timestamp(), q.ranking = 0, c.timestamp = timestamp()"
-            . " FOREACH (text in {answers}| CREATE (a:Answer {text: text})-[:IS_ANSWER_OF]->(q))"
-            . " RETURN q;";
+            . " FOREACH (text in {answers}| CREATE (:Answer {text: text})-[:IS_ANSWER_OF]->(q))"
+            . " WITH q"
+            . " MATCH (q)<-[:IS_ANSWER_OF]-(a:Answer)"
+            . " RETURN q AS question, collect(a) AS answers;";
 
         $query = new Query(
             $this->client,
@@ -373,8 +474,64 @@ class Fixtures
             $data
         );
 
-        $query->getResultSet();
+        $result = $query->getResultSet();
+
+        foreach ($result as $row) {
+            $question = array();
+            $question['createdBy'] = $data['userId'];
+            $question['id'] = $row['question']->getId();
+            foreach ($row['answers'] as $answer) {
+                $question['answers'][] = $answer->getId();
+            }
+            $this->questions[] = $question;
+        }
 
         return $this;
     }
+
+    /**
+     * @param $userId
+     * @param $questionId
+     * @param $answerId
+     * @param array $acceptsIds
+     * @param $rating
+     * @return \Everyman\Neo4j\Query\ResultSet
+     */
+    private function userAnswerQuestion($userId, $questionId, $answerId, array $acceptsIds, $rating)
+    {
+
+        $data = array(
+            'userId' => (integer)$userId,
+            'questionId' => (integer)$questionId,
+            'answerId' => (integer)$answerId,
+            'acceptedAnswers' => $acceptsIds,
+            'rating' => $rating,
+            'explanation' => '',
+            'isPrivate' => false,
+        );
+
+        $template = "MATCH (user:User), (question:Question), (answer:Answer)"
+            . " WHERE user.qnoow_id = {userId} AND id(question) = {questionId} AND id(answer) = {answerId}"
+            . " CREATE UNIQUE (user)-[a:ANSWERS]->(answer)"
+            . ", (user)-[r:RATES]->(question)"
+            . " SET r.rating = {rating}, a.private = {isPrivate}"
+            . ", a.answeredAt = timestamp(), a.explanation = {explanation}"
+            . " WITH user, question, answer"
+            . " OPTIONAL MATCH (pa:Answer)-[:IS_ANSWER_OF]->(question)"
+            . " WHERE id(pa) IN {acceptedAnswers}"
+            . " CREATE UNIQUE (user)-[:ACCEPTS]->(pa)"
+            . " RETURN answer";
+
+        $template .= ";";
+
+        //Create the Neo4j query object
+        $query = new Query(
+            $this->client,
+            $template,
+            $data
+        );
+
+        return $query->getResultSet();
+    }
+
 }
