@@ -206,11 +206,10 @@ class MatchingModel
 
             foreach ($result as $match) {
                 if ($match['m']) {
-                    $currentTimeInMillis = time() * 1000;
                     $matching['matching_content'] = $match['m']->getProperty('matching_content') ? : 0;
-                    $matching['timestamp_content'] = $match['m']->getProperty('timestamp_content') ? : $currentTimeInMillis;
+                    $matching['timestamp_content'] = $match['m']->getProperty('timestamp_content') ? : 0;
                     $matching['matching_questions'] = $match['m']->getProperty('matching_questions') ? : 0;
-                    $matching['timestamp_questions'] = $match['m']->getProperty('timestamp_questions') ? : $currentTimeInMillis;
+                    $matching['timestamp_questions'] = $match['m']->getProperty('timestamp_questions') ? : 0;
                 }
             }
 
@@ -478,9 +477,9 @@ class MatchingModel
 
         //State the value of the variables in the query string
         $queryDataArray = array(
-            'id1' => $id1,
-            'id2' => $id2,
-            'matching' => $matching
+            'id1' => (integer)$id1,
+            'id2' => (integer)$id2,
+            'matching' => (float)$matching
         );
 
         //Construct query
@@ -591,7 +590,7 @@ class MatchingModel
 
         //Get the wanted results
         foreach($result as $row){
-            $normalX = $row['numOfCommonAnswers'];
+            $normalX = $row['numOfCommonContent'];
         }
 
         //Calculate the matching
@@ -622,9 +621,9 @@ class MatchingModel
 
         //State the value of the variables in the query string
         $queryDataArray = array(
-            'id1' => $id1,
-            'id2' => $id2,
-            'matching' => $matching
+            'id1' => (integer)$id1,
+            'id2' => (integer)$id2,
+            'matching' => (float)$matching
         );
 
         //Construct query
