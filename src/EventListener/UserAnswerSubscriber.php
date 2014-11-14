@@ -49,7 +49,7 @@ class UserAnswerSubscriber implements EventSubscriberInterface
     /**
      * @param AnswerEvent $event
      */
-    private function onUserAnswer(AnswerEvent $event)
+    public function onUserAnswer(AnswerEvent $event)
     {
 
         $data = array(
