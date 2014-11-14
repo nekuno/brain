@@ -66,4 +66,9 @@ final class AppEvents
      * Fired when user rated content
      */
     const USER_DATA_CONTENT_RATED = 'user.data.content.added';
+
+    /**
+     * Fired when user answer an question
+     */
+    const USER_ANSWER_QUESTION = 'user.answer.added';
 }

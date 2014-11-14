@@ -2,6 +2,7 @@
 
 use ApiConsumer\EventListener\OAuthTokenSubscriber;
 use Dflydev\Silex\Provider\DoctrineOrm\DoctrineOrmServiceProvider;
+use EventListener\UserAnswerSubscriber;
 use EventListener\UserDataStatusSubscriber;
 use Provider\AMQPServiceProvider;
 use Provider\ApiConsumerServiceProvider;
@@ -63,5 +64,8 @@ $dispatcher->addSubscriber($tokenRefreshedSubscriber);
 
 $statusSubscriber = new UserDataStatusSubscriber($app['orm.ems']['mysql_brain'], $app['amqp']);
 $dispatcher->addSubscriber($statusSubscriber);
+
+$answerSubscriber = new UserAnswerSubscriber($app['amqp']);
+$dispatcher->addSubscriber($answerSubscriber);
 
 return $app;
