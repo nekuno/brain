@@ -122,7 +122,7 @@ class QuestionController
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      * @throws \Exception
      */
-    public function postQuestionsAction(Request $request, Application $app)
+    public function postQuestionAction(Request $request, Application $app)
     {
 
         $data = $request->request->all();
