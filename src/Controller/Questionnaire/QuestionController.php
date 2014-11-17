@@ -6,6 +6,10 @@ use Model\Questionnaire\QuestionModel;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 
+/**
+ * Class QuestionController
+ * @package Controller\Questionnaire
+ */
 class QuestionController
 {
 
@@ -15,7 +19,7 @@ class QuestionController
      * @param Application $app
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      */
-    public function nextAction(Request $request, Application $app)
+    public function getNextQuestionAction(Request $request, Application $app)
     {
 
         $userId = $request->query->get('userId');
@@ -51,7 +55,7 @@ class QuestionController
      * @param Application $app
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      */
-    public function indexAction(Request $request, Application $app)
+    public function getQuestionsAction(Request $request, Application $app)
     {
 
         $limit = $request->query->get('limit');
@@ -85,7 +89,7 @@ class QuestionController
      * @param Application $app
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      */
-    public function getAction(Request $request, Application $app)
+    public function getQuestionAction(Request $request, Application $app)
     {
 
         $questionId = $request->get('id');
@@ -118,12 +122,12 @@ class QuestionController
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      * @throws \Exception
      */
-    public function createAction(Request $request, Application $app)
+    public function postQuestionsAction(Request $request, Application $app)
     {
 
         $data = $request->request->all();
 
-        if (false === $this->isValidDataForCreateQuestion($data)) {
+        if (false === $this->validateQuestion($data)) {
             return $app->json(array('Bad data passed'), 400);
         }
 
@@ -149,7 +153,7 @@ class QuestionController
      * @param array $data
      * @return bool
      */
-    private function isValidDataForCreateQuestion(array $data)
+    private function validateQuestion(array $data)
     {
 
         if (empty($data)) {

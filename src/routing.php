@@ -40,10 +40,10 @@ $app->get('/users/{id}/status', 'users.controller:statusAction');
 /**
  * Questionnaire routes
  */
-$app->get('/questionnaire/questions/next', 'questionnaire.questions.controller:nextAction');
-$app->post('/questionnaire/questions', 'questionnaire.questions.controller:createAction');
-$app->get('/questionnaire/questions', 'questionnaire.questions.controller:indexAction')->value('limit', 20);
-$app->get('/questionnaire/questions/{id}', 'questionnaire.questions.controller:getAction');
+$app->get('/questionnaire/questions/next', 'questionnaire.questions.controller:getNextQuestionAction');
+$app->post('/questionnaire/questions', 'questionnaire.questions.controller:postQuestionsAction');
+$app->get('/questionnaire/questions', 'questionnaire.questions.controller:getQuestionsAction')->value('limit', 20);
+$app->get('/questionnaire/questions/{id}', 'questionnaire.questions.controller:getQuestionAction');
 $app->post('/questionnaire/questions/{id}', 'questionnaire.questions.controller:updateAction');
 $app->post('/questionnaire/questions/{id}/skip', 'questionnaire.questions.controller:skipAction');
 $app->post('/questionnaire/questions/{id}/report', 'questionnaire.questions.controller:reportAction');
