@@ -334,6 +334,10 @@ class QuestionModel
 
     }
 
+    /**
+     * @param $questionId
+     * @return bool
+     */
     public function existsQuestion($questionId)
     {
 
