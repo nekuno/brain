@@ -128,7 +128,7 @@ class QuestionController
         $data = $request->request->all();
 
         if (false === $this->validateQuestion($data)) {
-            return $app->json(array('Bad data passed'), 400);
+            return $app->json(array('error' => 'Invalid question data passed'), 400);
         }
 
         try {
@@ -187,11 +187,7 @@ class QuestionController
             $model = $app['questionnaire.questions.model'];
             $model->skip($data);
         } catch (\Exception $e) {
-            if ($app['env'] == 'dev') {
-                throw $e;
-            }
-
-            return $app->json(array(), 500);
+            return $app->json(array('error' => 'Error skipping question'), 500);
         }
 
         return $app->json(array('Question skipped successfully'), 200);
@@ -213,11 +209,7 @@ class QuestionController
             $model = $app['questionnaire.questions.model'];
             $model->report($data);
         } catch (\Exception $e) {
-            if ($app['env'] == 'dev') {
-                throw $e;
-            }
-
-            return $app->json(array(), 500);
+            return $app->json(array('error' => 'Error reporting question'), 500);
         }
 
         return $app->json(array('Question reported successfully'), 200);
@@ -256,17 +248,13 @@ class QuestionController
             }
 
             if (empty($stats)) {
-                return $app->json('Not question found with that ID', 404);
+                return $app->json(array('error' =>'Not question found with that ID'), 404);
             }
 
             return $app->json($stats, 200);
 
         } catch (\Exception $e) {
-            if ($app['env'] == 'dev') {
-                throw $e;
-            }
-
-            return $app->json(array(), 500);
+            return $app->json(array('error' => 'Error retrieving stats'), 500);
         }
 
     }
