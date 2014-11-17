@@ -27,7 +27,7 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
 
     /**
      * @param \Everyman\Neo4j\Client $client
-     * @param \Model\User\MatchingModel $matchingModel
+     * @param \Model\User\Matching\MatchingModel $matchingModel
      */
     public function __construct(Client $client, MatchingModel $matchingModel)
     {
@@ -164,9 +164,6 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
                     $content['embed']['id'] = $row['content']->getProperty('embed_id');
                 }
                 $match = $row['match'];
-                if ($preferredMatching == MatchingModel::PREFERRED_MATCHING_CONTENT) {
-                    $match = $this->matchingModel->applyMatchingBasedOnContentCorrectionFactor($match);
-                }
                 $commonTagsCount = (int)$row['commonTagsCount'];
                 $commonTagsMatch = 0;
                 if ($commonTagsCount > 0) {

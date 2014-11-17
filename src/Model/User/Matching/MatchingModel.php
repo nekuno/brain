@@ -99,7 +99,7 @@ class MatchingModel
 
             $matching = $rawMatching['matching_content'] ? $rawMatching['matching_content'] : 0;
 
-            $response['matching'] = $this->applyMatchingBasedOnContentCorrectionFactor($matching);
+            $response['matching'] = $matching;
         }
 
         return $response;
@@ -239,23 +239,6 @@ class MatchingModel
         }
 
         return false;
-    }
-
-    /**
-     * @param $matching
-     * @return int
-     * @throws \Exception
-     */
-    public function applyMatchingBasedOnContentCorrectionFactor($matching)
-    {
-
-        if ($matching != 0) {
-            $maxMatching = $this->getMaxMatchingBasedOnContent();
-
-            $matching /= $maxMatching;
-        }
-
-        return $matching;
     }
 
     /**
