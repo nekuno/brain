@@ -122,7 +122,7 @@ class UserRecommendationModel
 
         $response = array();
         foreach ($topUsersResult as $row) {
-            $matching = $this->matchingModel->applyMatchingBasedOnContentCorrectionFactor($row['matchings_content']);
+            $matching = $row['matchings_content'];
             $user = array(
                 'id' => $row['ids'],
                 'matching' => $matching,
