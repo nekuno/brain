@@ -182,9 +182,14 @@ class QuestionController
 
         $data = $request->request->all();
 
+        /** @var QuestionModel $model */
+        $model = $app['questionnaire.questions.model'];
+
+        if (!$model->existsQuestion($data['questionId'])) {
+            return $app->json(array('error' => "Given question doesn't exists"), 404);
+        }
+
         try {
-            /** @var QuestionModel $model */
-            $model = $app['questionnaire.questions.model'];
             $model->skip($data);
         } catch (\Exception $e) {
             return $app->json(array('error' => 'Error skipping question'), 500);
@@ -204,9 +209,14 @@ class QuestionController
 
         $data = $request->request->all();
 
+        /** @var QuestionModel $model */
+        $model = $app['questionnaire.questions.model'];
+
+        if (!$model->existsQuestion($data['questionId'])) {
+            return $app->json(array('error' => "Given question doesn't exists"), 404);
+        }
+
         try {
-            /** @var QuestionModel $model */
-            $model = $app['questionnaire.questions.model'];
             $model->report($data);
         } catch (\Exception $e) {
             return $app->json(array('error' => 'Error reporting question'), 500);
@@ -226,10 +236,14 @@ class QuestionController
 
         $id = $request->get('id');
 
-        try {
-            /** @var QuestionModel $model */
-            $model = $app['questionnaire.questions.model'];
+        /** @var QuestionModel $model */
+        $model = $app['questionnaire.questions.model'];
 
+        if (!$model->existsQuestion($id)) {
+            return $app->json(array('error' => "Given question doesn't exists"), 404);
+        }
+
+        try {
             $stats = array();
 
             $result = $model->getQuestionStats($id);
@@ -245,10 +259,6 @@ class QuestionController
                 }
 
                 $stats[$id]['id'] = $id;
-            }
-
-            if (empty($stats)) {
-                return $app->json(array('error' =>'Not question found with that ID'), 404);
             }
 
             return $app->json($stats, 200);
