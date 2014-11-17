@@ -58,7 +58,7 @@ class QuestionController
     public function getQuestionsAction(Request $request, Application $app)
     {
 
-        $limit = $request->query->get('limit');
+        $limit = $request->query->get('limit', 20);
 
         /** @var QuestionModel $model */
         $model = $app['questionnaire.questions.model'];
@@ -160,9 +160,11 @@ class QuestionController
             return false;
         } elseif (!array_key_exists('text', $data) || !array_key_exists('answers', $data)) {
             return false;
+        } elseif ($data['text'] === null || $data['text'] == '') {
+            return false;
         } elseif (!is_array($data['answers'])) {
             return false;
-        } elseif (empty($data['answers'])) {
+        } elseif (empty($data['answers']) || count($data['answers']) < 2) {
             return false;
         }
 
