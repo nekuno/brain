@@ -22,7 +22,6 @@ class QuestionModel
         $data = array('limit' => (integer) $limit);
 
         $template = "MATCH (q:Question)<-[:IS_ANSWER_OF]-(a:Answer)"
-            . " WITH q, a"
             . " RETURN q AS question, collect(a) AS answers"
             . " ORDER BY question.ranking DESC"
             . " LIMIT {limit}"
