@@ -27,13 +27,18 @@ class AnswerController
 
         $data = $request->request->all();
 
-        if (null === $data || array() === $data) {
-            return $app->json(array(), 400);
+        /** @var AnswerModel $model */
+        $model = $app['users.answers.model'];
+
+        if ($data['userId'] != $request->get('userId')) {
+            return $app->json(array('errors' => 'User ids mismatch'), 400);
+        }
+
+        if (count($errors = $model->validate($data))) {
+            return $app->json(array('errors' => $errors), 400);
         }
 
         try {
-            /** @var AnswerModel $model */
-            $model = $app['users.answers.model'];
             $model->create($data);
 
             /** @var QuestionModel $questionModel */
@@ -68,12 +73,17 @@ class AnswerController
         $data = $request->request->all();
 
         if ($data['userId'] != $request->get('userId')) {
-            return $app->json('Invalid data', 400);
+            return $app->json(array('errors' => 'User mismatch'), 400);
+        }
+
+        /** @var AnswerModel $model */
+        $model = $app['users.answers.model'];
+
+        if (count($errors = $model->validate($data))) {
+            return $app->json(array('errors' => $errors), 400);
         }
 
         try {
-            /** @var AnswerModel $model */
-            $model = $app['users.answers.model'];
             $model->update($data);
 
             /** @var QuestionModel $questionModel */

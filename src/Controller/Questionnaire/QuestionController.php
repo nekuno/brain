@@ -6,6 +6,10 @@ use Model\Questionnaire\QuestionModel;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 
+/**
+ * Class QuestionController
+ * @package Controller\Questionnaire
+ */
 class QuestionController
 {
 
@@ -15,7 +19,7 @@ class QuestionController
      * @param Application $app
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      */
-    public function nextAction(Request $request, Application $app)
+    public function getNextQuestionAction(Request $request, Application $app)
     {
 
         $userId = $request->query->get('userId');
@@ -51,10 +55,10 @@ class QuestionController
      * @param Application $app
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      */
-    public function indexAction(Request $request, Application $app)
+    public function getQuestionsAction(Request $request, Application $app)
     {
 
-        $limit = $request->query->get('limit');
+        $limit = $request->query->get('limit', 20);
 
         /** @var QuestionModel $model */
         $model = $app['questionnaire.questions.model'];
@@ -85,7 +89,7 @@ class QuestionController
      * @param Application $app
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      */
-    public function getAction(Request $request, Application $app)
+    public function getQuestionAction(Request $request, Application $app)
     {
 
         $questionId = $request->get('id');
@@ -118,13 +122,13 @@ class QuestionController
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      * @throws \Exception
      */
-    public function createAction(Request $request, Application $app)
+    public function postQuestionAction(Request $request, Application $app)
     {
 
         $data = $request->request->all();
 
-        if (false === $this->isValidDataForCreateQuestion($data)) {
-            return $app->json(array('Bad data passed'), 400);
+        if (false === $this->validateQuestion($data)) {
+            return $app->json(array('error' => 'Invalid question data passed'), 400);
         }
 
         try {
@@ -149,16 +153,18 @@ class QuestionController
      * @param array $data
      * @return bool
      */
-    private function isValidDataForCreateQuestion(array $data)
+    private function validateQuestion(array $data)
     {
 
         if (empty($data)) {
             return false;
         } elseif (!array_key_exists('text', $data) || !array_key_exists('answers', $data)) {
             return false;
+        } elseif ($data['text'] === null || $data['text'] == '') {
+            return false;
         } elseif (!is_array($data['answers'])) {
             return false;
-        } elseif (empty($data['answers'])) {
+        } elseif (empty($data['answers']) || count($data['answers']) < 2) {
             return false;
         }
 
@@ -176,16 +182,17 @@ class QuestionController
 
         $data = $request->request->all();
 
+        /** @var QuestionModel $model */
+        $model = $app['questionnaire.questions.model'];
+
+        if (!$model->existsQuestion($data['questionId'])) {
+            return $app->json(array('error' => "Given question doesn't exists"), 404);
+        }
+
         try {
-            /** @var QuestionModel $model */
-            $model = $app['questionnaire.questions.model'];
             $model->skip($data);
         } catch (\Exception $e) {
-            if ($app['env'] == 'dev') {
-                throw $e;
-            }
-
-            return $app->json(array(), 500);
+            return $app->json(array('error' => 'Error skipping question'), 500);
         }
 
         return $app->json(array('Question skipped successfully'), 200);
@@ -202,16 +209,17 @@ class QuestionController
 
         $data = $request->request->all();
 
+        /** @var QuestionModel $model */
+        $model = $app['questionnaire.questions.model'];
+
+        if (!$model->existsQuestion($data['questionId'])) {
+            return $app->json(array('error' => "Given question doesn't exists"), 404);
+        }
+
         try {
-            /** @var QuestionModel $model */
-            $model = $app['questionnaire.questions.model'];
             $model->report($data);
         } catch (\Exception $e) {
-            if ($app['env'] == 'dev') {
-                throw $e;
-            }
-
-            return $app->json(array(), 500);
+            return $app->json(array('error' => 'Error reporting question'), 500);
         }
 
         return $app->json(array('Question reported successfully'), 200);
@@ -228,10 +236,14 @@ class QuestionController
 
         $id = $request->get('id');
 
-        try {
-            /** @var QuestionModel $model */
-            $model = $app['questionnaire.questions.model'];
+        /** @var QuestionModel $model */
+        $model = $app['questionnaire.questions.model'];
 
+        if (!$model->existsQuestion($id)) {
+            return $app->json(array('error' => "Given question doesn't exists"), 404);
+        }
+
+        try {
             $stats = array();
 
             $result = $model->getQuestionStats($id);
@@ -249,18 +261,10 @@ class QuestionController
                 $stats[$id]['id'] = $id;
             }
 
-            if (empty($stats)) {
-                return $app->json('Not question found with that ID', 404);
-            }
-
             return $app->json($stats, 200);
 
         } catch (\Exception $e) {
-            if ($app['env'] == 'dev') {
-                throw $e;
-            }
-
-            return $app->json(array(), 500);
+            return $app->json(array('error' => 'Error retrieving stats'), 500);
         }
 
     }

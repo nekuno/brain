@@ -5,6 +5,10 @@ namespace Model\User;
 use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
 
+/**
+ * Class AnswerModel
+ * @package Model\User
+ */
 class AnswerModel
 {
 
@@ -106,8 +110,8 @@ class AnswerModel
     public function update(array $data)
     {
 
-        $data['userId'] = (integer) $data['userId'];
-        $data['questionId'] = (integer) $data['questionId'];
+        $data['userId'] = (integer)$data['userId'];
+        $data['questionId'] = (integer)$data['questionId'];
 
         $template = "MATCH (u:User)-[r1:ANSWERS]->(a1:Answer)-[:IS_ANSWER_OF]->(q:Question)"
             . ", (u)-[r2:ACCEPTS]->(a2:Answer)-[:IS_ANSWER_OF]->(q)"
@@ -145,8 +149,8 @@ class AnswerModel
     public function explain(array $data)
     {
 
-        $data['userId'] = (integer) $data['userId'];
-        $data['questionId'] = (integer) $data['questionId'];
+        $data['userId'] = (integer)$data['userId'];
+        $data['questionId'] = (integer)$data['questionId'];
 
         $template = "MATCH"
             . " (user:User)-[r:ANSWERS]->(answer:Answer)-[:IS_ANSWER_OF]->(question:Question)"
@@ -160,10 +164,14 @@ class AnswerModel
 
     }
 
+    /**
+     * @param $userId
+     * @return \Everyman\Neo4j\Query\ResultSet
+     */
     public function getUserAnswers($userId)
     {
 
-        $data['userId'] = (integer) $userId;
+        $data['userId'] = (integer)$userId;
 
         $template = "MATCH (a:Answer)<-[ua:ANSWERS]-(u:User), (a)-[:IS_ANSWER_OF]-(q:Question)"
             . " WITH u, a, q, ua"
@@ -171,26 +179,222 @@ class AnswerModel
             . " OPTIONAL MATCH (a2:Answer)-[:IS_ANSWER_OF]->(q)"
             . " WITH u AS user, a AS answer, ua.answeredAt AS answeredAt, ua.explanation AS explanation, q AS question, collect(a2) AS answers"
             . " RETURN user, answer, answeredAt, explanation, question, answers"
-            . " ORDER BY answeredAt DESC;"
-        ;
+            . " ORDER BY answeredAt DESC;";
 
         $query = new Query($this->client, $template, $data);
 
         return $query->getResultSet();
     }
 
+    /**
+     * @param $userId
+     * @return \Everyman\Neo4j\Query\ResultSet
+     */
     public function getNumberOfUserAnswers($userId)
     {
 
-        $data['userId'] = (integer) $userId;
+        $data['userId'] = (integer)$userId;
 
         $template = "MATCH (a:Answer)<-[ua:ANSWERS]-(u:User)"
             . " WHERE u.qnoow_id = {userId}"
-            . " RETURN count(ua) AS nOfAnswers;"
-        ;
+            . " RETURN count(ua) AS nOfAnswers;";
 
         $query = new Query($this->client, $template, $data);
 
         return $query->getResultSet();
+    }
+
+    /**
+     * @param $data
+     * @return array
+     */
+    public function validate($data)
+    {
+
+        $errors = array();
+
+        foreach ($this->getFieldsMetadata() as $fieldName => $fieldMetadata) {
+            if ($fieldMetadata['required'] === true && !array_key_exists($fieldName, $data)) {
+                $errors[] = 'The field ' . $fieldName . ' is required';
+            }
+        }
+
+        if (count($errors)) {
+            return $errors;
+        }
+
+        foreach ($this->getFieldsMetadata() as $fieldName => $fieldMetadata) {
+
+            switch ($fieldName) {
+                case 'answerId':
+                    if (!$this->existsAnswer($data['questionId'], $data['answerId'])) {
+                        $errors[] = 'Invalid answer ID';
+                    }
+                    break;
+                case 'acceptedAnswers':
+                    $acceptedAnswersNum = count($data[$fieldName]);
+                    if ($acceptedAnswersNum === 0) {
+                        $errors[] = '1 accepted answers is needed at least';
+                    } else {
+                        foreach ($data[$fieldName] as $acceptedAnswer) {
+                            if (!$this->existsAnswer($data['questionId'], $acceptedAnswer)) {
+                                $errors[] = 'Invalid accepted answer ID';
+                            }
+                        }
+                    }
+
+                    break;
+                case 'rating':
+                    if (!in_array($data[$fieldName], range($fieldMetadata['min'], $fieldMetadata['max']))) {
+                        $errors[] = 'Invalid importance value. Should be between both 0 and 3 included';
+                    }
+                    break;
+                case 'isPrivate':
+                    break;
+                case 'explanation':
+                    break;
+                case 'userId':
+                    if (!$this->existsUser($data[$fieldName])) {
+                        $errors[] = 'Invalid user ID';
+                    }
+                    break;
+                case 'questionId':
+                    if (!$this->existsQuestion($data[$fieldName])) {
+                        $errors[] = 'Invalid question ID';
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        // has one answer at least
+        // has one accepted answer at least
+        // has importance set
+
+        return $errors;
+    }
+
+    /**
+     * @return array
+     */
+    public function getFieldsMetadata()
+    {
+
+        $metadata = array(
+            'answerId' => array(
+                'type' => 'id',
+                'required' => true,
+            ),
+            'acceptedAnswers' => array(
+                'type' => 'checkbox',
+                'required' => true,
+                'multiple' => true
+            ),
+            'isPrivate' => array(
+                'type' => 'checkbox',
+                'required' => false,
+                'multiple' => false
+            ),
+            'rating' => array(
+                'type' => 'range',
+                'step' => 1,
+                'required' => true,
+                'min' => 0,
+                'max' => 3,
+            ),
+            'explanation' => array(
+                'type' => 'text',
+                'required' => false
+            ),
+            'userId' => array(
+                'type' => 'id',
+                'required' => true
+            ),
+            'questionId' => array(
+                'type' => 'id',
+                'required' => true
+            ),
+        );
+
+        return $metadata;
+    }
+
+    /**
+     * @param $questionId
+     * @param $answerId
+     * @return bool
+     */
+    public function existsAnswer($questionId, $answerId)
+    {
+
+        $data = array(
+            'questionId' => (integer)$questionId,
+            'answerId' => (integer)$answerId,
+        );
+
+        $template = "MATCH (q:Question)<-[:IS_ANSWER_OF]-(a:Answer)"
+            . " WHERE id(q) = {questionId} AND id(a) = {answerId}"
+            . " RETURN a AS answer";
+
+        $query = new Query($this->client, $template, $data);
+
+        $result = $query->getResultSet();
+
+        foreach ($result as $row) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @param $userId
+     * @return bool
+     */
+    public function existsUser($userId)
+    {
+
+        $data = array(
+            'userId' => (integer)$userId,
+        );
+
+        $template = "MATCH (u:User)"
+            . " WHERE u.qnoow_id = {userId}"
+            . " RETURN u AS user";
+
+        $query = new Query($this->client, $template, $data);
+
+        $result = $query->getResultSet();
+
+        foreach ($result as $row) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @param $questionId
+     * @return bool
+     */
+    public function existsQuestion($questionId)
+    {
+
+        $data = array(
+            'questionId' => (integer)$questionId,
+        );
+
+        $template = "MATCH (q:Question) WHERE id(q) = {questionId} RETURN q AS Question";
+
+        $query = new Query($this->client, $template, $data);
+
+        $result = $query->getResultSet();
+
+        foreach ($result as $row) {
+            return true;
+        }
+
+        return false;
     }
 }
