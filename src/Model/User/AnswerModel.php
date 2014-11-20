@@ -86,7 +86,7 @@ class AnswerModel
             . " SET r.rating = {rating}, a.private = {isPrivate}"
             . ", a.answeredAt = timestamp(), a.explanation = {explanation}"
             . " WITH user, question, answer"
-            . " OPTIONAL MATCH (pa:Answer)-[:IS_ANSWER_OF]->(question)"
+            . " MATCH (pa:Answer)-[:IS_ANSWER_OF]->(question)"
             . " WHERE id(pa) IN {acceptedAnswers}"
             . " CREATE UNIQUE (user)-[:ACCEPTS]->(pa)"
             . " RETURN answer";
@@ -198,6 +198,29 @@ class AnswerModel
         $template = "MATCH (a:Answer)<-[ua:ANSWERS]-(u:User)"
             . " WHERE u.qnoow_id = {userId}"
             . " RETURN count(ua) AS nOfAnswers;";
+
+        $query = new Query($this->client, $template, $data);
+
+        return $query->getResultSet();
+    }
+
+    public function getUserAnswer($userId, $questionId)
+    {
+
+        $data['userId'] = (integer)$userId;
+        $data['questionId'] = (integer)$questionId;
+
+        $template = "MATCH (q:Question), (u:User)"
+            . " WHERE u.qnoow_id = {userId} AND id(q) = {questionId}"
+            . " WITH u, q"
+            . " MATCH (u)-[ua:ANSWERS]->(a:Answer)-[:IS_ANSWER_OF]->(q)"
+            . " WITH u, a, q, ua"
+            . " MATCH (a1:Answer)-[:IS_ANSWER_OF]->(q), "
+            . " (u)-[:ACCEPTS]->(a2:Answer)-[:IS_ANSWER_OF]->(q)"
+            . " WITH u AS user, a AS answer, collect(DISTINCT a2) AS accepts, ua AS userAnswer,"
+            . " q AS question, collect(DISTINCT a1) AS answers"
+            . " RETURN user, answer, userAnswer, accepts, question, answers"
+            . " LIMIT 1;";
 
         $query = new Query($this->client, $template, $data);
 

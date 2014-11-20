@@ -201,7 +201,55 @@ class AnswerController
                 throw $e;
             }
 
-            return $app->json(array($e->getMessage()), 500);
+            return $app->json(array('error' => 'An error ocurred'), 500);
+        }
+    }
+
+    public function getAnswerAction(Request $request, Application $app)
+    {
+
+        $userId = $request->get('userId');
+        $questionId = $request->get('questionId');
+
+        try {
+            /** @var AnswerModel $model */
+            $model = $app['users.answers.model'];
+
+            $result = $model->getUserAnswer($userId, $questionId);
+
+            $data = array();
+
+            foreach ($result as $row) {
+                $data['question']['id'] = $row['question']->getId();
+                $data['question']['text'] = $row['question']->getProperty('text');
+                foreach ($row['answers'] as $answer) {
+                    $data['question']['answers'][] = array(
+                        'id' => $answer->getId(),
+                        'text' => $answer->getProperty('text'),
+                    );
+                }
+
+                $data['answer']['answerId'] = $row['answer']->getId();
+                $data['answer']['explanation'] = $row['userAnswer']->getProperty('explanation');
+                $data['answer']['answeredAt'] = $row['userAnswer']->getProperty('answeredAt');
+                $data['answer']['isPrivate'] = $row['userAnswer']->getProperty('private');
+                foreach ($row['accepts'] as $acceptedAnswer) {
+                    $data['answer']['acceptedAnswers'][] = $acceptedAnswer->getId();
+                }
+            }
+
+            if (empty($data)) {
+                return $app->json(array('error' => 'The user has not answered to any question'), 404);
+            }
+
+            return $app->json($data, 200);
+
+        } catch (\Exception $e) {
+            if ($app['env'] == 'dev') {
+                throw $e;
+            }
+
+            return $app->json(array('error' => 'An error ocurred'), 500);
         }
     }
 }
