@@ -205,6 +205,12 @@ class AnswerController
         }
     }
 
+    /**
+     * @param Request $request
+     * @param Application $app
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @throws \Exception
+     */
     public function getAnswerAction(Request $request, Application $app)
     {
 
@@ -223,10 +229,7 @@ class AnswerController
                 $data['question']['id'] = $row['question']->getId();
                 $data['question']['text'] = $row['question']->getProperty('text');
                 foreach ($row['answers'] as $answer) {
-                    $data['question']['answers'][] = array(
-                        'id' => $answer->getId(),
-                        'text' => $answer->getProperty('text'),
-                    );
+                    $data['question']['answers'][$answer->getId()] = $answer->getProperty('text');
                 }
 
                 $data['answer']['answerId'] = $row['answer']->getId();
