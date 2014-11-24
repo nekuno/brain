@@ -10,16 +10,27 @@ namespace Model\Neo4j;
 
 use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
-use Exception\QueryErrorException;
 use Model\User\UserStatusModel;
 
+/**
+ * Class Fixtures
+ * @package Model\Neo4j
+ */
 class Fixtures
 {
+
+    const NUM_OF_USERS = 8;
+
+    const NUM_OF_QUESTIONS = 33;
 
     /**
      * @var \Everyman\Neo4j\Client
      */
     protected $client;
+
+    private $users = array();
+
+    private $questions = array();
 
     /**
      * @param \Everyman\Neo4j\Client $client
@@ -32,13 +43,13 @@ class Fixtures
 
     public function load()
     {
-        $this->loadUsers(8);//8 users
 
-        $this->loadContent(19); //Contents are Links. //19 Links
-        $this->loadTags(20);//20 tags
+        $this->loadUsers(self::NUM_OF_USERS);
 
-        //Content-tag relationships
-        $this->createLinkTagRelationship(1, 6);//Link 1 has tag 6
+        $this->loadContent(19);//Contents are Links.
+        $this->loadTags(20);
+
+        $this->createLinkTagRelationship(1, 6);
         $this->createLinkTagRelationship(1, 7);
 
         $this->createLinkTagRelationship(2, 8);
@@ -118,74 +129,125 @@ class Fixtures
         $this->createUserLikesLinkRelationship(6, 12);
 
         //Questions
-        $this->loadQuestionsWithAnswers(4, 3); //4 questions, 3 answers each
+        for ($i = 1; $i <= self::NUM_OF_QUESTIONS; $i++) {
+            $userId = rand(1, self::NUM_OF_USERS);
+            $numOfAnswers = 3;
+            $text = 'Question ' . $i;
+            $this->loadQuestions($text, $numOfAnswers, $userId); //4 questions, 3 answers each
+        }
 
-        //User-Answer-Question relationships
-        $this->createUserRatesRelationship(3, 1, 0);//User 3 rates question 1 with a 0
-        $this->createUserAnswersRelationship(3, 12);//Answer 2 of question 1
-        $this->createUserAcceptsRelationship(3, 11);//Answer 1 of question 1
-        $this->createUserAcceptsRelationship(3, 12);
-        $this->createUserAcceptsRelationship(3, 13);
+        /**
+         * User 3, answer to StoredQuestion 1 with Answer 1 and accepts as others answer [1,2]
+         */
+        $userId = 4;
+        $storedQuestionsIndex = 0;
+        $rating = 1;
+        $questionId = $this->questions[$storedQuestionsIndex]['id'];
+        $answerId = $this->questions[$storedQuestionsIndex]['answers'][0];
+        $acceptsIds = array(
+            $this->questions[$storedQuestionsIndex]['answers'][0],
+        );
+        $this->userAnswerQuestion($userId, $questionId, $answerId, $acceptsIds, $rating);
 
-        $this->createUserRatesRelationship(3, 4, 0);
-        $this->createUserAnswersRelationship(3, 41);
-        $this->createUserAcceptsRelationship(3, 41);
-        $this->createUserAcceptsRelationship(3, 42);
+        $userId = 4;
+        $storedQuestionsIndex = 1;
+        $rating = 1;
+        $questionId = $this->questions[$storedQuestionsIndex]['id'];
+        $answerId = $this->questions[$storedQuestionsIndex]['answers'][0];
+        $acceptsIds = array(
+            $this->questions[$storedQuestionsIndex]['answers'][1]
+        );
+        $this->userAnswerQuestion($userId, $questionId, $answerId, $acceptsIds, $rating);
 
-        $this->createUserRatesRelationship(4, 1, 1);
-        $this->createUserAnswersRelationship(4, 11);
-        $this->createUserAcceptsRelationship(4, 11);
+        $userId = 5;
+        $storedQuestionsIndex = 1;
+        $rating = 1;
+        $questionId = $this->questions[$storedQuestionsIndex]['id'];
+        $answerId = $this->questions[$storedQuestionsIndex]['answers'][0];
+        $acceptsIds = array(
+            $this->questions[$storedQuestionsIndex]['answers'][0],
+        );
+        $this->userAnswerQuestion($userId, $questionId, $answerId, $acceptsIds, $rating);
 
-        $this->createUserRatesRelationship(4, 2, 10);
-        $this->createUserAnswersRelationship(4, 21);
-        $this->createUserAcceptsRelationship(4, 22);
+        $userId = 5;
+        $storedQuestionsIndex = 3;
+        $rating = 1;
+        $questionId = $this->questions[$storedQuestionsIndex]['id'];
+        $answerId = $this->questions[$storedQuestionsIndex]['answers'][1];
+        $acceptsIds = array(
+            $this->questions[$storedQuestionsIndex]['answers'][1],
+        );
+        $this->userAnswerQuestion($userId, $questionId, $answerId, $acceptsIds, $rating);
 
-        $this->createUserRatesRelationship(5, 2, 10);
-        $this->createUserAnswersRelationship(5, 21);
-        $this->createUserAcceptsRelationship(5, 21);
+        $userId = 6;
+        $storedQuestionsIndex = 1;
+        $rating = 1;
+        $questionId = $this->questions[$storedQuestionsIndex]['id'];
+        $answerId = $this->questions[$storedQuestionsIndex]['answers'][0];
+        $acceptsIds = array(
+            $this->questions[$storedQuestionsIndex]['answers'][1],
+        );
+        $this->userAnswerQuestion($userId, $questionId, $answerId, $acceptsIds, $rating);
 
-        $this->createUserRatesRelationship(5, 4, 10);
-        $this->createUserAnswersRelationship(5, 42);
-        $this->createUserAcceptsRelationship(5, 42);
+        $userId = 6;
+        $storedQuestionsIndex = 2;
+        $rating = 3;
+        $questionId = $this->questions[$storedQuestionsIndex]['id'];
+        $answerId = $this->questions[$storedQuestionsIndex]['answers'][1];
+        $acceptsIds = array(
+            $this->questions[$storedQuestionsIndex]['answers'][1],
+            $this->questions[$storedQuestionsIndex]['answers'][2],
+        );
+        $this->userAnswerQuestion($userId, $questionId, $answerId, $acceptsIds, $rating);
 
-        $this->createUserRatesRelationship(6, 2, 1);
-        $this->createUserAnswersRelationship(6, 21);
-        $this->createUserAcceptsRelationship(6, 22);
+        $userId = 7;
+        $storedQuestionsIndex = 1;
+        $rating = 3;
+        $questionId = $this->questions[$storedQuestionsIndex]['id'];
+        $answerId = $this->questions[$storedQuestionsIndex]['answers'][1];
+        $acceptsIds = array(
+            $this->questions[$storedQuestionsIndex]['answers'][0],
+        );
+        $this->userAnswerQuestion($userId, $questionId, $answerId, $acceptsIds, $rating);
 
-        $this->createUserRatesRelationship(6, 3, 50);
-        $this->createUserAnswersRelationship(6, 32);
-        $this->createUserAcceptsRelationship(6, 32);
-        $this->createUserAcceptsRelationship(6, 33);
+        $userId = 7;
+        $storedQuestionsIndex = 2;
+        $rating = 3;
+        $questionId = $this->questions[$storedQuestionsIndex]['id'];
+        $answerId = $this->questions[$storedQuestionsIndex]['answers'][1];
+        $acceptsIds = array(
+            $this->questions[$storedQuestionsIndex]['answers'][0],
+            $this->questions[$storedQuestionsIndex]['answers'][1],
+        );
+        $this->userAnswerQuestion($userId, $questionId, $answerId, $acceptsIds, $rating);
 
-        $this->createUserRatesRelationship(7, 2, 50);
-        $this->createUserAnswersRelationship(7, 22);
-        $this->createUserAcceptsRelationship(7, 21);
-
-        $this->createUserRatesRelationship(7, 3, 50);
-        $this->createUserAnswersRelationship(7, 32);
-        $this->createUserAcceptsRelationship(7, 31);
-        $this->createUserAcceptsRelationship(7, 32);
-
-        $this->createUserRatesRelationship(7, 4, 1);
-        $this->createUserAnswersRelationship(7, 42);
-        $this->createUserAcceptsRelationship(7, 42);
+        $userId = 7;
+        $storedQuestionsIndex = 3;
+        $rating = 1;
+        $questionId = $this->questions[$storedQuestionsIndex]['id'];
+        $answerId = $this->questions[$storedQuestionsIndex]['answers'][1];
+        $acceptsIds = array(
+            $this->questions[$storedQuestionsIndex]['answers'][1],
+        );
+        $this->userAnswerQuestion($userId, $questionId, $answerId, $acceptsIds, $rating);
     }
 
+    /**
+     * @param $numberOfUsers
+     * @throws \Exception
+     */
     public function loadUsers($numberOfUsers)
     {
+
         $userToCheck = array();
         for ($i = 1; $i <= $numberOfUsers; $i++) {
             $userToCheck[] = $i;
         }
+
         $queryUserToCheck = implode(',', $userToCheck);
-        $existingUsersQuery =
-            "
-            MATCH
-            (u:User)
-            WHERE
-            u.qnoow_id IN [" . $queryUserToCheck . "]
-            RETURN
-            distinct u.qnoow_id;";
+        $existingUsersQuery = " MATCH (u:User)"
+            . " WHERE u.qnoow_id IN [" . $queryUserToCheck . "]"
+            . " RETURN distinct u.qnoow_id;";
 
         $neo4jQuery = new Query(
             $this->client,
@@ -202,14 +264,12 @@ class Fixtures
         $userQuery = array();
         for ($i = 1; $i <= $numberOfUsers; $i++) {
             if (!in_array($i, $existingUsers)) {
-                $userQuery[] =
-                    "CREATE (u:User {
-                        status: '" . UserStatusModel::USER_STATUS_INCOMPLETE . "',
-                        qnoow_id: " . $i . ",
-                        username: 'user" . $i . "',
-                        email: 'testuser" . $i . "@test.test'
-                    })
-                    RETURN u;";
+                $userQuery[] = "CREATE (u:User {"
+                    . " status: '" . UserStatusModel::USER_STATUS_INCOMPLETE . "',"
+                    . " qnoow_id: " . $i . ","
+                    . " username: 'user" . $i . "',"
+                    . " email: 'testuser" . $i . "@test.test' })"
+                    . " RETURN u;";
             }
         }
 
@@ -221,11 +281,9 @@ class Fixtures
             );
 
             try {
-                $result = $neo4jQuery->getResultSet();
+                $neo4jQuery->getResultSet();
             } catch (\Exception $e) {
                 throw $e;
-
-                return;
             }
         }
 
@@ -233,19 +291,21 @@ class Fixtures
 
     }
 
+    /**
+     * @param $numberOfContents
+     * @throws \Exception
+     */
     public function loadContent($numberOfContents)
     {
 
         //Create queries in loop
         $contentQuery = array();
         for ($i = 1; $i <= $numberOfContents; $i++) {
-            $contentQuery[] =
-                "CREATE (l:Content:Link {
-                url: 'testLink" . $i . "',
-                description: 'test description " . $i . "',
-                processed: 0
-            })
-            RETURN l;";
+            $contentQuery[] = "CREATE (l:Content:Link {"
+                . " url: 'testLink" . $i . "',"
+                . " description: 'test description " . $i . "',"
+                . " processed: 0 })"
+                . " RETURN l;";
         }
 
         //Execute queries in loop
@@ -256,11 +316,9 @@ class Fixtures
             );
 
             try {
-                $result = $neo4jQuery->getResultSet();
+                $neo4jQuery->getResultSet();
             } catch (\Exception $e) {
                 throw $e;
-
-                return;
             }
         }
 
@@ -268,17 +326,17 @@ class Fixtures
 
     }
 
+    /**
+     * @param $numberOfTags
+     * @throws \Exception
+     */
     public function loadTags($numberOfTags)
     {
 
         //Create queries in loop
         $tagQuery = array();
         for ($i = 1; $i <= $numberOfTags; $i++) {
-            $tagQuery[] =
-                "CREATE (t:Tag {
-                name: 'testTag" . $i . "'
-            })
-            RETURN t;";
+            $tagQuery[] = "CREATE (t:Tag { name: 'testTag" . $i . "' }) RETURN t;";
         }
 
         //Execute queries in loop
@@ -289,11 +347,9 @@ class Fixtures
             );
 
             try {
-                $result = $neo4jQuery->getResultSet();
+                $neo4jQuery->getResultSet();
             } catch (\Exception $e) {
                 throw $e;
-
-                return;
             }
         }
 
@@ -301,17 +357,17 @@ class Fixtures
 
     }
 
+    /**
+     * @param $link
+     * @param $tag
+     * @throws \Exception
+     */
     public function createLinkTagRelationship($link, $tag)
     {
-        $relationshipQuery =
-            "MATCH
-            (l:Link {url: 'testLink" . $link . "'}),
-            (t:Tag {name: 'testTag" . $tag . "'})
-        CREATE UNIQUE
-            (l)-[r:TAGGED]->(t)
-        RETURN
-            l, r, t
-        ;";
+
+        $relationshipQuery = "MATCH (l:Link {url: 'testLink" . $link . "'}), (t:Tag {name: 'testTag" . $tag . "'})"
+            . " CREATE UNIQUE (l)-[r:TAGGED]->(t)"
+            . " RETURN l, r, t ;";
 
         $neo4jQuery = new Query(
             $this->client,
@@ -319,28 +375,26 @@ class Fixtures
         );
 
         try {
-            $result = $neo4jQuery->getResultSet();
+            $neo4jQuery->getResultSet();
         } catch (\Exception $e) {
             throw $e;
-
-            return;
         }
 
         return;
 
     }
 
+    /**
+     * @param $user
+     * @param $link
+     * @throws \Exception
+     */
     public function createUserLikesLinkRelationship($user, $link)
     {
-        $relationshipQuery =
-            "MATCH
-            (l:Link {url: 'testLink" . $link . "'}),
-            (u:User {qnoow_id: " . $user . "})
-        CREATE UNIQUE
-            (l)<-[r:LIKES]-(u)
-        RETURN
-            l, r, u
-        ;";
+
+        $relationshipQuery = "MATCH (l:Link {url: 'testLink" . $link . "'}), (u:User {qnoow_id: " . $user . "})"
+            . " CREATE UNIQUE (l)<-[r:LIKES]-(u)"
+            . " RETURN l, r, u ;";
 
         $neo4jQuery = new Query(
             $this->client,
@@ -348,27 +402,25 @@ class Fixtures
         );
 
         try {
-            $result = $neo4jQuery->getResultSet();
+            $neo4jQuery->getResultSet();
         } catch (\Exception $e) {
             throw $e;
-
-            return;
         }
 
         return;
     }
 
+    /**
+     * @param $user
+     * @param $link
+     * @throws \Exception
+     */
     public function createUserDislikesLinkRelationship($user, $link)
     {
-        $relationshipQuery =
-            "MATCH
-            (l:Link {url: 'testLink" . $link . "'}),
-            (u:User {qnoow_id: " . $user . "})
-        CREATE UNIQUE
-            (l)<-[r:DISLIKES]-(u)
-        RETURN
-            l, r, u
-        ;";
+
+        $relationshipQuery = "MATCH (l:Link {url: 'testLink" . $link . "'}), (u:User {qnoow_id: " . $user . "})"
+            . " CREATE UNIQUE (l)<-[r:DISLIKES]-(u)"
+            . " RETURN l, r, u ;";
 
         $neo4jQuery = new Query(
             $this->client,
@@ -376,166 +428,110 @@ class Fixtures
         );
 
         try {
-            $result = $neo4jQuery->getResultSet();
+            $neo4jQuery->getResultSet();
         } catch (\Exception $e) {
             throw $e;
-
-            return;
         }
 
         return;
     }
 
-    public function loadQuestionsWithAnswers($numberOfQuestions, $numberOfAnswersPerQuestion)
+    /**
+     * @param $text
+     * @param $numOfAnswers
+     * @param int $userId
+     * @return $this
+     */
+    public function loadQuestions($text, $numOfAnswers, $userId = 1)
     {
-        $questionToCheck = array();
-        for ($i = 1; $i <= $numberOfQuestions; $i++) {
-            $questionToCheck[] = $i;
+
+        // Check if exists?
+
+        $answers = array();
+
+        for ($i = 1; $i <= $numOfAnswers; $i++) {
+            $answers[] = 'Answer ' . $i;
         }
-        $queryQuestionToCheck = implode(',', $questionToCheck);
-        $existingQuestionsQuery =
-            "
-            MATCH
-            (q:Question)
-            WHERE
-            id(q) IN [" . $queryQuestionToCheck . "]
-            RETURN
-            distinct id(q);";
 
-        $neo4jQuery = new Query(
-            $this->client,
-            $existingQuestionsQuery
+        $data = array(
+            'userId' => $userId,
+            'text' => $text,
+            'answers' => $answers
         );
-        $result = $neo4jQuery->getResultSet();
 
-        $existingQuestions = array();
+        $template = "MATCH (u:User)"
+            . " WHERE u.qnoow_id = {userId}"
+            . " CREATE (q:Question)-[c:CREATED_BY]->(u)"
+            . " SET q.text = {text}, q.timestamp = timestamp(), q.ranking = 0, c.timestamp = timestamp()"
+            . " FOREACH (text in {answers}| CREATE (:Answer {text: text})-[:IS_ANSWER_OF]->(q))"
+            . " WITH q"
+            . " MATCH (q)<-[:IS_ANSWER_OF]-(a:Answer)"
+            . " RETURN q AS question, collect(a) AS answers;";
+
+        $query = new Query(
+            $this->client,
+            $template,
+            $data
+        );
+
+        $result = $query->getResultSet();
+
         foreach ($result as $row) {
-            $existingQuestions[] = $row['qnoow_id'];
-        }
-
-        //Create queries in loop
-        $questionsQuery = array();
-        for ($i = 1; $i <= $numberOfQuestions; $i++) {
-            if (!in_array($i, $existingQuestions)) {
-                $questionsQueryString =
-                    "CREATE
-                    (q:Question {qnoow_id: " . $i . ", text: 'question " . $i . "'})
-                ";
-
-                for ($j = 1; $j <= $numberOfAnswersPerQuestion; $j++) {
-                    $questionsQueryString .=
-                        ", (:Answer {qnoow_id: " . $i . $j . ", text: 'answer " . $i . "-" . $j . "'})
-                    -[:IS_ANSWER_OF]->(q)";
-                }
-
-                $questionsQueryString .= " RETURN q;";
-
-                $questionsQuery[] = $questionsQueryString;
+            $question = array();
+            $question['createdBy'] = $data['userId'];
+            $question['id'] = $row['question']->getId();
+            foreach ($row['answers'] as $answer) {
+                $question['answers'][] = $answer->getId();
             }
+            $this->questions[] = $question;
         }
 
-        //Execute queries in loop
-        foreach ($questionsQuery as $query) {
-            $neo4jQuery = new Query(
-                $this->client,
-                $query
-            );
-
-            try {
-                $result = $neo4jQuery->getResultSet();
-            } catch (\Exception $e) {
-                throw $e;
-
-                return;
-            }
-        }
-
-        return;
-
+        return $this;
     }
 
-    public function createUserRatesRelationship($user, $question, $rating)
+    /**
+     * @param $userId
+     * @param $questionId
+     * @param $answerId
+     * @param array $acceptsIds
+     * @param $rating
+     * @return \Everyman\Neo4j\Query\ResultSet
+     */
+    private function userAnswerQuestion($userId, $questionId, $answerId, array $acceptsIds, $rating)
     {
-        $relationshipQuery =
-            "MATCH
-            (q:Question {qnoow_id: " . $question . "}),
-            (u:User {qnoow_id: " . $user . "})
-        CREATE UNIQUE
-            (u)-[r:RATES {rating: " . $rating . "}]->(q)
-        RETURN
-            u, r, q
-        ;";
 
-        $neo4jQuery = new Query(
-            $this->client,
-            $relationshipQuery
+        $data = array(
+            'userId' => (integer)$userId,
+            'questionId' => (integer)$questionId,
+            'answerId' => (integer)$answerId,
+            'acceptedAnswers' => $acceptsIds,
+            'rating' => $rating,
+            'explanation' => '',
+            'isPrivate' => false,
         );
 
-        try {
-            $result = $neo4jQuery->getResultSet();
-        } catch (\Exception $e) {
-            throw $e;
+        $template = "MATCH (user:User), (question:Question), (answer:Answer)"
+            . " WHERE user.qnoow_id = {userId} AND id(question) = {questionId} AND id(answer) = {answerId}"
+            . " CREATE UNIQUE (user)-[a:ANSWERS]->(answer)"
+            . ", (user)-[r:RATES]->(question)"
+            . " SET r.rating = {rating}, a.private = {isPrivate}"
+            . ", a.answeredAt = timestamp(), a.explanation = {explanation}"
+            . " WITH user, question, answer"
+            . " OPTIONAL MATCH (pa:Answer)-[:IS_ANSWER_OF]->(question)"
+            . " WHERE id(pa) IN {acceptedAnswers}"
+            . " CREATE UNIQUE (user)-[:ACCEPTS]->(pa)"
+            . " RETURN answer";
 
-            return;
-        }
+        $template .= ";";
 
-        return;
-    }
-
-    public function createUserAnswersRelationship($user, $answer)
-    {
-        $relationshipQuery =
-            "MATCH
-            (a:Answer {qnoow_id: " . $answer . "}),
-            (u:User {qnoow_id: " . $user . "})
-        CREATE UNIQUE
-            (u)-[r:ANSWERS]->(a)
-        RETURN
-            u, r, a
-        ;";
-
-        $neo4jQuery = new Query(
+        //Create the Neo4j query object
+        $query = new Query(
             $this->client,
-            $relationshipQuery
+            $template,
+            $data
         );
 
-        try {
-            $result = $neo4jQuery->getResultSet();
-        } catch (\Exception $e) {
-            throw $e;
-
-            return;
-        }
-
-        return;
-    }
-
-    public function createUserAcceptsRelationship($user, $answer)
-    {
-        $relationshipQuery =
-            "MATCH
-            (a:Answer {qnoow_id: " . $answer . "}),
-            (u:User {qnoow_id: " . $user . "})
-        CREATE UNIQUE
-            (u)-[r:ACCEPTS]->(a)
-        RETURN
-            u, r, a
-        ;";
-
-        $neo4jQuery = new Query(
-            $this->client,
-            $relationshipQuery
-        );
-
-        try {
-            $result = $neo4jQuery->getResultSet();
-        } catch (\Exception $e) {
-            throw $e;
-
-            return;
-        }
-
-        return;
+        return $query->getResultSet();
     }
 
 }

@@ -104,7 +104,6 @@ class LinkProcessorWorker implements RabbitMQConsumerInterface, LoggerAwareInter
 
         try {
             $this->fetcherService->fetch($userId, $resourceOwner);
-            $message->delivery_info['channel']->basic_ack($message->delivery_info['delivery_tag']);
         } catch (\Exception $e) {
             $this->logger->error(
                 sprintf(
@@ -114,8 +113,9 @@ class LinkProcessorWorker implements RabbitMQConsumerInterface, LoggerAwareInter
                     $e->getMessage()
                 )
             );
-            return;
         }
+
+        $message->delivery_info['channel']->basic_ack($message->delivery_info['delivery_tag']);
     }
 
     /**

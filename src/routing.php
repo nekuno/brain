@@ -40,11 +40,10 @@ $app->get('/users/{id}/status', 'users.controller:statusAction');
 /**
  * Questionnaire routes
  */
-$app->get('/questionnaire/questions/next', 'questionnaire.questions.controller:nextAction');
-$app->post('/questionnaire/questions', 'questionnaire.questions.controller:createAction');
-$app->get('/questionnaire/questions', 'questionnaire.questions.controller:indexAction')->value('limit', 20);
-$app->get('/questionnaire/questions/{id}', 'questionnaire.questions.controller:getAction');
-$app->post('/questionnaire/questions/{id}', 'questionnaire.questions.controller:updateAction');
+$app->get('/questionnaire/questions/next', 'questionnaire.questions.controller:getNextQuestionAction');
+$app->post('/questionnaire/questions', 'questionnaire.questions.controller:postQuestionAction');
+$app->get('/questionnaire/questions', 'questionnaire.questions.controller:getQuestionsAction')->value('limit', 20);
+$app->get('/questionnaire/questions/{id}', 'questionnaire.questions.controller:getQuestionAction');
 $app->post('/questionnaire/questions/{id}/skip', 'questionnaire.questions.controller:skipAction');
 $app->post('/questionnaire/questions/{id}/report', 'questionnaire.questions.controller:reportAction');
 $app->get('/questionnaire/questions/{id}/stats', 'questionnaire.questions.controller:statsAction');
@@ -53,6 +52,7 @@ $app->post('/users/{userId}/answers/explain', 'users.answers.controller:explainA
 $app->get('/users/{userId}/answers', 'users.answers.controller:indexAction');
 $app->post('/users/{userId}/answers', 'users.answers.controller:createAction');
 $app->get('/users/{userId}/answers/count', 'users.answers.controller:countAction');
+$app->get('/users/{userId}/answers/{questionId}', 'users.answers.controller:getAnswerAction');
 $app->post('/users/{userId}/answers/{questionId}', 'users.answers.controller:updateAction');
 
 /**

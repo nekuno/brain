@@ -5,28 +5,40 @@ namespace Model\Questionnaire;
 use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
 
+/**
+ * Class QuestionModel
+ * @package Model\Questionnaire
+ */
 class QuestionModel
 {
 
+    /**
+     * @var Client
+     */
     protected $client;
 
+    /**
+     * @param Client $client
+     */
     public function __construct(Client $client)
     {
 
         $this->client = $client;
     }
 
+    /**
+     * @param int $limit
+     * @return \Everyman\Neo4j\Query\ResultSet
+     */
     public function getAll($limit = 20)
     {
 
-        $data = array('limit' => (integer) $limit);
+        $data = array('limit' => (integer)$limit);
 
         $template = "MATCH (q:Question)<-[:IS_ANSWER_OF]-(a:Answer)"
-            . " WITH q, a"
             . " RETURN q AS question, collect(a) AS answers"
             . " ORDER BY question.ranking DESC"
-            . " LIMIT {limit}"
-        ;
+            . " LIMIT {limit}";
 
         $query = new Query($this->client, $template, $data);
 
@@ -45,16 +57,16 @@ class QuestionModel
             'userId' => (integer)$userId
         );
 
-        $template = "OPTIONAL MATCH (u:User)-[:ANSWERS]->(a:Answer)-[:IS_ANSWER_OF]->(q:Question)"
-            . " WHERE u.qnoow_id = {userId}"
-            . " WITH u, q"
-            . " OPTIONAL MATCH (u)-[:SKIPS]->(q1:Question), (:User)-[:REPORTS]->(q2:Question)"
-            . " WITH u AS user, collect(q) + collect(q1) + collect(q2) AS excluded"
+        $template = "MATCH (user:User)"
+            . " WHERE user.qnoow_id = {userId}"
+            . " OPTIONAL MATCH (u:User)-[:ANSWERS]->(a:Answer)-[:IS_ANSWER_OF]->(answered:Question)"
+            . " OPTIONAL MATCH (u)-[:SKIPS]->(skip:Question)"
+            . " OPTIONAL MATCH (:User)-[:REPORTS]->(report:Question)"
+            . " WITH user, collect(answered) + collect(skip) + collect(report) AS excluded"
             . " MATCH (q3:Question)<-[:IS_ANSWER_OF]-(a2:Answer)"
             . " WHERE NOT q3 IN excluded"
             . " WITH q3 AS next, collect(DISTINCT a2) AS nextAnswers"
-            . " OPTIONAL MATCH (u2:User)-[r:RATES]->(next)"
-            . " RETURN next, nextAnswers, sum(r.rating) AS nextRating";
+            . " RETURN next, nextAnswers ";
 
         if ($sortByRanking && $this->sortByRanking()) {
             $template .= " ORDER BY next.ranking DESC";
@@ -63,31 +75,6 @@ class QuestionModel
         }
 
         $template .= " LIMIT 1;";
-
-        $query = new Query(
-            $this->client,
-            $template,
-            $data
-        );
-
-        return $query->getResultSet();
-    }
-
-    /**
-     * @return \Everyman\Neo4j\Query\ResultSet
-     */
-    public function getById($questionId)
-    {
-
-        $data = array(
-            'questionId' => (integer) $questionId,
-        );
-
-        $template = " MATCH (q:Question)<-[:IS_ANSWER_OF]-(a:Answer)"
-            . " WHERE id(q) = {questionId}"
-            . " WITH q AS question, collect(a) AS answers"
-            . " RETURN question, answers"
-            . " LIMIT 1;";
 
         $query = new Query(
             $this->client,
@@ -113,19 +100,44 @@ class QuestionModel
     }
 
     /**
+     * @return \Everyman\Neo4j\Query\ResultSet
+     */
+    public function getById($questionId)
+    {
+
+        $data = array(
+            'questionId' => (integer)$questionId,
+        );
+
+        $template = " MATCH (q:Question)<-[:IS_ANSWER_OF]-(a:Answer)"
+            . " WHERE id(q) = {questionId}"
+            . " WITH q AS question, collect(a) AS answers"
+            . " RETURN question, answers"
+            . " LIMIT 1;";
+
+        $query = new Query(
+            $this->client,
+            $template,
+            $data
+        );
+
+        return $query->getResultSet();
+    }
+
+    /**
      * @param array $data
      * @return \Everyman\Neo4j\Query\ResultSet
      */
     public function create(array $data)
     {
 
-        $data['userId'] = (integer) $data['userId'];
+        $data['userId'] = (integer)$data['userId'];
 
         $data['answers'] = array_values($data['answers']);
 
         $template = "MATCH (u:User)"
             . " WHERE u.qnoow_id = {userId}"
-            . " CREATE (q:Question)<-[c:CREATED_BY]-(u)"
+            . " CREATE (q:Question)-[c:CREATED_BY]->(u)"
             . " SET q.text = {text}, q.timestamp = timestamp(), q.ranking = 0, c.timestamp = timestamp()"
             . " FOREACH (text in {answers}| CREATE (a:Answer {text: text})-[:IS_ANSWER_OF]->(q))"
             . " RETURN q;";
@@ -149,8 +161,8 @@ class QuestionModel
     public function skip(array $data)
     {
 
-        $data['questionId'] = (integer) $data['questionId'];
-        $data['userId']     = (integer) $data['userId'];
+        $data['questionId'] = (integer)$data['questionId'];
+        $data['userId'] = (integer)$data['userId'];
 
         $template = "MATCH"
             . " (q:Question)"
@@ -174,8 +186,8 @@ class QuestionModel
     public function report(array $data)
     {
 
-        $data['questionId'] = (integer) $data['questionId'];
-        $data['userId'] = (integer) $data['userId'];
+        $data['questionId'] = (integer)$data['questionId'];
+        $data['userId'] = (integer)$data['userId'];
 
         $template = "MATCH"
             . " (q:Question)"
@@ -192,25 +204,32 @@ class QuestionModel
         }
     }
 
+    /**
+     * @param $id
+     * @return \Everyman\Neo4j\Query\ResultSet
+     */
     public function getQuestionStats($id)
     {
 
-            $data['id'] = (integer) $id;
+        $data['id'] = (integer)$id;
 
-            $template = "MATCH (a:Answer)-[:IS_ANSWER_OF]->(q:Question)"
-                . " WHERE id(q) = {id} WITH q, a"
-                . " OPTIONAL MATCH ua = (u:User)-[x:ANSWERS]->(a)"
-                . " WITH id(a) AS answer, count(x)"
-                . " AS nAnswers RETURN answer, nAnswers;"
-            ;
+        $template = "MATCH (a:Answer)-[:IS_ANSWER_OF]->(q:Question)"
+            . " WHERE id(q) = {id} WITH q, a"
+            . " OPTIONAL MATCH ua = (u:User)-[x:ANSWERS]->(a)"
+            . " WITH id(a) AS answer, count(x)"
+            . " AS nAnswers RETURN answer, nAnswers;";
 
-            $query = new Query($this->client, $template, $data);
+        $query = new Query($this->client, $template, $data);
 
-            return $query->getResultSet();
+        return $query->getResultSet();
     }
 
-
-    public function setOrUpdateRankingForQuestion ($questionId)
+    /**
+     * @param $questionId
+     * @return mixed
+     * @throws \Exception
+     */
+    public function setOrUpdateRankingForQuestion($questionId)
     {
 
         $queryString = "
@@ -262,7 +281,7 @@ class QuestionModel
             throw $e;
         }
 
-        foreach($result as $row){
+        foreach ($result as $row) {
             $questionRanking = $row['questionRanking'];
         }
 
@@ -272,7 +291,12 @@ class QuestionModel
 
     }
 
-    public function getRankingForQuestion ($questionId)
+    /**
+     * @param $questionId
+     * @return mixed
+     * @throws \Exception
+     */
+    public function getRankingForQuestion($questionId)
     {
 
         $queryString = "
@@ -300,7 +324,7 @@ class QuestionModel
             throw $e;
         }
 
-        foreach($result as $row){
+        foreach ($result as $row) {
             $questionRanking = $row['questionRanking'];
         }
 
@@ -308,5 +332,29 @@ class QuestionModel
 
         return $response;
 
+    }
+
+    /**
+     * @param $questionId
+     * @return bool
+     */
+    public function existsQuestion($questionId)
+    {
+
+        $data = array(
+            'questionId' => (integer)$questionId,
+        );
+
+        $template = "MATCH (q:Question) WHERE id(q) = {questionId} RETURN q AS Question";
+
+        $query = new Query($this->client, $template, $data);
+
+        $result = $query->getResultSet();
+
+        foreach ($result as $row) {
+            return true;
+        }
+
+        return false;
     }
 }

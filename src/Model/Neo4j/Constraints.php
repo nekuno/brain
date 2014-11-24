@@ -4,7 +4,6 @@ namespace Model\Neo4j;
 
 use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
-use Exception\QueryErrorException;
 
 /**
  * Class Constraints
@@ -39,9 +38,7 @@ class Constraints
     {
         $constraints = array();
         $constraints[] = "CREATE CONSTRAINT ON (u:User) ASSERT u.qnoow_id IS UNIQUE;";
-        $constraints[] = "CREATE CONSTRAINT ON (q:Question) ASSERT id(q) IS UNIQUE;";
-        $constraints[] = "CREATE CONSTRAINT ON (a:Answer) ASSERT id(a) IS UNIQUE;";
-        
+
         foreach ($constraints as $query) {
             $neo4jQuery = new Query(
                 $this->client,

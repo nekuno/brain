@@ -4,9 +4,9 @@ namespace Paginator;
 
 use Symfony\Component\HttpFoundation\Request;
 
-
 class Paginator
 {
+
     /**
      * @var int maximum items per page
      */
@@ -17,57 +17,11 @@ class Paginator
      */
     private $defaultLimit;
 
-    function __construct($maxLimit=50, $defaultLimit=20)
+    function __construct($maxLimit = 50, $defaultLimit = 20)
     {
+
         $this->maxLimit = (integer)$maxLimit;
         $this->defaultLimit = (integer)$defaultLimit;
-    }
-
-    /**
-     * Creates a previous page link if available.
-     * @param \Symfony\Component\HttpFoundation\Request $request
-     * @param int $offset
-     * @param int $limit
-     * @return string mixed
-     */
-    protected function createPrevLink(Request $request, $offset, $limit)
-    {
-        $prevLink = null;
-        $baseUri = $request->getSchemeAndHttpHost() .
-            $request->getBaseUrl() .
-            $request->getPathInfo();
-        if ($offset - $limit >= 0) {
-            parse_str($request->getQueryString(), $qsArray);
-            $qsArray['limit'] = $limit;
-            $qsArray['offset'] = $offset - $limit;
-            $qs = Request::normalizeQueryString(http_build_query($qsArray));
-            $prevLink = $baseUri . '?' . $qs;
-        }
-        return $prevLink;
-    }
-
-    /**
-     * Creates a next page link if available.
-     * @param \Symfony\Component\HttpFoundation\Request $request
-     * @param int $offset
-     * @param int $limit
-     * @param int $total
-     * @return \Symfony\Component\HttpFoundation\Request mixed
-     */
-    protected function createNextLink(Request $request, $offset, $limit, $total)
-    {
-        $nextLink = null;
-        $baseUri = $request->getSchemeAndHttpHost() .
-            $request->getBaseUrl() .
-            $request->getPathInfo();
-        if ($offset + $limit < $total) {
-            parse_str($request->getQueryString(), $qsArray);
-            $qsArray['limit'] = $limit;
-            $qsArray['offset'] = $limit + $offset;
-            $qs = Request::normalizeQueryString(http_build_query($qsArray));
-            $nextLink = $baseUri . '?' . $qs;
-        }
-        return $nextLink;
     }
 
     /**
@@ -78,6 +32,7 @@ class Paginator
      */
     public function paginate(array $filters, PaginatedInterface $paginated, Request $request)
     {
+
         $limit = $request->get('limit', $this->defaultLimit);
         $limit = min($limit, $this->maxLimit);
 
@@ -105,5 +60,56 @@ class Paginator
         $result['items'] = $items;
 
         return $result;
+    }
+
+    /**
+     * Creates a previous page link if available.
+     * @param \Symfony\Component\HttpFoundation\Request $request
+     * @param int $offset
+     * @param int $limit
+     * @return string mixed
+     */
+    protected function createPrevLink(Request $request, $offset, $limit)
+    {
+
+        $prevLink = null;
+        $baseUri = $request->getSchemeAndHttpHost() .
+            $request->getBaseUrl() .
+            $request->getPathInfo();
+        if ($offset - $limit >= 0) {
+            parse_str($request->getQueryString(), $qsArray);
+            $qsArray['limit'] = $limit;
+            $qsArray['offset'] = $offset - $limit;
+            $qs = Request::normalizeQueryString(http_build_query($qsArray));
+            $prevLink = $baseUri . '?' . $qs;
+        }
+
+        return $prevLink;
+    }
+
+    /**
+     * Creates a next page link if available.
+     * @param \Symfony\Component\HttpFoundation\Request $request
+     * @param int $offset
+     * @param int $limit
+     * @param int $total
+     * @return \Symfony\Component\HttpFoundation\Request mixed
+     */
+    protected function createNextLink(Request $request, $offset, $limit, $total)
+    {
+
+        $nextLink = null;
+        $baseUri = $request->getSchemeAndHttpHost() .
+            $request->getBaseUrl() .
+            $request->getPathInfo();
+        if ($offset + $limit < $total) {
+            parse_str($request->getQueryString(), $qsArray);
+            $qsArray['limit'] = $limit;
+            $qsArray['offset'] = $limit + $offset;
+            $qs = Request::normalizeQueryString(http_build_query($qsArray));
+            $nextLink = $baseUri . '?' . $qs;
+        }
+
+        return $nextLink;
     }
 }
