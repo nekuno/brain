@@ -61,22 +61,16 @@ class NormalDistributionModel
     {
         //Construct query string
         $queryString = "
-        MATCH
-            (u1:User),
-            (u2:User)
-        OPTIONAL MATCH
-            a=(u1)-[rl1]->(cl1:Link)-[:TAGGED]->(tl1:Tag)
-        OPTIONAL MATCH
-            b=(u2)-[rl2]->(cl2:Link)-[:TAGGED]->(tl2:Tag)
-        WHERE
-                type(rl1) = type(rl2)
-            AND
-                tl1 = tl2
-            AND
-                (cl1 = cl2 OR cl1 <> cl2)
-        WITH
+            MATCH
+            a=(u1:User)-[rl1]->(cl1:Link)-[:TAGGED]->(tl1:Tag)
+            MATCH
+            b=(u2:User)-[rl2]->(cl2:Link)-[:TAGGED]->(tl1)
+            WHERE
+            u1<>u2 AND
+            type(rl1) = type(rl2)
+            WITH
             u1, u2, length(collect(DISTINCT cl2)) AS numOfContentsInCommon
-        RETURN
+            RETURN
             avg(numOfContentsInCommon) AS ave_content,
             stdevp(numOfContentsInCommon) AS stdev_content
         ";
