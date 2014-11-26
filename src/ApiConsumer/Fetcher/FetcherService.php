@@ -103,8 +103,6 @@ class FetcherService implements LoggerAwareInterface
         $links = array();
         try {
 
-            $this->logger->info(sprintf('Fetcher: Fetching links for user %s from resource owner %s', $userId, $resourceOwner));
-
             $user = $this->userProvider->getUsersByResource($resourceOwner, $userId);
             if (!$user) {
                 throw new \Exception('User not found');
@@ -114,7 +112,7 @@ class FetcherService implements LoggerAwareInterface
 
                 if ($fetcherConfig['resourceOwner'] === $resourceOwner) {
 
-                    $this->logger->info(sprintf(' -> Using fetcher %s for user %s', $fetcher, $userId));
+                    $this->logger->info(sprintf('Fetcher: Fetching links for user "%s" with fetcher "%s" from resource owner "%s"', $user['username'], $fetcher, $resourceOwner));
 
                     $event = new UserDataEvent($user, $resourceOwner);
                     $this->dispatcher->dispatch(AppEvents::USER_DATA_FETCHING_START, $event);
@@ -123,12 +121,7 @@ class FetcherService implements LoggerAwareInterface
                         $links = $this->fetcherFactory->build($fetcher)->fetchLinksFromUserFeed($user);
                     } catch (\Exception $e) {
                         $this->logger->error(
-                            sprintf(
-                                'Fetcher: Error fetching feed for user %d from resource %s. Reason: %s',
-                                $userId,
-                                $resourceOwner,
-                                $e->getMessage()
-                            )
+                            sprintf('Fetcher: Error fetching feed for user "%s" with fetcher "%s" from resource "%s". Reason: %s', $user['username'], $fetcher, $resourceOwner, $e->getMessage())
                         );
                         continue;
                     }

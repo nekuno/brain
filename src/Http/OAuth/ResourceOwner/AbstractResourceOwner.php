@@ -128,7 +128,7 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
             if (!$token['refreshToken']) {
                 $event = new OAuthTokenEvent($token);
                 $this->dispatcher->dispatch(AppEvents::TOKEN_EXPIRED, $event);
-                $e = new TokenException(sprintf('Refresh token not present for user %s', $token['username']));
+                $e = new TokenException(sprintf('Refresh token not present for user "%s"', $token['username']));
                 $e->setToken($token);
                 throw $e;
             }
