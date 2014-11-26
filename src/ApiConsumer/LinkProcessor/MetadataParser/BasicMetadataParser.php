@@ -81,8 +81,9 @@ class BasicMetadataParser implements MetadataParserInterface
 
         $keywords = explode(',', $keywords);
 
+        $scrapedTags = array();
         foreach ($keywords as $keyword) {
-            $scrapedTags[] = array('name' => trim(strtolower($keyword)));
+            $scrapedTags[] = array('name' => trim(mb_strtolower($keyword, 'UTF-8')));
         }
 
         $this->filterTags($scrapedTags);
