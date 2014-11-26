@@ -49,7 +49,7 @@ class DBStorage implements StorageInterface
                     }
                 }
             } catch (\Exception $e) {
-                $this->errors[] = $this->getFormattedError($link);
+                $this->errors[] = $this->getFormattedError($link) . "\n" . $e->getMessage();
                 continue;
             }
         }
