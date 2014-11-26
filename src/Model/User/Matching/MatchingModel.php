@@ -423,6 +423,8 @@ class MatchingModel
         }
 
         //Get the wanted results
+        $ratingForMatching = 0;
+        $normalX = 0;
         foreach($result as $row){
             $ratingForMatching = $row['match_user1_user2'];
             $normalX = $row['numOfCommonAnswers'];
@@ -572,6 +574,7 @@ class MatchingModel
         }
 
         //Get the wanted results
+        $normalX = 0;
         foreach($result as $row){
             $normalX = $row['numOfCommonContent'];
         }
