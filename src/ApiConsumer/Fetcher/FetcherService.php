@@ -103,9 +103,7 @@ class FetcherService implements LoggerAwareInterface
         $links = array();
         try {
 
-            $this->logger->info(
-                sprintf('Fetcher: Fetching links for user %s from resource owner %s', $userId, $resourceOwner)
-            );
+            $this->logger->info(sprintf('Fetcher: Fetching links for user %s from resource owner %s', $userId, $resourceOwner));
 
             $user = $this->userProvider->getUsersByResource($resourceOwner, $userId);
             if (!$user) {
@@ -116,6 +114,8 @@ class FetcherService implements LoggerAwareInterface
 
                 if ($fetcherConfig['resourceOwner'] === $resourceOwner) {
 
+                    $this->logger->info(sprintf(' -> Using fetcher %s for user %s', $fetcher, $userId));
+
                     $event = new UserDataEvent($user, $resourceOwner);
                     $this->dispatcher->dispatch(AppEvents::USER_DATA_FETCHING_START, $event);
 
@@ -124,9 +124,10 @@ class FetcherService implements LoggerAwareInterface
                     } catch (\Exception $e) {
                         $this->logger->error(
                             sprintf(
-                                'Fetcher: Error fetching feed for user %d from resource %s',
+                                'Fetcher: Error fetching feed for user %d from resource %s. Reason: %s',
                                 $userId,
-                                $resourceOwner
+                                $resourceOwner,
+                                $e->getMessage()
                             )
                         );
                         continue;
