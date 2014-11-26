@@ -148,7 +148,7 @@ class FetcherService implements LoggerAwareInterface
                         } catch (\Exception $e) {
                             $this->logger->error(
                                 sprintf(
-                                    'Fetcher: Error processing link %s from resource %s. Reason: %s',
+                                    'Fetcher: Error processing link "%s" from resource "%s". Reason: %s',
                                     $link['url'],
                                     $resourceOwner,
                                     $e->getMessage()
