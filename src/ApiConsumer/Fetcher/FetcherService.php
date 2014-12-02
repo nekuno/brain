@@ -103,10 +103,6 @@ class FetcherService implements LoggerAwareInterface
         $links = array();
         try {
 
-            $this->logger->info(
-                sprintf('Fetcher: Fetching links for user %s from resource owner %s', $userId, $resourceOwner)
-            );
-
             $user = $this->userProvider->getUsersByResource($resourceOwner, $userId);
             if (!$user) {
                 throw new \Exception('User not found');
@@ -116,6 +112,8 @@ class FetcherService implements LoggerAwareInterface
 
                 if ($fetcherConfig['resourceOwner'] === $resourceOwner) {
 
+                    $this->logger->info(sprintf('Fetcher: Fetching links for user "%s" with fetcher "%s" from resource owner "%s"', $user['username'], $fetcher, $resourceOwner));
+
                     $event = new UserDataEvent($user, $resourceOwner);
                     $this->dispatcher->dispatch(AppEvents::USER_DATA_FETCHING_START, $event);
 
@@ -123,11 +121,7 @@ class FetcherService implements LoggerAwareInterface
                         $links = $this->fetcherFactory->build($fetcher)->fetchLinksFromUserFeed($user);
                     } catch (\Exception $e) {
                         $this->logger->error(
-                            sprintf(
-                                'Fetcher: Error fetching feed for user %d from resource %s',
-                                $userId,
-                                $resourceOwner
-                            )
+                            sprintf('Fetcher: Error fetching feed for user "%s" with fetcher "%s" from resource "%s". Reason: %s', $user['username'], $fetcher, $resourceOwner, $e->getMessage())
                         );
                         continue;
                     }
@@ -154,9 +148,10 @@ class FetcherService implements LoggerAwareInterface
                         } catch (\Exception $e) {
                             $this->logger->error(
                                 sprintf(
-                                    'Fetcher: Error processing link %s from resource %s',
+                                    'Fetcher: Error processing link "%s" from resource "%s". Reason: %s',
                                     $link['url'],
-                                    $resourceOwner
+                                    $resourceOwner,
+                                    $e->getMessage()
                                 )
                             );
                         }

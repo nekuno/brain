@@ -59,8 +59,8 @@ class QuestionModel
 
         $template = "MATCH (user:User)"
             . " WHERE user.qnoow_id = {userId}"
-            . " OPTIONAL MATCH (u:User)-[:ANSWERS]->(a:Answer)-[:IS_ANSWER_OF]->(answered:Question)"
-            . " OPTIONAL MATCH (u)-[:SKIPS]->(skip:Question)"
+            . " OPTIONAL MATCH (user)-[:ANSWERS]->(a:Answer)-[:IS_ANSWER_OF]->(answered:Question)"
+            . " OPTIONAL MATCH (user)-[:SKIPS]->(skip:Question)"
             . " OPTIONAL MATCH (:User)-[:REPORTS]->(report:Question)"
             . " WITH user, collect(answered) + collect(skip) + collect(report) AS excluded"
             . " MATCH (q3:Question)<-[:IS_ANSWER_OF]-(a2:Answer)"

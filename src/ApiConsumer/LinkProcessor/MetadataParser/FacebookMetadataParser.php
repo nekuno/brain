@@ -76,7 +76,7 @@ class FacebookMetadataParser implements MetadataParserInterface
 
                 $tag = $node->attr('content');
 
-                return array('name' => trim(strtolower($tag)));
+                return array('name' => trim(mb_strtolower($tag, 'UTF-8')));
             }
         );
 

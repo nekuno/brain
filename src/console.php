@@ -16,6 +16,7 @@ $console->addCommands(array(
     new \Console\Command\Neo4jProfileOptionsCommand($app),
     new \Console\Command\Neo4jTestsCommand($app),
     new \Console\Command\UpdateMatchingParameters($app),
+    new \Console\Command\RecalculateMatching($app),
 ));
 
 return $console;
