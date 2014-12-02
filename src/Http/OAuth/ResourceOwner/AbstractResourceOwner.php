@@ -8,6 +8,7 @@ use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Message\Request;
 use GuzzleHttp\Message\ResponseInterface;
+use Http\Exception\TokenException;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
@@ -124,12 +125,21 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
     {
         if (isset($token['expireTime']) && ($token['expireTime'] <= time() && $token['expireTime'] != 0)) {
 
+            if (!$token['refreshToken']) {
+                $event = new OAuthTokenEvent($token);
+                $this->dispatcher->dispatch(AppEvents::TOKEN_EXPIRED, $event);
+                $e = new TokenException(sprintf('Refresh token not present for user "%s"', $token['username']));
+                $e->setToken($token);
+                throw $e;
+            }
+
             try {
                 $data = $this->refreshAccessToken($token['refreshToken']);
             } catch (\Exception $e) {
-                // The resource owner not implements the method refreshAccessToken
                 $event = new OAuthTokenEvent($token);
                 $this->dispatcher->dispatch(AppEvents::TOKEN_EXPIRED, $event);
+                $e = new TokenException($e->getMessage(), $e->getCode(), $e->getPrevious());
+                $e->setToken($token);
                 throw $e;
             }
 
@@ -208,13 +218,17 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
      */
     protected function configureOptions(OptionsResolverInterface $resolver)
     {
-        $resolver->setRequired(array(
-            'consumer_key',
-            'consumer_secret',
-            'class'
-        ));
-        $resolver->setOptional(array(
-            'api_key',
-        ));
+        $resolver->setRequired(
+            array(
+                'consumer_key',
+                'consumer_secret',
+                'class'
+            )
+        );
+        $resolver->setOptional(
+            array(
+                'api_key',
+            )
+        );
     }
 }
