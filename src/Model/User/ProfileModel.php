@@ -69,7 +69,7 @@ class ProfileModel
                 $labelName = $label->getName();
                 if ($labelName != 'ProfileOption') {
                     $labelName = lcfirst($labelName);
-                    $profile[$labelName] = $option->getId();
+                    $profile[$labelName] = $option->getProperty('id') ? $option->getProperty('id') : $option->getId();
                 }
 
             }
@@ -287,7 +287,7 @@ class ProfileModel
     protected function getChoiceMetadata()
     {
         $template = "MATCH (option:ProfileOption) "
-            . "RETURN head(filter(x IN labels(option) WHERE x <> 'ProfileOption')) As type, id(option) as id, option.name AS name "
+            . "RETURN head(filter(x IN labels(option) WHERE x <> 'ProfileOption')) AS type, CASE HAS(option.id) WHEN TRUE THEN option.id ELSE id(option) END AS id, option.name AS name "
             . "ORDER BY type;";
 
         $query = new Query(
@@ -343,6 +343,7 @@ class ProfileModel
             'dateAlcohol' => 'Would you date a person that drinks alcohol?',
             'dateHandicap' => 'Would you date a person with the same disabilities?',
             'dateChildren' => 'Would you date a person with children?',
+            'interfaceLanguage' => 'Preferred interface language?',
         );
 
         return isset($labels[$fieldName]) ? $labels[$fieldName] : $fieldName;
@@ -425,7 +426,7 @@ class ProfileModel
                             $options[$fieldName]->delete();
                         }
                         if (!is_null($fieldValue)) {
-                            $optionNode = $this->client->getNode($fieldValue);
+                            $optionNode = is_numeric($fieldValue) ? $this->client->getNode($fieldValue) : $this->getProfileOptionNode($fieldValue, $fieldName);
                             $optionNode->relateTo($profileNode, 'OPTION_OF')->save();
 
                         }
@@ -494,6 +495,30 @@ class ProfileModel
         }
 
         return $tags;
+    }
+
+    protected function getProfileOptionNode($id, $profileType)
+    {
+        $profileLabelName = ucfirst($profileType);
+
+        $params = array(
+            'id' => $id,
+        );
+
+        $template = "MATCH (profileOption:" . $profileLabelName . ")"
+            . " WHERE profileOption.id = {id} "
+            . " RETURN profileOption "
+            . " LIMIT 1;";
+
+        $query = new Query(
+            $this->client,
+            $template,
+            $params
+        );
+
+        $result = $query->getResultSet();
+
+        return $result[0]['profileOption'];
     }
 
     protected function getProfileTagNode($tagName, $tagType)

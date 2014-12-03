@@ -3,11 +3,11 @@
 namespace Console\Command;
 
 use Model\Neo4j\ProfileOptions;
-
+use Psr\Log\LogLevel;
 use Silex\Application;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\OutputInterface;
-
 
 class Neo4jProfileOptionsCommand extends ApplicationAwareCommand
 {
@@ -20,10 +20,18 @@ class Neo4jProfileOptionsCommand extends ApplicationAwareCommand
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+
         $profileOptions = new ProfileOptions($this->app['neo4j.client']);
 
+        $verbosityLevelMap = array(
+            LogLevel::NOTICE => OutputInterface::VERBOSITY_NORMAL,
+            LogLevel::INFO => OutputInterface::VERBOSITY_NORMAL,
+        );
+        $logger = new ConsoleLogger($output, $verbosityLevelMap);
+        $profileOptions->setLogger($logger);
+
         try {
-            $profileOptions->load();
+            $new = $profileOptions->load();
         } catch (\Exception $e) {
             $output->writeln(
                 'Error loading neo4j profile options with message: ' . $e->getMessage()
@@ -32,6 +40,6 @@ class Neo4jProfileOptionsCommand extends ApplicationAwareCommand
             return;
         }
 
-        $output->writeln('Profile options created');
+        $output->writeln(sprintf('%d new profile options loaded.', $new));
     }
 }
