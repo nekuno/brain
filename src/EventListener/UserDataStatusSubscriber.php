@@ -8,7 +8,7 @@ use Doctrine\ORM\EntityManager;
 use Event\MatchingExpiredEvent;
 use Event\UserDataEvent;
 use Model\Entity\DataStatus;
-use PhpAmqpLib\Connection\AMQPConnection;
+use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -25,15 +25,15 @@ class UserDataStatusSubscriber implements EventSubscriberInterface
     protected $entityManager;
 
     /**
-     * @var AMQPConnection
+     * @var AMQPStreamConnection
      */
     protected $connection;
 
     /**
      * @param EntityManager $entityManager
-     * @param AMQPConnection $connection
+     * @param AMQPStreamConnection $connection
      */
-    public function __construct(EntityManager $entityManager, AMQPConnection $connection)
+    public function __construct(EntityManager $entityManager, AMQPStreamConnection $connection)
     {
 
         $this->entityManager = $entityManager;
