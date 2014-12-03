@@ -4,6 +4,7 @@ namespace Model\User;
 
 use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
+use Everyman\Neo4j\Label;
 use Everyman\Neo4j\Node;
 use Model\Exception\ValidationException;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
@@ -63,21 +64,24 @@ class ProfileModel
         $profile = $row['profile']->getProperties();
 
         foreach ($row['options'] as $option) {
-            /* @var $option \Everyman\Neo4j\Node */
+            /* @var $option Node */
             $labels = $option->getLabels();
             foreach ($labels as $index => $label) {
+                /* @var $label Label */
                 $labelName = $label->getName();
                 if ($labelName != 'ProfileOption') {
                     $labelName = lcfirst($labelName);
-                    $profile[$labelName] = $option->getProperty('id') ? $option->getProperty('id') : $option->getId();
+                    $profile[$labelName] = $option->getProperty('id');
                 }
 
             }
         }
 
         foreach ($row['tags'] as $tag) {
+            /* @var $tag Node */
             $labels = $tag->getLabels();
             foreach ($labels as $label) {
+                /* @var $label Label */
                 $labelName = $label->getName();
                 if ($labelName != 'ProfileTag') {
                     $labelName = lcfirst($labelName);
@@ -181,8 +185,11 @@ class ProfileModel
         $metadata = $this->getMetadata();
 
         foreach ($metadata as $fieldName => $fieldData) {
+
             $fieldErrors = array();
+
             if (isset($data[$fieldName])) {
+
                 $fieldValue = $data[$fieldName];
 
                 if (isset($fieldData['type'])) {
@@ -219,6 +226,13 @@ class ProfileModel
                         case 'boolean':
                             if ($fieldValue !== true && $fieldValue !== false) {
                                 $fieldErrors[] = 'Must be a boolean.';
+                            }
+                            break;
+
+                        case 'choice':
+                            $choices = $fieldData['choices'];
+                            if (!in_array($fieldValue, array_keys($choices))) {
+                                $fieldErrors[] = sprintf('Option with value \'%s\' is not valid, possible values are \'%s\'', $fieldValue, implode("', '", array_keys($choices)));
                             }
                             break;
                     }
@@ -287,7 +301,7 @@ class ProfileModel
     protected function getChoiceMetadata()
     {
         $template = "MATCH (option:ProfileOption) "
-            . "RETURN head(filter(x IN labels(option) WHERE x <> 'ProfileOption')) AS type, CASE HAS(option.id) WHEN TRUE THEN option.id ELSE id(option) END AS id, option.name AS name "
+            . "RETURN head(filter(x IN labels(option) WHERE x <> 'ProfileOption')) AS type, option.id AS id, option.name AS name "
             . "ORDER BY type;";
 
         $query = new Query(
@@ -426,7 +440,7 @@ class ProfileModel
                             $options[$fieldName]->delete();
                         }
                         if (!is_null($fieldValue)) {
-                            $optionNode = is_numeric($fieldValue) ? $this->client->getNode($fieldValue) : $this->getProfileOptionNode($fieldValue, $fieldName);
+                            $optionNode = $this->getProfileOptionNode($fieldValue, $fieldName);
                             $optionNode->relateTo($profileNode, 'OPTION_OF')->save();
 
                         }
@@ -458,6 +472,7 @@ class ProfileModel
         $optionRelations = $profileNode->getRelationships('OPTION_OF');
 
         foreach ($optionRelations as $optionRelation) {
+
             $optionNode = $optionRelation->getStartNode();
             $optionLabels = $optionNode->getLabels();
 
@@ -497,6 +512,11 @@ class ProfileModel
         return $tags;
     }
 
+    /**
+     * @param $id
+     * @param $profileType
+     * @return Node
+     */
     protected function getProfileOptionNode($id, $profileType)
     {
         $profileLabelName = ucfirst($profileType);
@@ -521,6 +541,12 @@ class ProfileModel
         return $result[0]['profileOption'];
     }
 
+    /**
+     * @param $tagName
+     * @param $tagType
+     * @return Node
+     * @throws \Everyman\Neo4j\Exception
+     */
     protected function getProfileTagNode($tagName, $tagType)
     {
         $tagLabelName = ucfirst($tagType);
@@ -562,6 +588,8 @@ class ProfileModel
      */
     protected function getZodiacSignNonsenseFromDate($date)
     {
+
+        $sign = '';
         $birthday = \DateTime::createFromFormat('Y-m-d', $date);
 
         $zodiac[356] = "Capricorn";
@@ -579,7 +607,7 @@ class ProfileModel
         $zodiac[0] = "Capricorn";
 
         if (!$date) {
-            return "";
+            return $sign;
         }
 
         $dayOfTheYear = $birthday->format('z');
