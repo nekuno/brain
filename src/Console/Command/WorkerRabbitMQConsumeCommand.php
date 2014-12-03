@@ -5,7 +5,7 @@ namespace Console\Command;
 use ApiConsumer\Auth\UserProviderInterface;
 use ApiConsumer\Fetcher\FetcherService;
 use PhpAmqpLib\Channel\AMQPChannel;
-use PhpAmqpLib\Connection\AMQPConnection;
+use PhpAmqpLib\Connection\AMQPStreamConnection;
 use Silex\Application;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -51,7 +51,7 @@ class WorkerRabbitMQConsumeCommand extends ApplicationAwareCommand
         /** @var FetcherService $fetcher */
         $fetcher = $this->app['api_consumer.fetcher'];
 
-        /** @var AMQPConnection $connection */
+        /** @var AMQPStreamConnection $connection */
         $connection = $this->app['amqp'];
 
         $output->writeln(sprintf('Starting %s consumer', $consumer));

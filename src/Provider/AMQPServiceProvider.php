@@ -4,7 +4,7 @@
 namespace Provider;
 
 
-use PhpAmqpLib\Connection\AMQPConnection;
+use PhpAmqpLib\Connection\AMQPStreamConnection;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
 
@@ -24,7 +24,7 @@ class AMQPServiceProvider implements ServiceProviderInterface
         $app['amqp'] = $app->share(
             function () use ($app) {
 
-                return new AMQPConnection(
+                return new AMQPStreamConnection(
                     $app['amqp.options']['host'],
                     $app['amqp.options']['port'],
                     $app['amqp.options']['user'],
