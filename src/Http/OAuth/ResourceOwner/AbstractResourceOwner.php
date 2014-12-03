@@ -9,6 +9,7 @@ use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Message\Request;
 use GuzzleHttp\Message\ResponseInterface;
 use Http\Exception\TokenException;
+use Http\OAuth\ResourceOwner\ClientCredential\ClientCredentialInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
@@ -34,6 +35,11 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
     protected $dispatcher;
 
     /**
+     * @var \Http\OAuth\ResourceOwner\ClientCredential\ClientCredentialInterface
+     */
+    private $clientCredential;
+
+    /**
      * @var array Configuration
      */
     protected $options = array();
@@ -53,6 +59,15 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
         $this->configureOptions($resolver);
         $options = $resolver->resolve($options);
         $this->options = $options;
+
+        if (isset($this->options['client_credential_class'])) {
+            $clientCredentialClass = $this->options['client_credential_class'];
+            $clientCredentialOptions = array();
+            if (isset($this->options['client_credential'])) {
+                $clientCredentialOptions = $this->options['client_credential'];
+            }
+            $this->clientCredential = new $clientCredentialClass($clientCredentialOptions);
+        }
 
         $this->configure();
     }
@@ -83,6 +98,15 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
     public function getName()
     {
         return $this->name;
+    }
+
+    protected function getClientToken()
+    {
+        if ($this->clientCredential instanceof ClientCredentialInterface) {
+            return $this->clientCredential->getClientToken();
+        }
+
+        return '';
     }
 
     /**
@@ -228,6 +252,8 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
         $resolver->setOptional(
             array(
                 'api_key',
+                'client_credential_class',
+                'client_credential'
             )
         );
     }

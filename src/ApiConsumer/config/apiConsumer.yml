@@ -6,6 +6,7 @@ api_consumer.config:
             class: Http\OAuth\ResourceOwner\FacebookResourceOwner
         google:
             class: Http\OAuth\ResourceOwner\GoogleResourceOwner
+            client_credential_class: Http\OAuth\ResourceOwner\ClientCredential\GoogleClientCredentialFromLibrary
         spotify:
             class: Http\OAuth\ResourceOwner\SpotifyResourceOwner
     fetcher:
