@@ -40,7 +40,6 @@ params:
     ##Spotify
     spotify.consumer_key: '2cc22e2706704d39998c990457530a9a'
     spotify.consumer_secret: '47189c30d7f84d7ca4c4436309c0dc3c'
-    spotify.api_key: ''
 
     ##Google
     google.consumer_key: '556826433000.apps.googleusercontent.com'

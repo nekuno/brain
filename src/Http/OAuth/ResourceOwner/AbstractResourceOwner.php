@@ -250,7 +250,6 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
         );
         $resolver->setDefined(
             array(
-                'api_key',
                 'client_credential_class',
                 'client_credential'
             )
