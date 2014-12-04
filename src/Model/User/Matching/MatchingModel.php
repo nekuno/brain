@@ -2,17 +2,18 @@
 
 namespace Model\User\Matching;
 
+use Event\MatchingExpiredEvent;
 use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
-use Model\User\ContentPaginatedModel;
 use Model\User\AnswerModel;
+use Model\User\ContentPaginatedModel;
 use Symfony\Component\EventDispatcher\EventDispatcher;
-use Event\MatchingExpiredEvent;
 
 class MatchingModel
 {
-    const PREFERRED_MATCHING_CONTENT='content';
-    const PREFERRED_MATCHING_ANSWERS='answers';
+
+    const PREFERRED_MATCHING_CONTENT = 'content';
+    const PREFERRED_MATCHING_ANSWERS = 'answers';
 
     /**
      * @var EventDispatcher
@@ -53,10 +54,11 @@ class MatchingModel
         AnswerModel $answerModel,
         NormalDistributionModel $normalDistributionModel
     ) {
-        $this->dispatcher = $dispatcher;
-        $this->client = $client;
-        $this->contentPaginatedModel = $contentPaginatedModel;
-        $this->answerModel = $answerModel;
+
+        $this->dispatcher              = $dispatcher;
+        $this->client                  = $client;
+        $this->contentPaginatedModel   = $contentPaginatedModel;
+        $this->answerModel             = $answerModel;
         $this->normalDistributionModel = $normalDistributionModel;
     }
 
@@ -68,7 +70,7 @@ class MatchingModel
     public function getPreferredMatchingType($id)
     {
 
-        $numberOfSharedContent = $this->contentPaginatedModel->countTotal(array('id' => $id));
+        $numberOfSharedContent     = $this->contentPaginatedModel->countTotal(array('id' => $id));
         $numberOfAnsweredQuestions = $this->answerModel->countTotal(array('id' => $id));
 
         if ($numberOfSharedContent > (2 * $numberOfAnsweredQuestions)) {
@@ -145,10 +147,10 @@ class MatchingModel
             throw $e;
         }
 
-        $checkValueLikes = 0;
+        $checkValueLikes    = 0;
         $checkValueDislikes = 0;
         foreach ($checkResult as $checkRow) {
-            $checkValueLikes = $checkRow['l'];
+            $checkValueLikes    = $checkRow['l'];
             $checkValueDislikes = $checkRow['d'];
         }
 
@@ -206,10 +208,10 @@ class MatchingModel
 
             foreach ($result as $match) {
                 if ($match['m']) {
-                    $matching['matching_content'] = $match['m']->getProperty('matching_content') ? : 0;
-                    $matching['timestamp_content'] = $match['m']->getProperty('timestamp_content') ? : 0;
-                    $matching['matching_questions'] = $match['m']->getProperty('matching_questions') ? : 0;
-                    $matching['timestamp_questions'] = $match['m']->getProperty('timestamp_questions') ? : 0;
+                    $matching['matching_content']    = $match['m']->getProperty('matching_content') ?: 0;
+                    $matching['timestamp_content']   = $match['m']->getProperty('timestamp_content') ?: 0;
+                    $matching['matching_questions']  = $match['m']->getProperty('matching_questions') ?: 0;
+                    $matching['timestamp_questions'] = $match['m']->getProperty('timestamp_questions') ?: 0;
                 }
             }
 
@@ -230,8 +232,8 @@ class MatchingModel
     {
 
         if (isset($rawMatching[$matchingIndex]) && $rawMatching[$matchingIndex] !== null) {
-            $matchingUpdatedAt = $rawMatching[$tsIndex] ? $rawMatching[$tsIndex] : 0;
-            $currentTimeInMillis = time() * 1000;
+            $matchingUpdatedAt    = $rawMatching[$tsIndex] ? $rawMatching[$tsIndex] : 0;
+            $currentTimeInMillis  = time() * 1000;
             $lastUpdatePlusOneDay = $matchingUpdatedAt + (1000 * 60 * 60 * 24);
             if ($lastUpdatePlusOneDay < $currentTimeInMillis) {
                 return true;
@@ -314,7 +316,7 @@ class MatchingModel
 
         $data = array(
             'questions' => implode(',', $questions),
-            'userId' => (integer) $userId,
+            'userId'    => (integer)$userId,
         );
 
         $template = "
@@ -352,10 +354,11 @@ class MatchingModel
      */
     public function calculateMatchingBetweenTwoUsersBasedOnAnswers($id1, $id2)
     {
+
         $data = $this->normalDistributionModel->getQuestionsNormalDistributionVariables();
 
         $questionsAverage = $data->average;
-        $questionsStdev = $data->stdev;
+        $questionsStdev   = $data->stdev;
 
         //Construct query String
         $queryString = "
@@ -424,10 +427,10 @@ class MatchingModel
 
         //Get the wanted results
         $ratingForMatching = 0;
-        $normalX = 0;
-        foreach($result as $row){
+        $normalX           = 0;
+        foreach ($result as $row) {
             $ratingForMatching = $row['match_user1_user2'];
-            $normalX = $row['numOfCommonAnswers'];
+            $normalX           = $row['numOfCommonAnswers'];
         }
 
         //Calculate the matching
@@ -437,7 +440,7 @@ class MatchingModel
                 stats_dens_normal($normalX, $questionsAverage, $questionsStdev) //function from stats PHP extension
             ) / 2;
 
-        if ($matching == false){
+        if ($matching == false) {
             $matching = 0;
         }
 
@@ -462,8 +465,8 @@ class MatchingModel
 
         //State the value of the variables in the query string
         $queryDataArray = array(
-            'id1' => (integer)$id1,
-            'id2' => (integer)$id2,
+            'id1'      => (integer)$id1,
+            'id2'      => (integer)$id2,
             'matching' => (float)$matching
         );
 
@@ -481,7 +484,7 @@ class MatchingModel
             throw $e;
         }
 
-        return $matching == null ? 0 : $matching ;
+        return $matching == null ? 0 : $matching;
     }
 
     /**
@@ -522,12 +525,13 @@ class MatchingModel
      * @return float matching by content (with tags) between both users
      * @throws \Exception
      */
-    public function calculateMatchingBetweenTwoUsersBasedOnSharedContent ($id1, $id2)
+    public function calculateMatchingBetweenTwoUsersBasedOnSharedContent($id1, $id2)
     {
+
         $data = $this->normalDistributionModel->getContentNormalDistributionVariables();
 
         $contentAverage = $data->average;
-        $contentStdev = $data->stdev;
+        $contentStdev   = $data->stdev;
 
         //Construct query String
         $queryString = "
@@ -575,14 +579,14 @@ class MatchingModel
 
         //Get the wanted results
         $normalX = 0;
-        foreach($result as $row){
+        foreach ($result as $row) {
             $normalX = $row['numOfCommonContent'];
         }
 
         //Calculate the matching
         $matching = stats_dens_normal($normalX, $contentAverage, $contentStdev);
 
-        if ($matching == false){
+        if ($matching == false) {
             $matching = 0;
         }
 
@@ -607,8 +611,8 @@ class MatchingModel
 
         //State the value of the variables in the query string
         $queryDataArray = array(
-            'id1' => (integer)$id1,
-            'id2' => (integer)$id2,
+            'id1'      => (integer)$id1,
+            'id2'      => (integer)$id2,
             'matching' => (float)$matching
         );
 
