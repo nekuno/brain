@@ -93,26 +93,19 @@ class LinkProcessorWorker implements RabbitMQConsumerInterface, LoggerAwareInter
         $resourceOwner = $data['resourceOwner'];
         $userId = $data['userId'];
 
-        $user = $this->userProvider->getUsersByResource(
-            $resourceOwner,
-            $userId
-        );
+        $user = $this->userProvider->getUsersByResource($resourceOwner, $userId);
 
-        if (!$user) {
-            // TODO: handle this
-        }
-
-        try {
-            $this->fetcherService->fetch($userId, $resourceOwner);
-        } catch (\Exception $e) {
-            $this->logger->error(
-                sprintf(
-                    'Worker: Error fetching feed for user %d and resource %s with message: %s',
-                    $user['id'],
-                    $resourceOwner,
-                    $e->getMessage()
-                )
-            );
+        if($user){
+            try {
+                $this->fetcherService->fetch($user['id'], $resourceOwner);
+            } catch (\Exception $e) {
+                $this->logger->error(
+                    sprintf(
+                        'Worker -> %s',
+                        $e->getMessage()
+                    )
+                );
+            }
         }
 
         $message->delivery_info['channel']->basic_ack($message->delivery_info['delivery_tag']);
