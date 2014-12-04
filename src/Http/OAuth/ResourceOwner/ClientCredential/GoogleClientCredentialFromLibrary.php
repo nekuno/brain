@@ -2,18 +2,37 @@
 
 namespace Http\OAuth\ResourceOwner\ClientCredential;
 
+use Symfony\Component\OptionsResolver\OptionsResolver;
 
 class GoogleClientCredentialFromLibrary extends AbstractClientCredential
 {
+
+    protected function configureOptions(OptionsResolver $resolver)
+    {
+        parent::configureOptions($resolver);
+
+        $resolver->setDefaults(array(
+            'key_password' => 'notasecret',
+        ));
+        $resolver->setRequired(
+            array(
+                'service_account_email',
+                'key_file',
+                'scopes'
+            )
+        );
+    }
 
     /**
      * {@inheritDoc}
      */
     public function getClientToken()
     {
-        $service_account_name = $this->options['service_account_email'];
-        $key_file_location = $this->options['key_file'];
-        $scopes = $this->options['scopes'];
+        $serviceAccountName = $this->getOption('service_account_email');
+        $keyFileLocation = $this->getOption('key_file');
+        $keyPassword = $this->getOption('key_password');
+        $scopes = $this->getOption('scopes');
+
 
         $client = new \Google_Client();
         $client->setApplicationName("Nekuno"); //seems irrelevant
@@ -21,12 +40,13 @@ class GoogleClientCredentialFromLibrary extends AbstractClientCredential
         if (isset($_SESSION['google']['service_token'])) {
             $client->setAccessToken($_SESSION['google']['service_token']);
         }
-        $key = file_get_contents($key_file_location);
+        $key = file_get_contents($keyFileLocation);
 
         $credentials = new \Google_Auth_AssertionCredentials(
-            $service_account_name,
+            $serviceAccountName,
             $scopes,
-            $key
+            $key,
+            $keyPassword
         );
 
         $client->setAssertionCredentials($credentials);

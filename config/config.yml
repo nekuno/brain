@@ -62,6 +62,7 @@ api_consumer.config:
             client_credential:
                 service_account_email: %google.service_account_email%
                 key_file: %google.key_file%
+                key_password: %google.key_password%
                 scopes:
                     - 'https://www.googleapis.com/auth/youtube'
 
