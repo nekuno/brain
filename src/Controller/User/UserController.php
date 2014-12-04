@@ -443,22 +443,26 @@ class UserController
 
         // Get params
         $id = $request->get('id');
-        $basedOn = $request->get('type');
+        $order = $request->get('order', false);
 
         if (null === $id) {
             return $app->json(array(), 400);
         }
 
-        try {
-            /** @var $model \Model\User\Recommendation\UserModel */
-            $model = $app['users.recommendation.users.model'];
-            if ($basedOn == 'answers') {
-                $result = $model->getUserRecommendationsBasedOnAnswers($id);
-            }
-            if ($basedOn == 'content') {
-                $result = $model->getUserRecommendationsBasedOnSharedContent($id);
-            }
+        /** @var $paginator \Paginator\Paginator */
+        $paginator = $app['paginator'];
 
+        $filters = array('id' => $id);
+
+        if ($order) {
+            $filters['order'] = $order;
+        }
+
+        /** @var $model \Model\User\Recommendation\UserRecommendationPaginatedModel */
+        $model = $app['users.recommendation.users.model'];
+
+        try {
+            $result = $paginator->paginate($filters, $model, $request);
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;
@@ -500,7 +504,7 @@ class UserController
             $filters['type'] = urldecode($type);
         }
 
-        /** @var $model \Model\User\Recommendation\ContentPaginatedModel */
+        /** @var $model \Model\User\Recommendation\ContentRecommendationPaginatedModel */
         $model = $app['users.recommendation.content.model'];
 
         try {
