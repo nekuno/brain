@@ -12,7 +12,6 @@ use Http\Exception\TokenException;
 use Http\OAuth\ResourceOwner\ClientCredential\ClientCredentialInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\OptionsResolver\OptionsResolver;
-use Symfony\Component\OptionsResolver\OptionsResolverInterface;
 use AppEvents;
 
 /**
@@ -238,9 +237,9 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
     /**
      * Configure the option resolver
      *
-     * @param OptionsResolverInterface $resolver
+     * @param OptionsResolver $resolver
      */
-    protected function configureOptions(OptionsResolverInterface $resolver)
+    protected function configureOptions(OptionsResolver $resolver)
     {
         $resolver->setRequired(
             array(
@@ -249,7 +248,7 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
                 'class'
             )
         );
-        $resolver->setOptional(
+        $resolver->setDefined(
             array(
                 'api_key',
                 'client_credential_class',
