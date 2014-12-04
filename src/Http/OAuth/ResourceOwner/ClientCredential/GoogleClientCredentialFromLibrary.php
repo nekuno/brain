@@ -7,6 +7,9 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 class GoogleClientCredentialFromLibrary extends AbstractClientCredential
 {
 
+    /**
+     * {@inheritDoc}
+     */
     protected function configureOptions(OptionsResolver $resolver)
     {
         parent::configureOptions($resolver);

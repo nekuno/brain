@@ -17,6 +17,11 @@ abstract class AbstractClientCredential implements ClientCredentialInterface
         $this->options = $options;
     }
 
+    /**
+     * Get the value of an option
+     *
+     * @param $name the name of the options
+     */
     public function getOption($name)
     {
         if (!array_key_exists($name, $this->options)) {
