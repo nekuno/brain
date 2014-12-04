@@ -2,7 +2,7 @@
 
 namespace Http\OAuth\ResourceOwner;
 
-use Symfony\Component\OptionsResolver\OptionsResolverInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
  * Class FacebookResourceOwner
@@ -16,7 +16,7 @@ class GoogleResourceOwner extends Oauth2GenericResourceOwner
     /**
      * {@inheritDoc}
      */
-    protected function configureOptions(OptionsResolverInterface $resolver)
+    protected function configureOptions(OptionsResolver $resolver)
     {
         parent::configureOptions($resolver);
 
@@ -43,11 +43,13 @@ class GoogleResourceOwner extends Oauth2GenericResourceOwner
 
     public function getAPIRequest($url, array $query = array(), array $token = array())
     {
-
-        $query = array_merge($query, array('key' => $this->options['api_key']));
+        $token = $this->getClientToken();
 
         $clientConfig = array(
             'query' => $query,
+            'headers' => array(
+                'Authorization' => 'Bearer ' . $token
+            )
         );
 
         return $this->httpClient->createRequest('GET', $url, $clientConfig);
