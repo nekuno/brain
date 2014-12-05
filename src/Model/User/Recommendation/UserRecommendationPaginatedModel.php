@@ -68,6 +68,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
             WHERE r.matching_questions > 0 OR r.matching_content > 0
             RETURN
             anyUser.qnoow_id AS id,
+            anyUser.username AS username,
             CASE r.matching_questions IS NULL WHEN true THEN 0 ELSE r.matching_questions END as matching_questions,
             CASE r.matching_content IS NULL WHEN true THEN 0 ELSE r.matching_content END as matching_content
         ";
@@ -92,6 +93,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
             foreach ($result as $row) {
                 $user = array();
                 $user['id'] = $row['id'];
+                $user['username'] = $row['username'];
                 $user['matching_questions'] = $row['matching_questions'];
                 $user['matching_content'] = $row['matching_content'];
 
