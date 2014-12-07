@@ -72,7 +72,7 @@ $app['users.matching.model'] = function ($app) {
 
 $app['users.recommendation.users.model'] = function ($app) {
 
-    return new \Model\User\Recommendation\UserRecommendationModel($app['neo4j.client'], $app['users.matching.model']);
+    return new \Model\User\Recommendation\UserRecommendationPaginatedModel($app['neo4j.client']);
 };
 
 $app['users.recommendation.content.model'] = function ($app) {
