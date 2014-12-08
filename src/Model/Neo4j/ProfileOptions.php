@@ -4,13 +4,20 @@ namespace Model\Neo4j;
 
 use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerInterface;
 
-class ProfileOptions
+class ProfileOptions implements LoggerAwareInterface
 {
     /**
      * @var \Everyman\Neo4j\Client
      */
     protected $client;
+
+    /**
+     * @var LoggerInterface
+     */
+    protected $logger;
 
     /**
      * @param \Everyman\Neo4j\Client $client
@@ -22,122 +29,419 @@ class ProfileOptions
     }
 
     /**
-     * @throws /Exception
+     * @param LoggerInterface $logger
+     * @return null
+     */
+    public function setLogger(LoggerInterface $logger)
+    {
+
+        $this->logger = $logger;
+    }
+
+    /**
+     * @throws \Exception
+     * @return integer New ProfileOptions added
      */
     public function load()
     {
 
-        $this->createOption('Alcohol', 'Yes');
-        $this->createOption('Alcohol', 'No');
-        $this->createOption('Alcohol', 'Occasionally');
-        $this->createOption('Alcohol', 'Socially/On parties');
+        $new = 0;
 
-        $this->createOption('CivilStatus', 'Single');
-        $this->createOption('CivilStatus', 'Married');
-        $this->createOption('CivilStatus', 'Open relationship');
-        $this->createOption('CivilStatus', 'Dating someone');
+        $options = array(
+            'Alcohol' => array(
+                array(
+                    'id' => 'yes',
+                    'name' => 'Yes',
+                ),
+                array(
+                    'id' => 'no',
+                    'name' => 'No',
+                ),
+                array(
+                    'id' => 'occasionally',
+                    'name' => 'Occasionally',
+                ),
+                array(
+                    'id' => 'socially-on-parties',
+                    'name' => 'Socially/On parties',
+                ),
+            ),
+            'CivilStatus' => array(
+                array(
+                    'id' => 'single',
+                    'name' => 'Single',
+                ),
+                array(
+                    'id' => 'married',
+                    'name' => 'Married',
+                ),
+                array(
+                    'id' => 'open-relationship',
+                    'name' => 'Open relationship',
+                ),
+                array(
+                    'id' => 'dating-someone',
+                    'name' => 'Dating someone',
+                ),
+            ),
+            'Complexion' => array(
+                array(
+                    'id' => 'slim',
+                    'name' => 'Slim',
+                ),
+                array(
+                    'id' => 'normal',
+                    'name' => 'Normal',
+                ),
+                array(
+                    'id' => 'fat',
+                    'name' => 'Fat',
+                ),
+            ),
+            'DateAlcohol' => array(
+                array(
+                    'id' => 'yes',
+                    'name' => 'Yes',
+                ),
+                array(
+                    'id' => 'no',
+                    'name' => 'No',
+                ),
+                array(
+                    'id' => 'maybe',
+                    'name' => 'Maybe',
+                ),
+            ),
+            'DateChildren' => array(
+                array(
+                    'id' => 'yes',
+                    'name' => 'Yes',
+                ),
+                array(
+                    'id' => 'no',
+                    'name' => 'No',
+                ),
+                array(
+                    'id' => 'maybe',
+                    'name' => 'Maybe',
+                ),
+            ),
+            'DateComplexion' => array(
+                array(
+                    'id' => 'yes',
+                    'name' => 'Yes',
+                ),
+                array(
+                    'id' => 'no',
+                    'name' => 'No',
+                ),
+                array(
+                    'id' => 'maybe',
+                    'name' => 'Maybe',
+                ),
+            ),
+            'DateHandicap' => array(
+                array(
+                    'id' => 'yes',
+                    'name' => 'Yes',
+                ),
+                array(
+                    'id' => 'no',
+                    'name' => 'No',
+                ),
+                array(
+                    'id' => 'maybe',
+                    'name' => 'Maybe',
+                ),
+            ),
+            'DateReligion' => array(
+                array(
+                    'id' => 'yes',
+                    'name' => 'Yes',
+                ),
+                array(
+                    'id' => 'no',
+                    'name' => 'No',
+                ),
+                array(
+                    'id' => 'maybe',
+                    'name' => 'Maybe',
+                ),
+            ),
+            'DateSmoker' => array(
+                array(
+                    'id' => 'yes',
+                    'name' => 'Yes',
+                ),
+                array(
+                    'id' => 'no',
+                    'name' => 'No',
+                ),
+                array(
+                    'id' => 'maybe',
+                    'name' => 'Maybe',
+                ),
+            ),
+            'Diet' => array(
+                array(
+                    'id' => 'vegetarian',
+                    'name' => 'Vegetarian',
+                ),
+                array(
+                    'id' => 'vegan',
+                    'name' => 'Vegan',
+                ),
+                array(
+                    'id' => 'other',
+                    'name' => 'Other',
+                ),
+            ),
+            'Drugs' => array(
+                array(
+                    'id' => 'yes',
+                    'name' => 'Yes',
+                ),
+                array(
+                    'id' => 'no',
+                    'name' => 'No',
+                ),
+                array(
+                    'id' => 'occasionally',
+                    'name' => 'Occasionally',
+                ),
+                array(
+                    'id' => 'socially-on-parties',
+                    'name' => 'Socially/On parties',
+                ),
+            ),
+            'EthnicGroup' => array(
+                array(
+                    'id' => 'oriental',
+                    'name' => 'Oriental',
+                ),
+                array(
+                    'id' => 'afro-american',
+                    'name' => 'Afro-American',
+                ),
+                array(
+                    'id' => 'caucasian',
+                    'name' => 'Caucasian',
+                ),
+            ),
+            'EyeColor' => array(
+                array(
+                    'id' => 'blue',
+                    'name' => 'Blue',
+                ),
+                array(
+                    'id' => 'brown',
+                    'name' => 'Brown',
+                ),
+                array(
+                    'id' => 'black',
+                    'name' => 'Black',
+                ),
+                array(
+                    'id' => 'green',
+                    'name' => 'Green',
+                ),
+            ),
+            'Gender' => array(
+                array(
+                    'id' => 'male',
+                    'name' => 'Male',
+                ),
+                array(
+                    'id' => 'female',
+                    'name' => 'Female',
+                ),
+                array(
+                    'id' => 'other',
+                    'name' => 'Other',
+                ),
+            ),
+            'HairColor' => array(
+                array(
+                    'id' => 'black',
+                    'name' => 'Black',
+                ),
+                array(
+                    'id' => 'brown',
+                    'name' => 'Brown',
+                ),
+                array(
+                    'id' => 'blond',
+                    'name' => 'Blond',
+                ),
+                array(
+                    'id' => 'red',
+                    'name' => 'Red',
+                ),
+                array(
+                    'id' => 'gray-or-white',
+                    'name' => 'Gray or White',
+                ),
+                array(
+                    'id' => 'other',
+                    'name' => 'Other',
+                ),
+            ),
+            'Handicap' => array(
+                array(
+                    'id' => 'physical',
+                    'name' => 'Physical',
+                ),
+                array(
+                    'id' => 'cognitive',
+                    'name' => 'Cognitive',
+                ),
+                array(
+                    'id' => 'mental',
+                    'name' => 'Mental',
+                ),
+                array(
+                    'id' => 'sensory',
+                    'name' => 'Sensory',
+                ),
+                array(
+                    'id' => 'emotional',
+                    'name' => 'Emotional',
+                ),
+                array(
+                    'id' => 'developmental',
+                    'name' => 'Developmental',
+                ),
+            ),
+            'Income' => array(
+                array(
+                    'id' => 'less-than-us-12-000-year',
+                    'name' => 'Less than US$12,000/year',
+                ),
+                array(
+                    'id' => 'between-us-12-000-and-us-24-000-year',
+                    'name' => 'Between US$12,000 and US$24,000/year',
+                ),
+                array(
+                    'id' => 'more-than-us-24-000-year',
+                    'name' => 'More than US$24,000/year',
+                ),
+            ),
+            'Nationality' => array(
+                array(
+                    'id' => 'us',
+                    'name' => 'US',
+                ),
+                array(
+                    'id' => 'british',
+                    'name' => 'British',
+                ),
+                array(
+                    'id' => 'spanish',
+                    'name' => 'Spanish',
+                ),
+            ),
+            'Orientation' => array(
+                array(
+                    'id' => 'heterosexual',
+                    'name' => 'Heterosexual',
+                ),
+                array(
+                    'id' => 'homosexual',
+                    'name' => 'Homosexual',
+                ),
+                array(
+                    'id' => 'bisexual',
+                    'name' => 'Bisexual',
+                ),
+            ),
+            'Pets' => array(
+                array(
+                    'id' => 'cat',
+                    'name' => 'Cat',
+                ),
+                array(
+                    'id' => 'dog',
+                    'name' => 'Dog',
+                ),
+                array(
+                    'id' => 'other',
+                    'name' => 'Other',
+                ),
+            ),
+            'RelationshipInterest' => array(
+                array(
+                    'id' => 'friendship',
+                    'name' => 'Friendship',
+                ),
+                array(
+                    'id' => 'relation',
+                    'name' => 'Relation',
+                ),
+                array(
+                    'id' => 'open-relation',
+                    'name' => 'Open Relation',
+                ),
+            ),
+            'Smoke' => array(
+                array(
+                    'id' => 'yes',
+                    'name' => 'Yes',
+                ),
+                array(
+                    'id' => 'no-but-i-tolerate-it',
+                    'name' => 'No, but I tolerate it',
+                ),
+                array(
+                    'id' => 'no-and-i-hate-it',
+                    'name' => 'No, and I hate it',
+                ),
+            ),
+            'InterfaceLanguage' => array(
+                array(
+                    'id' => 'es',
+                    'name' => 'Español',
+                ),
+                array(
+                    'id' => 'en',
+                    'name' => 'English',
+                ),
+            ),
+        );
 
-        $this->createOption('Complexion', 'Slim');
-        $this->createOption('Complexion', 'Normal');
-        $this->createOption('Complexion', 'Fat');
+        foreach ($options as $type => $values) {
+            foreach ($values as $value) {
+                $id = $value['id'];
+                $name = $value['name'];
+                if ($this->createOption($type, $id, $name)) {
+                    $new += 1;
+                }
+            }
+        }
 
-        $this->createOption('DateAlcohol', 'Yes');
-        $this->createOption('DateAlcohol', 'No');
-        $this->createOption('DateAlcohol', 'Maybe');
-
-        $this->createOption('DateChildren', 'Yes');
-        $this->createOption('DateChildren', 'No');
-        $this->createOption('DateChildren', 'Maybe');
-
-        $this->createOption('DateComplexion', 'Yes');
-        $this->createOption('DateComplexion', 'No');
-        $this->createOption('DateComplexion', 'Maybe');
-
-        $this->createOption('DateHandicap', 'Yes');
-        $this->createOption('DateHandicap', 'No');
-        $this->createOption('DateHandicap', 'Maybe');
-
-        $this->createOption('DateReligion', 'Yes');
-        $this->createOption('DateReligion', 'No');
-        $this->createOption('DateReligion', 'Maybe');
-
-        $this->createOption('DateSmoker', 'Yes');
-        $this->createOption('DateSmoker', 'No');
-        $this->createOption('DateSmoker', 'Maybe');
-
-        $this->createOption('Diet', 'Vegetarian');
-        $this->createOption('Diet', 'Vegan');
-        $this->createOption('Diet', 'Other');
-
-        $this->createOption('Drugs', 'Yes');
-        $this->createOption('Drugs', 'No');
-        $this->createOption('Drugs', 'Occasionally');
-        $this->createOption('Drugs', 'Socially/On parties');
-
-        $this->createOption('EthnicGroup', 'Oriental');
-        $this->createOption('EthnicGroup', 'Afro-American');
-        $this->createOption('EthnicGroup', 'Caucasian');
-
-        $this->createOption('EyeColor', 'Blue');
-        $this->createOption('EyeColor', 'Brown');
-        $this->createOption('EyeColor', 'Black');
-        $this->createOption('EyeColor', 'Green');
-
-        $this->createOption('Gender', 'Male');
-        $this->createOption('Gender', 'Female');
-        $this->createOption('Gender', 'Other');
-
-        $this->createOption('HairColor', 'Black');
-        $this->createOption('HairColor', 'Brown');
-        $this->createOption('HairColor', 'Blond');
-        $this->createOption('HairColor', 'Red');
-        $this->createOption('HairColor', 'Gray or White');
-        $this->createOption('HairColor', 'Other');
-
-        $this->createOption('Handicap', 'Physical');
-        $this->createOption('Handicap', 'Cognitive');
-        $this->createOption('Handicap', 'Mental');
-        $this->createOption('Handicap', 'Sensory');
-        $this->createOption('Handicap', 'Emotional');
-        $this->createOption('Handicap', 'Developmental');
-
-        $this->createOption('Income', 'Less than US$12,000/year');
-        $this->createOption('Income', 'Between US$12,000 and US$24,000/year');
-        $this->createOption('Income', 'More than US$24,000/year');
-
-        $this->createOption('Nationality', 'US');
-        $this->createOption('Nationality', 'British');
-        $this->createOption('Nationality', 'Spanish');
-
-        $this->createOption('Orientation', 'Heterosexual');
-        $this->createOption('Orientation', 'Homosexual');
-        $this->createOption('Orientation', 'Bisexual');
-
-        $this->createOption('Pets', 'Cat');
-        $this->createOption('Pets', 'Dog');
-        $this->createOption('Pets', 'Other');
-
-        $this->createOption('RelationshipInterest', 'Friendship');
-        $this->createOption('RelationshipInterest', 'Relation');
-        $this->createOption('RelationshipInterest', 'Open Relation');
-
-        $this->createOption('Smoke', 'Yes');
-        $this->createOption('Smoke', 'No, but I tolerate it');
-        $this->createOption('Smoke', 'No, and I hate it');
-
-        return;
+        return $new;
     }
 
     /**
      * @param $type
+     * @param $id
      * @param $name
-     * @throws /Exception
+     * @throws \Exception
+     * @return boolean
      */
-    public function createOption($type, $name)
+    public function createOption($type, $id, $name)
     {
-        if (!$this->optionExists($type, $name)) {
-            $params = array('name' => $name);
-            $query = "CREATE (:ProfileOption:".$type." { name: {name} })";
+        if (!$this->optionExists($type, $id, $name)) {
+
+            if ($this->optionExists($type, null, $name)) {
+                // This is for BC
+                $this->logger->info(sprintf('Updating ProfileOption:%s id: "%s", name: "%s"', $type, $id, $name));
+                $params = array('type' => $type, 'id' => $id, 'name' => $name);
+                $query = "MATCH (o:ProfileOption) WHERE {type} IN labels(o) AND o.name = {name} SET o.id = {id} RETURN o;";
+            } else {
+                $this->logger->info(sprintf('Creating ProfileOption:%s id: "%s", name: "%s"', $type, $id, $name));
+                $params = array('id' => $id, 'name' => $name);
+                $query = "CREATE (:ProfileOption:" . $type . " { id: {id}, name: {name} })";
+            }
 
             $neo4jQuery = new Query(
                 $this->client,
@@ -146,29 +450,35 @@ class ProfileOptions
             );
 
             $result = $neo4jQuery->getResultSet();
+
+            return true;
+
+        } else {
+
+            $this->logger->info(sprintf('ProfileOption:%s id: "%s", name: "%s" already exists', $type, $id, $name));
+
+            return false;
         }
 
-        return;
     }
 
     /**
      * @param $type
+     * @param $id
      * @param $name
      * @return boolean
-     * @throws /Exception
+     * @throws \Exception
      */
-    public function optionExists($type, $name)
+    public function optionExists($type, $id, $name)
     {
         $params = array('type' => $type, 'name' => $name);
-        $query =
-            "
-            MATCH
-            (o:ProfileOption)
-            WHERE
-            {type} IN labels(o) AND
-            o.name = {name}
-            RETURN
-            o;";
+        $query = "MATCH (o:ProfileOption) WHERE {type} IN labels(o) AND o.name = {name}";
+        if ($id) {
+            // For BC
+            $params['id'] = $id;
+            $query .= " AND o.id = {id}";
+        }
+        $query .= " RETURN o;";
 
         $neo4jQuery = new Query(
             $this->client,
