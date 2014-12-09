@@ -111,56 +111,6 @@ class NormalDistributionModel
         return $data;
     }
 
-    public function updateQuestionsNormalDistributionVariables()
-    {
-        //Construct query string
-        $queryString = "
-        MATCH
-            (u1:User),
-            (u2:User)
-        OPTIONAL MATCH
-            (u1)-[:ACCEPTS]->(commonanswer:Answer)<-[:ANSWERS]-(u2)
-        WITH
-            u1, u2, count(commonanswer) AS numOfCommonAnswers
-        RETURN
-            avg(numOfCommonAnswers) AS ave_questions,
-            stdevp(numOfCommonAnswers) AS stdev_questions
-        ";
-
-        //Create the Neo4j query object
-        $query = new Query(
-            $this->client,
-            $queryString
-        );
-
-        //Execute Query
-        try {
-            $result = $query->getResultSet();
-        } catch (\Exception $e) {
-            throw $e;
-        }
-
-        //Get the wanted results
-        foreach ($result as $row) {
-            $average = $row['ave_questions'];
-            $stdev = $row['stdev_questions'];
-        }
-
-        //Persist data
-
-        $date = date("d-m-Y [H:i:s]");
-        $data = array("average" => $average, "stdev" => $stdev, "calculationDate" => $date );
-
-        $this->saveDataFile("questionsNormalDistributionVariables", $data);
-
-        return $data;
-    }
-
-    public function getQuestionsNormalDistributionVariables()
-    {
-        return $this->readDataFile("questionsNormalDistributionVariables");
-    }
-
     public function getContentNormalDistributionVariables()
     {
         return $this->readDataFile("contentNormalDistributionVariables");
