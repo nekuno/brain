@@ -10,7 +10,7 @@ namespace EventListener;
 
 use AppEvents;
 use Event\AnswerEvent;
-use PhpAmqpLib\Connection\AMQPConnection;
+use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -22,14 +22,14 @@ class UserAnswerSubscriber implements EventSubscriberInterface
 {
 
     /**
-     * @var AMQPConnection
+     * @var AMQPStreamConnection
      */
     private $connection;
 
     /**
-     * @param AMQPConnection $connection
+     * @param AMQPStreamConnection $connection
      */
-    public function __construct(AMQPConnection $connection)
+    public function __construct(AMQPStreamConnection $connection)
     {
 
         $this->connection = $connection;

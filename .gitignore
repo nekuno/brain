@@ -1,7 +1,4 @@
 .idea
-
 /vendor
-/composer.lock
-
 /config/params.yml
 /phpunit.xml

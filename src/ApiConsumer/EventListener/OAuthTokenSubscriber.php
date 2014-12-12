@@ -3,7 +3,7 @@ namespace ApiConsumer\EventListener;
 
 use ApiConsumer\Auth\UserProviderInterface;
 use ApiConsumer\Event\OAuthTokenEvent;
-use PhpAmqpLib\Connection\AMQPConnection;
+use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -16,7 +16,7 @@ class OAuthTokenSubscriber implements EventSubscriberInterface
 {
 
     /**
-     * @var \PhpAmqpLib\Connection\AMQPConnection
+     * @var \PhpAmqpLib\Connection\AMQPStreamConnection
      */
     private $amqp;
     /**
@@ -38,9 +38,9 @@ class OAuthTokenSubscriber implements EventSubscriberInterface
      * @param UserProviderInterface $userProvider
      * @param \Swift_Mailer $mailer
      * @param LoggerInterface $logger
-     * @param \PhpAmqpLib\Connection\AMQPConnection $amqp
+     * @param \PhpAmqpLib\Connection\AMQPStreamConnection $amqp
      */
-    public function __construct(UserProviderInterface $userProvider, \Swift_Mailer $mailer, LoggerInterface $logger, AMQPConnection $amqp)
+    public function __construct(UserProviderInterface $userProvider, \Swift_Mailer $mailer, LoggerInterface $logger, AMQPStreamConnection $amqp)
     {
         $this->userProvider = $userProvider;
 

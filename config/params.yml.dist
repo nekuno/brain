@@ -40,12 +40,13 @@ params:
     ##Spotify
     spotify.consumer_key: '2cc22e2706704d39998c990457530a9a'
     spotify.consumer_secret: '47189c30d7f84d7ca4c4436309c0dc3c'
-    spotify.api_key: ''
 
     ##Google
     google.consumer_key: '556826433000.apps.googleusercontent.com'
     google.consumer_secret: 'oNAbbRwxxZD9Ntyj7D4yXq1f'
-    google.api_key: 'AIzaSyD-FATpKY396h_bGxRiAg7wSgiGiCr5Prs'
+    google.service_account_email: '556826433000-0b3i84k7li492e1t9rvat650cb8v00dg@developer.gserviceaccount.com'
+    google.key_file: '/root/.ssh/OauthTest-d90f7483fcf1.p12'
+    google.key_password: 'notasecret'
 
     ## Facebook App
     facebook.consumer_key: '525923770862645'
