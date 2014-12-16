@@ -27,6 +27,7 @@ class FacebookMetadataParser implements MetadataParserInterface
 
         $facebookMetadata['title'] = $this->getOgTitleText($crawler);
         $facebookMetadata['description'] = $this->getOgDescriptionText($crawler);
+        $facebookMetadata['language'] = $this->getLanguage($crawler);
 
         return $facebookMetadata;
     }
@@ -61,6 +62,22 @@ class FacebookMetadataParser implements MetadataParserInterface
         }
 
         return '' !== trim($description) ? $description : null;
+    }
+
+    /**
+     * @param Crawler $crawler
+     * @return null|string
+     */
+    private function getLanguage(Crawler $crawler)
+    {
+
+        try {
+            $language = strtolower(substr($crawler->filterXPath('//meta[@property="og:locale"]')->attr('content'), 0, 2));
+        } catch (\InvalidArgumentException $e) {
+            $language = null;
+        }
+
+        return '' !== trim($language) ? $language : null;
     }
 
     /**

@@ -27,6 +27,7 @@ class BasicMetadataParser implements MetadataParserInterface
 
         $htmlTagsWithValidMetadata['title'] = $this->getTitleTagText($crawler);
         $htmlTagsWithValidMetadata['description'] = $this->getMetaDescriptionText($crawler);
+        $htmlTagsWithValidMetadata['language'] = $this->getLanguage($crawler);
 
         return $htmlTagsWithValidMetadata;
     }
@@ -61,6 +62,22 @@ class BasicMetadataParser implements MetadataParserInterface
         }
 
         return '' !== trim($description) ? $description : null;
+    }
+
+    /**
+     * @param Crawler $crawler
+     * @return null|string
+     */
+    private function getLanguage(Crawler $crawler)
+    {
+
+        try {
+            $language = strtolower(substr($crawler->filterXPath('//html')->attr('lang'), 0, 2));
+        } catch (\InvalidArgumentException $e) {
+            $language = null;
+        }
+
+        return '' !== trim($language) ? $language : null;
     }
 
     /**
