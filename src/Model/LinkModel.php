@@ -48,13 +48,18 @@ class LinkModel
             }
         }
 
+        $language = "";
+        if (isset($data['language'])) {
+            $language = $data['language'];
+        }
+
         if (false === $this->isAlreadySaved($data['url'])) {
             $template = "MATCH (u:User)"
                 . " WHERE u.qnoow_id = {userId}"
                 . " CREATE "
                 . " (l:Link".$additionalLabels.") "
                 ." SET l.url = {url}, l.title = {title}, l.description = {description}, "
-                . " l.processed = 1, l.created =  timestamp() "
+                . " l.language = {language}, l.processed = 1, l.created =  timestamp() "
                 . $additionalFields
                 . " CREATE (u)-[r:LIKES]->(l) "
                 . " RETURN l;";
@@ -74,7 +79,8 @@ class LinkModel
                 'title'       => $data['title'],
                 'description' => $data['description'],
                 'url'         => $data['url'],
-                'userId'      => (integer)$data['userId']
+                'userId'      => (integer)$data['userId'],
+                'language'    => $language
             )
         );
 
