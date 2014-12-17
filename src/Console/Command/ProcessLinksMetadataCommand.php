@@ -8,14 +8,14 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class ScrapLinksMetadataCommand extends ApplicationAwareCommand
+class ProcessLinksMetadataCommand extends ApplicationAwareCommand
 {
 
     protected function configure()
     {
 
-        $this->setName('scrap:links')
-            ->setDescription("Scrap links metadata")
+        $this->setName('process:links')
+            ->setDescription("Process links")
             ->setDefinition(
                 array(
                     new InputArgument('limit', InputArgument::OPTIONAL, 'Items limit', 100)
