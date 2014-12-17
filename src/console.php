@@ -14,6 +14,7 @@ $console->addCommands(array(
     new \Console\Command\Neo4jConstraintsCommand($app),
     new \Console\Command\Neo4jFixturesCommand($app),
     new \Console\Command\Neo4jProfileOptionsCommand($app),
+    new \Console\Command\Neo4jLoadQuestionsCommand($app),
     new \Console\Command\Neo4jTestsCommand($app),
     new \Console\Command\UpdateMatchingParameters($app),
     new \Console\Command\RecalculateMatching($app),

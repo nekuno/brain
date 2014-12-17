@@ -2,3 +2,4 @@
 /vendor
 /config/params.yml
 /phpunit.xml
+/csv

@@ -27,18 +27,22 @@ class QuestionModel
     }
 
     /**
-     * @param int $limit
+     * @param int|null $limit
      * @return \Everyman\Neo4j\Query\ResultSet
      */
     public function getAll($limit = 20)
     {
 
-        $data = array('limit' => (integer)$limit);
+        $data = is_null($limit) ? array() : array('limit' => (integer)$limit);
 
-        $template = "MATCH (q:Question)<-[:IS_ANSWER_OF]-(a:Answer)"
+        $template = "MATCH (q:Question)"
+            . " OPTIONAL MATCH (q)<-[:IS_ANSWER_OF]-(a:Answer)"
             . " RETURN q AS question, collect(a) AS answers"
-            . " ORDER BY question.ranking DESC"
-            . " LIMIT {limit}";
+            . " ORDER BY question.ranking DESC";
+
+        if (!is_null($limit)) {
+            $template .= " LIMIT {limit}";
+        }
 
         $query = new Query($this->client, $template, $data);
 
@@ -135,14 +139,22 @@ class QuestionModel
 
         $data['answers'] = array_values($data['answers']);
 
+        if (!isset($data['text_es'])) {
+            $data['text_es'] = null;
+        }
+
+        if (!isset($data['text_en'])) {
+            $data['text_en'] = null;
+        }
+
         $template = "MATCH (u:User)"
             . " WHERE u.qnoow_id = {userId}"
             . " CREATE (q:Question)-[c:CREATED_BY]->(u)"
-            . " SET q.text = {text}, q.timestamp = timestamp(), q.ranking = 0, c.timestamp = timestamp()"
-            . " FOREACH (text in {answers}| CREATE (a:Answer {text: text})-[:IS_ANSWER_OF]->(q))"
+            . " SET q.text = {text}, q.text_es = {text_es}, q.text_en = {text_en}, q.timestamp = timestamp(), q.ranking = 0, c.timestamp = timestamp()"
+            . " FOREACH (answer in {answers}| CREATE (a:Answer {text: answer.text, text_es: answer.text_es, text_en: answer.text_en})-[:IS_ANSWER_OF]->(q))"
             . " RETURN q;";
 
-        //Create the Neo4j query object
+        // Create the Neo4j query object
         $query = new  Query(
             $this->client,
             $template,
@@ -152,6 +164,71 @@ class QuestionModel
         foreach ($query->getResultSet() as $row) {
             return $row;
         }
+
+        return true;
+    }
+
+    public function update(array $data)
+    {
+
+        $data['id'] = (integer)$data['id'];
+
+        $answers = array();
+        if (isset($data['answers'])) {
+            $answers = $data['answers'];
+            unset($data['answers']);
+        }
+
+        $template = "MATCH (q:Question)"
+            . " WHERE id(q) = {id}"
+            . " SET q.text = {text}";
+
+        if (isset($data['text_es'])) {
+            $template .= ", q.text_es = {text_es}";
+        }
+
+        if (isset($data['text_en'])) {
+            $template .= ", q.text_en = {text_en}";
+        }
+
+        $template .= " RETURN q;";
+
+        // Create the Neo4j query object
+        $query = new Query(
+            $this->client,
+            $template,
+            $data
+        );
+
+        $query->getResultSet();
+
+        foreach ($answers as $answer) {
+
+            $template = "MATCH (a:Answer)"
+                . " WHERE id(a) = {id}"
+                . " SET a.text = {text}";
+
+            if (isset($answer['text_es'])) {
+                $template .= ", a.text_es = {text_es}";
+            }
+
+            if (isset($answer['text_en'])) {
+                $template .= ", a.text_en = {text_en}";
+            }
+
+            $template .= " RETURN a;";
+
+            // Create the Neo4j query object
+            $query = new Query(
+                $this->client,
+                $template,
+                $answer
+            );
+
+            $query->getResultSet();
+        }
+
+        return true;
     }
 
     /**
