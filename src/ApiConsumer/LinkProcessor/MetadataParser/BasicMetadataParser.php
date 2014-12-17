@@ -77,6 +77,22 @@ class BasicMetadataParser implements MetadataParserInterface
             $language = null;
         }
 
+        if (null == $language) {
+            try {
+                $language = strtolower(substr($crawler->filterXPath('//meta[@name="lang"]')->attr('content'), 0, 2));
+            } catch (\InvalidArgumentException $e) {
+                $language = null;
+            }
+        }
+
+        if (null == $language) {
+            try {
+                $language = strtolower(substr($crawler->filterXPath('//meta[@http - equiv="content-language"]')->attr('content'), 0, 2));
+            } catch (\InvalidArgumentException $e) {
+                $language = null;
+            }
+        }
+
         return '' !== trim($language) ? $language : null;
     }
 
