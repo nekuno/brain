@@ -132,17 +132,33 @@ class LinkModel
             }
         }
 
+        $language = "";
+        if (isset($data['language'])) {
+            $language = $data['language'];
+        }
+
         $template = "MATCH (link:Link)"
             . " WHERE link.url = { tempId } "
             . " SET link.url = { url }"
             . " , link.title = { title }"
             . " , link.description = { description }"
+            . " , link.language = { language }"
             . " , link.processed = " . (integer)$processed
             . " , link.updated = timestamp() "
             . $additionalLabels . $additionalFields
             . " RETURN link;";
 
-        $query = new Query($this->client, $template, $data);
+        $query = new Query(
+            $this->client,
+            $template,
+            array(
+                'tempId'      => $data['tempId'],
+                'url'         => $data['url'],
+                'title'       => $data['title'],
+                'description' => $data['description'],
+                'language'    => $language
+            )
+        );
 
         try {
             return $query->getResultSet();
