@@ -152,6 +152,7 @@ class BasicMetadataParserTest extends \PHPUnit_Framework_TestCase
 
         $title = 'My title';
         $description = 'My description';
+        $language = 'en';
 
         $crawler = $this->getMockBuilder('Symfony\Component\DomCrawler\Crawler')->getMock();
         $crawler
@@ -164,10 +165,9 @@ class BasicMetadataParserTest extends \PHPUnit_Framework_TestCase
             ->method('text')
             ->will($this->returnValue($title));
         $crawler
-            ->expects($this->once())
+            ->expects($this->any())
             ->method('attr')
-            ->with($this->equalTo('content'))
-            ->will($this->onConsecutiveCalls($description));
+            ->will($this->onConsecutiveCalls($description, $language));
 
         $actual = $this->parser->extractMetadata($crawler);
 
@@ -176,6 +176,7 @@ class BasicMetadataParserTest extends \PHPUnit_Framework_TestCase
         $this->assertArrayHasKey('description', $actual);
         $this->assertEquals($title, $actual['title']);
         $this->assertEquals($description, $actual['description']);
+        $this->assertEquals($language, $actual['language']);
 
     }
 
@@ -193,9 +194,8 @@ class BasicMetadataParserTest extends \PHPUnit_Framework_TestCase
             ->method('text')
             ->will($this->throwException(new \InvalidArgumentException));
         $crawler
-            ->expects($this->once())
+            ->expects($this->any())
             ->method('attr')
-            ->with($this->equalTo('content'))
             ->will($this->throwException(new \InvalidArgumentException));
 
         $actual = $this->parser->extractMetadata($crawler);
