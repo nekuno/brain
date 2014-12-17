@@ -138,15 +138,15 @@ class FacebookMetadataParserTest extends \PHPUnit_Framework_TestCase
 
         $crawler = $this->getMockBuilder('\Symfony\Component\DomCrawler\Crawler')->getMock();
         $crawler
-            ->expects($this->exactly(2))
+            ->expects($this->any())
             ->method('filterXPath')
             ->with($this->stringStartsWith('//meta[@property'))
             ->will($this->returnSelf());
         $crawler
-            ->expects($this->exactly(2))
+            ->expects($this->any())
             ->method('attr')
             ->with('content')
-            ->will($this->onConsecutiveCalls($testData['title'], $testData['description']));
+            ->will($this->onConsecutiveCalls($testData['title'], $testData['description'], $testData['language']));
 
         $actual = $this->parser->extractMetadata($crawler);
 
@@ -231,20 +231,24 @@ class FacebookMetadataParserTest extends \PHPUnit_Framework_TestCase
                 array(
                     'title' => 'My title',
                     'description' => 'Test description',
+                    'language' => 'es',
                 ),
                 array(
                     'title' => 'My title',
                     'description' => 'Test description',
+                    'language' => 'es'
                 ),
             ),
             array(
                 array(
                     'title' => null,
                     'description' => null,
+                    'language' => null,
                 ),
                 array(
                     'title' => ' ',
                     'description' => ' ',
+                    'language' => '',
                 ),
             ),
         );
