@@ -110,11 +110,14 @@ class ProfileController
 
     /**
      * @param Application $app
+     * @param Request $request
      * @return JsonResponse
      */
     public function getMetadataAction(Request $request, Application $app)
     {
-        $locale = $request->get('locale', 'en');
+        $defaultLocale = $app['locale.options']['default'];
+        $locale = $request->get('locale', $defaultLocale);
+
         /* @var $model ProfileModel */
         $model = $app['users.profile.model'];
         $metadata = $model->getMetadata($locale);
