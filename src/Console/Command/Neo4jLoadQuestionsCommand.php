@@ -149,7 +149,7 @@ class Neo4jLoadQuestionsCommand extends ApplicationAwareCommand
         /* @var $questionModel QuestionModel */
         $questionModel = $this->app['questionnaire.questions.model'];
         $all = array();
-        foreach ($questionModel->getAll(null) as $one) {
+        foreach ($questionModel->getAll() as $one) {
             /* @var $one Row */
             /* @var $node Node */
             $node = $one->current();

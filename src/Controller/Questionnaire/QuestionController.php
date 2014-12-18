@@ -2,8 +2,11 @@
 
 namespace Controller\Questionnaire;
 
+use Everyman\Neo4j\Node;
+use Everyman\Neo4j\Query\Row;
 use Model\Questionnaire\QuestionModel;
 use Silex\Application;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -17,7 +20,7 @@ class QuestionController
      * Returns an unanswered question for given user
      * @param Request $request
      * @param Application $app
-     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @return JsonResponse
      */
     public function getNextQuestionAction(Request $request, Application $app)
     {
@@ -28,18 +31,27 @@ class QuestionController
             return $app->json(array(), 400);
         }
 
-        /** @var QuestionModel $model */
+        $locale = $this->getLocale($request, $app['locale.options']['default']);
+
+        /* @var QuestionModel $model */
         $model = $app['questionnaire.questions.model'];
-        $result = $model->getNextByUser($userId);
+        $result = $model->getNextByUser($userId, $locale);
 
         $question = array();
 
         foreach ($result as $row) {
-            $question['id'] = $row['next']->getId();
-            $question['text'] = $row['next']->getProperty('text');
+
+            /* @var $row Row */
+            $node = $row->current();
+            /* @var $node Node */
+
+            $question['id'] = $node->getId();
+            $question['text'] = $node->getProperty('text_' . $locale);
+            $question['locale'] = $locale;
 
             foreach ($row['nextAnswers'] as $answer) {
-                $question['answers'][$answer->getId()] = $answer->getProperty('text');
+                /* @var $answer Node */
+                $question['answers'][$answer->getId()] = $answer->getProperty('text_' . $locale);
             }
         }
 
@@ -53,26 +65,32 @@ class QuestionController
     /**
      * @param Request $request
      * @param Application $app
-     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @return JsonResponse
      */
     public function getQuestionsAction(Request $request, Application $app)
     {
 
+        $locale = $this->getLocale($request, $app['locale.options']['default']);
         $limit = $request->query->get('limit', 20);
 
-        /** @var QuestionModel $model */
+        /* @var QuestionModel $model */
         $model = $app['questionnaire.questions.model'];
-        $result = $model->getAll($limit);
+        $result = $model->getAll($locale, $limit);
 
         $questions = array();
 
         foreach ($result as $row) {
-            $question['id'] = $row['next']->getId();
-            $question['text'] = $row['next']->getProperty('text');
 
+            /* @var $row Row */
+            $node = $row->current();
+            /* @var $node Node */
+            $question['id'] = $node->getId();
+            $question['text'] = $node->getProperty('text_' . $locale);
+            $question['locale'] = $locale;
             $question['answers'] = array();
             foreach ($row['answers'] as $answer) {
-                $question['answers'][$answer->getId()] = $answer->getProperty('text');
+                /* @var $answer Node */
+                $question['answers'][$answer->getId()] = $answer->getProperty('text_' . $locale);
             }
             $questions[] = $question;
         }
@@ -87,25 +105,32 @@ class QuestionController
     /**
      * @param Request $request
      * @param Application $app
-     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @return JsonResponse
      */
     public function getQuestionAction(Request $request, Application $app)
     {
 
+        $locale = $this->getLocale($request, $app['locale.options']['default']);
         $questionId = $request->get('id');
 
-        /** @var QuestionModel $model */
+        /* @var QuestionModel $model */
         $model = $app['questionnaire.questions.model'];
-        $result = $model->getById($questionId);
+        $result = $model->getById($questionId, $locale);
 
         $question = array();
 
         foreach ($result as $row) {
-            $question['id'] = $row['next']->getId();
-            $question['text'] = $row['next']->getProperty('text');
+
+            /* @var $row Row */
+            $node = $row->current();
+            /* @var $node Node */
+            $question['id'] = $node->getId();
+            $question['text'] = $node->getProperty('text_' . $locale);
+            $question['locale'] = $locale;
 
             foreach ($row['answers'] as $answer) {
-                $question['answers'][$answer->getId()] = $answer->getProperty('text');
+                /* @var $answer Node */
+                $question['answers'][$answer->getId()] = $answer->getProperty('text_' . $locale);
             }
         }
 
@@ -119,7 +144,7 @@ class QuestionController
     /**
      * @param Request $request
      * @param Application $app
-     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @return JsonResponse
      * @throws \Exception
      */
     public function postQuestionAction(Request $request, Application $app)
@@ -132,7 +157,7 @@ class QuestionController
         }
 
         try {
-            /** @var QuestionModel $model */
+            /* @var QuestionModel $model */
             $model = $app['questionnaire.questions.model'];
             $result = $model->create($data);
             if (null !== $result) {
@@ -174,7 +199,7 @@ class QuestionController
     /**
      * @param Request $request
      * @param Application $app
-     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @return JsonResponse
      * @throws \Exception
      */
     public function skipAction(Request $request, Application $app)
@@ -182,7 +207,7 @@ class QuestionController
 
         $data = $request->request->all();
 
-        /** @var QuestionModel $model */
+        /* @var QuestionModel $model */
         $model = $app['questionnaire.questions.model'];
 
         if (!$model->existsQuestion($data['questionId'])) {
@@ -201,7 +226,7 @@ class QuestionController
     /**
      * @param Request $request
      * @param Application $app
-     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @return JsonResponse
      * @throws \Exception
      */
     public function reportAction(Request $request, Application $app)
@@ -209,7 +234,7 @@ class QuestionController
 
         $data = $request->request->all();
 
-        /** @var QuestionModel $model */
+        /* @var QuestionModel $model */
         $model = $app['questionnaire.questions.model'];
 
         if (!$model->existsQuestion($data['questionId'])) {
@@ -228,7 +253,7 @@ class QuestionController
     /**
      * @param Request $request
      * @param Application $app
-     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @return JsonResponse
      * @throws \Exception
      */
     public function statsAction(Request $request, Application $app)
@@ -236,7 +261,7 @@ class QuestionController
 
         $id = $request->get('id');
 
-        /** @var QuestionModel $model */
+        /* @var QuestionModel $model */
         $model = $app['questionnaire.questions.model'];
 
         if (!$model->existsQuestion($id)) {
@@ -268,4 +293,15 @@ class QuestionController
         }
 
     }
+
+    protected function getLocale(Request $request, $defaultLocale)
+    {
+        $locale = $request->query->get('locale', $defaultLocale);
+        if (!in_array($locale, array('en', 'es'))) {
+            $locale = $defaultLocale;
+        }
+
+        return $locale;
+    }
+
 }

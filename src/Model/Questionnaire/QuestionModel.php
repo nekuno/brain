@@ -30,13 +30,18 @@ class QuestionModel
      * @param int|null $limit
      * @return \Everyman\Neo4j\Query\ResultSet
      */
-    public function getAll($limit = 20)
+    public function getAll($locale = null, $limit = null)
     {
 
         $data = is_null($limit) ? array() : array('limit' => (integer)$limit);
 
-        $template = "MATCH (q:Question)"
-            . " OPTIONAL MATCH (q)<-[:IS_ANSWER_OF]-(a:Answer)"
+        $template = "MATCH (q:Question)";
+
+        if (!is_null($locale)) {
+            $template .= " WHERE HAS(q.text_$locale)";
+        }
+
+        $template .= " OPTIONAL MATCH (q)<-[:IS_ANSWER_OF]-(a:Answer)"
             . " RETURN q AS question, collect(a) AS answers"
             . " ORDER BY question.ranking DESC";
 
@@ -51,10 +56,11 @@ class QuestionModel
 
     /**
      * @param $userId
+     * @param $locale
      * @param bool $sortByRanking
      * @return \Everyman\Neo4j\Query\ResultSet
      */
-    public function getNextByUser($userId, $sortByRanking = true)
+    public function getNextByUser($userId, $locale = null, $sortByRanking = true)
     {
 
         $data = array(
@@ -68,8 +74,13 @@ class QuestionModel
             . " OPTIONAL MATCH (:User)-[:REPORTS]->(report:Question)"
             . " WITH user, collect(answered) + collect(skip) + collect(report) AS excluded"
             . " MATCH (q3:Question)<-[:IS_ANSWER_OF]-(a2:Answer)"
-            . " WHERE NOT q3 IN excluded"
-            . " WITH q3 AS next, collect(DISTINCT a2) AS nextAnswers"
+            . " WHERE NOT q3 IN excluded";
+
+        if (!is_null($locale)) {
+            $template .= " AND HAS(q3.text_$locale)";
+        }
+
+        $template .= " WITH q3 AS next, collect(DISTINCT a2) AS nextAnswers"
             . " RETURN next, nextAnswers ";
 
         if ($sortByRanking && $this->sortByRanking()) {
@@ -106,7 +117,7 @@ class QuestionModel
     /**
      * @return \Everyman\Neo4j\Query\ResultSet
      */
-    public function getById($questionId)
+    public function getById($questionId, $locale = null)
     {
 
         $data = array(
@@ -114,8 +125,13 @@ class QuestionModel
         );
 
         $template = " MATCH (q:Question)<-[:IS_ANSWER_OF]-(a:Answer)"
-            . " WHERE id(q) = {questionId}"
-            . " WITH q AS question, collect(a) AS answers"
+            . " WHERE id(q) = {questionId}";
+
+        if (!is_null($locale)) {
+            $template .= " AND HAS(q.text_$locale)";
+        }
+
+        $template .= " WITH q AS question, collect(a) AS answers"
             . " RETURN question, answers"
             . " LIMIT 1;";
 

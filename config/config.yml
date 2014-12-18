@@ -1,3 +1,6 @@
+locale.options:
+    default: %locale.default%
+
 dbs.options:
     mysql_social:
         driver: %dbs.mysql_social.driver%
