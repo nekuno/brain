@@ -30,13 +30,14 @@ class ProfileModel
         $publicMetadata = array();
         foreach ($metadata as $name => $values) {
             $publicField = $values;
-            if ($values['type'] == 'choice') {
-                $publicField['choices'] = $choiceOptions[$name];
-            }
-
             $publicField['label'] = $values['label'][$language];
-            unset($publicField['optionsLabel']);
-            unset($publicField['tagsLabel']);
+
+            if ($values['type'] == 'choice') {
+                $publicField['choices'] = array();
+                if (isset($choiceOptions[$name])) {
+                    $publicField['choices'] = $choiceOptions[$name];
+                }
+            }
 
             $publicMetadata[$name] = $publicField;
         }

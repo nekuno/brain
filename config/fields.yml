@@ -56,187 +56,156 @@ profile:
             es: '¿Quieres tener hijos?'
     gender:
         type: choice
-        optionsLabel: Gender
         label:
             en: 'Gender'
             es: 'Género'
     hairColor:
         type: choice
-        optionsLabel: HairColor
         label:
             en: 'Hair color'
             es: 'Color pelo'
     ethnicGroup:
         type: choice
-        optionsLabel: EthnicGroup
         label:
             en: 'Ethnic group'
             es: 'Grupo Étnico'
     complexion:
         type: choice
-        optionsLabel: Complexion
         label:
             en: 'Complexion'
             es: 'Complexión'
     eyeColor:
         type: choice
-        optionsLabel: EyeColor
         label:
             en: 'Eyes color'
             es: 'Color ojos'
     allergy:
         type: choice
-        optionsLabel: Allergy
         label:
             en: 'Have you any allergy?'
             es: '¿Tienes alguna alergia?'
     handicap:
         type: choice
-        optionsLabel: Handicap
         label:
             en: 'Have you any handicap?'
             es: '¿Tienes alguna discapacidad?'
     civilStatus:
         type: choice
-        optionsLabel: CivilStatus
         label:
             en: 'Civil status'
             es: 'Estado civil'
     nationality:
         type: choice
-        optionsLabel: Nationality
         label:
             en: 'Nationality'
             es: 'Nacionalidad'
     income:
         type: choice
-        optionsLabel: Income
         label:
             en: 'Income'
             es: 'Ingresos'
     car:
         type: choice
-        optionsLabel: Nationality
         label:
             en: 'Have a car?'
             es: '¿Tienes coche?'
     sons:
         type: choice
-        optionsLabel: Sons
         label:
             en: 'Have sons?'
             es: '¿Tienes hijos?'
     pets:
         type: choice
-        optionsLabel: Pets
         label:
             en: 'Have pets?'
             es: '¿Tienes mascotas?'
     smoke:
         type: choice
-        optionsLabel: Smoke
         label:
             en: 'Smoke?'
             es: '¿Fumas?'
     alcohol:
         type: choice
-        optionsLabel: Alcohol
         label:
             en: 'Drink alcohol?'
             es: '¿Bebes Alcohol?'
     drugs:
         type: choice
-        optionsLabel: Drugs
         label:
             en: 'Take drugs?'
             es: '¿Tomas drogas?'
     diet:
         type: choice
-        optionsLabel: Diet
         label:
             en: 'Have a special diet?'
             es: '¿Sigues alguna dieta especial?'
     wantSons:
         type: choice
-        optionsLabel: WantSons
         label:
             en: 'Do you want to have children?'
             es: '¿Quieres tener hijos?'
     orientation:
         type: choice
-        optionsLabel: Orientation
         label:
             en: 'Orientation'
             es: 'Orientación'
     relationshipInterest:
         type: choice
-        optionsLabel: RelationshipInterest
         label:
             en: 'What are your interests on relations?'
             es: '¿Qué te interesa de las relaciones?'
     dateSmoker:
         type: choice
-        optionsLabel: DateSmoker
         label:
             en: 'Would you date a person that smokes?'
             es: '¿Saldrías con una persona que fuma?'
     dateReligion:
         type: choice
-        optionsLabel: DateReligion
         label:
             en: 'Would you date a person with different religious beliefs?'
             es: '¿Saldrías con una persona con diferente creencia religiosa?'
     dateComplexion:
         type: choice
-        optionsLabel: DateComplexion
         label:
             en: 'Would you date a person with larger body complexion?'
             es: '¿Saldrías con una persona con mayor complexión?'
     dateAlcohol:
         type: choice
-        optionsLabel: DateAlcohol
         label:
             en: 'Would you date a person that drinks alcohol?'
             es: '¿Saldrías con una persona que bebe alcohol?'
     dateHandicap:
         type: choice
-        optionsLabel: DateHandicap
         label:
             en: 'Would you date a person with the same disabilities?'
             es: '¿Saldrías con una persona con las mismas discapacidades?'
     dateChildren:
         type: choice
-        optionsLabel: DateChildren
         label:
             en: 'Would you date a person with children?'
             es: '¿Saldrías con una persona con hijos?'
     interfaceLanguage:
         type: choice
-        optionsLabel: InterfaceLanguage
         label:
             en: 'Preferred interface language?'
             es: '¿Lenguaje de interfaz preferido?'
     religion:
         type: tags
-        tagsLabel: Religion
         label:
             en: 'Religion'
             es: 'Religión'
     ideology:
         type: tags
-        tagsLabel: Ideology
         label:
             en: 'Ideology'
             es: 'Ideología'
     profession:
         type: tags
-        tagsLabel: Profession
         label:
             en: 'Profession'
             es: 'Profesión'
     education:
         type: tags
-        tagsLabel: Education
         label:
             en: 'Education'
             es: 'Educación'
