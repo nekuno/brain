@@ -22,15 +22,15 @@ class ProfileModel
         $this->metadata = $metadata;
     }
 
-    public function getMetadata($language='en')
+    public function getMetadata($locale='en')
     {
-        $choiceOptions = $this->getChoiceOptions($language);
+        $choiceOptions = $this->getChoiceOptions($locale);
         $metadata = $this->metadata;
 
         $publicMetadata = array();
         foreach ($metadata as $name => $values) {
             $publicField = $values;
-            $publicField['label'] = $values['label'][$language];
+            $publicField['label'] = $values['label'][$locale];
 
             if ($values['type'] == 'choice') {
                 $publicField['choices'] = array();
@@ -271,9 +271,9 @@ class ProfileModel
         }
     }
 
-    protected function getChoiceOptions($language)
+    protected function getChoiceOptions($locale)
     {
-        $translationField = 'name_'.$language;
+        $translationField = 'name_'.$locale;
         $template = "MATCH (option:ProfileOption) "
             . "RETURN head(filter(x IN labels(option) WHERE x <> 'ProfileOption')) AS type, option.id AS id, option." . $translationField . " AS name "
             . "ORDER BY type;";
