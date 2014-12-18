@@ -112,12 +112,12 @@ class ProfileController
      * @param Application $app
      * @return JsonResponse
      */
-    public function getMetadataAction(Application $app)
+    public function getMetadataAction(Request $request, Application $app)
     {
-
+        $language = $request->get('lang', 'en');
         /* @var $model ProfileModel */
         $model = $app['users.profile.model'];
-        $metadata = $model->getMetadata();
+        $metadata = $model->getMetadata($language);
 
         return $app->json($metadata, 200);
     }
