@@ -512,11 +512,11 @@ class ProfileOptions implements LoggerAwareInterface
     public function createOption($type, $id, $name)
     {
         if ($this->optionExists($type, $id)) {
-            $this->logger->info(sprintf('Updating ProfileOption:%s id: "%s", name_en: "%s", name_es: "%s', $type, $id, $name['name_en'], $name['name_es']));
+            $this->logger->info(sprintf('Updating ProfileOption:%s id: "%s", name_en: "%s", name_es: "%s"', $type, $id, $name['name_en'], $name['name_es']));
             $params = array('type' => $type, 'id' => $id, 'name_en' => $name['name_en'], 'name_es' => $name['name_es']);
             $query = "MATCH (o:ProfileOption) WHERE {type} IN labels(o) AND o.id = {id} SET o.name_en = {name_en}, o.name_es = {name_es}  RETURN o;";
         } else {
-            $this->logger->info(sprintf('Creating ProfileOption:%s id: "%s", name_en: "%s", name_es: "%s', $type, $id, $name['name_en'], $name['name_es']));
+            $this->logger->info(sprintf('Creating ProfileOption:%s id: "%s", name_en: "%s", name_es: "%s"', $type, $id, $name['name_en'], $name['name_es']));
             $params = array('id' => $id, 'name_en' => $name['name_en'], 'name_es' => $name['name_es']);
             $query = "CREATE (:ProfileOption:" . $type . " { id: {id}, name_en: {name_en}, name_es: {name_es}  })";
         }
