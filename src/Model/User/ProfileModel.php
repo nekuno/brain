@@ -6,6 +6,7 @@ use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
 use Everyman\Neo4j\Label;
 use Everyman\Neo4j\Node;
+use Everyman\Neo4j\Query\Row;
 use Model\Exception\ValidationException;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -22,7 +23,7 @@ class ProfileModel
         $this->metadata = $metadata;
     }
 
-    public function getMetadata($locale='en')
+    public function getMetadata($locale = 'en')
     {
         $choiceOptions = $this->getChoiceOptions($locale);
         $metadata = $this->metadata;
@@ -76,10 +77,13 @@ class ProfileModel
             throw new NotFoundHttpException('Profile not found');
         }
 
-        $row = $result[0];
-        $profile = $row['profile']->getProperties();
+        /* @var $row Row */
+        $row = $result->current();
+        /* @var $node Node */
+        $node = $row->offsetGet('profile');
+        $profile = $node->getProperties();
 
-        foreach ($row['options'] as $option) {
+        foreach ($row->offsetGet('options') as $option) {
             /* @var $option Node */
             $labels = $option->getLabels();
             foreach ($labels as $index => $label) {
@@ -93,7 +97,7 @@ class ProfileModel
             }
         }
 
-        foreach ($row['tags'] as $tag) {
+        foreach ($row->offsetGet('tags') as $tag) {
             /* @var $tag Node */
             $labels = $tag->getLabels();
             foreach ($labels as $label) {
@@ -273,7 +277,7 @@ class ProfileModel
 
     protected function getChoiceOptions($locale)
     {
-        $translationField = 'name_'.$locale;
+        $translationField = 'name_' . $locale;
         $template = "MATCH (option:ProfileOption) "
             . "RETURN head(filter(x IN labels(option) WHERE x <> 'ProfileOption')) AS type, option.id AS id, option." . $translationField . " AS name "
             . "ORDER BY type;";
