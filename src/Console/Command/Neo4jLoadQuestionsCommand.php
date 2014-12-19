@@ -2,8 +2,10 @@
 
 namespace Console\Command;
 
+use Everyman\Neo4j\Cypher\Query;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
+use Model\Exception\ValidationException;
 use Model\Questionnaire\QuestionModel;
 use Model\UserModel;
 use Silex\Application;
@@ -146,10 +148,18 @@ class Neo4jLoadQuestionsCommand extends ApplicationAwareCommand
 
     protected function getAll()
     {
-        /* @var $questionModel QuestionModel */
-        $questionModel = $this->app['questionnaire.questions.model'];
+
+        $template = "MATCH (q:Question)"
+            . " OPTIONAL MATCH (q)<-[:IS_ANSWER_OF]-(a:Answer)"
+            . " RETURN q AS question, collect(a) AS answers"
+            . " ORDER BY question.ranking DESC";
+
+        $query = new Query($this->app['neo4j.client'], $template);
+
+        $result = $query->getResultSet();
+
         $all = array();
-        foreach ($questionModel->getAll() as $one) {
+        foreach ($result as $one) {
             /* @var $one Row */
             /* @var $node Node */
             $node = $one->current();
@@ -217,13 +227,70 @@ class Neo4jLoadQuestionsCommand extends ApplicationAwareCommand
                         }
                     }
 
-                    $questionModel->update($allQuestion);
+                    $answers_es = $answers_en = array();
+                    foreach ($allQuestion['answers'] as $answer) {
+                        $answers_es[$answer['id']] = $answer['text_es'];
+                        $answers_en[$answer['id']] = $answer['text_en'];
+                    }
+
+                    $question_es = array(
+                        'id' => $allQuestion['id'],
+                        'text' => $allQuestion['text_es'],
+                        'locale' => 'es',
+                        'answers' => $answers_es,
+                    );
+                    $question_en = array(
+                        'id' => $allQuestion['id'],
+                        'text' => $allQuestion['text_en'],
+                        'locale' => 'en',
+                        'answers' => $answers_en,
+                    );
+
+                    try {
+                        $questionModel->update($question_es);
+                        $questionModel->update($question_en);
+                    } catch (ValidationException $e) {
+                        $this->output->writeln('There where some errors...');
+                        $this->output->writeln(print_r($e->getErrors(), true));
+                    }
                     $updated += 1;
                 }
             } else {
                 // Create from scratch
-                $csvQuestion['userId'] = $user['qnoow_id'];
-                $questionModel->create($csvQuestion);
+                $answers_es = array();
+                foreach ($csvQuestion['answers'] as $answer) {
+                    $answers_es[] = $answer['text_es'];
+                }
+                $question_es = array(
+                    'text' => $csvQuestion['text_es'],
+                    'locale' => 'es',
+                    'userId' => $user['qnoow_id'],
+                    'answers' => $answers_es,
+                );
+
+                try {
+                    $question = $questionModel->create($question_es);
+                    $question_en = array(
+                        'id' => $question['id'],
+                        'text' => $csvQuestion['text_en'],
+                        'locale' => 'en',
+                    );
+                    $answers_en = array();
+                    foreach ($question['answers'] as $id => $answer) {
+
+                        $keyAnswer = $this->find($answer, $csvQuestion['answers']);
+
+                        if (!is_null($keyAnswer)) {
+                            $answers_en[$id] = $csvQuestion['answers'][$keyAnswer]['text_en'];
+                        }
+                    }
+                    $question_en['answers'] = $answers_en;
+                    $questionModel->update($question_en);
+                } catch (ValidationException $e) {
+                    $this->output->writeln('There where some errors...');
+                    $this->output->writeln(print_r($e->getErrors(), true));
+                }
+
                 $created += 1;
             }
         }
@@ -234,7 +301,7 @@ class Neo4jLoadQuestionsCommand extends ApplicationAwareCommand
     protected function find($text, $haystack)
     {
         foreach ($haystack as $key => $item) {
-            if ($text === $item['text']) {
+            if ($text === $item['text'] || $text === $item['text_es']) {
                 return $key;
             }
         }

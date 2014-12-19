@@ -201,7 +201,7 @@ class QuestionModel
     public function update(array $data)
     {
 
-        $this->validate($data);
+        $this->validate($data, false);
 
         $data['id'] = (integer)$data['id'];
         $locale = $data['locale'];
@@ -226,7 +226,12 @@ class QuestionModel
 
         $query->getResultSet();
 
-        foreach ($answers as $answer) {
+        foreach ($answers as $id => $answer) {
+
+            $answerData = array(
+                'id' => (integer)$id,
+                'text' => $answer,
+            );
 
             $template = "MATCH (a:Answer)"
                 . " WHERE id(a) = {id}"
@@ -237,7 +242,7 @@ class QuestionModel
             $query = new Query(
                 $this->client,
                 $template,
-                $answer
+                $answerData
             );
 
             $query->getResultSet();
@@ -462,7 +467,7 @@ class QuestionModel
      * @param array $data
      * @throws ValidationException
      */
-    public function validate(array $data)
+    public function validate(array $data, $includeUser = true)
     {
 
         $errors = array();
@@ -478,11 +483,11 @@ class QuestionModel
             $errors['text'] = 'The text of the question is required';
         }
 
-        if (!isset($data['userId'])) {
+        if ($includeUser && !isset($data['userId'])) {
             $errors['userId'] = 'The userId is required';
         }
 
-        if (!isset($data['answers']) || !is_array($data['answers']) || count($data['answers']) <= 2) {
+        if (!isset($data['answers']) || !is_array($data['answers']) || count($data['answers']) <= 1) {
             $errors['answers'] = 'At least, two answers are required';
         }
 
