@@ -1,0 +1,211 @@
+profile:
+    realName:
+        type: string
+        min: 5
+        max: 255
+        label:
+            en: 'Real Name'
+            es: 'Nombre Real'
+    description:
+        type: string
+        min: 0
+        max: 1024
+        label:
+            en: 'Description'
+            es: 'Descripción'
+    birthday:
+        type: birthday
+        label:
+            en: 'Birthday'
+            es: 'Cumpleaños'
+    height:
+        type: string
+        min: 0
+        max: 255
+        label:
+            en: 'Height'
+            es: 'Altura'
+    allergy:
+        type: string
+        min: 0
+        max: 255
+        label:
+            en: 'Allergy'
+            es: 'Alergia'
+    car:
+        type: boolean
+        label:
+            en: 'Car'
+            es: 'Coche'
+    sons:
+        type: boolean
+        label:
+            en: 'Sons'
+            es: 'Hijos'
+    languages:
+        type: string
+        min: 0
+        max: 255
+        label:
+            en: 'Languages'
+            es: 'Idiomas'
+    wantSons:
+        type: boolean
+        label:
+            en: 'Do you want Sons?'
+            es: '¿Quieres tener hijos?'
+    gender:
+        type: choice
+        label:
+            en: 'Gender'
+            es: 'Género'
+    hairColor:
+        type: choice
+        label:
+            en: 'Hair color'
+            es: 'Color pelo'
+    ethnicGroup:
+        type: choice
+        label:
+            en: 'Ethnic group'
+            es: 'Grupo Étnico'
+    complexion:
+        type: choice
+        label:
+            en: 'Complexion'
+            es: 'Complexión'
+    eyeColor:
+        type: choice
+        label:
+            en: 'Eyes color'
+            es: 'Color ojos'
+    allergy:
+        type: choice
+        label:
+            en: 'Have you any allergy?'
+            es: '¿Tienes alguna alergia?'
+    handicap:
+        type: choice
+        label:
+            en: 'Have you any handicap?'
+            es: '¿Tienes alguna discapacidad?'
+    civilStatus:
+        type: choice
+        label:
+            en: 'Civil status'
+            es: 'Estado civil'
+    nationality:
+        type: choice
+        label:
+            en: 'Nationality'
+            es: 'Nacionalidad'
+    income:
+        type: choice
+        label:
+            en: 'Income'
+            es: 'Ingresos'
+    car:
+        type: choice
+        label:
+            en: 'Have a car?'
+            es: '¿Tienes coche?'
+    sons:
+        type: choice
+        label:
+            en: 'Have sons?'
+            es: '¿Tienes hijos?'
+    pets:
+        type: choice
+        label:
+            en: 'Have pets?'
+            es: '¿Tienes mascotas?'
+    smoke:
+        type: choice
+        label:
+            en: 'Smoke?'
+            es: '¿Fumas?'
+    alcohol:
+        type: choice
+        label:
+            en: 'Drink alcohol?'
+            es: '¿Bebes Alcohol?'
+    drugs:
+        type: choice
+        label:
+            en: 'Take drugs?'
+            es: '¿Tomas drogas?'
+    diet:
+        type: choice
+        label:
+            en: 'Have a special diet?'
+            es: '¿Sigues alguna dieta especial?'
+    wantSons:
+        type: choice
+        label:
+            en: 'Do you want to have children?'
+            es: '¿Quieres tener hijos?'
+    orientation:
+        type: choice
+        label:
+            en: 'Orientation'
+            es: 'Orientación'
+    relationshipInterest:
+        type: choice
+        label:
+            en: 'What are your interests on relations?'
+            es: '¿Qué te interesa de las relaciones?'
+    dateSmoker:
+        type: choice
+        label:
+            en: 'Would you date a person that smokes?'
+            es: '¿Saldrías con una persona que fuma?'
+    dateReligion:
+        type: choice
+        label:
+            en: 'Would you date a person with different religious beliefs?'
+            es: '¿Saldrías con una persona con diferente creencia religiosa?'
+    dateComplexion:
+        type: choice
+        label:
+            en: 'Would you date a person with larger body complexion?'
+            es: '¿Saldrías con una persona con mayor complexión?'
+    dateAlcohol:
+        type: choice
+        label:
+            en: 'Would you date a person that drinks alcohol?'
+            es: '¿Saldrías con una persona que bebe alcohol?'
+    dateHandicap:
+        type: choice
+        label:
+            en: 'Would you date a person with the same disabilities?'
+            es: '¿Saldrías con una persona con las mismas discapacidades?'
+    dateChildren:
+        type: choice
+        label:
+            en: 'Would you date a person with children?'
+            es: '¿Saldrías con una persona con hijos?'
+    interfaceLanguage:
+        type: choice
+        label:
+            en: 'Preferred interface language?'
+            es: '¿Lenguaje de interfaz preferido?'
+    religion:
+        type: tags
+        label:
+            en: 'Religion'
+            es: 'Religión'
+    ideology:
+        type: tags
+        label:
+            en: 'Ideology'
+            es: 'Ideología'
+    profession:
+        type: tags
+        label:
+            en: 'Profession'
+            es: 'Profesión'
+    education:
+        type: tags
+        label:
+            en: 'Education'
+            es: 'Educación'

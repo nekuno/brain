@@ -7,7 +7,7 @@ $app['users.model'] = function ($app) {
 
 $app['users.profile.model'] = function ($app) {
 
-    return new \Model\User\ProfileModel($app['neo4j.client']);
+    return new \Model\User\ProfileModel($app['neo4j.client'], $app['fields']['profile']);
 };
 
 $app['users.profile.tag.model'] = function ($app) {
