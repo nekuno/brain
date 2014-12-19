@@ -1,4 +1,7 @@
 params:
+    ## Locale
+    locale.default: en
+
     ## Doctrine
     dbs.mysql_social.driver: pdo_mysql
     dbs.mysql_social.host: localhost

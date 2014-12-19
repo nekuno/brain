@@ -46,6 +46,7 @@ $replacements = array_merge($app['params'], array('app_root_dir' => __DIR__));
 $app->register(new Igorw\Silex\ConfigServiceProvider(__DIR__ . "/../config/config.yml", $replacements));
 $app->register(new Igorw\Silex\ConfigServiceProvider(__DIR__ . "/../config/config_{$app['env']}.yml", $replacements));
 
+$app->register(new Igorw\Silex\ConfigServiceProvider(__DIR__ . "/../config/fields.yml",array(),null,'fields'));
 
 /**
  * Event system configuration. Initialize the listeners and subscribers below.
