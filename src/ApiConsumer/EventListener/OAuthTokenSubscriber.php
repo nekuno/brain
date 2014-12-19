@@ -5,6 +5,7 @@ use ApiConsumer\Auth\UserProviderInterface;
 use ApiConsumer\Event\OAuthTokenEvent;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
+use PhpAmqpLib\Exception\AMQPRuntimeException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -73,7 +74,12 @@ class OAuthTokenSubscriber implements EventSubscriberInterface
 
         $this->sendMail($user);
 
-        $channel = $this->amqp->channel();
+        try {
+            $channel = $this->amqp->channel();
+        } catch (AMQPRuntimeException $e) {
+            $this->amqp->reconnect();
+            $channel = $this->amqp->channel();
+        }
 
         $exchangeName = 'social.direct';
         $exchangeType = 'direct';
