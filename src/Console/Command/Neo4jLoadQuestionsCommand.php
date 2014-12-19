@@ -252,6 +252,7 @@ class Neo4jLoadQuestionsCommand extends ApplicationAwareCommand
                     } catch (ValidationException $e) {
                         $this->output->writeln('There where some errors...');
                         $this->output->writeln(print_r($e->getErrors(), true));
+                        $this->output->writeln(print_r($question_es, true));
                     }
                     $updated += 1;
                 }
@@ -289,6 +290,7 @@ class Neo4jLoadQuestionsCommand extends ApplicationAwareCommand
                 } catch (ValidationException $e) {
                     $this->output->writeln('There where some errors...');
                     $this->output->writeln(print_r($e->getErrors(), true));
+                    $this->output->writeln(print_r($question_es, true));
                 }
 
                 $created += 1;
