@@ -249,12 +249,13 @@ class Neo4jLoadQuestionsCommand extends ApplicationAwareCommand
                     try {
                         $questionModel->update($question_es);
                         $questionModel->update($question_en);
+                        $updated += 1;
                     } catch (ValidationException $e) {
-                        $this->output->writeln('There where some errors...');
-                        $this->output->writeln(print_r($e->getErrors(), true));
+                        $this->output->writeln('There where some errors creating this question:');
                         $this->output->writeln(print_r($question_es, true));
+                        $this->output->writeln(print_r($question_en, true));
+                        $this->output->writeln(print_r($e->getErrors(), true));
                     }
-                    $updated += 1;
                 }
             } else {
                 // Create from scratch
@@ -287,13 +288,12 @@ class Neo4jLoadQuestionsCommand extends ApplicationAwareCommand
                     }
                     $question_en['answers'] = $answers_en;
                     $questionModel->update($question_en);
+                    $created += 1;
                 } catch (ValidationException $e) {
-                    $this->output->writeln('There where some errors...');
-                    $this->output->writeln(print_r($e->getErrors(), true));
+                    $this->output->writeln('There where some errors creating this question:');
                     $this->output->writeln(print_r($question_es, true));
+                    $this->output->writeln(print_r($e->getErrors(), true));
                 }
-
-                $created += 1;
             }
         }
         $this->output->writeln(sprintf('%s questions have been updated', $updated));
