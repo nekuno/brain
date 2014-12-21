@@ -30,8 +30,9 @@ class QuestionComparePaginatedModel implements PaginatedInterface
     public function validateFilters(array $filters)
     {
         $hasIds = isset($filters['id']) && isset($filters['id2']);
+        $hasLocale = isset($filters['locale']);
 
-        return $hasIds;
+        return $hasIds && $hasLocale;
     }
 
     /**
@@ -48,6 +49,7 @@ class QuestionComparePaginatedModel implements PaginatedInterface
 
         $id = $filters['id'];
         $id2 = $filters['id2'];
+        $locale = $filters['locale'];
 
         $showOnlyCommon = false;
         if (isset($filters['showOnlyCommon'])) {
@@ -78,6 +80,7 @@ class QuestionComparePaginatedModel implements PaginatedInterface
             WHERE u.qnoow_id = {UserId} AND u2.qnoow_id = {UserId2}
             MATCH
             (u)-[:ANSWERS]-(answer:Answer)-[:IS_ANSWER_OF]-(question:Question)
+            WHERE HAS(answer.text_$locale)
         ";
         $query .= $commonQuery;
         $query .= "
@@ -126,11 +129,11 @@ class QuestionComparePaginatedModel implements PaginatedInterface
 
                 $question = array();
                 $question['id'] = $row['question']->getId();
-                $question['text'] = $row['question']->getProperty('text');
+                $question['text'] = $row['question']->getProperty('text_' . $locale);
                 foreach ($row['possible_answers'] as $possibleAnswer) {
                     $answer = array();
                     $answer['id'] = $possibleAnswer->getId();
-                    $answer['text'] = $possibleAnswer->getProperty('text');
+                    $answer['text'] = $possibleAnswer->getProperty('text_' . $locale);
                     $question['answers'][] = $answer;
                 }
                 $content['question'] = $question;
