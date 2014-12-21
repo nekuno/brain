@@ -6,6 +6,7 @@ use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
 use Everyman\Neo4j\Label;
 use Everyman\Neo4j\Node;
+use Everyman\Neo4j\Query\Row;
 use Model\Exception\ValidationException;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -13,20 +14,36 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 class ProfileModel
 {
     protected $client;
+    protected $metadata;
 
-    public function __construct(Client $client)
+    public function __construct(Client $client, array $metadata)
     {
 
         $this->client = $client;
+        $this->metadata = $metadata;
     }
 
-    public function getMetadata()
+    public function getMetadata($locale = 'en')
     {
-        return array_merge(
-            $this->getScalarMetadata(),
-            $this->getChoiceMetadata(),
-            $this->getTagsMetadata()
-        );
+        $choiceOptions = $this->getChoiceOptions($locale);
+        $metadata = $this->metadata;
+
+        $publicMetadata = array();
+        foreach ($metadata as $name => $values) {
+            $publicField = $values;
+            $publicField['label'] = $values['label'][$locale];
+
+            if ($values['type'] == 'choice') {
+                $publicField['choices'] = array();
+                if (isset($choiceOptions[$name])) {
+                    $publicField['choices'] = $choiceOptions[$name];
+                }
+            }
+
+            $publicMetadata[$name] = $publicField;
+        }
+
+        return $publicMetadata;
     }
 
     /**
@@ -60,10 +77,13 @@ class ProfileModel
             throw new NotFoundHttpException('Profile not found');
         }
 
-        $row = $result[0];
-        $profile = $row['profile']->getProperties();
+        /* @var $row Row */
+        $row = $result->current();
+        /* @var $node Node */
+        $node = $row->offsetGet('profile');
+        $profile = $node->getProperties();
 
-        foreach ($row['options'] as $option) {
+        foreach ($row->offsetGet('options') as $option) {
             /* @var $option Node */
             $labels = $option->getLabels();
             foreach ($labels as $index => $label) {
@@ -77,7 +97,7 @@ class ProfileModel
             }
         }
 
-        foreach ($row['tags'] as $tag) {
+        foreach ($row->offsetGet('tags') as $tag) {
             /* @var $tag Node */
             $labels = $tag->getLabels();
             foreach ($labels as $label) {
@@ -255,53 +275,11 @@ class ProfileModel
         }
     }
 
-    protected function getScalarMetadata()
+    protected function getChoiceOptions($locale)
     {
-        return array(
-            'realName' => array(
-                'type' => 'string',
-                'min' => 5,
-                'max' => 255,
-            ),
-            'description' => array(
-                'type' => 'string',
-                'min' => 0,
-                'max' => 1024,
-            ),
-            'birthday' => array(
-                'type' => 'birthday',
-            ),
-            'height' => array(
-                'type' => 'string',
-                'min' => 0,
-                'max' => 255,
-            ),
-            'allergy' => array(
-                'type' => 'string',
-                'min' => 0,
-                'max' => 255,
-            ),
-            'car' => array(
-                'type' => 'boolean',
-            ),
-            'sons' => array(
-                'type' => 'boolean',
-            ),
-            'languages' => array(
-                'type' => 'string',
-                'min' => 0,
-                'max' => 255,
-            ),
-            'wantSons' => array(
-                'type' => 'boolean',
-            ),
-        );
-    }
-
-    protected function getChoiceMetadata()
-    {
+        $translationField = 'name_' . $locale;
         $template = "MATCH (option:ProfileOption) "
-            . "RETURN head(filter(x IN labels(option) WHERE x <> 'ProfileOption')) AS type, option.id AS id, option.name AS name "
+            . "RETURN head(filter(x IN labels(option) WHERE x <> 'ProfileOption')) AS type, option.id AS id, option." . $translationField . " AS name "
             . "ORDER BY type;";
 
         $query = new Query(
@@ -310,75 +288,16 @@ class ProfileModel
         );
 
         $result = $query->getResultSet();
-        $choiceMetadata = array();
+        $choiceOptions = array();
         foreach ($result as $row) {
             $fieldName = lcfirst($row['type']);
             $optionId = $row['id'];
             $optionName = $row['name'];
-            if (!isset($choiceMetadata[$fieldName])) {
-                $choiceMetadata[$fieldName] = array(
-                    'type' => 'choice',
-                    'label' => $this->getChoiceMetadataLabel($fieldName),
-                    'choices' => array(),
-                );
-            }
-            $choiceMetadata[$fieldName]['choices'][$optionId] = $optionName;
+
+            $choiceOptions[$fieldName][$optionId] = $optionName;
         }
 
-        return $choiceMetadata;
-    }
-
-    protected function getChoiceMetadataLabel($fieldName)
-    {
-        $labels = array(
-            'gender' => 'Genre',
-            'hairColor' => 'Hair color',
-            'ethnicGroup' => 'Ethnic group',
-            'complexion' => 'Complexion',
-            'eyeColor' => 'Eyes color',
-            'allergy' => 'Have you any allergy?',
-            'handicap' => 'Have you any handicap?',
-            'civilStatus' => 'Civil status',
-            'nationality' => 'Nationality',
-            'income' => 'Income',
-            'car' => 'Have a car?',
-            'sons' => 'Have sons?',
-            'pets' => 'Have pets?',
-            'smoke' => 'Smoke?',
-            'alcohol' => 'Drink alcohol?',
-            'drugs' => 'Take drugs?',
-            'diet' => 'Have a special diet?',
-            'wantSons' => 'Do you want to have children?',
-            'orientation' => 'Orientation',
-            'relationshipInterest' => 'What are your interests on relations?',
-            'dateSmoker' => 'Would you date a person that smokes?',
-            'dateReligion' => 'Would you date a person with different religious beliefs?',
-            'dateComplexion' => 'Would you date a person with larger body complexion?',
-            'dateAlcohol' => 'Would you date a person that drinks alcohol?',
-            'dateHandicap' => 'Would you date a person with the same disabilities?',
-            'dateChildren' => 'Would you date a person with children?',
-            'interfaceLanguage' => 'Preferred interface language?',
-        );
-
-        return isset($labels[$fieldName]) ? $labels[$fieldName] : $fieldName;
-    }
-
-    protected function getTagsMetadata()
-    {
-        return array(
-            'religion' => array(
-                'type' => 'tags',
-            ),
-            'ideology' => array(
-                'type' => 'tags',
-            ),
-            'profession' => array(
-                'type' => 'tags',
-            ),
-            'education' => array(
-                'type' => 'tags',
-            ),
-        );
+        return $choiceOptions;
     }
 
     protected function getUserAndProfileNodesById($id)

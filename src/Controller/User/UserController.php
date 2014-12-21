@@ -240,6 +240,7 @@ class UserController
 
         $id = $request->get('id');
         $id2 = $request->get('id2');
+        $locale = $request->get('locale');
         $showOnlyCommon = $request->get('showOnlyCommon', 0);
 
         if (null === $id || null === $id2) {
@@ -249,7 +250,7 @@ class UserController
         /** @var $paginator \Paginator\Paginator */
         $paginator = $app['paginator'];
 
-        $filters = array('id' => $id, 'id2' => $id2, 'showOnlyCommon' => $showOnlyCommon);
+        $filters = array('id' => $id, 'id2' => $id2, 'locale' => $locale, 'showOnlyCommon' => $showOnlyCommon);
 
         /** @var $model \Model\User\QuestionComparePaginatedModel */
         $model = $app['users.questions.compare.model'];

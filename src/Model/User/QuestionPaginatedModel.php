@@ -30,8 +30,9 @@ class QuestionPaginatedModel implements PaginatedInterface
     public function validateFilters(array $filters)
     {
         $hasId = isset($filters['id']);
+        $hasLocale = isset($filters['locale']);
 
-        return $hasId;
+        return $hasId && $hasLocale;
     }
 
     /**
@@ -45,6 +46,7 @@ class QuestionPaginatedModel implements PaginatedInterface
     public function slice(array $filters, $offset, $limit)
     {
         $id = $filters['id'];
+        $locale = $filters['locale'];
         $response = array();
 
         $params = array(
@@ -56,6 +58,7 @@ class QuestionPaginatedModel implements PaginatedInterface
         $query = "MATCH (u:User)"
             . " WHERE u.qnoow_id = {UserId}"
             . " MATCH (u)-[r1:ANSWERS]-(answer:Answer)-[:IS_ANSWER_OF]-(question:Question)"
+            . " WHERE HAS(answer.text_$locale)"
             . " OPTIONAL MATCH (possible_answers:Answer)-[:IS_ANSWER_OF]-(question)"
             . " OPTIONAL MATCH (u)-[:ACCEPTS]-(accepted_answers:Answer)-[:IS_ANSWER_OF]-(question)"
             . " OPTIONAL MATCH (u)-[rate:RATES]-(question)"
@@ -82,11 +85,11 @@ class QuestionPaginatedModel implements PaginatedInterface
 
                 $question = array();
                 $question['id'] = $row['question']->getId();
-                $question['text'] = $row['question']->getProperty('text');
+                $question['text'] = $row['question']->getProperty('text_' . $locale);
                 foreach ($row['possible_answers'] as $possibleAnswer) {
                     $answer = array();
                     $answer['id'] = $possibleAnswer->getId();
-                    $answer['text'] = $possibleAnswer->getProperty('text');
+                    $answer['text'] = $possibleAnswer->getProperty('text_' . $locale);
                     $question['answers'][] = $answer;
                 }
                 $content['question'] = $question;
@@ -121,6 +124,7 @@ class QuestionPaginatedModel implements PaginatedInterface
     public function countTotal(array $filters)
     {
         $id = $filters['id'];
+        $locale = $filters['locale'];
         $count = 0;
 
         $params = array(
@@ -130,8 +134,8 @@ class QuestionPaginatedModel implements PaginatedInterface
         $query = " MATCH (u:User)"
             . " WHERE u.qnoow_id = {UserId}"
             . " MATCH (u)-[:ANSWERS]-(answer:Answer)-[:IS_ANSWER_OF]-(question:Question)"
-            . " RETURN count(distinct question) as total;"
-        ;
+            . " WHERE HAS(answer.text_$locale)"
+            . " RETURN count(distinct question) as total;";
 
         //Create the Neo4j query object
         $contentQuery = new Query(

@@ -204,14 +204,15 @@ class AnswerModel
         return $query->getResultSet();
     }
 
-    public function getUserAnswer($userId, $questionId)
+    public function getUserAnswer($userId, $questionId, $locale)
     {
 
         $data['userId'] = (integer)$userId;
         $data['questionId'] = (integer)$questionId;
+        $data['locale'] = $locale;
 
         $template = "MATCH (q:Question), (u:User)"
-            . " WHERE u.qnoow_id = {userId} AND id(q) = {questionId}"
+            . " WHERE u.qnoow_id = {userId} AND id(q) = {questionId} AND HAS(q.text_$locale)"
             . " WITH u, q"
             . " MATCH (u)-[ua:ANSWERS]->(a:Answer)-[:IS_ANSWER_OF]->(q)"
             . " WITH u, a, q, ua"

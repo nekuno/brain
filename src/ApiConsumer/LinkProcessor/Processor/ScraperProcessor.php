@@ -99,6 +99,12 @@ class ScraperProcessor implements ProcessorInterface
             }
         }
 
+        if (array_key_exists('language', $scrapedData)) {
+            if (null !== $scrapedData['language'] && "" !== $scrapedData['language']) {
+                $link['language'] = $scrapedData['language'];
+            }
+        }
+
         if (array_key_exists('tags', $scrapedData)) {
             if (!array_key_exists('tags', $link)) {
                 $link['tags'] = array();

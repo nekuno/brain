@@ -140,27 +140,24 @@ class AnswerController
     public function indexAction(Request $request, Application $app)
     {
 
-        $userId = $request->get('userId');
+        $id = $request->get('userId');
+        $locale = $request->get('locale');
 
-        if (null === $userId) {
+        if (null === $id || null === $locale) {
             return $app->json(array(), 400);
         }
 
         /** @var $paginator \Paginator\Paginator */
         $paginator = $app['paginator'];
 
-        $filters = array('id' => $userId);
+        $filters = array('id' => $id, 'locale' => $locale);
         /** @var $model \Model\User\QuestionPaginatedModel */
         $model = $app['users.questions.model'];
 
         try {
             $result = $paginator->paginate($filters, $model, $request);
         } catch (\Exception $e) {
-            if ($app['env'] == 'dev') {
-                throw $e;
-            }
-
-            return $app->json(array(), 500);
+            return $app->json($e->getMessage(), 500);
         }
 
         return $app->json($result, !empty($result) ? 201 : 200);
@@ -216,20 +213,21 @@ class AnswerController
 
         $userId = $request->get('userId');
         $questionId = $request->get('questionId');
+        $locale = $request->get('locale');
 
         try {
             /** @var AnswerModel $model */
             $model = $app['users.answers.model'];
 
-            $result = $model->getUserAnswer($userId, $questionId);
+            $result = $model->getUserAnswer($userId, $questionId, $locale);
 
             $data = array();
 
             foreach ($result as $row) {
                 $data['question']['id'] = $row['question']->getId();
-                $data['question']['text'] = $row['question']->getProperty('text');
+                $data['question']['text'] = $row['question']->getProperty('text_' . $locale);
                 foreach ($row['answers'] as $answer) {
-                    $data['question']['answers'][$answer->getId()] = $answer->getProperty('text');
+                    $data['question']['answers'][$answer->getId()] = $answer->getProperty('text_' . $locale);
                 }
 
                 $data['answer']['answerId'] = $row['answer']->getId();

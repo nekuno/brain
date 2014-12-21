@@ -10,10 +10,11 @@ $console->setDispatcher($app['dispatcher']);
 $console->addCommands(array(
     new \Console\Command\FetchLinksCommand($app),
     new \Console\Command\WorkerRabbitMQConsumeCommand($app),
-    new \Console\Command\ScrapLinksMetadataCommand($app),
+    new \Console\Command\ProcessLinksMetadataCommand($app),
     new \Console\Command\Neo4jConstraintsCommand($app),
     new \Console\Command\Neo4jFixturesCommand($app),
     new \Console\Command\Neo4jProfileOptionsCommand($app),
+    new \Console\Command\Neo4jLoadQuestionsCommand($app),
     new \Console\Command\Neo4jTestsCommand($app),
     new \Console\Command\UpdateMatchingParameters($app),
     new \Console\Command\RecalculateMatching($app),

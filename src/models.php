@@ -7,7 +7,7 @@ $app['users.model'] = function ($app) {
 
 $app['users.profile.model'] = function ($app) {
 
-    return new \Model\User\ProfileModel($app['neo4j.client']);
+    return new \Model\User\ProfileModel($app['neo4j.client'], $app['fields']['profile']);
 };
 
 $app['users.profile.tag.model'] = function ($app) {
@@ -50,13 +50,11 @@ $app['users.rate.model'] = function ($app) {
     return new \Model\User\RateModel($app['dispatcher'], $app['neo4j.client']);
 };
 
-
 $app['users.matching.normal_distribution.model'] = function ($app) {
 
     return new \Model\User\Matching\NormalDistributionModel($app['neo4j.client'], $app['dataFile.dir']);
 
 };
-
 
 $app['users.matching.model'] = function ($app) {
 
