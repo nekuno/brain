@@ -124,6 +124,7 @@ class QuestionPaginatedModel implements PaginatedInterface
     public function countTotal(array $filters)
     {
         $id = $filters['id'];
+        $locale = $filters['locale'];
         $count = 0;
 
         $params = array(
@@ -133,6 +134,7 @@ class QuestionPaginatedModel implements PaginatedInterface
         $query = " MATCH (u:User)"
             . " WHERE u.qnoow_id = {UserId}"
             . " MATCH (u)-[:ANSWERS]-(answer:Answer)-[:IS_ANSWER_OF]-(question:Question)"
+            . " WHERE HAS(answer.text_$locale)"
             . " RETURN count(distinct question) as total;";
 
         //Create the Neo4j query object
