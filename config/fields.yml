@@ -210,6 +210,12 @@ profile:
             en: 'Education'
             es: 'Educación'
     lat:
+        label:
+            en: ''
+            es: ''
         type: string
     lng:
+        label:
+            en: ''
+            es: ''
         type: string
