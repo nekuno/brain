@@ -209,3 +209,7 @@ profile:
         label:
             en: 'Education'
             es: 'Educación'
+    lat:
+        type: string
+    lng:
+        type: string
