@@ -3,6 +3,7 @@
 namespace Controller\User;
 
 use Model\User\ContentPaginatorModel;
+use Model\User\RateModel;
 use Model\UserModel;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
@@ -420,6 +421,7 @@ class UserController
         }
 
         try {
+            /** @var RateModel $model */
             $model = $app['users.rate.model'];
             $result = $model->userRateLink($userId, $linkId, $rate);
         } catch (\Exception $e) {
