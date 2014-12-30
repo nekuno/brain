@@ -15,16 +15,19 @@ class ProfileModel
 {
     protected $client;
     protected $metadata;
+    protected $defaultLocale;
 
-    public function __construct(Client $client, array $metadata)
+    public function __construct(Client $client, array $metadata, $defaultLocale)
     {
 
         $this->client = $client;
         $this->metadata = $metadata;
+        $this->defaultLocale = $defaultLocale;
     }
 
-    public function getMetadata($locale = 'en')
+    public function getMetadata($locale = null)
     {
+        $locale = $this->getLocale($locale);
         $choiceOptions = $this->getChoiceOptions($locale);
         $metadata = $this->metadata;
 
@@ -544,4 +547,13 @@ class ProfileModel
         return $sign;
     }
 
+    protected function getLocale($locale)
+    {
+
+        if (!$locale || !in_array($locale, array('en', 'es'))) {
+            $locale = $this->defaultLocale;
+        }
+
+        return $locale;
+    }
 } 
