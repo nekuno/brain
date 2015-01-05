@@ -2,7 +2,7 @@
 
 namespace ApiConsumer\Fetcher;
 
-class FacebookFetcher extends BasicPaginationFetcher
+abstract class AbstractFacebookFetcher extends BasicPaginationFetcher
 {
     protected $paginationField = 'after';
 
@@ -10,24 +10,35 @@ class FacebookFetcher extends BasicPaginationFetcher
 
     protected $paginationId = null;
 
+    /**
+     * @inheritdoc
+     */
     public function getUrl()
     {
-        return 'me';
+        return $this->user['facebookID'];
     }
 
+    /**
+     * @inheritdoc
+     */
     protected function getQuery()
     {
         return array(
-            'fields' => 'links{link},likes{link,website}',
             'limit' => $this->pageLength,
         );
     }
 
+    /**
+     * @inheritdoc
+     */
     protected function getItemsFromResponse($response)
     {
-        return array_merge($response['links']['data'],$response['likes']['data']) ?: array();
+        return $response['data'] ?: array();
     }
 
+    /**
+     * @inheritdoc
+     */
     protected function getPaginationIdFromResponse($response)
     {
         $paginationId = null;
@@ -46,7 +57,7 @@ class FacebookFetcher extends BasicPaginationFetcher
     }
 
     /**
-     * @return array
+     * @inheritdoc
      */
     protected function parseLinks(array $rawFeed)
     {
@@ -72,6 +83,13 @@ class FacebookFetcher extends BasicPaginationFetcher
         return $parsed;
     }
 
+    /**
+     * Get the link array from a url and an id
+     *
+     * @param $url
+     * @param $id
+     * @return array
+     */
     private function getLinkArrayFromUrl($url, $id)
     {
         $link = array();

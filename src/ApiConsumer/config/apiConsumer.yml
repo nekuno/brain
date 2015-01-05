@@ -13,8 +13,11 @@ api_consumer.config:
         twitter:
             class: ApiConsumer\Fetcher\TwitterFetcher
             resourceOwner: twitter
-        facebook:
-            class: ApiConsumer\Fetcher\FacebookFetcher
+        facebook_links:
+            class: ApiConsumer\Fetcher\FacebookLinksFetcher
+            resourceOwner: facebook
+        facebook_likes:
+            class: ApiConsumer\Fetcher\FacebookLikesFetcher
             resourceOwner: facebook
         google:
             class: ApiConsumer\Fetcher\GoogleFetcher
