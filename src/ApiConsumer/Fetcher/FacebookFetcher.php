@@ -12,19 +12,20 @@ class FacebookFetcher extends BasicPaginationFetcher
 
     public function getUrl()
     {
-        return $this->user['facebookID'] . '/links';
+        return 'me';
     }
 
     protected function getQuery()
     {
         return array(
+            'fields' => 'links{link},likes{link,website}',
             'limit' => $this->pageLength,
         );
     }
 
     protected function getItemsFromResponse($response)
     {
-        return $response['data'] ?: array();
+        return array_merge($response['links']['data'],$response['likes']['data']) ?: array();
     }
 
     protected function getPaginationIdFromResponse($response)
@@ -53,16 +54,35 @@ class FacebookFetcher extends BasicPaginationFetcher
 
         foreach ($rawFeed as $item) {
             $url = $item['link'];
-            $parts = parse_url($url);
-            $link['url'] = !isset($parts['host']) && isset($parts['path']) ? 'https://www.facebook.com' . $parts['path'] : $url;
-            $link['title'] = array_key_exists('name', $item) ? $item['name'] : null;
-            $link['description'] = array_key_exists('description', $item) ? $item['description'] : null;
-            $link['resourceItemId'] = array_key_exists('id', $item) ? (int)$item['id'] : null;
-            $link['resource'] = 'facebook';
+            $id = $item['id'];
+            $parsed[] = $this->getLinkArrayFromUrl($url, $id);
 
-            $parsed[] = $link;
+            if (isset($item['website'])) {
+                preg_match_all('/https?\:\/\/[^\" ]+/i', $item['website'], $matches);
+                $websiteUrlsArray = $matches[0];
+
+                $counter = 1;
+                foreach ($websiteUrlsArray as $websiteUrl) {
+                    $parsed[] = $this->getLinkArrayFromUrl(trim($websiteUrl), $id.'-'.$counter);
+                    $counter++;
+                }
+            }
         }
 
         return $parsed;
+    }
+
+    private function getLinkArrayFromUrl($url, $id)
+    {
+        $link = array();
+
+        $parts = parse_url($url);
+        $link['url'] = !isset($parts['host']) && isset($parts['path']) ? 'https://www.facebook.com' . $parts['path'] : $url;
+        $link['title'] = null;
+        $link['description'] = null;
+        $link['resourceItemId'] = $id;
+        $link['resource'] = 'facebook';
+
+        return $link;
     }
 }
