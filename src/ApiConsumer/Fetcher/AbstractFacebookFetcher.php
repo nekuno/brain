@@ -69,11 +69,19 @@ abstract class AbstractFacebookFetcher extends BasicPaginationFetcher
             $parsed[] = $this->getLinkArrayFromUrl($url, $id);
 
             if (isset($item['website'])) {
-                preg_match_all('/https?\:\/\/[^\" ]+/i', $item['website'], $matches);
+                $website = $item['website'];
+
+                $website = str_replace('\n', ' ', $website);
+                $website = str_replace(', ', ' ', $website);
+
+                preg_match_all('/(https?\:\/\/[^\" ]+)|(www\.[a-z][-a-z0-9]+\.[a-z]+(\.[a-z]{2,2})?)/i', $website, $matches);
                 $websiteUrlsArray = $matches[0];
 
                 $counter = 1;
                 foreach ($websiteUrlsArray as $websiteUrl) {
+                    if (substr($websiteUrl,0,3) == 'www') {
+                        $websiteUrl = 'http://' . $websiteUrl;
+                    }
                     $parsed[] = $this->getLinkArrayFromUrl(trim($websiteUrl), $id.'-'.$counter);
                     $counter++;
                 }
