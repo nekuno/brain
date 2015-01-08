@@ -280,6 +280,9 @@ class ProfileModel
                                 } elseif (!is_float($fieldValue['longitude'])) {
                                     $fieldErrors[] = 'Longitude must be float';
                                 }
+                                if (!isset($fieldValue['address']) || !$fieldValue['address'] || !is_string($fieldValue['address'])) {
+                                    $fieldErrors[] = 'Address required';
+                                }
                             }
                             break;
                     }
@@ -386,6 +389,7 @@ class ProfileModel
                             $location = $this->client->makeNode();
                             $location->setProperty('latitude', $fieldValue['latitude']);
                             $location->setProperty('longitude', $fieldValue['longitude']);
+                            $location->setProperty('address', $fieldValue['address']);
                             $location->save();
                             $locationLabel = $this->client->makeLabel('Location');
                             $location->addLabels(array($locationLabel));
@@ -396,6 +400,7 @@ class ProfileModel
                             $location = $relation->getEndNode();
                             $location->setProperty('latitude', $fieldValue['latitude']);
                             $location->setProperty('longitude', $fieldValue['longitude']);
+                            $location->setProperty('address', $fieldValue['address']);
                             $location->save();
                         }
                         break;
