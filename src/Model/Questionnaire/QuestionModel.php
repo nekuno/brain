@@ -90,7 +90,7 @@ class QuestionModel
         if ($sortByRanking && $this->sortByRanking()) {
             $template .= " ORDER BY question.ranking DESC";
         } else {
-            $template .= " ORDER BY question.timestamp DESC";
+            $template .= " ORDER BY question.timestamp ASC";
         }
 
         $template .= " LIMIT 1;";

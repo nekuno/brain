@@ -7,6 +7,7 @@ use Everyman\Neo4j\Cypher\Query;
 use Everyman\Neo4j\Label;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
+use Everyman\Neo4j\Relationship;
 use Model\Exception\ValidationException;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -15,16 +16,19 @@ class ProfileModel
 {
     protected $client;
     protected $metadata;
+    protected $defaultLocale;
 
-    public function __construct(Client $client, array $metadata)
+    public function __construct(Client $client, array $metadata, $defaultLocale)
     {
 
         $this->client = $client;
         $this->metadata = $metadata;
+        $this->defaultLocale = $defaultLocale;
     }
 
-    public function getMetadata($locale = 'en')
+    public function getMetadata($locale = null)
     {
+        $locale = $this->getLocale($locale);
         $choiceOptions = $this->getChoiceOptions($locale);
         $metadata = $this->metadata;
 
@@ -62,7 +66,8 @@ class ProfileModel
             . " OPTIONAL MATCH (profile)<-[:OPTION_OF]-(option:ProfileOption)"
             . " WITH profile, collect(option) AS options"
             . " OPTIONAL MATCH (profile)<-[:TAGGED]-(tag:ProfileTag)"
-            . " RETURN profile, options, collect(tag) as tags"
+            . " OPTIONAL MATCH (profile)-[:LOCATION]->(location:Location)"
+            . " RETURN profile, location, options, collect(tag) as tags"
             . " LIMIT 1;";
 
         $query = new Query(
@@ -82,6 +87,12 @@ class ProfileModel
         /* @var $node Node */
         $node = $row->offsetGet('profile');
         $profile = $node->getProperties();
+
+        /* @var $location Node */
+        $location = $row->offsetGet('location');
+        if ($location) {
+            $profile['location'] = $location->getProperties();
+        }
 
         foreach ($row->offsetGet('options') as $option) {
             /* @var $option Node */
@@ -227,6 +238,19 @@ class ProfileModel
                             }
                             break;
 
+                        case 'integer':
+                            if (isset($fieldData['min'])) {
+                                if ($fieldValue < $fieldData['min']) {
+                                    $fieldErrors[] = 'Must be greater than ' . $fieldData['min'];
+                                }
+                            }
+                            if (isset($fieldData['max'])) {
+                                if ($fieldValue > $fieldData['max']) {
+                                    $fieldErrors[] = 'Must be less than ' . $fieldData['max'];
+                                }
+                            }
+                            break;
+
                         case 'date':
                             $date = \DateTime::createFromFormat('Y-m-d', $fieldValue);
                             if (!($date && $date->format('Y-m-d') == $fieldValue)) {
@@ -252,7 +276,33 @@ class ProfileModel
                         case 'choice':
                             $choices = $fieldData['choices'];
                             if (!in_array($fieldValue, array_keys($choices))) {
-                                $fieldErrors[] = sprintf('Option with value \'%s\' is not valid, possible values are \'%s\'', $fieldValue, implode("', '", array_keys($choices)));
+                                $fieldErrors[] = sprintf('Option with value "%s" is not valid, possible values are "%s"', $fieldValue, implode("', '", array_keys($choices)));
+                            }
+                            break;
+
+                        case 'location':
+                            if (!is_array($fieldValue)) {
+                                $fieldErrors[] = sprintf('The value "%s" is not valid, it should be an array with "latitude" and "longitude" keys', $fieldValue);
+                            } else {
+                                if (!isset($fieldValue['latitude']) || !preg_match("/^-?([1-8]?[1-9]|[1-9]0)\.{1}\d+$/", $fieldValue['latitude'])) {
+                                    $fieldErrors[] = 'Latitude not valid';
+                                } elseif (!is_float($fieldValue['latitude'])) {
+                                    $fieldErrors[] = 'Latitude must be float';
+                                }
+                                if (!isset($fieldValue['longitude']) || !preg_match("/^-?([1]?[1-7][1-9]|[1]?[1-8][0]|[1-9]?[0-9])\.{1}\d+$/", $fieldValue['longitude'])) {
+                                    $fieldErrors[] = 'Longitude not valid';
+                                } elseif (!is_float($fieldValue['longitude'])) {
+                                    $fieldErrors[] = 'Longitude must be float';
+                                }
+                                if (!isset($fieldValue['address']) || !$fieldValue['address'] || !is_string($fieldValue['address'])) {
+                                    $fieldErrors[] = 'Address required';
+                                }
+                                if (!isset($fieldValue['locality']) || !$fieldValue['locality'] || !is_string($fieldValue['locality'])) {
+                                    $fieldErrors[] = 'Locality required';
+                                }
+                                if (!isset($fieldValue['country']) || !$fieldValue['country'] || !is_string($fieldValue['country'])) {
+                                    $fieldErrors[] = 'Country required';
+                                }
                             }
                             break;
                     }
@@ -353,7 +403,31 @@ class ProfileModel
                         $profileNode->setProperty('zodiacSign', $this->getZodiacSignNonsenseFromDate($fieldValue));
                         $profileNode->setProperty($fieldName, $fieldValue);
                         break;
-
+                    case 'location':
+                        $relations = $profileNode->getRelationships('LOCATION');
+                        if (empty($relations)) {
+                            $location = $this->client->makeNode();
+                            $location->setProperty('latitude', $fieldValue['latitude']);
+                            $location->setProperty('longitude', $fieldValue['longitude']);
+                            $location->setProperty('address', $fieldValue['address']);
+                            $location->setProperty('locality', $fieldValue['locality']);
+                            $location->setProperty('country', $fieldValue['country']);
+                            $location->save();
+                            $locationLabel = $this->client->makeLabel('Location');
+                            $location->addLabels(array($locationLabel));
+                            $profileNode->relateTo($location, 'LOCATION')->save();
+                        } else {
+                            /* @var $relation Relationship */
+                            $relation = array_shift($relations);
+                            $location = $relation->getEndNode();
+                            $location->setProperty('latitude', $fieldValue['latitude']);
+                            $location->setProperty('longitude', $fieldValue['longitude']);
+                            $location->setProperty('address', $fieldValue['address']);
+                            $location->setProperty('locality', $fieldValue['locality']);
+                            $location->setProperty('country', $fieldValue['country']);
+                            $location->save();
+                        }
+                        break;
                     case 'choice':
                         if (isset($options[$fieldName])) {
                             $options[$fieldName]->delete();
@@ -364,7 +438,6 @@ class ProfileModel
 
                         }
                         break;
-
                     case 'tags':
                         if (isset($tags[$fieldName])) {
                             foreach ($tags[$fieldName] as $tagRelation) {
@@ -544,4 +617,13 @@ class ProfileModel
         return $sign;
     }
 
+    protected function getLocale($locale)
+    {
+
+        if (!$locale || !in_array($locale, array('en', 'es'))) {
+            $locale = $this->defaultLocale;
+        }
+
+        return $locale;
+    }
 } 

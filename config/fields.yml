@@ -19,12 +19,12 @@ profile:
             en: 'Birthday'
             es: 'Cumpleaños'
     height:
-        type: string
-        min: 0
-        max: 255
+        type: integer
+        min: 50
+        max: 300
         label:
-            en: 'Height'
-            es: 'Altura'
+            en: 'Height (cm)'
+            es: 'Altura (cm)'
     allergy:
         type: string
         min: 0
@@ -177,8 +177,8 @@ profile:
     dateHandicap:
         type: choice
         label:
-            en: 'Would you date a person with the same disabilities?'
-            es: '¿Saldrías con una persona con las mismas discapacidades?'
+            en: 'Will you meet somebody with any disabilities?'
+            es: '¿Quedarías con una persona con alguna discapacidad?'
     dateChildren:
         type: choice
         label:
@@ -209,13 +209,8 @@ profile:
         label:
             en: 'Education'
             es: 'Educación'
-    lat:
+    location:
+        type: location
         label:
-            en: ''
-            es: ''
-        type: string
-    lng:
-        label:
-            en: ''
-            es: ''
-        type: string
+            en: 'Location'
+            es: 'Ubicación'
