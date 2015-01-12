@@ -106,6 +106,8 @@ class FetcherService implements LoggerAwareInterface
             $user = $this->userProvider->getUsersByResource($resourceOwner, $userId);
             if (!$user) {
                 throw new \Exception('User not found');
+            } else {
+                $user = $user[0];
             }
 
             foreach ($this->options as $fetcher => $fetcherConfig) {

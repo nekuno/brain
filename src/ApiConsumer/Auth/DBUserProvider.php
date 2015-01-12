@@ -22,29 +22,32 @@ class DBUserProvider implements UserProviderInterface
     /**
      * { @inheritdoc }
      */
-    public function getUsersByResource($resource, $userId = null)
+    public function getUsersByResource($resource = null, $userId = null)
     {
 
         $sql = "SELECT * " .
             " FROM users AS u" .
             " INNER JOIN user_access_tokens AS ut ON u.id = ut.user_id" .
-            " WHERE ut.resourceOwner = :resource";
+            " WHERE ";
 
-        $params[':resource'] = $resource;
+        $filters = array();
+        if (null !== $resource) {
+            $filters[] = "ut.resourceOwner = :resource";
+            $params[':resource'] = $resource;
+        }
 
         if (null !== $userId) {
-            $sql .= " AND u.id = :userId";
+            $filters[] =  "u.id = :userId";
             $params[':userId'] = (int) $userId;
         }
+
+        $sql .= implode(" AND ", $filters);
 
         $sql .= ";";
 
         try {
-            if ($userId) {
-                return $this->driver->fetchAssoc($sql, $params);
-            } else {
-                return $this->driver->fetchAll($sql, $params);
-            }
+
+            return $this->driver->fetchAll($sql, $params);
         } catch (DBALException $e) {
             throw $e;
         }

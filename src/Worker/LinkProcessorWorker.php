@@ -96,6 +96,7 @@ class LinkProcessorWorker implements RabbitMQConsumerInterface, LoggerAwareInter
         $user = $this->userProvider->getUsersByResource($resourceOwner, $userId);
 
         if($user){
+            $user = $user[0];
             try {
                 $this->fetcherService->fetch($user['id'], $resourceOwner);
             } catch (\Exception $e) {

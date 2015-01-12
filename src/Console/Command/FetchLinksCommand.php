@@ -12,6 +12,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
+use Symfony\Component\Validator\Exception\MissingOptionsException;
 
 class FetchLinksCommand extends ApplicationAwareCommand
 {
@@ -26,8 +27,14 @@ class FetchLinksCommand extends ApplicationAwareCommand
                     new InputOption(
                         'resource',
                         null,
-                        InputOption::VALUE_REQUIRED,
+                        InputOption::VALUE_OPTIONAL,
                         'The resource owner which should fetch links'
+                    ),
+                    new InputOption(
+                        'user',
+                        null,
+                        InputOption::VALUE_OPTIONAL,
+                        'ID of the user to fetch links from'
                     ),
                     new InputOption(
                         'debug',
@@ -42,23 +49,27 @@ class FetchLinksCommand extends ApplicationAwareCommand
     protected function execute(InputInterface $input, OutputInterface $output)
     {
 
-        $resource = $input->getOption('resource');
-        $resourceOwners = $this->app['api_consumer.config']['resource_owner'];
-        $availableResourceOwners = implode(', ', array_keys($resourceOwners));
+        $resource = $input->getOption('resource', null);
+        $userId = $input->getOption('user', null);
 
-        if (!$resource) {
-            $output->writeln(sprintf('Resource owner is needed, available resource owners: %s.', $availableResourceOwners));
-            return;
+        if (null === $resource && null === $userId) {
+            throw new MissingOptionsException ("You must provide the user or the resource to fetch links from",array("resource", "user"));
         }
 
-        if (!isset($resourceOwners[$resource])) {
-            $output->writeln(sprintf('Resource ownner %s not found, available resource owners: %s.', $resource, $availableResourceOwners));
-            return;
+        if (null !== $resource) {
+            $resourceOwners = $this->app['api_consumer.config']['resource_owner'];
+            $availableResourceOwners = implode(', ', array_keys($resourceOwners));
+
+            if (!isset($resourceOwners[$resource])) {
+                $output->writeln(sprintf('Resource ownner %s not found, available resource owners: %s.', $resource, $availableResourceOwners));
+                return;
+            }
         }
 
         $userProvider = $this->app['api_consumer.user_provider'];
+
         /* @var $userProvider DBUserProvider */
-        $users = $userProvider->getUsersByResource($resource);
+        $users = $userProvider->getUsersByResource($resource, $userId);
 
         /** @var FetcherService $fetcher */
         $fetcher = $this->app['api_consumer.fetcher'];
@@ -80,7 +91,7 @@ class FetchLinksCommand extends ApplicationAwareCommand
         foreach ($users as $user) {
             try {
 
-                $fetcher->fetch($user['id'], $resource);
+                $fetcher->fetch($user['id'], $user['resourceOwner']);
 
             } catch (\Exception $e) {
                 $output->writeln(
