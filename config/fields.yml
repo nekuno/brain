@@ -177,8 +177,8 @@ profile:
     dateHandicap:
         type: choice
         label:
-            en: 'Would you date a person with the same disabilities?'
-            es: '¿Saldrías con una persona con las mismas discapacidades?'
+            en: 'Will you meet somebody with any disabilities?'
+            es: '¿Quedarías con una persona con alguna discapacidad?'
     dateChildren:
         type: choice
         label:
