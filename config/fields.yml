@@ -19,12 +19,12 @@ profile:
             en: 'Birthday'
             es: 'Cumpleaños'
     height:
-        type: string
-        min: 0
-        max: 255
+        type: integer
+        min: 50
+        max: 300
         label:
-            en: 'Height'
-            es: 'Altura'
+            en: 'Height (cm)'
+            es: 'Altura (cm)'
     allergy:
         type: string
         min: 0

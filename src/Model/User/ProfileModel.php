@@ -238,6 +238,19 @@ class ProfileModel
                             }
                             break;
 
+                        case 'integer':
+                            if (isset($fieldData['min'])) {
+                                if ($fieldValue < $fieldData['min']) {
+                                    $fieldErrors[] = 'Must be greater than ' . $fieldData['min'];
+                                }
+                            }
+                            if (isset($fieldData['max'])) {
+                                if ($fieldValue > $fieldData['max']) {
+                                    $fieldErrors[] = 'Must be less than ' . $fieldData['max'];
+                                }
+                            }
+                            break;
+
                         case 'date':
                             $date = \DateTime::createFromFormat('Y-m-d', $fieldValue);
                             if (!($date && $date->format('Y-m-d') == $fieldValue)) {
@@ -266,6 +279,7 @@ class ProfileModel
                                 $fieldErrors[] = sprintf('Option with value "%s" is not valid, possible values are "%s"', $fieldValue, implode("', '", array_keys($choices)));
                             }
                             break;
+
                         case 'location':
                             if (!is_array($fieldValue)) {
                                 $fieldErrors[] = sprintf('The value "%s" is not valid, it should be an array with "latitude" and "longitude" keys', $fieldValue);
