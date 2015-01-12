@@ -297,11 +297,11 @@ class ProfileModel
                                 if (!isset($fieldValue['address']) || !$fieldValue['address'] || !is_string($fieldValue['address'])) {
                                     $fieldErrors[] = 'Address required';
                                 }
-                                if (isset($fieldValue['locality']) && !$fieldValue['locality']) {
-                                    $fieldErrors[] = 'If locality is present, it must have a value';
+                                if (!isset($fieldValue['locality']) || !$fieldValue['locality'] || !is_string($fieldValue['locality'])) {
+                                    $fieldErrors[] = 'Locality required';
                                 }
-                                if (isset($fieldValue['country']) && !$fieldValue['country']) {
-                                    $fieldErrors[] = 'If country is present, it must have a value';
+                                if (!isset($fieldValue['country']) || !$fieldValue['country'] || !is_string($fieldValue['country'])) {
+                                    $fieldErrors[] = 'Country required';
                                 }
                             }
                             break;
@@ -410,12 +410,8 @@ class ProfileModel
                             $location->setProperty('latitude', $fieldValue['latitude']);
                             $location->setProperty('longitude', $fieldValue['longitude']);
                             $location->setProperty('address', $fieldValue['address']);
-                            if (isset($fieldValue['locality'])) {
-                                $location->setProperty('locality', $fieldValue['locality']);
-                            }
-                            if (isset($fieldValue['country'])) {
-                                $location->setProperty('country', $fieldValue['country']);
-                            }
+                            $location->setProperty('locality', $fieldValue['locality']);
+                            $location->setProperty('country', $fieldValue['country']);
                             $location->save();
                             $locationLabel = $this->client->makeLabel('Location');
                             $location->addLabels(array($locationLabel));
@@ -427,12 +423,8 @@ class ProfileModel
                             $location->setProperty('latitude', $fieldValue['latitude']);
                             $location->setProperty('longitude', $fieldValue['longitude']);
                             $location->setProperty('address', $fieldValue['address']);
-                            if (isset($fieldValue['locality'])) {
-                                $location->setProperty('locality', $fieldValue['locality']);
-                            }
-                            if (isset($fieldValue['country'])) {
-                                $location->setProperty('country', $fieldValue['country']);
-                            }
+                            $location->setProperty('locality', $fieldValue['locality']);
+                            $location->setProperty('country', $fieldValue['country']);
                             $location->save();
                         }
                         break;
