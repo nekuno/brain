@@ -30,18 +30,19 @@ class ProfileModel
     {
         $locale = $this->getLocale($locale);
         $choiceOptions = $this->getChoiceOptions($locale);
-        $metadata = $this->metadata;
 
         $publicMetadata = array();
-        foreach ($metadata as $name => $values) {
+        foreach ($this->metadata as $name => $values) {
             $publicField = $values;
             $publicField['label'] = $values['label'][$locale];
 
-            if ($values['type'] == 'choice') {
+            if ($values['type'] === 'choice') {
                 $publicField['choices'] = array();
                 if (isset($choiceOptions[$name])) {
                     $publicField['choices'] = $choiceOptions[$name];
                 }
+            } elseif ($values['type'] === 'tags') {
+                $publicField['top'] = $this->getTopProfileTags($name);
             }
 
             $publicMetadata[$name] = $publicField;
@@ -573,6 +574,35 @@ class ProfileModel
         }
 
         return $tagNode;
+    }
+
+    protected function getTopProfileTags($tagType)
+    {
+
+        $tagLabelName = ucfirst($tagType);
+
+        $params = array();
+
+        $template = "MATCH (tag:" . $tagLabelName . ")-[tagged:TAGGED]-(profile:Profile)"
+            . " RETURN tag.name AS tag, count(*) as count"
+            . " ORDER BY count DESC"
+            . " LIMIT 5;";
+
+        $query = new Query(
+            $this->client,
+            $template,
+            $params
+        );
+
+        $tags = array();
+        $result = $query->getResultSet();
+
+        foreach ($result as $row) {
+            /* @var $row \Everyman\Neo4j\Query\Row */
+            $tags[] = $row->offsetGet('tag');
+        }
+
+        return $tags;
     }
 
     /*
