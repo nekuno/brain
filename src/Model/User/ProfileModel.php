@@ -51,6 +51,14 @@ class ProfileModel
         return $publicMetadata;
     }
 
+    public function getFilters($locale = null)
+    {
+
+        $metadata = $this->getMetadata($locale);
+
+        return $metadata;
+    }
+
     /**
      * @param int $id
      * @return array

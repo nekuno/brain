@@ -12,7 +12,8 @@ $app->get('/users/{id}/profile', 'users.profile.controller:getAction')->value('i
 $app->post('/users/{id}/profile', 'users.profile.controller:postAction')->value('id', null);
 $app->put('/users/{id}/profile', 'users.profile.controller:putAction')->value('id', null);
 $app->delete('/users/{id}/profile', 'users.profile.controller:deleteAction')->value('id', null);
-$app->get('/profile/metadata', 'users.profile.controller:getMetadataAction')->value('id', null);
+$app->get('/profile/metadata', 'users.profile.controller:getMetadataAction');
+$app->get('/profile/filters', 'users.profile.controller:getFiltersAction');
 $app->get('/profile/tags/{type}', 'users.profile.controller:getProfileTagsAction');
 $app->post('/profile/validate', 'users.profile.controller:validateAction')->value('id', null);
 
