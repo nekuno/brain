@@ -489,6 +489,68 @@ class ProfileOptions implements LoggerAwareInterface
                     'name_es' => 'English',
                 ),
             ),
+            'ZodiacSign' => array(
+                array(
+                    'id' => 'capricorn',
+                    'name_en' => 'Capricorn',
+                    'name_es' => 'Capricornio',
+                ),
+                array(
+                    'id' => 'sagittarius',
+                    'name_en' => 'Sagittarius',
+                    'name_es' => 'Sagitario',
+                ),
+                array(
+                    'id' => 'scorpio',
+                    'name_en' => 'Scorpio',
+                    'name_es' => 'Escorpio',
+                ),
+                array(
+                    'id' => 'libra',
+                    'name_en' => 'Libra',
+                    'name_es' => 'Libra',
+                ),
+                array(
+                    'id' => 'virgo',
+                    'name_en' => 'Virgo',
+                    'name_es' => 'Virgo',
+                ),
+                array(
+                    'id' => 'leo',
+                    'name_en' => 'Leo',
+                    'name_es' => 'Leo',
+                ),
+                array(
+                    'id' => 'cancer',
+                    'name_en' => 'Cancer',
+                    'name_es' => 'Cáncer',
+                ),
+                array(
+                    'id' => 'gemini',
+                    'name_en' => 'Gemini',
+                    'name_es' => 'Géminis',
+                ),
+                array(
+                    'id' => 'taurus',
+                    'name_en' => 'Taurus',
+                    'name_es' => 'Tauro',
+                ),
+                array(
+                    'id' => 'aries',
+                    'name_en' => 'Aries',
+                    'name_es' => 'Aries',
+                ),
+                array(
+                    'id' => 'pisces',
+                    'name_en' => 'Pisces',
+                    'name_es' => 'Piscis',
+                ),
+                array(
+                    'id' => 'aquarius',
+                    'name_en' => 'Aquarius',
+                    'name_es' => 'Acuario',
+                ),
+            ),
         );
 
         foreach ($options as $type => $values) {

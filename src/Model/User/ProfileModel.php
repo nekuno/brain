@@ -436,7 +436,15 @@ class ProfileModel
                         break;
 
                     case 'birthday':
-                        $profileNode->setProperty('zodiacSign', $this->getZodiacSignNonsenseFromDate($fieldValue));
+                        $zodiacSign = $this->getZodiacSignFromDate($fieldValue);
+                        if (isset($options['zodiacSign'])) {
+                            $options['zodiacSign']->delete();
+                        }
+                        if (!is_null($zodiacSign)) {
+                            $optionNode = $this->getProfileOptionNode($zodiacSign, 'zodiacSign');
+                            $optionNode->relateTo($profileNode, 'OPTION_OF')->save();
+                        }
+
                         $profileNode->setProperty($fieldName, $fieldValue);
                         break;
                     case 'location':
@@ -471,7 +479,6 @@ class ProfileModel
                         if (!is_null($fieldValue)) {
                             $optionNode = $this->getProfileOptionNode($fieldValue, $fieldName);
                             $optionNode->relateTo($profileNode, 'OPTION_OF')->save();
-
                         }
                         break;
                     case 'tags':
@@ -643,25 +650,25 @@ class ProfileModel
     /*
      * Please don't believe in this crap
      */
-    protected function getZodiacSignNonsenseFromDate($date)
+    protected function getZodiacSignFromDate($date)
     {
 
-        $sign = '';
+        $sign = null;
         $birthday = \DateTime::createFromFormat('Y-m-d', $date);
 
-        $zodiac[356] = "Capricorn";
-        $zodiac[326] = "Sagittarius";
-        $zodiac[296] = "Scorpio";
-        $zodiac[266] = "Libra";
-        $zodiac[235] = "Virgo";
-        $zodiac[203] = "Leo";
-        $zodiac[172] = "Cancer";
-        $zodiac[140] = "Gemini";
-        $zodiac[111] = "Taurus";
-        $zodiac[78] = "Aries";
-        $zodiac[51] = "Pisces";
-        $zodiac[20] = "Aquarius";
-        $zodiac[0] = "Capricorn";
+        $zodiac[356] = 'capricorn';
+        $zodiac[326] = 'sagittarius';
+        $zodiac[296] = 'scorpio';
+        $zodiac[266] = 'libra';
+        $zodiac[235] = 'virgo';
+        $zodiac[203] = 'leo';
+        $zodiac[172] = 'cancer';
+        $zodiac[140] = 'gemini';
+        $zodiac[111] = 'taurus';
+        $zodiac[78] = 'aries';
+        $zodiac[51] = 'pisces';
+        $zodiac[20] = 'aquarius';
+        $zodiac[0] = 'capricorn';
 
         if (!$date) {
             return $sign;

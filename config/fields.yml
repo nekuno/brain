@@ -21,6 +21,11 @@ profile:
         labelFilter:
             en: 'Age'
             es: 'Edad'
+    zodiacSign:
+        type: choice
+        label:
+            en: 'Zodiac sign'
+            es: 'Signo del zodíaco'
     height:
         type: integer
         min: 50
