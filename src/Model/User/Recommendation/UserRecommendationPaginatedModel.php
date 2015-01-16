@@ -57,7 +57,6 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         $response = array();
 
         $params = array(
-            'UserId' => (integer)$id,
             'offset' => (integer)$offset,
             'limit' => (integer)$limit
         );
@@ -70,7 +69,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         }
 
         $query = "
-            MATCH (u:User {qnoow_id: " . $id . "})
+            MATCH (u:User {qnoow_id: $id})
             MATCH (u)-[r:MATCHES]-(anyUser:User)
             MATCH (anyUser)<-[:PROFILE_OF]-(p:Profile)
             WHERE (r.matching_questions > 0 OR r.matching_content > 0)";
@@ -81,7 +80,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
 
         $query .= "
             RETURN
-            anyUser.qnoow_id AS id,
+            DISTINCT anyUser.qnoow_id AS id,
             anyUser.username AS username,
             CASE r.matching_questions IS NULL WHEN true THEN 0 ELSE r.matching_questions END as matching_questions,
             CASE r.matching_content IS NULL WHEN true THEN 0 ELSE r.matching_content END as matching_content";
@@ -131,14 +130,12 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         $id = $filters['id'];
         $count = 0;
 
-        $params = array(
-            'UserId' => (integer)$id,
-        );
+        $params = array();
 
         $profileFilters = $this->getProfileFilters($filters['profileFilters']);
 
         $query = "
-            MATCH (u:User {qnoow_id: " . $id . "})
+            MATCH (u:User {qnoow_id: $id})
             MATCH (u)-[r:MATCHES]-(anyUser:User)
             MATCH (anyUser)<-[:PROFILE_OF]-(p:Profile)
             WHERE r.matching_questions > 0 OR r.matching_content > 0";
@@ -148,9 +145,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         }
 
         $query .= "
-            RETURN
-            count(distinct anyUser) as total;
-        ";
+            RETURN COUNT(DISTINCT anyUser) as total;";
 
         //Create the Neo4j query object
         $contentQuery = new Query(
