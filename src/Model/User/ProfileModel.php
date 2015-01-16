@@ -26,7 +26,13 @@ class ProfileModel
         $this->defaultLocale = $defaultLocale;
     }
 
-    public function getMetadata($locale = null)
+    /**
+     * Returns the metadata for editing the profile
+     * @param null $locale Locale of the metadata
+     * @param bool $filter Filter non public attributes
+     * @return array
+     */
+    public function getMetadata($locale = null, $filter = true)
     {
         $locale = $this->getLocale($locale);
         $choiceOptions = $this->getChoiceOptions($locale);
@@ -48,13 +54,34 @@ class ProfileModel
             $publicMetadata[$name] = $publicField;
         }
 
+        if ($filter) {
+            foreach ($publicMetadata as &$item) {
+                if (isset($item['labelFilter'])) {
+                    unset($item['labelFilter']);
+                }
+            }
+        }
+
         return $publicMetadata;
     }
 
+    /**
+     * Returns the metadata for creating search filters
+     * @param null $locale
+     * @return array
+     */
     public function getFilters($locale = null)
     {
 
-        $metadata = $this->getMetadata($locale);
+        $locale = $this->getLocale($locale);
+        $metadata = $this->getMetadata($locale, false);
+
+        foreach ($metadata as &$item) {
+            if (isset($item['labelFilter'])) {
+                $item['label'] = $item['labelFilter'][$locale];
+                unset($item['labelFilter']);
+            }
+        }
 
         return $metadata;
     }

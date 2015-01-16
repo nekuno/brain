@@ -4,8 +4,8 @@ profile:
         min: 5
         max: 255
         label:
-            en: 'Real Name'
-            es: 'Nombre Real'
+            en: 'Real name'
+            es: 'Nombre real'
     description:
         type: string
         min: 0
@@ -18,6 +18,9 @@ profile:
         label:
             en: 'Birthday'
             es: 'Cumpleaños'
+        labelFilter:
+            en: 'Age'
+            es: 'Edad'
     height:
         type: integer
         min: 50
