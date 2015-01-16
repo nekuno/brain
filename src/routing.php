@@ -24,7 +24,7 @@ $app->get('/users/{id}/content', 'users.controller:getUserContentAction');
 $app->get('/users/{id}/content/compare/{id2}', 'users.controller:getUserContentCompareAction');
 $app->get('/users/{id}/content/tags', 'users.controller:getUserContentTagsAction');
 $app->post('/users/{id}/content/rate', 'users.controller:rateContentAction');
-$app->get('/users/{id}/recommendations/users', 'users.controller:getUserRecommendationAction')->value('type', 'answers');
+$app->get('/users/{id}/recommendations/users', 'users.controller:getUserRecommendationAction');
 $app->get('/users/{id}/recommendations/content', 'users.controller:getContentRecommendationAction');
 $app->get('/users/{id}/recommendations/content/tags', 'users.controller:getContentRecommendationTagsAction');
 $app->get('/users/{id}/status', 'users.controller:statusAction');

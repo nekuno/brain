@@ -2,6 +2,7 @@
 
 namespace Model\User\Recommendation;
 
+use Model\User\ProfileModel;
 use Paginator\PaginatedInterface;
 
 use Everyman\Neo4j\Client;
@@ -16,13 +17,18 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
     protected $client;
 
     /**
+     * @var ProfileModel
+     */
+    protected $profileModel;
+
+    /**
      * @param \Everyman\Neo4j\Client $client
      */
-    public function __construct(Client $client)
+    public function __construct(Client $client, ProfileModel $profileModel)
     {
         $this->client = $client;
+        $this->profileModel = $profileModel;
     }
-
 
     /**
      * Hook point for validating the query.
@@ -32,8 +38,9 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
     public function validateFilters(array $filters)
     {
         $hasId = isset($filters['id']);
+        $hasProfileFilters = isset($filters['profileFilters']);
 
-        return $hasId;
+        return $hasId && $hasProfileFilters;
     }
 
     /**
@@ -55,23 +62,29 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
             'limit' => (integer)$limit
         );
 
+        $profileFilters = $this->getProfileFilters($filters['profileFilters']);
+
         $orderQuery = ' ORDER BY matching_questions DESC ';
         if (isset($filters['order']) && $filters['order'] == 'content') {
             $orderQuery = ' ORDER BY matching_content DESC ';
         }
 
         $query = "
-            MATCH
-            (u:User {qnoow_id: " . $id . "})
-            MATCH
-            (u)-[r:MATCHES]-(anyUser:User)
-            WHERE r.matching_questions > 0 OR r.matching_content > 0
+            MATCH (u:User {qnoow_id: " . $id . "})
+            MATCH (u)-[r:MATCHES]-(anyUser:User)
+            MATCH (anyUser)<-[:PROFILE_OF]-(p:Profile)
+            WHERE (r.matching_questions > 0 OR r.matching_content > 0)";
+
+        if ($profileFilters) {
+            $query .= "\n" . implode("\n", $profileFilters);
+        }
+
+        $query .= "
             RETURN
             anyUser.qnoow_id AS id,
             anyUser.username AS username,
             CASE r.matching_questions IS NULL WHEN true THEN 0 ELSE r.matching_questions END as matching_questions,
-            CASE r.matching_content IS NULL WHEN true THEN 0 ELSE r.matching_content END as matching_content
-        ";
+            CASE r.matching_content IS NULL WHEN true THEN 0 ELSE r.matching_content END as matching_content";
         $query .= $orderQuery;
         $query .= "
             SKIP {offset}
@@ -122,12 +135,19 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
             'UserId' => (integer)$id,
         );
 
+        $profileFilters = $this->getProfileFilters($filters['profileFilters']);
+
         $query = "
-            MATCH
-            (u:User {qnoow_id: " . $id . "})
-            MATCH
-            (u)-[r:MATCHES]-(anyUser:User)
-            WHERE r.matching_questions > 0 OR r.matching_content > 0
+            MATCH (u:User {qnoow_id: " . $id . "})
+            MATCH (u)-[r:MATCHES]-(anyUser:User)
+            MATCH (anyUser)<-[:PROFILE_OF]-(p:Profile)
+            WHERE r.matching_questions > 0 OR r.matching_content > 0";
+
+        if ($profileFilters) {
+            $query .= "\n" . implode("\n", $profileFilters);
+        }
+
+        $query .= "
             RETURN
             count(distinct anyUser) as total;
         ";
@@ -152,5 +172,46 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         }
 
         return $count;
+    }
+
+    protected function getProfileFilters(array $filters)
+    {
+        $profileFilters = array();
+
+        foreach ($this->profileModel->getFilters() as $name => $filter) {
+            if (isset($filters[$name])) {
+                $value = $filters[$name];
+                switch ($filter['type']) {
+                    case 'string':
+                        $profileFilters[] = "AND p.$name =~ '(?i).*$value.*'";
+                        break;
+                    case 'integer':
+                        $min = $value['min'];
+                        $max = $value['max'];
+                        $profileFilters[] = "AND ('$min' <= p.$name AND p.$name <= '$max')";
+                        break;
+                    case 'date':
+
+                        break;
+                    case 'birthday':
+                        $min = $value['min'];
+                        $max = $value['max'];
+                        $profileFilters[] = "AND ('$min' <= p.$name AND p.$name <= '$max')";
+                        break;
+                    case 'boolean':
+                        $profileFilters[] = "AND p.$name = true";
+                        break;
+                    case 'choice':
+                        $profileLabelName = ucfirst($name);
+                        $value = implode("', '", $value);
+                        $profileFilters[] = "MATCH (p)<-[:OPTION_OF]-(option:$profileLabelName) WHERE option.id IN ['$value']";
+                        break;
+                    case 'location':
+                        break;
+                }
+            }
+        }
+
+        return $profileFilters;
     }
 } 
