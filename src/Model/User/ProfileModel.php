@@ -424,8 +424,15 @@ class ProfileModel
         $tags = $this->getProfileNodeTags($profileNode);
 
         foreach ($data as $fieldName => $fieldValue) {
+
             if (isset($metadata[$fieldName])) {
+
                 $fieldType = $metadata[$fieldName]['type'];
+                $editable = isset($metadata[$fieldName]['editable']) ? $metadata[$fieldName]['editable'] === true : true;
+
+                if (!$editable) {
+                    continue;
+                }
 
                 switch ($fieldType) {
                     case 'string':

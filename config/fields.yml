@@ -23,6 +23,7 @@ profile:
             es: 'Edad'
     zodiacSign:
         type: choice
+        editable: false
         label:
             en: 'Zodiac sign'
             es: 'Signo del zodíaco'
