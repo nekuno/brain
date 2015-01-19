@@ -311,6 +311,42 @@ class ProfileOptions implements LoggerAwareInterface
                     'name_es' => 'Otro',
                 ),
             ),
+            'Car' => array(
+                array(
+                    'id' => 'yes',
+                    'name_en' => 'Yes',
+                    'name_es' => 'Sí',
+                ),
+                array(
+                    'id' => 'no',
+                    'name_en' => 'No',
+                    'name_es' => 'No',
+                ),
+            ),
+            'Sons' => array(
+                array(
+                    'id' => 'yes',
+                    'name_en' => 'Yes',
+                    'name_es' => 'Sí',
+                ),
+                array(
+                    'id' => 'no',
+                    'name_en' => 'No',
+                    'name_es' => 'No',
+                ),
+            ),
+            'WantSons' => array(
+                array(
+                    'id' => 'yes',
+                    'name_en' => 'Yes',
+                    'name_es' => 'Sí',
+                ),
+                array(
+                    'id' => 'no',
+                    'name_en' => 'No',
+                    'name_es' => 'No',
+                ),
+            ),
             'HairColor' => array(
                 array(
                     'id' => 'black',

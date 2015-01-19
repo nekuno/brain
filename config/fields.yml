@@ -42,15 +42,20 @@ profile:
             en: 'Allergy'
             es: 'Alergia'
     car:
-        type: boolean
+        type: choice
         label:
             en: 'Car'
             es: 'Coche'
     sons:
-        type: boolean
+        type: choice
         label:
             en: 'Sons'
             es: 'Hijos'
+    wantSons:
+        type: choice
+        label:
+            en: 'Do you want Sons?'
+            es: '¿Quieres tener hijos?'
     languages:
         type: string
         min: 0
@@ -58,11 +63,6 @@ profile:
         label:
             en: 'Languages'
             es: 'Idiomas'
-    wantSons:
-        type: boolean
-        label:
-            en: 'Do you want Sons?'
-            es: '¿Quieres tener hijos?'
     gender:
         type: choice
         label:
