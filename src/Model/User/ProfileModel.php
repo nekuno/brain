@@ -275,6 +275,9 @@ class ProfileModel
                             break;
 
                         case 'integer':
+                            if (!is_integer($fieldValue)) {
+                                $fieldErrors[] = 'Must be an integer';
+                            }
                             if (isset($fieldData['min'])) {
                                 if ($fieldValue < $fieldData['min']) {
                                     $fieldErrors[] = 'Must be greater than ' . $fieldData['min'];
