@@ -181,9 +181,9 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                         $profileFilters[] = "AND p.$name =~ '(?i).*$value.*'";
                         break;
                     case 'integer':
-                        $min = $value['min'];
-                        $max = $value['max'];
-                        $profileFilters[] = "AND ('$min' <= p.$name AND p.$name <= '$max')";
+                        $min = (integer)$value['min'];
+                        $max = (integer)$value['max'];
+                        $profileFilters[] = "AND ($min <= p.$name AND p.$name <= $max)";
                         break;
                     case 'date':
 
