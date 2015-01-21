@@ -213,7 +213,7 @@ class AnswerController
 
         $userId = $request->get('userId');
         $questionId = $request->get('questionId');
-        $locale = $request->get('locale');
+        $locale = $request->query->get('locale');
 
         try {
             /** @var AnswerModel $model */
