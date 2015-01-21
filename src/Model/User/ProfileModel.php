@@ -26,28 +26,64 @@ class ProfileModel
         $this->defaultLocale = $defaultLocale;
     }
 
-    public function getMetadata($locale = null)
+    /**
+     * Returns the metadata for editing the profile
+     * @param null $locale Locale of the metadata
+     * @param bool $filter Filter non public attributes
+     * @return array
+     */
+    public function getMetadata($locale = null, $filter = true)
     {
         $locale = $this->getLocale($locale);
         $choiceOptions = $this->getChoiceOptions($locale);
-        $metadata = $this->metadata;
 
         $publicMetadata = array();
-        foreach ($metadata as $name => $values) {
+        foreach ($this->metadata as $name => $values) {
             $publicField = $values;
             $publicField['label'] = $values['label'][$locale];
 
-            if ($values['type'] == 'choice') {
+            if ($values['type'] === 'choice') {
                 $publicField['choices'] = array();
                 if (isset($choiceOptions[$name])) {
                     $publicField['choices'] = $choiceOptions[$name];
                 }
+            } elseif ($values['type'] === 'tags') {
+                $publicField['top'] = $this->getTopProfileTags($name);
             }
 
             $publicMetadata[$name] = $publicField;
         }
 
+        if ($filter) {
+            foreach ($publicMetadata as &$item) {
+                if (isset($item['labelFilter'])) {
+                    unset($item['labelFilter']);
+                }
+            }
+        }
+
         return $publicMetadata;
+    }
+
+    /**
+     * Returns the metadata for creating search filters
+     * @param null $locale
+     * @return array
+     */
+    public function getFilters($locale = null)
+    {
+
+        $locale = $this->getLocale($locale);
+        $metadata = $this->getMetadata($locale, false);
+
+        foreach ($metadata as &$item) {
+            if (isset($item['labelFilter'])) {
+                $item['label'] = $item['labelFilter'][$locale];
+                unset($item['labelFilter']);
+            }
+        }
+
+        return $metadata;
     }
 
     /**
@@ -239,6 +275,9 @@ class ProfileModel
                             break;
 
                         case 'integer':
+                            if (!is_integer($fieldValue)) {
+                                $fieldErrors[] = 'Must be an integer';
+                            }
                             if (isset($fieldData['min'])) {
                                 if ($fieldValue < $fieldData['min']) {
                                     $fieldErrors[] = 'Must be greater than ' . $fieldData['min'];
@@ -388,8 +427,15 @@ class ProfileModel
         $tags = $this->getProfileNodeTags($profileNode);
 
         foreach ($data as $fieldName => $fieldValue) {
+
             if (isset($metadata[$fieldName])) {
+
                 $fieldType = $metadata[$fieldName]['type'];
+                $editable = isset($metadata[$fieldName]['editable']) ? $metadata[$fieldName]['editable'] === true : true;
+
+                if (!$editable) {
+                    continue;
+                }
 
                 switch ($fieldType) {
                     case 'string':
@@ -400,7 +446,15 @@ class ProfileModel
                         break;
 
                     case 'birthday':
-                        $profileNode->setProperty('zodiacSign', $this->getZodiacSignNonsenseFromDate($fieldValue));
+                        $zodiacSign = $this->getZodiacSignFromDate($fieldValue);
+                        if (isset($options['zodiacSign'])) {
+                            $options['zodiacSign']->delete();
+                        }
+                        if (!is_null($zodiacSign)) {
+                            $optionNode = $this->getProfileOptionNode($zodiacSign, 'zodiacSign');
+                            $optionNode->relateTo($profileNode, 'OPTION_OF')->save();
+                        }
+
                         $profileNode->setProperty($fieldName, $fieldValue);
                         break;
                     case 'location':
@@ -435,7 +489,6 @@ class ProfileModel
                         if (!is_null($fieldValue)) {
                             $optionNode = $this->getProfileOptionNode($fieldValue, $fieldName);
                             $optionNode->relateTo($profileNode, 'OPTION_OF')->save();
-
                         }
                         break;
                     case 'tags':
@@ -575,28 +628,57 @@ class ProfileModel
         return $tagNode;
     }
 
+    protected function getTopProfileTags($tagType)
+    {
+
+        $tagLabelName = ucfirst($tagType);
+
+        $params = array();
+
+        $template = "MATCH (tag:" . $tagLabelName . ")-[tagged:TAGGED]-(profile:Profile)"
+            . " RETURN tag.name AS tag, count(*) as count"
+            . " ORDER BY count DESC"
+            . " LIMIT 5;";
+
+        $query = new Query(
+            $this->client,
+            $template,
+            $params
+        );
+
+        $tags = array();
+        $result = $query->getResultSet();
+
+        foreach ($result as $row) {
+            /* @var $row \Everyman\Neo4j\Query\Row */
+            $tags[] = $row->offsetGet('tag');
+        }
+
+        return $tags;
+    }
+
     /*
      * Please don't believe in this crap
      */
-    protected function getZodiacSignNonsenseFromDate($date)
+    protected function getZodiacSignFromDate($date)
     {
 
-        $sign = '';
+        $sign = null;
         $birthday = \DateTime::createFromFormat('Y-m-d', $date);
 
-        $zodiac[356] = "Capricorn";
-        $zodiac[326] = "Sagittarius";
-        $zodiac[296] = "Scorpio";
-        $zodiac[266] = "Libra";
-        $zodiac[235] = "Virgo";
-        $zodiac[203] = "Leo";
-        $zodiac[172] = "Cancer";
-        $zodiac[140] = "Gemini";
-        $zodiac[111] = "Taurus";
-        $zodiac[78] = "Aries";
-        $zodiac[51] = "Pisces";
-        $zodiac[20] = "Aquarius";
-        $zodiac[0] = "Capricorn";
+        $zodiac[356] = 'capricorn';
+        $zodiac[326] = 'sagittarius';
+        $zodiac[296] = 'scorpio';
+        $zodiac[266] = 'libra';
+        $zodiac[235] = 'virgo';
+        $zodiac[203] = 'leo';
+        $zodiac[172] = 'cancer';
+        $zodiac[140] = 'gemini';
+        $zodiac[111] = 'taurus';
+        $zodiac[78] = 'aries';
+        $zodiac[51] = 'pisces';
+        $zodiac[20] = 'aquarius';
+        $zodiac[0] = 'capricorn';
 
         if (!$date) {
             return $sign;

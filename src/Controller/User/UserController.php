@@ -447,6 +447,7 @@ class UserController
         // Get params
         $id = $request->get('id');
         $order = $request->get('order', false);
+        $profileFilters = $request->get('filters', array());
 
         if (null === $id) {
             return $app->json(array(), 400);
@@ -455,7 +456,10 @@ class UserController
         /** @var $paginator \Paginator\Paginator */
         $paginator = $app['paginator'];
 
-        $filters = array('id' => $id);
+        $filters = array(
+            'id' => $id,
+            'profileFilters' => $profileFilters,
+        );
 
         if ($order) {
             $filters['order'] = $order;

@@ -4,8 +4,8 @@ profile:
         min: 5
         max: 255
         label:
-            en: 'Real Name'
-            es: 'Nombre Real'
+            en: 'Real name'
+            es: 'Nombre real'
     description:
         type: string
         min: 0
@@ -18,6 +18,15 @@ profile:
         label:
             en: 'Birthday'
             es: 'Cumpleaños'
+        labelFilter:
+            en: 'Age'
+            es: 'Edad'
+    zodiacSign:
+        type: choice
+        editable: false
+        label:
+            en: 'Zodiac sign'
+            es: 'Signo del zodíaco'
     height:
         type: integer
         min: 50
@@ -33,15 +42,20 @@ profile:
             en: 'Allergy'
             es: 'Alergia'
     car:
-        type: boolean
+        type: choice
         label:
             en: 'Car'
             es: 'Coche'
     sons:
-        type: boolean
+        type: choice
         label:
             en: 'Sons'
             es: 'Hijos'
+    wantSons:
+        type: choice
+        label:
+            en: 'Do you want Sons?'
+            es: '¿Quieres tener hijos?'
     languages:
         type: string
         min: 0
@@ -49,11 +63,6 @@ profile:
         label:
             en: 'Languages'
             es: 'Idiomas'
-    wantSons:
-        type: boolean
-        label:
-            en: 'Do you want Sons?'
-            es: '¿Quieres tener hijos?'
     gender:
         type: choice
         label:

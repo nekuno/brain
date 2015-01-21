@@ -129,6 +129,22 @@ class ProfileController
      * @param Application $app
      * @return JsonResponse
      */
+    public function getFiltersAction(Request $request, Application $app)
+    {
+        $locale = $request->query->get('locale');
+
+        /* @var $model ProfileModel */
+        $model = $app['users.profile.model'];
+        $filters = $model->getFilters($locale);
+
+        return $app->json($filters, 200);
+    }
+
+    /**
+     * @param Request $request
+     * @param Application $app
+     * @return JsonResponse
+     */
     public function validateAction(Request $request, Application $app)
     {
         /* @var $model ProfileModel */
