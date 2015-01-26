@@ -31,7 +31,7 @@ class Neo4jProfileOptionsCommand extends ApplicationAwareCommand
         $profileOptions->setLogger($logger);
 
         try {
-            $new = $profileOptions->load();
+            $result = $profileOptions->load();
         } catch (\Exception $e) {
             $output->writeln(
                 'Error loading neo4j profile options with message: ' . $e->getMessage()
@@ -40,6 +40,8 @@ class Neo4jProfileOptionsCommand extends ApplicationAwareCommand
             return;
         }
 
-        $output->writeln(sprintf('%d new profile options loaded.', $new));
+        $output->writeln(sprintf('%d new profile options processed.', $result->getTotal()));
+        $output->writeln(sprintf('%d new profile options updated.', $result->getUpdated()));
+        $output->writeln(sprintf('%d new profile options created.', $result->getCreated()));
     }
 }

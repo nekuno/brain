@@ -20,6 +20,11 @@ class ProfileOptions implements LoggerAwareInterface
     protected $logger;
 
     /**
+     * @var ProfileOptionsResult
+     */
+    protected $result;
+
+    /**
      * @param \Everyman\Neo4j\Client $client
      */
     public function __construct(Client $client)
@@ -40,12 +45,12 @@ class ProfileOptions implements LoggerAwareInterface
 
     /**
      * @throws \Exception
-     * @return integer New ProfileOptions added
+     * @return ProfileOptionsResult New ProfileOptions added
      */
     public function load()
     {
 
-        $new = 0;
+        $this->result = new ProfileOptionsResult();
 
         $options = array(
             'Alcohol' => array(
@@ -306,6 +311,42 @@ class ProfileOptions implements LoggerAwareInterface
                     'name_es' => 'Otro',
                 ),
             ),
+            'Car' => array(
+                array(
+                    'id' => 'yes',
+                    'name_en' => 'Yes',
+                    'name_es' => 'Sí',
+                ),
+                array(
+                    'id' => 'no',
+                    'name_en' => 'No',
+                    'name_es' => 'No',
+                ),
+            ),
+            'Sons' => array(
+                array(
+                    'id' => 'yes',
+                    'name_en' => 'Yes',
+                    'name_es' => 'Sí',
+                ),
+                array(
+                    'id' => 'no',
+                    'name_en' => 'No',
+                    'name_es' => 'No',
+                ),
+            ),
+            'WantSons' => array(
+                array(
+                    'id' => 'yes',
+                    'name_en' => 'Yes',
+                    'name_es' => 'Sí',
+                ),
+                array(
+                    'id' => 'no',
+                    'name_en' => 'No',
+                    'name_es' => 'No',
+                ),
+            ),
             'HairColor' => array(
                 array(
                     'id' => 'black',
@@ -484,65 +525,152 @@ class ProfileOptions implements LoggerAwareInterface
                     'name_es' => 'English',
                 ),
             ),
+            'ZodiacSign' => array(
+                array(
+                    'id' => 'capricorn',
+                    'name_en' => 'Capricorn',
+                    'name_es' => 'Capricornio',
+                ),
+                array(
+                    'id' => 'sagittarius',
+                    'name_en' => 'Sagittarius',
+                    'name_es' => 'Sagitario',
+                ),
+                array(
+                    'id' => 'scorpio',
+                    'name_en' => 'Scorpio',
+                    'name_es' => 'Escorpio',
+                ),
+                array(
+                    'id' => 'libra',
+                    'name_en' => 'Libra',
+                    'name_es' => 'Libra',
+                ),
+                array(
+                    'id' => 'virgo',
+                    'name_en' => 'Virgo',
+                    'name_es' => 'Virgo',
+                ),
+                array(
+                    'id' => 'leo',
+                    'name_en' => 'Leo',
+                    'name_es' => 'Leo',
+                ),
+                array(
+                    'id' => 'cancer',
+                    'name_en' => 'Cancer',
+                    'name_es' => 'Cáncer',
+                ),
+                array(
+                    'id' => 'gemini',
+                    'name_en' => 'Gemini',
+                    'name_es' => 'Géminis',
+                ),
+                array(
+                    'id' => 'taurus',
+                    'name_en' => 'Taurus',
+                    'name_es' => 'Tauro',
+                ),
+                array(
+                    'id' => 'aries',
+                    'name_en' => 'Aries',
+                    'name_es' => 'Aries',
+                ),
+                array(
+                    'id' => 'pisces',
+                    'name_en' => 'Pisces',
+                    'name_es' => 'Piscis',
+                ),
+                array(
+                    'id' => 'aquarius',
+                    'name_en' => 'Aquarius',
+                    'name_es' => 'Acuario',
+                ),
+            ),
         );
 
         foreach ($options as $type => $values) {
             foreach ($values as $value) {
                 $id = $value['id'];
-                $name = array(
+                $names = array(
                     'name_es' => $value['name_es'],
                     'name_en' => $value['name_en'],
                 );
-                if ($this->createOption($type, $id, $name)) {
-                    $new += 1;
-                }
+                $this->processOption($type, $id, $names);
             }
         }
 
-        return $new;
+        return $this->result;
     }
 
     /**
      * @param $type
      * @param $id
-     * @param $name
+     * @param $names
      * @throws \Exception
-     * @return boolean
      */
-    public function createOption($type, $id, $name)
+    public function processOption($type, $id, $names)
     {
+
+        $this->result->incrementTotal();
+
         if ($this->optionExists($type, $id)) {
-            $this->logger->info(sprintf('Updating ProfileOption:%s id: "%s", name_en: "%s", name_es: "%s"', $type, $id, $name['name_en'], $name['name_es']));
-            $params = array('type' => $type, 'id' => $id, 'name_en' => $name['name_en'], 'name_es' => $name['name_es']);
-            $query = "MATCH (o:ProfileOption) WHERE {type} IN labels(o) AND o.id = {id} SET o.name_en = {name_en}, o.name_es = {name_es}  RETURN o;";
+
+            if ($this->optionExists($type, $id, $names)) {
+
+                $this->logger->info(sprintf('Skipping, Already exists ProfileOption:%s id: "%s", name_en: "%s", name_es: "%s"', $type, $id, $names['name_en'], $names['name_es']));
+
+            } else {
+
+                $this->result->incrementUpdated();
+                $this->logger->info(sprintf('Updating ProfileOption:%s id: "%s", name_en: "%s", name_es: "%s"', $type, $id, $names['name_en'], $names['name_es']));
+                $params = array('type' => $type, 'id' => $id);
+                $params = array_merge($params, $names);
+                $query = "MATCH (o:ProfileOption) WHERE {type} IN labels(o) AND o.id = {id} SET o.name_en = {name_en}, o.name_es = {name_es} RETURN o;";
+
+                $neo4jQuery = new Query(
+                    $this->client,
+                    $query,
+                    $params
+                );
+
+                $neo4jQuery->getResultSet();
+            }
+
         } else {
-            $this->logger->info(sprintf('Creating ProfileOption:%s id: "%s", name_en: "%s", name_es: "%s"', $type, $id, $name['name_en'], $name['name_es']));
-            $params = array('id' => $id, 'name_en' => $name['name_en'], 'name_es' => $name['name_es']);
-            $query = "CREATE (:ProfileOption:" . $type . " { id: {id}, name_en: {name_en}, name_es: {name_es}  })";
+
+            $this->result->incrementCreated();
+            $this->logger->info(sprintf('Creating ProfileOption:%s id: "%s", name_en: "%s", name_es: "%s"', $type, $id, $names['name_en'], $names['name_es']));
+            $params = array('id' => $id);
+            $params = array_merge($params, $names);
+            $query = "CREATE (:ProfileOption:" . $type . " { id: {id}, name_en: {name_en}, name_es: {name_es} })";
+
+            $neo4jQuery = new Query(
+                $this->client,
+                $query,
+                $params
+            );
+
+            $neo4jQuery->getResultSet();
         }
-
-        $neo4jQuery = new Query(
-            $this->client,
-            $query,
-            $params
-        );
-
-        $result = $neo4jQuery->getResultSet();
-
-        return true;
     }
 
     /**
      * @param $type
      * @param $id
+     * @param array $names
      * @return boolean
      * @throws \Exception
      */
-    public function optionExists($type, $id)
+    public function optionExists($type, $id, $names = array())
     {
         $params = array('type' => $type, 'id' => $id);
-        $query = "MATCH (o:ProfileOption) WHERE {type} IN labels(o) AND o.id = {id}";
-        $query .= " RETURN o;";
+        $query = "MATCH (o:ProfileOption) WHERE {type} IN labels(o) AND o.id = {id}\n";
+        if (!empty($names)) {
+            $params = array_merge($params, $names);
+            $query .= "AND o.name_es = {name_es} AND o.name_en = {name_en}\n";
+        }
+        $query .= "RETURN o;";
 
         $neo4jQuery = new Query(
             $this->client,

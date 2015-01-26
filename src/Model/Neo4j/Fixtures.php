@@ -462,8 +462,8 @@ class Fixtures
         $template = "MATCH (u:User)"
             . " WHERE u.qnoow_id = {userId}"
             . " CREATE (q:Question)-[c:CREATED_BY]->(u)"
-            . " SET q.text = {text}, q.timestamp = timestamp(), q.ranking = 0, c.timestamp = timestamp()"
-            . " FOREACH (text in {answers}| CREATE (:Answer {text: text})-[:IS_ANSWER_OF]->(q))"
+            . " SET q.text_en = {text}, q.text_es = {text}, q.timestamp = timestamp(), q.ranking = 0, c.timestamp = timestamp()"
+            . " FOREACH (text in {answers}| CREATE (:Answer {text_en: text, text_es: text})-[:IS_ANSWER_OF]->(q))"
             . " WITH q"
             . " MATCH (q)<-[:IS_ANSWER_OF]-(a:Answer)"
             . " RETURN q AS question, collect(a) AS answers;";
