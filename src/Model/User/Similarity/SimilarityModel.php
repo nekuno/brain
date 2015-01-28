@@ -52,10 +52,58 @@ class SimilarityModel
 
         $result = $query->getResultSet();
 
-        /* @var $row Row */
-        $row = $result->current();
-        /* @var $node Node */
-        $similarity = $row->offsetGet('similarity');
+        $similarity = 0;
+        if ($result->count() > 0) {
+            /* @var $row Row */
+            $row = $result->current();
+            /* @var $node Node */
+            $similarity = $row->offsetGet('similarity');
+        }
+
+        return $similarity;
+    }
+
+    public function getSimilarityByInterests($idA, $idB)
+    {
+        $parameters = array(
+          'idA' => (integer)$idA,
+          'idB' => (integer)$idB,
+        );
+
+        $template = "
+            MATCH (userA:User {qnoow_id: {idA}}), (userB:User {qnoow_id: {idB}})
+            MATCH (userA)-[:LIKES]-(l:Link)-[:LIKES]-(userB)
+            WHERE userA <> userB AND HAS(l.unpopularity)
+	        WITH userA, userB, COUNT(DISTINCT l) AS numberCommonContent, SUM(l.unpopularity) AS common
+	        WHERE numberCommonContent > 4
+	        WITH userA, userB, common
+
+            OPTIONAL MATCH (userA)-[:LIKES]-(l1:Link)
+	        WHERE NOT (userB)-[:LIKES]->(l1) AND HAS(l1.popularity)
+	        WITH userA, userB, common, SUM(l1.popularity) AS onlyUserA
+
+            OPTIONAL MATCH (userB)-[:LIKES]-(l2:Link)
+            WHERE NOT (userA)-[:LIKES]->(l2) AND HAS(l2.popularity)
+	        WITH userA, userB, common, onlyUserA, SUM(l2.popularity) AS onlyUserB
+
+            WITH userA, userB, sqrt( common / (onlyUserA + common)) * sqrt( common / (onlyUserB + common)) AS similarity
+
+            MERGE (userA)-[s:SIMILARITY]-(userB)
+            SET s.interests = similarity
+            RETURN similarity
+        ";
+
+        $query = new Query($this->client, $template, $parameters);
+
+        $result = $query->getResultSet();
+
+        $similarity = 0;
+        if ($result->count() > 0) {
+            /* @var $row Row */
+            $row = $result->current();
+            /* @var $node Node */
+            $similarity = $row->offsetGet('similarity');
+        }
 
         return $similarity;
     }

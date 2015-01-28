@@ -36,8 +36,12 @@ class SimilarityCommand extends ApplicationAwareCommand
         $userB = $input->getArgument('userB');
 
         try {
-            $similarity = $model->getSimilarityByQuestions($userA, $userB);
-            $output->writeln(sprintf('Similarity: %s', $similarity));
+            $similarityQuestions = $model->getSimilarityByQuestions($userA, $userB);
+            $similarityInterest = $model->getSimilarityByInterests($userA, $userB);
+
+            $output->writeln(sprintf('Similarity Questions: %s', $similarityQuestions));
+            $output->writeln(sprintf('Similarity Interest: %s', $similarityInterest));
+            $output->writeln(sprintf('Similarity: %s', ($similarityQuestions + $similarityInterest) / 2 ));
 
         } catch (\Exception $e) {
             $output->writeln(
