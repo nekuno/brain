@@ -21,7 +21,7 @@ class Fixtures
 
     const NUM_OF_USERS = 8;
 
-    const NUM_OF_QUESTIONS = 33;
+    const NUM_OF_QUESTIONS = 60;
 
     /**
      * @var \Everyman\Neo4j\Client
@@ -230,6 +230,19 @@ class Fixtures
             $this->questions[$storedQuestionsIndex]['answers'][1],
         );
         $this->userAnswerQuestion($userId, $questionId, $answerId, $acceptsIds, $rating);
+
+        for ($i = 41; $i <= self::NUM_OF_QUESTIONS; $i++) {
+            $key = $i - 1;
+            $questionId = $this->questions[$key]['id'];
+            $answerId = $this->questions[$key]['answers'][1];
+            $acceptsIds = array(
+                $this->questions[$key]['answers'][1],
+            );
+            $rating = 1;
+            $this->userAnswerQuestion(1, $questionId, $answerId, $acceptsIds, $rating);
+            $this->userAnswerQuestion(2, $questionId, $answerId, $acceptsIds, $rating);
+        }
+
     }
 
     /**
@@ -301,7 +314,7 @@ class Fixtures
         //Create queries in loop
         $contentQuery = array();
         for ($i = 1; $i <= $numberOfContents; $i++) {
-            $contentQuery[] = "CREATE (l:Content:Link {"
+            $contentQuery[] = "CREATE (l:Link {"
                 . " url: 'testLink" . $i . "',"
                 . " description: 'test description " . $i . "',"
                 . " processed: 0 })"
@@ -466,6 +479,7 @@ class Fixtures
             . " FOREACH (text in {answers}| CREATE (:Answer {text_en: text, text_es: text})-[:IS_ANSWER_OF]->(q))"
             . " WITH q"
             . " MATCH (q)<-[:IS_ANSWER_OF]-(a:Answer)"
+            . " WITH q, a ORDER BY id(q), id(a)"
             . " RETURN q AS question, collect(a) AS answers;";
 
         $query = new Query(
