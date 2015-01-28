@@ -97,18 +97,26 @@ class Fixtures
         $this->createUserLikesLinkRelationship(1, 1);
         $this->createUserLikesLinkRelationship(1, 2);
         $this->createUserLikesLinkRelationship(1, 3);
+        $this->createUserLikesLinkRelationship(1, 4);
+        $this->createUserLikesLinkRelationship(1, 5);
+        $this->createUserLikesLinkRelationship(1, 6);
+        $this->createUserLikesLinkRelationship(1, 7);
 
         $this->createUserLikesLinkRelationship(2, 1);
         $this->createUserLikesLinkRelationship(2, 2);
         $this->createUserLikesLinkRelationship(2, 3);
+        $this->createUserLikesLinkRelationship(2, 4);
+        $this->createUserLikesLinkRelationship(2, 5);
 
         $this->createUserDislikesLinkRelationship(3, 4);
         $this->createUserDislikesLinkRelationship(3, 5);
-        $this->createUserDislikesLinkRelationship(3, 6);
+        $this->createUserLikesLinkRelationship(3, 6);
+        $this->createUserLikesLinkRelationship(3, 7);
 
         $this->createUserDislikesLinkRelationship(4, 4);
         $this->createUserDislikesLinkRelationship(4, 5);
-        $this->createUserDislikesLinkRelationship(4, 6);
+        $this->createUserLikesLinkRelationship(4, 6);
+        $this->createUserLikesLinkRelationship(4, 7);
 
         $this->createUserLikesLinkRelationship(5, 1);
         $this->createUserLikesLinkRelationship(5, 7);

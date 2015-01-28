@@ -66,8 +66,8 @@ class SimilarityModel
     public function getSimilarityByInterests($idA, $idB)
     {
         $parameters = array(
-          'idA' => (integer)$idA,
-          'idB' => (integer)$idB,
+            'idA' => (integer)$idA,
+            'idB' => (integer)$idB,
         );
 
         $template = "
