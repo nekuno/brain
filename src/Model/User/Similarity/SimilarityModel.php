@@ -12,6 +12,7 @@ use Everyman\Neo4j\Query\Row;
  */
 class SimilarityModel
 {
+    const numberOfSecondsToCache = 86400;
 
     /**
      * @var Client
@@ -23,12 +24,68 @@ class SimilarityModel
         $this->client = $client;
     }
 
-    public function getSimilarity($id1, $id2)
+    public function getSimilarity($idA, $idB)
     {
+        $currentSimilarity = $this->getCurrentSimilarity($idA, $idB);
 
+        $minTimestampForCache  = time() - self::numberOfSecondsToCache;
+        $hasToRecalculateQuestions = ($currentSimilarity['questionsUpdated'] / 1000) < $minTimestampForCache;
+        $hasToRecalculateContent = ($currentSimilarity['interestsUpdated'] / 1000) < $minTimestampForCache;
+
+        $similarity = $currentSimilarity['value'];
+        if ($hasToRecalculateQuestions || $hasToRecalculateContent) {
+            if ($hasToRecalculateQuestions) {
+                $this->calculateSimilarityByQuestions($idA, $idB);
+            }
+            if ($hasToRecalculateQuestions) {
+                $this->calculateSimilarityByInterests($idA, $idB);
+            }
+
+            $currentSimilarity = $this->getCurrentSimilarity($idA, $idB);
+            $similarity = $currentSimilarity['value'];
+        }
+
+        return $similarity;
     }
 
-    public function getSimilarityByQuestions($idA, $idB)
+    private function getCurrentSimilarity($idA, $idB) {
+        $parameters = array(
+          'idA' => (integer)$idA,
+          'idB' => (integer)$idB,
+        );
+
+        $template = "
+            MATCH (userA:User {qnoow_id: {idA}}), (userB:User {qnoow_id: {idB}})
+            MATCH (userA)-[s:SIMILARITY]-(userB)
+            WITH CASE WHEN HAS(s.questions) THEN s.questions ELSE 0 END AS questions,
+                 CASE WHEN HAS(s.interests) THEN s.interests ELSE 0 END AS interests,
+                 CASE WHEN HAS(s.questionsUpdated) THEN s.questionsUpdated ELSE 0 END AS questionsUpdated,
+                 CASE WHEN HAS(s.interestsUpdated) THEN s.interestsUpdated ELSE 0 END AS interestsUpdated
+            RETURN (questions + interests) / 2 AS similarity, questionsUpdated, interestsUpdated
+        ";
+
+        $query = new Query($this->client, $template, $parameters);
+
+        $result = $query->getResultSet();
+
+        $similarity = array(
+            'value' => 0,
+            'questionsUpdated' => 0,
+            'interestsUpdated' => 0,
+        );
+        if ($result->count() > 0) {
+            /* @var $row Row */
+            $row = $result->current();
+            /* @var $node Node */
+            $similarity['value'] = $row->offsetGet('similarity');
+            $similarity['questionsUpdated']  = $row->offsetGet('questionsUpdated');
+            $similarity['interestsUpdated']  = $row->offsetGet('interestsUpdated');
+        }
+
+        return $similarity;
+    }
+
+    private function calculateSimilarityByQuestions($idA, $idB)
     {
         $parameters = array(
             'idA' => (integer)$idA,
@@ -44,7 +101,7 @@ class SimilarityModel
             WITH userA, userB, CASE WHEN PC <= 0 THEN toFloat(0) ELSE RI/PC - 1/PC END AS similarity
             WITH userA, userB, CASE WHEN similarity < 0 THEN toFloat(0) ELSE similarity END AS similarity
             MERGE (userA)-[s:SIMILARITY]-(userB)
-            SET s.questions = similarity
+            SET s.questions = similarity, s.questionsUpdated = timestamp()
             RETURN similarity
         ";
 
@@ -63,7 +120,7 @@ class SimilarityModel
         return $similarity;
     }
 
-    public function getSimilarityByInterests($idA, $idB)
+    private function calculateSimilarityByInterests($idA, $idB)
     {
         $parameters = array(
           'idA' => (integer)$idA,
@@ -89,7 +146,7 @@ class SimilarityModel
             WITH userA, userB, sqrt( common / (onlyUserA + common)) * sqrt( common / (onlyUserB + common)) AS similarity
 
             MERGE (userA)-[s:SIMILARITY]-(userB)
-            SET s.interests = similarity
+            SET s.interests = similarity, s.interestsUpdated = timestamp()
             RETURN similarity
         ";
 
