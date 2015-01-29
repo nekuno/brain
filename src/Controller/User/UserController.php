@@ -168,7 +168,7 @@ class UserController
         }
 
         try {
-            /** @var $model \Model\User\MatchingModel */
+            /** @var $model \Model\User\Matching\MatchingModel */
             $model = $app['users.matching.model'];
             switch ($basedOn) {
                 case 'answers':
@@ -191,6 +191,40 @@ class UserController
             return $app->json(array(), 500);
         }
 
+        return $app->json($result, !empty($result) ? 201 : 200);
+    }
+
+    /**
+     * @param Request $request
+     * @param Application $app
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @throws \Exception
+     */
+    public function getSimilarityAction(Request $request, Application $app)
+    {
+
+        // Get params
+        $id1 = $request->get('id1');
+        $id2 = $request->get('id2');
+
+        if (null === $id1 || null === $id2) {
+            return $app->json(array(), 400);
+        }
+
+        try {
+            /** @var $model \Model\User\Similarity\SimilarityModel */
+            $model = $app['users.similarity.model'];
+            $similarity = $model->getSimilarity($id1, $id2);
+            $result = array('similarity' => $similarity);
+
+        } catch (\Exception $e) {
+            if ($app['env'] == 'dev') {
+                throw $e;
+            }
+
+            return $app->json(array(), 500);
+        }
+        
         return $app->json($result, !empty($result) ? 201 : 200);
     }
 

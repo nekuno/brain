@@ -18,6 +18,7 @@ $app->get('/profile/tags/{type}', 'users.profile.controller:getProfileTagsAction
 $app->post('/profile/validate', 'users.profile.controller:validateAction')->value('id', null);
 
 $app->get('/users/{id1}/matching/{id2}', 'users.controller:getMatchingAction')->value('type', 'answers');
+$app->get('/users/{id1}/similarity/{id2}', 'users.controller:getSimilarityAction');
 $app->get('/users/{id}/questions', 'users.controller:getUserQuestionsAction');
 $app->get('/users/{id}/questions/compare/{id2}', 'users.controller:getUserQuestionsCompareAction');
 $app->get('/users/{id}/content', 'users.controller:getUserContentAction');
