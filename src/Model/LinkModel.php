@@ -251,7 +251,7 @@ class LinkModel
 
     }
 
-    public function updatePopularity($limit = null)
+    public function updatePopularity(array $filters)
     {
         $parameters = array();
 
@@ -262,18 +262,32 @@ class LinkModel
                 WITH  total AS max
                 ORDER BY max DESC
                 LIMIT 1
-            MATCH (l:Link)-[r:LIKES]-(:User)
+        ";
+
+        if (isset($filters['userId'])) {
+            $template .= "
+                MATCH (:User {qnoow_id: {id}})-[LIKES]-(l:Link)
+            ";
+            $parameters['id'] = (integer) $filters['userId'];
+        } else {
+            $template .= "
+                MATCH (l:Link)
+            ";
+        }
+
+        $template .= "
+            MATCH (l)-[r:LIKES]-(:User)
                 WITH l, count(DISTINCT r) AS total, max
                 WHERE total > 1
 		        WITH l, toFloat(total) AS total, toFloat(max) AS max
         ";
 
-        if (null !== $limit) {
+        if (isset($filters['limit'])) {
             $template .= "
                 ORDER BY HAS(l.popularity_timestamp), l.popularity_timestamp
 		        LIMIT {limit}
             ";
-            $parameters['limit'] = (integer) $limit;
+            $parameters['limit'] = (integer) $filters['limit'];
         }
 
         $template .= "
