@@ -69,7 +69,7 @@ $app['users.matching.model'] = function ($app) {
 };
 $app['users.similarity.model'] = function ($app) {
 
-    return new \Model\User\Similarity\SimilarityModel($app['neo4j.client']);
+    return new \Model\User\Similarity\SimilarityModel($app['neo4j.client'], $app['links.model']);
 };
 
 $app['users.recommendation.users.model'] = function ($app) {

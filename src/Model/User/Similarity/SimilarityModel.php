@@ -6,6 +6,7 @@ use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
+use Model\LinkModel;
 
 /**
  * @author Juan Luis Martínez <juanlu@comakai.com>
@@ -19,9 +20,15 @@ class SimilarityModel
      */
     protected $client;
 
-    public function __construct(Client $client)
+    /**
+     * @var LinkModel
+     */
+    protected $linkModel;
+
+    public function __construct(Client $client, LinkModel $linkModel)
     {
         $this->client = $client;
+        $this->linkModel = $linkModel;
     }
 
     public function getSimilarity($idA, $idB)
@@ -38,6 +45,8 @@ class SimilarityModel
                 $this->calculateSimilarityByQuestions($idA, $idB);
             }
             if ($hasToRecalculateQuestions) {
+                $this->linkModel->updatePopularity(array('userId' => $idA));
+                $this->linkModel->updatePopularity(array('userId' => $idB));
                 $this->calculateSimilarityByInterests($idA, $idB);
             }
 
