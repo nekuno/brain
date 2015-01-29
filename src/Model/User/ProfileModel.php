@@ -59,6 +59,9 @@ class ProfileModel
                 if (isset($item['labelFilter'])) {
                     unset($item['labelFilter']);
                 }
+                if (isset($item['filterable'])) {
+                    unset($item['filterable']);
+                }
             }
         }
 
@@ -76,10 +79,13 @@ class ProfileModel
         $locale = $this->getLocale($locale);
         $metadata = $this->getMetadata($locale, false);
 
-        foreach ($metadata as &$item) {
+        foreach ($metadata as $key => &$item) {
             if (isset($item['labelFilter'])) {
                 $item['label'] = $item['labelFilter'][$locale];
                 unset($item['labelFilter']);
+            }
+            if (isset($item['filterable']) && $item['filterable'] === false) {
+                unset($metadata[$key]);
             }
         }
 

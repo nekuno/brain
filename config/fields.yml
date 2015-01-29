@@ -195,6 +195,7 @@ profile:
             es: '¿Saldrías con una persona con hijos?'
     interfaceLanguage:
         type: choice
+        filterable: false
         label:
             en: 'Preferred interface language?'
             es: '¿Lenguaje de interfaz preferido?'
@@ -220,6 +221,7 @@ profile:
             es: 'Educación'
     location:
         type: location
+        filterable: false
         label:
             en: 'Location'
             es: 'Ubicación'

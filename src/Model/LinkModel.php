@@ -250,4 +250,43 @@ class LinkModel
         return $unprocessedLinks;
 
     }
+
+    public function updatePopularity($limit = null)
+    {
+        $parameters = array();
+
+        $template = "
+            MATCH (:Link)-[r:LIKES]-(:User)
+                WITH count(DISTINCT r) AS total
+                WHERE total > 1
+                WITH  total AS max
+                ORDER BY max DESC
+                LIMIT 1
+            MATCH (l:Link)-[r:LIKES]-(:User)
+                WITH l, count(DISTINCT r) AS total, max
+                WHERE total > 1
+		        WITH l, toFloat(total) AS total, toFloat(max) AS max
+        ";
+
+        if (null !== $limit) {
+            $template .= "
+                ORDER BY HAS(l.popularity_timestamp), l.popularity_timestamp
+		        LIMIT {limit}
+            ";
+            $parameters['limit'] = (integer) $limit;
+        }
+
+        $template .= "
+                SET
+                    l.popularity = (total/max)^3,
+                    l.unpopularity = (1-(total/max))^3,
+                    l.popularity_timestamp = timestamp()
+        ";
+
+        $query = new Query($this->client, $template, $parameters);
+
+        $query->getResultSet();
+
+        return true;
+    }
 }
