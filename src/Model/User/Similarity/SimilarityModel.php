@@ -6,7 +6,9 @@ use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
+use Model\Neo4j\GraphManager;
 use Model\LinkModel;
+
 
 /**
  * @author Juan Luis Martínez <juanlu@comakai.com>
@@ -21,14 +23,20 @@ class SimilarityModel
     protected $client;
 
     /**
+     * @var GraphManager
+     */
+    protected $gm;
+
+    /**
      * @var LinkModel
      */
     protected $linkModel;
 
-    public function __construct(Client $client, LinkModel $linkModel)
+    public function __construct(Client $client, GraphManager $gm, LinkModel $linkModel)
     {
         $this->client = $client;
         $this->linkModel = $linkModel;
+        $this->gm = $gm;
     }
 
     public function getSimilarity($idA, $idB)
@@ -55,23 +63,28 @@ class SimilarityModel
         return $similarity;
     }
 
-    private function getCurrentSimilarity($idA, $idB) {
-        $parameters = array(
-          'idA' => (integer)$idA,
-          'idB' => (integer)$idB,
+    private function getCurrentSimilarity($idA, $idB)
+    {
+        $qb = $this->gm->createQueryBuilder();
+        $qb
+            ->match('(userA:User {qnoow_id: { idA } }), (userB:User {qnoow_id: { idB } })')
+            ->match('(userA)-[s:SIMILARITY]-(userB)')
+            ->with(
+                's.similarity AS similarity',
+                'CASE WHEN HAS(s.questionsUpdated) THEN s.questionsUpdated ELSE 0 END AS questionsUpdated',
+                'CASE WHEN HAS(s.interestsUpdated) THEN s.interestsUpdated ELSE 0 END AS interestsUpdated'
+            )
+            ->returns('similarity, questionsUpdated, interestsUpdated')
+        ;
+
+        $qb->setParameters(
+            array(
+                'idA' => (integer)$idA,
+                'idB' => (integer)$idB,
+            )
         );
 
-        $template = "
-            MATCH (userA:User {qnoow_id: {idA}}), (userB:User {qnoow_id: {idB}})
-            MATCH (userA)-[s:SIMILARITY]-(userB)
-            WITH s.similarity AS similarity,
-                CASE WHEN HAS(s.questionsUpdated) THEN s.questionsUpdated ELSE 0 END AS questionsUpdated,
-                CASE WHEN HAS(s.interestsUpdated) THEN s.interestsUpdated ELSE 0 END AS interestsUpdated
-            RETURN similarity, questionsUpdated, interestsUpdated
-        ";
-
-        $query = new Query($this->client, $template, $parameters);
-
+        $query = $qb->getQuery();
         $result = $query->getResultSet();
 
         $similarity = array(
@@ -91,32 +104,39 @@ class SimilarityModel
         return $similarity;
     }
 
-    private function calculateSimilarityByQuestions($idA, $idB)
+    public function calculateSimilarityByQuestions($idA, $idB)
     {
-        $parameters = array(
-            'idA' => (integer)$idA,
-            'idB' => (integer)$idB,
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb
+            ->match('(userA:User {qnoow_id: { idA } }), (userB:User {qnoow_id: { idB } })')
+            ->match('(userA)-[:ANSWERS]-(answerA:Answer)-[:IS_ANSWER_OF]-(q:Question)')
+            ->match('(userB)-[:ANSWERS]-(answerB:Answer)-[:IS_ANSWER_OF]-(q)')
+            ->with('userA, userB, q, CASE WHEN answerA = answerB THEN 1 ELSE 0 END AS equal')
+            ->with('userA, userB, toFloat(COUNT(q)) AS PC, toFloat(SUM(equal)) AS RI')
+            ->with('userA, userB, CASE WHEN PC <= 0 THEN toFloat(0) ELSE RI/PC - 1/PC END AS similarity')
+            ->with('userA, userB, CASE WHEN similarity < 0 THEN toFloat(0) ELSE similarity END AS similarity')
+        ;
+
+        $qb
+            ->merge('(userA)-[s:SIMILARITY]-(userB)')
+            ->set('s.questions = similarity',
+                's.interests = CASE WHEN HAS(s.interests) THEN s.interests ELSE 0 END',
+                's.similarity = (s.questions + s.interests) / 2',
+                's.questionsUpdated = timestamp()',
+                's.similarityUpdated = timestamp()'
+            )
+            ->returns('similarity')
+        ;
+
+        $qb->setParameters(
+            array(
+                'idA' => (integer)$idA,
+                'idB' => (integer)$idB,
+            )
         );
 
-        $template = "
-            MATCH (userA:User {qnoow_id: {idA}}), (userB:User {qnoow_id: {idB}})
-            MATCH (userA)-[:ANSWERS]-(answerA:Answer)-[:IS_ANSWER_OF]-(q:Question)
-            MATCH (userB)-[:ANSWERS]-(answerB:Answer)-[:IS_ANSWER_OF]-(q)
-            WITH userA, userB, q, CASE WHEN answerA = answerB THEN 1 ELSE 0 END AS equal
-            WITH userA, userB, toFloat(COUNT(q)) AS PC, toFloat(SUM(equal)) AS RI
-            WITH userA, userB, CASE WHEN PC <= 0 THEN toFloat(0) ELSE RI/PC - 1/PC END AS similarity
-            WITH userA, userB, CASE WHEN similarity < 0 THEN toFloat(0) ELSE similarity END AS similarity
-            MERGE (userA)-[s:SIMILARITY]-(userB)
-            SET s.questions = similarity,
-                s.interests = CASE WHEN HAS(s.interests) THEN s.interests ELSE 0 END,
-                s.similarity = (s.questions + s.interests) / 2,
-                s.questionsUpdated = timestamp(),
-                s.similarityUpdated = timestamp()
-            RETURN similarity
-        ";
-
-        $query = new Query($this->client, $template, $parameters);
-
+        $query = $qb->getQuery();
         $result = $query->getResultSet();
 
         $similarity = 0;
@@ -130,45 +150,57 @@ class SimilarityModel
         return $similarity;
     }
 
-    private function calculateSimilarityByInterests($idA, $idB)
+    public function calculateSimilarityByInterests($idA, $idB)
     {
         $this->linkModel->updatePopularity(array('userId' => $idA));
         $this->linkModel->updatePopularity(array('userId' => $idB));
 
-        $parameters = array(
-            'idA' => (integer)$idA,
-            'idB' => (integer)$idB,
+        $qb = $this->gm->createQueryBuilder();
+        $qb
+            ->match('(userA:User {qnoow_id: { idA } }), (userB:User {qnoow_id: { idB } })')
+            ->match('(userA)-[:LIKES]-(l:Link)-[:LIKES]-(userB)')
+            ->where('HAS(l.unpopularity)')
+            ->with('userA, userB, COUNT(DISTINCT l) AS numberCommonContent, SUM(l.unpopularity) AS common')
+            ->where('numberCommonContent > 4')
+            ->with('userA, userB, common')
+        ;
+
+        $qb
+            ->optionalMatch('(userA)-[:LIKES]-(l1:Link)')
+            ->where('NOT (userB)-[:LIKES]->(l1) AND HAS(l1.popularity)')
+            ->with('userA, userB, common, SUM(l1.popularity) AS onlyUserA')
+        ;
+
+        $qb
+          ->optionalMatch('(userB)-[:LIKES]-(l2:Link)')
+          ->where('NOT (userA)-[:LIKES]->(l2) AND HAS(l2.popularity)')
+          ->with(' userA, userB, common, onlyUserA, SUM(l2.popularity) AS onlyUserB')
+        ;
+
+        $qb
+            ->with('userA, userB, sqrt( common / (onlyUserA + common)) * sqrt( common / (onlyUserB + common)) AS similarity')
+        ;
+
+        $qb
+            ->merge('(userA)-[s:SIMILARITY]-(userB)')
+            ->set(
+                's.interests = similarity',
+                's.questions = CASE WHEN HAS(s.questions) THEN s.questions ELSE 0 END',
+                's.similarity = (s.questions + s.interests) / 2',
+                's.interestsUpdated = timestamp()',
+                's.similarityUpdated = timestamp()'
+            )
+            ->returns('similarity')
+        ;
+
+        $qb->setParameters(
+            array(
+                'idA' => (integer)$idA,
+                'idB' => (integer)$idB,
+            )
         );
 
-        $template = "
-            MATCH (userA:User {qnoow_id: {idA}}), (userB:User {qnoow_id: {idB}})
-            MATCH (userA)-[:LIKES]-(l:Link)-[:LIKES]-(userB)
-            WHERE userA <> userB AND HAS(l.unpopularity)
-	        WITH userA, userB, COUNT(DISTINCT l) AS numberCommonContent, SUM(l.unpopularity) AS common
-	        WHERE numberCommonContent > 4
-	        WITH userA, userB, common
-
-            OPTIONAL MATCH (userA)-[:LIKES]-(l1:Link)
-	        WHERE NOT (userB)-[:LIKES]->(l1) AND HAS(l1.popularity)
-	        WITH userA, userB, common, SUM(l1.popularity) AS onlyUserA
-
-            OPTIONAL MATCH (userB)-[:LIKES]-(l2:Link)
-            WHERE NOT (userA)-[:LIKES]->(l2) AND HAS(l2.popularity)
-	        WITH userA, userB, common, onlyUserA, SUM(l2.popularity) AS onlyUserB
-
-            WITH userA, userB, sqrt( common / (onlyUserA + common)) * sqrt( common / (onlyUserB + common)) AS similarity
-
-            MERGE (userA)-[s:SIMILARITY]-(userB)
-            SET s.interests = similarity,
-                s.questions = CASE WHEN HAS(s.questions) THEN s.questions ELSE 0 END,
-                s.similarity = (s.questions + s.interests) / 2,
-                s.interestsUpdated = timestamp(),
-                s.similarityUpdated = timestamp()
-            RETURN similarity
-        ";
-
-        $query = new Query($this->client, $template, $parameters);
-
+        $query = $qb->getQuery();
         $result = $query->getResultSet();
 
         $similarity = 0;
