@@ -115,7 +115,7 @@ class UserModel implements PaginatedInterface
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(u:User {qnoow_id: { id }})')
             ->returns('u')
-            ->setParameter('id', $id);
+            ->setParameter('id', (integer)$id);
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();
@@ -136,7 +136,7 @@ class UserModel implements PaginatedInterface
             ->optionalMatch('(u)-[:ANSWERS]->(a:Answer)')
             ->optionalMatch('(u)-[:LIKES]->(l:Link)')
             ->returns('u.status AS status', 'COUNT(DISTINCT a) AS answerCount', 'COUNT(DISTINCT l) AS linkCount')
-            ->setParameter('id', $id);
+            ->setParameter('id', (integer)$id);
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();
