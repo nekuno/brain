@@ -4,6 +4,7 @@ namespace Model;
 
 use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
+use Everyman\Neo4j\Query\Row;
 use Model\Neo4j\GraphManager;
 use Model\User\UserStatusModel;
 use Paginator\PaginatedInterface;
@@ -73,14 +74,14 @@ class UserModel implements PaginatedInterface
      */
     public function remove($id = null)
     {
-        $queryString = "MATCH (u:User {qnoow_id:" . $id . "}) DELETE u;";
-        $query = new Query($this->client, $queryString);
 
-        try {
-            $result = $query->getResultSet();
-        } catch (\Exception $e) {
-            throw $e;
-        }
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User {qnoow_id: {id}})')
+            ->delete('u')
+            ->setParameter('id', $id);
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
 
         return $this->parseResultSet($result);
     }
@@ -91,14 +92,13 @@ class UserModel implements PaginatedInterface
      */
     public function getAll()
     {
-        $queryString = "MATCH (u:User) RETURN u;";
-        $query = new Query($this->client, $queryString);
 
-        try {
-            $result = $query->getResultSet();
-        } catch (\Exception $e) {
-            throw $e;
-        }
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User)')
+            ->returns('u');
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
 
         return $this->parseResultSet($result);
 
@@ -111,14 +111,14 @@ class UserModel implements PaginatedInterface
      */
     public function getById($id = null)
     {
-        $queryString = "MATCH (u:User { qnoow_id : " . $id . "}) RETURN u;";
-        $query = new Query($this->client, $queryString);
 
-        try {
-            $result = $query->getResultSet();
-        } catch (\Exception $e) {
-            throw $e;
-        }
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User {qnoow_id: {id}})')
+            ->returns('u')
+            ->setParameter('id', $id);
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
 
         return $this->parseResultSet($result);
 
@@ -130,25 +130,35 @@ class UserModel implements PaginatedInterface
      */
     public function getStatus($id)
     {
-        $queryString = "
-             MATCH (u:User {qnoow_id: $id})
-             OPTIONAL MATCH (u)-[:ANSWERS]->(a:Answer)
-             OPTIONAL MATCH (u)-[:LIKES]->(l:Link)
-             RETURN u.status AS status, COUNT(DISTINCT a) AS answerCount, COUNT(DISTINCT l) AS linkCount";
-        $query = new Query($this->client, $queryString);
 
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User {qnoow_id: {id}})')
+            ->optionalMatch('(u)-[:ANSWERS]->(a:Answer)')
+            ->optionalMatch('(u)-[:LIKES]->(l:Link)')
+            ->returns('u.status AS status', 'COUNT(DISTINCT a) AS answerCount', 'COUNT(DISTINCT l) AS linkCount')
+            ->setParameter('id', $id);
+
+        $query = $qb->getQuery();
         $result = $query->getResultSet();
 
-        /* @var $row \Everyman\Neo4j\Query\Row */
+        /* @var $row Row */
         $row = $result->current();
         $status = $row['status'];
 
         $status = new UserStatusModel($status, $row['answerCount'], $row['linkCount']);
 
         if ($status->getStatus() !== $status) {
+
             $newStatus = $status->getStatus();
-            $queryString = "MATCH (u:User {qnoow_id: $id}) SET u.status = '$newStatus' RETURN u";
-            $query = new Query($this->client, $queryString);
+
+            $qb = $this->gm->createQueryBuilder();
+            $qb->match('(u:User {qnoow_id: {id}})')
+                ->set('u.status = {status}')
+                ->returns('u')
+                ->setParameter('id', $id)
+                ->setParameter('status', $newStatus);
+
+            $query = $qb->getQuery();
             $query->getResultSet();
         }
 
