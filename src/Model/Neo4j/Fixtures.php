@@ -51,93 +51,8 @@ class Fixtures
         $this->loadLinks();
         $this->loadTags();
         $this->loadQuestions();
-
-//        $this->createLinkTagRelationship(1, 6);
-//        $this->createLinkTagRelationship(1, 7);
-//
-//        $this->createLinkTagRelationship(2, 8);
-//        $this->createLinkTagRelationship(2, 1);
-//
-//        $this->createLinkTagRelationship(3, 1);
-//        $this->createLinkTagRelationship(3, 2);
-//        $this->createLinkTagRelationship(3, 3);
-//
-//        $this->createLinkTagRelationship(4, 1);
-//        $this->createLinkTagRelationship(4, 2);
-//        $this->createLinkTagRelationship(4, 3);
-//        $this->createLinkTagRelationship(4, 9);
-//
-//        $this->createLinkTagRelationship(5, 1);
-//        $this->createLinkTagRelationship(5, 5);
-//
-//        $this->createLinkTagRelationship(6, 2);
-//
-//        $this->createLinkTagRelationship(7, 3);
-//        $this->createLinkTagRelationship(7, 4);
-//
-//        $this->createLinkTagRelationship(9, 10);
-//
-//        $this->createLinkTagRelationship(10, 11);
-//        $this->createLinkTagRelationship(10, 12);
-//
-//        $this->createLinkTagRelationship(13, 13);
-//        $this->createLinkTagRelationship(13, 4);
-//
-//        $this->createLinkTagRelationship(14, 3);
-//        $this->createLinkTagRelationship(14, 14);
-//
-//        $this->createLinkTagRelationship(15, 3);
-//
-//        $this->createLinkTagRelationship(16, 15);
-//        $this->createLinkTagRelationship(16, 16);
-//        $this->createLinkTagRelationship(16, 17);
-//
-//        $this->createLinkTagRelationship(18, 18);
-//        $this->createLinkTagRelationship(18, 19);
-//        $this->createLinkTagRelationship(18, 20);
-//
-//        //User-content relationships
-//        $this->createUserLikesLinkRelationship(1, 1);
-//        $this->createUserLikesLinkRelationship(1, 2);
-//        $this->createUserLikesLinkRelationship(1, 3);
-//        $this->createUserLikesLinkRelationship(1, 4);
-//        $this->createUserLikesLinkRelationship(1, 5);
-//        $this->createUserLikesLinkRelationship(1, 6);
-//        $this->createUserLikesLinkRelationship(1, 7);
-//
-//        $this->createUserLikesLinkRelationship(2, 1);
-//        $this->createUserLikesLinkRelationship(2, 2);
-//        $this->createUserLikesLinkRelationship(2, 3);
-//        $this->createUserLikesLinkRelationship(2, 4);
-//        $this->createUserLikesLinkRelationship(2, 5);
-//
-//        $this->createUserDislikesLinkRelationship(3, 4);
-//        $this->createUserDislikesLinkRelationship(3, 5);
-//        $this->createUserLikesLinkRelationship(3, 6);
-//        $this->createUserLikesLinkRelationship(3, 7);
-//
-//        $this->createUserDislikesLinkRelationship(4, 4);
-//        $this->createUserDislikesLinkRelationship(4, 5);
-//        $this->createUserLikesLinkRelationship(4, 6);
-//        $this->createUserLikesLinkRelationship(4, 7);
-//
-//        $this->createUserLikesLinkRelationship(5, 1);
-//        $this->createUserLikesLinkRelationship(5, 7);
-//        $this->createUserLikesLinkRelationship(5, 8);
-//        $this->createUserLikesLinkRelationship(5, 9);
-//        $this->createUserLikesLinkRelationship(5, 10);
-//        $this->createUserLikesLinkRelationship(5, 11);
-//        $this->createUserLikesLinkRelationship(5, 12);
-//
-//        $this->createUserDislikesLinkRelationship(6, 13);
-//        $this->createUserDislikesLinkRelationship(6, 14);
-//        $this->createUserLikesLinkRelationship(6, 15);
-//        $this->createUserLikesLinkRelationship(6, 16);
-//        $this->createUserLikesLinkRelationship(6, 17);
-//        $this->createUserDislikesLinkRelationship(6, 18);
-//        $this->createUserDislikesLinkRelationship(6, 19);
-//        $this->createUserDislikesLinkRelationship(6, 11);
-//        $this->createUserLikesLinkRelationship(6, 12);
+        $this->loadLinkTags();
+        $this->loadLikes();
 
         /**
          * User 3, answer to StoredQuestion 1 with Answer 1 and accepts as others answer [1,2]
@@ -329,83 +244,93 @@ class Fixtures
         }
     }
 
-    /**
-     * @param $link
-     * @param $tag
-     * @throws \Exception
-     */
-    protected function createLinkTagRelationship($link, $tag)
+    protected function loadLinkTags()
     {
-
-        $relationshipQuery = "MATCH (l:Link {url: 'testLink" . $link . "'}), (t:Tag {name: 'testTag" . $tag . "'})"
-            . " CREATE UNIQUE (l)-[r:TAGGED]->(t)"
-            . " RETURN l, r, t ;";
-
-        $neo4jQuery = new Query(
-            $this->client,
-            $relationshipQuery
+        $tags = array(
+            array(
+                'link' => 1,
+                'tagFrom' => 1,
+                'tagTo' => 10,
+            ),
+            array(
+                'link' => 2,
+                'tagFrom' => 5,
+                'tagTo' => 15,
+            ),
+            array(
+                'link' => 3,
+                'tagFrom' => 10,
+                'tagTo' => 20,
+            ),
         );
 
-        try {
-            $neo4jQuery->getResultSet();
-        } catch (\Exception $e) {
-            throw $e;
+        foreach ($tags as $tag) {
+            foreach (range($tag['tagFrom'], $tag['tagTo']) as $i) {
+                $this->lm->addTag(array('url' => 'https://www.nekuno.com/link' . $tag['link']), array('name' => 'tag ' . $i));
+            }
         }
-
-        return;
-
     }
 
-    /**
-     * @param $user
-     * @param $link
-     * @throws \Exception
-     */
+    protected function loadLikes()
+    {
+        $likes = array(
+            array(
+                'user' => 1,
+                'linkFrom' => 1,
+                'linkTo' => 1000,
+            ),
+            array(
+                'user' => 2,
+                'linkFrom' => 1,
+                'linkTo' => 1000,
+            ),
+            array(
+                'user' => 3,
+                'linkFrom' => 1,
+                'linkTo' => 100,
+            ),
+            array(
+                'user' => 4,
+                'linkFrom' => 50,
+                'linkTo' => 150,
+            ),
+        );
+
+        foreach ($likes as $like) {
+            foreach (range($like['linkFrom'], $like['linkTo']) as $i) {
+                $this->createUserLikesLinkRelationship($like['user'], $i);
+            }
+        }
+    }
+
     protected function createUserLikesLinkRelationship($user, $link)
     {
 
-        $relationshipQuery = "MATCH (l:Link {url: 'testLink" . $link . "'}), (u:User {qnoow_id: " . $user . "})"
-            . " CREATE UNIQUE (l)<-[r:LIKES]-(u)"
-            . " RETURN l, r, u ;";
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(l:Link {url: { url } })', '(u:User {qnoow_id: { qnoow_id } })')
+            ->setParameter('url', 'https://www.nekuno.com/link' . $link)
+            ->setParameter('qnoow_id', $user)
+            ->createUnique('(l)<-[r:LIKES]-(u)')
+            ->returns('l', 'u');
 
-        $neo4jQuery = new Query(
-            $this->client,
-            $relationshipQuery
-        );
+        $query = $qb->getQuery();
+        $query->getResultSet();
 
-        try {
-            $neo4jQuery->getResultSet();
-        } catch (\Exception $e) {
-            throw $e;
-        }
-
-        return;
     }
 
-    /**
-     * @param $user
-     * @param $link
-     * @throws \Exception
-     */
-    protected function createUserDislikesLinkRelationship($user, $link)
+    protected function createUserDisLikesLinkRelationship($user, $link)
     {
 
-        $relationshipQuery = "MATCH (l:Link {url: 'testLink" . $link . "'}), (u:User {qnoow_id: " . $user . "})"
-            . " CREATE UNIQUE (l)<-[r:DISLIKES]-(u)"
-            . " RETURN l, r, u ;";
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(l:Link {url: { url } })', '(u:User {qnoow_id: { qnoow_id } })')
+            ->setParameter('url', 'https://www.nekuno.com/link' . $link)
+            ->setParameter('qnoow_id', $user)
+            ->createUnique('(l)<-[r:DISLIKES]-(u)')
+            ->returns('l', 'u');
 
-        $neo4jQuery = new Query(
-            $this->client,
-            $relationshipQuery
-        );
+        $query = $qb->getQuery();
+        $query->getResultSet();
 
-        try {
-            $neo4jQuery->getResultSet();
-        } catch (\Exception $e) {
-            throw $e;
-        }
-
-        return;
     }
 
     /**
