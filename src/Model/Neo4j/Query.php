@@ -34,7 +34,7 @@ class Query extends \Everyman\Neo4j\Cypher\Query
             }
 
             if ($replace) {
-                $pattern = sprintf('/{%s}/', $parameter);
+                $pattern = sprintf('/{\s?%s\s?}/', $parameter);
                 $query = preg_replace($pattern, $replace, $query);
             }
         }
