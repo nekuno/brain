@@ -3,6 +3,7 @@
 namespace Provider;
 
 use Everyman\Neo4j\Client;
+use Model\Neo4j\GraphManager;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
 
@@ -20,7 +21,7 @@ class Neo4jPHPServiceProvider implements ServiceProviderInterface
             function ($app) {
 
                 $client = new Client($app['neo4j.options']['host'], $app['neo4j.options']['port']);
-                
+
                 if (isset($app['neo4j.options']['auth']) && $app['neo4j.options']['auth']) {
                     $client
                         ->getTransport()
@@ -28,6 +29,15 @@ class Neo4jPHPServiceProvider implements ServiceProviderInterface
                 }
 
                 return $client;
+            }
+        );
+
+        $app['neo4j.graph_manager'] = $app->share(
+            function ($app) {
+
+                $manager = new GraphManager($app['neo4j.client']);
+
+                return $manager;
             }
         );
     }

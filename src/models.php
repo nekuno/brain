@@ -2,7 +2,7 @@
 
 $app['users.model'] = function ($app) {
 
-    return new \Model\UserModel($app['neo4j.client']);
+    return new \Model\UserModel($app['neo4j.client'], $app['neo4j.graph_manager']);
 };
 
 $app['users.profile.model'] = function ($app) {
@@ -94,5 +94,5 @@ $app['questionnaire.questions.model'] = function ($app) {
 
 $app['links.model'] = function ($app) {
 
-    return new \Model\LinkModel($app['neo4j.client']);
+    return new \Model\LinkModel($app['neo4j.client'], $app['neo4j.graph_manager']);
 };

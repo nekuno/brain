@@ -14,7 +14,6 @@ use Silex\Application;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-
 class Neo4jFixturesCommand extends ApplicationAwareCommand
 {
 
@@ -26,7 +25,8 @@ class Neo4jFixturesCommand extends ApplicationAwareCommand
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $fixtures = new Fixtures($this->app['neo4j.client']);
+
+        $fixtures = new Fixtures($this->app['neo4j.graph_manager'], $this->app['users.model'], $this->app['links.model']);
 
         try {
             $fixtures->load();

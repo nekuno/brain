@@ -4,6 +4,7 @@ namespace Model;
 
 use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
+use Model\Neo4j\GraphManager;
 use Model\User\UserStatusModel;
 use Paginator\PaginatedInterface;
 
@@ -20,11 +21,14 @@ class UserModel implements PaginatedInterface
     protected $client;
 
     /**
-     * @param \Everyman\Neo4j\Client $client
+     * @var GraphManager
      */
-    public function __construct(Client $client)
+    protected $gm;
+
+    public function __construct(Client $client, GraphManager $gm)
     {
         $this->client = $client;
+        $this->gm = $gm;
     }
 
     /**
@@ -40,45 +44,18 @@ class UserModel implements PaginatedInterface
             $user['email'] = '';
         }
 
-        $query = new Query(
-            $this->client,
-            "CREATE (u:User {
-                status: '" . UserStatusModel::USER_STATUS_INCOMPLETE . "',
-                qnoow_id: " . $user['id'] . ",
-                username: '" . $user['username'] . "',
-                email: '" . $user['email'] . "'
-            })
-            RETURN u;"
-        );
+        $qb = $this->gm->createQueryBuilder();
+        $qb->create('(u:User {qnoow_id: {qnoow_id}, status: {status}, username: {username}, email: {email}})')
+            ->setParameter('qnoow_id', $user['id'])
+            ->setParameter('status', UserStatusModel::USER_STATUS_INCOMPLETE)
+            ->setParameter('username', $user['username'])
+            ->setParameter('email', $user['email'])
+            ->returns('u');
 
-        try {
-            $result = $query->getResultSet();
-        } catch (\Exception $e) {
-            throw $e;
-        }
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
 
         return $this->parseResultSet($result);
-    }
-
-    /**
-     * @param $resultSet
-     * @return array
-     */
-    private function parseResultSet($resultSet)
-    {
-        $users = array();
-
-        foreach ($resultSet as $row) {
-            $user = array(
-                'qnoow_id' => $row['u']->getProperty('qnoow_id'),
-                'username' => $row['u']->getProperty('username'),
-                'email' => $row['u']->getProperty('email'),
-            );
-            $users[] = $user;
-        }
-
-        return $users;
-
     }
 
     /**
@@ -338,5 +315,26 @@ class UserModel implements PaginatedInterface
         }
 
         return $count;
+    }
+
+    /**
+     * @param $resultSet
+     * @return array
+     */
+    private function parseResultSet($resultSet)
+    {
+        $users = array();
+
+        foreach ($resultSet as $row) {
+            $user = array(
+                'qnoow_id' => $row['u']->getProperty('qnoow_id'),
+                'username' => $row['u']->getProperty('username'),
+                'email' => $row['u']->getProperty('email'),
+            );
+            $users[] = $user;
+        }
+
+        return $users;
+
     }
 }
