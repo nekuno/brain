@@ -215,7 +215,7 @@ class UserController
             /** @var $model \Model\User\Similarity\SimilarityModel */
             $model = $app['users.similarity.model'];
             $similarity = $model->getSimilarity($id1, $id2);
-            $result = array('similarity' => $similarity);
+            $result = array('similarity' => $similarity['similarity']);
 
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {

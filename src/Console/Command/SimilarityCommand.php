@@ -38,7 +38,18 @@ class SimilarityCommand extends ApplicationAwareCommand
         try {
             $similarity = $model->getSimilarity($userA, $userB);
 
-            $output->writeln(sprintf('Similarity: %s', $similarity));
+            $output->writeln('');
+
+            $table = $this->getHelper('table');
+            $table
+                ->setHeaders(array('Type', 'Value', 'Last Updated'))
+                ->setRows(array(
+                    array('Questions', $similarity['questions'], $similarity['questionsUpdated']),
+                    array('Interests', $similarity['interests'], $similarity['interestsUpdated']),
+                    array('Similarity', $similarity['similarity'], $similarity['similarityUpdated']),
+                ))
+            ;
+            $table->render($output);
 
         } catch (\Exception $e) {
             $output->writeln(

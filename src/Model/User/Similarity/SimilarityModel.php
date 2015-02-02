@@ -41,13 +41,12 @@ class SimilarityModel
 
     public function getSimilarity($idA, $idB)
     {
-        $currentSimilarity = $this->getCurrentSimilarity($idA, $idB);
+        $similarity = $this->getCurrentSimilarity($idA, $idB);
 
         $minTimestampForCache  = time() - self::numberOfSecondsToCache;
-        $hasToRecalculateQuestions = ($currentSimilarity['questionsUpdated'] / 1000) < $minTimestampForCache;
-        $hasToRecalculateContent = ($currentSimilarity['interestsUpdated'] / 1000) < $minTimestampForCache;
+        $hasToRecalculateQuestions = ($similarity['questionsUpdated'] / 1000) < $minTimestampForCache;
+        $hasToRecalculateContent = ($similarity['interestsUpdated'] / 1000) < $minTimestampForCache;
 
-        $similarity = $currentSimilarity['value'];
         if ($hasToRecalculateQuestions || $hasToRecalculateContent) {
             if ($hasToRecalculateQuestions) {
                 $this->calculateSimilarityByQuestions($idA, $idB);
@@ -56,8 +55,7 @@ class SimilarityModel
                 $this->calculateSimilarityByInterests($idA, $idB);
             }
 
-            $currentSimilarity = $this->getCurrentSimilarity($idA, $idB);
-            $similarity = $currentSimilarity['value'];
+            $similarity = $this->getCurrentSimilarity($idA, $idB);
         }
 
         return $similarity;
@@ -70,11 +68,14 @@ class SimilarityModel
             ->match('(userA:User {qnoow_id: { idA } }), (userB:User {qnoow_id: { idB } })')
             ->match('(userA)-[s:SIMILARITY]-(userB)')
             ->with(
+                's.questions AS questions',
+                's.interests AS interests',
                 's.similarity AS similarity',
                 'CASE WHEN HAS(s.questionsUpdated) THEN s.questionsUpdated ELSE 0 END AS questionsUpdated',
-                'CASE WHEN HAS(s.interestsUpdated) THEN s.interestsUpdated ELSE 0 END AS interestsUpdated'
+                'CASE WHEN HAS(s.interestsUpdated) THEN s.interestsUpdated ELSE 0 END AS interestsUpdated',
+                'CASE WHEN HAS(s.similarityUpdated) THEN s.similarityUpdated ELSE 0 END AS similarityUpdated'
             )
-            ->returns('similarity, questionsUpdated, interestsUpdated')
+            ->returns('questions, interests, similarity, questionsUpdated, interestsUpdated, similarityUpdated')
         ;
 
         $qb->setParameters(
@@ -88,17 +89,23 @@ class SimilarityModel
         $result = $query->getResultSet();
 
         $similarity = array(
-            'value' => 0,
+            'questions' => 0,
+            'interests' => 0,
+            'similarity' => 0,
             'questionsUpdated' => 0,
             'interestsUpdated' => 0,
+            'similarityUpdated' => 0,
         );
         if ($result->count() > 0) {
             /* @var $row Row */
             $row = $result->current();
             /* @var $node Node */
-            $similarity['value'] = $row->offsetGet('similarity');
+            $similarity['questions']  = $row->offsetGet('questions');
+            $similarity['interests']  = $row->offsetGet('interests');
+            $similarity['similarity'] = $row->offsetGet('similarity');
             $similarity['questionsUpdated']  = $row->offsetGet('questionsUpdated');
             $similarity['interestsUpdated']  = $row->offsetGet('interestsUpdated');
+            $similarity['similarityUpdated']  = $row->offsetGet('similarityUpdated');
         }
 
         return $similarity;
