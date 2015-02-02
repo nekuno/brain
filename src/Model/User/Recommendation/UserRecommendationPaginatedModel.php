@@ -65,14 +65,19 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
 
         $orderQuery = ' ORDER BY matching_questions DESC ';
         if (isset($filters['order']) && $filters['order'] == 'content') {
-            $orderQuery = ' ORDER BY matching_content DESC ';
+            $orderQuery = ' ORDER BY similarity DESC ';
         }
 
         $query = "
             MATCH (u:User {qnoow_id: $id})
-            MATCH (u)-[r:MATCHES]-(anyUser:User)
+            OPTIONAL MATCH (u)-[m:MATCHES]-(anyUser:User)
+            OPTIONAL MATCH (u)-[s:SIMILARITY]-(anyUser)
+            WITH u, anyUser,
+                (CASE WHEN HAS(m.matching_questions) THEN m.matching_questions ELSE 0 END) AS matching_questions,
+                (CASE WHEN HAS(s.similarity) THEN s.similarity ELSE 0 END) AS similarity
+
             MATCH (anyUser)<-[:PROFILE_OF]-(p:Profile)
-            WHERE (r.matching_questions > 0 OR r.matching_content > 0)";
+            WHERE matching_questions > 0 OR similarity > 0 ";
 
         if ($profileFilters) {
             $query .= "\n" . implode("\n", $profileFilters);
@@ -82,8 +87,8 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
             RETURN
             DISTINCT anyUser.qnoow_id AS id,
             anyUser.username AS username,
-            CASE r.matching_questions IS NULL WHEN true THEN 0 ELSE r.matching_questions END as matching_questions,
-            CASE r.matching_content IS NULL WHEN true THEN 0 ELSE r.matching_content END as matching_content";
+            matching_questions,
+            similarity";
         $query .= $orderQuery;
         $query .= "
             SKIP {offset}
@@ -107,7 +112,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                 $user['id'] = $row['id'];
                 $user['username'] = $row['username'];
                 $user['matching_questions'] = $row['matching_questions'];
-                $user['matching_content'] = $row['matching_content'];
+                $user['similarity'] = $row['similarity'];
 
                 $response[] = $user;
             }

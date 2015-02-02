@@ -44,9 +44,7 @@ class SimilarityModel
             if ($hasToRecalculateQuestions) {
                 $this->calculateSimilarityByQuestions($idA, $idB);
             }
-            if ($hasToRecalculateQuestions) {
-                $this->linkModel->updatePopularity(array('userId' => $idA));
-                $this->linkModel->updatePopularity(array('userId' => $idB));
+            if ($hasToRecalculateContent) {
                 $this->calculateSimilarityByInterests($idA, $idB);
             }
 
@@ -66,11 +64,10 @@ class SimilarityModel
         $template = "
             MATCH (userA:User {qnoow_id: {idA}}), (userB:User {qnoow_id: {idB}})
             MATCH (userA)-[s:SIMILARITY]-(userB)
-            WITH CASE WHEN HAS(s.questions) THEN s.questions ELSE 0 END AS questions,
-                 CASE WHEN HAS(s.interests) THEN s.interests ELSE 0 END AS interests,
-                 CASE WHEN HAS(s.questionsUpdated) THEN s.questionsUpdated ELSE 0 END AS questionsUpdated,
-                 CASE WHEN HAS(s.interestsUpdated) THEN s.interestsUpdated ELSE 0 END AS interestsUpdated
-            RETURN (questions + interests) / 2 AS similarity, questionsUpdated, interestsUpdated
+            WITH s.similarity AS similarity,
+                CASE WHEN HAS(s.questionsUpdated) THEN s.questionsUpdated ELSE 0 END AS questionsUpdated,
+                CASE WHEN HAS(s.interestsUpdated) THEN s.interestsUpdated ELSE 0 END AS interestsUpdated
+            RETURN similarity, questionsUpdated, interestsUpdated
         ";
 
         $query = new Query($this->client, $template, $parameters);
@@ -110,7 +107,11 @@ class SimilarityModel
             WITH userA, userB, CASE WHEN PC <= 0 THEN toFloat(0) ELSE RI/PC - 1/PC END AS similarity
             WITH userA, userB, CASE WHEN similarity < 0 THEN toFloat(0) ELSE similarity END AS similarity
             MERGE (userA)-[s:SIMILARITY]-(userB)
-            SET s.questions = similarity, s.questionsUpdated = timestamp()
+            SET s.questions = similarity,
+                s.interests = CASE WHEN HAS(s.interests) THEN s.interests ELSE 0 END,
+                s.similarity = (s.questions + s.interests) / 2,
+                s.questionsUpdated = timestamp(),
+                s.similarityUpdated = timestamp()
             RETURN similarity
         ";
 
@@ -131,6 +132,9 @@ class SimilarityModel
 
     private function calculateSimilarityByInterests($idA, $idB)
     {
+        $this->linkModel->updatePopularity(array('userId' => $idA));
+        $this->linkModel->updatePopularity(array('userId' => $idB));
+
         $parameters = array(
             'idA' => (integer)$idA,
             'idB' => (integer)$idB,
@@ -155,7 +159,11 @@ class SimilarityModel
             WITH userA, userB, sqrt( common / (onlyUserA + common)) * sqrt( common / (onlyUserB + common)) AS similarity
 
             MERGE (userA)-[s:SIMILARITY]-(userB)
-            SET s.interests = similarity, s.interestsUpdated = timestamp()
+            SET s.interests = similarity,
+                s.questions = CASE WHEN HAS(s.questions) THEN s.questions ELSE 0 END,
+                s.similarity = (s.questions + s.interests) / 2,
+                s.interestsUpdated = timestamp(),
+                s.similarityUpdated = timestamp()
             RETURN similarity
         ";
 
