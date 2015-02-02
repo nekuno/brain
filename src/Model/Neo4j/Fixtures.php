@@ -4,6 +4,7 @@ namespace Model\Neo4j;
 
 use Everyman\Neo4j\Cypher\Query;
 use Model\LinkModel;
+use Model\Questionnaire\QuestionModel;
 use Model\UserModel;
 
 class Fixtures
@@ -11,6 +12,7 @@ class Fixtures
 
     const NUM_OF_USERS = 20;
     const NUM_OF_LINKS = 2000;
+    const NUM_OF_TAGS = 20;
     const NUM_OF_QUESTIONS = 60;
 
     /**
@@ -28,27 +30,27 @@ class Fixtures
      */
     protected $lm;
 
-    private $questions = array();
-
     /**
-     * @param GraphManager $gm
+     * @var QuestionModel
      */
-    public function __construct(GraphManager $gm, UserModel $um, LinkModel $lm)
-    {
+    protected $qm;
 
+    public function __construct(GraphManager $gm, UserModel $um, LinkModel $lm, QuestionModel $qm)
+    {
         $this->gm = $gm;
         $this->um = $um;
         $this->lm = $lm;
+        $this->qm = $qm;
     }
 
     public function load()
     {
 
         $this->clean();
-
         $this->loadUsers();
         $this->loadLinks();
-//        $this->loadTags(20);
+        $this->loadTags();
+        $this->loadQuestions();
 
 //        $this->createLinkTagRelationship(1, 6);
 //        $this->createLinkTagRelationship(1, 7);
@@ -136,14 +138,6 @@ class Fixtures
 //        $this->createUserDislikesLinkRelationship(6, 19);
 //        $this->createUserDislikesLinkRelationship(6, 11);
 //        $this->createUserLikesLinkRelationship(6, 12);
-
-        //Questions
-//        for ($i = 1; $i <= self::NUM_OF_QUESTIONS; $i++) {
-//            $userId = rand(1, self::NUM_OF_USERS);
-//            $numOfAnswers = 3;
-//            $text = 'Question ' . $i;
-//            $this->loadQuestions($text, $numOfAnswers, $userId); //4 questions, 3 answers each
-//        }
 
         /**
          * User 3, answer to StoredQuestion 1 with Answer 1 and accepts as others answer [1,2]
@@ -299,33 +293,40 @@ class Fixtures
         }
     }
 
-    /**
-     * @param $numberOfTags
-     * @throws \Exception
-     */
-    protected function loadTags($numberOfTags)
+    protected function loadTags()
     {
 
-        //Create queries in loop
-        $tagQuery = array();
-        for ($i = 1; $i <= $numberOfTags; $i++) {
-            $tagQuery[] = "CREATE (t:Tag { name: 'testTag" . $i . "' }) RETURN t;";
+        for ($i = 1; $i <= self::NUM_OF_TAGS; $i++) {
+
+            $this->lm->createTag(
+                array('name' => 'tag ' . $i,)
+            );
+
+            // This second call should be ignored and do not duplicate tags
+            $this->lm->createTag(
+                array('name' => 'tag ' . $i,)
+            );
         }
+    }
 
-        //Execute queries in loop
-        foreach ($tagQuery as $query) {
+    protected function loadQuestions()
+    {
+        for ($i = 1; $i <= self::NUM_OF_QUESTIONS; $i++) {
 
-            $neo4jQuery = $this->gm->createQuery($query);
-
-            try {
-                $neo4jQuery->getResultSet();
-            } catch (\Exception $e) {
-                throw $e;
+            $answers = array();
+            for ($j = 1; $j <= 4; $j++) {
+                $answers[] = 'Answer ' . $j . ' to Question ' . $i;
             }
+
+            $this->qm->create(
+                array(
+                    'locale' => 'en',
+                    'text' => 'Question ' . $i,
+                    'userId' => 1,
+                    'answers' => $answers,
+                )
+            );
         }
-
-        return;
-
     }
 
     /**
@@ -405,56 +406,6 @@ class Fixtures
         }
 
         return;
-    }
-
-    /**
-     * @param $text
-     * @param $numOfAnswers
-     * @param int $userId
-     * @return $this
-     */
-    protected function loadQuestions($text, $numOfAnswers, $userId = 1)
-    {
-
-        // Check if exists?
-
-        $answers = array();
-
-        for ($i = 1; $i <= $numOfAnswers; $i++) {
-            $answers[] = 'Answer ' . $i;
-        }
-
-        $data = array(
-            'userId' => $userId,
-            'text' => $text,
-            'answers' => $answers
-        );
-
-        $template = "MATCH (u:User)"
-            . " WHERE u.qnoow_id = {userId}"
-            . " CREATE (q:Question)-[c:CREATED_BY]->(u)"
-            . " SET q.text_en = {text}, q.text_es = {text}, q.timestamp = timestamp(), q.ranking = 0, c.timestamp = timestamp()"
-            . " FOREACH (text in {answers}| CREATE (:Answer {text_en: text, text_es: text})-[:IS_ANSWER_OF]->(q))"
-            . " WITH q"
-            . " MATCH (q)<-[:IS_ANSWER_OF]-(a:Answer)"
-            . " WITH q, a ORDER BY id(q), id(a)"
-            . " RETURN q AS question, collect(a) AS answers;";
-
-        $query = $this->gm->createQuery($template, $data);
-
-        $result = $query->getResultSet();
-
-        foreach ($result as $row) {
-            $question = array();
-            $question['createdBy'] = $data['userId'];
-            $question['id'] = $row['question']->getId();
-            foreach ($row['answers'] as $answer) {
-                $question['answers'][] = $answer->getId();
-            }
-            $this->questions[] = $question;
-        }
-
-        return $this;
     }
 
     /**

@@ -4,6 +4,8 @@ namespace Model;
 
 use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
+use Everyman\Neo4j\Node;
+use Everyman\Neo4j\Query\Row;
 use Model\Neo4j\GraphManager;
 
 /**
@@ -62,13 +64,13 @@ class LinkModel
         if (false === $this->isAlreadySaved($data['url'])) {
 
             $qb->match('(u:User)')
-                ->where('u.qnoow_id = {userId}')
+                ->where('u.qnoow_id = { userId }')
                 ->create('(l:Link' . $additionalLabels . ')')
                 ->set(
-                    'l.url = {url}',
-                    'l.title = {title}',
-                    'l.description = {description}',
-                    'l.language = {language}',
+                    'l.url = { url }',
+                    'l.title = { title }',
+                    'l.description = { description }',
+                    'l.language = { language }',
                     'l.processed = 1',
                     'l.created =  timestamp()' . $additionalFields
                 )
@@ -78,7 +80,7 @@ class LinkModel
         } else {
 
             $qb->match('(u:User)', '(l:Link)')
-                ->where('u.qnoow_id = {userId}', 'l.url = {url}')
+                ->where('u.qnoow_id = { userId }', 'l.url = { url }')
                 ->createUnique('(u)-[r:LIKES]->(l)')
                 ->returns('l');
 
@@ -154,41 +156,32 @@ class LinkModel
     public function createTag(array $tag)
     {
 
-        $template = "MATCH (tag:Tag) WHERE tag.name = { name } RETURN tag LIMIT 1";
+        $qb = $this->gm->createQueryBuilder();
+        $qb->merge('(tag:Tag {name: { name }})')
+            ->setParameter('name', $tag['name'])
+            ->returns('tag');
 
-        $query = new Query($this->client, $template, $tag);
+        $query = $qb->getQuery();
 
         $result = $query->getResultSet();
 
-        foreach ($result as $row) {
-            return $result;
+        /* @var $row Row */
+        $row = $result->current();
+        /* @var $node Node */
+        $node = $row->offsetGet('tag');
+
+        if (isset($tag['additionalLabels']) && is_array($tag['additionalLabels'])) {
+            $node->addLabels($this->gm->makeLabels($tag['additionalLabels']));
         }
 
-        $additionalLabels = "";
-        if (isset($tag['additionalLabels'])) {
-            foreach ($tag['additionalLabels'] as $label) {
-                $additionalLabels .= ":" . $label;
-            }
-        }
-
-        $additionalFields = "";
-        if (isset($tag['additionalFields'])) {
+        if (isset($tag['additionalFields']) && is_array($tag['additionalFields'])) {
             foreach ($tag['additionalFields'] as $field => $value) {
-                $additionalFields .= ", tag." . $field . " = '" . $value . "'";
+                $node->setProperty($field, $value);
             }
+            $node->save();
         }
 
-        $params = array(
-            'name' => $tag['name'],
-        );
-
-        $template = "CREATE (tag:Tag" . $additionalLabels . ")"
-            . "SET tag.name = { name }" . $additionalFields
-            . "RETURN tag";
-
-        $query = new Query($this->client, $template, $params);
-
-        return $query->getResultSet();
+        return $node;
 
     }
 

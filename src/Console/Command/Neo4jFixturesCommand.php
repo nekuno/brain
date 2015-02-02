@@ -26,7 +26,7 @@ class Neo4jFixturesCommand extends ApplicationAwareCommand
     protected function execute(InputInterface $input, OutputInterface $output)
     {
 
-        $fixtures = new Fixtures($this->app['neo4j.graph_manager'], $this->app['users.model'], $this->app['links.model']);
+        $fixtures = new Fixtures($this->app['neo4j.graph_manager'], $this->app['users.model'], $this->app['links.model'], $this->app['questionnaire.questions.model']);
 
         try {
             $fixtures->load();

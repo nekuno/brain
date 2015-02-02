@@ -46,7 +46,7 @@ class UserModel implements PaginatedInterface
         }
 
         $qb = $this->gm->createQueryBuilder();
-        $qb->create('(u:User {qnoow_id: {qnoow_id}, status: {status}, username: {username}, email: {email}})')
+        $qb->create('(u:User {qnoow_id: { qnoow_id }, status: { status }, username: { username }, email: { email }})')
             ->setParameter('qnoow_id', $user['id'])
             ->setParameter('status', UserStatusModel::USER_STATUS_INCOMPLETE)
             ->setParameter('username', $user['username'])
@@ -76,7 +76,7 @@ class UserModel implements PaginatedInterface
     {
 
         $qb = $this->gm->createQueryBuilder();
-        $qb->match('(u:User {qnoow_id: {id}})')
+        $qb->match('(u:User {qnoow_id: { id }})')
             ->delete('u')
             ->setParameter('id', $id);
 
@@ -113,7 +113,7 @@ class UserModel implements PaginatedInterface
     {
 
         $qb = $this->gm->createQueryBuilder();
-        $qb->match('(u:User {qnoow_id: {id}})')
+        $qb->match('(u:User {qnoow_id: { id }})')
             ->returns('u')
             ->setParameter('id', $id);
 
@@ -132,7 +132,7 @@ class UserModel implements PaginatedInterface
     {
 
         $qb = $this->gm->createQueryBuilder();
-        $qb->match('(u:User {qnoow_id: {id}})')
+        $qb->match('(u:User {qnoow_id: { id }})')
             ->optionalMatch('(u)-[:ANSWERS]->(a:Answer)')
             ->optionalMatch('(u)-[:LIKES]->(l:Link)')
             ->returns('u.status AS status', 'COUNT(DISTINCT a) AS answerCount', 'COUNT(DISTINCT l) AS linkCount')
@@ -152,8 +152,8 @@ class UserModel implements PaginatedInterface
             $newStatus = $status->getStatus();
 
             $qb = $this->gm->createQueryBuilder();
-            $qb->match('(u:User {qnoow_id: {id}})')
-                ->set('u.status = {status}')
+            $qb->match('(u:User {qnoow_id: { id }})')
+                ->set('u.status = { status }')
                 ->returns('u')
                 ->setParameter('id', $id)
                 ->setParameter('status', $newStatus);
