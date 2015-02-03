@@ -307,46 +307,6 @@ class MatchingModel
     }
 
     /**
-     * @param $userId
-     * @param array $questions
-     * @throws \Exception
-     */
-    public function calculateMatchingOfUserByAnswersWhenNewQuestionsAreAnswered($userId, array $questions)
-    {
-
-        $data = array(
-            'questions' => implode(',', $questions),
-            'userId'    => (integer)$userId,
-        );
-
-        $template = "
-        MATCH
-        (u:User)-[:RATES]->(q:Question)
-        WHERE
-        id(q) IN [ { questions } ]
-        AND NOT u.qnoow_id = { userId }
-        RETURN
-        u.qnoow_id AS u;";
-
-        //Create the Neo4j template object
-        $query = new Query(
-            $this->client,
-            $template,
-            $data
-        );
-
-        try {
-            $result = $query->getResultSet();
-        } catch (\Exception $e) {
-            throw $e;
-        }
-
-        foreach ($result as $row) {
-            $this->calculateMatchingBetweenTwoUsersBasedOnAnswers($userId, $row['u']);
-        }
-    }
-
-    /**
      * @param $id1  int id of the first user
      * @param $id2 int id of the second user
      * @return float matching by questions between both users
@@ -525,38 +485,6 @@ class MatchingModel
         }
 
         return $matching == null ? 0 : $matching;
-    }
-
-    /**
-     * @param $id
-     * @throws \Exception
-     */
-    public function calculateMatchingByContentOfUserWhenNewContentIsAdded($id)
-    {
-
-        //This query is for version 1.1 of the algorithm, which is the one currently being used in Brain
-        //For
-        $query = "
-        MATCH
-        (u:User {qnoow_id: " . $id . " })-[:LIKES|DISLIKES]->(:Link)<-[:LIKES|DISLIKES]-(v:User)
-        RETURN
-        v.qnoow_id AS id;";
-
-        //Create the Neo4j query object
-        $neoQuery = new Query(
-            $this->client,
-            $query
-        );
-
-        try {
-            $result = $neoQuery->getResultSet();
-        } catch (\Exception $e) {
-            throw $e;
-        }
-
-        foreach ($result as $row) {
-            $this->calculateMatchingBetweenTwoUsersBasedOnSharedContent($id, $row['id']);
-        }
     }
 
     /**

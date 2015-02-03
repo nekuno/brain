@@ -125,6 +125,48 @@ class UserModel implements PaginatedInterface
     }
 
     /**
+     * @param null $id
+     * @return array
+     * @throws \Exception
+     */
+    public function getByCommonLinksWithUser($id = null)
+    {
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(ref:User {qnoow_id: { id }})')
+            ->match('(ref)-[:LIKES|DISLIKES]->(:Link)<-[:LIKES]-(u:User)')
+            ->returns('DISTINCT u')
+            ->setParameter('id', (integer)$id);
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        return $this->parseResultSet($result);
+
+    }
+
+    /**
+     * @param $questionId
+     * @return array
+     * @throws \Exception
+     */
+    public function getByQuestionAnswered($questionId)
+    {
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User)-[:RATES]->(q:Question)')
+          ->where('id(q) IN [ { questions } ]')
+          ->returns('DISTINCT u')
+          ->setParameter('questions', (integer)$questionId);
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        return $this->parseResultSet($result);
+
+    }
+
+    /**
      * @param $id
      * @return UserStatusModel
      */
