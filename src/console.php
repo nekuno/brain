@@ -17,7 +17,6 @@ $console->addCommands(
         new \Console\Command\Neo4jProfileOptionsCommand($app),
         new \Console\Command\Neo4jLoadQuestionsCommand($app),
         new \Console\Command\Neo4jTestsCommand($app),
-        new \Console\Command\UpdateMatchingParameters($app),
         new \Console\Command\RecalculateMatching($app),
         new \Console\Command\RecalculatePopularity($app),
         new \Console\Command\SimilarityCommand($app),

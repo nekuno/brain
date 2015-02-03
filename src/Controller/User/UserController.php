@@ -161,7 +161,6 @@ class UserController
         // Get params
         $id1 = $request->get('id1');
         $id2 = $request->get('id2');
-        $basedOn = $request->get('type');
 
         if (null === $id1 || null === $id2) {
             return $app->json(array(), 400);
@@ -170,19 +169,7 @@ class UserController
         try {
             /** @var $model \Model\User\Matching\MatchingModel */
             $model = $app['users.matching.model'];
-            switch ($basedOn) {
-                case 'answers':
-                    $result = $model->getMatchingBetweenTwoUsersBasedOnAnswers($id1, $id2);
-
-                    break;
-                case 'content':
-                    $result = $model->getMatchingBetweenTwoUsersBasedOnContent($id1, $id2);
-
-                    break;
-                default:
-                    throw new \Exception('Invalid matching type given');
-                    break;
-            }
+            $result = $model->getMatchingBetweenTwoUsersBasedOnAnswers($id1, $id2);
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;

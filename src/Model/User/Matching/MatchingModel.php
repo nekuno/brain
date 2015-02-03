@@ -36,30 +36,22 @@ class MatchingModel
     protected $answerModel;
 
     /**
-     * @var NormalDistributionModel
-     */
-    protected $normalDistributionModel;
-
-    /**
      * @param EventDispatcher $dispatcher
      * @param \Everyman\Neo4j\Client $client
      * @param \Model\User\ContentPaginatedModel $contentPaginatedModel
      * @param \Model\User\AnswerModel $answerModel
-     * @param NormalDistributionModel $normalDistributionModel
      */
     public function __construct(
         EventDispatcher $dispatcher,
         Client $client,
         ContentPaginatedModel $contentPaginatedModel,
-        AnswerModel $answerModel,
-        NormalDistributionModel $normalDistributionModel
+        AnswerModel $answerModel
     ) {
 
         $this->dispatcher              = $dispatcher;
         $this->client                  = $client;
         $this->contentPaginatedModel   = $contentPaginatedModel;
         $this->answerModel             = $answerModel;
-        $this->normalDistributionModel = $normalDistributionModel;
     }
 
     /**
@@ -78,83 +70,6 @@ class MatchingModel
         } else {
             return self::PREFERRED_MATCHING_ANSWERS;
         }
-    }
-
-    /**
-     * @param $id1
-     * @param $id2
-     * @return int
-     * @throws \Exception
-     */
-    public function getMatchingBetweenTwoUsersBasedOnContent($id1, $id2)
-    {
-
-        $response['matching'] = 0;
-
-        if ($this->hasContentInCommon($id1, $id2)) {
-            $rawMatching = $this->getMatchingBetweenTwoUsers($id1, $id2);
-
-            if ($this->isNecessaryToRecalculateIt($rawMatching, 'timestamp_content', 'matching_content')) {
-                $event = new MatchingExpiredEvent($id1, $id2, 'content');
-                $this->dispatcher->dispatch(\AppEvents::USER_MATCHING_EXPIRED, $event);
-            }
-
-            $matching = $rawMatching['matching_content'] ? $rawMatching['matching_content'] : 0;
-
-            $response['matching'] = $matching;
-        }
-
-        return $response;
-    }
-
-    /**
-     * @param $id1
-     * @param $id2
-     * @return array
-     * @throws \Exception
-     */
-    public function hasContentInCommon($id1, $id2)
-    {
-
-        $params = array(
-            'id1' => (int)$id1,
-            'id2' => (int)$id2
-        );
-
-        //Check that both users have at least one url in common
-        $check =
-            "MATCH
-                (u1:User {qnoow_id: {id1}}),
-                (u2:User {qnoow_id: {id2}})
-            OPTIONAL MATCH
-                (u1)-[:LIKES]->(l:Link)<-[:LIKES]-(u2)
-            OPTIONAL MATCH
-                (u1)-[:DISLIKES]->(d:Link)<-[:DISLIKES]-(u2)
-            RETURN
-                count(l) AS l,
-                count(d) AS d;";
-
-        //Create the Neo4j query object
-        $checkQuery = new Query(
-            $this->client,
-            $check,
-            $params
-        );
-
-        try {
-            $checkResult = $checkQuery->getResultSet();
-        } catch (\Exception $e) {
-            throw $e;
-        }
-
-        $checkValueLikes    = 0;
-        $checkValueDislikes = 0;
-        foreach ($checkResult as $checkRow) {
-            $checkValueLikes    = $checkRow['l'];
-            $checkValueDislikes = $checkRow['d'];
-        }
-
-        return ($checkValueLikes > 0) || ($checkValueDislikes > 0);
     }
 
     /**
@@ -208,8 +123,6 @@ class MatchingModel
 
             foreach ($result as $match) {
                 if ($match['m']) {
-                    $matching['matching_content']    = $match['m']->getProperty('matching_content') ?: 0;
-                    $matching['timestamp_content']   = $match['m']->getProperty('timestamp_content') ?: 0;
                     $matching['matching_questions']  = $match['m']->getProperty('matching_questions') ?: 0;
                     $matching['timestamp_questions'] = $match['m']->getProperty('timestamp_questions') ?: 0;
                 }
@@ -241,48 +154,6 @@ class MatchingModel
         }
 
         return false;
-    }
-
-    /**
-     * Get the maximum matching based on content
-     */
-    public function getMaxMatchingBasedOnContent()
-    {
-
-        $maxMatching = 0;
-
-        $query = "
-            MATCH
-            ()-[match:MATCHES]-()
-            WHERE
-            has(match.matching_content)
-            RETURN
-            match.matching_content as max
-            ORDER BY
-            match.matching_content DESC
-            LIMIT 1
-            ;
-            ";
-
-        //Create the Neo4j query object
-        $neoQuery = new Query(
-            $this->client,
-            $query
-        );
-
-        //Execute query
-        try {
-            $result = $neoQuery->getResultSet();
-
-        } catch (\Exception $e) {
-            throw $e;
-        }
-
-        foreach ($result as $row) {
-            $maxMatching = $row['max'];
-        }
-
-        return $maxMatching;
     }
 
     /**
@@ -485,120 +356,6 @@ class MatchingModel
         }
 
         return $matching == null ? 0 : $matching;
-    }
-
-    /**
-     * @param $id1 qnoow_id of the first user
-     * @param $id2 qnoow_id of the second user
-     * @return float matching by content (with tags) between both users
-     * @throws \Exception
-     */
-    public function calculateMatchingBetweenTwoUsersBasedOnSharedContent($id1, $id2)
-    {
-
-        $data = $this->normalDistributionModel->getContentNormalDistributionVariables();
-
-        $contentAverage = $data->average;
-        $contentStdev   = $data->stdev;
-
-        //Construct query String
-        $queryString = "
-        MATCH
-            (u1:User),
-            (u2:User)
-        WHERE
-            u1.qnoow_id = {id1} AND
-            u2.qnoow_id = {id2}
-        OPTIONAL MATCH
-            a=(u1)-[rl1]->(cl1:Link)-[:TAGGED]->(tl1:Tag)
-        OPTIONAL MATCH
-            b=(u2)-[rl2]->(cl2:Link)-[:TAGGED]->(tl2:Tag)
-        WHERE
-                type(rl1) = type(rl2)
-            AND
-                tl1 = tl2
-            AND
-                (cl1 = cl2 OR cl1 <> cl2)
-        WITH
-            count(DISTINCT cl2) AS numOfContentsInCommon
-        RETURN
-            numOfContentsInCommon AS numOfCommonContent
-        ";
-
-        //State the value of the variables in the query string
-        $queryDataArray = array(
-            'id1' => (integer)$id1,
-            'id2' => (integer)$id2
-        );
-
-        //Construct query
-        $query = new Query(
-            $this->client,
-            $queryString,
-            $queryDataArray
-        );
-
-        //Execute query
-        try {
-            $result = $query->getResultSet();
-        } catch (\Exception $e) {
-            throw $e;
-        }
-
-        //Get the wanted results
-        $normalX = 0;
-        foreach ($result as $row) {
-            $normalX = $row['numOfCommonContent'];
-        }
-
-        //Calculate the matching
-        $matching = stats_dens_normal($normalX, $contentAverage, $contentStdev);
-
-        if ($matching == false) {
-            $matching = 0;
-        }
-
-        //Query to create the matching relationship with the appropriate value
-
-        //Construct query String
-        $queryString = "
-        MATCH
-            (u1:User),
-            (u2:User)
-        WHERE
-            u1.qnoow_id = {id1} AND
-            u2.qnoow_id = {id2}
-        CREATE UNIQUE
-            (u1)-[m:MATCHES]-(u2)
-        SET
-            m.matching_content = {matching},
-            m.timestamp_content = timestamp()
-        RETURN
-            m
-        ";
-
-        //State the value of the variables in the query string
-        $queryDataArray = array(
-            'id1'      => (integer)$id1,
-            'id2'      => (integer)$id2,
-            'matching' => (float)$matching
-        );
-
-        //Construct query
-        $query = new Query(
-            $this->client,
-            $queryString,
-            $queryDataArray
-        );
-
-        //Execute query
-        try {
-            $result = $query->getResultSet();
-        } catch (\Exception $e) {
-            throw $e;
-        }
-
-        return $matching;
     }
 
 }

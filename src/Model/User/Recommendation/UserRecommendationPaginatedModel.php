@@ -111,7 +111,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                 $user = array();
                 $user['id'] = $row['id'];
                 $user['username'] = $row['username'];
-                $user['matching_questions'] = $row['matching_questions'];
+                $user['matching'] = $row['matching_questions'];
                 $user['similarity'] = $row['similarity'];
 
                 $response[] = $user;

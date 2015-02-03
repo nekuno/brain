@@ -265,8 +265,10 @@ class UserModel implements PaginatedInterface
                 user.qnoow_id <> {referenceUserId}
                 OPTIONAL MATCH
                 (user)-[match:MATCHES]-(referenceUser)
+                OPTIONAL MATCH
+                (user)-[similarity:SIMILARITY]-(referenceUser)
              ";
-            $resultQuery .= ", match";
+            $resultQuery .= ", match, similarity ";
         }
 
         $query = "
@@ -300,14 +302,18 @@ class UserModel implements PaginatedInterface
                 $user['id'] = $row['user']->getProperty('qnoow_id');
                 $user['username'] = $row['content']->getProperty('username');
                 $user['email'] = $row['content']->getProperty('email');
-                $user['matching']['content'] = 0;
-                $user['matching']['questions'] = 0;
 
+
+                $user['matching'] = 0;
                 if (isset($row['match'])) {
-                    $matchingByContent = $row['match']->getProperty('matching_content');
                     $matchingByQuestions = $row['match']->getProperty('matching_questions');
-                    $user['matching']['content'] = null === $matchingByContent ? 0 : $matchingByContent;
-                    $user['matching']['questions'] = null === $matchingByQuestions ? 0 : $matchingByQuestions;
+                    $user['matching'] = null === $matchingByQuestions ? 0 : $matchingByQuestions;
+                }
+
+                $user['similarity'] = 0;
+                if (isset($row['similarity'])) {
+                    $similarity = $row['similarity']->getProperty('similarity');
+                    $user['similarity'] = null === $similarity ? 0 : $similarity;
                 }
 
                 $response[] = $user;
