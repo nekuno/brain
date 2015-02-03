@@ -2,10 +2,9 @@
 
 namespace Model;
 
-use Everyman\Neo4j\Client;
-use Everyman\Neo4j\Cypher\Query;
 use Everyman\Neo4j\Query\Row;
 use Model\Neo4j\GraphManager;
+use Model\User\ProfileModel;
 use Model\User\UserStatusModel;
 use Paginator\PaginatedInterface;
 
@@ -16,20 +15,21 @@ use Paginator\PaginatedInterface;
  */
 class UserModel implements PaginatedInterface
 {
-    /**
-     * @var \Everyman\Neo4j\Client
-     */
-    protected $client;
 
     /**
      * @var GraphManager
      */
     protected $gm;
 
-    public function __construct(Client $client, GraphManager $gm)
+    /**
+     * @var ProfileModel
+     */
+    protected $pm;
+
+    public function __construct(GraphManager $gm, ProfileModel $pm)
     {
-        $this->client = $client;
         $this->gm = $gm;
+        $this->pm = $pm;
     }
 
     /**
@@ -55,6 +55,8 @@ class UserModel implements PaginatedInterface
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();
+
+        $this->pm->create($user['id'], array());
 
         return $this->parseResultSet($result);
     }
@@ -155,9 +157,9 @@ class UserModel implements PaginatedInterface
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(u:User)-[:RATES]->(q:Question)')
-          ->where('id(q) IN [ { questions } ]')
-          ->returns('DISTINCT u')
-          ->setParameter('questions', (integer)$questionId);
+            ->where('id(q) IN [ { questions } ]')
+            ->returns('DISTINCT u')
+            ->setParameter('questions', (integer)$questionId);
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();
@@ -222,7 +224,7 @@ class UserModel implements PaginatedInterface
     {
         $response = array();
 
-        $params = array(
+        $parameters = array(
             'offset' => (integer)$offset,
             'limit' => (integer)$limit
         );
@@ -235,28 +237,28 @@ class UserModel implements PaginatedInterface
                     MATCH (profile)-[:OPTION_OF]-(zodiacSign:ZodiacSign)
                     WHERE id(zodiacSign) = {zodiacSign}
                 ";
-                $params['zodiacSign'] = $filters['profile']['zodiacSign'];
+                $parameters['zodiacSign'] = $filters['profile']['zodiacSign'];
             }
             if (isset($filters['profile']['gender'])) {
                 $profileQuery .= "
                     MATCH (profile)-[:OPTION_OF]-(gender:Gender)
                     WHERE id(gender) = {gender}
                 ";
-                $params['gender'] = $filters['profile']['gender'];
+                $parameters['gender'] = $filters['profile']['gender'];
             }
             if (isset($filters['profile']['orientation'])) {
                 $profileQuery .= "
                     MATCH (profile)-[:OPTION_OF]-(orientation:Orientation)
                     WHERE id(orientation) = {orientation}
                 ";
-                $params['orientation'] = $filters['profile']['orientation'];
+                $parameters['orientation'] = $filters['profile']['orientation'];
             }
         }
 
         $referenceUserQuery = "";
         $resultQuery = " RETURN user ";
         if (isset($filters['referenceUserId'])) {
-            $params['referenceUserId'] = (integer)$filters['referenceUserId'];
+            $parameters['referenceUserId'] = (integer)$filters['referenceUserId'];
             $referenceUserQuery = "
                 MATCH
                 (referenceUser:User)
@@ -285,42 +287,30 @@ class UserModel implements PaginatedInterface
             ;
          ";
 
-        //Create the Neo4j query object
-        $contentQuery = new Query(
-            $this->client,
-            $query,
-            $params
-        );
+        $contentQuery = $this->gm->createQuery($query, $parameters);
 
-        //Execute query
-        try {
-            $result = $contentQuery->getResultSet();
+        $result = $contentQuery->getResultSet();
 
-            foreach ($result as $row) {
-                $user = array();
+        foreach ($result as $row) {
+            $user = array();
 
-                $user['id'] = $row['user']->getProperty('qnoow_id');
-                $user['username'] = $row['content']->getProperty('username');
-                $user['email'] = $row['content']->getProperty('email');
+            $user['id'] = $row['user']->getProperty('qnoow_id');
+            $user['username'] = $row['content']->getProperty('username');
+            $user['email'] = $row['content']->getProperty('email');
 
-
-                $user['matching'] = 0;
-                if (isset($row['match'])) {
-                    $matchingByQuestions = $row['match']->getProperty('matching_questions');
-                    $user['matching'] = null === $matchingByQuestions ? 0 : $matchingByQuestions;
-                }
-
-                $user['similarity'] = 0;
-                if (isset($row['similarity'])) {
-                    $similarity = $row['similarity']->getProperty('similarity');
-                    $user['similarity'] = null === $similarity ? 0 : $similarity;
-                }
-
-                $response[] = $user;
+            $user['matching'] = 0;
+            if (isset($row['match'])) {
+                $matchingByQuestions = $row['match']->getProperty('matching_questions');
+                $user['matching'] = null === $matchingByQuestions ? 0 : $matchingByQuestions;
             }
 
-        } catch (\Exception $e) {
-            throw $e;
+            $user['similarity'] = 0;
+            if (isset($row['similarity'])) {
+                $similarity = $row['similarity']->getProperty('similarity');
+                $user['similarity'] = null === $similarity ? 0 : $similarity;
+            }
+
+            $response[] = $user;
         }
 
         return $response;
@@ -331,11 +321,12 @@ class UserModel implements PaginatedInterface
      */
     public function countTotal(array $filters)
     {
-        $params = array();
+
+        $parameters = array();
 
         $queryWhere = " WHERE user.status = 'complete' ";
         if (isset($filters['referenceUserId'])) {
-            $params['referenceUserId'] = (integer)$filters['referenceUserId'];
+            $parameters['referenceUserId'] = (integer)$filters['referenceUserId'];
             $queryWhere .= " AND user.qnoow_id <> {referenceUserId} ";
         }
 
@@ -352,25 +343,11 @@ class UserModel implements PaginatedInterface
             ;
         ";
 
-        //Create the Neo4j query object
-        $contentQuery = new Query(
-            $this->client,
-            $query,
-            $params
-        );
+        $contentQuery = $this->gm->createQuery($query, $parameters);
 
-        $count = 0;
-        //Execute query
-        try {
-            $result = $contentQuery->getResultSet();
-
-            foreach ($result as $row) {
-                $count = $row['total'];
-            }
-
-        } catch (\Exception $e) {
-            throw $e;
-        }
+        $result = $contentQuery->getResultSet();
+        $row = $result->current();
+        $count = $row['total'];
 
         return $count;
     }

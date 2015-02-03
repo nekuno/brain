@@ -4,6 +4,7 @@ namespace Provider;
 
 use Everyman\Neo4j\Client;
 use Model\Neo4j\GraphManager;
+use Psr\Log\LoggerAwareInterface;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
 
@@ -36,6 +37,10 @@ class Neo4jPHPServiceProvider implements ServiceProviderInterface
             function ($app) {
 
                 $manager = new GraphManager($app['neo4j.client']);
+
+                if ($app['env'] == 'dev' && $manager instanceof LoggerAwareInterface) {
+                    $manager->setLogger($app['monolog']);
+                }
 
                 return $manager;
             }

@@ -2,11 +2,29 @@
 
 namespace Model\Neo4j;
 
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerInterface;
+
 /**
  * @author Juan Luis Martínez <juanlu@comakai.com>
  */
-class Query extends \Everyman\Neo4j\Cypher\Query
+class Query extends \Everyman\Neo4j\Cypher\Query implements LoggerAwareInterface
 {
+
+    /**
+     * @var LoggerInterface
+     */
+    protected $logger;
+
+    public function getResultSet()
+    {
+
+        if ($this->logger instanceof LoggerInterface) {
+            $this->logger->debug(sprintf('Executing query: "%s"', $this->getExecutableQuery()));
+        }
+
+        return parent::getResultSet();
+    }
 
     public function getExecutableQuery()
     {
@@ -40,5 +58,10 @@ class Query extends \Everyman\Neo4j\Cypher\Query
         }
 
         return $query;
+    }
+
+    public function setLogger(LoggerInterface $logger)
+    {
+        $this->logger = $logger;
     }
 }
