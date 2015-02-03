@@ -2,9 +2,9 @@
 
 namespace Model\Neo4j;
 
-use Everyman\Neo4j\Cypher\Query;
 use Model\LinkModel;
 use Model\Questionnaire\QuestionModel;
+use Model\User\AnswerModel;
 use Model\UserModel;
 
 class Fixtures
@@ -13,7 +13,7 @@ class Fixtures
     const NUM_OF_USERS = 20;
     const NUM_OF_LINKS = 2000;
     const NUM_OF_TAGS = 20;
-    const NUM_OF_QUESTIONS = 60;
+    const NUM_OF_QUESTIONS = 200;
 
     /**
      * @var GraphManager
@@ -35,12 +35,23 @@ class Fixtures
      */
     protected $qm;
 
-    public function __construct(GraphManager $gm, UserModel $um, LinkModel $lm, QuestionModel $qm)
+    /**
+     * @var AnswerModel
+     */
+    protected $am;
+
+    /**
+     * @var array
+     */
+    protected $questions = array();
+
+    public function __construct(GraphManager $gm, UserModel $um, LinkModel $lm, QuestionModel $qm, AnswerModel $am)
     {
         $this->gm = $gm;
         $this->um = $um;
         $this->lm = $lm;
         $this->qm = $qm;
+        $this->am = $am;
     }
 
     public function load()
@@ -53,6 +64,7 @@ class Fixtures
         $this->loadQuestions();
         $this->loadLinkTags();
         $this->loadLikes();
+        $this->loadAnswers();
 
         /**
          * User 3, answer to StoredQuestion 1 with Answer 1 and accepts as others answer [1,2]
@@ -229,11 +241,11 @@ class Fixtures
         for ($i = 1; $i <= self::NUM_OF_QUESTIONS; $i++) {
 
             $answers = array();
-            for ($j = 1; $j <= 4; $j++) {
+            for ($j = 1; $j <= 3; $j++) {
                 $answers[] = 'Answer ' . $j . ' to Question ' . $i;
             }
 
-            $this->qm->create(
+            $this->questions[$i] = $this->qm->create(
                 array(
                     'locale' => 'en',
                     'text' => 'Question ' . $i,
@@ -333,6 +345,98 @@ class Fixtures
         }
     }
 
+    protected function loadAnswers()
+    {
+
+        $answers = array(
+            array(
+                'user' => 1,
+                'answer' => 1,
+                'questionFrom' => 1,
+                'questionTo' => 20,
+            ),
+            array(
+                'user' => 1,
+                'answer' => 1,
+                'questionFrom' => 21,
+                'questionTo' => 31,
+            ),
+            array(
+                'user' => 2,
+                'answer' => 1,
+                'questionFrom' => 1,
+                'questionTo' => 20,
+            ),
+            array(
+                'user' => 2,
+                'answer' => 1,
+                'questionFrom' => 31,
+                'questionTo' => 41,
+            ),
+            // 18 common questions with same answer
+            array(
+                'user' => 3,
+                'answer' => 1,
+                'questionFrom' => 1,
+                'questionTo' => 18,
+            ),
+            array(
+                'user' => 4,
+                'answer' => 1,
+                'questionFrom' => 1,
+                'questionTo' => 18,
+            ),
+            // 52 common questions
+            array(
+                'user' => 3,
+                'answer' => 1,
+                'questionFrom' => 19,
+                'questionTo' => 52,
+            ),
+            array(
+                'user' => 4,
+                'answer' => 2,
+                'questionFrom' => 19,
+                'questionTo' => 52,
+            ),
+            // 120 and 78 questions in total
+            array(
+                'user' => 3,
+                'answer' => 1,
+                'questionFrom' => 53,
+                'questionTo' => 120,
+            ),
+            array(
+                'user' => 4,
+                'answer' => 2,
+                'questionFrom' => 121,
+                'questionTo' => 127,
+            ),
+        );
+
+        foreach ($answers as $answer) {
+
+            foreach (range($answer['questionFrom'], $answer['questionTo']) as $i) {
+
+                $answerIds = array_keys($this->questions[$i]['answers']);
+                $questionId = $this->questions[$i]['id'];
+                $answerId = $answerIds[$answer['answer'] - 1];
+                $this->am->create(
+                    array(
+                        'userId' => $answer['user'],
+                        'questionId' => $questionId,
+                        'answerId' => $answerId,
+                        'acceptedAnswers' => array($answerId),
+                        'isPrivate' => false,
+                        'rating' => 3,
+                        'explanation' => '',
+                    )
+                );
+            }
+        }
+
+    }
+
     protected function createUserLikesLinkRelationship($user, $link)
     {
 
@@ -361,51 +465,6 @@ class Fixtures
         $query = $qb->getQuery();
         $query->getResultSet();
 
-    }
-
-    /**
-     * @param $userId
-     * @param $questionId
-     * @param $answerId
-     * @param array $acceptsIds
-     * @param $rating
-     * @return \Everyman\Neo4j\Query\ResultSet
-     */
-    protected function userAnswerQuestion($userId, $questionId, $answerId, array $acceptsIds, $rating)
-    {
-
-        $data = array(
-            'userId' => (integer)$userId,
-            'questionId' => (integer)$questionId,
-            'answerId' => (integer)$answerId,
-            'acceptedAnswers' => $acceptsIds,
-            'rating' => $rating,
-            'explanation' => '',
-            'isPrivate' => false,
-        );
-
-        $template = "MATCH (user:User), (question:Question), (answer:Answer)"
-            . " WHERE user.qnoow_id = {userId} AND id(question) = {questionId} AND id(answer) = {answerId}"
-            . " CREATE UNIQUE (user)-[a:ANSWERS]->(answer)"
-            . ", (user)-[r:RATES]->(question)"
-            . " SET r.rating = {rating}, a.private = {isPrivate}"
-            . ", a.answeredAt = timestamp(), a.explanation = {explanation}"
-            . " WITH user, question, answer"
-            . " OPTIONAL MATCH (pa:Answer)-[:IS_ANSWER_OF]->(question)"
-            . " WHERE id(pa) IN {acceptedAnswers}"
-            . " CREATE UNIQUE (user)-[:ACCEPTS]->(pa)"
-            . " RETURN answer";
-
-        $template .= ";";
-
-        //Create the Neo4j query object
-        $query = new Query(
-            $this->client,
-            $template,
-            $data
-        );
-
-        return $query->getResultSet();
     }
 
 }

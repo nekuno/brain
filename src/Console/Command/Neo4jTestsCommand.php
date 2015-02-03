@@ -14,19 +14,25 @@ class Neo4jTestsCommand extends ApplicationAwareCommand
     protected function configure()
     {
         $this->setName('neo4j:test')
-             ->setDescription("Load test for Neo4j development. Intended for quick creation of tests only; behavior may change");
+            ->setDescription("Load test for Neo4j development. Intended for quick creation of tests only; behavior may change");
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $testObject = new MatchingModel($this->app['neo4j.client'], $this->app['users.content.model'], $this->app['users.answer.model']);
+        $testObject = new MatchingModel(
+            $this->app['dispatcher'],
+            $this->app['neo4j.client'],
+            $this->app['users.content.model'],
+            $this->app['users.answers.model'],
+            $this->app['users.matching.normal_distribution.model']
+        );
 
         try {
             $value1 = $testObject->getMatchingBetweenTwoUsersBasedOnAnswers(36, 39);
             $value2 = $testObject->getMatchingBetweenTwoUsersBasedOnSharedContent(36, 39);
         } catch (\Exception $e) {
             $output->writeln(
-               'Error trying to execute test with message: ' . $e->getMessage()
+                'Error trying to execute test with message: ' . $e->getMessage()
             );
 
             return;
