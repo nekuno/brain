@@ -294,6 +294,36 @@ class Fixtures
                 'linkFrom' => 50,
                 'linkTo' => 150,
             ),
+            array(
+                'user' => 5,
+                'linkFrom' => 1,
+                'linkTo' => 15,
+            ),
+            array(
+                'user' => 6,
+                'linkFrom' => 10,
+                'linkTo' => 25,
+            ),
+            array(
+                'user' => 7,
+                'linkFrom' => 1101,
+                'linkTo' => 1115,
+            ),
+            array(
+                'user' => 8,
+                'linkFrom' => 1110,
+                'linkTo' => 1125,
+            ),
+            array(
+                'user' => 9,
+                'linkFrom' => 1501,
+                'linkTo' => 1511,
+            ),
+            array(
+                'user' => 10,
+                'linkFrom' => 1507,
+                'linkTo' => 1515,
+            ),
         );
 
         foreach ($likes as $like) {
