@@ -232,8 +232,8 @@ class LinkModel
         $parameters = array();
 
         $template = "
-            MATCH (:Link)-[r:LIKES]-(:User)
-                WITH count(DISTINCT r) AS total
+            MATCH (l:Link)-[r:LIKES]-(:User)
+                WITH l, count(DISTINCT r) AS total
                 WHERE total > 1
                 WITH  total AS max
                 ORDER BY max DESC
