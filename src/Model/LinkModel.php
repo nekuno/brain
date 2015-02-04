@@ -36,27 +36,13 @@ class LinkModel
     /**
      * @param array $data
      * @return \Everyman\Neo4j\Query\ResultSet
-     * @throws \Exception
      */
     public function addLink(array $data)
     {
-        $additionalLabels = "";
+
+        $additionalLabels = '';
         if (isset($data['additionalLabels'])) {
-            foreach ($data['additionalLabels'] as $label) {
-                $additionalLabels .= ":" . $label;
-            }
-        }
-
-        $additionalFields = "";
-        if (isset($data['additionalFields'])) {
-            foreach ($data['additionalFields'] as $field => $value) {
-                $additionalFields .= ", l." . $field . " = '" . $value . "'";
-            }
-        }
-
-        $language = "";
-        if (isset($data['language'])) {
-            $language = $data['language'];
+            $additionalLabels = ':' . implode(':', $data['additionalLabels']);
         }
 
         $qb = $this->gm->createQueryBuilder();
@@ -72,9 +58,16 @@ class LinkModel
                     'l.description = { description }',
                     'l.language = { language }',
                     'l.processed = 1',
-                    'l.created =  timestamp()' . $additionalFields
-                )
-                ->create('(u)-[r:LIKES]->(l)')
+                    'l.created =  timestamp()'
+                );
+
+            if (isset($data['additionalFields'])) {
+                foreach ($data['additionalFields'] as $field => $value) {
+                    $qb->set(sprintf('l.%s = { %s }', $field, $field));
+                }
+            }
+
+            $qb->create('(u)-[r:LIKES]->(l)')
                 ->returns('l');
 
         } else {
@@ -92,9 +85,15 @@ class LinkModel
                 'description' => $data['description'],
                 'url' => $data['url'],
                 'userId' => (integer)$data['userId'],
-                'language' => $language
+                'language' => isset($data['language']) ? $data['language'] : null,
             )
         );
+
+        if (isset($data['additionalFields'])) {
+            foreach ($data['additionalFields'] as $field => $value) {
+                $qb->setParameter($field, $value);
+            }
+        }
 
         $query = $qb->getQuery();
 
@@ -103,53 +102,54 @@ class LinkModel
 
     public function updateLink(array $data, $processed = false)
     {
-        $additionalLabels = "";
-        if (isset($data['additionalLabels'])) {
-            foreach ($data['additionalLabels'] as $label) {
-                $additionalLabels .= ", link:" . $label;
-            }
-        }
 
-        $additionalFields = "";
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(l:Link)')
+            ->where('l.url = { tempId }')
+            ->set(
+                'l.url = { url }',
+                'l.title = { title }',
+                'l.description = { description }',
+                'l.language = { language }',
+                'l.processed = { processed }',
+                'l.updated = timestamp()'
+            );
+
         if (isset($data['additionalFields'])) {
             foreach ($data['additionalFields'] as $field => $value) {
-                $additionalFields .= ", link." . $field . " = '" . $value . "'";
+                $qb->set(sprintf('l.%s = { %s }', $field, $field));
             }
         }
 
-        $language = "";
-        if (isset($data['language'])) {
-            $language = $data['language'];
+        if (isset($data['additionalLabels'])) {
+            foreach ($data['additionalLabels'] as $label) {
+                $qb->set('l:' . $label);
+            }
         }
 
-        $template = "MATCH (link:Link)"
-            . " WHERE link.url = { tempId } "
-            . " SET link.url = { url }"
-            . " , link.title = { title }"
-            . " , link.description = { description }"
-            . " , link.language = { language }"
-            . " , link.processed = " . (integer)$processed
-            . " , link.updated = timestamp() "
-            . $additionalLabels . $additionalFields
-            . " RETURN link;";
+        $qb->returns('l');
 
-        $query = new Query(
-            $this->client,
-            $template,
+        $qb->setParameters(
             array(
                 'tempId' => $data['tempId'],
                 'url' => $data['url'],
                 'title' => $data['title'],
                 'description' => $data['description'],
-                'language' => $language
+                'language' => isset($data['language']) ? $data['language'] : null,
+                'processed' => (integer)$processed,
             )
         );
 
-        try {
-            return $query->getResultSet();
-        } catch (\Exception $e) {
-            throw $e;
+        if (isset($data['additionalFields'])) {
+            foreach ($data['additionalFields'] as $field => $value) {
+                $qb->setParameter($field, $value);
+            }
         }
+
+        $query = $qb->getQuery();
+
+        return $query->getResultSet();
 
     }
 
