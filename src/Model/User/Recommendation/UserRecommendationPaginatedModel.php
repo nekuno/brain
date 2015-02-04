@@ -56,13 +56,13 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
 
         $profileFilters = $this->getProfileFilters($filters['profileFilters']);
 
-        $orderQuery = ' ORDER BY matching_questions DESC ';
+        $orderQuery = ' ORDER BY matching_questions DESC, similarity DESC ';
         if (isset($filters['order']) && $filters['order'] == 'content') {
-            $orderQuery = ' ORDER BY similarity DESC ';
+            $orderQuery = ' ORDER BY similarity DESC, matching_questions DESC ';
         }
 
-        $query = "MATCH (u:User {qnoow_id: $id})
-OPTIONAL MATCH (u)-[m:MATCHES]-(anyUser:User)
+        $query = "MATCH (u:User {qnoow_id: $id})-[:MATCHES|SIMILARITY]-(anyUser:User)
+OPTIONAL MATCH (u)-[m:MATCHES]-(anyUser)
 OPTIONAL MATCH (u)-[s:SIMILARITY]-(anyUser)
 WITH u, anyUser,
 (CASE WHEN HAS(m.matching_questions) THEN m.matching_questions ELSE 0 END) AS matching_questions,
