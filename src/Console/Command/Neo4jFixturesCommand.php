@@ -1499,25 +1499,37 @@ class Neo4jFixturesCommand extends ApplicationAwareCommand
                         'user' => 1,
                         'answer' => 1,
                         'questionFrom' => 1,
-                        'questionTo' => 20,
+                        'questionTo' => 120,
                     ),
                     array(
                         'user' => 1,
                         'answer' => 1,
-                        'questionFrom' => 21,
-                        'questionTo' => 31,
+                        'questionFrom' => 121,
+                        'questionTo' => 180,
+                    ),
+                    array(
+                        'user' => 1,
+                        'answer' => 1,
+                        'questionFrom' => 181,
+                        'questionTo' => 190,
                     ),
                     array(
                         'user' => 2,
                         'answer' => 1,
                         'questionFrom' => 1,
-                        'questionTo' => 20,
+                        'questionTo' => 120,
+                    ),
+                    array(
+                        'user' => 2,
+                        'answer' => 2,
+                        'questionFrom' => 121,
+                        'questionTo' => 180,
                     ),
                     array(
                         'user' => 2,
                         'answer' => 1,
-                        'questionFrom' => 31,
-                        'questionTo' => 41,
+                        'questionFrom' => 191,
+                        'questionTo' => 200,
                     ),
                     // 18 common questions with same answer
                     array(
