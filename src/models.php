@@ -2,7 +2,7 @@
 
 $app['users.model'] = function ($app) {
 
-    return new \Model\UserModel($app['neo4j.client']);
+    return new \Model\UserModel($app['neo4j.graph_manager'], $app['users.profile.model']);
 };
 
 $app['users.profile.model'] = function ($app) {
@@ -50,27 +50,24 @@ $app['users.rate.model'] = function ($app) {
     return new \Model\User\RateModel($app['dispatcher'], $app['neo4j.client']);
 };
 
-$app['users.matching.normal_distribution.model'] = function ($app) {
-
-    return new \Model\User\Matching\NormalDistributionModel($app['neo4j.client'], $app['dataFile.dir']);
-
-};
-
 $app['users.matching.model'] = function ($app) {
 
     return new \Model\User\Matching\MatchingModel(
         $app['dispatcher'],
         $app['neo4j.client'],
         $app['users.content.model'],
-        $app['users.answers.model'],
-        $app['users.matching.normal_distribution.model']
+        $app['users.answers.model']
     );
 
+};
+$app['users.similarity.model'] = function ($app) {
+
+    return new \Model\User\Similarity\SimilarityModel($app['neo4j.client'], $app['neo4j.graph_manager'], $app['links.model']);
 };
 
 $app['users.recommendation.users.model'] = function ($app) {
 
-    return new \Model\User\Recommendation\UserRecommendationPaginatedModel($app['neo4j.client'], $app['users.profile.model']);
+    return new \Model\User\Recommendation\UserRecommendationPaginatedModel($app['neo4j.graph_manager'], $app['users.profile.model']);
 };
 
 $app['users.recommendation.content.model'] = function ($app) {
@@ -90,5 +87,5 @@ $app['questionnaire.questions.model'] = function ($app) {
 
 $app['links.model'] = function ($app) {
 
-    return new \Model\LinkModel($app['neo4j.client']);
+    return new \Model\LinkModel($app['neo4j.graph_manager']);
 };

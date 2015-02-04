@@ -7,7 +7,7 @@ use Model\User\Matching\MatchingModel;
 use Silex\Application;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputOption;
 
 class RecalculatePopularity extends ApplicationAwareCommand
 {
@@ -16,12 +16,22 @@ class RecalculatePopularity extends ApplicationAwareCommand
     {
         $this->setName('popularity:recalculate')
             ->setDescription("Recalculate the popularity of the links.")
-            ->addArgument(
-                'limit',
-                InputArgument::OPTIONAL,
-                'Number of links to recalculate'
-            )
-        ;
+            ->setDefinition(
+                array(
+                    new InputOption(
+                        'limit',
+                        null,
+                        InputOption::VALUE_OPTIONAL,
+                        'Maximum number of links to recalculate'
+                    ),
+                    new InputOption(
+                        'user',
+                        null,
+                        InputOption::VALUE_OPTIONAL,
+                        'ID of the user to recalculate links from'
+                    ),
+                )
+            );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -29,10 +39,20 @@ class RecalculatePopularity extends ApplicationAwareCommand
         /* @var \Model\LinkModel $modelObject */
         $modelObject = $this->app['links.model'];
 
-        $limit = $input->getArgument('limit');
+        $filters = array();
+
+        $limit = $input->getOption('limit');
+        if (null !== $limit) {
+            $filters['limit'] = $limit;
+        }
+
+        $userId = $input->getOption('user');
+        if (null !== $userId) {
+            $filters['userId'] = $userId;
+        }
 
         try {
-            $modelObject->updatePopularity($limit);
+            $modelObject->updatePopularity($filters);
 
         } catch (\Exception $e) {
             $output->writeln(

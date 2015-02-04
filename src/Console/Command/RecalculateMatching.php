@@ -39,13 +39,10 @@ class RecalculateMatching extends ApplicationAwareCommand
 
         try {
             $oldQuestionMatching = $modelObject->getMatchingBetweenTwoUsersBasedOnAnswers($id1, $id2);
-            $oldContentMatching = $modelObject->getMatchingBetweenTwoUsersBasedOnContent($id1, $id2);
 
             $modelObject->calculateMatchingBetweenTwoUsersBasedOnAnswers($id1, $id2);
-            $modelObject->calculateMatchingBetweenTwoUsersBasedOnSharedContent($id1, $id2);
 
             $newQuestionMatching = $modelObject->getMatchingBetweenTwoUsersBasedOnAnswers($id1, $id2);
-            $newContentMatching = $modelObject->getMatchingBetweenTwoUsersBasedOnContent($id1, $id2);
 
         } catch (\Exception $e) {
             $output->writeln(
@@ -57,8 +54,6 @@ class RecalculateMatching extends ApplicationAwareCommand
 
         $output->writeln('Old Questions Matching: ' . $oldQuestionMatching['matching']);
         $output->writeln('New Questions Matching: ' . $newQuestionMatching['matching']);
-        $output->writeln('Old Content Matching: ' . $oldContentMatching['matching']);
-        $output->writeln('New Content Matching: ' . $newContentMatching['matching']);
 
     }
 }

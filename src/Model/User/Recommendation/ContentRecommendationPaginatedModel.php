@@ -94,20 +94,25 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
             $linkType = $filters['type'];
         }
 
-        $typeQuery = 'has(match.matching_questions)';
-        $getMatchQuery = 'match.matching_questions AS match, ';
+
         $preferredMatching = $this->matchingModel->getPreferredMatchingType($id);
+
         if($preferredMatching == MatchingModel::PREFERRED_MATCHING_CONTENT) {
-            $typeQuery = "has(match.matching_content)";
-            $getMatchQuery = 'match.matching_content AS match, ';
+            $query = "
+                MATCH
+                (user:User {qnoow_id: {UserId}})-[match:SIMILARITY]-(matching_users:User)
+                WHERE has(match.similarity)
+            ";
+            $getMatchQuery = 'match.similarity AS match, ';
+        } else {
+            $query = "
+                MATCH
+                (user:User {qnoow_id: {UserId}})-[match:MATCHES]-(matching_users:User)
+                WHERE has(match.matching_questions)
+            ";
+            $getMatchQuery = 'match.matching_questions AS match, ';
         }
 
-        $query = "
-            MATCH
-            (user:User {qnoow_id: {UserId}})-[match:MATCHES]-(matching_users:User)
-            WHERE
-        ";
-        $query .= $typeQuery;
         $query .= "
             MATCH
             (matching_users)-[:LIKES]->(content:" . $linkType .")
@@ -213,17 +218,22 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
             $linkType = $filters['type'];
         }
 
-        $typeQuery = 'has(match.matching_questions)';
-        if($this->matchingModel->getPreferredMatchingType($id) == MatchingModel::PREFERRED_MATCHING_CONTENT) {
-            $typeQuery = "has(match.matching_content)";
+        $preferredMatching = $this->matchingModel->getPreferredMatchingType($id);
+
+        if($preferredMatching == MatchingModel::PREFERRED_MATCHING_CONTENT) {
+            $query = "
+                MATCH
+                (user:User {qnoow_id: {UserId}})-[match:SIMILARITY]-(matching_users:User)
+                WHERE has(match.similarity)
+            ";
+        } else {
+            $query = "
+                MATCH
+                (user:User {qnoow_id: {UserId}})-[match:MATCHES]-(matching_users:User)
+                WHERE has(match.matching_questions)
+            ";
         }
 
-        $query = "
-            MATCH
-            (user:User {qnoow_id: {UserId}})-[match:MATCHES]-(matching_users:User)
-            WHERE
-        ";
-        $query .= $typeQuery;
         $query .= "
             MATCH
             (matching_users)-[r:LIKES]->(content:" . $linkType . ")

@@ -2,8 +2,9 @@
 
 namespace Model;
 
-use Everyman\Neo4j\Client;
-use Everyman\Neo4j\Cypher\Query;
+use Everyman\Neo4j\Node;
+use Everyman\Neo4j\Query\Row;
+use Model\Neo4j\GraphManager;
 
 /**
  * Class LinkModel
@@ -14,77 +15,270 @@ class LinkModel
 {
 
     /**
-     * @var \Everyman\Neo4j\Client
+     * @var GraphManager
      */
-    protected $client;
+    protected $gm;
 
-    /**
-     * @param Client $client
-     */
-    public function __construct(Client $client)
+    public function __construct(GraphManager $gm)
     {
 
-        $this->client = $client;
+        $this->gm = $gm;
     }
 
     /**
      * @param array $data
      * @return \Everyman\Neo4j\Query\ResultSet
-     * @throws \Exception
      */
     public function addLink(array $data)
     {
-        $additionalLabels = "";
+
+        $additionalLabels = '';
         if (isset($data['additionalLabels'])) {
-            foreach ($data['additionalLabels'] as $label) {
-                $additionalLabels .= ":".$label;
-            }
+            $additionalLabels = ':' . implode(':', $data['additionalLabels']);
         }
 
-        $additionalFields = "";
-        if (isset($data['additionalFields'])) {
-            foreach ($data['additionalFields'] as $field => $value) {
-                $additionalFields .= ", l.".$field." = '".$value."'";
-            }
-        }
-
-        $language = "";
-        if (isset($data['language'])) {
-            $language = $data['language'];
-        }
+        $qb = $this->gm->createQueryBuilder();
 
         if (false === $this->isAlreadySaved($data['url'])) {
-            $template = "MATCH (u:User)"
-                . " WHERE u.qnoow_id = {userId}"
-                . " CREATE "
-                . " (l:Link".$additionalLabels.") "
-                ." SET l.url = {url}, l.title = {title}, l.description = {description}, "
-                . " l.language = {language}, l.processed = 1, l.created =  timestamp() "
-                . $additionalFields
-                . " CREATE (u)-[r:LIKES]->(l) "
-                . " RETURN l;";
+
+            $qb->match('(u:User)')
+                ->where('u.qnoow_id = { userId }')
+                ->create('(l:Link' . $additionalLabels . ')')
+                ->set(
+                    'l.url = { url }',
+                    'l.title = { title }',
+                    'l.description = { description }',
+                    'l.language = { language }',
+                    'l.processed = 1',
+                    'l.created =  timestamp()'
+                );
+
+            if (isset($data['additionalFields'])) {
+                foreach ($data['additionalFields'] as $field => $value) {
+                    $qb->set(sprintf('l.%s = { %s }', $field, $field));
+                }
+            }
+
+            $qb->create('(u)-[r:LIKES]->(l)')
+                ->returns('l');
+
         } else {
-            $template = "MATCH (u:User)"
-                . ", (l:Link) "
-                . " WHERE u.qnoow_id = {userId} AND l.url = {url}"
-                . " CREATE UNIQUE (u)-[r:LIKES]->(l)"
-                . " RETURN l;
-            ";
+
+            $qb->match('(u:User)', '(l:Link)')
+                ->where('u.qnoow_id = { userId }', 'l.url = { url }')
+                ->createUnique('(u)-[r:LIKES]->(l)')
+                ->returns('l');
+
         }
 
-        $query = new Query(
-            $this->client,
-            $template,
+        $qb->setParameters(
             array(
-                'title'       => $data['title'],
+                'title' => $data['title'],
                 'description' => $data['description'],
-                'url'         => $data['url'],
-                'userId'      => (integer)$data['userId'],
-                'language'    => $language
+                'url' => $data['url'],
+                'userId' => (integer)$data['userId'],
+                'language' => isset($data['language']) ? $data['language'] : null,
             )
         );
 
+        if (isset($data['additionalFields'])) {
+            foreach ($data['additionalFields'] as $field => $value) {
+                $qb->setParameter($field, $value);
+            }
+        }
+
+        $query = $qb->getQuery();
+
         return $query->getResultSet();
+    }
+
+    public function updateLink(array $data, $processed = false)
+    {
+
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(l:Link)')
+            ->where('l.url = { tempId }')
+            ->set(
+                'l.url = { url }',
+                'l.title = { title }',
+                'l.description = { description }',
+                'l.language = { language }',
+                'l.processed = { processed }',
+                'l.updated = timestamp()'
+            );
+
+        if (isset($data['additionalFields'])) {
+            foreach ($data['additionalFields'] as $field => $value) {
+                $qb->set(sprintf('l.%s = { %s }', $field, $field));
+            }
+        }
+
+        if (isset($data['additionalLabels'])) {
+            foreach ($data['additionalLabels'] as $label) {
+                $qb->set('l:' . $label);
+            }
+        }
+
+        $qb->returns('l');
+
+        $qb->setParameters(
+            array(
+                'tempId' => $data['tempId'],
+                'url' => $data['url'],
+                'title' => $data['title'],
+                'description' => $data['description'],
+                'language' => isset($data['language']) ? $data['language'] : null,
+                'processed' => (integer)$processed,
+            )
+        );
+
+        if (isset($data['additionalFields'])) {
+            foreach ($data['additionalFields'] as $field => $value) {
+                $qb->setParameter($field, $value);
+            }
+        }
+
+        $query = $qb->getQuery();
+
+        return $query->getResultSet();
+
+    }
+
+    public function createTag(array $tag)
+    {
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->merge('(tag:Tag {name: { name }})')
+            ->setParameter('name', $tag['name'])
+            ->returns('tag');
+
+        $query = $qb->getQuery();
+
+        $result = $query->getResultSet();
+
+        /* @var $row Row */
+        $row = $result->current();
+        /* @var $node Node */
+        $node = $row->offsetGet('tag');
+
+        if (isset($tag['additionalLabels']) && is_array($tag['additionalLabels'])) {
+            $node->addLabels($this->gm->makeLabels($tag['additionalLabels']));
+        }
+
+        if (isset($tag['additionalFields']) && is_array($tag['additionalFields'])) {
+            foreach ($tag['additionalFields'] as $field => $value) {
+                $node->setProperty($field, $value);
+            }
+            $node->save();
+        }
+
+        return $node;
+
+    }
+
+    public function addTag($link, $tag)
+    {
+
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(link:Link)', '(tag:Tag)')
+            ->where('link.url = { url }', 'tag.name = { tag }')
+            ->createUnique('(link)-[:TAGGED]->(tag)');
+
+        $qb->setParameters(
+            array(
+                'url' => $link['url'],
+                'tag' => $tag['name'],
+            )
+        );
+
+        $query = $qb->getQuery();
+
+        return $query->getResultSet();
+
+    }
+
+    public function getUnprocessedLinks($limit = 100)
+    {
+
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(link:Link)')
+            ->where('link.processed = 0')
+            ->returns('link')
+            ->limit('{ limit }');
+
+        $qb->setParameters(
+            array(
+                'limit' => (integer)$limit
+            )
+        );
+
+        $query = $qb->getQuery();
+
+        $resultSet = $query->getResultSet();
+
+        $unprocessedLinks = array();
+
+        foreach ($resultSet as $row) {
+            $unprocessedLinks[] = array(
+                'url' => $row['link']->getProperty('url'),
+                'description' => $row['link']->getProperty('description'),
+                'title' => $row['link']->getProperty('title'),
+                'tempId' => $row['link']->getProperty('url'),
+            );
+        }
+
+        return $unprocessedLinks;
+
+    }
+
+    public function updatePopularity(array $filters)
+    {
+
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(l:Link)-[r:LIKES]-(:User)')
+            ->with('l', 'count(DISTINCT r) AS total')
+            ->where('total > 1')
+            ->with('total AS max')
+            ->orderBy('max DESC')
+            ->limit(1);
+
+        if (isset($filters['userId'])) {
+
+            $qb->match('(:User {qnoow_id: { id } })-[LIKES]-(l:Link)');
+            $qb->setParameter('id', (integer)$filters['userId']);
+
+        } else {
+
+            $qb->match('(l:Link)');
+        }
+
+        $qb->match('(l)-[r:LIKES]-(:User)')
+            ->with('l', 'count(DISTINCT r) AS total', 'max')
+            ->where('total > 1')
+            ->with('l', 'toFloat(total) AS total', 'toFloat(max) AS max');
+
+        if (isset($filters['limit'])) {
+
+            $qb->orderBy('HAS(l.popularity_timestamp)', 'l.popularity_timestamp')
+                ->limit('{ limit }');
+            $qb->setParameter('limit', (integer)$filters['limit']);
+        }
+
+        $qb->set(
+            'l.popularity = (total/max)^3',
+            'l.unpopularity = (1-(total/max))^3',
+            'l.popularity_timestamp = timestamp()'
+        );
+
+        $query = $qb->getQuery();
+
+        $query->getResultSet();
+
+        return true;
     }
 
     /**
@@ -94,199 +288,23 @@ class LinkModel
     private function isAlreadySaved($url)
     {
 
-        $template = "
-            MATCH
-                (u:User)-[:LIKES]->(l:Link)
-            WHERE l.url = {url}
-            RETURN l, u
-            LIMIT 1";
+        $qb = $this->gm->createQueryBuilder();
 
-        $query = new Query(
-            $this->client,
-            $template,
-            array('url' => $url)
-        );
+        $qb->match('(u:User)-[:LIKES]->(l:Link)')
+            ->where('l.url = { url }')
+            ->returns('l', 'u')
+            ->limit(1);
+
+        $qb->setParameter('url', $url);
+
+        $query = $qb->getQuery();
 
         $result = $query->getResultSet();
 
-        foreach ($result as $row) {
+        if ($result->count() > 0) {
             return true;
         }
 
         return false;
-    }
-
-    public function updateLink(array $data, $processed = false)
-    {
-        $additionalLabels = "";
-        if (isset($data['additionalLabels'])) {
-            foreach ($data['additionalLabels'] as $label) {
-                $additionalLabels .= ", link:".$label;
-            }
-        }
-
-        $additionalFields = "";
-        if (isset($data['additionalFields'])) {
-            foreach ($data['additionalFields'] as $field => $value) {
-                $additionalFields .= ", link.".$field." = '".$value."'";
-            }
-        }
-
-        $language = "";
-        if (isset($data['language'])) {
-            $language = $data['language'];
-        }
-
-        $template = "MATCH (link:Link)"
-            . " WHERE link.url = { tempId } "
-            . " SET link.url = { url }"
-            . " , link.title = { title }"
-            . " , link.description = { description }"
-            . " , link.language = { language }"
-            . " , link.processed = " . (integer)$processed
-            . " , link.updated = timestamp() "
-            . $additionalLabels . $additionalFields
-            . " RETURN link;";
-
-        $query = new Query(
-            $this->client,
-            $template,
-            array(
-                'tempId'      => $data['tempId'],
-                'url'         => $data['url'],
-                'title'       => $data['title'],
-                'description' => $data['description'],
-                'language'    => $language
-            )
-        );
-
-        try {
-            return $query->getResultSet();
-        } catch (\Exception $e) {
-            throw $e;
-        }
-
-    }
-
-    public function createTag(array $tag)
-    {
-
-        $template = "MATCH (tag:Tag) WHERE tag.name = { name } RETURN tag LIMIT 1";
-
-        $query = new Query($this->client, $template, $tag);
-
-        $result = $query->getResultSet();
-
-        foreach ($result as $row) {
-            return $result;
-        }
-
-        $additionalLabels = "";
-        if (isset($tag['additionalLabels'])) {
-            foreach ($tag['additionalLabels'] as $label) {
-                $additionalLabels .= ":".$label;
-            }
-        }
-
-        $additionalFields = "";
-        if (isset($tag['additionalFields'])) {
-            foreach ($tag['additionalFields'] as $field => $value) {
-                $additionalFields .= ", tag.".$field." = '".$value."'";
-            }
-        }
-
-        $params = array(
-            'name' => $tag['name'],
-        );
-
-        $template = "CREATE (tag:Tag".$additionalLabels.")"
-            . "SET tag.name = { name }".$additionalFields
-            . "RETURN tag";
-
-        $query = new Query($this->client, $template, $params);
-
-        return $query->getResultSet();
-
-    }
-
-    public function addTag($link, $tag)
-    {
-
-        $template = "MATCH (link:Link)"
-            . ", (tag:Tag)"
-            . " WHERE link.url = { url } AND tag.name = { tag }"
-            . " CREATE UNIQUE (link)-[:TAGGED]->(tag)";
-
-        $params = array(
-            'url' => $link['url'],
-            'tag' => $tag['name'],
-        );
-        $query  = new Query($this->client, $template, $params);
-
-        return $query->getResultSet();
-
-    }
-
-    public function getUnprocessedLinks($limit = 100)
-    {
-
-        $template = "MATCH (link:Link) WHERE link.processed = 0 RETURN link LIMIT {limit}";
-
-        $query = new Query($this->client, $template, array('limit' => (integer) $limit));
-
-        $resultSet = $query->getResultSet();
-
-        $unprocessedLinks = array();
-
-        foreach ($resultSet as $row) {
-            $unprocessedLinks[] = array(
-                'url'         => $row['link']->getProperty('url'),
-                'description' => $row['link']->getProperty('description'),
-                'title'       => $row['link']->getProperty('title'),
-                'tempId'      => $row['link']->getProperty('url'),
-            );
-        }
-
-        return $unprocessedLinks;
-
-    }
-
-    public function updatePopularity($limit = null)
-    {
-        $parameters = array();
-
-        $template = "
-            MATCH (:Link)-[r:LIKES]-(:User)
-                WITH count(DISTINCT r) AS total
-                WHERE total > 1
-                WITH  total AS max
-                ORDER BY max DESC
-                LIMIT 1
-            MATCH (l:Link)-[r:LIKES]-(:User)
-                WITH l, count(DISTINCT r) AS total, max
-                WHERE total > 1
-		        WITH l, toFloat(total) AS total, toFloat(max) AS max
-        ";
-
-        if (null !== $limit) {
-            $template .= "
-                ORDER BY HAS(l.popularity_timestamp), l.popularity_timestamp
-		        LIMIT {limit}
-            ";
-            $parameters['limit'] = (integer) $limit;
-        }
-
-        $template .= "
-                SET
-                    l.popularity = (total/max)^3,
-                    l.unpopularity = (1-(total/max))^3,
-                    l.popularity_timestamp = timestamp()
-        ";
-
-        $query = new Query($this->client, $template, $parameters);
-
-        $query->getResultSet();
-
-        return true;
     }
 }
