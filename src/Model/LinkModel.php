@@ -2,8 +2,6 @@
 
 namespace Model;
 
-use Everyman\Neo4j\Client;
-use Everyman\Neo4j\Cypher\Query;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Neo4j\GraphManager;
@@ -17,19 +15,13 @@ class LinkModel
 {
 
     /**
-     * @var \Everyman\Neo4j\Client
-     */
-    protected $client;
-
-    /**
      * @var GraphManager
      */
     protected $gm;
 
-    public function __construct(Client $client, GraphManager $gm)
+    public function __construct(GraphManager $gm)
     {
 
-        $this->client = $client;
         $this->gm = $gm;
     }
 
@@ -188,16 +180,20 @@ class LinkModel
     public function addTag($link, $tag)
     {
 
-        $template = "MATCH (link:Link)"
-            . ", (tag:Tag)"
-            . " WHERE link.url = { url } AND tag.name = { tag }"
-            . " CREATE UNIQUE (link)-[:TAGGED]->(tag)";
+        $qb = $this->gm->createQueryBuilder();
 
-        $params = array(
-            'url' => $link['url'],
-            'tag' => $tag['name'],
+        $qb->match('(link:Link)', '(tag:Tag)')
+            ->where('link.url = { url }', 'tag.name = { tag }')
+            ->createUnique('(link)-[:TAGGED]->(tag)');
+
+        $qb->setParameters(
+            array(
+                'url' => $link['url'],
+                'tag' => $tag['name'],
+            )
         );
-        $query = new Query($this->client, $template, $params);
+
+        $query = $qb->getQuery();
 
         return $query->getResultSet();
 
@@ -206,9 +202,20 @@ class LinkModel
     public function getUnprocessedLinks($limit = 100)
     {
 
-        $template = "MATCH (link:Link) WHERE link.processed = 0 RETURN link LIMIT {limit}";
+        $qb = $this->gm->createQueryBuilder();
 
-        $query = new Query($this->client, $template, array('limit' => (integer)$limit));
+        $qb->match('(link:Link)')
+            ->where('link.processed = 0')
+            ->returns('link')
+            ->limit('{ limit }');
+
+        $qb->setParameters(
+            array(
+                'limit' => (integer)$limit
+            )
+        );
+
+        $query = $qb->getQuery();
 
         $resultSet = $query->getResultSet();
 
@@ -229,51 +236,45 @@ class LinkModel
 
     public function updatePopularity(array $filters)
     {
-        $parameters = array();
 
-        $template = "
-            MATCH (l:Link)-[r:LIKES]-(:User)
-                WITH l, count(DISTINCT r) AS total
-                WHERE total > 1
-                WITH  total AS max
-                ORDER BY max DESC
-                LIMIT 1
-        ";
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(l:Link)-[r:LIKES]-(:User)')
+            ->with('l', 'count(DISTINCT r) AS total')
+            ->where('total > 1')
+            ->with('total AS max')
+            ->orderBy('max DESC')
+            ->limit(1);
 
         if (isset($filters['userId'])) {
-            $template .= "
-                MATCH (:User {qnoow_id: {id}})-[LIKES]-(l:Link)
-            ";
-            $parameters['id'] = (integer)$filters['userId'];
+
+            $qb->match('(:User {qnoow_id: { id } })-[LIKES]-(l:Link)');
+            $qb->setParameter('id', (integer)$filters['userId']);
+
         } else {
-            $template .= "
-                MATCH (l:Link)
-            ";
+
+            $qb->match('(l:Link)');
         }
 
-        $template .= "
-            MATCH (l)-[r:LIKES]-(:User)
-                WITH l, count(DISTINCT r) AS total, max
-                WHERE total > 1
-		        WITH l, toFloat(total) AS total, toFloat(max) AS max
-        ";
+        $qb->match('(l)-[r:LIKES]-(:User)')
+            ->with('l', 'count(DISTINCT r) AS total', 'max')
+            ->where('total > 1')
+            ->with('l', 'toFloat(total) AS total', 'toFloat(max) AS max');
 
         if (isset($filters['limit'])) {
-            $template .= "
-                ORDER BY HAS(l.popularity_timestamp), l.popularity_timestamp
-		        LIMIT {limit}
-            ";
-            $parameters['limit'] = (integer)$filters['limit'];
+
+            $qb->orderBy('HAS(l.popularity_timestamp)', 'l.popularity_timestamp')
+                ->limit('{ limit }');
+            $qb->setParameter('limit', (integer)$filters['limit']);
         }
 
-        $template .= "
-                SET
-                    l.popularity = (total/max)^3,
-                    l.unpopularity = (1-(total/max))^3,
-                    l.popularity_timestamp = timestamp()
-        ";
+        $qb->set(
+            'l.popularity = (total/max)^3',
+            'l.unpopularity = (1-(total/max))^3',
+            'l.popularity_timestamp = timestamp()'
+        );
 
-        $query = new Query($this->client, $template, $parameters);
+        $query = $qb->getQuery();
 
         $query->getResultSet();
 
@@ -287,22 +288,20 @@ class LinkModel
     private function isAlreadySaved($url)
     {
 
-        $template = "
-            MATCH
-                (u:User)-[:LIKES]->(l:Link)
-            WHERE l.url = {url}
-            RETURN l, u
-            LIMIT 1";
+        $qb = $this->gm->createQueryBuilder();
 
-        $query = new Query(
-            $this->client,
-            $template,
-            array('url' => $url)
-        );
+        $qb->match('(u:User)-[:LIKES]->(l:Link)')
+            ->where('l.url = { url }')
+            ->returns('l', 'u')
+            ->limit(1);
+
+        $qb->setParameter('url', $url);
+
+        $query = $qb->getQuery();
 
         $result = $query->getResultSet();
 
-        foreach ($result as $row) {
+        if ($result->count() > 0) {
             return true;
         }
 

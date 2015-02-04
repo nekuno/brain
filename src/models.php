@@ -87,5 +87,5 @@ $app['questionnaire.questions.model'] = function ($app) {
 
 $app['links.model'] = function ($app) {
 
-    return new \Model\LinkModel($app['neo4j.client'], $app['neo4j.graph_manager']);
+    return new \Model\LinkModel($app['neo4j.graph_manager']);
 };
