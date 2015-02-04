@@ -3,6 +3,7 @@
 namespace Console\Command;
 
 use Model\User\Similarity\SimilarityModel;
+use Model\UserModel;
 use Silex\Application;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -17,12 +18,12 @@ class SimilarityCommand extends ApplicationAwareCommand
             ->setDescription('Calculate the similarity of two users.')
             ->addArgument(
                 'userA',
-                InputArgument::REQUIRED,
+                InputArgument::OPTIONAL,
                 'id of the first user?'
             )
             ->addArgument(
                 'userB',
-                InputArgument::REQUIRED,
+                InputArgument::OPTIONAL,
                 'id of the second user?'
             );
     }
@@ -35,21 +36,40 @@ class SimilarityCommand extends ApplicationAwareCommand
         $userA = $input->getArgument('userA');
         $userB = $input->getArgument('userB');
 
+        $combinations = array(
+            array(
+                0 => $userA,
+                1 => $userB
+            )
+        );
+        if (null === $userA || null === $userB) {
+            /* @var $userModel UserModel */
+            $userModel = $this->app['users.model'];
+            $combinations = $userModel->getAllCombinations();
+        }
+
         try {
-            $similarity = $model->getSimilarity($userA, $userB);
+            foreach ($combinations AS $users) {
+                $userA = $users[0];
+                $userB = $users[1];
 
-            $output->writeln('');
+                $similarity = $model->getSimilarity($userA, $userB);
+            }
 
-            $table = $this->getHelper('table');
-            $table
-                ->setHeaders(array('Type', 'Value', 'Last Updated'))
-                ->setRows(array(
-                    array('Questions', $similarity['questions'], $similarity['questionsUpdated']),
-                    array('Interests', $similarity['interests'], $similarity['interestsUpdated']),
-                    array('Similarity', $similarity['similarity'], $similarity['similarityUpdated']),
-                ))
-            ;
-            $table->render($output);
+            if (count($combinations) == 1) {
+                $output->writeln('');
+
+                $table = $this->getHelper('table');
+                $table
+                    ->setHeaders(array('Type', 'Value', 'Last Updated'))
+                    ->setRows(array(
+                        array('Questions', $similarity['questions'], $similarity['questionsUpdated']),
+                        array('Interests', $similarity['interests'], $similarity['interestsUpdated']),
+                        array('Similarity', $similarity['similarity'], $similarity['similarityUpdated']),
+                    ))
+                ;
+                $table->render($output);
+            }
 
         } catch (\Exception $e) {
             $output->writeln(

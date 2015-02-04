@@ -127,6 +127,25 @@ class UserModel implements PaginatedInterface
     }
 
     /**
+     * @return array
+     * @throws \Exception
+     */
+    public function getAllCombinations()
+    {
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u1:User), (u2:User)')
+            ->where('u1.qnoow_id < u2.qnoow_id')
+            ->returns('u1.qnoow_id, u2.qnoow_id');
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        return $result;
+
+    }
+
+    /**
      * @param null $id
      * @return array
      * @throws \Exception
