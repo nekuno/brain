@@ -76,9 +76,6 @@ class Fixtures
     protected function clean()
     {
 
-        $constraints = $this->gm->createQuery('CREATE CONSTRAINT ON (u:User) ASSERT u.qnoow_id IS UNIQUE');
-        $constraints->getResultSet();
-
         $qb = $this->gm->createQueryBuilder();
 
         $qb->match('(n)')
@@ -87,6 +84,9 @@ class Fixtures
 
         $query = $qb->getQuery();
         $query->getResultSet();
+
+        $constraints = $this->gm->createQuery('CREATE CONSTRAINT ON (u:User) ASSERT u.qnoow_id IS UNIQUE');
+        $constraints->getResultSet();
     }
 
     protected function loadUsers()
