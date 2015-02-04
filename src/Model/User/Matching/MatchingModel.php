@@ -189,83 +189,30 @@ class MatchingModel
         //Construct query String
         $queryString = "
         MATCH
-            (u1:User),
-            (u2:User)
-        WHERE
-            u1.qnoow_id = {id1} AND
-            u2.qnoow_id = {id2}
+            (u1:User {qnoow_id: 1}),
+            (u2:User {qnoow_id: 2})
         OPTIONAL MATCH
             (u1)-[:ACCEPTS]->(acceptedAnswerU1:Answer)<-[:ANSWERS]-(u2),
             (acceptedAnswerU1)-[:IS_ANSWER_OF]->(:Question)<-[rateAcceptedAnswerU1:RATES]-(u1)
+	    WITH
+	        u1, u2, SUM(CASE toint(rateAcceptedAnswerU1.rating) WHEN 0 THEN 0 WHEN 1 THEN 1 WHEN 2 THEN 10 WHEN 3 THEN 50 ELSE 0 END) AS totalRatingAcceptedAnswersU1
         OPTIONAL MATCH
             (u2)-[:ACCEPTS]->(acceptedAnswerU2:Answer)<-[:ANSWERS]-(u1),
             (acceptedAnswerU2)-[:IS_ANSWER_OF]->(:Question)<-[rateAcceptedAnswerU2:RATES]-(u2)
+	    WITH
+	        u1, u2, totalRatingAcceptedAnswersU1, SUM(CASE toint(rateAcceptedAnswerU2.rating) WHEN 0 THEN 0 WHEN 1 THEN 1 WHEN 2 THEN 10 WHEN 3 THEN 50 ELSE 0 END) AS totalRatingAcceptedAnswersU2
         OPTIONAL MATCH
             (u1)-[rateCommonAnswerU1:RATES]->(commonQuestions:Question)<-[rateCommonAnswerU2:RATES]-(u2)
         WITH
-            count(DISTINCT commonQuestions) AS numOfCommonQuestions,
-            [n1 IN collect(distinct rateAcceptedAnswerU1) |
-                CASE toint(n1.rating)
-			        WHEN 0 THEN 0
-			        WHEN 1 THEN 1
-			        WHEN 2 THEN 10
-			        WHEN 3 THEN 50
-			        ELSE 0
-		        END
-            ] AS arrayRatingAcceptedAnswerU1,
-            [n2 IN collect(distinct rateAcceptedAnswerU2) |
-                CASE toint(n2.rating)
-			        WHEN 0 THEN 0
-			        WHEN 1 THEN 1
-			        WHEN 2 THEN 10
-			        WHEN 3 THEN 50
-			        ELSE 0
-                END
-            ] AS arrayRatingAcceptedAnswerU2,
-            [n3 IN collect(distinct rateCommonAnswerU1) |
-                CASE toint(n3.rating)
-			        WHEN 0 THEN 0
-			        WHEN 1 THEN 1
-			        WHEN 2 THEN 10
-			        WHEN 3 THEN 50
-			        ELSE 0
-                END
-            ] AS arrayRatingCommonAnswerU1,
-            [n4 IN collect(distinct rateCommonAnswerU2) |
-                CASE toint(n4.rating)
-			        WHEN 0 THEN 0
-			        WHEN 1 THEN 1
-			        WHEN 2 THEN 10
-			        WHEN 3 THEN 50
-			        ELSE 0
-                END
-            ] AS arrayRatingCommonAnswerU2
+            count(DISTINCT commonQuestions) AS numOfCommonQuestions, totalRatingAcceptedAnswersU1, totalRatingAcceptedAnswersU2,
+	        SUM(CASE toint(rateCommonAnswerU1.rating) WHEN 0 THEN 0 WHEN 1 THEN 1 WHEN 2 THEN 10 WHEN 3 THEN 50 ELSE 0 END) AS totalRatingCommonAnswersU1,
+	        SUM(CASE toint(rateCommonAnswerU2.rating) WHEN 0 THEN 0 WHEN 1 THEN 1 WHEN 2 THEN 10 WHEN 3 THEN 50 ELSE 0 END) AS totalRatingCommonAnswersU2
         WITH
             tofloat(numOfCommonQuestions) as numOfCommonQuestions,
-            tofloat(
-                reduce(
-                    totalRatingAcceptedAnswersU1 = 0,
-                    n1 IN arrayRatingAcceptedAnswerU1 | totalRatingAcceptedAnswersU1 + n1
-                )
-            ) AS totalRatingAcceptedAnswersU1,
-            tofloat(
-                reduce(
-                    totalRatingAcceptedAnswersU2 = 0,
-                    n2 IN arrayRatingAcceptedAnswerU2 | totalRatingAcceptedAnswersU2 + n2
-                )
-            ) AS totalRatingAcceptedAnswersU2,
-            tofloat(
-                reduce(
-                    totalRatingCommonAnswersU1 = 0,
-                    n3 IN arrayRatingCommonAnswerU1 | totalRatingCommonAnswersU1 + n3
-                )
-            ) AS totalRatingCommonAnswersU1,
-            tofloat(
-                reduce(
-                    totalRatingCommonAnswersU2 = 0,
-                    n4 IN arrayRatingCommonAnswerU2 | totalRatingCommonAnswersU2 + n4
-                )
-            ) AS totalRatingCommonAnswersU2
+	        toFloat(totalRatingAcceptedAnswersU1) AS totalRatingAcceptedAnswersU1,
+            toFloat(totalRatingAcceptedAnswersU2) AS totalRatingAcceptedAnswersU2,
+	        toFloat(totalRatingCommonAnswersU1) AS totalRatingCommonAnswersU1,
+	        toFloat(totalRatingCommonAnswersU2) AS totalRatingCommonAnswersU2
         WITH
 	        CASE
                 WHEN numOfCommonQuestions > 0 THEN
