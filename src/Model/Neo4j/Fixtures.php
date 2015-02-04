@@ -43,15 +43,21 @@ class Fixtures
     /**
      * @var array
      */
+    protected $scenario = array();
+
+    /**
+     * @var array
+     */
     protected $questions = array();
 
-    public function __construct(GraphManager $gm, UserModel $um, LinkModel $lm, QuestionModel $qm, AnswerModel $am)
+    public function __construct(GraphManager $gm, UserModel $um, LinkModel $lm, QuestionModel $qm, AnswerModel $am, $scenario)
     {
         $this->gm = $gm;
         $this->um = $um;
         $this->lm = $lm;
         $this->qm = $qm;
         $this->am = $am;
+        $this->scenario = $scenario;
     }
 
     public function load()
@@ -165,58 +171,8 @@ class Fixtures
 
     protected function loadLikes()
     {
-        $likes = array(
-            array(
-                'user' => 1,
-                'linkFrom' => 1,
-                'linkTo' => 1000,
-            ),
-            array(
-                'user' => 2,
-                'linkFrom' => 1,
-                'linkTo' => 1000,
-            ),
-            array(
-                'user' => 3,
-                'linkFrom' => 1,
-                'linkTo' => 100,
-            ),
-            array(
-                'user' => 4,
-                'linkFrom' => 50,
-                'linkTo' => 150,
-            ),
-            array(
-                'user' => 5,
-                'linkFrom' => 1,
-                'linkTo' => 15,
-            ),
-            array(
-                'user' => 6,
-                'linkFrom' => 10,
-                'linkTo' => 25,
-            ),
-            array(
-                'user' => 7,
-                'linkFrom' => 1101,
-                'linkTo' => 1115,
-            ),
-            array(
-                'user' => 8,
-                'linkFrom' => 1110,
-                'linkTo' => 1125,
-            ),
-            array(
-                'user' => 9,
-                'linkFrom' => 1501,
-                'linkTo' => 1511,
-            ),
-            array(
-                'user' => 10,
-                'linkFrom' => 1507,
-                'linkTo' => 1515,
-            ),
-        );
+
+        $likes = $this->scenario['likes'];
 
         foreach ($likes as $like) {
             foreach (range($like['linkFrom'], $like['linkTo']) as $i) {
@@ -228,71 +184,7 @@ class Fixtures
     protected function loadAnswers()
     {
 
-        $answers = array(
-            array(
-                'user' => 1,
-                'answer' => 1,
-                'questionFrom' => 1,
-                'questionTo' => 20,
-            ),
-            array(
-                'user' => 1,
-                'answer' => 1,
-                'questionFrom' => 21,
-                'questionTo' => 31,
-            ),
-            array(
-                'user' => 2,
-                'answer' => 1,
-                'questionFrom' => 1,
-                'questionTo' => 20,
-            ),
-            array(
-                'user' => 2,
-                'answer' => 1,
-                'questionFrom' => 31,
-                'questionTo' => 41,
-            ),
-            // 18 common questions with same answer
-            array(
-                'user' => 3,
-                'answer' => 1,
-                'questionFrom' => 1,
-                'questionTo' => 18,
-            ),
-            array(
-                'user' => 4,
-                'answer' => 1,
-                'questionFrom' => 1,
-                'questionTo' => 18,
-            ),
-            // 52 common questions
-            array(
-                'user' => 3,
-                'answer' => 1,
-                'questionFrom' => 19,
-                'questionTo' => 52,
-            ),
-            array(
-                'user' => 4,
-                'answer' => 2,
-                'questionFrom' => 19,
-                'questionTo' => 52,
-            ),
-            // 120 and 78 questions in total
-            array(
-                'user' => 3,
-                'answer' => 1,
-                'questionFrom' => 53,
-                'questionTo' => 120,
-            ),
-            array(
-                'user' => 4,
-                'answer' => 2,
-                'questionFrom' => 121,
-                'questionTo' => 127,
-            ),
-        );
+        $answers = $this->scenario['answers'];
 
         foreach ($answers as $answer) {
 
