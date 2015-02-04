@@ -12,7 +12,7 @@ class Fixtures
 
     const NUM_OF_USERS = 20;
     const NUM_OF_LINKS = 2000;
-    const NUM_OF_TAGS = 20;
+    const NUM_OF_TAGS = 200;
     const NUM_OF_QUESTIONS = 200;
 
     /**
@@ -65,114 +65,6 @@ class Fixtures
         $this->loadLinkTags();
         $this->loadLikes();
         $this->loadAnswers();
-
-        /**
-         * User 3, answer to StoredQuestion 1 with Answer 1 and accepts as others answer [1,2]
-         */
-//        $userId = 4;
-//        $storedQuestionsIndex = 0;
-//        $rating = 1;
-//        $questionId = $this->questions[$storedQuestionsIndex]['id'];
-//        $answerId = $this->questions[$storedQuestionsIndex]['answers'][0];
-//        $acceptsIds = array(
-//            $this->questions[$storedQuestionsIndex]['answers'][0],
-//        );
-//        $this->userAnswerQuestion($userId, $questionId, $answerId, $acceptsIds, $rating);
-//
-//        $userId = 4;
-//        $storedQuestionsIndex = 1;
-//        $rating = 1;
-//        $questionId = $this->questions[$storedQuestionsIndex]['id'];
-//        $answerId = $this->questions[$storedQuestionsIndex]['answers'][0];
-//        $acceptsIds = array(
-//            $this->questions[$storedQuestionsIndex]['answers'][1]
-//        );
-//        $this->userAnswerQuestion($userId, $questionId, $answerId, $acceptsIds, $rating);
-//
-//        $userId = 5;
-//        $storedQuestionsIndex = 1;
-//        $rating = 1;
-//        $questionId = $this->questions[$storedQuestionsIndex]['id'];
-//        $answerId = $this->questions[$storedQuestionsIndex]['answers'][0];
-//        $acceptsIds = array(
-//            $this->questions[$storedQuestionsIndex]['answers'][0],
-//        );
-//        $this->userAnswerQuestion($userId, $questionId, $answerId, $acceptsIds, $rating);
-//
-//        $userId = 5;
-//        $storedQuestionsIndex = 3;
-//        $rating = 1;
-//        $questionId = $this->questions[$storedQuestionsIndex]['id'];
-//        $answerId = $this->questions[$storedQuestionsIndex]['answers'][1];
-//        $acceptsIds = array(
-//            $this->questions[$storedQuestionsIndex]['answers'][1],
-//        );
-//        $this->userAnswerQuestion($userId, $questionId, $answerId, $acceptsIds, $rating);
-//
-//        $userId = 6;
-//        $storedQuestionsIndex = 1;
-//        $rating = 1;
-//        $questionId = $this->questions[$storedQuestionsIndex]['id'];
-//        $answerId = $this->questions[$storedQuestionsIndex]['answers'][0];
-//        $acceptsIds = array(
-//            $this->questions[$storedQuestionsIndex]['answers'][1],
-//        );
-//        $this->userAnswerQuestion($userId, $questionId, $answerId, $acceptsIds, $rating);
-//
-//        $userId = 6;
-//        $storedQuestionsIndex = 2;
-//        $rating = 3;
-//        $questionId = $this->questions[$storedQuestionsIndex]['id'];
-//        $answerId = $this->questions[$storedQuestionsIndex]['answers'][1];
-//        $acceptsIds = array(
-//            $this->questions[$storedQuestionsIndex]['answers'][1],
-//            $this->questions[$storedQuestionsIndex]['answers'][2],
-//        );
-//        $this->userAnswerQuestion($userId, $questionId, $answerId, $acceptsIds, $rating);
-//
-//        $userId = 7;
-//        $storedQuestionsIndex = 1;
-//        $rating = 3;
-//        $questionId = $this->questions[$storedQuestionsIndex]['id'];
-//        $answerId = $this->questions[$storedQuestionsIndex]['answers'][1];
-//        $acceptsIds = array(
-//            $this->questions[$storedQuestionsIndex]['answers'][0],
-//        );
-//        $this->userAnswerQuestion($userId, $questionId, $answerId, $acceptsIds, $rating);
-//
-//        $userId = 7;
-//        $storedQuestionsIndex = 2;
-//        $rating = 3;
-//        $questionId = $this->questions[$storedQuestionsIndex]['id'];
-//        $answerId = $this->questions[$storedQuestionsIndex]['answers'][1];
-//        $acceptsIds = array(
-//            $this->questions[$storedQuestionsIndex]['answers'][0],
-//            $this->questions[$storedQuestionsIndex]['answers'][1],
-//        );
-//        $this->userAnswerQuestion($userId, $questionId, $answerId, $acceptsIds, $rating);
-//
-//        $userId = 7;
-//        $storedQuestionsIndex = 3;
-//        $rating = 1;
-//        $questionId = $this->questions[$storedQuestionsIndex]['id'];
-//        $answerId = $this->questions[$storedQuestionsIndex]['answers'][1];
-//        $acceptsIds = array(
-//            $this->questions[$storedQuestionsIndex]['answers'][1],
-//        );
-//        $this->userAnswerQuestion($userId, $questionId, $answerId, $acceptsIds, $rating);
-//
-//        for ($i = 41; $i <= self::NUM_OF_QUESTIONS; $i++) {
-//            $key = $i - 1;
-//            $questionId = $this->questions[$key]['id'];
-//            $answerId = $this->questions[$key]['answers'][1];
-//            $acceptsIds = array(
-//                $this->questions[$key]['answers'][1],
-//            );
-//            $rating = 1;
-//            $this->userAnswerQuestion(1, $questionId, $answerId, $acceptsIds, $rating);
-//            $this->userAnswerQuestion(2, $questionId, $answerId, $acceptsIds, $rating);
-//        }
-
     }
 
     protected function clean()
@@ -258,27 +150,15 @@ class Fixtures
 
     protected function loadLinkTags()
     {
-        $tags = array(
-            array(
-                'link' => 1,
-                'tagFrom' => 1,
-                'tagTo' => 10,
-            ),
-            array(
-                'link' => 2,
-                'tagFrom' => 5,
-                'tagTo' => 15,
-            ),
-            array(
-                'link' => 3,
-                'tagFrom' => 10,
-                'tagTo' => 20,
-            ),
-        );
 
-        foreach ($tags as $tag) {
-            foreach (range($tag['tagFrom'], $tag['tagTo']) as $i) {
-                $this->lm->addTag(array('url' => 'https://www.nekuno.com/link' . $tag['link']), array('name' => 'tag ' . $i));
+        $tag = 1;
+        foreach (range(1, self::NUM_OF_LINKS) as $link) {
+            foreach (range($tag, $tag + 3) as $tag) {
+                if ($tag > self::NUM_OF_TAGS) {
+                    $tag = 1;
+                    break;
+                }
+                $this->lm->addTag(array('url' => 'https://www.nekuno.com/link' . $link), array('name' => 'tag ' . $tag));
             }
         }
     }
