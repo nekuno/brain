@@ -73,7 +73,7 @@ class WorkerRabbitMQConsumeCommand extends ApplicationAwareCommand
             case 'matching':
                 /** @var AMQPChannel $channel */
                 $channel = $connection->channel();
-                $worker  = new MatchingCalculatorWorker($channel, $this->app['users.matching.model']);
+                $worker  = new MatchingCalculatorWorker($channel, $this->app['users.model'], $this->app['users.matching.model'], $this->app['users.similarity.model']);
                 $worker->setLogger($logger);
                 $logger->info('Processing matching queue');
                 $worker->consume();

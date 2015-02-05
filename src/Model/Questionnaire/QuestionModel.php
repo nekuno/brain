@@ -378,10 +378,11 @@ class QuestionModel
         WITH
             q,
             length(collect(answers)) AS numOfAnswers,
-            stdev(numOfUsersThatAnswered) AS standardDeviation
+            sum(numOfUsersThatAnswered) AS totalAnswers,
+            stdevp(numOfUsersThatAnswered) AS standardDeviation
         WITH
             q,
-            1- (standardDeviation*1.0/numOfAnswers) AS ranking
+            1- (standardDeviation*1.0/totalAnswers) AS ranking
         OPTIONAL MATCH
             (u:User)-[r:RATES]->(q)
         WITH

@@ -2,8 +2,9 @@
 
 namespace Model;
 
-use Everyman\Neo4j\Client;
-use Everyman\Neo4j\Cypher\Query;
+use Everyman\Neo4j\Query\Row;
+use Model\Neo4j\GraphManager;
+use Model\User\ProfileModel;
 use Model\User\UserStatusModel;
 use Paginator\PaginatedInterface;
 
@@ -14,17 +15,21 @@ use Paginator\PaginatedInterface;
  */
 class UserModel implements PaginatedInterface
 {
-    /**
-     * @var \Everyman\Neo4j\Client
-     */
-    protected $client;
 
     /**
-     * @param \Everyman\Neo4j\Client $client
+     * @var GraphManager
      */
-    public function __construct(Client $client)
+    protected $gm;
+
+    /**
+     * @var ProfileModel
+     */
+    protected $pm;
+
+    public function __construct(GraphManager $gm, ProfileModel $pm)
     {
-        $this->client = $client;
+        $this->gm = $gm;
+        $this->pm = $pm;
     }
 
     /**
@@ -40,45 +45,20 @@ class UserModel implements PaginatedInterface
             $user['email'] = '';
         }
 
-        $query = new Query(
-            $this->client,
-            "CREATE (u:User {
-                status: '" . UserStatusModel::USER_STATUS_INCOMPLETE . "',
-                qnoow_id: " . $user['id'] . ",
-                username: '" . $user['username'] . "',
-                email: '" . $user['email'] . "'
-            })
-            RETURN u;"
-        );
+        $qb = $this->gm->createQueryBuilder();
+        $qb->create('(u:User {qnoow_id: { qnoow_id }, status: { status }, username: { username }, email: { email }})')
+            ->setParameter('qnoow_id', $user['id'])
+            ->setParameter('status', UserStatusModel::USER_STATUS_INCOMPLETE)
+            ->setParameter('username', $user['username'])
+            ->setParameter('email', $user['email'])
+            ->returns('u');
 
-        try {
-            $result = $query->getResultSet();
-        } catch (\Exception $e) {
-            throw $e;
-        }
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        $this->pm->create($user['id'], array());
 
         return $this->parseResultSet($result);
-    }
-
-    /**
-     * @param $resultSet
-     * @return array
-     */
-    private function parseResultSet($resultSet)
-    {
-        $users = array();
-
-        foreach ($resultSet as $row) {
-            $user = array(
-                'qnoow_id' => $row['u']->getProperty('qnoow_id'),
-                'username' => $row['u']->getProperty('username'),
-                'email' => $row['u']->getProperty('email'),
-            );
-            $users[] = $user;
-        }
-
-        return $users;
-
     }
 
     /**
@@ -96,14 +76,14 @@ class UserModel implements PaginatedInterface
      */
     public function remove($id = null)
     {
-        $queryString = "MATCH (u:User {qnoow_id:" . $id . "}) DELETE u;";
-        $query = new Query($this->client, $queryString);
 
-        try {
-            $result = $query->getResultSet();
-        } catch (\Exception $e) {
-            throw $e;
-        }
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User {qnoow_id: { id }})')
+            ->delete('u')
+            ->setParameter('id', $id);
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
 
         return $this->parseResultSet($result);
     }
@@ -114,14 +94,13 @@ class UserModel implements PaginatedInterface
      */
     public function getAll()
     {
-        $queryString = "MATCH (u:User) RETURN u;";
-        $query = new Query($this->client, $queryString);
 
-        try {
-            $result = $query->getResultSet();
-        } catch (\Exception $e) {
-            throw $e;
-        }
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User)')
+            ->returns('u');
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
 
         return $this->parseResultSet($result);
 
@@ -134,14 +113,75 @@ class UserModel implements PaginatedInterface
      */
     public function getById($id = null)
     {
-        $queryString = "MATCH (u:User { qnoow_id : " . $id . "}) RETURN u;";
-        $query = new Query($this->client, $queryString);
 
-        try {
-            $result = $query->getResultSet();
-        } catch (\Exception $e) {
-            throw $e;
-        }
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User {qnoow_id: { id }})')
+            ->returns('u')
+            ->setParameter('id', (integer)$id);
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        return $this->parseResultSet($result);
+
+    }
+
+    /**
+     * @return array
+     * @throws \Exception
+     */
+    public function getAllCombinations()
+    {
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u1:User), (u2:User)')
+            ->where('u1.qnoow_id < u2.qnoow_id')
+            ->returns('u1.qnoow_id, u2.qnoow_id');
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        return $result;
+
+    }
+
+    /**
+     * @param null $id
+     * @return array
+     * @throws \Exception
+     */
+    public function getByCommonLinksWithUser($id = null)
+    {
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(ref:User {qnoow_id: { id }})')
+            ->match('(ref)-[:LIKES|DISLIKES]->(:Link)<-[:LIKES]-(u:User)')
+            ->returns('DISTINCT u')
+            ->setParameter('id', (integer)$id);
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        return $this->parseResultSet($result);
+
+    }
+
+    /**
+     * @param $questionId
+     * @return array
+     * @throws \Exception
+     */
+    public function getByQuestionAnswered($questionId)
+    {
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User)-[:RATES]->(q:Question)')
+            ->where('id(q) IN [ { questions } ]')
+            ->returns('DISTINCT u')
+            ->setParameter('questions', (integer)$questionId);
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
 
         return $this->parseResultSet($result);
 
@@ -153,25 +193,35 @@ class UserModel implements PaginatedInterface
      */
     public function getStatus($id)
     {
-        $queryString = "
-             MATCH (u:User {qnoow_id: $id})
-             OPTIONAL MATCH (u)-[:ANSWERS]->(a:Answer)
-             OPTIONAL MATCH (u)-[:LIKES]->(l:Link)
-             RETURN u.status AS status, COUNT(DISTINCT a) AS answerCount, COUNT(DISTINCT l) AS linkCount";
-        $query = new Query($this->client, $queryString);
 
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User {qnoow_id: { id }})')
+            ->optionalMatch('(u)-[:ANSWERS]->(a:Answer)')
+            ->optionalMatch('(u)-[:LIKES]->(l:Link)')
+            ->returns('u.status AS status', 'COUNT(DISTINCT a) AS answerCount', 'COUNT(DISTINCT l) AS linkCount')
+            ->setParameter('id', (integer)$id);
+
+        $query = $qb->getQuery();
         $result = $query->getResultSet();
 
-        /* @var $row \Everyman\Neo4j\Query\Row */
+        /* @var $row Row */
         $row = $result->current();
         $status = $row['status'];
 
         $status = new UserStatusModel($status, $row['answerCount'], $row['linkCount']);
 
         if ($status->getStatus() !== $status) {
+
             $newStatus = $status->getStatus();
-            $queryString = "MATCH (u:User {qnoow_id: $id}) SET u.status = '$newStatus' RETURN u";
-            $query = new Query($this->client, $queryString);
+
+            $qb = $this->gm->createQueryBuilder();
+            $qb->match('(u:User {qnoow_id: { id }})')
+                ->set('u.status = { status }')
+                ->returns('u')
+                ->setParameter('id', $id)
+                ->setParameter('status', $newStatus);
+
+            $query = $qb->getQuery();
             $query->getResultSet();
         }
 
@@ -193,7 +243,7 @@ class UserModel implements PaginatedInterface
     {
         $response = array();
 
-        $params = array(
+        $parameters = array(
             'offset' => (integer)$offset,
             'limit' => (integer)$limit
         );
@@ -206,28 +256,28 @@ class UserModel implements PaginatedInterface
                     MATCH (profile)-[:OPTION_OF]-(zodiacSign:ZodiacSign)
                     WHERE id(zodiacSign) = {zodiacSign}
                 ";
-                $params['zodiacSign'] = $filters['profile']['zodiacSign'];
+                $parameters['zodiacSign'] = $filters['profile']['zodiacSign'];
             }
             if (isset($filters['profile']['gender'])) {
                 $profileQuery .= "
                     MATCH (profile)-[:OPTION_OF]-(gender:Gender)
                     WHERE id(gender) = {gender}
                 ";
-                $params['gender'] = $filters['profile']['gender'];
+                $parameters['gender'] = $filters['profile']['gender'];
             }
             if (isset($filters['profile']['orientation'])) {
                 $profileQuery .= "
                     MATCH (profile)-[:OPTION_OF]-(orientation:Orientation)
                     WHERE id(orientation) = {orientation}
                 ";
-                $params['orientation'] = $filters['profile']['orientation'];
+                $parameters['orientation'] = $filters['profile']['orientation'];
             }
         }
 
         $referenceUserQuery = "";
         $resultQuery = " RETURN user ";
         if (isset($filters['referenceUserId'])) {
-            $params['referenceUserId'] = (integer)$filters['referenceUserId'];
+            $parameters['referenceUserId'] = (integer)$filters['referenceUserId'];
             $referenceUserQuery = "
                 MATCH
                 (referenceUser:User)
@@ -236,8 +286,10 @@ class UserModel implements PaginatedInterface
                 user.qnoow_id <> {referenceUserId}
                 OPTIONAL MATCH
                 (user)-[match:MATCHES]-(referenceUser)
+                OPTIONAL MATCH
+                (user)-[similarity:SIMILARITY]-(referenceUser)
              ";
-            $resultQuery .= ", match";
+            $resultQuery .= ", match, similarity ";
         }
 
         $query = "
@@ -254,38 +306,30 @@ class UserModel implements PaginatedInterface
             ;
          ";
 
-        //Create the Neo4j query object
-        $contentQuery = new Query(
-            $this->client,
-            $query,
-            $params
-        );
+        $contentQuery = $this->gm->createQuery($query, $parameters);
 
-        //Execute query
-        try {
-            $result = $contentQuery->getResultSet();
+        $result = $contentQuery->getResultSet();
 
-            foreach ($result as $row) {
-                $user = array();
+        foreach ($result as $row) {
+            $user = array();
 
-                $user['id'] = $row['user']->getProperty('qnoow_id');
-                $user['username'] = $row['content']->getProperty('username');
-                $user['email'] = $row['content']->getProperty('email');
-                $user['matching']['content'] = 0;
-                $user['matching']['questions'] = 0;
+            $user['id'] = $row['user']->getProperty('qnoow_id');
+            $user['username'] = $row['content']->getProperty('username');
+            $user['email'] = $row['content']->getProperty('email');
 
-                if (isset($row['match'])) {
-                    $matchingByContent = $row['match']->getProperty('matching_content');
-                    $matchingByQuestions = $row['match']->getProperty('matching_questions');
-                    $user['matching']['content'] = null === $matchingByContent ? 0 : $matchingByContent;
-                    $user['matching']['questions'] = null === $matchingByQuestions ? 0 : $matchingByQuestions;
-                }
-
-                $response[] = $user;
+            $user['matching'] = 0;
+            if (isset($row['match'])) {
+                $matchingByQuestions = $row['match']->getProperty('matching_questions');
+                $user['matching'] = null === $matchingByQuestions ? 0 : $matchingByQuestions;
             }
 
-        } catch (\Exception $e) {
-            throw $e;
+            $user['similarity'] = 0;
+            if (isset($row['similarity'])) {
+                $similarity = $row['similarity']->getProperty('similarity');
+                $user['similarity'] = null === $similarity ? 0 : $similarity;
+            }
+
+            $response[] = $user;
         }
 
         return $response;
@@ -296,11 +340,12 @@ class UserModel implements PaginatedInterface
      */
     public function countTotal(array $filters)
     {
-        $params = array();
+
+        $parameters = array();
 
         $queryWhere = " WHERE user.status = 'complete' ";
         if (isset($filters['referenceUserId'])) {
-            $params['referenceUserId'] = (integer)$filters['referenceUserId'];
+            $parameters['referenceUserId'] = (integer)$filters['referenceUserId'];
             $queryWhere .= " AND user.qnoow_id <> {referenceUserId} ";
         }
 
@@ -317,26 +362,33 @@ class UserModel implements PaginatedInterface
             ;
         ";
 
-        //Create the Neo4j query object
-        $contentQuery = new Query(
-            $this->client,
-            $query,
-            $params
-        );
+        $contentQuery = $this->gm->createQuery($query, $parameters);
 
-        $count = 0;
-        //Execute query
-        try {
-            $result = $contentQuery->getResultSet();
-
-            foreach ($result as $row) {
-                $count = $row['total'];
-            }
-
-        } catch (\Exception $e) {
-            throw $e;
-        }
+        $result = $contentQuery->getResultSet();
+        $row = $result->current();
+        $count = $row['total'];
 
         return $count;
+    }
+
+    /**
+     * @param $resultSet
+     * @return array
+     */
+    private function parseResultSet($resultSet)
+    {
+        $users = array();
+
+        foreach ($resultSet as $row) {
+            $user = array(
+                'qnoow_id' => $row['u']->getProperty('qnoow_id'),
+                'username' => $row['u']->getProperty('username'),
+                'email' => $row['u']->getProperty('email'),
+            );
+            $users[] = $user;
+        }
+
+        return $users;
+
     }
 }

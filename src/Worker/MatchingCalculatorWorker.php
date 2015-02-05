@@ -4,6 +4,8 @@
 namespace Worker;
 
 use Model\User\Matching\MatchingModel;
+use Model\User\Similarity\SimilarityModel;
+use Model\UserModel;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Message\AMQPMessage;
 use Psr\Log\LoggerAwareInterface;
@@ -26,13 +28,28 @@ class MatchingCalculatorWorker implements RabbitMQConsumerInterface, LoggerAware
      */
     protected $channel;
 
-    protected $model;
+    /**
+     * @var UserModel
+     */
+    protected $userModel;
 
-    public function __construct(AMQPChannel $channel, MatchingModel $model)
+    /**
+     * @var MatchingModel
+     */
+    protected $matchingModel;
+
+    /**
+     * @var SimilarityModel
+     */
+    protected $similarityModel;
+
+    public function __construct(AMQPChannel $channel, UserModel $userModel, MatchingModel $matchingModel, SimilarityModel $similarityModel)
     {
 
         $this->channel = $channel;
-        $this->model = $model;
+        $this->userModel = $userModel;
+        $this->matchingModel = $matchingModel;
+        $this->similarityModel = $similarityModel;
     }
 
     /**
@@ -71,11 +88,17 @@ class MatchingCalculatorWorker implements RabbitMQConsumerInterface, LoggerAware
             case 'content_rated':
             case 'process_finished':
                 try {
-                    $this->model->calculateMatchingByContentOfUserWhenNewContentIsAdded($data['userId']);
+                    $userA = $data['userId'];
+                    $usersWithSameContent = $this->userModel->getByCommonLinksWithUser($userA);
+
+                    foreach ($usersWithSameContent as $currentUser) {
+                        $userB = $currentUser['qnoow_id'];
+                        $this->similarityModel->calculateSimilarityByInterests($userA, $userB);
+                    }
                 } catch (\Exception $e) {
                     $this->logger->debug(
                         sprintf(
-                            'Worker: Error calculating matching for user %d with message %s on file %s, line %d',
+                            'Worker: Error calculating similarity for user %d with message %s on file %s, line %d',
                             $data['userId'],
                             $e->getMessage(),
                             $e->getFile(),
@@ -86,14 +109,21 @@ class MatchingCalculatorWorker implements RabbitMQConsumerInterface, LoggerAware
                 break;
             case 'question_answered':
                 try {
-                    $this->model->calculateMatchingOfUserByAnswersWhenNewQuestionsAreAnswered(
-                        $data['user_id'],
-                        array($data['question_id'])
-                    );
+                    $userA = $data['userId'];
+                    $usersAnsweredQuestion = $this->userModel->getByQuestionAnswered($data['question_id']);
+
+                    foreach ($usersAnsweredQuestion as $currentUser) {
+                        $userB = $currentUser['qnoow_id'];
+                        if ($userA <> $userB) {
+                            $this->similarityModel->calculateSimilarityByQuestions($userA, $userB);
+                            $this->matchingModel->calculateMatchingBetweenTwoUsersBasedOnAnswers($userA, $userB);
+                        }
+                    }
+
                 } catch (\Exception $e) {
                     $this->logger->debug(
                         sprintf(
-                            'Worker: Error calculating matching for user %d with message %s on file %s, line %d',
+                            'Worker: Error calculating matching and similarity for user %d with message %s on file %s, line %d',
                             $data['user_id'],
                             $e->getMessage(),
                             $e->getFile(),
@@ -106,10 +136,10 @@ class MatchingCalculatorWorker implements RabbitMQConsumerInterface, LoggerAware
                 try {
                     switch($data['matching_type']){
                         case 'content':
-                            $this->model->calculateMatchingBetweenTwoUsersBasedOnSharedContent($data['user_1_id'], $data['user_2_id']);
+                            $this->similarityModel->getSimilarity($data['user_1_id'], $data['user_2_id']);
                             break;
                         case 'answer':
-                            $this->model->calculateMatchingBetweenTwoUsersBasedOnAnswers($data['user_1_id'], $data['user_2_id']);
+                            $this->matchingModel->calculateMatchingBetweenTwoUsersBasedOnAnswers($data['user_1_id'], $data['user_2_id']);
                             break;
                     }
                 } catch (\Exception $e) {

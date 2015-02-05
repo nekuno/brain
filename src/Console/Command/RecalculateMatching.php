@@ -3,7 +3,7 @@
 namespace Console\Command;
 
 use Model\User\Matching\MatchingModel;
-
+use Model\UserModel;
 use Silex\Application;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -17,35 +17,55 @@ class RecalculateMatching extends ApplicationAwareCommand
         $this->setName('matching:recalculate')
             ->setDescription("Recalculate the matching between two users.")
             ->addArgument(
-                'user1',
-                InputArgument::REQUIRED,
+                'userA',
+                InputArgument::OPTIONAL,
                 'id of the first user?'
             )
             ->addArgument(
-                'user2',
-                InputArgument::REQUIRED,
+                'userB',
+                InputArgument::OPTIONAL,
                 'id of the second user?'
-            )
-        ;
+            );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        /* @var \Model\User\Matching\MatchingModel $modelObject */
+        /* @var MatchingModel $modelObject */
         $modelObject = $this->app['users.matching.model'];
 
-        $id1 = $input->getArgument('user1');
-        $id2 = $input->getArgument('user2');
+        $userA = $input->getArgument('userA');
+        $userB = $input->getArgument('userB');
+
+        $combinations = array(
+          array(
+            0 => $userA,
+            1 => $userB
+          )
+        );
+        if (null === $userA || null === $userB) {
+            /* @var $userModel UserModel */
+            $userModel = $this->app['users.model'];
+            $combinations = $userModel->getAllCombinations();
+        }
 
         try {
-            $oldQuestionMatching = $modelObject->getMatchingBetweenTwoUsersBasedOnAnswers($id1, $id2);
-            $oldContentMatching = $modelObject->getMatchingBetweenTwoUsersBasedOnContent($id1, $id2);
 
-            $modelObject->calculateMatchingBetweenTwoUsersBasedOnAnswers($id1, $id2);
-            $modelObject->calculateMatchingBetweenTwoUsersBasedOnSharedContent($id1, $id2);
+            foreach ($combinations AS $users) {
+                $userA = $users[0];
+                $userB = $users[1];
 
-            $newQuestionMatching = $modelObject->getMatchingBetweenTwoUsersBasedOnAnswers($id1, $id2);
-            $newContentMatching = $modelObject->getMatchingBetweenTwoUsersBasedOnContent($id1, $id2);
+                if (count($combinations) == 1) {
+                    $oldQuestionMatching = $modelObject->getMatchingBetweenTwoUsersBasedOnAnswers($userA, $userB);
+                    $output->writeln('Old Questions Matching: ' . $oldQuestionMatching['matching']);
+                }
+
+                $modelObject->calculateMatchingBetweenTwoUsersBasedOnAnswers($userA, $userB);
+
+                if (count($combinations) == 1) {
+                    $newQuestionMatching = $modelObject->getMatchingBetweenTwoUsersBasedOnAnswers($userA, $userB);
+                    $output->writeln('New Questions Matching: ' . $newQuestionMatching['matching']);
+                }
+            }
 
         } catch (\Exception $e) {
             $output->writeln(
@@ -55,10 +75,8 @@ class RecalculateMatching extends ApplicationAwareCommand
             return;
         }
 
-        $output->writeln('Old Questions Matching: ' . $oldQuestionMatching['matching']);
-        $output->writeln('New Questions Matching: ' . $newQuestionMatching['matching']);
-        $output->writeln('Old Content Matching: ' . $oldContentMatching['matching']);
-        $output->writeln('New Content Matching: ' . $newContentMatching['matching']);
+
+
 
     }
 }

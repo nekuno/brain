@@ -2,31 +2,24 @@
 
 namespace Model\User\Recommendation;
 
+use Everyman\Neo4j\Cypher\Query;
+use Model\Neo4j\GraphManager;
 use Model\User\ProfileModel;
 use Paginator\PaginatedInterface;
-
-use Everyman\Neo4j\Client;
-use Everyman\Neo4j\Cypher\Query;
 
 class UserRecommendationPaginatedModel implements PaginatedInterface
 {
 
-    /**
-     * @var \Everyman\Neo4j\Client
-     */
-    protected $client;
+    protected $gm;
 
     /**
      * @var ProfileModel
      */
     protected $profileModel;
 
-    /**
-     * @param \Everyman\Neo4j\Client $client
-     */
-    public function __construct(Client $client, ProfileModel $profileModel)
+    public function __construct(GraphManager $gm, ProfileModel $profileModel)
     {
-        $this->client = $client;
+        $this->gm = $gm;
         $this->profileModel = $profileModel;
     }
 
@@ -56,64 +49,54 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         $id = $filters['id'];
         $response = array();
 
-        $params = array(
+        $parameters = array(
             'offset' => (integer)$offset,
             'limit' => (integer)$limit
         );
 
         $profileFilters = $this->getProfileFilters($filters['profileFilters']);
 
-        $orderQuery = ' ORDER BY matching_questions DESC ';
+        $orderQuery = ' ORDER BY matching_questions DESC, similarity DESC ';
         if (isset($filters['order']) && $filters['order'] == 'content') {
-            $orderQuery = ' ORDER BY matching_content DESC ';
+            $orderQuery = ' ORDER BY similarity DESC, matching_questions DESC ';
         }
 
-        $query = "
-            MATCH (u:User {qnoow_id: $id})
-            MATCH (u)-[r:MATCHES]-(anyUser:User)
-            MATCH (anyUser)<-[:PROFILE_OF]-(p:Profile)
-            WHERE (r.matching_questions > 0 OR r.matching_content > 0)";
+        $query = "MATCH (u:User {qnoow_id: $id})-[:MATCHES|SIMILARITY]-(anyUser:User)
+OPTIONAL MATCH (u)-[m:MATCHES]-(anyUser)
+OPTIONAL MATCH (u)-[s:SIMILARITY]-(anyUser)
+WITH u, anyUser,
+(CASE WHEN HAS(m.matching_questions) THEN m.matching_questions ELSE 0 END) AS matching_questions,
+(CASE WHEN HAS(s.similarity) THEN s.similarity ELSE 0 END) AS similarity
+MATCH (anyUser)<-[:PROFILE_OF]-(p:Profile)
+WHERE matching_questions > 0 OR similarity > 0 ";
 
         if ($profileFilters) {
             $query .= "\n" . implode("\n", $profileFilters);
         }
 
         $query .= "
-            RETURN
-            DISTINCT anyUser.qnoow_id AS id,
-            anyUser.username AS username,
-            CASE r.matching_questions IS NULL WHEN true THEN 0 ELSE r.matching_questions END as matching_questions,
-            CASE r.matching_content IS NULL WHEN true THEN 0 ELSE r.matching_content END as matching_content";
+RETURN
+DISTINCT anyUser.qnoow_id AS id,
+anyUser.username AS username,
+matching_questions,
+similarity";
         $query .= $orderQuery;
         $query .= "
-            SKIP {offset}
-            LIMIT {limit}
-            ;
-         ";
+SKIP {offset}
+LIMIT {limit}";
 
-        //Create the Neo4j query object
-        $contentQuery = new Query(
-            $this->client,
-            $query,
-            $params
-        );
+        $query = $this->gm->createQuery($query, $parameters);
 
-        //Execute query
-        try {
-            $result = $contentQuery->getResultSet();
+        $result = $query->getResultSet();
 
-            foreach ($result as $row) {
-                $user = array();
-                $user['id'] = $row['id'];
-                $user['username'] = $row['username'];
-                $user['matching_questions'] = $row['matching_questions'];
-                $user['matching_content'] = $row['matching_content'];
+        foreach ($result as $row) {
+            $user = array();
+            $user['id'] = $row['id'];
+            $user['username'] = $row['username'];
+            $user['matching'] = $row['matching_questions'];
+            $user['similarity'] = $row['similarity'];
 
-                $response[] = $user;
-            }
-
-        } catch (\Exception $e) {
-            throw $e;
+            $response[] = $user;
         }
 
         return $response;
@@ -130,40 +113,26 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         $id = $filters['id'];
         $count = 0;
 
-        $params = array();
-
         $profileFilters = $this->getProfileFilters($filters['profileFilters']);
 
-        $query = "
-            MATCH (u:User {qnoow_id: $id})
-            MATCH (u)-[r:MATCHES]-(anyUser:User)
-            MATCH (anyUser)<-[:PROFILE_OF]-(p:Profile)
-            WHERE r.matching_questions > 0 OR r.matching_content > 0";
+        $query = "MATCH (u:User {qnoow_id: $id})
+MATCH (u)-[r:MATCHES]-(anyUser:User)
+MATCH (anyUser)<-[:PROFILE_OF]-(p:Profile)
+WHERE r.matching_questions > 0 OR r.matching_content > 0";
 
         if ($profileFilters) {
             $query .= "\n" . implode("\n", $profileFilters);
         }
 
         $query .= "
-            RETURN COUNT(DISTINCT anyUser) as total;";
+RETURN COUNT(DISTINCT anyUser) as total;";
 
-        //Create the Neo4j query object
-        $contentQuery = new Query(
-            $this->client,
-            $query,
-            $params
-        );
+        $query = $this->gm->createQuery($query);
 
-        //Execute query
-        try {
-            $result = $contentQuery->getResultSet();
+        $result = $query->getResultSet();
 
-            foreach ($result as $row) {
-                $count = $row['total'];
-            }
-
-        } catch (\Exception $e) {
-            throw $e;
+        foreach ($result as $row) {
+            $count = $row['total'];
         }
 
         return $count;
