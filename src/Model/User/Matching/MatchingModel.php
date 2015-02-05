@@ -189,8 +189,8 @@ class MatchingModel
         //Construct query String
         $queryString = "
         MATCH
-            (u1:User {qnoow_id: 1}),
-            (u2:User {qnoow_id: 2})
+            (u1:User {qnoow_id: { id1 }}),
+            (u2:User {qnoow_id: { id2 }})
         OPTIONAL MATCH
             (u1)-[:ACCEPTS]->(acceptedAnswerU1:Answer)<-[:ANSWERS]-(u2),
             (acceptedAnswerU1)-[:IS_ANSWER_OF]->(:Question)<-[rateAcceptedAnswerU1:RATES]-(u1)
