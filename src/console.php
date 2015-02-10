@@ -19,6 +19,7 @@ $console->addCommands(
         new \Console\Command\RecalculateMatching($app),
         new \Console\Command\RecalculatePopularity($app),
         new \Console\Command\SimilarityCommand($app),
+        new \Console\Command\AffinityCommand($app),
         new \Console\Command\EnqueueFetchingCommand($app),
     )
 );
