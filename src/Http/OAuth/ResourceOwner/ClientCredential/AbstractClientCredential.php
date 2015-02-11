@@ -20,7 +20,7 @@ abstract class AbstractClientCredential implements ClientCredentialInterface
     /**
      * Get the value of an option
      *
-     * @param $name the name of the options
+     * @param string $name The name of the options
      */
     public function getOption($name)
     {
