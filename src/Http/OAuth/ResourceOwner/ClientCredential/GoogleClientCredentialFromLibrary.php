@@ -7,6 +7,8 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 class GoogleClientCredentialFromLibrary extends AbstractClientCredential
 {
 
+    protected $key = null;
+
     /**
      * {@inheritDoc}
      */
@@ -43,12 +45,14 @@ class GoogleClientCredentialFromLibrary extends AbstractClientCredential
         if (isset($_SESSION['google']['service_token'])) {
             $client->setAccessToken($_SESSION['google']['service_token']);
         }
-        $key = file_get_contents($keyFileLocation);
+        if (is_null($this->key)) {
+            $this->key = file_get_contents($keyFileLocation);
+        }
 
         $credentials = new \Google_Auth_AssertionCredentials(
             $serviceAccountName,
             $scopes,
-            $key,
+            $this->key,
             $keyPassword
         );
 
