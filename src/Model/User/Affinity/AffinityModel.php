@@ -96,8 +96,8 @@ class AffinityModel
                 'COUNT(similarUsers) AS numUsers',
                 'REDUCE(totalInverse = 1.0, i IN COLLECT(inverseSimilarity) | totalInverse * i) AS totalInverse'
             )
-            ->with('user, link, totalInverse ^ (1.0/numUsers) AS geometricMean')
-            ->with('user, link, 1 - geometricMean AS affinity')
+            ->with('user, link, totalInverse ^ (1.0/numUsers) AS inverseGeometricMean')
+            ->with('user, link, 1 - inverseGeometricMean AS affinity')
         ;
 
         $qb
