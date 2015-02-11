@@ -30,6 +30,8 @@ $app->get('/users/{id}/recommendations/content', 'users.controller:getContentRec
 $app->get('/users/{id}/recommendations/content/tags', 'users.controller:getContentRecommendationTagsAction');
 $app->get('/users/{id}/status', 'users.controller:statusAction');
 
+$app->get('/users/{userId}/affinity/{linkId}', 'users.controller:getAffinityAction');
+
 $app->post('/users/{userId}/answers/explain', 'users.answers.controller:explainAction');
 $app->get('/users/{userId}/answers', 'users.answers.controller:indexAction');
 $app->post('/users/{userId}/answers', 'users.answers.controller:createAction');
