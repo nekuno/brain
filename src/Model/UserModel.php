@@ -146,6 +146,28 @@ class UserModel implements PaginatedInterface
     }
 
     /**
+     * @return array
+     * @throws \Exception
+     */
+    public function getPredictedContent($id)
+    {
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(l:Link), (u:User {qnoow_id: { id } })')
+            ->where('NOT ((u)-[:LIKES|:DISLIKES]-(l))')
+            ->returns('id(l) AS id')
+            ->limit('10');
+
+        $qb->setParameter('id', (integer)$id);
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        return $result;
+
+    }
+
+    /**
      * @param null $id
      * @return array
      * @throws \Exception
