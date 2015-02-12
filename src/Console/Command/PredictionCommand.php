@@ -3,9 +3,11 @@
 namespace Console\Command;
 
 use Model\UserModel;
+use Model\LinkModel;
 use Model\User\Affinity\AffinityModel;
 use Silex\Application;
 use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -18,27 +20,57 @@ class PredictionCommand extends ApplicationAwareCommand
             ->setDescription('Calculate the predicted high affinity links for a user.')
             ->addArgument(
                 'user',
-                InputArgument::REQUIRED,
-                'id of the user?'
-            );
+                InputArgument::OPTIONAL,
+                'the id of the user'
+            )
+            ->addOption(
+                'limit',
+                null,
+                InputOption::VALUE_OPTIONAL,
+                'Max links to calculate per user'
+            )
+        ;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        /* @var $model UserModel */
-        $usersModel = $this->app['users.model'];
-        /* @var $model AffinityModel */
+        /* @var $userModel UserModel */
+        $userModel = $this->app['users.model'];
+        /* @var $linkModel LinkModel */
+        $linkModel = $this->app['links.model'];
+        /* @var $affinityModel AffinityModel */
         $affinityModel = $this->app['users.affinity.model'];
 
         $user = $input->getArgument('user');
+        $limit = $input->getOption('limit');
 
         try {
 
-            $links = $usersModel->getPredictedContent($user);
+            if (null === $user) {
+                $users = $userModel->getAll();
+            } else {
+                $users = $userModel->getById($user);
+            }
 
-            foreach($links as $link) {
-                $affinity = $affinityModel->getAffinity($user, $link['id']);
-                $output->writeln($link['id'] . ' -> ' . $affinity['affinity']);
+            $limit = $limit?:10;
+
+            foreach ($users as $user) {
+                $userId = $user['qnoow_id'];
+                $links = $linkModel->getPredictedContentForAUser($userId, $limit);
+
+                foreach($links as $link) {
+                    $linkId = $link['id'];
+                    $affinity = $affinityModel->getAffinity($userId, $linkId);
+
+                    $output->writeln(
+                        sprintf(
+                            'User: %d --> Link: %d (Affinity: %f)',
+                            $userId,
+                            $linkId,
+                            $affinity['affinity']
+                        )
+                    );
+                }
             }
 
         } catch (\Exception $e) {

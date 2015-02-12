@@ -307,4 +307,42 @@ class LinkModel
 
         return false;
     }
+
+    /**
+     * @param integer $userId
+     * @param integer $limit Max Number of content to return
+     * @return array
+     * @throws \Exception
+     */
+    public function getPredictedContentForAUser($userId, $limit=10)
+    {
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User {qnoow_id: { uid } })')
+          ->match('(u)-[r:SIMILARITY]-(users:User)')
+          ->with('users,u,r.similarity AS m')
+          ->orderby('m DESC')
+          ->limit('10');
+
+        $qb->match('(users)-[d:LIKES]->(l:Link)')
+          ->where('NOT(u)-[:LIKES|:DISLIKES|:AFFINITY]-(l)')
+          ->with('id(l) AS id, avg(m) AS average, count(d) AS amount')
+          ->where('amount>=2')
+          ->returns('id')
+          ->orderby('average DESC')
+          ->limit('{ limit }');
+
+        $qb->setParameters(
+          array(
+            'uid'   => (integer)$userId,
+            'limit' => (integer)$limit,
+          )
+        );
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        return $result;
+
+    }
 }
