@@ -153,13 +153,21 @@ class UserModel implements PaginatedInterface
     {
 
         $qb = $this->gm->createQueryBuilder();
-        $qb->match('(l:Link), (u:User {qnoow_id: { id } })')
-            ->where('NOT ((u)-[:LIKES|:DISLIKES]-(l))')
-            ->returns('id(l) AS id')
+        $qb ->match('(u:User {qnoow_id: { uid } })')
+            ->match('(u)-[r:SIMILARITY]-(users:User)')
+   	    ->with('users,u,r.similarity AS m')
+	    ->orderby('m DESC')
+            ->limit('10')
+
+	    ->match('(users)-[d:LIKES]->(l:Link)')
+            ->where('NOT(u)-[:LIKES|:DISLIKES]-(l)')
+            ->with('id(l) AS id, avg(m) AS average, count(d) AS amount')
+	    ->where('(amount>=2)')
+            ->returns('id')
+	    ->orderby('average DESC')
             ->limit('10');
-
-        $qb->setParameter('id', (integer)$id);
-
+        $qb->setParameter('uid', (integer)$id);
+	
         $query = $qb->getQuery();
         $result = $query->getResultSet();
 
