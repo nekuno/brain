@@ -7,7 +7,38 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 class GoogleClientCredentialFromLibrary extends AbstractClientCredential
 {
 
-    protected $key = null;
+    /**
+     * @var \Google_Client
+     */
+    protected $client = null;
+
+    /**
+     * @var \Google_Auth_AssertionCredentials
+     */
+    protected $credentials = null;
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getClientToken()
+    {
+
+        $client = $this->getClient();
+
+        /* @var $auth \Google_Auth_OAuth2 */
+        $auth = $client->getAuth();
+        if ($auth->isAccessTokenExpired()) {
+            $auth->refreshTokenWithAssertion($this->getCredentials());
+        }
+
+        $tokenInfo = json_decode($client->getAccessToken());
+
+        if (!isset($tokenInfo->access_token)) {
+            return '';
+        }
+
+        return $tokenInfo->access_token;
+    }
 
     /**
      * {@inheritDoc}
@@ -16,9 +47,11 @@ class GoogleClientCredentialFromLibrary extends AbstractClientCredential
     {
         parent::configureOptions($resolver);
 
-        $resolver->setDefaults(array(
-            'key_password' => 'notasecret',
-        ));
+        $resolver->setDefaults(
+            array(
+                'key_password' => 'notasecret',
+            )
+        );
         $resolver->setRequired(
             array(
                 'service_account_email',
@@ -29,45 +62,52 @@ class GoogleClientCredentialFromLibrary extends AbstractClientCredential
     }
 
     /**
-     * {@inheritDoc}
+     * @return \Google_Client
      */
-    public function getClientToken()
+    protected function getClient()
     {
+
+        if ($this->client instanceof \Google_Client) {
+            return $this->client;
+        }
+
+        $this->client = new \Google_Client();
+        $this->client->setApplicationName('Nekuno'); // seems irrelevant
+        $this->client->setAssertionCredentials($this->getCredentials());
+
+        /* @var $auth \Google_Auth_OAuth2 */
+        $auth = $this->client->getAuth();
+        if ($auth->isAccessTokenExpired()) {
+            $auth->refreshTokenWithAssertion($this->getCredentials());
+        }
+
+        return $this->client;
+
+    }
+
+    /**
+     * @return \Google_Auth_AssertionCredentials
+     */
+    protected function getCredentials()
+    {
+
+        if ($this->credentials instanceof \Google_Auth_AssertionCredentials) {
+            return $this->credentials;
+        }
+
         $serviceAccountName = $this->getOption('service_account_email');
         $keyFileLocation = $this->getOption('key_file');
         $keyPassword = $this->getOption('key_password');
         $scopes = $this->getOption('scopes');
+        $key = file_get_contents($keyFileLocation);
 
-
-        $client = new \Google_Client();
-        $client->setApplicationName("Nekuno"); //seems irrelevant
-
-        if (isset($_SESSION['google']['service_token'])) {
-            $client->setAccessToken($_SESSION['google']['service_token']);
-        }
-        if (is_null($this->key)) {
-            $this->key = file_get_contents($keyFileLocation);
-        }
-
-        $credentials = new \Google_Auth_AssertionCredentials(
+        $this->credentials = new \Google_Auth_AssertionCredentials(
             $serviceAccountName,
             $scopes,
-            $this->key,
+            $key,
             $keyPassword
         );
 
-        $client->setAssertionCredentials($credentials);
-        if ($client->getAuth()->isAccessTokenExpired()) {
-            $client->getAuth()->refreshTokenWithAssertion($credentials);
-        }
-        $_SESSION['google']['service_token'] = $client->getAccessToken();
-
-        $tokenInfo = json_decode($_SESSION['google']['service_token']);
-
-        if (!isset($tokenInfo->access_token)) {
-            return '';
-        }
-
-        return $tokenInfo->access_token;
+        return $this->credentials;
     }
 } 
