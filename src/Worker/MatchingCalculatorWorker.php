@@ -87,8 +87,11 @@ class MatchingCalculatorWorker implements RabbitMQConsumerInterface, LoggerAware
         switch ($trigger) {
             case 'content_rated':
             case 'process_finished':
+
+                $userA = $data['userId'];
+                $this->logger->info(sprintf('Calculating matching by trigger "%s" for user "%s"', $trigger, $userA));
+
                 try {
-                    $userA = $data['userId'];
                     $usersWithSameContent = $this->userModel->getByCommonLinksWithUser($userA);
 
                     foreach ($usersWithSameContent as $currentUser) {
@@ -96,10 +99,10 @@ class MatchingCalculatorWorker implements RabbitMQConsumerInterface, LoggerAware
                         $this->similarityModel->calculateSimilarityByInterests($userA, $userB);
                     }
                 } catch (\Exception $e) {
-                    $this->logger->debug(
+                    $this->logger->error(
                         sprintf(
                             'Worker: Error calculating similarity for user %d with message %s on file %s, line %d',
-                            $data['userId'],
+                            $userA,
                             $e->getMessage(),
                             $e->getFile(),
                             $e->getLine()
@@ -108,8 +111,11 @@ class MatchingCalculatorWorker implements RabbitMQConsumerInterface, LoggerAware
                 }
                 break;
             case 'question_answered':
+
+                $userA = $data['userId'];
+                $this->logger->info(sprintf('Calculating matching by trigger "%s" for user "%s"', $trigger, $userA));
+
                 try {
-                    $userA = $data['userId'];
                     $usersAnsweredQuestion = $this->userModel->getByQuestionAnswered($data['question_id']);
 
                     foreach ($usersAnsweredQuestion as $currentUser) {
@@ -121,10 +127,10 @@ class MatchingCalculatorWorker implements RabbitMQConsumerInterface, LoggerAware
                     }
 
                 } catch (\Exception $e) {
-                    $this->logger->debug(
+                    $this->logger->error(
                         sprintf(
                             'Worker: Error calculating matching and similarity for user %d with message %s on file %s, line %d',
-                            $data['user_id'],
+                            $userA,
                             $e->getMessage(),
                             $e->getFile(),
                             $e->getLine()
@@ -133,21 +139,26 @@ class MatchingCalculatorWorker implements RabbitMQConsumerInterface, LoggerAware
                 }
                 break;
             case 'matching_expired':
+
+                $matchingType = $data['matching_type'];
+                $user1 = $data['user_1_id'];
+                $user2 = $data['user_2_id'];
+
                 try {
-                    switch($data['matching_type']){
+                    switch ($matchingType) {
                         case 'content':
-                            $this->similarityModel->getSimilarity($data['user_1_id'], $data['user_2_id']);
+                            $this->similarityModel->getSimilarity($user1, $user2);
                             break;
                         case 'answer':
-                            $this->matchingModel->calculateMatchingBetweenTwoUsersBasedOnAnswers($data['user_1_id'], $data['user_2_id']);
+                            $this->matchingModel->calculateMatchingBetweenTwoUsersBasedOnAnswers($user1, $user2);
                             break;
                     }
                 } catch (\Exception $e) {
-                    $this->logger->debug(
+                    $this->logger->error(
                         sprintf(
                             'Worker: Error calculating matching between user %d and user %d with message %s on file %s, line %d',
-                            $data['user_1_id'],
-                            $data['user_2_id'],
+                            $user1,
+                            $user2,
                             $e->getMessage(),
                             $e->getFile(),
                             $e->getLine()
