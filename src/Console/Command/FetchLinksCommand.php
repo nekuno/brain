@@ -53,7 +53,7 @@ class FetchLinksCommand extends ApplicationAwareCommand
         $userId = $input->getOption('user', null);
 
         if (null === $resource && null === $userId) {
-            throw new MissingOptionsException ("You must provide the user or the resource to fetch links from",array("resource", "user"));
+            throw new MissingOptionsException ("You must provide the user or the resource to fetch links from", array("resource", "user"));
         }
 
         if (null !== $resource) {
@@ -62,6 +62,7 @@ class FetchLinksCommand extends ApplicationAwareCommand
 
             if (!isset($resourceOwners[$resource])) {
                 $output->writeln(sprintf('Resource ownner %s not found, available resource owners: %s.', $resource, $availableResourceOwners));
+
                 return;
             }
         }
@@ -106,5 +107,6 @@ class FetchLinksCommand extends ApplicationAwareCommand
         }
 
         $output->writeln('Success!');
+        $output->writeln(sprintf('Memory consumed: %s', $this->formatBytes(memory_get_peak_usage(true))));
     }
 }
