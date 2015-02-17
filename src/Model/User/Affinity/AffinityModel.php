@@ -39,28 +39,28 @@ class AffinityModel
     {
         $qb = $this->gm->createQueryBuilder();
         $qb
-          ->match('(user:User)-[a:AFFINITY]->(link:Link)')
-          ->where('user.qnoow_id = { userId } AND id(link) = { linkId }')
-          ->with(
-            'a.affinity AS affinity',
-            'a.updated AS updated'
-          )
-          ->returns('affinity, updated')
+            ->match('(user:User)-[a:AFFINITY]->(link:Link)')
+            ->where('user.qnoow_id = { userId } AND id(link) = { linkId }')
+            ->with(
+                'a.affinity AS affinity',
+                'a.updated AS updated'
+            )
+            ->returns('affinity, updated')
         ;
 
         $qb->setParameters(
-          array(
-            'userId' => (integer)$userId,
-            'linkId' => (integer)$linkId,
-          )
+            array(
+                'userId' => (integer)$userId,
+                'linkId' => (integer)$linkId,
+            )
         );
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();
 
         $affinity = array(
-          'affinity' => 0,
-          'updated' => 0,
+            'affinity' => 0,
+            'updated' => 0,
         );
         if ($result->count() > 0) {
             /* @var $row Row */

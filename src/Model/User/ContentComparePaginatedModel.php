@@ -116,11 +116,14 @@ class ContentComparePaginatedModel implements PaginatedInterface
         $query .= "
             OPTIONAL MATCH
             (content)-[:TAGGED]->(tag:Tag)
+            OPTIONAL MATCH
+            (u2)-[a:AFFINITY]->(content)
             RETURN
             id(content) as id,
             type(r) as rate1,
             type(r2) as rate2,
             content,
+            a.affinity as affinity,
             collect(distinct tag.name) as tags,
             labels(content) as types
             SKIP {offset}
@@ -171,6 +174,8 @@ class ContentComparePaginatedModel implements PaginatedInterface
                     $content['embed']['type'] = $row['content']->getProperty('embed_type');
                     $content['embed']['id'] = $row['content']->getProperty('embed_id');
                 }
+
+                $content['match'] = $row['affinity'];
 
                 $response[] = $content;
             }

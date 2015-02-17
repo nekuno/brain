@@ -55,24 +55,6 @@ class MatchingModel
     }
 
     /**
-     * @param $id
-     * @return string
-     * @throws \Exception
-     */
-    public function getPreferredMatchingType($id)
-    {
-
-        $numberOfSharedContent     = $this->contentPaginatedModel->countTotal(array('id' => $id));
-        $numberOfAnsweredQuestions = $this->answerModel->countTotal(array('id' => $id));
-
-        if ($numberOfSharedContent > (2 * $numberOfAnsweredQuestions)) {
-            return self::PREFERRED_MATCHING_CONTENT;
-        } else {
-            return self::PREFERRED_MATCHING_ANSWERS;
-        }
-    }
-
-    /**
      * @param $id1
      * @param $id2
      * @return array

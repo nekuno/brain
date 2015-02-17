@@ -2,31 +2,22 @@
 
 namespace Model\User\Recommendation;
 
-use Model\User\Matching\MatchingModel;
-
-use Everyman\Neo4j\Client;
-use Everyman\Neo4j\Cypher\Query;
+use Model\Neo4j\GraphManager;
 
 class ContentRecommendationTagModel
 {
-    /**
-     * @var \Everyman\Neo4j\Client
-     */
-    protected $client;
 
     /**
-     * @var MatchingModel
+     * @var GraphManager
      */
-    protected $matchingModel;
+    protected $gm;
 
     /**
-     * @param \Everyman\Neo4j\Client $client
-     * @param MatchingModel $matchingModel
+     * @param GraphManager $gm
      */
-    public function __construct(Client $client, MatchingModel $matchingModel)
+    public function __construct(GraphManager $gm)
     {
-        $this->client = $client;
-        $this->matchingModel = $matchingModel;
+        $this->gm = $gm;
     }
 
     /**
@@ -43,72 +34,38 @@ class ContentRecommendationTagModel
 
         $params = array('UserId' => (integer)$id);
 
-        $startingWithQuery = '';
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(user:User {qnoow_id: {UserId}})-[affinity:AFFINITY]->(content:Link)')
+            ->where('NOT (user)-[:LIKES|:DISLIKES]->(content) AND affinity.affinity > 0')
+            ->match('(content)-[r:TAGGED]->(tag:Tag)')
+        ;
+
         if ($startingWith != '') {
+            $qb->where('tag.name =~ { tag }');
             $params['tag'] = '(?i)'.$startingWith.'.*';
-            $startingWithQuery = 'WHERE tag.name =~ {tag}';
         }
 
-        $limitQuery = '';
+        $qb->returns('distinct tag.name as name, count(distinct r) as total')
+            ->orderBy('tag.name')
+        ;
+
         if ($limit != 0) {
+            $qb->limit('{ limit }');
             $params['limit'] = (integer)$limit;
-            $limitQuery = ' LIMIT {limit}';
         }
 
-        $preferredMatching = $this->matchingModel->getPreferredMatchingType($id);
+        $qb->setParameters($params);
 
-        if($preferredMatching == MatchingModel::PREFERRED_MATCHING_CONTENT) {
-            $query = "
-                MATCH
-                (user:User {qnoow_id: {UserId}})-[match:SIMILARITY]-(matching_users:User)
-                WHERE has(match.similarity)
-            ";
-        } else {
-            $query = "
-                MATCH
-                (user:User {qnoow_id: {UserId}})-[match:MATCHES]-(matching_users:User)
-                WHERE has(match.matching_questions)
-            ";
-        }
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
 
-        $query .= "
-            MATCH
-            (matching_users)-[:LIKES]->(content:Link)
-            WHERE
-            NOT (user)-[:LIKES]->(content)
-            MATCH
-            (content)-[r:TAGGED]->(tag:Tag)
-        ";
-        $query .= $startingWithQuery;
-        $query .= "
-            RETURN
-            distinct tag.name as name, count(distinct r) as total
-            ORDER BY
-            tag.name
-        ";
-        $query .= $limitQuery;
+        foreach ($result as $row) {
+            $content = array();
+            $content['name'] = $row['name'];
+            $content['count'] = $row['total'];
 
-        //Create the Neo4j query object
-        $contentQuery = new Query(
-            $this->client,
-            $query,
-            $params
-        );
-
-        //Execute query
-        try {
-            $result = $contentQuery->getResultSet();
-
-            foreach ($result as $row) {
-                $content = array();
-                $content['name'] = $row['name'];
-                $content['count'] = $row['total'];
-
-                $response['items'][] = $content;
-            }
-
-        } catch (\Exception $e) {
-            throw $e;
+            $response['items'][] = $content;
         }
 
         return $response;
