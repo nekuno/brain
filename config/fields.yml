@@ -4,8 +4,8 @@ profile:
         min: 5
         max: 255
         label:
-            en: 'Real name'
-            es: 'Nombre real'
+            en: 'Real Name'
+            es: 'Nombre Real'
     description:
         type: string
         min: 0
@@ -54,7 +54,7 @@ profile:
     wantSons:
         type: choice
         label:
-            en: 'Do you want Sons?'
+            en: 'Do you want to have sons?'
             es: '¿Quieres tener hijos?'
     languages:
         type: string
@@ -72,7 +72,7 @@ profile:
         type: choice
         label:
             en: 'Hair color'
-            es: 'Color pelo'
+            es: 'Color de pelo'
     ethnicGroup:
         type: choice
         label:
@@ -116,37 +116,37 @@ profile:
     car:
         type: choice
         label:
-            en: 'Have a car?'
+            en: ‘Do you have a car?'
             es: '¿Tienes coche?'
     sons:
         type: choice
         label:
-            en: 'Have sons?'
+            en: ‘Do you have sons?'
             es: '¿Tienes hijos?'
     pets:
         type: choice
         label:
-            en: 'Have pets?'
+            en: ‘Do you have pets?'
             es: '¿Tienes mascotas?'
     smoke:
         type: choice
         label:
-            en: 'Smoke?'
+            en: ‘Do you smoke?'
             es: '¿Fumas?'
     alcohol:
         type: choice
         label:
-            en: 'Drink alcohol?'
+            en: ‘Do you drink alcohol?'
             es: '¿Bebes Alcohol?'
     drugs:
         type: choice
         label:
-            en: 'Take drugs?'
+            en: ‘Do you take drugs?'
             es: '¿Tomas drogas?'
     diet:
         type: choice
         label:
-            en: 'Have a special diet?'
+            en: ‘Are you on a special diet?'
             es: '¿Sigues alguna dieta especial?'
     wantSons:
         type: choice
@@ -197,8 +197,8 @@ profile:
         type: choice
         filterable: false
         label:
-            en: 'Preferred interface language?'
-            es: '¿Lenguaje de interfaz preferido?'
+            en: ‘What interface language do you prefer?’
+            es: ‘¿Qué lenguaje de interfaz prefieres?’
     religion:
         type: tags
         label:
