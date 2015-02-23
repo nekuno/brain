@@ -3,7 +3,6 @@
 namespace Model\User\Similarity;
 
 use Everyman\Neo4j\Client;
-use Everyman\Neo4j\Cypher\Query;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Neo4j\GraphManager;
@@ -117,6 +116,7 @@ class SimilarityModel
         $qb = $this->gm->createQueryBuilder();
         $qb
             ->match('(userA:User {qnoow_id: { idA } }), (userB:User {qnoow_id: { idB } })')
+            ->where('userA <> userB')
             ->match('(userA)-[:ANSWERS]-(answerA:Answer)-[:IS_ANSWER_OF]-(q:Question)')
             ->match('(userB)-[:ANSWERS]-(answerB:Answer)-[:IS_ANSWER_OF]-(q)')
             ->with('userA, userB, q, CASE WHEN answerA = answerB THEN 1 ELSE 0 END AS equal')
@@ -165,6 +165,7 @@ class SimilarityModel
         $qb = $this->gm->createQueryBuilder();
         $qb
             ->match('(userA:User {qnoow_id: { idA } }), (userB:User {qnoow_id: { idB } })')
+            ->where('userA <> userB')
             ->match('(userA)-[:LIKES]-(l:Link)-[:LIKES]-(userB)')
             ->where('HAS(l.unpopularity)')
             ->with('userA, userB, COUNT(DISTINCT l) AS numberCommonContent, SUM(l.unpopularity) AS common')

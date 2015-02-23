@@ -508,6 +508,38 @@ class UserController
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      * @throws \Exception
      */
+    public function getAffinityAction(Request $request, Application $app)
+    {
+
+        $userId = $request->get('userId');
+        $linkId = $request->get('linkId');
+
+        if (null === $userId || null === $linkId) {
+            return $app->json(array(), 400);
+        }
+
+        try {
+            /** @var $model \Model\User\Affinity\AffinityModel */
+            $model = $app['users.affinity.model'];
+            $affinity = $model->getAffinity($userId, $linkId);
+            $result = array('affinity' => $affinity['affinity']);
+        } catch (\Exception $e) {
+            if ($app['env'] == 'dev') {
+                throw $e;
+            }
+
+            return $app->json(array(), 500);
+        }
+
+        return $app->json($result, !empty($result) ? 201 : 200);
+    }
+
+    /**
+     * @param Request $request
+     * @param Application $app
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @throws \Exception
+     */
     public function getContentRecommendationAction(Request $request, Application $app)
     {
 

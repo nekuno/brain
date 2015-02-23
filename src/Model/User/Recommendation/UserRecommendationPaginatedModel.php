@@ -62,6 +62,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         }
 
         $query = "MATCH (u:User {qnoow_id: $id})-[:MATCHES|SIMILARITY]-(anyUser:User)
+WHERE u <> anyUser
 OPTIONAL MATCH (u)-[m:MATCHES]-(anyUser)
 OPTIONAL MATCH (u)-[s:SIMILARITY]-(anyUser)
 WITH u, anyUser,
@@ -115,10 +116,15 @@ LIMIT {limit}";
 
         $profileFilters = $this->getProfileFilters($filters['profileFilters']);
 
-        $query = "MATCH (u:User {qnoow_id: $id})
-MATCH (u)-[r:MATCHES]-(anyUser:User)
+        $query = "MATCH (u:User {qnoow_id: $id})-[:MATCHES|SIMILARITY]-(anyUser:User)
+WHERE u <> anyUser
+OPTIONAL MATCH (u)-[m:MATCHES]-(anyUser)
+OPTIONAL MATCH (u)-[s:SIMILARITY]-(anyUser)
+WITH u, anyUser,
+(CASE WHEN HAS(m.matching_questions) THEN m.matching_questions ELSE 0 END) AS matching_questions,
+(CASE WHEN HAS(s.similarity) THEN s.similarity ELSE 0 END) AS similarity
 MATCH (anyUser)<-[:PROFILE_OF]-(p:Profile)
-WHERE r.matching_questions > 0 OR r.matching_content > 0";
+WHERE matching_questions > 0 OR similarity > 0 ";
 
         if ($profileFilters) {
             $query .= "\n" . implode("\n", $profileFilters);

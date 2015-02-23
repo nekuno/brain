@@ -70,14 +70,19 @@ $app['users.recommendation.users.model'] = function ($app) {
     return new \Model\User\Recommendation\UserRecommendationPaginatedModel($app['neo4j.graph_manager'], $app['users.profile.model']);
 };
 
+$app['users.affinity.model'] = function ($app) {
+
+    return new \Model\User\Affinity\AffinityModel($app['neo4j.graph_manager']);
+};
+
 $app['users.recommendation.content.model'] = function ($app) {
 
-    return new \Model\User\Recommendation\ContentRecommendationPaginatedModel($app['neo4j.client'], $app['users.matching.model']);
+    return new \Model\User\Recommendation\ContentRecommendationPaginatedModel($app['neo4j.graph_manager']);
 };
 
 $app['users.recommendation.content.tag.model'] = function ($app) {
 
-    return new \Model\User\Recommendation\ContentRecommendationTagModel($app['neo4j.client'], $app['users.matching.model']);
+    return new \Model\User\Recommendation\ContentRecommendationTagModel($app['neo4j.graph_manager']);
 };
 
 $app['questionnaire.questions.model'] = function ($app) {
