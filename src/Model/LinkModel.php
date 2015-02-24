@@ -26,6 +26,42 @@ class LinkModel
     }
 
     /**
+     * @param string $url
+     * @return integer|boolean the id of the link or false
+     * @throws Exception on failure
+     */
+    public function findLinkByUrl($url)
+    {
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(l:Link)')
+            ->where('l.url = { url } ')
+            ->returns('l AS link')
+            ->limit('1');
+
+        $qb->setParameter('url', $url);
+
+        $query = $qb->getQuery();
+
+        $result = $query->getResultSet();
+
+        if (count($result) <= 0) {
+            return false;
+        }
+
+        /* @var $row Row */
+        $row = $result->current();
+        /* @var $node Node */
+        $node = $row->offsetGet('link');
+
+        $link = $node->getProperties();
+        $link['id'] = $node->getId();
+
+        return $link;
+    }
+
+
+    /**
      * @param array $data
      * @return \Everyman\Neo4j\Query\ResultSet
      */

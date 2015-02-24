@@ -5,6 +5,7 @@ namespace ApiConsumer\LinkProcessor;
 use ApiConsumer\LinkProcessor\Processor\ScraperProcessor;
 use ApiConsumer\LinkProcessor\Processor\SpotifyProcessor;
 use ApiConsumer\LinkProcessor\Processor\YoutubeProcessor;
+use Model\LinkModel;
 
 class LinkProcessor
 {
@@ -18,6 +19,11 @@ class LinkProcessor
      * @var LinkAnalyzer
      */
     protected $analyzer;
+
+    /**
+     * @var LinkModel
+     */
+    protected $linkModel;
 
     /**
      * @var ScraperProcessor
@@ -38,6 +44,7 @@ class LinkProcessor
     public function __construct(
         LinkResolver $linkResolver,
         LinkAnalyzer $linkAnalyzer,
+        LinkModel $linkModel,
         ScraperProcessor $scrapperProcessor,
         YoutubeProcessor $youtubeProcessor,
         SpotifyProcessor $spotifyProcessor
@@ -46,6 +53,7 @@ class LinkProcessor
 
         $this->resolver = $linkResolver;
         $this->analyzer = $linkAnalyzer;
+        $this->linkModel = $linkModel;
         $this->scrapperProcessor = $scrapperProcessor;
         $this->youtubeProcessor = $youtubeProcessor;
         $this->spotifyProcessor = $spotifyProcessor;
@@ -57,8 +65,15 @@ class LinkProcessor
      */
     public function process(array $link)
     {
+        if ($this->isLinkProcessed($link)) {
+            return $link;
+        }
 
         $link['url'] = $this->resolver->resolve($link['url']);
+
+        if ($this->isLinkProcessed($link)) {
+            return $link;
+        }
 
         $processor = $this->scrapperProcessor;
         $processorName = $this->analyzer->getProcessor($link);
@@ -82,6 +97,21 @@ class LinkProcessor
         }
 
         return $processedLink;
+    }
+
+    private function isLinkProcessed ($link)
+    {
+        try {
+            $storedLink = $this->linkModel->findLinkByUrl($link['url']);
+            if ($storedLink && isset($storedLink['processed']) && $storedLink['processed'] == '1') {
+                return true;
+            }
+
+        } catch (\Exception $e) {
+            return false;
+        }
+
+        return false;
     }
 
 }

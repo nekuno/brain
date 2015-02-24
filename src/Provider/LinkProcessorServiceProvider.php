@@ -65,6 +65,7 @@ class LinkProcessorServiceProvider implements ServiceProviderInterface
                 return new LinkProcessor(
                     $app['api_consumer.link_processor.link_resolver'],
                     $app['api_consumer.link_processor.link_analyzer'],
+                    $app['links.model'],
                     $app['api_consumer.link_processor.processor.scrapper'],
                     $app['api_consumer.link_processor.processor.youtube'],
                     $app['api_consumer.link_processor.processor.spotify']
