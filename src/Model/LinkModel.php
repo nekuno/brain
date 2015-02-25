@@ -362,8 +362,7 @@ class LinkModel
         $qb->match('(u:User {qnoow_id: { uid } })')
           ->match('(u)-[r:SIMILARITY]-(users:User)')
           ->with('users,u,r.similarity AS m')
-          ->orderby('m DESC')
-          ->limit('10');
+          ->orderby('m DESC');
 
         $qb->match('(users)-[d:LIKES]->(l:Link)')
           ->where('NOT(u)-[:LIKES|:DISLIKES|:AFFINITY]-(l)')

@@ -144,9 +144,9 @@ class FetcherService implements LoggerAwareInterface
 
                     foreach ($links as $key => $link) {
                         try {
-                            $links[$key] = $this->linkProcessor->process($link);
                             $event['link'] = $link;
                             $this->dispatcher->dispatch(\AppEvents::PROCESS_LINK, new LinkEvent($event));
+                            $links[$key] = $this->linkProcessor->process($link);
                         } catch (\Exception $e) {
                             $this->logger->error(
                                 sprintf(

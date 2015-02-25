@@ -26,12 +26,21 @@ class LinkProcessorServiceProvider implements ServiceProviderInterface
     public function register(Application $app)
     {
 
-        $app['api_consumer.link_processor.processor.scrapper'] = $app->share(
+        $app['api_consumer.link_processor.goutte'] = $app->share(
             function () {
                 $client = new Client();
+                $client->setMaxRedirects(10);
+
+                return $client;
+            }
+        );
+
+        $app['api_consumer.link_processor.processor.scrapper'] = $app->share(
+            function ($app) {
                 $basicMetadataParser = new BasicMetadataParser();
                 $fbMetadataParser = new FacebookMetadataParser();
-                return new ScraperProcessor($client, $basicMetadataParser, $fbMetadataParser);
+
+                return new ScraperProcessor($app['api_consumer.link_processor.goutte'], $basicMetadataParser, $fbMetadataParser);
             }
         );
 
@@ -54,9 +63,9 @@ class LinkProcessorServiceProvider implements ServiceProviderInterface
         );
 
         $app['api_consumer.link_processor.link_resolver'] = $app->share(
-            function () {
-                $client = new Client();
-                return new LinkResolver($client);
+            function ($app) {
+
+                return new LinkResolver($app['api_consumer.link_processor.goutte']);
             }
         );
 
