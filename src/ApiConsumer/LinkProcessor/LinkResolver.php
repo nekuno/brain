@@ -33,6 +33,8 @@ class LinkResolver
             $statusCode = $this->client->getResponse()->getStatus();
         } catch (RequestException $e) {
             return $this->client->getRequest()->getUri();
+        } catch (\LogicException $e) {
+            return $url;
         }
 
         if (!in_array($url, $visited)) {
