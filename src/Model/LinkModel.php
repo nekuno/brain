@@ -27,8 +27,8 @@ class LinkModel
 
     /**
      * @param string $url
-     * @return integer|boolean the id of the link or false
-     * @throws Exception on failure
+     * @return array|boolean the the link or false
+     * @throws \Exception on failure
      */
     public function findLinkByUrl($url)
     {
@@ -58,6 +58,44 @@ class LinkModel
         $link['id'] = $node->getId();
 
         return $link;
+    }
+
+    /**
+     * @param string $userId
+     * @param string $type The type of relationship between the user and the links
+     * @return array of links
+     * @throws \Exception on failure
+     */
+    public function findLinksByUser($userId, $type = null)
+    {
+        $qb = $this->gm->createQueryBuilder();
+
+        $type = (null !== $type)?$type:'';
+        if ($type != '') {
+            $type = ':' . $type;
+        }
+
+        $qb->match('(u:User)-[' . $type . ']-(l:Link)')
+          ->where('u.qnoow_id = { userId }')
+          ->returns('l AS link');
+
+        $qb->setParameter('userId', (integer)$userId);
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        $links = array();
+        foreach($result as $row) {
+            /* @var $node Node */
+            $node = $row->offsetGet('link');
+
+            $link = $node->getProperties();
+            $link['id'] = $node->getId();
+
+            $links[] = $link;
+        }
+
+        return $links;
     }
 
 

@@ -3,6 +3,7 @@
 namespace Console\Command;
 
 use Model\User\Affinity\AffinityModel;
+use Model\LinkModel;
 use Silex\Application;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -22,35 +23,51 @@ class AffinityCommand extends ApplicationAwareCommand
             )
             ->addArgument(
                 'link',
-                InputArgument::REQUIRED,
+                InputArgument::OPTIONAL,
                 'id of the link?'
             );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        /* @var $model AffinityModel */
-        $model = $this->app['users.affinity.model'];
+        /* @var $linkModel LinkModel */
+        $linkModel = $this->app['links.model'];
 
-        $user = $input->getArgument('user');
-        $link = $input->getArgument('link');
+        $userId = $input->getArgument('user');
+        $linkId = $input->getArgument('link');
 
-        try {
+        if (null === $linkId) {
+            $affineLinks = $linkModel->findLinksByUser($userId, 'AFFINITY');
 
-            $affinity = $model->getAffinity($user, $link);
+            foreach ($affineLinks as $link) {
+                $output->write('Link: ' . $link['id'] . ' (' . $link['url'] . ') - ');
 
-            $output->writeln('Affinity: ' . $affinity['affinity']);
-            $output->writeln('Last Updated: ' . $affinity['updated']);
-
-        } catch (\Exception $e) {
-            $output->writeln(
-                'Error trying to recalculate affinity with message: ' . $e->getMessage()
-            );
-
-            return;
+                $this->calculateAffinity($userId, $link['id'], $output);
+            }
+        } else {
+            $this->calculateAffinity($userId, $linkId, $output);
         }
 
         $output->writeln('Done.');
 
+    }
+
+    private function calculateAffinity($userId, $linkId, OutputInterface $output)
+    {
+        /* @var $affinityModel AffinityModel */
+        $affinityModel = $this->app['users.affinity.model'];
+
+        try {
+            $affinity = $affinityModel->getAffinity($userId, $linkId);
+
+            $output->writeln('Affinity: ' . $affinity['affinity'] . ' - Last Updated: ' . $affinity['updated']);
+
+        } catch (\Exception $e) {
+            $output->writeln(
+              'Error trying to recalculate affinity with message: ' . $e->getMessage()
+            );
+
+            return;
+        }
     }
 }
