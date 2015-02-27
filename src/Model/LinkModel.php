@@ -295,9 +295,9 @@ class LinkModel
 
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match('(u:User)-[:LIKES]->(l:Link)')
+        $qb->match('(l:Link)')
             ->where('l.url = { url }')
-            ->returns('l', 'u')
+            ->returns('l')
             ->limit(1);
 
         $qb->setParameter('url', $url);
