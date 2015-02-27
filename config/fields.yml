@@ -1,11 +1,4 @@
 profile:
-    realName:
-        type: string
-        min: 5
-        max: 255
-        label:
-            en: 'Real Name'
-            es: 'Nombre Real'
     description:
         type: string
         min: 0
