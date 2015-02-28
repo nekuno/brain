@@ -94,8 +94,6 @@ class LinkModel
 
         $query = $qb->getQuery();
 
-        print_r($query->getExecutableQuery());
-
         return $query->getResultSet();
     }
 
