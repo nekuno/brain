@@ -66,7 +66,7 @@ class FetchLinksSubscriber implements EventSubscriberInterface
             $data = $event->getData();
             $link = $data['link'];
             $url = $link['url'];
-            $this->output->writeln(sprintf('Link "%s"', $url));
+            $this->output->writeln(sprintf(' "%s"', $url));
         }
     }
 
