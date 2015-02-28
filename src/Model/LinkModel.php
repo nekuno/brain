@@ -66,7 +66,7 @@ class LinkModel
 
             $qb->match('(u:User)', '(l:Link)')
                 ->where('u.qnoow_id = { userId }', 'l.url = { url }')
-                ->createUnique('(u)-[r:LIKES]->(l)');
+                ->merge('(u)-[r:LIKES]->(l)');
 
             $qb->with('u, l')
                 ->optionalMatch('(u)-[a:AFFINITY]-(l)')
@@ -93,6 +93,8 @@ class LinkModel
         }
 
         $query = $qb->getQuery();
+
+        print_r($query->getExecutableQuery());
 
         return $query->getResultSet();
     }
