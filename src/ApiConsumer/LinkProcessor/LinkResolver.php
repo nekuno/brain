@@ -25,7 +25,7 @@ class LinkResolver
         $this->client = $client;
     }
 
-    public function resolve($url, array $visited = array())
+    public function resolve($url)
     {
 
         try {
@@ -37,9 +37,7 @@ class LinkResolver
             return $url;
         }
 
-        if (!in_array($url, $visited)) {
-            $visited[] = $url;
-        }
+        $uri = $this->client->getRequest()->getUri();
 
         if ($statusCode == 200) {
 
@@ -49,23 +47,30 @@ class LinkResolver
                 $canonical = null;
             }
 
-            $uri = $this->client->getRequest()->getUri();
-
             if ($canonical && $uri !== $canonical) {
 
-                if (in_array($uri, $visited)) {
-                    return $canonical;
-                }
+                $canonical = $this->verifyCanonical($canonical, $uri);
 
-                $visited[] = $uri;
-
-                return $this->resolve($canonical, $visited);
+                return $canonical;
             }
 
-            return $uri;
         }
 
-        return $this->client->getRequest()->getUri();
+        return $uri;
 
+    }
+
+    protected function verifyCanonical($canonical, $uri)
+    {
+        $parsedCanonical = parse_url($canonical);
+
+        if (!isset($parsedCanonical['scheme']) && !isset($parsedCanonical['host'])) {
+            $parsedUri = parse_url($uri);
+            $parsedCanonical['scheme'] = $parsedUri['scheme'];
+            $parsedCanonical['host'] = $parsedUri['host'];
+            $canonical = http_build_url($parsedCanonical);
+        }
+
+        return $canonical;
     }
 } 

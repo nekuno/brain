@@ -62,6 +62,12 @@ class FetchLinksSubscriber implements EventSubscriberInterface
     {
 
         $this->progress->advance();
+        if (OutputInterface::VERBOSITY_NORMAL < $this->output->getVerbosity()) {
+            $data = $event->getData();
+            $link = $data['link'];
+            $url = $link['url'];
+            $this->output->writeln(sprintf(' "%s"', $url));
+        }
     }
 
     public function onProcessFinish()
