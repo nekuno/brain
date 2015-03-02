@@ -94,3 +94,8 @@ $app['links.model'] = function ($app) {
 
     return new \Model\LinkModel($app['neo4j.graph_manager']);
 };
+
+$app['users.groups.model'] = function ($app) {
+
+    return new \Model\User\GroupModel($app['neo4j.graph_manager']);
+};
