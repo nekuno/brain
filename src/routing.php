@@ -58,4 +58,12 @@ $app->get('/questionnaire/questions/{id}/stats', 'questionnaire.questions.contro
 $app->post('/add/links', 'fetch.controller:addLinkAction');
 $app->get('/fetch/links', 'fetch.controller:fetchLinksAction')->value('userId', null)->value('resource', null);
 
+/**
+ * Group routes
+ */
 
+$app->post('/groups', 'users.groups.controller:addAction');
+$app->get('/groups/{groupId}', 'users.groups.controller:showAction');
+$app->delete('/groups/{groupId}', 'users.groups.controller:deleteAction');
+$app->post('/groups/{groupId}/link', 'users.groups.controller:addUserAction');
+$app->delete('/groups/{groupId}/link', 'users.groups.controller:removeUserAction');

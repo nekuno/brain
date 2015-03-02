@@ -39,6 +39,13 @@ $app['users.answers.controller'] = $app->share(
     }
 );
 
+$app['users.groups.controller'] = $app->share(
+    function () {
+
+        return new \Controller\User\GroupController;
+    }
+);
+
 $app['fetch.controller'] = $app->share(
     function () {
 
