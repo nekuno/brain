@@ -121,6 +121,31 @@ class GroupModel
         return this->parseResultSet($query->getResultSet());
     }
 
+    /**
+     * Gets all data from a group with its name
+     * This method accepts returning multiple groups
+     * @param int $groupId
+     * @throws \Exception
+     * @return array
+     */
+    public function getByName(int $groupName)
+    {
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(g:Group{groupName:{groupName}})')
+           ->returns('g');
+       
+        $qb->setParameters(
+            array(
+                'groupName' => $groupName
+            )
+        );
+
+        $query = $qb->getQuery();
+
+        return this->parseResultSet($query->getResultSet());
+    }
+
      /**
      * @param $groupId
      * @param $userId

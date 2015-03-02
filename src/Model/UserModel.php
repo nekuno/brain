@@ -196,9 +196,9 @@ class UserModel implements PaginatedInterface
     {
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match('(g:Group{id:{groupId}})');
-        $qb->match('(u:User)-[:BELONGS_TO]->(g)')
-        $qb->returns('u');
+        $qb ->match('(g:Group{id:{groupId}})')
+            ->match('(u:User)-[:BELONGS_TO]->(g)');
+        $qb ->returns('u');
        
         $qb->setParameters(
             array(

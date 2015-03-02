@@ -55,6 +55,7 @@ class GroupController
     }
 
     /**
+     * This method accepts requests with 'groupId' or 'groupName' fields
      * @param Request $request
      * @param Application $app
      * @return \Symfony\Component\HttpFoundation\JsonResponse
@@ -64,21 +65,36 @@ class GroupController
     {
 
         $id = $request->get('groupId');
-        if (null === $id) {
+        $name=$request->get('groupName');
+
+        if (null === $id && null === $name) {
             return $app->json(array(), 404);
         }
 
-        try {
-            $model = $app['users.groups.model'];
-            $result = $model->getById($request->get('groupId'));
-        } catch (\Exception $e) {
-            if ($app['env'] == 'dev') {
-                throw $e;
+        if (null !== $id){
+            try {
+                $model = $app['users.groups.model'];
+                $result = $model->getById($id);
+            } catch (\Exception $e) {
+                if ($app['env'] == 'dev') {
+                    throw $e;
+                }
+                return $app->json(array(), 500);
             }
-
-            return $app->json(array(), 500);
         }
 
+        if (null === $id && null !== $name){
+            try {
+                $model = $app['users.groups.model'];
+                $result = $model->getByName($name);
+            } catch (\Exception $e) {
+                if ($app['env'] == 'dev') {
+                    throw $e;
+                }
+                return $app->json(array(), 500);
+            }
+        }
+        
         return $app->json($result, !empty($result) ? 200 : 404);
     }
 
