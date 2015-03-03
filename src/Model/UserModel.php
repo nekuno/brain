@@ -34,6 +34,7 @@ class UserModel implements PaginatedInterface
 
     /**
      * Creates an new User and returns the query result
+     * If the given group exists, links user to the group
      *
      * @param array $user
      * @throws \Exception
@@ -46,8 +47,14 @@ class UserModel implements PaginatedInterface
         }
 
         $qb = $this->gm->createQueryBuilder();
-        $qb->create('(u:User {qnoow_id: { qnoow_id }, status: { status }, username: { username }, email: { email }})')
-            ->setParameter('qnoow_id', $user['id'])
+        $qb ->create('(u:User {qnoow_id: { qnoow_id }, status: { status }, username: { username }, email: { email }})');
+        if (isset($user['groupName'])){
+            $qb->optionalMatch('(g:Group{groupName:{groupName}})')
+               ->add('FOREACH (o IN CASE WHEN g IS NOT NULL THEN [g] ELSE [] END |
+                      CREATE (u)-[:BELONGS_TO]->(g))')
+               ->setParameter('groupName',$user['groupName']);
+        }
+         $qb->setParameter('qnoow_id', $user['id'])
             ->setParameter('status', UserStatusModel::USER_STATUS_INCOMPLETE)
             ->setParameter('username', $user['username'])
             ->setParameter('email', $user['email'])
