@@ -22,6 +22,7 @@ $console->addCommands(
         new \Console\Command\AffinityCommand($app),
         new \Console\Command\PredictionCommand($app),
         new \Console\Command\EnqueueFetchingCommand($app),
+        new \Console\Command\LinksRemoveDuplicatesCommand($app),
     )
 );
 

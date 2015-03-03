@@ -224,6 +224,21 @@ class LinkModel
 
     }
 
+    public function removeLink($linkId)
+    {
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(l:Link)')
+            ->where('id(l) = { linkId }')
+            ->optionalMatch('(l)-[r]-()')
+            ->delete('l,r');
+
+        $qb->setParameter('linkId', $linkId);
+
+        $query = $qb->getQuery();
+
+        return $query->getResultSet();
+    }
+
     public function createTag(array $tag)
     {
 
