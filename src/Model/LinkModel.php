@@ -26,6 +26,80 @@ class LinkModel
     }
 
     /**
+     * @param string $url
+     * @return array|boolean the the link or false
+     * @throws \Exception on failure
+     */
+    public function findLinkByUrl($url)
+    {
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(l:Link)')
+            ->where('l.url = { url } ')
+            ->returns('l AS link')
+            ->limit('1');
+
+        $qb->setParameter('url', $url);
+
+        $query = $qb->getQuery();
+
+        $result = $query->getResultSet();
+
+        if (count($result) <= 0) {
+            return false;
+        }
+
+        /* @var $row Row */
+        $row = $result->current();
+        /* @var $node Node */
+        $node = $row->offsetGet('link');
+
+        $link = $node->getProperties();
+        $link['id'] = $node->getId();
+
+        return $link;
+    }
+
+    /**
+     * @param string $userId
+     * @param string $type The type of relationship between the user and the links
+     * @return array of links
+     * @throws \Exception on failure
+     */
+    public function findLinksByUser($userId, $type = null)
+    {
+        $qb = $this->gm->createQueryBuilder();
+
+        $type = (null !== $type)?$type:'';
+        if ($type != '') {
+            $type = ':' . $type;
+        }
+
+        $qb->match('(u:User)-[' . $type . ']-(l:Link)')
+          ->where('u.qnoow_id = { userId }')
+          ->returns('l AS link');
+
+        $qb->setParameter('userId', (integer)$userId);
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        $links = array();
+        foreach($result as $row) {
+            /* @var $node Node */
+            $node = $row->offsetGet('link');
+
+            $link = $node->getProperties();
+            $link['id'] = $node->getId();
+
+            $links[] = $link;
+        }
+
+        return $links;
+    }
+
+
+    /**
      * @param array $data
      * @return \Everyman\Neo4j\Query\ResultSet
      */

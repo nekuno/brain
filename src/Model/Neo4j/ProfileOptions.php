@@ -305,11 +305,6 @@ class ProfileOptions implements LoggerAwareInterface
                     'name_en' => 'Female',
                     'name_es' => 'Femenino',
                 ),
-                array(
-                    'id' => 'other',
-                    'name_en' => 'Other',
-                    'name_es' => 'Otro',
-                ),
             ),
             'Car' => array(
                 array(
