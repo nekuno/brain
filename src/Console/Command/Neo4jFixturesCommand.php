@@ -4,9 +4,11 @@ namespace Console\Command;
 
 use Model\Neo4j\Fixtures;
 
+use Psr\Log\LogLevel;
 use Silex\Application;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class Neo4jFixturesCommand extends ApplicationAwareCommand
@@ -25,6 +27,11 @@ class Neo4jFixturesCommand extends ApplicationAwareCommand
         $scenario = $input->getArgument('scenario');
 
         $fixtures = new Fixtures($this->app['neo4j.graph_manager'], $this->app['users.model'], $this->app['links.model'], $this->app['questionnaire.questions.model'], $this->app['users.answers.model'], $this->getScenario($scenario));
+
+        $logger = new ConsoleLogger($output);
+        $fixtures->setLogger($logger);
+
+        $output->writeln('Loading fixtures');
 
         try {
             $fixtures->load();
