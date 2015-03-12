@@ -49,14 +49,7 @@ class FetchLinksSubscriber implements EventSubscriberInterface
         $this->progress = new ProgressBar($this->output, $data['links']);
 
         if (OutputInterface::VERBOSITY_NORMAL < $this->output->getVerbosity()) {
-            $this->output->writeln(
-                sprintf(
-                    'Processing links for user %s from resource owner %s with fetcher %s',
-                    $data['userId'],
-                    $data['resourceOwner'],
-                    $data['fetcher']
-                )
-            );
+            $this->output->writeln(sprintf('Processing links for user "%s" from resource owner %s with fetcher %s', $data['userId'], $data['resourceOwner'], $data['fetcher']));
             $this->progress->start();
         }
     }

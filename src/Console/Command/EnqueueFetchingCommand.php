@@ -23,7 +23,7 @@ class EnqueueFetchingCommand extends ApplicationAwareCommand
                  InputOption::VALUE_OPTIONAL,
                  'If set, only will enqueue process for given user'
              )->addOption(
-                'resource-owner',
+                'resource',
                 null,
                 InputOption::VALUE_OPTIONAL,
                 'If set, only will enqueue process for given resource owner'
@@ -34,7 +34,7 @@ class EnqueueFetchingCommand extends ApplicationAwareCommand
     {
 
         $userId        = $input->getOption('user');
-        $resourceOwner = $input->getOption('resource-owner');
+        $resourceOwner = $input->getOption('resource');
 
         $availableResourceOwners = $this->app['api_consumer.config']['resource_owner'];
         if($resourceOwner && !array_key_exists($resourceOwner, $availableResourceOwners)) {
