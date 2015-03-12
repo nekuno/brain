@@ -114,7 +114,7 @@ class FetcherService implements LoggerAwareInterface
 
                 if ($fetcherConfig['resourceOwner'] === $resourceOwner) {
 
-                    $this->logger->info(sprintf('Fetcher: Fetching links for user "%s" with fetcher "%s" from resource owner "%s"', $user['username'], $fetcher, $resourceOwner));
+                    $this->logger->notice(sprintf('Fetcher: Fetching links for user "%s" with fetcher "%s" from resource owner "%s"', $user['username'], $fetcher, $resourceOwner));
 
                     $event = new UserDataEvent($user, $resourceOwner);
                     $this->dispatcher->dispatch(AppEvents::USER_DATA_FETCHING_START, $event);

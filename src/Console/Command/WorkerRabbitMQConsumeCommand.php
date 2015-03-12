@@ -63,11 +63,7 @@ class WorkerRabbitMQConsumeCommand extends ApplicationAwareCommand
 
         if ($input->getOption('debug')) {
 
-            $verbosityLevelMap = array(
-                LogLevel::NOTICE => OutputInterface::VERBOSITY_NORMAL,
-                LogLevel::INFO => OutputInterface::VERBOSITY_NORMAL,
-            );
-            $logger = new ConsoleLogger($output, $verbosityLevelMap);
+            $logger = new ConsoleLogger($output, array(LogLevel::NOTICE => OutputInterface::VERBOSITY_NORMAL));
 
             $fetchLinksSubscriber = new FetchLinksSubscriber($output);
             $dispatcher = $this->app['dispatcher'];
@@ -87,7 +83,7 @@ class WorkerRabbitMQConsumeCommand extends ApplicationAwareCommand
                 $channel = $connection->channel();
                 $worker = new LinkProcessorWorker($channel, $fetcher, $userProvider);
                 $worker->setLogger($logger);
-                $logger->info('Processing fetching queue');
+                $logger->notice('Processing fetching queue');
                 $worker->consume();
                 $channel->close();
                 break;
@@ -96,7 +92,7 @@ class WorkerRabbitMQConsumeCommand extends ApplicationAwareCommand
                 $channel = $connection->channel();
                 $worker = new MatchingCalculatorWorker($channel, $this->app['users.model'], $this->app['users.matching.model'], $this->app['users.similarity.model']);
                 $worker->setLogger($logger);
-                $logger->info('Processing matching queue');
+                $logger->notice('Processing matching queue');
                 $worker->consume();
                 $channel->close();
                 break;

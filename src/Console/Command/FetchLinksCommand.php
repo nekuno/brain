@@ -36,12 +36,6 @@ class FetchLinksCommand extends ApplicationAwareCommand
                         InputOption::VALUE_OPTIONAL,
                         'ID of the user to fetch links from'
                     ),
-                    new InputOption(
-                        'debug',
-                        null,
-                        InputOption::VALUE_NONE,
-                        'Debug the process to the console'
-                    ),
                 )
             );
     }
@@ -72,22 +66,16 @@ class FetchLinksCommand extends ApplicationAwareCommand
         /* @var $userProvider DBUserProvider */
         $users = $userProvider->getUsersByResource($resource, $userId);
 
-        /** @var FetcherService $fetcher */
+        /* @var FetcherService $fetcher */
         $fetcher = $this->app['api_consumer.fetcher'];
 
-        if ($input->getOption('debug')) {
-            $verbosityLevelMap = array(
-                LogLevel::NOTICE => OutputInterface::VERBOSITY_NORMAL,
-                LogLevel::INFO => OutputInterface::VERBOSITY_NORMAL,
-            );
-            $logger = new ConsoleLogger($output, $verbosityLevelMap);
-            $fetcher->setLogger($logger);
+        $logger = new ConsoleLogger($output, array(LogLevel::NOTICE => OutputInterface::VERBOSITY_NORMAL));
+        $fetcher->setLogger($logger);
 
-            $fetchLinksSubscriber = new FetchLinksSubscriber($output);
-            $dispatcher = $this->app['dispatcher'];
-            /* @var $dispatcher EventDispatcher */
-            $dispatcher->addSubscriber($fetchLinksSubscriber);
-        }
+        $fetchLinksSubscriber = new FetchLinksSubscriber($output);
+        $dispatcher = $this->app['dispatcher'];
+        /* @var $dispatcher EventDispatcher */
+        $dispatcher->addSubscriber($fetchLinksSubscriber);
 
         foreach ($users as $user) {
             try {
