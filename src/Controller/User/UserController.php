@@ -211,7 +211,7 @@ class UserController
 
             return $app->json(array(), 500);
         }
-        
+
         return $app->json($result, !empty($result) ? 201 : 200);
     }
 
@@ -627,7 +627,7 @@ class UserController
     {
 
         $response = array('status' => null);
-        $id = $request->get('id');
+        $id = (integer)$request->get('id');
         if (null === $id) {
             return $app->json($response, 404);
         }
