@@ -53,7 +53,7 @@ class UserAnswerSubscriber implements EventSubscriberInterface
     {
 
         $data = array(
-            'user_id' => $event->getUser(),
+            'userId' => $event->getUser(),
             'question_id' => $event->getQuestion(),
             'trigger' => 'question_answered'
         );

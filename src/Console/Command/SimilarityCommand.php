@@ -5,6 +5,7 @@ namespace Console\Command;
 use Model\User\Similarity\SimilarityModel;
 use Model\UserModel;
 use Silex\Application;
+use Symfony\Component\Console\Helper\TableHelper;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -50,25 +51,15 @@ class SimilarityCommand extends ApplicationAwareCommand
 
         try {
             foreach ($combinations AS $users) {
+
                 $userA = $users[0];
                 $userB = $users[1];
 
                 $similarity = $model->getSimilarity($userA, $userB);
-            }
 
-            if (count($combinations) == 1) {
-                $output->writeln('');
-
-                $table = $this->getHelper('table');
-                $table
-                    ->setHeaders(array('Type', 'Value', 'Last Updated'))
-                    ->setRows(array(
-                        array('Questions', $similarity['questions'], $similarity['questionsUpdated']),
-                        array('Interests', $similarity['interests'], $similarity['interestsUpdated']),
-                        array('Similarity', $similarity['similarity'], $similarity['similarityUpdated']),
-                    ))
-                ;
-                $table->render($output);
+                if (OutputInterface::VERBOSITY_NORMAL < $output->getVerbosity()) {
+                    $this->getTable($similarity)->render($output);
+                }
             }
 
         } catch (\Exception $e) {
@@ -81,5 +72,29 @@ class SimilarityCommand extends ApplicationAwareCommand
 
         $output->writeln('Done.');
 
+    }
+
+    protected function getTable($similarity)
+    {
+        $questionsUpdated = new \DateTime();
+        $questionsUpdated->setTimestamp($similarity['questionsUpdated'] / 1000);
+        $interestsUpdated = new \DateTime();
+        $interestsUpdated->setTimestamp($similarity['interestsUpdated'] / 1000);
+        $similarityUpdated = new \DateTime();
+        $similarityUpdated->setTimestamp($similarity['similarityUpdated'] / 1000);
+
+        /* @var $table TableHelper */
+        $table = $this->getHelper('table');
+        $table
+            ->setHeaders(array('Type', 'Value', 'Last Updated'))
+            ->setRows(
+                array(
+                    array('Questions', $similarity['questions'], $questionsUpdated->format('Y-m-d H:i:s')),
+                    array('Interests', $similarity['interests'], $interestsUpdated->format('Y-m-d H:i:s')),
+                    array('Similarity', $similarity['similarity'], $similarityUpdated->format('Y-m-d H:i:s')),
+                )
+            );
+
+        return $table;
     }
 }

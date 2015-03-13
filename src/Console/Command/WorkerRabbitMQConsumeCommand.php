@@ -40,7 +40,6 @@ class WorkerRabbitMQConsumeCommand extends ApplicationAwareCommand
             ->setDefinition(
                 array(
                     new InputArgument('consumer', InputArgument::OPTIONAL, 'Consumer to start up', 'fetching'),
-                    new InputOption('debug', null, InputOption::VALUE_NONE, 'Debug the process to the console'),
                 )
             );
     }
@@ -51,7 +50,7 @@ class WorkerRabbitMQConsumeCommand extends ApplicationAwareCommand
         $consumer = $input->getArgument('consumer');
 
         if (!in_array($consumer, $this->validConsumers)) {
-            throw new \Exception('Invalid consumer name');
+            throw new \Exception(sprintf('Invalid "%s" consumer name, valid consumers "%s".', $consumer, implode('", "', $this->validConsumers)));
         }
 
         /* @var $logger LoggerInterface */
@@ -61,19 +60,14 @@ class WorkerRabbitMQConsumeCommand extends ApplicationAwareCommand
         /* @var $fetcher FetcherService */
         $fetcher = $this->app['api_consumer.fetcher'];
 
-        if ($input->getOption('debug')) {
-
-            $verbosityLevelMap = array(
-                LogLevel::NOTICE => OutputInterface::VERBOSITY_NORMAL,
-                LogLevel::INFO => OutputInterface::VERBOSITY_NORMAL,
-            );
-            $logger = new ConsoleLogger($output, $verbosityLevelMap);
-
-            $fetchLinksSubscriber = new FetchLinksSubscriber($output);
-            $dispatcher = $this->app['dispatcher'];
-            /* @var $dispatcher EventDispatcher */
-            $dispatcher->addSubscriber($fetchLinksSubscriber);
+        if (OutputInterface::VERBOSITY_NORMAL < $output->getVerbosity()) {
+            $logger = new ConsoleLogger($output, array(LogLevel::NOTICE => OutputInterface::VERBOSITY_NORMAL));
         }
+
+        $fetchLinksSubscriber = new FetchLinksSubscriber($output);
+        $dispatcher = $this->app['dispatcher'];
+        /* @var $dispatcher EventDispatcher */
+        $dispatcher->addSubscriber($fetchLinksSubscriber);
 
         $fetcher->setLogger($logger);
 
@@ -87,7 +81,7 @@ class WorkerRabbitMQConsumeCommand extends ApplicationAwareCommand
                 $channel = $connection->channel();
                 $worker = new LinkProcessorWorker($channel, $fetcher, $userProvider);
                 $worker->setLogger($logger);
-                $logger->info('Processing fetching queue');
+                $logger->notice('Processing fetching queue');
                 $worker->consume();
                 $channel->close();
                 break;
@@ -96,7 +90,7 @@ class WorkerRabbitMQConsumeCommand extends ApplicationAwareCommand
                 $channel = $connection->channel();
                 $worker = new MatchingCalculatorWorker($channel, $this->app['users.model'], $this->app['users.matching.model'], $this->app['users.similarity.model']);
                 $worker->setLogger($logger);
-                $logger->info('Processing matching queue');
+                $logger->notice('Processing matching queue');
                 $worker->consume();
                 $channel->close();
                 break;

@@ -188,7 +188,7 @@ class UserModel implements PaginatedInterface
     }
 
     /**
-     * @param $id
+     * @param integer $id
      * @return UserStatusModel
      */
     public function getStatus($id)
@@ -206,20 +206,17 @@ class UserModel implements PaginatedInterface
 
         /* @var $row Row */
         $row = $result->current();
-        $status = $row['status'];
 
-        $status = new UserStatusModel($status, $row['answerCount'], $row['linkCount']);
+        $status = new UserStatusModel($row['status'], $row['answerCount'], $row['linkCount']);
 
-        if ($status->getStatus() !== $status) {
-
-            $newStatus = $status->getStatus();
+        if ($status->getStatus() !== $row['status']) {
 
             $qb = $this->gm->createQueryBuilder();
             $qb->match('(u:User {qnoow_id: { id }})')
                 ->set('u.status = { status }')
                 ->returns('u')
-                ->setParameter('id', $id)
-                ->setParameter('status', $newStatus);
+                ->setParameter('id', (integer)$id)
+                ->setParameter('status', $status->getStatus());
 
             $query = $qb->getQuery();
             $query->getResultSet();
