@@ -11,7 +11,7 @@ use Psr\Log\LoggerInterface;
 class Fixtures
 {
 
-    const NUM_OF_USERS = 20;
+    const NUM_OF_USERS = 50;
     const NUM_OF_LINKS = 2000;
     const NUM_OF_TAGS = 200;
     const NUM_OF_QUESTIONS = 200;
