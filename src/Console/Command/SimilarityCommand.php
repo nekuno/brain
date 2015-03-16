@@ -58,6 +58,7 @@ class SimilarityCommand extends ApplicationAwareCommand
                 $similarity = $model->getSimilarity($userA, $userB);
 
                 if (OutputInterface::VERBOSITY_NORMAL < $output->getVerbosity()) {
+                    $output->writeln(sprintf('[%s] Similarity between user %d - %d', date('Y-m-d H:i:s'), $userA, $userB));
                     $this->getTable($similarity)->render($output);
                 }
             }
