@@ -160,9 +160,10 @@ class UserModel implements PaginatedInterface
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(ref:User {qnoow_id: { id }})')
+            ->setParameter('id', (integer)$id)
             ->match('(ref)-[:LIKES|DISLIKES]->(:Link)<-[:LIKES]-(u:User)')
             ->returns('DISTINCT u')
-            ->setParameter('id', (integer)$id);
+            ->orderBy('u.qnoow_id');
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();
@@ -181,9 +182,10 @@ class UserModel implements PaginatedInterface
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(u:User)-[:RATES]->(q:Question)')
+            ->setParameter('questions', (integer)$questionId)
             ->where('id(q) IN [ { questions } ]')
             ->returns('DISTINCT u')
-            ->setParameter('questions', (integer)$questionId);
+            ->orderBy('u.qnoow_id');
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();
