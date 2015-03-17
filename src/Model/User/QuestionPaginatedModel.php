@@ -2,24 +2,32 @@
 
 namespace Model\User;
 
+use Everyman\Neo4j\Node;
+use Everyman\Neo4j\Query\Row;
+use Model\Neo4j\GraphManager;
+use Model\Questionnaire\QuestionModel;
 use Paginator\PaginatedInterface;
-
-use Everyman\Neo4j\Client;
-use Everyman\Neo4j\Cypher\Query;
 
 class QuestionPaginatedModel implements PaginatedInterface
 {
-    /**
-     * @var \Everyman\Neo4j\Client
-     */
-    protected $client;
 
     /**
-     * @param \Everyman\Neo4j\Client $client
+     * @var GraphManager
      */
-    public function __construct(Client $client)
+    protected $gm;
+
+    /**
+     * @var QuestionModel
+     */
+    protected $qm;
+
+    /**
+     * @param GraphManager $gm
+     */
+    public function __construct(GraphManager $gm, QuestionModel $qm)
     {
-        $this->client = $client;
+        $this->gm = $gm;
+        $this->qm = $qm;
     }
 
     /**
@@ -36,80 +44,96 @@ class QuestionPaginatedModel implements PaginatedInterface
     }
 
     /**
-     * Slices the query according to $offset, and $limit.
+     * Slices the query according to $offset, and $limit
      * @param array $filters
      * @param int $offset
      * @param int $limit
-     * @throws \Exception
      * @return array
      */
     public function slice(array $filters, $offset, $limit)
     {
-        $id = $filters['id'];
+        $id = (integer)$filters['id'];
         $locale = $filters['locale'];
         $response = array();
 
-        $params = array(
-            'UserId' => (integer)$id,
-            'offset' => (integer)$offset,
-            'limit' => (integer)$limit
-        );
+        $qb = $this->gm->createQueryBuilder();
+        $qb
+            ->match('(u:User {qnoow_id: { id }})')
+            ->setParameter('id', $id)
+            ->match('(u)-[r1:ANSWERS]-(answer:Answer)-[:IS_ANSWER_OF]-(question:Question)')
+            ->where("HAS(answer.text_$locale)")
+            ->optionalMatch('(possible_answers:Answer)-[:IS_ANSWER_OF]-(question)')
+            ->optionalMatch('(u)-[:ACCEPTS]-(accepted_answers:Answer)-[:IS_ANSWER_OF]-(question)')
+            ->optionalMatch('(u)-[rate:RATES]-(question)')
+            ->with(
+                'question, possible_answers',
+                'ID(answer) AS answer',
+                'r1.explanation AS explanation',
+                'r1.answeredAt AS answeredAt',
+                'COLLECT(DISTINCT id(accepted_answers)) AS accepted_answers',
+                'rate.rating AS rating'
+            )
+            ->orderBy('id(possible_answers)')
+            ->returns(
+                'question',
+                'COLLECT(DISTINCT possible_answers) AS possible_answers',
+                'answer',
+                'explanation',
+                'answeredAt',
+                'accepted_answers',
+                'rating'
+            )
+            ->orderBy('answeredAt DESC')
+            ->skip('{ offset }')
+            ->setParameter('offset', (integer)$offset)
+            ->limit('{ limit }')
+            ->setParameter('limit', (integer)$limit);
 
-        $query = "MATCH (u:User)"
-            . " WHERE u.qnoow_id = {UserId}"
-            . " MATCH (u)-[r1:ANSWERS]-(answer:Answer)-[:IS_ANSWER_OF]-(question:Question)"
-            . " WHERE HAS(answer.text_$locale)"
-            . " OPTIONAL MATCH (possible_answers:Answer)-[:IS_ANSWER_OF]-(question)"
-            . " OPTIONAL MATCH (u)-[:ACCEPTS]-(accepted_answers:Answer)-[:IS_ANSWER_OF]-(question)"
-            . " OPTIONAL MATCH (u)-[rate:RATES]-(question)"
-            . " RETURN question, collect(distinct possible_answers) as possible_answers, id(answer) as answer"
-            . ", r1.explanation AS explanation, r1.answeredAt AS answeredAt"
-            . ", collect(distinct id(accepted_answers)) as accepted_answers, rate.rating AS rating"
-            . " ORDER BY answeredAt DESC"
-            . " SKIP {offset}"
-            . " LIMIT {limit};";
+        $query = $qb->getQuery();
 
-        //Create the Neo4j query object
-        $contentQuery = new Query(
-            $this->client,
-            $query,
-            $params
-        );
+        $result = $query->getResultSet();
 
-        //Execute query
-        try {
-            $result = $contentQuery->getResultSet();
+        foreach ($result as $row) {
 
-            foreach ($result as $row) {
-                $content = array();
+            /* @var $question Node */
+            $question = $row['question'];
 
-                $question = array();
-                $question['id'] = $row['question']->getId();
-                $question['text'] = $row['question']->getProperty('text_' . $locale);
-                foreach ($row['possible_answers'] as $possibleAnswer) {
-                    $answer = array();
-                    $answer['id'] = $possibleAnswer->getId();
-                    $answer['text'] = $possibleAnswer->getProperty('text_' . $locale);
-                    $question['answers'][] = $answer;
-                }
-                $content['question'] = $question;
+            $stats = $this->qm->getQuestionStats($question->getId());
 
-                $user = array();
-                $user['id'] = $id;
-                $user['answer'] = $row['answer'];
-                $user['answeredAt'] = floor($row['answeredAt'] / 1000);
-                $user['explanation'] = $row['explanation'];
-                foreach ($row['accepted_answers'] as $acceptedAnswer) {
-                    $user['accepted_answers'][] = $acceptedAnswer;
-                }
-                $user['rating'] = $row['rating'];
-                $content['user_answers'] = $user;
+            $responseQuestion = array(
+                'id' => $question->getId(),
+                'text' => $question->getProperty('text_' . $locale),
+                'totalAnswers' => $stats[$question->getId()]['totalAnswers'],
+            );
 
-                $response[] = $content;
+            foreach ($row['possible_answers'] as $possibleAnswer) {
+
+                /* @var $possibleAnswer Node */
+                $responseQuestion['answers'][] = array(
+                    'id' => $possibleAnswer->getId(),
+                    'text' => $possibleAnswer->getProperty('text_' . $locale),
+                    'nAnswers' => $stats[$question->getId()]['answers'][$possibleAnswer->getId()]['nAnswers'],
+                );
+
             }
 
-        } catch (\Exception $e) {
-            throw $e;
+            $user = array(
+                'id' => $id,
+                'answer' => $row['answer'],
+                'answeredAt' => floor($row['answeredAt'] / 1000),
+                'explanation' => $row['explanation'],
+                'accepted_answers' => array(),
+                'rating' => $row['rating'],
+            );
+
+            foreach ($row['accepted_answers'] as $acceptedAnswer) {
+                $user['accepted_answers'][] = $acceptedAnswer;
+            }
+
+            $response[] = array(
+                'question' => $responseQuestion,
+                'user_answers' => $user,
+            );
         }
 
         return $response;
@@ -123,39 +147,24 @@ class QuestionPaginatedModel implements PaginatedInterface
      */
     public function countTotal(array $filters)
     {
-        $id = $filters['id'];
+        $id = (integer)$filters['id'];
         $locale = $filters['locale'];
-        $count = 0;
 
-        $params = array(
-            'UserId' => (integer)$id,
-        );
+        $qb = $this->gm->createQueryBuilder();
+        $qb
+            ->match('(u:User {qnoow_id: { id }})')
+            ->setParameter('id', $id)
+            ->match('(u)-[:ANSWERS]-(answer:Answer)-[:IS_ANSWER_OF]-(question:Question)')
+            ->where("HAS(answer.text_$locale)")
+            ->returns('COUNT(DISTINCT question) AS total');
 
-        $query = " MATCH (u:User)"
-            . " WHERE u.qnoow_id = {UserId}"
-            . " MATCH (u)-[:ANSWERS]-(answer:Answer)-[:IS_ANSWER_OF]-(question:Question)"
-            . " WHERE HAS(answer.text_$locale)"
-            . " RETURN count(distinct question) as total;";
+        $query = $qb->getQuery();
 
-        //Create the Neo4j query object
-        $contentQuery = new Query(
-            $this->client,
-            $query,
-            $params
-        );
+        $result = $query->getResultSet();
 
-        //Execute query
-        try {
-            $result = $contentQuery->getResultSet();
+        /* @var $row Row */
+        $row = $result->current();
 
-            foreach ($result as $row) {
-                $count = $row['total'];
-            }
-
-        } catch (\Exception $e) {
-            throw $e;
-        }
-
-        return $count;
+        return $row->offsetGet('total');
     }
 }

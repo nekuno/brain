@@ -79,18 +79,23 @@ $app->error(
     function (\Exception $e, $code) use ($app) {
 
         $response = array(
-            "error" => array(
-                "code" => $code,
-                "text" => "An error ocurred",
+            'error' => array(
+                'code' => $code,
+                'text' => 'An error ocurred',
             )
         );
 
         if ($app['debug']) {
-            $response['error']['code'] = $e->getCode();
-            $response['error']['text'] = $e->getMessage();
-            $response['error']['file'] = $e->getFile();
-            $response['error']['line'] = $e->getLine();
-            $response['error']['trace'] = $e->getTrace();
+            $response = array(
+                'error' => array(
+                    'code' => $code,
+                    'exceptionCode' => $e->getCode(),
+                    'text' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                    'trace' => $e->getTrace(),
+                )
+            );
         }
 
         return $app->json($response, $code);
