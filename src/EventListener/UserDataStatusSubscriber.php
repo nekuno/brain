@@ -113,37 +113,6 @@ class UserDataStatusSubscriber implements EventSubscriberInterface
 
         $this->saveStatus($dataStatus);
 
-        $user = $event->getUser();
-        $resourceOwner = $event->getResourceOwner();
-
-        $data = array(
-            'userId' => $user['id'],
-            'resourceOwner' => $resourceOwner,
-            'trigger' => 'process_finished',
-        );
-
-        $this->enqueueMatchingCalculation($data, 'brain.matching.process');
-    }
-
-    /**
-     * @param $data
-     * @param $routingKey
-     */
-    private function enqueueMatchingCalculation($data, $routingKey)
-    {
-
-        $message = new AMQPMessage(json_encode($data, JSON_UNESCAPED_UNICODE));
-
-        $exchangeName = 'brain.topic';
-        $exchangeType = 'topic';
-        $topic = 'brain.matching.*';
-        $queueName = 'brain.matching';
-
-        $channel = $this->connection->channel();
-        $channel->exchange_declare($exchangeName, $exchangeType, false, true, false);
-        $channel->queue_declare($queueName, false, true, false, false);
-        $channel->queue_bind($queueName, $exchangeName, $topic);
-        $channel->basic_publish($message, $exchangeName, $routingKey);
     }
 
     /**
@@ -170,6 +139,17 @@ class UserDataStatusSubscriber implements EventSubscriberInterface
         $status->setProcessed(true);
 
         $this->saveStatus($status);
+
+        $user = $event->getUser();
+        $resourceOwner = $event->getResourceOwner();
+
+        $data = array(
+            'userId' => $user['id'],
+            'resourceOwner' => $resourceOwner,
+            'trigger' => 'process_finished',
+        );
+
+        $this->enqueueMatchingCalculation($data, 'brain.matching.process');
     }
 
     /**
@@ -198,6 +178,27 @@ class UserDataStatusSubscriber implements EventSubscriberInterface
         );
 
         $this->enqueueMatchingCalculation($data, 'brain.matching.content_rated');
+    }
+
+    /**
+     * @param $data
+     * @param $routingKey
+     */
+    private function enqueueMatchingCalculation($data, $routingKey)
+    {
+
+        $message = new AMQPMessage(json_encode($data, JSON_UNESCAPED_UNICODE));
+
+        $exchangeName = 'brain.topic';
+        $exchangeType = 'topic';
+        $topic = 'brain.matching.*';
+        $queueName = 'brain.matching';
+
+        $channel = $this->connection->channel();
+        $channel->exchange_declare($exchangeName, $exchangeType, false, true, false);
+        $channel->queue_declare($queueName, false, true, false, false);
+        $channel->queue_bind($queueName, $exchangeName, $topic);
+        $channel->basic_publish($message, $exchangeName, $routingKey);
     }
 
 }
