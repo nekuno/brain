@@ -3,10 +3,11 @@
 
 namespace EventListener;
 
-use AppEvents;
 use Doctrine\ORM\EntityManager;
+use Event\FetchingEvent;
 use Event\MatchingExpiredEvent;
-use Event\UserDataEvent;
+use Event\ProcessLinksEvent;
+use Event\ContentRatedEvent;
 use Model\Entity\DataStatus;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
@@ -47,19 +48,16 @@ class UserDataStatusSubscriber implements EventSubscriberInterface
     {
 
         return array(
-            AppEvents::USER_DATA_FETCHING_START => array('onUserDataFetchStart'),
-            AppEvents::USER_DATA_FETCHING_FINISH => array('onUserDataFetchFinish'),
-            AppEvents::USER_DATA_PROCESS_START => array('onUserDataProcessStart'),
-            AppEvents::USER_DATA_PROCESS_FINISH => array('onUserDataProcessFinish'),
-            AppEvents::USER_MATCHING_EXPIRED => array('onUserMatchingExpired'),
-            AppEvents::USER_DATA_CONTENT_RATED => array('onContentRated'),
+            \AppEvents::FETCHING_START => array('onFetchStart'),
+            \AppEvents::FETCHING_FINISH => array('onFetchFinish'),
+            \AppEvents::PROCESS_START => array('onProcessStart'),
+            \AppEvents::PROCESS_FINISH => array('onProcessFinish'),
+            \AppEvents::MATCHING_EXPIRED => array('onMatchingExpired'),
+            \AppEvents::CONTENT_RATED => array('onContentRated'),
         );
     }
 
-    /**
-     * @param UserDataEvent $event
-     */
-    public function onUserDataFetchStart(UserDataEvent $event)
+    public function onFetchStart(FetchingEvent $event)
     {
 
         $status = $this->getCurrentDataStatus($event);
@@ -69,22 +67,18 @@ class UserDataStatusSubscriber implements EventSubscriberInterface
         $this->saveStatus($status);
     }
 
-    /**
-     * @param UserDataEvent $event
-     * @return \Model\Entity\DataStatus
-     */
-    public function getCurrentDataStatus(UserDataEvent $event)
+    public function getCurrentDataStatus(FetchingEvent $event)
     {
 
         $user = $event->getUser();
         $resourceOwner = $event->getResourceOwner();
 
         $repository = $this->entityManager->getRepository('\Model\Entity\DataStatus');
-        $dataStatus = $repository->findOneBy(array('userId' => $user['id'], 'resourceOwner' => $resourceOwner));
+        $dataStatus = $repository->findOneBy(array('userId' => $user, 'resourceOwner' => $resourceOwner));
 
         if (null === $dataStatus) {
             $dataStatus = new DataStatus();
-            $dataStatus->setUserId($user['id']);
+            $dataStatus->setUserId($user);
             $dataStatus->setResourceOwner($resourceOwner);
         }
 
@@ -101,10 +95,7 @@ class UserDataStatusSubscriber implements EventSubscriberInterface
         $this->entityManager->flush();
     }
 
-    /**
-     * @param UserDataEvent $event
-     */
-    public function onUserDataFetchFinish(UserDataEvent $event)
+    public function onFetchFinish(FetchingEvent $event)
     {
 
         $dataStatus = $this->getCurrentDataStatus($event);
@@ -115,10 +106,7 @@ class UserDataStatusSubscriber implements EventSubscriberInterface
 
     }
 
-    /**
-     * @param UserDataEvent $event
-     */
-    public function onUserDataProcessStart(UserDataEvent $event)
+    public function onProcessStart(ProcessLinksEvent $event)
     {
 
         $status = $this->getCurrentDataStatus($event);
@@ -128,10 +116,7 @@ class UserDataStatusSubscriber implements EventSubscriberInterface
         $this->saveStatus($status);
     }
 
-    /**
-     * @param UserDataEvent $event
-     */
-    public function onUserDataProcessFinish(UserDataEvent $event)
+    public function onProcessFinish(ProcessLinksEvent $event)
     {
 
         $status = $this->getCurrentDataStatus($event);
@@ -144,7 +129,7 @@ class UserDataStatusSubscriber implements EventSubscriberInterface
         $resourceOwner = $event->getResourceOwner();
 
         $data = array(
-            'userId' => $user['id'],
+            'userId' => $user,
             'resourceOwner' => $resourceOwner,
             'trigger' => 'process_finished',
         );
@@ -152,10 +137,7 @@ class UserDataStatusSubscriber implements EventSubscriberInterface
         $this->enqueueMatchingCalculation($data, 'brain.matching.process');
     }
 
-    /**
-     * @param MatchingExpiredEvent $event
-     */
-    public function onUserMatchingExpired(MatchingExpiredEvent $event)
+    public function onMatchingExpired(MatchingExpiredEvent $event)
     {
 
         $data = array(
@@ -169,7 +151,7 @@ class UserDataStatusSubscriber implements EventSubscriberInterface
 
     }
 
-    public function onContentRated(UserDataEvent $event)
+    public function onContentRated(ContentRatedEvent $event)
     {
 
         $data = array(

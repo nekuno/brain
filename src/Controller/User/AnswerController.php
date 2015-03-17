@@ -48,7 +48,7 @@ class AnswerController
             $event = new AnswerEvent($data['userId'], $data['questionId']);
             /** @var EventDispatcher $dispatcher */
             $dispatcher = $app['dispatcher'];
-            $dispatcher->dispatch(\AppEvents::USER_ANSWER_QUESTION, $event);
+            $dispatcher->dispatch(\AppEvents::ANSWER_ADDED, $event);
 
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
@@ -93,7 +93,7 @@ class AnswerController
             $event = new AnswerEvent($data['userId'], $data['questionId']);
             /** @var EventDispatcher $dispatcher */
             $dispatcher = $app['dispatcher'];
-            $dispatcher->dispatch(\AppEvents::USER_ANSWER_QUESTION, $event);
+            $dispatcher->dispatch(\AppEvents::ANSWER_ADDED, $event);
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;

@@ -2,7 +2,7 @@
 
 namespace Model\User;
 
-use Event\UserDataEvent;
+use Event\ContentRatedEvent;
 use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
 use Symfony\Component\EventDispatcher\EventDispatcher;
@@ -81,16 +81,15 @@ class RateModel
             $this->client,
             $query,
             array(
-                'userId'    => (integer)$userId,
-                'linkId'    => (integer)$linkId,
-                'rate'      => $rate,
+                'userId' => (integer)$userId,
+                'linkId' => (integer)$linkId,
+                'rate' => $rate,
             )
         );
 
         $result = $query->getResultSet();
 
-        $event = new UserDataEvent($userId);
-        $this->dispatcher->dispatch(\AppEvents::USER_DATA_CONTENT_RATED, $event);
+        $this->dispatcher->dispatch(\AppEvents::CONTENT_RATED, new ContentRatedEvent($userId));
 
         $response = array();
         foreach ($result as $row) {
