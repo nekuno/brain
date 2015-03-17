@@ -2,11 +2,12 @@
 
 namespace Controller\User;
 
-use Model\User\ContentPaginatorModel;
+use Model\User\ContentPaginatedModel;
 use Model\User\RateModel;
 use Model\UserModel;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * Class UserController
@@ -35,7 +36,7 @@ class UserController
             $filters['profile'] = $profile;
         }
 
-        /** @var $paginator \Paginator\Paginator */
+        /* @var $paginator \Paginator\Paginator */
         $paginator = $app['paginator'];
 
         $model = $app['users.model'];
@@ -167,7 +168,7 @@ class UserController
         }
 
         try {
-            /** @var $model \Model\User\Matching\MatchingModel */
+            /* @var $model \Model\User\Matching\MatchingModel */
             $model = $app['users.matching.model'];
             $result = $model->getMatchingBetweenTwoUsersBasedOnAnswers($id1, $id2);
         } catch (\Exception $e) {
@@ -199,7 +200,7 @@ class UserController
         }
 
         try {
-            /** @var $model \Model\User\Similarity\SimilarityModel */
+            /* @var $model \Model\User\Similarity\SimilarityModel */
             $model = $app['users.similarity.model'];
             $similarity = $model->getSimilarity($id1, $id2);
             $result = array('similarity' => $similarity['similarity']);
@@ -230,12 +231,12 @@ class UserController
             return $app->json(array(), 400);
         }
 
-        /** @var $paginator \Paginator\Paginator */
+        /* @var $paginator \Paginator\Paginator */
         $paginator = $app['paginator'];
 
         $filters = array('id' => $id);
 
-        /** @var $model \Model\User\QuestionPaginatedModel */
+        /* @var $model \Model\User\QuestionPaginatedModel */
         $model = $app['users.questions.model'];
 
         try {
@@ -269,12 +270,12 @@ class UserController
             return $app->json(array(), 400);
         }
 
-        /** @var $paginator \Paginator\Paginator */
+        /* @var $paginator \Paginator\Paginator */
         $paginator = $app['paginator'];
 
         $filters = array('id' => $id, 'id2' => $id2, 'locale' => $locale, 'showOnlyCommon' => $showOnlyCommon);
 
-        /** @var $model \Model\User\QuestionComparePaginatedModel */
+        /* @var $model \Model\User\QuestionComparePaginatedModel */
         $model = $app['users.questions.compare.model'];
 
         try {
@@ -308,7 +309,7 @@ class UserController
             return $app->json(array(), 400);
         }
 
-        /** @var $paginator \Paginator\Paginator */
+        /* @var $paginator \Paginator\Paginator */
         $paginator = $app['paginator'];
 
         $filters = array('id' => $id);
@@ -325,7 +326,7 @@ class UserController
             $filters['type'] = urldecode($type);
         }
 
-        /** @var $model \Model\User\ContentPaginatorModel */
+        /* @var $model ContentPaginatedModel */
         $model = $app['users.content.model'];
 
         try {
@@ -359,7 +360,7 @@ class UserController
             return $app->json(array(), 400);
         }
 
-        /** @var $paginator \Paginator\Paginator */
+        /* @var $paginator \Paginator\Paginator */
         $paginator = $app['paginator'];
 
         $filters = array('id' => $id, 'id2' => $id2, 'showOnlyCommon' => $showOnlyCommon);
@@ -372,7 +373,7 @@ class UserController
             $filters['type'] = urldecode($type);
         }
 
-        /** @var $model \Model\User\ContentComparePaginatedModel */
+        /* @var $model \Model\User\ContentComparePaginatedModel */
         $model = $app['users.content.compare.model'];
 
         try {
@@ -409,7 +410,7 @@ class UserController
             $search = urldecode($search);
         }
 
-        /** @var $model \Model\User\ContentTagModel */
+        /* @var $model \Model\User\ContentTagModel */
         $model = $app['users.content.tag.model'];
 
         try {
@@ -442,7 +443,7 @@ class UserController
         }
 
         try {
-            /** @var RateModel $model */
+            /* @var RateModel $model */
             $model = $app['users.rate.model'];
             $result = $model->userRateLink($userId, $linkId, $rate);
         } catch (\Exception $e) {
@@ -474,7 +475,7 @@ class UserController
             return $app->json(array(), 400);
         }
 
-        /** @var $paginator \Paginator\Paginator */
+        /* @var $paginator \Paginator\Paginator */
         $paginator = $app['paginator'];
 
         $filters = array(
@@ -486,7 +487,7 @@ class UserController
             $filters['order'] = $order;
         }
 
-        /** @var $model \Model\User\Recommendation\UserRecommendationPaginatedModel */
+        /* @var $model \Model\User\Recommendation\UserRecommendationPaginatedModel */
         $model = $app['users.recommendation.users.model'];
 
         try {
@@ -519,7 +520,7 @@ class UserController
         }
 
         try {
-            /** @var $model \Model\User\Affinity\AffinityModel */
+            /* @var $model \Model\User\Affinity\AffinityModel */
             $model = $app['users.affinity.model'];
             $affinity = $model->getAffinity($userId, $linkId);
             $result = array('affinity' => $affinity['affinity']);
@@ -551,7 +552,7 @@ class UserController
             return $app->json(array(), 400);
         }
 
-        /** @var $paginator \Paginator\Paginator */
+        /* @var $paginator \Paginator\Paginator */
         $paginator = $app['paginator'];
 
         $filters = array('id' => $id);
@@ -564,7 +565,7 @@ class UserController
             $filters['type'] = urldecode($type);
         }
 
-        /** @var $model \Model\User\Recommendation\ContentRecommendationPaginatedModel */
+        /* @var $model \Model\User\Recommendation\ContentRecommendationPaginatedModel */
         $model = $app['users.recommendation.content.model'];
 
         try {
@@ -601,7 +602,7 @@ class UserController
             $search = urldecode($search);
         }
 
-        /** @var $model \Model\User\Recommendation\ContentRecommendationTagModel */
+        /* @var $model \Model\User\Recommendation\ContentRecommendationTagModel */
         $model = $app['users.recommendation.content.tag.model'];
 
         try {
@@ -626,44 +627,16 @@ class UserController
     public function statusAction(Request $request, Application $app)
     {
 
-        $response = array('status' => null);
         $id = (integer)$request->get('id');
         if (null === $id) {
-            return $app->json($response, 404);
+            throw new NotFoundHttpException('User not found');
         }
 
-        try {
-            /* @var $model UserModel */
-            $model = $app['users.model'];
-            $user = $model->getById($id);
+        /* @var $model UserModel */
+        $model = $app['users.model'];
 
-            if (!$user) {
-                return $app->json($response, 404);
-            }
-        } catch (\Exception $e) {
+        $status = $model->getStatus($id);
 
-            if ($app['env'] == 'dev') {
-                throw $e;
-            }
-
-            return $app->json($response, 500);
-        }
-
-        try {
-
-            $status = $model->getStatus($id);
-
-        } catch (\Exception $e) {
-
-            if ($app['env'] == 'dev') {
-                throw $e;
-            }
-
-            return $app->json($response, 500);
-        }
-
-        $response['status'] = $status->getStatus();
-
-        return $app->json($response, 200);
+        return $app->json(array('status' => $status));
     }
 }
