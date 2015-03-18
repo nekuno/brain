@@ -2,7 +2,7 @@
 
 $app['users.model'] = function ($app) {
 
-    return new \Model\UserModel($app['neo4j.graph_manager'], $app['users.profile.model']);
+    return new \Model\UserModel($app['neo4j.graph_manager'], $app['users.profile.model'], $app['dbs']['mysql_social']);
 };
 
 $app['users.profile.model'] = function ($app) {
