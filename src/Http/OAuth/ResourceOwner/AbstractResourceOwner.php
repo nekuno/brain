@@ -12,7 +12,6 @@ use Http\Exception\TokenException;
 use Http\OAuth\ResourceOwner\ClientCredential\ClientCredentialInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\OptionsResolver\OptionsResolver;
-use AppEvents;
 
 /**
  * Class AbstractResourceOwner
@@ -32,16 +31,14 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
      * @var EventDispatcher
      */
     protected $dispatcher;
-
-    /**
-     * @var \Http\OAuth\ResourceOwner\ClientCredential\ClientCredentialInterface
-     */
-    private $clientCredential;
-
     /**
      * @var array Configuration
      */
     protected $options = array();
+    /**
+     * @var \Http\OAuth\ResourceOwner\ClientCredential\ClientCredentialInterface
+     */
+    private $clientCredential;
 
     /**
      * @param ClientInterface $httpClient
@@ -99,39 +96,6 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
         return $this->name;
     }
 
-    protected function getClientToken()
-    {
-        if ($this->clientCredential instanceof ClientCredentialInterface) {
-            return $this->clientCredential->getClientToken();
-        }
-
-        return '';
-    }
-
-    /**
-     * Get the 'parsed' content based on the response headers.
-     *
-     * @param ResponseInterface $response
-     *
-     * @return array
-     */
-    protected function getResponseContent(ResponseInterface $response)
-    {
-        return $response->json();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected function getAuthorizedRequest($url, array $query = array(), array $token = array())
-    {
-        $clientConfig = array(
-            'query' => $query,
-        );
-
-        return $this->httpClient->createRequest('GET', $url, $clientConfig);
-    }
-
     /**
      * Performs an authorized HTTP request
      *
@@ -150,7 +114,7 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
 
             if (!$token['refreshToken']) {
                 $event = new OAuthTokenEvent($token);
-                $this->dispatcher->dispatch(AppEvents::TOKEN_EXPIRED, $event);
+                $this->dispatcher->dispatch(\AppEvents::TOKEN_EXPIRED, $event);
                 $e = new TokenException(sprintf('Refresh token not present for user "%s"', $token['username']));
                 $e->setToken($token);
                 throw $e;
@@ -160,7 +124,7 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
                 $data = $this->refreshAccessToken($token['refreshToken']);
             } catch (\Exception $e) {
                 $event = new OAuthTokenEvent($token);
-                $this->dispatcher->dispatch(AppEvents::TOKEN_EXPIRED, $event);
+                $this->dispatcher->dispatch(\AppEvents::TOKEN_EXPIRED, $event);
                 $e = new TokenException($e->getMessage(), $e->getCode(), $e->getPrevious());
                 $e->setToken($token);
                 throw $e;
@@ -174,7 +138,7 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
             $token['createdTime'] = time();
             $token['expireTime'] = $token['createdTime'] + $data['expires_in'];
             $event = new OAuthTokenEvent($token);
-            $this->dispatcher->dispatch(AppEvents::TOKEN_REFRESHED, $event);
+            $this->dispatcher->dispatch(\AppEvents::TOKEN_REFRESHED, $event);
         }
 
         $request = $this->getAuthorizedRequest($this->options['base_url'] . $url, $query, $token);
@@ -232,6 +196,39 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
     public function refreshAccessToken($refreshToken, array $extraParameters = array())
     {
         throw new \Exception('OAuth error: "Method unsupported."');
+    }
+
+    protected function getClientToken()
+    {
+        if ($this->clientCredential instanceof ClientCredentialInterface) {
+            return $this->clientCredential->getClientToken();
+        }
+
+        return '';
+    }
+
+    /**
+     * Get the 'parsed' content based on the response headers.
+     *
+     * @param ResponseInterface $response
+     *
+     * @return array
+     */
+    protected function getResponseContent(ResponseInterface $response)
+    {
+        return $response->json();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function getAuthorizedRequest($url, array $query = array(), array $token = array())
+    {
+        $clientConfig = array(
+            'query' => $query,
+        );
+
+        return $this->httpClient->createRequest('GET', $url, $clientConfig);
     }
 
     /**

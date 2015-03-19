@@ -7,25 +7,29 @@ final class AppEvents
 {
 
     /**
-     * The token.refreshed event is thrown each time an oauth token is successfully
-     * refreshed in the system.
-     *
-     * The event listener receives an
-     * ApiConsumer\Event\FilterTokenRefreshedEvent instance.
-     *
-     * @var string
+     * Fired each time an oauth token is successfully refreshed in the system.
      */
     const TOKEN_REFRESHED = 'token.refreshed';
 
     /**
-     * Fired when detect that current token is expired
+     * Fired when detects that current token is expired
      */
     const TOKEN_EXPIRED = 'token.expired';
 
     /**
-     * Fired before link process starts
+     * Fired when fetch process starts
      */
-    const PROCESS_LINKS = 'process.links';
+    const FETCHING_START = 'fetching.start';
+
+    /**
+     * Fired when fetch process finish
+     */
+    const FETCHING_FINISH = 'fetching.finish';
+
+    /**
+     * Fired when links process starts
+     */
+    const PROCESS_START = 'process.start';
 
     /**
      * Fired with each link process
@@ -33,42 +37,32 @@ final class AppEvents
     const PROCESS_LINK = 'process.link';
 
     /**
-     * Fired when link process is finished
+     * Fired before storing links
+     */
+    const PROCESS_STORING_START = 'process.storing.start';
+
+    /**
+     * Fired after storing links
+     */
+    const PROCESS_STORING_FINISH = 'process.storing.finish';
+
+    /**
+     * Fired when links process is finished
      */
     const PROCESS_FINISH = 'process.finish';
 
     /**
-     * Fired when fetch process starts
-     */
-    const USER_DATA_FETCHING_START = 'user.data.fetching.start';
-
-    /**
-     * Fired when fetch process finish
-     */
-    const USER_DATA_FETCHING_FINISH = 'user.data.fetching.finish';
-
-    /**
-     * Fired when link processing starts
-     */
-    const USER_DATA_PROCESS_START = 'user.data.process.start';
-
-    /**
-     * Fired when link processing finish
-     */
-    const USER_DATA_PROCESS_FINISH = 'user.data.process.finish';
-
-    /**
      * Fired when matching is outdated
      */
-    const USER_MATCHING_EXPIRED = 'user.matching.expired';
+    const MATCHING_EXPIRED = 'matching.expired';
 
     /**
      * Fired when user rated content
      */
-    const USER_DATA_CONTENT_RATED = 'user.data.content.added';
+    const CONTENT_RATED = 'content.rated';
 
     /**
-     * Fired when user answer an question
+     * Fired when user answers a question
      */
-    const USER_ANSWER_QUESTION = 'user.answer.added';
+    const ANSWER_ADDED = 'answer.added';
 }

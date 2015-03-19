@@ -320,12 +320,12 @@ class QueryBuilder
     private function _getCypher()
     {
 
-        $cypher = '';
+        $parts = array();
         foreach ($this->_parts as $part) {
             /* @var $part CypherPart */
-            $cypher .= $part->getCypherPartName() . ' ' . $part->getCypherPart() . "\n";
+            $parts[] = $part->getCypherPartName() . ' ' . $part->getCypherPart();
         }
 
-        return $cypher;
+        return implode("\n", $parts);
     }
 }

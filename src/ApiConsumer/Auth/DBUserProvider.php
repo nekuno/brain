@@ -11,7 +11,7 @@ class DBUserProvider implements UserProviderInterface
     /**
      * @var Connection
      */
-    private $driver;
+    protected $driver;
 
     public function __construct(Connection $driver)
     {
@@ -37,8 +37,8 @@ class DBUserProvider implements UserProviderInterface
         }
 
         if (null !== $userId) {
-            $filters[] =  "u.id = :userId";
-            $params[':userId'] = (int) $userId;
+            $filters[] = "u.id = :userId";
+            $params[':userId'] = (int)$userId;
         }
 
         $sql .= implode(" AND ", $filters);
@@ -56,15 +56,15 @@ class DBUserProvider implements UserProviderInterface
     /**
      * { @inheritdoc }
      */
-    public function updateAccessToken($resource, $userId, $acessToken, $creationTime, $expirationTime )
+    public function updateAccessToken($resource, $userId, $acessToken, $creationTime, $expirationTime)
     {
 
         $sql = "UPDATE  user_access_tokens " .
             " SET oauthToken = :accessToken, " .
-                " createdTime = :creationTime, " .
-                " expireTime = :expirationTime " .
+            " createdTime = :creationTime, " .
+            " expireTime = :expirationTime " .
             " WHERE resourceOwner = :resource AND " .
-                "user_id = :userId;";
+            "user_id = :userId;";
 
         $params = array(
             ':accessToken' => $acessToken,
@@ -77,7 +77,7 @@ class DBUserProvider implements UserProviderInterface
         try {
 
             return $this->driver->executeUpdate($sql, $params);
-            
+
         } catch (\Exception $e) {
             throw $e;
         }

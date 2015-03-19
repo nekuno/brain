@@ -20,7 +20,13 @@ class Query extends \Everyman\Neo4j\Cypher\Query implements LoggerAwareInterface
     {
 
         if ($this->logger instanceof LoggerInterface) {
-            $this->logger->debug(sprintf('Executing query: "%s"', $this->getExecutableQuery()));
+            $now = microtime(true);
+            $result = parent::getResultSet();
+            $time = round(microtime(true) - $now, 3) * 1000;
+            $message = sprintf('Executed query (took %s ms): "%s"', $time, $this->getExecutableQuery());
+            1000 <= $time ? $this->logger->warning($message) : $this->logger->debug($message);
+
+            return $result;
         }
 
         return parent::getResultSet();

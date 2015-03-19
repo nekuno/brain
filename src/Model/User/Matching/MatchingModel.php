@@ -48,10 +48,10 @@ class MatchingModel
         AnswerModel $answerModel
     ) {
 
-        $this->dispatcher              = $dispatcher;
-        $this->client                  = $client;
-        $this->contentPaginatedModel   = $contentPaginatedModel;
-        $this->answerModel             = $answerModel;
+        $this->dispatcher = $dispatcher;
+        $this->client = $client;
+        $this->contentPaginatedModel = $contentPaginatedModel;
+        $this->answerModel = $answerModel;
     }
 
     /**
@@ -105,7 +105,7 @@ class MatchingModel
 
             foreach ($result as $match) {
                 if ($match['m']) {
-                    $matching['matching_questions']  = $match['m']->getProperty('matching_questions') ?: 0;
+                    $matching['matching_questions'] = $match['m']->getProperty('matching_questions') ?: 0;
                     $matching['timestamp_questions'] = $match['m']->getProperty('timestamp_questions') ?: 0;
                 }
             }
@@ -127,8 +127,8 @@ class MatchingModel
     {
 
         if (isset($rawMatching[$matchingIndex]) && $rawMatching[$matchingIndex] !== null) {
-            $matchingUpdatedAt    = $rawMatching[$tsIndex] ? $rawMatching[$tsIndex] : 0;
-            $currentTimeInMillis  = time() * 1000;
+            $matchingUpdatedAt = $rawMatching[$tsIndex] ? $rawMatching[$tsIndex] : 0;
+            $currentTimeInMillis = time() * 1000;
             $lastUpdatePlusOneDay = $matchingUpdatedAt + (1000 * 60 * 60 * 24);
             if ($lastUpdatePlusOneDay < $currentTimeInMillis) {
                 return true;
@@ -150,8 +150,7 @@ class MatchingModel
         $rawMatching = $this->getMatchingBetweenTwoUsers($id1, $id2);
 
         if ($this->isNecessaryToRecalculateIt($rawMatching, 'timestamp_questions', 'matching_questions')) {
-            $event = new MatchingExpiredEvent($id1, $id2, 'answer');
-            $this->dispatcher->dispatch(\AppEvents::USER_MATCHING_EXPIRED, $event);
+            $this->dispatcher->dispatch(\AppEvents::MATCHING_EXPIRED, new MatchingExpiredEvent($id1, $id2, 'answer'));
         }
 
         $response['matching'] = $rawMatching['matching_questions'] ? $rawMatching['matching_questions'] : 0;
@@ -265,8 +264,8 @@ class MatchingModel
 
         //State the value of the variables in the query string
         $queryDataArray = array(
-            'id1'      => (integer)$id1,
-            'id2'      => (integer)$id2,
+            'id1' => (integer)$id1,
+            'id2' => (integer)$id2,
             'matching' => (float)$matching
         );
 

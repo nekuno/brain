@@ -6,14 +6,20 @@ use Model\LinkModel;
 use Model\Questionnaire\QuestionModel;
 use Model\User\AnswerModel;
 use Model\UserModel;
+use Psr\Log\LoggerInterface;
 
 class Fixtures
 {
 
-    const NUM_OF_USERS = 20;
+    const NUM_OF_USERS = 50;
     const NUM_OF_LINKS = 2000;
     const NUM_OF_TAGS = 200;
     const NUM_OF_QUESTIONS = 200;
+
+    /**
+     * @var LoggerInterface
+     */
+    protected $logger;
 
     /**
      * @var GraphManager
@@ -60,6 +66,15 @@ class Fixtures
         $this->scenario = $scenario;
     }
 
+    /**
+     * @param LoggerInterface $logger
+     */
+    public function setLogger(LoggerInterface $logger)
+    {
+
+        $this->logger = $logger;
+    }
+
     public function load()
     {
 
@@ -75,6 +90,8 @@ class Fixtures
 
     protected function clean()
     {
+
+        $this->logger->notice('Cleaning database');
 
         $qb = $this->gm->createQueryBuilder();
 
@@ -92,6 +109,8 @@ class Fixtures
     protected function loadUsers()
     {
 
+        $this->logger->notice(sprintf('Loading %d users', self::NUM_OF_USERS));
+
         for ($i = 1; $i <= self::NUM_OF_USERS; $i++) {
 
             $this->um->create(
@@ -106,6 +125,8 @@ class Fixtures
 
     protected function loadLinks()
     {
+
+        $this->logger->notice(sprintf('Loading %d links', self::NUM_OF_LINKS));
 
         for ($i = 1; $i <= self::NUM_OF_LINKS; $i++) {
 
@@ -124,6 +145,8 @@ class Fixtures
     protected function loadTags()
     {
 
+        $this->logger->notice(sprintf('Loading %d tags', self::NUM_OF_TAGS));
+
         for ($i = 1; $i <= self::NUM_OF_TAGS; $i++) {
 
             $this->lm->createTag(
@@ -139,6 +162,8 @@ class Fixtures
 
     protected function loadQuestions()
     {
+        $this->logger->notice(sprintf('Loading %d questions', self::NUM_OF_QUESTIONS));
+
         for ($i = 1; $i <= self::NUM_OF_QUESTIONS; $i++) {
 
             $answers = array();
@@ -146,7 +171,7 @@ class Fixtures
                 $answers[] = 'Answer ' . $j . ' to Question ' . $i;
             }
 
-            $this->questions[$i] = $this->qm->create(
+            $question = $this->qm->create(
                 array(
                     'locale' => 'en',
                     'text' => 'Question ' . $i,
@@ -154,6 +179,25 @@ class Fixtures
                     'answers' => $answers,
                 )
             );
+
+            $answers = $question['answers'];
+            $j = 1;
+            foreach ($answers as $id => $text) {
+                $answers[$id] = 'Respuesta ' . $j . ' a la pregunta ' . $i;
+                $j++;
+            }
+
+            $this->qm->update(
+                array(
+                    'id' => $question['id'],
+                    'locale' => 'es',
+                    'text' => 'Pregunta ' . $i,
+                    'answers' => $answers,
+                )
+            );
+
+            $this->questions[$i] = $question;
+
         }
     }
 
@@ -175,6 +219,8 @@ class Fixtures
     protected function loadLikes()
     {
 
+        $this->logger->notice('Loading likes');
+
         $likes = $this->scenario['likes'];
 
         foreach ($likes as $like) {
@@ -186,6 +232,7 @@ class Fixtures
 
     protected function loadAnswers()
     {
+        $this->logger->notice('Loading answers');
 
         $answers = $this->scenario['answers'];
 

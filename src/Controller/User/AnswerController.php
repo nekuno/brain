@@ -48,7 +48,7 @@ class AnswerController
             $event = new AnswerEvent($data['userId'], $data['questionId']);
             /** @var EventDispatcher $dispatcher */
             $dispatcher = $app['dispatcher'];
-            $dispatcher->dispatch(\AppEvents::USER_ANSWER_QUESTION, $event);
+            $dispatcher->dispatch(\AppEvents::ANSWER_ADDED, $event);
 
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
@@ -93,7 +93,7 @@ class AnswerController
             $event = new AnswerEvent($data['userId'], $data['questionId']);
             /** @var EventDispatcher $dispatcher */
             $dispatcher = $app['dispatcher'];
-            $dispatcher->dispatch(\AppEvents::USER_ANSWER_QUESTION, $event);
+            $dispatcher->dispatch(\AppEvents::ANSWER_ADDED, $event);
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;
@@ -154,11 +154,7 @@ class AnswerController
         /** @var $model \Model\User\QuestionPaginatedModel */
         $model = $app['users.questions.model'];
 
-        try {
-            $result = $paginator->paginate($filters, $model, $request);
-        } catch (\Exception $e) {
-            return $app->json($e->getMessage(), 500);
-        }
+        $result = $paginator->paginate($filters, $model, $request);
 
         return $app->json($result, !empty($result) ? 201 : 200);
     }

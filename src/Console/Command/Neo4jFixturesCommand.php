@@ -4,9 +4,11 @@ namespace Console\Command;
 
 use Model\Neo4j\Fixtures;
 
+use Psr\Log\LogLevel;
 use Silex\Application;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class Neo4jFixturesCommand extends ApplicationAwareCommand
@@ -25,6 +27,11 @@ class Neo4jFixturesCommand extends ApplicationAwareCommand
         $scenario = $input->getArgument('scenario');
 
         $fixtures = new Fixtures($this->app['neo4j.graph_manager'], $this->app['users.model'], $this->app['links.model'], $this->app['questionnaire.questions.model'], $this->app['users.answers.model'], $this->getScenario($scenario));
+
+        $logger = new ConsoleLogger($output);
+        $fixtures->setLogger($logger);
+
+        $output->writeln('Loading fixtures');
 
         try {
             $fixtures->load();
@@ -1569,6 +1576,169 @@ class Neo4jFixturesCommand extends ApplicationAwareCommand
                         'answer' => 2,
                         'questionFrom' => 121,
                         'questionTo' => 127,
+                    ),
+                    // next users have same answers
+                    array(
+                        'user' => 5,
+                        'answer' => 1,
+                        'questionFrom' => 1,
+                        'questionTo' => 190,
+                    ),
+                    array(
+                        'user' => 6,
+                        'answer' => 1,
+                        'questionFrom' => 1,
+                        'questionTo' => 190,
+                    ),
+                    array(
+                        'user' => 7,
+                        'answer' => 1,
+                        'questionFrom' => 1,
+                        'questionTo' => 190,
+                    ),
+                    array(
+                        'user' => 8,
+                        'answer' => 1,
+                        'questionFrom' => 1,
+                        'questionTo' => 190,
+                    ),
+                    array(
+                        'user' => 9,
+                        'answer' => 1,
+                        'questionFrom' => 1,
+                        'questionTo' => 190,
+                    ),
+                    array(
+                        'user' => 10,
+                        'answer' => 1,
+                        'questionFrom' => 1,
+                        'questionTo' => 190,
+                    ),
+                    array(
+                        'user' => 11,
+                        'answer' => 1,
+                        'questionFrom' => 1,
+                        'questionTo' => 190,
+                    ),
+                    array(
+                        'user' => 12,
+                        'answer' => 1,
+                        'questionFrom' => 1,
+                        'questionTo' => 190,
+                    ),
+                    array(
+                        'user' => 13,
+                        'answer' => 1,
+                        'questionFrom' => 1,
+                        'questionTo' => 190,
+                    ),
+                    array(
+                        'user' => 14,
+                        'answer' => 1,
+                        'questionFrom' => 1,
+                        'questionTo' => 190,
+                    ),
+                    array(
+                        'user' => 15,
+                        'answer' => 1,
+                        'questionFrom' => 1,
+                        'questionTo' => 190,
+                    ),
+                    array(
+                        'user' => 16,
+                        'answer' => 1,
+                        'questionFrom' => 1,
+                        'questionTo' => 190,
+                    ),
+                    array(
+                        'user' => 17,
+                        'answer' => 1,
+                        'questionFrom' => 1,
+                        'questionTo' => 190,
+                    ),
+                    array(
+                        'user' => 18,
+                        'answer' => 1,
+                        'questionFrom' => 1,
+                        'questionTo' => 190,
+                    ),
+                    array(
+                        'user' => 19,
+                        'answer' => 1,
+                        'questionFrom' => 1,
+                        'questionTo' => 190,
+                    ),
+                    array(
+                        'user' => 20,
+                        'answer' => 1,
+                        'questionFrom' => 1,
+                        'questionTo' => 190,
+                    ),
+                    array(
+                        'user' => 21,
+                        'answer' => 1,
+                        'questionFrom' => 1,
+                        'questionTo' => 190,
+                    ),
+                    array(
+                        'user' => 22,
+                        'answer' => 1,
+                        'questionFrom' => 1,
+                        'questionTo' => 190,
+                    ),
+                    array(
+                        'user' => 23,
+                        'answer' => 1,
+                        'questionFrom' => 1,
+                        'questionTo' => 190,
+                    ),
+                    array(
+                        'user' => 24,
+                        'answer' => 1,
+                        'questionFrom' => 1,
+                        'questionTo' => 190,
+                    ),
+                    array(
+                        'user' => 25,
+                        'answer' => 1,
+                        'questionFrom' => 1,
+                        'questionTo' => 190,
+                    ),
+                    array(
+                        'user' => 26,
+                        'answer' => 1,
+                        'questionFrom' => 1,
+                        'questionTo' => 190,
+                    ),
+                    array(
+                        'user' => 27,
+                        'answer' => 1,
+                        'questionFrom' => 1,
+                        'questionTo' => 190,
+                    ),
+                    array(
+                        'user' => 28,
+                        'answer' => 1,
+                        'questionFrom' => 1,
+                        'questionTo' => 190,
+                    ),
+                    array(
+                        'user' => 29,
+                        'answer' => 1,
+                        'questionFrom' => 1,
+                        'questionTo' => 190,
+                    ),
+                    array(
+                        'user' => 30,
+                        'answer' => 1,
+                        'questionFrom' => 1,
+                        'questionTo' => 190,
+                    ),
+                    array(
+                        'user' => 31,
+                        'answer' => 1,
+                        'questionFrom' => 1,
+                        'questionTo' => 190,
                     ),
                 ),
             ),

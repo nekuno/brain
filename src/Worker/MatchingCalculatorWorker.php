@@ -92,6 +92,8 @@ class MatchingCalculatorWorker implements RabbitMQConsumerInterface, LoggerAware
                 $this->logger->notice(sprintf('[%s] Calculating matching by trigger "%s" for user "%s"', date('Y-m-d H:i:s'), $trigger, $userA));
 
                 try {
+                    $status = $this->userModel->calculateStatus($userA);
+                    $this->logger->notice(sprintf('Calculating user "%s" new status: "%s"', $userA, $status->getStatus()));
                     $usersWithSameContent = $this->userModel->getByCommonLinksWithUser($userA);
 
                     foreach ($usersWithSameContent as $currentUser) {
@@ -118,6 +120,8 @@ class MatchingCalculatorWorker implements RabbitMQConsumerInterface, LoggerAware
                 $this->logger->notice(sprintf('[%s] Calculating matching by trigger "%s" for user "%s" and question "%s"', date('Y-m-d H:i:s'), $trigger, $userA, $questionId));
 
                 try {
+                    $status = $this->userModel->calculateStatus($userA);
+                    $this->logger->notice(sprintf('Calculating user "%s" new status: "%s"', $userA, $status->getStatus()));
                     $usersAnsweredQuestion = $this->userModel->getByQuestionAnswered($questionId);
 
                     foreach ($usersAnsweredQuestion as $currentUser) {
