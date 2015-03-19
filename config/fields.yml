@@ -109,37 +109,37 @@ profile:
     car:
         type: choice
         label:
-            en: ‘Do you have a car?'
+            en: 'Do you have a car?'
             es: '¿Tienes coche?'
     sons:
         type: choice
         label:
-            en: ‘Do you have sons?'
+            en: 'Do you have sons?'
             es: '¿Tienes hijos?'
     pets:
         type: choice
         label:
-            en: ‘Do you have pets?'
+            en: 'Do you have pets?'
             es: '¿Tienes mascotas?'
     smoke:
         type: choice
         label:
-            en: ‘Do you smoke?'
+            en: 'Do you smoke?'
             es: '¿Fumas?'
     alcohol:
         type: choice
         label:
-            en: ‘Do you drink alcohol?'
+            en: 'Do you drink alcohol?'
             es: '¿Bebes Alcohol?'
     drugs:
         type: choice
         label:
-            en: ‘Do you take drugs?'
+            en: 'Do you take drugs?'
             es: '¿Tomas drogas?'
     diet:
         type: choice
         label:
-            en: ‘Are you on a special diet?'
+            en: 'Are you on a special diet?'
             es: '¿Sigues alguna dieta especial?'
     wantSons:
         type: choice
@@ -190,8 +190,8 @@ profile:
         type: choice
         filterable: false
         label:
-            en: ‘What interface language do you prefer?’
-            es: ‘¿Qué lenguaje de interfaz prefieres?’
+            en: 'What interface language do you prefer?’
+            es: '¿Qué lenguaje de interfaz prefieres?’
     religion:
         type: tags
         label:
