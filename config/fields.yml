@@ -190,8 +190,8 @@ profile:
         type: choice
         filterable: false
         label:
-            en: 'What interface language do you prefer?’
-            es: '¿Qué lenguaje de interfaz prefieres?’
+            en: 'What interface language do you prefer?'
+            es: '¿Qué lenguaje de interfaz prefieres?'
     religion:
         type: tags
         label:
