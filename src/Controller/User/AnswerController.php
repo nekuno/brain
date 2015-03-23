@@ -225,6 +225,7 @@ class AnswerController
                 foreach ($row['answers'] as $answer) {
                     $data['question']['answers'][$answer->getId()] = $answer->getProperty('text_' . $locale);
                 }
+                $data['question']['answers'][$row['answer']->getId()] = $row['answer']->getProperty('text_' . $locale);
 
                 $data['answer']['answerId'] = $row['answer']->getId();
                 $data['answer']['explanation'] = $row['userAnswer']->getProperty('explanation');
