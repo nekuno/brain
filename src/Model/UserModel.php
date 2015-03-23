@@ -2,6 +2,7 @@
 
 namespace Model;
 
+use Doctrine\DBAL\Connection;
 use Everyman\Neo4j\Query\Row;
 use Model\Neo4j\GraphManager;
 use Model\User\ProfileModel;
@@ -27,10 +28,16 @@ class UserModel implements PaginatedInterface
      */
     protected $pm;
 
-    public function __construct(GraphManager $gm, ProfileModel $pm)
+    /**
+     * @var Connection
+     */
+    protected $driver;
+
+    public function __construct(GraphManager $gm, ProfileModel $pm, Connection $driver)
     {
         $this->gm = $gm;
         $this->pm = $pm;
+        $this->driver = $driver;
     }
 
     /**
@@ -262,6 +269,8 @@ class UserModel implements PaginatedInterface
 
             $query = $qb->getQuery();
             $query->getResultSet();
+
+            $this->driver->update('users', array('status' => $status->getStatus()), array('id' => (integer)$id));
         }
 
         return $status;
