@@ -105,7 +105,8 @@ class UserModel implements PaginatedInterface
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(u:User)')
-            ->returns('u');
+            ->returns('u')
+            ->orderBy('u.qnoow_id');
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();
