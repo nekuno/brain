@@ -109,6 +109,8 @@ class UserController
         try {
             $model = $app['users.model'];
             $result = $model->getById($request->get('id'));
+            $groupModel= $app['users.groups.model'];
+            $result['groups']= $groupModel->getByUser((integer)($request->get('id')));
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;

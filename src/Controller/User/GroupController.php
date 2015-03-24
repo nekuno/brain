@@ -26,12 +26,8 @@ class GroupController
 
         // Basic data validation
         if (array() !== $request->request->all()) {
-            if (null == $request->request->get('groupId') || null == $request->request->get('groupName')
+            if (null == $request->request->get('groupName')
             ) {
-                return $app->json(array(), 400);
-            }
-
-            if (!is_int($request->request->get('groupId'))) {
                 return $app->json(array(), 400);
             }
         } else {
@@ -42,7 +38,14 @@ class GroupController
 
         try {
             $model = $app['users.groups.model'];
-            $result = $model->create($request->request->all());
+            $isCreated=$model->isAlreadyCreated($request->request->get('groupName'));
+            if ($isCreated){
+                $result=array();
+            } else {
+                $result = $model->create($request->request->get('groupName'));
+            }
+            
+            $result["wasCreated"]=$isCreated;
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;
@@ -64,38 +67,39 @@ class GroupController
      public function showAction(Request $request, Application $app)
     {
 
-        $id = $request->get('groupId');
-        $name=$request->get('groupName');
-
-        if (null === $id && null === $name) {
+        if (null === $request->get('groupId') && null === $request->get('groupName')) {
             return $app->json(array(), 404);
         }
-
-        if (null !== $id){
+      
+        if ((null!==$request->get('groupId'))&&(is_int($request->get('groupId')))){
             try {
                 $model = $app['users.groups.model'];
-                $result = $model->getById($id);
+                $result = $model->getById($request->get('groupId'));
             } catch (\Exception $e) {
                 if ($app['env'] == 'dev') {
                     throw $e;
                 }
                 return $app->json(array(), 500);
             }
-        }
 
-        if (null === $id && null !== $name){
-            try {
-                $model = $app['users.groups.model'];
-                $result = $model->getByName($name);
-            } catch (\Exception $e) {
-                if ($app['env'] == 'dev') {
-                    throw $e;
-                }
-                return $app->json(array(), 500);
-            }
+            return $app->json($result, !empty($result) ? 200 : 404);
         }
         
-        return $app->json($result, !empty($result) ? 200 : 404);
+        if (null!==$request->get('groupName')){
+
+            try {
+                $model = $app['users.groups.model'];
+                $result = $model->getByName($request->get('groupName'));
+            } catch (\Exception $e) {
+                if ($app['env'] == 'dev') {
+                    throw $e;
+                }
+                return $app->json(array(), 500);
+            }
+            return $app->json($result, !empty($result) ? 200 : 404);
+        }
+        
+        return $app->json(array(), 200);
     }
 
     /**
@@ -107,14 +111,21 @@ class GroupController
     public function deleteAction(Request $request, Application $app)
     {
 
-        $id = $request->get('groupId');
-        if (null === $id) {
+        if (null === $request->get('groupName')) {
             return $app->json(array(), 400);
         }
 
+
         try {
             $model = $app['users.groups.model'];
-            $model->remove($id);
+
+            $isCreated = $model->isAlreadyCreated($request->get('groupName'));
+            if ($isCreated){
+                $model->remove($request->get('groupName'));
+            }
+
+            return  $app->json(array("wasCreated"=>$isCreated), 200);
+            
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;
@@ -138,21 +149,37 @@ class GroupController
 
         // Basic data validation
         if (array() !== $request->request->all()) {
-            if (null == $request->request->get('groupId') || null == $request->request->get('userId')
+            if     (null == $request->get('groupName') 
+                || (null == $request->request->get('id'))
             ) {
-                return $app->json(array(), 400);
+                return $app->json(array('reason'=>'null value',
+                                        'id'=>$request->request->get('id'),
+                                        'groupName'=>$request->get('groupName')
+                                        ), 400);
             }
 
-            if (!is_int($request->request->get('groupId'))||!is_int($request->request->get('userId'))) {
-                return $app->json(array(), 400);
+            //comment this validation (and add cast to int) if
+            //debugging with Postman 1.02, due to bug 831 (need to send key->value)
+            if (!is_int($request->request->get('id'))) {
+
+                    return $app->json(  array('reason'=>'id not int',
+                                              'id'    =>$request->request->get('id')),
+                                        400);
             }
+
         } else {
-            return $app->json(array(), 400);
+            return $app->json(array('reason'=>'null values'), 400);
         }
 
         try {
             $model = $app['users.groups.model'];
-            $model->addUserToGroup($request->request->all());
+            $isBelonging=$model->isUserFromGroup($request->get('groupName'),
+                                                $request->request->get('id'));
+            if (!$isBelonging){
+                $model->addUserToGroup(array('id'=>$request->request->get('id'),
+                                             'groupName'=>$request->get('groupName')));
+            }
+
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;
@@ -161,7 +188,7 @@ class GroupController
             return $app->json(array(), 500);
         }
 
-        return $app->json(array(), 200);
+        return $app->json(array('wasBelonging'=>$isBelonging), 200);
     }
 
     /**
@@ -175,22 +202,30 @@ class GroupController
     {
 
         // Basic data validation
-        if (array() !== $request->request->all()) {
-            if (null == $request->request->get('groupId') || null == $request->request->get('userId')
+        
+            if (    null == $request->get('groupName') 
+                 || null == $request->get('id')
             ) {
-                return $app->json(array(), 400);
+                return $app->json(array('reason'=>'null value'), 400);
             }
-
-            if (!is_int($request->request->get('groupId'))||!is_int($request->request->get('userId'))) {
-                return $app->json(array(), 400);
-            }
-        } else {
-            return $app->json(array(), 400);
-        }
+            
+            //comment this validation (and add cast to int in model) if
+            //debugging with Postman 1.02, due to bug 831 (need to send key->value)
+            /*if (!is_int($request->get('id'))) {
+                return $app->json(array($request->get('id')), 400);
+            }*/
 
         try {
             $model = $app['users.groups.model'];
-            $model->removeUserFromGroup($request->request->all());
+
+            $isBelonging = $model->isUserFromGroup( $request->get('groupName'),
+                                                    $request->get('id'));
+            if ($isBelonging){
+                $model->removeUserFromGroup($request->get('groupName'),
+                                            $request->get('id'));
+            }
+
+            return  $app->json(array("wasBelonging"=>$isBelonging), 200);
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;

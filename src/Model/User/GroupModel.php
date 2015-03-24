@@ -29,71 +29,51 @@ class GroupModel
     }
 
     /**
-     * @param array $data
+     * @param $groupName
      * @throws \Exception
      * @return array
      */
-    public function create(array $data)
+    public function create($groupName)
     {
         $qb = $this->gm->createQueryBuilder();
 
-        $result=array();
-
-
-        if(this->isAlreadyCreated($groupId)){
-            $result['alreadyCreated']=true;
-            $qb ->match('(g:Group{id:{groupId}})')
+            $qb ->create('(g:Group{groupName:{groupName}})')
                 ->returns('g');
-        } else {
-            $result['alreadyCreated']=false;
-            $qb ->create('(g:Group{id:{groupId},groupName:{groupName}})')
-                ->returns('g');
-        }
+        
           
         $qb->setParameters(
             array(
-                'groupId' => $data['groupId'],
-                'groupName'=>$data['groupName']
+                'groupName'=>$groupName
             )
         );
+
         $query = $qb->getQuery();
 
-        $resultArray=this->parseResultSet($query->getResultSet());
-
-        $result=array_merge($result,$resultArray);
+        $result=$this->parseResultSet($query->getResultSet());
 
         return $result;
     }
     /*
-     * @param int $groupId
+     * @param $groupName
      * @returns array
      */
-    public function remove(int $groupId)
+    public function remove($groupName)
     {
         $qb = $this->gm->createQueryBuilder();
 
-        $result=array();
-
-
-        if(this->isAlreadyCreated($groupId)){
-            $result['wasCreated']=true;
-
             //needs to delete all relationships too
-            $qb ->match('(g:Group{id:{groupId}})')
-                ->match('(g)-[r]-()')
+            $qb ->match('(g:Group{groupName:{groupName}})')
+                ->optionalMatch('(g)-[r]-()')
                 ->delete('r,g');
 
             $qb->setParameters(
                 array(
-                    'groupId' => $groupId
+                    'groupName' => $groupName
                 )
             );
-            
-        } else {
-            $result['wasCreated']=false;
-        }
-          
-        return $result;
+
+        $query = $qb->getQuery();
+        return $this->parseResultSet($query->getResultSet());
         
     }
 
@@ -105,9 +85,11 @@ class GroupModel
      */
     public function getById(int $groupId)
     {
+
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match('(g:Group{id:{groupId}})')
+        $qb->match('(g:Group)')
+           ->where('id(g)={groupId}')
            ->returns('g');
        
         $qb->setParameters(
@@ -117,18 +99,17 @@ class GroupModel
         );
 
         $query = $qb->getQuery();
-
-        return this->parseResultSet($query->getResultSet());
+        return $this->parseResultSet($query->getResultSet());
     }
 
     /**
      * Gets all data from a group with its name
      * This method accepts returning multiple groups
-     * @param int $groupId
+     * @param $groupId
      * @throws \Exception
      * @return array
      */
-    public function getByName(int $groupName)
+    public function getByName($groupName)
     {
         $qb = $this->gm->createQueryBuilder();
 
@@ -142,44 +123,65 @@ class GroupModel
         );
 
         $query = $qb->getQuery();
-
-        return this->parseResultSet($query->getResultSet());
+        return $this->parseResultSet($query->getResultSet());
     }
 
      /**
-     * @param $groupId
-     * @param $userId
+     * @param integer $userId
      * @throws \Exception
      * @return array
      */
-    public function addUserToGroup($data)
+    public function getByUser($userId){
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb ->match('(u:User{qnoow_id:{userId}})')
+            ->match('(u)-[r:BELONGS_TO]->(g:Group)')
+            ->returns('g');
+        $qb ->setParameters(
+            array(
+                'userId'=>$userId
+            )
+        );
+
+        $query = $qb->getQuery();
+        return $this->parseResultSet($query->getResultSet());
+    }
+
+     /**
+     * @param array $data
+     * @throws \Exception
+     * @return array
+     */
+    public function addUserToGroup(array $data)
     {
         $qb = $this->gm->createQueryBuilder();
 
         $result=array();
+       // $group=getByName($data['groupName']);
+        //$groupId=$group['groupId'];
 
-        if (isUserFromGroup($groupId,$userId)){
+       /* if (isUserFromGroup($groupId,$data['id'])){
             $result['wasBelonging']=true;
-        } else {
+        } else {*/
             
-            $qb ->match('(g:Group{id:{groupId})')
-                ->match('(u:User{id:{userId}}')
-                ->match('(u)-[r:BELONGS_TO]->(g)')
+            $qb ->match('(g:Group{groupName:{groupName}})')
+                ->match('(u:User{qnoow_id:{userId}})')
+                ->create('(u)-[r:BELONGS_TO]->(g)')
                 ->set('r.created=timestamp()');
             $qb ->returns('r');
            
             $qb->setParameters(
                 array(
-                    'groupId'   => $data['groupId'],
-                    'userId'    => $data['userId']
+                    'groupName'   => $data['groupName'],
+                    'userId'      => $data['id']
                 )
             );
 
             $query = $qb->getQuery();
             $result=$query->getResultSet();
 
-            $result['wasBelonging']=false;
-        }
+            //$result['wasBelonging']=false;
+        //}
 
         return $result;
     }
@@ -190,35 +192,26 @@ class GroupModel
      * @return boolean
      */
 
-    public function removeUserFromGroup(array $data){
+    public function removeUserFromGroup($groupName,$id){
 
         $qb = $this->gm->createQueryBuilder();
 
         $result=array();
 
-        if (isUserFromGroup($groupId,$userId)){
-            
-            $qb ->match('(g:Group{id:{groupId})')
-                ->match('(u:User{id:{userId}}')
+            $qb ->match('(g:Group{groupName:{groupName}})')
+                ->match('(u:User{qnoow_id:{userId}})')
                 ->match('(u)-[r:BELONGS_TO]->(g)')
                 ->delete('r');
            
             $qb->setParameters(
                 array(
-                    'groupId'   => $data['groupId'],
-                    'userId'    => $data['userId']
+                    'groupName'   => $groupName,
+                    'userId'    => (int)$id
                 )
             );
 
             $query = $qb->getQuery();
             $result=$query->getResultSet();
-
-            $result['wasBelonging']=true;
-
-        } else {
-            
-            $result['wasBelonging']=false;
-        }
 
         return $result;
     }
@@ -229,28 +222,16 @@ class GroupModel
      * @throws \Exception
      * @return boolean
      */
-    public function isAlreadyCreated($groupId)
+    public function isAlreadyCreated($groupName)
     {
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match('(g:Group{id:{groupId})');
-        $qb->returns('g');
-       
-        $qb->setParameters(
-            array(
-                'groupId' => $groupId
-            )
-        );
-
-        $query = $qb->getQuery();
-
-        $result = $query->getResultSet();
-
-        if ($result->count() > 0) {
+        if (count($this->getByName($groupName))>0){
             return true;
+        } else {
+            return false;
         }
-
-        return false;
+       
     }
 
     /**
@@ -259,19 +240,19 @@ class GroupModel
      * @throws \Exception
      * @return boolean
      */
-    public function isUserFromGroup($groupId,$userId)
+    public function isUserFromGroup($groupName,$id)
     {
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match('(g:Group{id:{groupId})');
-           ->match('(u:User{id:{userId}})')
+        $qb->match('(g:Group{groupName:{groupName}})')
+           ->match('(u:User{qnoow_id:{userId}})')
            ->match('(u)-[r:BELONGS_TO]->(g)')
            ->returns('r');
        
         $qb->setParameters(
             array(
-                'groupId'   => $groupId,
-                'userId'    => $userId
+                'groupName'   => $groupName,
+                'userId'    => (int)$id
             )
         );
 
@@ -297,10 +278,9 @@ class GroupModel
 
         foreach ($resultSet as $row) {
             $group = array(
-                'group_Id' => $row['g']->getProperty('id'),
                 'groupName' => $row['g']->getProperty('groupName'),
             );
-            $group[] = $group;
+            $groups[] = $group;
         }
 
         return $groups;
