@@ -1,14 +1,7 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: adridev
- * Date: 14/11/14
- * Time: 17:13
- */
 
 namespace EventListener;
 
-use AppEvents;
 use Event\AnswerEvent;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
@@ -42,18 +35,18 @@ class UserAnswerSubscriber implements EventSubscriberInterface
     {
 
         return array(
-            AppEvents::USER_ANSWER_QUESTION => array('onUserAnswer'),
+            \AppEvents::ANSWER_ADDED => array('onAnswerAdded'),
         );
     }
 
     /**
      * @param AnswerEvent $event
      */
-    public function onUserAnswer(AnswerEvent $event)
+    public function onAnswerAdded(AnswerEvent $event)
     {
 
         $data = array(
-            'user_id' => $event->getUser(),
+            'userId' => $event->getUser(),
             'question_id' => $event->getQuestion(),
             'trigger' => 'question_answered'
         );

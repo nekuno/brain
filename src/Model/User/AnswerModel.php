@@ -110,8 +110,9 @@ class AnswerModel
     public function update(array $data)
     {
 
-        $data['userId'] = (integer)$data['userId'];
-        $data['questionId'] = (integer)$data['questionId'];
+        $data['userId'] = intval($data['userId']);
+        $data['questionId'] = intval($data['questionId']);
+        $data['answerId'] = intval($data['answerId']);
 
         $template = "MATCH (u:User)-[r1:ANSWERS]->(a1:Answer)-[:IS_ANSWER_OF]->(q:Question)"
             . ", (u)-[r2:ACCEPTS]->(a2:Answer)-[:IS_ANSWER_OF]->(q)"

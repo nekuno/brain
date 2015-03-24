@@ -3,8 +3,9 @@
 
 namespace ApiConsumer\EventListener;
 
-use ApiConsumer\Event\LinkEvent;
-use ApiConsumer\Event\LinksEvent;
+use Event\FetchingEvent;
+use Event\ProcessLinkEvent;
+use Event\ProcessLinksEvent;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -36,44 +37,66 @@ class FetchLinksSubscriber implements EventSubscriberInterface
     {
 
         return array(
-            \AppEvents::PROCESS_LINKS => array('onProcessLinks', 1),
-            \AppEvents::PROCESS_LINK => array('onProcessLink', 1),
-            \AppEvents::PROCESS_FINISH => array('onProcessFinish', 1),
+            \AppEvents::FETCHING_START => array('onFetchingStart'),
+            \AppEvents::FETCHING_FINISH => array('onFetchingFinish'),
+            \AppEvents::PROCESS_START => array('onProcessStart'),
+            \AppEvents::PROCESS_LINK => array('onProcessLink'),
+            \AppEvents::PROCESS_STORING_START => array('onProcessStoringStart'),
+            \AppEvents::PROCESS_STORING_FINISH => array('onProcessStoringFinish'),
+            \AppEvents::PROCESS_FINISH => array('onProcessFinish'),
         );
     }
 
-    public function onProcessLinks(LinksEvent $event)
+    public function onFetchingStart(FetchingEvent $event)
     {
-
-        $data = $event->getData();
-        $this->output->writeln(
-            sprintf(
-                'Processing links for user %s from resource owner %s with fetcher %s',
-                $data['userId'],
-                $data['resourceOwner'],
-                $data['fetcher']
-            )
-        );
-        $this->progress = new ProgressBar($this->output, $data['links']);
-        $this->progress->start();
+        $this->output->writeln(sprintf('[%s] Fetching links for user "%d" with fetcher "%s" from resource owner "%s"', date('Y-m-d H:i:s'), $event->getUser(), $event->getFetcher(), $event->getResourceOwner()));
     }
 
-    public function onProcessLink(LinkEvent $event)
+    public function onFetchingFinish(FetchingEvent $event)
+    {
+        $this->output->writeln(sprintf('[%s] Fetched links for user "%d" with fetcher "%s" from resource owner "%s"', date('Y-m-d H:i:s'), $event->getUser(), $event->getFetcher(), $event->getResourceOwner()));
+    }
+
+    public function onProcessStart(ProcessLinksEvent $event)
     {
 
-        $this->progress->advance();
+        $this->progress = new ProgressBar($this->output, count($event->getLinks()));
+
         if (OutputInterface::VERBOSITY_NORMAL < $this->output->getVerbosity()) {
-            $data = $event->getData();
-            $link = $data['link'];
+            $this->output->writeln(sprintf('[%s] Processing "%d" links for user "%d" with fetcher "%s" from resource owner "%s"', date('Y-m-d H:i:s'), count($event->getLinks()), $event->getUser(), $event->getFetcher(), $event->getResourceOwner()));
+            $this->progress->start();
+        }
+    }
+
+    public function onProcessLink(ProcessLinkEvent $event)
+    {
+
+        if (OutputInterface::VERBOSITY_NORMAL < $this->output->getVerbosity()) {
+            $this->progress->advance();
+        }
+        if (OutputInterface::VERBOSITY_VERBOSE < $this->output->getVerbosity()) {
+            $link = $event->getLink();
             $url = $link['url'];
             $this->output->writeln(sprintf(' "%s"', $url));
         }
     }
 
-    public function onProcessFinish()
+    public function onProcessStoringStart(ProcessLinksEvent $event)
+    {
+        $this->output->writeln(sprintf('[%s] Storing "%d" links for user "%d" with fetcher "%s" from resource owner "%s"', date('Y-m-d H:i:s'), count($event->getLinks()), $event->getUser(), $event->getFetcher(), $event->getResourceOwner()));
+    }
+
+    public function onProcessStoringFinish(ProcessLinksEvent $event)
+    {
+        $this->output->writeln(sprintf('[%s] Stored "%d" links for user "%d" with fetcher "%s" from resource owner "%s"', date('Y-m-d H:i:s'), count($event->getLinks()), $event->getUser(), $event->getFetcher(), $event->getResourceOwner()));
+    }
+
+    public function onProcessFinish(ProcessLinksEvent $event)
     {
 
-        $this->progress->finish();
-        $this->output->writeln('');
+        if (OutputInterface::VERBOSITY_NORMAL < $this->output->getVerbosity()) {
+            $this->progress->finish();
+            $this->output->writeln('');
+        }
     }
 }

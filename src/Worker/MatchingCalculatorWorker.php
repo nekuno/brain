@@ -89,14 +89,17 @@ class MatchingCalculatorWorker implements RabbitMQConsumerInterface, LoggerAware
             case 'process_finished':
 
                 $userA = $data['userId'];
-                $this->logger->info(sprintf('Calculating matching by trigger "%s" for user "%s"', $trigger, $userA));
+                $this->logger->notice(sprintf('[%s] Calculating matching by trigger "%s" for user "%s"', date('Y-m-d H:i:s'), $trigger, $userA));
 
                 try {
+                    $status = $this->userModel->calculateStatus($userA);
+                    $this->logger->notice(sprintf('Calculating user "%s" new status: "%s"', $userA, $status->getStatus()));
                     $usersWithSameContent = $this->userModel->getByCommonLinksWithUser($userA);
 
                     foreach ($usersWithSameContent as $currentUser) {
                         $userB = $currentUser['qnoow_id'];
-                        $this->similarityModel->calculateSimilarityByInterests($userA, $userB);
+                        $similarity = $this->similarityModel->calculateSimilarityByInterests($userA, $userB);
+                        $this->logger->info(sprintf('   Similarity by interests between users %d - %d: %s', $userA, $userB, $similarity));
                     }
                 } catch (\Exception $e) {
                     $this->logger->error(
@@ -113,16 +116,22 @@ class MatchingCalculatorWorker implements RabbitMQConsumerInterface, LoggerAware
             case 'question_answered':
 
                 $userA = $data['userId'];
-                $this->logger->info(sprintf('Calculating matching by trigger "%s" for user "%s"', $trigger, $userA));
+                $questionId = $data['question_id'];
+                $this->logger->notice(sprintf('[%s] Calculating matching by trigger "%s" for user "%s" and question "%s"', date('Y-m-d H:i:s'), $trigger, $userA, $questionId));
 
                 try {
-                    $usersAnsweredQuestion = $this->userModel->getByQuestionAnswered($data['question_id']);
+                    $status = $this->userModel->calculateStatus($userA);
+                    $this->logger->notice(sprintf('Calculating user "%s" new status: "%s"', $userA, $status->getStatus()));
+                    $usersAnsweredQuestion = $this->userModel->getByQuestionAnswered($questionId);
 
                     foreach ($usersAnsweredQuestion as $currentUser) {
+
                         $userB = $currentUser['qnoow_id'];
                         if ($userA <> $userB) {
-                            $this->similarityModel->calculateSimilarityByQuestions($userA, $userB);
-                            $this->matchingModel->calculateMatchingBetweenTwoUsersBasedOnAnswers($userA, $userB);
+                            $similarity = $this->similarityModel->calculateSimilarityByQuestions($userA, $userB);
+                            $matching = $this->matchingModel->calculateMatchingBetweenTwoUsersBasedOnAnswers($userA, $userB);
+                            $this->logger->info(sprintf('   Similarity by questions between users %d - %d: %s', $userA, $userB, $similarity));
+                            $this->logger->info(sprintf('   Matching by questions between users %d - %d: %s', $userA, $userB, $matching));
                         }
                     }
 

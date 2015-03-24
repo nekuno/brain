@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: adridev
- * Date: 14/11/14
- * Time: 17:20
- */
 
 namespace Event;
 

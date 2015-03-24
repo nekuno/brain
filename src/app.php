@@ -22,11 +22,12 @@ $app = new Application();
 
 $app['env'] = getenv('APP_ENV') ?: 'prod';
 
+$app->register(new MonologServiceProvider(), array('monolog.name' => 'brain'));
+
 $app->register(new DoctrineServiceProvider());
 $app->register(new DoctrineOrmServiceProvider());
 $app->register(new Neo4jPHPServiceProvider());
 
-$app->register(new MonologServiceProvider());
 $app->register(new UrlGeneratorServiceProvider());
 $app->register(new GuzzleServiceProvider());
 $app->register(new ValidatorServiceProvider());

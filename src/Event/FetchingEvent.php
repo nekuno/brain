@@ -5,35 +5,38 @@ namespace Event;
 
 use Symfony\Component\EventDispatcher\Event;
 
-class UserDataEvent extends Event
+class FetchingEvent extends Event
 {
 
     protected $user;
 
     protected $resourceOwner;
 
-    public function __construct($user, $resourceOwner = null)
+    protected $fetcher;
+
+    public function __construct($user, $resourceOwner, $fetcher)
     {
 
         $this->user = $user;
         $this->resourceOwner = $resourceOwner;
+        $this->fetcher = $fetcher;
     }
 
-    /**
-     * @return mixed
-     */
+    public function getUser()
+    {
+
+        return $this->user;
+    }
+
     public function getResourceOwner()
     {
 
         return $this->resourceOwner;
     }
 
-    /**
-     * @return mixed
-     */
-    public function getUser()
+    public function getFetcher()
     {
-
-        return $this->user;
+        return $this->fetcher;
     }
+
 }

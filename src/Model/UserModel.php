@@ -2,11 +2,13 @@
 
 namespace Model;
 
+use Doctrine\DBAL\Connection;
 use Everyman\Neo4j\Query\Row;
 use Model\Neo4j\GraphManager;
 use Model\User\ProfileModel;
 use Model\User\UserStatusModel;
 use Paginator\PaginatedInterface;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * Class UserModel
@@ -26,15 +28,20 @@ class UserModel implements PaginatedInterface
      */
     protected $pm;
 
-    public function __construct(GraphManager $gm, ProfileModel $pm)
+    /**
+     * @var Connection
+     */
+    protected $driver;
+
+    public function __construct(GraphManager $gm, ProfileModel $pm, Connection $driver)
     {
         $this->gm = $gm;
         $this->pm = $pm;
+        $this->driver = $driver;
     }
 
     /**
      * Creates an new User and returns the query result
-     * If the given group exists, links user to the group
      *
      * @param array $user
      * @throws \Exception
@@ -47,9 +54,8 @@ class UserModel implements PaginatedInterface
         }
 
         $qb = $this->gm->createQueryBuilder();
-        $qb ->create('(u:User {qnoow_id: { qnoow_id }, status: { status }, username: { username }, email: { email }})');
-      
-        $qb->setParameter('qnoow_id', $user['id'])
+        $qb->create('(u:User {qnoow_id: { qnoow_id }, status: { status }, username: { username }, email: { email }})')
+            ->setParameter('qnoow_id', $user['id'])
             ->setParameter('status', UserStatusModel::USER_STATUS_INCOMPLETE)
             ->setParameter('username', $user['username'])
             ->setParameter('email', $user['email'])
@@ -99,7 +105,8 @@ class UserModel implements PaginatedInterface
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(u:User)')
-            ->returns('u');
+            ->returns('u')
+            ->orderBy('u.qnoow_id');
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();
@@ -118,11 +125,15 @@ class UserModel implements PaginatedInterface
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(u:User {qnoow_id: { id }})')
-            ->returns('u')
-            ->setParameter('id', (integer)$id);
+            ->setParameter('id', (integer)$id)
+            ->returns('u');
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();
+
+        if ($result->count() < 1) {
+            throw new NotFoundHttpException('User not found');
+        }
 
         return $this->parseResultSet($result);
 
@@ -157,9 +168,10 @@ class UserModel implements PaginatedInterface
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(ref:User {qnoow_id: { id }})')
+            ->setParameter('id', (integer)$id)
             ->match('(ref)-[:LIKES|DISLIKES]->(:Link)<-[:LIKES]-(u:User)')
             ->returns('DISTINCT u')
-            ->setParameter('id', (integer)$id);
+            ->orderBy('u.qnoow_id');
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();
@@ -178,9 +190,10 @@ class UserModel implements PaginatedInterface
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(u:User)-[:RATES]->(q:Question)')
+            ->setParameter('questions', (integer)$questionId)
             ->where('id(q) IN [ { questions } ]')
             ->returns('DISTINCT u')
-            ->setParameter('questions', (integer)$questionId);
+            ->orderBy('u.qnoow_id');
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();
@@ -221,34 +234,68 @@ class UserModel implements PaginatedInterface
     {
 
         $qb = $this->gm->createQueryBuilder();
-        $qb->match('(u:User {qnoow_id: { id }})')
-            ->optionalMatch('(u)-[:ANSWERS]->(a:Answer)')
-            ->optionalMatch('(u)-[:LIKES]->(l:Link)')
-            ->returns('u.status AS status', 'COUNT(DISTINCT a) AS answerCount', 'COUNT(DISTINCT l) AS linkCount')
-            ->setParameter('id', (integer)$id);
+        $qb
+            ->match('(u:User {qnoow_id: { id }})')
+            ->setParameter('id', (integer)$id)
+            ->returns('u.status AS status');
 
         $query = $qb->getQuery();
+
         $result = $query->getResultSet();
+
+        if ($result->count() < 1) {
+            throw new NotFoundHttpException('User not found');
+        }
 
         /* @var $row Row */
         $row = $result->current();
-        $status = $row['status'];
 
-        $status = new UserStatusModel($status, $row['answerCount'], $row['linkCount']);
+        return $row->offsetGet('status');
 
-        if ($status->getStatus() !== $status) {
+    }
 
-            $newStatus = $status->getStatus();
+    /**
+     * @param integer $id
+     * @return UserStatusModel
+     */
+    public function calculateStatus($id)
+    {
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb
+            ->match('(u:User {qnoow_id: { id }})')
+            ->setParameter('id', (integer)$id)
+            ->optionalMatch('(u)-[:ANSWERS]->(a:Answer)')
+            ->optionalMatch('(u)-[:LIKES]->(l:Link)')
+            ->returns('u.status AS status', 'COUNT(DISTINCT a) AS answerCount', 'COUNT(DISTINCT l) AS linkCount');
+
+        $query = $qb->getQuery();
+
+        $result = $query->getResultSet();
+
+        if ($result->count() < 1) {
+            throw new NotFoundHttpException('User not found');
+        }
+
+        /* @var $row Row */
+        $row = $result->current();
+
+        $status = new UserStatusModel($row['status'], $row['answerCount'], $row['linkCount']);
+
+        if ($status->getStatus() !== $row['status']) {
 
             $qb = $this->gm->createQueryBuilder();
-            $qb->match('(u:User {qnoow_id: { id }})')
+            $qb
+                ->match('(u:User {qnoow_id: { id }})')
+                ->setParameter('id', (integer)$id)
                 ->set('u.status = { status }')
-                ->returns('u')
-                ->setParameter('id', $id)
-                ->setParameter('status', $newStatus);
+                ->setParameter('status', $status->getStatus())
+                ->returns('u');
 
             $query = $qb->getQuery();
             $query->getResultSet();
+
+            $this->driver->update('users', array('status' => $status->getStatus()), array('id' => (integer)$id));
         }
 
         return $status;

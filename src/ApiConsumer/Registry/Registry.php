@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: adridev
- * Date: 7/21/14
- * Time: 2:07 PM
- */
 
 namespace ApiConsumer\Registry;
 

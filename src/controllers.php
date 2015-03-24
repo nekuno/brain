@@ -1,6 +1,7 @@
 <?php
 
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 //Request::setTrustedProxies(array('127.0.0.1'));
 
@@ -85,22 +86,19 @@ $app->before(
 $app->error(
     function (\Exception $e, $code) use ($app) {
 
-        $response = array(
-            "error" => array(
-                "code" => $code,
-                "text" => "An error ocurred",
-            )
-        );
+        $response = array('error' => $e->getMessage());
 
         if ($app['debug']) {
-            $response['error']['code'] = $e->getCode();
-            $response['error']['text'] = $e->getMessage();
-            $response['error']['file'] = $e->getFile();
-            $response['error']['line'] = $e->getLine();
-            $response['error']['trace'] = $e->getTrace();
+            $response['debug'] = array(
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTrace(),
+            );
         }
 
-        return $app->json($response, $code);
+        $headers = $e instanceof HttpExceptionInterface ? $e->getHeaders() : array();
+
+        return $app->json($response, $code, $headers);
     }
 
 );
