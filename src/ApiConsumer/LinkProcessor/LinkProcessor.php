@@ -5,6 +5,7 @@ namespace ApiConsumer\LinkProcessor;
 use ApiConsumer\LinkProcessor\Processor\ScraperProcessor;
 use ApiConsumer\LinkProcessor\Processor\SpotifyProcessor;
 use ApiConsumer\LinkProcessor\Processor\YoutubeProcessor;
+use ApiConsumer\LinkProcessor\UrlParser\UrlParser;
 use Model\LinkModel;
 
 class LinkProcessor
@@ -40,6 +41,11 @@ class LinkProcessor
      */
     protected $spotifyProcessor;
 
+    /**
+     * @var UrlParser
+     */
+    protected $urlParser;
+
 
     public function __construct(
         LinkResolver $linkResolver,
@@ -47,7 +53,8 @@ class LinkProcessor
         LinkModel $linkModel,
         ScraperProcessor $scrapperProcessor,
         YoutubeProcessor $youtubeProcessor,
-        SpotifyProcessor $spotifyProcessor
+        SpotifyProcessor $spotifyProcessor,
+        UrlParser $urlParser
     )
     {
 
@@ -57,6 +64,7 @@ class LinkProcessor
         $this->scrapperProcessor = $scrapperProcessor;
         $this->youtubeProcessor = $youtubeProcessor;
         $this->spotifyProcessor = $spotifyProcessor;
+        $this->urlParser = $urlParser;
     }
 
     /**
@@ -70,6 +78,7 @@ class LinkProcessor
         }
 
         $link['url'] = $this->resolver->resolve($link['url']);
+        $link['url']= $this->urlParser->cleanURL($link['url']);
 
         if ($this->isLinkProcessed($link)) {
             return $link;

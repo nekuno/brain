@@ -236,9 +236,9 @@ class GroupModel
 
     /**
      * Check if a given user belongs to a given group
-     * @param $groupId
-     * @throws \Exception
-     * @return boolean
+     * @param $groupName
+     * @param $id
+     * @return bool
      */
     public function isUserFromGroup($groupName,$id)
     {
