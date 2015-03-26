@@ -203,7 +203,31 @@ class UserModel implements PaginatedInterface
     }
 
     /**
-     * @param integer $id
+     * @param $groupId
+     * @throws \Exception
+     * @return array
+     */
+    public function getByGroup($groupId)
+    {
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb ->match('(g:Group{id:{groupId}})')
+            ->match('(u:User)-[:BELONGS_TO]->(g)');
+        $qb ->returns('u');
+       
+        $qb->setParameters(
+            array(
+                'groupId' => $groupId
+            )
+        );
+
+        $query = $qb->getQuery();
+
+        return $this->parseResultSet($query->getResultSet());
+    }
+
+    /**
+     * @param $id
      * @return UserStatusModel
      */
     public function getStatus($id)

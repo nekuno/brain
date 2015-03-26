@@ -23,6 +23,8 @@ $console->addCommands(
         new \Console\Command\PredictionCommand($app),
         new \Console\Command\EnqueueFetchingCommand($app),
         new \Console\Command\LinksRemoveDuplicatesCommand($app),
+        new \Console\Command\LinksFindPseudoduplicatesCommand($app),
+        new \Console\Command\LinksFuseCommand($app),
     )
 );
 

@@ -8,6 +8,7 @@ use ApiConsumer\LinkProcessor\LinkProcessor;
 use ApiConsumer\LinkProcessor\LinkResolver;
 use ApiConsumer\LinkProcessor\MetadataParser\BasicMetadataParser;
 use ApiConsumer\LinkProcessor\MetadataParser\FacebookMetadataParser;
+use ApiConsumer\LinkProcessor\UrlParser\UrlParser;
 use ApiConsumer\LinkProcessor\UrlParser\YoutubeUrlParser;
 use ApiConsumer\LinkProcessor\UrlParser\SpotifyUrlParser;
 use ApiConsumer\LinkProcessor\Processor\ScraperProcessor;
@@ -69,6 +70,13 @@ class LinkProcessorServiceProvider implements ServiceProviderInterface
             }
         );
 
+        $app['api_consumer.link_processor.url_parser.parser'] = $app->share(
+            function ($app) {
+
+                return new UrlParser();
+            }
+        );
+
         $app['api_consumer.link_processor'] = $app->share(
             function ($app) {
                 return new LinkProcessor(
@@ -77,7 +85,8 @@ class LinkProcessorServiceProvider implements ServiceProviderInterface
                     $app['links.model'],
                     $app['api_consumer.link_processor.processor.scrapper'],
                     $app['api_consumer.link_processor.processor.youtube'],
-                    $app['api_consumer.link_processor.processor.spotify']
+                    $app['api_consumer.link_processor.processor.spotify'],
+                    $app['api_consumer.link_processor.url_parser.parser']
                 );
             }
         );
