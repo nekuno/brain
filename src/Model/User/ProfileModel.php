@@ -267,7 +267,8 @@ class ProfileModel
 
                 if (isset($fieldData['type'])) {
                     switch ($fieldData['type']) {
-                        case 'string':
+                        case 'text':
+                        case 'textarea':
                             if (isset($fieldData['min'])) {
                                 if (strlen($fieldValue) < $fieldData['min']) {
                                     $fieldErrors[] = 'Must have ' . $fieldData['min'] . ' characters min.';
@@ -444,7 +445,8 @@ class ProfileModel
                 }
 
                 switch ($fieldType) {
-                    case 'string':
+                    case 'text':
+                    case 'textarea':
                     case 'boolean':
                     case 'integer':
                     case 'date':

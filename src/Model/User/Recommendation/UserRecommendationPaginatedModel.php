@@ -152,7 +152,8 @@ RETURN COUNT(DISTINCT anyUser) as total;";
             if (isset($filters[$name])) {
                 $value = $filters[$name];
                 switch ($filter['type']) {
-                    case 'string':
+                    case 'text':
+                    case 'textarea':
                         $profileFilters[] = "AND p.$name =~ '(?i).*$value.*'";
                         break;
                     case 'integer':
