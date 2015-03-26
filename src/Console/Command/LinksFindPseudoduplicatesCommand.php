@@ -3,52 +3,40 @@
 
 namespace Console\Command;
 
+use Model\Neo4j\GraphManager;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class LinksRemoveDuplicatesCommand extends ApplicationAwareCommand
+class LinksFindPseudoduplicatesCommand extends ApplicationAwareCommand
 {
     protected function configure()
     {
 
         $this->setName('links:find-pseudoduplicates')
-          ->setDescription("Remove duplicate links")
+          ->setDescription("Return links with very similar URLs")
         ;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        $output->writeln('Starting the database search.');
+
+        /** @var GraphManager $gm */
         $gm = $this->app['neo4j.graph_manager'];
         $qb = $gm->createQueryBuilder();
 
-        $qb->match('(l:Link)')
-            ->with('l.url AS url, COLLECT(ID(l)) AS ids, COUNT(*) AS count')
-            ->where('count > 1')
-            ->returns('url, ids');
+        $qb->match('(l1:Link), (l2:Link)')
+            ->where('l2.url=l1.url+"/" OR l2.url=l1.url+"?" OR l2.url=l1.url+"&"')
+            ->returns('id(l1) AS id1, l1.url AS url1, id(l2) AS id2, l2.url AS url2');
+        $duplicates=$qb->getQuery()->getResultSet();
 
-        $query = $qb->getQuery();
-        $duplicates =  $query->getResultSet();
-
-        $numDuplicates = count($duplicates);
-
-        if ($numDuplicates > 0) {
-            $output->writeln(sprintf('%d duplicated links found.', $numDuplicates));
-
-            $linkModel = $this->app['links.model'];
-
-            foreach ($duplicates as $duplicate) {
-                $url = $duplicate->offsetGet('url');
-                $ids = $duplicate->offsetGet('ids');
-
-                $output->writeln(sprintf('Removing %d duplicates of %s', (count($ids) - 1), $url));
-
-                for ($i=1;$i<count($ids);$i++) {
-                    $linkModel->removeLink($ids[$i]);
-                }
-            }
-
+        if (count($duplicates)==0){
+            $output->writeln('No pseudoduplicate links found');
         } else {
-            $output->writeln('No duplicates links found.');
+            foreach ($duplicates AS $duplicate){
+                $output->writeln('Link with id '.$duplicate['id2'].' and url '.$duplicate['url2'].
+                    ' is a pseudoduplicate of link with id '.$duplicate['id1'].' and url '.$duplicate['url1']);
+            }
         }
 
         $output->writeln('Done.');

@@ -83,7 +83,8 @@ class GraphManager implements LoggerAwareInterface
 
     }
 
-    /**
+    /** Copies every relationship from node 1 to node 2 and deletes node 1
+     *  Returns an array with every relationship for logging and debugging
      * @param $id1 'node to be deleted'
      * @param $id2 'node to receive relationships'
      * @return array
@@ -100,18 +101,23 @@ class GraphManager implements LoggerAwareInterface
             ->where('id(n1)={id1}')
             ->returns('r AS rel,type(r) AS type, id(a) AS destination');
         $qb->setParameter('id1',$id1);
-        $outrs=$qb->getQuery()->getResultSet();
+        $rs=$qb->getQuery()->getResultSet();
 
         //create new relationships
-        foreach($outrs as $row){
+        foreach($rs as $row){
             $qb=$this->createQueryBuilder();
             $qb->match('(n2),(a)')
-                ->where('id(n2)=id2 and id(a)=ida')
+                ->where('id(n2)={id2} and id(a)={ida}')
                 ->merge('(n2)-[r:'.$row['type'].']->(a)');
-                foreach($row['rel'] as $property=>$value){
-                    $qb->add(' ON CREATE ', ' SET r.'.$property.' = '.$value.' ');
+                foreach($row['rel']->getProperties() as $property=>$value){
+                    if (is_string($value)){
+                        $qb->add(' ON CREATE ', ' SET r.'.$property.' = "'.$value.'" ');
+                    } else {
+                        $qb->add(' ON CREATE ', ' SET r.'.$property.' = '.$value.' ');
+                    }
+
                 }
-            $qb->returns('r');
+            $qb->returns('r, id(r) AS id');
 
             $qb->setParameters(array(
                 'id2'=>$id2,
@@ -129,18 +135,22 @@ class GraphManager implements LoggerAwareInterface
             ->where('id(n1)={id1}')
             ->returns('r AS rel,type(r) AS type, id(a) AS origin');
         $qb->setParameter('id1',$id1);
-        $inrs=$qb->getQuery()->getResultSet();
+        $rs=$qb->getQuery()->getResultSet();
 
         //create new relationships
-        foreach($inrs as $row){
+        foreach($rs as $row){
             $qb=$this->createQueryBuilder();
             $qb->match('(n2),(a)')
-                ->where('id(n2)=id2 and id(a)=ida')
+                ->where('id(n2)={id2} and id(a)={ida}')
                 ->merge('(n2)<-[r:'.$row['type'].']-(a)');
-            foreach($row['rel'] as $property=>$value){
-                $qb->add(' ON CREATE ', ' SET r.'.$property.' = '.$value.' ');
+            foreach($row['rel']->getProperties() as $property=>$value){
+                if (is_string($value)){
+                    $qb->add(' ON CREATE ', ' SET r.'.$property.' = "'.$value.'" ');
+                } else {
+                    $qb->add(' ON CREATE ', ' SET r.'.$property.' = '.$value.' ');
+                }
             }
-            $qb->returns('r');
+            $qb->returns('r, id(r) AS id');
 
             $qb->setParameters(array(
                 'id2'=>$id2,
@@ -152,9 +162,12 @@ class GraphManager implements LoggerAwareInterface
 
         //delete n1
         $qb=$this->createQueryBuilder();
-        $qb->match(('(n1)-[r]->()'))
+        $qb->match(('(n1)'))
             ->where('id(n1)={id1}')
-            ->delete('r,n1');
+            ->optionalMatch('(n1)-[r1]->()')
+            ->optionalMatch(('(n1)<-[r2]-()'))
+            ->delete('r1,r2,n1')
+            ->returns('count(r1)+count(r2) as amount');
         $qb->setParameter('id1',$id1);
         $deleted=$qb->getQuery()->getResultSet();
 
