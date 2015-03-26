@@ -53,7 +53,7 @@ class Query extends \Everyman\Neo4j\Cypher\Query implements LoggerAwareInterface
                     $replace = '"' . $value . '"';
                     break;
                 case 'array':
-                    $replace = is_string(current($value)) ? '"' . implode('", "', $value) . '"' : implode(', ', $value);
+                    $replace = '[' . (is_string(current($value)) ? '"' . implode('", "', $value) . '"' : implode(', ', $value)) . ']';
                     break;
             }
 
