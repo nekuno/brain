@@ -17,7 +17,7 @@ $app['users.profile.tag.model'] = function ($app) {
 
 $app['users.answers.model'] = function ($app) {
 
-    return new \Model\User\AnswerModel($app['neo4j.client']);
+    return new \Model\User\AnswerModel($app['neo4j.graph_manager']);
 };
 
 $app['users.questions.model'] = function ($app) {

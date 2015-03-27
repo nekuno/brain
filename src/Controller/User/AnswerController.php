@@ -231,6 +231,7 @@ class AnswerController
                 $data['answer']['explanation'] = $row['userAnswer']->getProperty('explanation');
                 $data['answer']['answeredAt'] = $row['userAnswer']->getProperty('answeredAt');
                 $data['answer']['isPrivate'] = $row['userAnswer']->getProperty('private');
+                $data['answer']['rating'] = $row['rates']->getProperty('rating');
                 foreach ($row['accepts'] as $acceptedAnswer) {
                     $data['answer']['acceptedAnswers'][] = $acceptedAnswer->getId();
                 }
