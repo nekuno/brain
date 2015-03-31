@@ -212,10 +212,10 @@ class UserModel implements PaginatedInterface
     {
         $qb = $this->gm->createQueryBuilder();
 
-        $qb ->match('(g:Group{id:{groupId}})')
+        $qb->match('(g:Group{id:{groupId}})')
             ->match('(u:User)-[:BELONGS_TO]->(g)');
-        $qb ->returns('u');
-       
+        $qb->returns('u');
+
         $qb->setParameters(
             array(
                 'groupId' => $groupId
@@ -255,7 +255,8 @@ class UserModel implements PaginatedInterface
 
     }
 
-    public function getStats($id){
+    public function getStats($id)
+    {
 
         $qb = $this->gm->createQueryBuilder();
 
@@ -268,10 +269,7 @@ class UserModel implements PaginatedInterface
             ->optionalMatch('(u)-[r:LIKES]->(:Audio)')
             ->with('u,contentLikes,videoLikes,count(r) AS audioLikes')
             ->optionalMatch('(u)-[r:LIKES]->(:Image)')
-            ->returns('contentLikes,
-                        videoLikes,
-                        audioLikes,
-                        count(r) AS imageLikes');
+            ->returns('contentLikes', 'videoLikes', 'audioLikes', 'COUNT(r) AS imageLikes');
 
         $query = $qb->getQuery();
 
@@ -280,15 +278,22 @@ class UserModel implements PaginatedInterface
         if ($result->count() < 1) {
             throw new NotFoundHttpException('User not found');
         }
+
         /* @var $row Row */
         $row = $result->current();
 
-        $userStats = new UserStatsModel($row->offsetGet('contentLikes'),
-                                        $row->offsetGet('videoLikes'),
-                                        $row->offsetGet('audioLikes'),
-                                        $row->offsetGet('imageLikes'),
-                                        1,
-                                        1);
+        $numberOfReceivedLikes = $this->driver->executeQuery('SELECT COUNT(*) AS numberOfReceivedLikes FROM user_like WHERE user_to = :user_to', array('user_to' => (integer)$id))->fetchColumn();
+        $numberOfUserLikes = $this->driver->executeQuery('SELECT COUNT(*) AS numberOfUserLikes FROM user_like WHERE user_from = :user_from', array('user_from' => (integer)$id))->fetchColumn();
+
+        $userStats = new UserStatsModel(
+            $row->offsetGet('contentLikes'),
+            $row->offsetGet('videoLikes'),
+            $row->offsetGet('audioLikes'),
+            $row->offsetGet('imageLikes'),
+            (integer)$numberOfReceivedLikes,
+            (integer)$numberOfUserLikes
+        );
+
         return $userStats;
 
     }
@@ -482,8 +487,6 @@ class UserModel implements PaginatedInterface
 
         return $count;
     }
-
-
 
     /**
      * @param $resultSet
