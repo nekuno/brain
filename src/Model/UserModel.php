@@ -6,6 +6,7 @@ use Doctrine\DBAL\Connection;
 use Everyman\Neo4j\Query\Row;
 use Model\Neo4j\GraphManager;
 use Model\User\ProfileModel;
+use Model\User\UserStatsModel;
 use Model\User\UserStatusModel;
 use Paginator\PaginatedInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -254,6 +255,44 @@ class UserModel implements PaginatedInterface
 
     }
 
+    public function getStats($id){
+
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb
+            ->match('(u:User {qnoow_id: { id }})-[r:LIKES]-(:Link)')
+            ->setParameter('id', (integer)$id)
+            ->with('u,count(r) AS contentLikes')
+            ->optionalMatch('(u)-[r:LIKES]->(:Video)')
+            ->with('u,contentLikes,count(r) AS videoLikes')
+            ->optionalMatch('(u)-[r:LIKES]->(:Audio)')
+            ->with('u,contentLikes,videoLikes,count(r) AS audioLikes')
+            ->optionalMatch('(u)-[r:LIKES]->(:Image)')
+            ->returns('contentLikes,
+                        videoLikes,
+                        audioLikes,
+                        count(r) AS imageLikes');
+
+        $query = $qb->getQuery();
+
+        $result = $query->getResultSet();
+
+        if ($result->count() < 1) {
+            throw new NotFoundHttpException('User not found');
+        }
+        /* @var $row Row */
+        $row = $result->current();
+
+        $userStats = new UserStatsModel($row->offsetGet('contentLikes'),
+                                        $row->offsetGet('videoLikes'),
+                                        $row->offsetGet('audioLikes'),
+                                        $row->offsetGet('imageLikes'),
+                                        1,
+                                        1);
+        return $userStats;
+
+    }
+
     /**
      * @param integer $id
      * @return UserStatusModel
@@ -443,6 +482,8 @@ class UserModel implements PaginatedInterface
 
         return $count;
     }
+
+
 
     /**
      * @param $resultSet
