@@ -2,8 +2,10 @@
 
 namespace Model\User;
 
+use Event\AnswerEvent;
 use Everyman\Neo4j\Query\Row;
 use Model\Neo4j\GraphManager;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 /**
  * Class AnswerModel
@@ -17,10 +19,16 @@ class AnswerModel
      */
     protected $gm;
 
-    public function __construct(GraphManager $gm)
+    /**
+     * @var EventDispatcher
+     */
+    protected $eventDispatcher;
+
+    public function __construct(GraphManager $gm, EventDispatcher $eventDispatcher)
     {
 
         $this->gm = $gm;
+        $this->eventDispatcher = $eventDispatcher;
     }
 
     /**
@@ -74,7 +82,12 @@ class AnswerModel
 
         $query = $qb->getQuery();
 
-        return $query->getResultSet();
+        $result = $query->getResultSet();
+
+        $this->handleAnswerAddedEvent($data);
+
+        return $result;
+
     }
 
     /**
@@ -110,7 +123,11 @@ class AnswerModel
 
         $query = $qb->getQuery();
 
-        return $query->getResultSet();
+        $result = $query->getResultSet();
+
+        $this->handleAnswerAddedEvent($data);
+
+        return $result;
     }
 
     /**
@@ -392,5 +409,11 @@ class AnswerModel
         }
 
         return false;
+    }
+
+    protected function handleAnswerAddedEvent(array $data)
+    {
+        $event = new AnswerEvent($data['userId'], $data['questionId']);
+        $this->eventDispatcher->dispatch(\AppEvents::ANSWER_ADDED, $event);
     }
 }

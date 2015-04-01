@@ -27,7 +27,7 @@ class AnswerController
 
         $data = $request->request->all();
 
-        /** @var AnswerModel $model */
+        /* @var AnswerModel $model */
         $model = $app['users.answers.model'];
 
         if ($data['userId'] != $request->get('userId')) {
@@ -39,21 +39,14 @@ class AnswerController
         }
 
         try {
+
             $model->create($data);
 
-            /** @var QuestionModel $questionModel */
+            // TODO: Refactor this to listener
             $questionModel = $app['questionnaire.questions.model'];
             $questionModel->setOrUpdateRankingForQuestion($data['questionId']);
 
-            $event = new AnswerEvent($data['userId'], $data['questionId']);
-            /** @var EventDispatcher $dispatcher */
-            $dispatcher = $app['dispatcher'];
-            $dispatcher->dispatch(\AppEvents::ANSWER_ADDED, $event);
-
         } catch (\Exception $e) {
-            if ($app['env'] == 'dev') {
-                throw $e;
-            }
 
             return $app->json(array($e->getMessage()), 500);
         }
@@ -76,7 +69,7 @@ class AnswerController
             return $app->json(array('errors' => 'User mismatch'), 400);
         }
 
-        /** @var AnswerModel $model */
+        /* @var AnswerModel $model */
         $model = $app['users.answers.model'];
 
         if (count($errors = $model->validate($data))) {
@@ -84,20 +77,14 @@ class AnswerController
         }
 
         try {
+
             $model->update($data);
 
-            /** @var QuestionModel $questionModel */
+            // TODO: Refactor this to listener
             $questionModel = $app['questionnaire.questions.model'];
             $questionModel->setOrUpdateRankingForQuestion($data['questionId']);
 
-            $event = new AnswerEvent($data['userId'], $data['questionId']);
-            /** @var EventDispatcher $dispatcher */
-            $dispatcher = $app['dispatcher'];
-            $dispatcher->dispatch(\AppEvents::ANSWER_ADDED, $event);
         } catch (\Exception $e) {
-            if ($app['env'] == 'dev') {
-                throw $e;
-            }
 
             return $app->json(array($e->getMessage()), 500);
         }
@@ -117,7 +104,7 @@ class AnswerController
         $data = $request->request->all();
 
         try {
-            /** @var AnswerModel $model */
+            /* @var AnswerModel $model */
             $model = $app['users.answers.model'];
             $model->explain($data);
         } catch (\Exception $e) {
@@ -147,11 +134,11 @@ class AnswerController
             return $app->json(array(), 400);
         }
 
-        /** @var $paginator \Paginator\Paginator */
+        /* @var $paginator \Paginator\Paginator */
         $paginator = $app['paginator'];
 
         $filters = array('id' => $id, 'locale' => $locale);
-        /** @var $model \Model\User\QuestionPaginatedModel */
+        /* @var $model \Model\User\QuestionPaginatedModel */
         $model = $app['users.questions.model'];
 
         $result = $paginator->paginate($filters, $model, $request);
@@ -171,7 +158,7 @@ class AnswerController
         $userId = $request->get('userId');
 
         try {
-            /** @var AnswerModel $model */
+            /* @var AnswerModel $model */
             $model = $app['users.answers.model'];
             $userAnswerResult = $model->getNumberOfUserAnswers($userId);
 
@@ -212,7 +199,7 @@ class AnswerController
         $locale = $request->get('locale');
 
         try {
-            /** @var AnswerModel $model */
+            /* @var AnswerModel $model */
             $model = $app['users.answers.model'];
 
             $result = $model->getUserAnswer($userId, $questionId, $locale);
