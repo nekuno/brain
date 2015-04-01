@@ -641,4 +641,20 @@ class UserController
 
         return $app->json(array('status' => $status));
     }
+
+    public function statsAction(Request $request, Application $app)
+    {
+
+        $id = (integer)$request->get('id');
+        if (null === $id) {
+            throw new NotFoundHttpException('User not found');
+        }
+
+        /* @var $model UserModel */
+        $model = $app['users.model'];
+
+        $stats = $model->getStats($id);
+
+        return $app->json($stats->toArray());
+    }
 }
