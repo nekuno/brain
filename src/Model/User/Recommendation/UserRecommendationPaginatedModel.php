@@ -69,7 +69,7 @@ WITH u, anyUser,
 (CASE WHEN HAS(m.matching_questions) THEN m.matching_questions ELSE 0 END) AS matching_questions,
 (CASE WHEN HAS(s.similarity) THEN s.similarity ELSE 0 END) AS similarity
 MATCH (anyUser)<-[:PROFILE_OF]-(p:Profile)
-WHERE matching_questions > 0 OR similarity > 0 ";
+WHERE (matching_questions > 0 OR similarity > 0) ";
 
         if ($profileFilters) {
             $query .= "\n" . implode("\n", $profileFilters);
