@@ -28,8 +28,8 @@ class Neo4jFixturesCommand extends ApplicationAwareCommand
         $dispatcher = $this->app['dispatcher'];
         $listeners = $dispatcher->getListeners(\AppEvents::ANSWER_ADDED);
         foreach ($listeners as $listener) {
-            if ($listener instanceof UserAnswerSubscriber) {
-                $dispatcher->removeListener(\AppEvents::ANSWER_ADDED, $listener);
+            if ($listener[0] instanceof UserAnswerSubscriber) {
+                $dispatcher->removeSubscriber($listener[0]);
             }
         }
 
