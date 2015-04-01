@@ -490,6 +490,8 @@ class QuestionModel
 
         if (!isset($data['answers']) || !is_array($data['answers']) || count($data['answers']) <= 1) {
             $errors['answers'] = 'At least, two answers are required';
+        } elseif (6 < count($data['answers'])) {
+            $errors['answers'] = 'Maximum of 6 answers allowed';
         }
 
         if (count($errors) > 0) {
