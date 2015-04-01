@@ -260,9 +260,10 @@ class UserModel implements PaginatedInterface
 
         $qb = $this->gm->createQueryBuilder();
 
-        $qb
-            ->match('(u:User {qnoow_id: { id }})-[r:LIKES]-(:Link)')
+        $qb->match('(u:User {qnoow_id: { id }})')
             ->setParameter('id', (integer)$id)
+            ->with('u')
+            ->optionalMatch('(u)-[r:LIKES]->(:Link)')
             ->with('u,count(r) AS contentLikes')
             ->optionalMatch('(u)-[r:LIKES]->(:Video)')
             ->with('u,contentLikes,count(r) AS videoLikes')
