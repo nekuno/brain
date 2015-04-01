@@ -17,7 +17,7 @@ $app['users.profile.tag.model'] = function ($app) {
 
 $app['users.answers.model'] = function ($app) {
 
-    return new \Model\User\AnswerModel($app['neo4j.client']);
+    return new \Model\User\AnswerModel($app['neo4j.graph_manager'], $app['dispatcher']);
 };
 
 $app['users.questions.model'] = function ($app) {
@@ -93,4 +93,9 @@ $app['questionnaire.questions.model'] = function ($app) {
 $app['links.model'] = function ($app) {
 
     return new \Model\LinkModel($app['neo4j.graph_manager']);
+};
+
+$app['users.groups.model'] = function ($app) {
+
+    return new \Model\User\GroupModel($app['neo4j.graph_manager']);
 };

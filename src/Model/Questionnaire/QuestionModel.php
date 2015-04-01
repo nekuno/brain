@@ -490,6 +490,8 @@ class QuestionModel
 
         if (!isset($data['answers']) || !is_array($data['answers']) || count($data['answers']) <= 1) {
             $errors['answers'] = 'At least, two answers are required';
+        } elseif (6 < count($data['answers'])) {
+            $errors['answers'] = 'Maximum of 6 answers allowed';
         }
 
         if (count($errors) > 0) {
@@ -504,14 +506,22 @@ class QuestionModel
         /* @var $node Node */
         $node = $row->offsetGet('question');
 
+        $stats = $this->getQuestionStats($node->getId());
+
         $question = array(
             'id' => $node->getId(),
             'text' => $node->getProperty('text_' . $locale),
+            'totalAnswers' => $stats[$node->getId()]['totalAnswers'],
         );
 
         foreach ($row->offsetGet('answers') as $answer) {
+
             /* @var $answer Node */
-            $question['answers'][$answer->getId()] = $answer->getProperty('text_' . $locale);
+            $question['answers'][$answer->getId()] = array(
+                'id' => $answer->getId(),
+                'text' => $answer->getProperty('text_' . $locale),
+                'nAnswers' => $stats[$node->getId()]['answers'][$answer->getId()]['nAnswers'],
+            );
         }
 
         $question['locale'] = $locale;

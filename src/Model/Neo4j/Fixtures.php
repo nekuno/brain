@@ -130,15 +130,24 @@ class Fixtures
 
         for ($i = 1; $i <= self::NUM_OF_LINKS; $i++) {
 
-            $this->lm->addLink(
-                array(
-                    'userId' => 1,
-                    'title' => 'Title ' . $i,
-                    'description' => 'Description ' . $i,
-                    'url' => 'https://www.nekuno.com/link' . $i,
-                    'language' => 'en',
-                )
+            $link = array(
+                'userId' => 1,
+                'title' => 'Title ' . $i,
+                'description' => 'Description ' . $i,
+                'url' => 'https://www.nekuno.com/link' . $i,
+                'language' => 'en',
             );
+
+            if ($i <= 50) {
+                $link['additionalLabels'] = array('Video');
+            } elseif ($i <= 150) {
+                $link['additionalLabels'] = array('Audio');
+            } elseif ($i <= 350) {
+                $link['additionalLabels'] = array('Image');
+            }
+
+            $this->lm->addLink($link);
+
         }
     }
 

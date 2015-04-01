@@ -2,8 +2,10 @@
 
 namespace Model\User;
 
-use Everyman\Neo4j\Client;
-use Everyman\Neo4j\Cypher\Query;
+use Event\AnswerEvent;
+use Everyman\Neo4j\Query\Row;
+use Model\Neo4j\GraphManager;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 /**
  * Class AnswerModel
@@ -13,23 +15,25 @@ class AnswerModel
 {
 
     /**
-     * @var \Everyman\Neo4j\Client
+     * @var GraphManager
      */
-    protected $client;
+    protected $gm;
 
     /**
-     * @param \Everyman\Neo4j\Client $client
+     * @var EventDispatcher
      */
-    public function __construct(Client $client)
+    protected $eventDispatcher;
+
+    public function __construct(GraphManager $gm, EventDispatcher $eventDispatcher)
     {
 
-        $this->client = $client;
+        $this->gm = $gm;
+        $this->eventDispatcher = $eventDispatcher;
     }
 
     /**
-     * Counts the total results from queryset.
+     * Counts the total results
      * @param array $filters
-     * @throws \Exception
      * @return int
      */
     public function countTotal(array $filters)
@@ -37,36 +41,21 @@ class AnswerModel
 
         $count = 0;
 
-        $query = "
-            MATCH
-            (u:User)
-            WHERE u.qnoow_id = {UserId}
-            MATCH
-            (u)-[r:RATES]->(q:Question)
-            RETURN
-            count(distinct r) as total
-            ;
-         ";
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User)')
+            ->where('u.qnoow_id = { userId }')
+            ->setParameter('userId', (integer)$filters['id'])
+            ->match('(u)-[r:RATES]->(q:Question)')
+            ->returns('COUNT(DISTINCT r) AS total');
 
-        //Create the Neo4j query object
-        $contentQuery = new Query(
-            $this->client,
-            $query,
-            array(
-                'UserId' => (integer)$filters['id'],
-            )
-        );
+        $query = $qb->getQuery();
 
-        //Execute query
-        try {
-            $result = $contentQuery->getResultSet();
+        $result = $query->getResultSet();
 
-            foreach ($result as $row) {
-                $count = $row['total'];
-            }
-
-        } catch (\Exception $e) {
-            throw $e;
+        if ($result->count() > 0) {
+            $row = $result->current();
+            /* @var $row Row */
+            $count = $row->offsetGet('total');
         }
 
         return $count;
@@ -79,28 +68,26 @@ class AnswerModel
     public function create(array $data)
     {
 
-        $template = "MATCH (user:User), (question:Question), (answer:Answer)"
-            . " WHERE user.qnoow_id = {userId} AND id(question) = {questionId} AND id(answer) = {answerId}"
-            . " CREATE UNIQUE (user)-[a:ANSWERS]->(answer)"
-            . ", (user)-[r:RATES]->(question)"
-            . " SET r.rating = {rating}, a.private = {isPrivate}"
-            . ", a.answeredAt = timestamp(), a.explanation = {explanation}"
-            . " WITH user, question, answer"
-            . " MATCH (pa:Answer)-[:IS_ANSWER_OF]->(question)"
-            . " WHERE id(pa) IN {acceptedAnswers}"
-            . " CREATE UNIQUE (user)-[:ACCEPTS]->(pa)"
-            . " RETURN answer";
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(user:User)', '(question:Question)', '(answer:Answer)')
+            ->where('user.qnoow_id = { userId } AND id(question) = { questionId } AND id(answer) = { answerId }')
+            ->createUnique('(user)-[a:ANSWERS]->(answer)', '(user)-[r:RATES]->(question)')
+            ->set('r.rating = { rating }', 'a.private = { isPrivate }', 'a.answeredAt = timestamp()', 'a.explanation = { explanation }')
+            ->with('user', 'question', 'answer')
+            ->match('(pa:Answer)-[:IS_ANSWER_OF]->(question)')
+            ->where('id(pa) IN { acceptedAnswers }')
+            ->createUnique('(user)-[:ACCEPTS]->(pa)')
+            ->returns('answer')
+            ->setParameters($data);
 
-        $template .= ";";
+        $query = $qb->getQuery();
 
-        //Create the Neo4j query object
-        $query = new Query(
-            $this->client,
-            $template,
-            $data
-        );
+        $result = $query->getResultSet();
 
-        return $query->getResultSet();
+        $this->handleAnswerAddedEvent($data);
+
+        return $result;
+
     }
 
     /**
@@ -110,36 +97,37 @@ class AnswerModel
     public function update(array $data)
     {
 
-        $data['userId'] = (integer)$data['userId'];
-        $data['questionId'] = (integer)$data['questionId'];
+        $data['userId'] = intval($data['userId']);
+        $data['questionId'] = intval($data['questionId']);
+        $data['answerId'] = intval($data['answerId']);
 
-        $template = "MATCH (u:User)-[r1:ANSWERS]->(a1:Answer)-[:IS_ANSWER_OF]->(q:Question)"
-            . ", (u)-[r2:ACCEPTS]->(a2:Answer)-[:IS_ANSWER_OF]->(q)"
-            . ", (u)-[r3:RATES]->(q)"
-            . " WHERE u.qnoow_id = {userId} AND id(q) = {questionId}"
-            . " DELETE r1, r2, r3"
-            . " WITH u AS user, q AS question"
-            . " MATCH (a2:Answer)"
-            . " WHERE id(a2) = {answerId}"
-            . " CREATE UNIQUE (user)-[r4:ANSWERS]->(a2),  (user)-[r5:RATES]->(question)"
-            . " SET r5.rating = {rating}, r4.private = {isPrivate}"
-            . ", r4.answeredAt = timestamp(), r4.explanation = {explanation}"
-            . " WITH user, question, a2 as answer"
-            . " OPTIONAL MATCH (a3:Answer)-[:IS_ANSWER_OF]->(question)"
-            . " WHERE id(a3) IN {acceptedAnswers}"
-            . " CREATE UNIQUE (user)-[:ACCEPTS]->(a3)"
-            . " RETURN answer";
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User)-[r1:ANSWERS]->(:Answer)-[:IS_ANSWER_OF]->(q:Question)')
+            ->where('u.qnoow_id = { userId } AND id(q) = { questionId }')
+            ->with('u', 'q', 'r1')
+            ->match('(u)-[r2:ACCEPTS]->(:Answer)-[:IS_ANSWER_OF]->(q)')
+            ->with('u', 'q', 'r1', 'r2')
+            ->match('(u)-[r3:RATES]->(q)')
+            ->delete('r1', 'r2', 'r3')
+            ->with('u', 'q')
+            ->match('(a:Answer)')
+            ->where('id(a) = { answerId }')
+            ->createUnique('(u)-[r4:ANSWERS]->(a)', '(u)-[r5:RATES]->(q)')
+            ->set('r5.rating = { rating }', 'r4.private = { isPrivate }', 'r4.answeredAt = timestamp()', 'r4.explanation = { explanation }')
+            ->with('u', 'q', 'a')
+            ->optionalMatch('(a1:Answer)-[:IS_ANSWER_OF]->(q)')
+            ->where('id(a1) IN { acceptedAnswers }')
+            ->createUnique('(u)-[:ACCEPTS]->(a1)')
+            ->returns('a AS answer')
+            ->setParameters($data);
 
-        $template .= ";";
+        $query = $qb->getQuery();
 
-        //Create the Neo4j query object
-        $query = new Query(
-            $this->client,
-            $template,
-            $data
-        );
+        $result = $query->getResultSet();
 
-        return $query->getResultSet();
+        $this->handleAnswerAddedEvent($data);
+
+        return $result;
     }
 
     /**
@@ -158,7 +146,7 @@ class AnswerModel
             . " SET r.explanation = {explanation}"
             . " RETURN answer";
 
-        $query = new Query($this->client, $template, $data);
+        $query = $this->gm->createQuery($template, $data);
 
         return $query->getResultSet();
 
@@ -181,7 +169,7 @@ class AnswerModel
             . " RETURN user, answer, answeredAt, explanation, question, answers"
             . " ORDER BY answeredAt DESC;";
 
-        $query = new Query($this->client, $template, $data);
+        $query = $this->gm->createQuery($template, $data);
 
         return $query->getResultSet();
     }
@@ -199,7 +187,7 @@ class AnswerModel
             . " WHERE u.qnoow_id = {userId}"
             . " RETURN count(ua) AS nOfAnswers;";
 
-        $query = new Query($this->client, $template, $data);
+        $query = $this->gm->createQuery($template, $data);
 
         return $query->getResultSet();
     }
@@ -215,15 +203,16 @@ class AnswerModel
             . " WHERE u.qnoow_id = {userId} AND id(q) = {questionId} AND HAS(q.text_$locale)"
             . " WITH u, q"
             . " MATCH (u)-[ua:ANSWERS]->(a:Answer)-[:IS_ANSWER_OF]->(q)"
-            . " WITH u, a, q, ua"
+            . " MATCH (u)-[r:RATES]->(q)"
+            . " WITH u, a, q, ua, r"
             . " MATCH (a1:Answer)-[:IS_ANSWER_OF]->(q), "
             . " (u)-[:ACCEPTS]->(a2:Answer)-[:IS_ANSWER_OF]->(q)"
-            . " WITH u AS user, a AS answer, collect(DISTINCT a2) AS accepts, ua AS userAnswer,"
+            . " WITH u AS user, a AS answer, collect(DISTINCT a2) AS accepts, ua AS userAnswer, r AS rates,"
             . " q AS question, collect(DISTINCT a1) AS answers"
-            . " RETURN user, answer, userAnswer, accepts, question, answers"
+            . " RETURN user, answer, userAnswer, accepts, question, answers, rates"
             . " LIMIT 1;";
 
-        $query = new Query($this->client, $template, $data);
+        $query = $this->gm->createQuery($template, $data);
 
         return $query->getResultSet();
     }
@@ -361,7 +350,7 @@ class AnswerModel
             . " WHERE id(q) = {questionId} AND id(a) = {answerId}"
             . " RETURN a AS answer";
 
-        $query = new Query($this->client, $template, $data);
+        $query = $this->gm->createQuery($template, $data);
 
         $result = $query->getResultSet();
 
@@ -387,7 +376,7 @@ class AnswerModel
             . " WHERE u.qnoow_id = {userId}"
             . " RETURN u AS user";
 
-        $query = new Query($this->client, $template, $data);
+        $query = $this->gm->createQuery($template, $data);
 
         $result = $query->getResultSet();
 
@@ -411,7 +400,7 @@ class AnswerModel
 
         $template = "MATCH (q:Question) WHERE id(q) = {questionId} RETURN q AS Question";
 
-        $query = new Query($this->client, $template, $data);
+        $query = $this->gm->createQuery($template, $data);
 
         $result = $query->getResultSet();
 
@@ -420,5 +409,11 @@ class AnswerModel
         }
 
         return false;
+    }
+
+    protected function handleAnswerAddedEvent(array $data)
+    {
+        $event = new AnswerEvent($data['userId'], $data['questionId']);
+        $this->eventDispatcher->dispatch(\AppEvents::ANSWER_ADDED, $event);
     }
 }

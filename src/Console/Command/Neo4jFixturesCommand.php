@@ -2,14 +2,14 @@
 
 namespace Console\Command;
 
+use EventListener\UserAnswerSubscriber;
 use Model\Neo4j\Fixtures;
-
-use Psr\Log\LogLevel;
 use Silex\Application;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 class Neo4jFixturesCommand extends ApplicationAwareCommand
 {
@@ -23,6 +23,15 @@ class Neo4jFixturesCommand extends ApplicationAwareCommand
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+
+        /* @var $dispatcher EventDispatcher */
+        $dispatcher = $this->app['dispatcher'];
+        $listeners = $dispatcher->getListeners(\AppEvents::ANSWER_ADDED);
+        foreach ($listeners as $listener) {
+            if ($listener instanceof UserAnswerSubscriber) {
+                $dispatcher->removeListener(\AppEvents::ANSWER_ADDED, $listener);
+            }
+        }
 
         $scenario = $input->getArgument('scenario');
 

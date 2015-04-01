@@ -4,9 +4,10 @@ namespace Console\Command;
 
 use Model\User\Affinity\AffinityModel;
 use Model\LinkModel;
+use Model\UserModel;
 use Silex\Application;
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class AffinityCommand extends ApplicationAwareCommand
@@ -16,36 +17,52 @@ class AffinityCommand extends ApplicationAwareCommand
     {
         $this->setName('affinity:calculate')
             ->setDescription('Calculate the affinity between a user an a link.')
-            ->addArgument(
-                'user',
-                InputArgument::REQUIRED,
-                'id of the user?'
-            )
-            ->addArgument(
-                'link',
-                InputArgument::OPTIONAL,
-                'id of the link?'
-            );
+            ->addOption('user', null, InputOption::VALUE_OPTIONAL, 'id of the user?')
+            ->addOption('link', null, InputOption::VALUE_OPTIONAL, 'id of the link?');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+
+        /* @var $userModel UserModel */
+        $userModel = $this->app['users.model'];
         /* @var $linkModel LinkModel */
         $linkModel = $this->app['links.model'];
 
-        $userId = $input->getArgument('user');
-        $linkId = $input->getArgument('link');
+        $user = $input->getOption('user');
+        $linkId = $input->getOption('link');
 
-        if (null === $linkId) {
-            $affineLinks = $linkModel->findLinksByUser($userId, 'AFFINITY');
+        $users = null === $user ? $userModel->getAll() : $userModel->getById($user);
 
-            foreach ($affineLinks as $link) {
-                $output->write('Link: ' . $link['id'] . ' (' . $link['url'] . ') - ');
+        try {
 
-                $this->calculateAffinity($userId, $link['id'], $output);
+            foreach ($users as $user) {
+
+                $userId = $user['qnoow_id'];
+
+                $output->writeln(sprintf('Calculating affinity for user %d', $userId));
+
+                if (null === $linkId) {
+
+                    $affineLinks = $linkModel->findLinksByUser($userId, 'AFFINITY');
+
+                    foreach ($affineLinks as $link) {
+
+                        $output->write('Link: ' . $link['id'] . ' (' . $link['url'] . ') - ');
+
+                        $this->calculateAffinity($userId, $link['id'], $output);
+                    }
+
+                } else {
+
+                    $this->calculateAffinity($userId, $linkId, $output);
+
+                }
             }
-        } else {
-            $this->calculateAffinity($userId, $linkId, $output);
+
+        } catch (\Exception $e) {
+
+            $output->writeln('Error trying to recalculate affinity with message: ' . $e->getMessage());
         }
 
         $output->writeln('Done.');
@@ -57,17 +74,9 @@ class AffinityCommand extends ApplicationAwareCommand
         /* @var $affinityModel AffinityModel */
         $affinityModel = $this->app['users.affinity.model'];
 
-        try {
-            $affinity = $affinityModel->getAffinity($userId, $linkId);
+        $affinity = $affinityModel->getAffinity($userId, $linkId);
 
-            $output->writeln('Affinity: ' . $affinity['affinity'] . ' - Last Updated: ' . $affinity['updated']);
+        $output->writeln('Affinity: ' . $affinity['affinity'] . ' - Last Updated: ' . $affinity['updated']);
 
-        } catch (\Exception $e) {
-            $output->writeln(
-              'Error trying to recalculate affinity with message: ' . $e->getMessage()
-            );
-
-            return;
-        }
     }
 }

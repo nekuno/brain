@@ -1,11 +1,11 @@
 profile:
     description:
-        type: string
+        type: textarea
         min: 0
-        max: 1024
+        max: 20000
         label:
-            en: 'Description'
-            es: 'Descripción'
+            en: 'About me'
+            es: 'Sobre mí'
     birthday:
         type: birthday
         label:
@@ -28,7 +28,7 @@ profile:
             en: 'Height (cm)'
             es: 'Altura (cm)'
     allergy:
-        type: string
+        type: text
         min: 0
         max: 255
         label:
@@ -50,7 +50,7 @@ profile:
             en: 'Do you want to have sons?'
             es: '¿Quieres tener hijos?'
     languages:
-        type: string
+        type: text
         min: 0
         max: 255
         label:

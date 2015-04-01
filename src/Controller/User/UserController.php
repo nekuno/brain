@@ -110,6 +110,8 @@ class UserController
         try {
             $model = $app['users.model'];
             $result = $model->getById($request->get('id'));
+            $groupModel= $app['users.groups.model'];
+            $result['groups']= $groupModel->getByUser((integer)($request->get('id')));
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;
@@ -638,5 +640,21 @@ class UserController
         $status = $model->getStatus($id);
 
         return $app->json(array('status' => $status));
+    }
+
+    public function statsAction(Request $request, Application $app)
+    {
+
+        $id = (integer)$request->get('id');
+        if (null === $id) {
+            throw new NotFoundHttpException('User not found');
+        }
+
+        /* @var $model UserModel */
+        $model = $app['users.model'];
+
+        $stats = $model->getStats($id);
+
+        return $app->json($stats->toArray());
     }
 }

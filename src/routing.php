@@ -29,6 +29,7 @@ $app->get('/users/{id}/recommendations/users', 'users.controller:getUserRecommen
 $app->get('/users/{id}/recommendations/content', 'users.controller:getContentRecommendationAction');
 $app->get('/users/{id}/recommendations/content/tags', 'users.controller:getContentRecommendationTagsAction');
 $app->get('/users/{id}/status', 'users.controller:statusAction');
+$app->get('/users/{id}/stats', 'users.controller:statsAction');
 
 $app->get('/users/{userId}/affinity/{linkId}', 'users.controller:getAffinityAction');
 
@@ -58,4 +59,12 @@ $app->get('/questionnaire/questions/{id}/stats', 'questionnaire.questions.contro
 $app->post('/add/links', 'fetch.controller:addLinkAction');
 $app->get('/fetch/links', 'fetch.controller:fetchLinksAction')->value('userId', null)->value('resource', null);
 
+/**
+ * Group routes
+ */
 
+$app->post('/groups', 'users.groups.controller:addAction');
+$app->get('/groups/{groupName}', 'users.groups.controller:showAction');
+$app->delete('/groups/{groupName}', 'users.groups.controller:deleteAction');
+$app->post('/groups/{groupName}/links', 'users.groups.controller:addUserAction');
+$app->delete('/groups/{groupName}/links/{id}', 'users.groups.controller:removeUserAction');
