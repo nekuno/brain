@@ -204,15 +204,31 @@ class AnswerController
 
             $result = $model->getUserAnswer($userId, $questionId, $locale);
 
+            /** @var QuestionModel $questionModel */
+            $questionModel = $app['questionnaire.questions.model'];
+            $stats = $questionModel->getQuestionStats($questionId);
             $data = array();
 
             foreach ($result as $row) {
                 $data['question']['id'] = $row['question']->getId();
                 $data['question']['text'] = $row['question']->getProperty('text_' . $locale);
+                $data['question']['totalAnswers'] = 0;
                 foreach ($row['answers'] as $answer) {
-                    $data['question']['answers'][$answer->getId()] = $answer->getProperty('text_' . $locale);
+                    //$data['question']['answers'][$answer->getId()] = $answer->getProperty('text_' . $locale);
+                    //$stats = $this->qm->getQuestionStats($question->getId());
+                    $data['question']['answers'][$answer->getId()] = array(
+                        'id'    => $answer->getId(),
+                        'text'  => $answer->getProperty('text_' . $locale),
+                        'nAnswers' => $stats[$questionId]['answers'][$answer->getId()]['nAnswers']
+                    );
+                    $data['question']['totalAnswers'] += $stats[$questionId]['answers'][$answer->getId()]['nAnswers'];
                 }
-                $data['question']['answers'][$row['answer']->getId()] = $row['answer']->getProperty('text_' . $locale);
+                $data['question']['answers'][$row['answer']->getId()] = array(
+                    'id'    => $row['answer']->getId(),
+                    'text'  => $row['answer']->getProperty('text_' . $locale),
+                    'nAnswers' => $stats[$questionId]['answers'][$row['answer']->getId()]['nAnswers']
+                );
+                $data['question']['totalAnswers'] += $stats[$questionId]['answers'][$row['answer']->getId()]['nAnswers'];
 
                 $data['answer']['answerId'] = $row['answer']->getId();
                 $data['answer']['explanation'] = $row['userAnswer']->getProperty('explanation');
