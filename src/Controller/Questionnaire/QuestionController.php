@@ -2,19 +2,35 @@
 
 namespace Controller\Questionnaire;
 
-use Model\Exception\ValidationException;
 use Model\Questionnaire\QuestionModel;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-/**
- * Class QuestionController
- * @package Controller\Questionnaire
- */
 class QuestionController
 {
+
+    /**
+     * @param Request $request
+     * @param Application $app
+     * @return JsonResponse
+     */
+    public function getQuestionsAction(Request $request, Application $app)
+    {
+
+        $locale = $this->getLocale($request, $app['locale.options']['default']);
+        $skip = $request->query->get('skip');
+        $limit = $request->query->get('limit', 10);
+        /* @var QuestionModel $model */
+        $model = $app['questionnaire.questions.model'];
+
+        $questions = $model->getAll($locale, $skip, $limit);
+
+        return $app->json($questions, 200);
+
+    }
 
     /**
      * Returns an unanswered question for given user
@@ -26,36 +42,17 @@ class QuestionController
     {
 
         $userId = $request->query->get('userId');
-        $locale = $this->getLocale($request, $app['locale.options']['default']);
-        /* @var QuestionModel $model */
-        $model = $app['questionnaire.questions.model'];
-
-        try {
-            $question = $model->getNextByUser($userId, $locale);
-        } catch (HttpException $e) {
-            return $app->json(array('error' => $e->getMessage()), $e->getStatusCode(), $e->getHeaders());
+        if (!$userId) {
+            throw new NotFoundHttpException('User not found');
         }
 
-        return $app->json($question, 200);
-    }
-
-    /**
-     * @param Request $request
-     * @param Application $app
-     * @return JsonResponse
-     */
-    public function getQuestionsAction(Request $request, Application $app)
-    {
-
         $locale = $this->getLocale($request, $app['locale.options']['default']);
-        $limit = $request->query->get('limit', 20);
         /* @var QuestionModel $model */
         $model = $app['questionnaire.questions.model'];
 
-        $questions = $model->getAll($locale, $limit);
+        $question = $model->getNextByUser($userId, $locale);
 
-        return $app->json($questions, 200);
-
+        return $app->json($question, 200);
     }
 
     /**
@@ -71,11 +68,7 @@ class QuestionController
         /* @var QuestionModel $model */
         $model = $app['questionnaire.questions.model'];
 
-        try {
-            $question = $model->getById($id, $locale);
-        } catch (HttpException $e) {
-            return $app->json(array('error' => $e->getMessage()), $e->getStatusCode(), $e->getHeaders());
-        }
+        $question = $model->getById($id, $locale);
 
         return $app->json($question, 200);
     }
@@ -92,11 +85,7 @@ class QuestionController
         /* @var $model QuestionModel */
         $model = $app['questionnaire.questions.model'];
 
-        try {
-            $question = $model->create($request->request->all());
-        } catch (ValidationException $e) {
-            return $app->json(array('validationErrors' => $e->getErrors()), 500);
-        }
+        $question = $model->create($request->request->all());
 
         return $app->json($question, 201);
 
@@ -111,22 +100,19 @@ class QuestionController
     public function skipAction(Request $request, Application $app)
     {
 
-        $id = $request->get('id');
+        $id = $request->attributes->get('id');
+        $userId = $request->request->get('userId');
+        if (!$userId) {
+            throw new NotFoundHttpException('User not found');
+        }
+
         $locale = $this->getLocale($request, $app['locale.options']['default']);
         /* @var QuestionModel $model */
         $model = $app['questionnaire.questions.model'];
 
-        try {
-            $question = $model->getById($id, $locale);
-        } catch (HttpException $e) {
-            return $app->json(array('error' => $e->getMessage()), $e->getStatusCode(), $e->getHeaders());
-        }
+        $question = $model->getById($id, $locale);
 
-        try {
-            $model->skip($id, $request->request->get('userId'));
-        } catch (\Exception $e) {
-            return $app->json(array('error' => $e->getMessage()), 500);
-        }
+        $model->skip($id, $userId);
 
         return $app->json($question, 200);
     }
@@ -140,22 +126,20 @@ class QuestionController
     public function reportAction(Request $request, Application $app)
     {
 
-        $id = $request->get('id');
+        $id = $request->attributes->get('id');
+        $userId = $request->request->get('userId');
+        $reason = $request->request->get('reason');
+        if (!$userId) {
+            throw new NotFoundHttpException('User not found');
+        }
+
         $locale = $this->getLocale($request, $app['locale.options']['default']);
         /* @var QuestionModel $model */
         $model = $app['questionnaire.questions.model'];
 
-        try {
-            $question = $model->getById($id, $locale);
-        } catch (HttpException $e) {
-            return $app->json(array('error' => $e->getMessage()), $e->getStatusCode(), $e->getHeaders());
-        }
+        $question = $model->getById($id, $locale);
 
-        try {
-            $model->report($id, $request->request->get('userId'), $request->request->get('reason'));
-        } catch (\Exception $e) {
-            return $app->json(array('error' => $e->getMessage()), 500);
-        }
+        $model->report($id, $userId, $reason);
 
         return $app->json($question, 200);
     }
@@ -169,22 +153,14 @@ class QuestionController
     public function statsAction(Request $request, Application $app)
     {
 
-        $id = $request->get('id');
+        $id = $request->attributes->get('id');
         $locale = $this->getLocale($request, $app['locale.options']['default']);
         /* @var QuestionModel $model */
         $model = $app['questionnaire.questions.model'];
 
-        try {
-            $question = $model->getById($id, $locale);
-        } catch (HttpException $e) {
-            return $app->json(array('error' => $e->getMessage()), $e->getStatusCode(), $e->getHeaders());
-        }
+        $question = $model->getById($id, $locale);
 
-        try {
-            $stats = $model->getQuestionStats($id);
-        } catch (\Exception $e) {
-            return $app->json(array('error' => 'Error retrieving stats'), 500);
-        }
+        $stats = $model->getQuestionStats($id);
 
         return $app->json($stats, 200);
     }

@@ -2,11 +2,10 @@
 
 namespace Model\Questionnaire;
 
-use Everyman\Neo4j\Client;
-use Everyman\Neo4j\Cypher\Query;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Exception\ValidationException;
+use Model\Neo4j\GraphManager;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
@@ -17,89 +16,69 @@ class QuestionModel
 {
 
     /**
-     * @var Client
+     * @var GraphManager
      */
-    protected $client;
+    protected $gm;
 
     /**
-     * @param Client $client
+     * @param GraphManager $gm
      */
-    public function __construct(Client $client)
+    public function __construct(GraphManager $gm)
     {
 
-        $this->client = $client;
+        $this->gm = $gm;
     }
 
-    /**
-     * @param int|null $limit
-     * @return \Everyman\Neo4j\Query\ResultSet
-     */
-    public function getAll($locale, $limit = null)
+    public function getAll($locale, $skip = null, $limit = null)
     {
 
-        $data = is_null($limit) ? array() : array('limit' => (integer)$limit);
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(q:Question)')
+            ->where("HAS(q.text_$locale)")
+            ->optionalMatch('(q)<-[:IS_ANSWER_OF]-(a:Answer)')
+            ->returns('q, collect(a) AS answers')
+            ->orderBy('q.ranking DESC');
 
-        $template = "MATCH (q:Question)";
-        $template .= " WHERE HAS(q.text_$locale)";
-        $template .= " OPTIONAL MATCH (q)<-[:IS_ANSWER_OF]-(a:Answer)"
-            . " RETURN q AS question, collect(a) AS answers"
-            . " ORDER BY question.ranking DESC";
-
-        if (!is_null($limit)) {
-            $template .= " LIMIT {limit}";
+        if (!is_null($skip)) {
+            $qb->skip($skip);
         }
 
-        $query = new Query($this->client, $template, $data);
+        if (!is_null($limit)) {
+            $qb->limit($limit);
+        }
+
+        $query = $qb->getQuery();
 
         $result = $query->getResultSet();
 
-        $questions = array();
+        $return = array();
 
         foreach ($result as $row) {
-            $questions[] = $this->build($row, $locale);
+            $return[] = $this->build($row, $locale);
         }
 
-        return $questions;
+        return $return;
     }
 
-    /**
-     * @param $userId
-     * @param $locale
-     * @param bool $sortByRanking
-     * @return \Everyman\Neo4j\Query\ResultSet
-     */
     public function getNextByUser($userId, $locale, $sortByRanking = true)
     {
 
-        $data = array(
-            'userId' => (integer)$userId
-        );
+        $qb = $this->gm->createQueryBuilder();
+        $qb
+            ->match('(user:User {qnoow_id: { userId }})')
+            ->setParameter('userId', (integer)$userId)
+            ->optionalMatch('(user)-[:ANSWERS]->(a:Answer)-[:IS_ANSWER_OF]->(answered:Question)')
+            ->optionalMatch('(user)-[:SKIPS]->(skip:Question)')
+            ->optionalMatch('(:User)-[:REPORTS]->(report:Question)')
+            ->with('user', 'collect(answered) + collect(skip) + collect(report) AS excluded')
+            ->match('(q3:Question)<-[:IS_ANSWER_OF]-(a2:Answer)')
+            ->where('NOT q3 IN excluded', "HAS(q3.text_$locale)")
+            ->with('q3 AS question', 'collect(DISTINCT a2) AS answers')
+            ->returns('question', 'answers')
+            ->orderBy($sortByRanking && $this->sortByRanking() ? 'question.ranking DESC' : 'question.timestamp ASC')
+            ->limit(1);
 
-        $template = "MATCH (user:User)"
-            . " WHERE user.qnoow_id = {userId}"
-            . " OPTIONAL MATCH (user)-[:ANSWERS]->(a:Answer)-[:IS_ANSWER_OF]->(answered:Question)"
-            . " OPTIONAL MATCH (user)-[:SKIPS]->(skip:Question)"
-            . " OPTIONAL MATCH (:User)-[:REPORTS]->(report:Question)"
-            . " WITH user, collect(answered) + collect(skip) + collect(report) AS excluded"
-            . " MATCH (q3:Question)<-[:IS_ANSWER_OF]-(a2:Answer)"
-            . " WHERE NOT q3 IN excluded";
-        $template .= " AND HAS(q3.text_$locale)";
-        $template .= " WITH q3 AS question, collect(DISTINCT a2) AS answers"
-            . " RETURN question, answers ";
-
-        if ($sortByRanking && $this->sortByRanking()) {
-            $template .= " ORDER BY question.ranking DESC";
-        } else {
-            $template .= " ORDER BY question.timestamp ASC";
-        }
-
-        $template .= " LIMIT 1;";
-
-        $query = new Query(
-            $this->client,
-            $template,
-            $data
-        );
+        $query = $qb->getQuery();
 
         $result = $query->getResultSet();
 
@@ -127,28 +106,18 @@ class QuestionModel
         return false;
     }
 
-    /**
-     * @return \Everyman\Neo4j\Query\ResultSet
-     */
     public function getById($id, $locale)
     {
 
-        $data = array(
-            'id' => (integer)$id,
-        );
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(q:Question)<-[:IS_ANSWER_OF]-(a:Answer)')
+            ->where('id(q) = { id }', "HAS(q.text_$locale)")
+            ->setParameter('id', (integer)$id)
+            ->with('q, COLLECT(a) AS answers')
+            ->returns('q, answers')
+            ->limit(1);
 
-        $template = "MATCH (q:Question)<-[:IS_ANSWER_OF]-(a:Answer)";
-        $template .= " WHERE id(q) = {id}";
-        $template .= " AND HAS(q.text_$locale)";
-        $template .= " WITH q AS question, collect(a) AS answers"
-            . " RETURN question, answers"
-            . " LIMIT 1;";
-
-        $query = new Query(
-            $this->client,
-            $template,
-            $data
-        );
+        $query = $qb->getQuery();
 
         $result = $query->getResultSet();
 
@@ -175,19 +144,15 @@ class QuestionModel
         $data['userId'] = (integer)$data['userId'];
         $data['answers'] = array_values($data['answers']);
 
-        $template = "MATCH (u:User)"
-            . " WHERE u.qnoow_id = {userId}"
-            . " CREATE (q:Question)-[c:CREATED_BY]->(u)"
-            . " SET q.text_$locale = {text}, q.timestamp = timestamp(), q.ranking = 0, c.timestamp = timestamp()"
-            . " FOREACH (answer in {answers}| CREATE (a:Answer {text_$locale: answer})-[:IS_ANSWER_OF]->(q))"
-            . " RETURN q;";
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User {qnoow_id: { userId }})')
+            ->create('(q:Question)-[c:CREATED_BY]->(u)')
+            ->set("q.text_$locale = { text }", 'q.timestamp = timestamp()', 'q.ranking = 0', 'c.timestamp = timestamp()')
+            ->add('FOREACH', "(answer in {answers}| CREATE (a:Answer {text_$locale: answer})-[:IS_ANSWER_OF]->(q))")
+            ->returns('q')
+            ->setParameters($data);
 
-        // Create the Neo4j query object
-        $query = new  Query(
-            $this->client,
-            $template,
-            $data
-        );
+        $query = $qb->getQuery();
 
         $result = $query->getResultSet();
         /* @var $row Row */
@@ -217,12 +182,7 @@ class QuestionModel
             . " SET q.text_$locale = {text}"
             . " RETURN q;";
 
-        // Create the Neo4j query object
-        $query = new Query(
-            $this->client,
-            $template,
-            $data
-        );
+        $query = $this->gm->createQuery($template, $data);
 
         $query->getResultSet();
 
@@ -238,12 +198,7 @@ class QuestionModel
                 . " SET a.text_$locale = {text}"
                 . " RETURN a;";
 
-            // Create the Neo4j query object
-            $query = new Query(
-                $this->client,
-                $template,
-                $answerData
-            );
+            $query = $this->gm->createQuery($template, $answerData);
 
             $query->getResultSet();
         }
@@ -259,20 +214,17 @@ class QuestionModel
     public function skip($id, $userId)
     {
 
-        $data = array(
-            'id' => (integer)$id,
-            'userId' => $userId ? (integer)$userId : $userId,
-        );
+        $qb = $this->gm->createQueryBuilder();
+        $qb
+            ->match('(q:Question)', '(u:User)')
+            ->where('u.qnoow_id = { userId } AND id(q) = { id }')
+            ->setParameter('userId', (integer)$userId)
+            ->setParameter('id', (integer)$id)
+            ->createUnique('(u)-[r:SKIPS]->(q)')
+            ->set('r.timestamp = timestamp()')
+            ->returns('r');
 
-        $template = "MATCH"
-            . " (q:Question)"
-            . ", (u:User)"
-            . " WHERE u.qnoow_id = {userId} AND id(q) = {id}"
-            . " CREATE UNIQUE (u)-[r:SKIPS]->(q)"
-            . " SET r.timestamp = timestamp()"
-            . " RETURN r;";
-
-        $query = new Query($this->client, $template, $data);
+        $query = $qb->getQuery();
 
         $result = $query->getResultSet();
 
@@ -290,21 +242,17 @@ class QuestionModel
     public function report($id, $userId, $reason)
     {
 
-        $data = array(
-            'id' => (integer)$id,
-            'userId' => $userId ? (integer)$userId : $userId,
-            'reason' => $reason,
-        );
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(q:Question)', '(u:User)')
+            ->where('u.qnoow_id = { userId } AND id(q) = { id }')
+            ->setParameter('userId', (integer)$userId)
+            ->setParameter('id', (integer)$id)
+            ->createUnique('(u)-[r:REPORTS]->(q)')
+            ->set('r.reason = { reason }', 'r.timestamp = timestamp()')
+            ->setParameter('reason', $reason)
+            ->returns('r');
 
-        $template = "MATCH"
-            . " (q:Question)"
-            . ", (u:User)"
-            . " WHERE u.qnoow_id = {userId} AND id(q) = {id}"
-            . " CREATE UNIQUE (u)-[r:REPORTS]->(q)"
-            . " SET r.reason = {reason}, r.timestamp = timestamp()"
-            . " RETURN r;";
-
-        $query = new Query($this->client, $template, $data);
+        $query = $qb->getQuery();
 
         $result = $query->getResultSet();
 
@@ -320,17 +268,16 @@ class QuestionModel
     public function getQuestionStats($id)
     {
 
-        $data = array(
-            'id' => (integer)$id,
-        );
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(a:Answer)-[:IS_ANSWER_OF]->(q:Question)')
+            ->where('id(q) = { id }')
+            ->setParameter('id', (integer)$id)
+            ->with('q, a')
+            ->optionalMatch('ua = (u:User)-[x:ANSWERS]->(a)')
+            ->with('id(a) AS answer', 'COUNT(x) AS nAnswers')
+            ->returns('answer, nAnswers');
 
-        $template = "MATCH (a:Answer)-[:IS_ANSWER_OF]->(q:Question)"
-            . " WHERE id(q) = {id} WITH q, a"
-            . " OPTIONAL MATCH ua = (u:User)-[x:ANSWERS]->(a)"
-            . " WITH id(a) AS answer, count(x)"
-            . " AS nAnswers RETURN answer, nAnswers;";
-
-        $query = new Query($this->client, $template, $data);
+        $query = $qb->getQuery();
 
         $result = $query->getResultSet();
 
@@ -365,16 +312,10 @@ class QuestionModel
         );
 
         $template = "
-        MATCH
-            (q:Question)<-[:IS_ANSWER_OF]-(a:Answer)
-        WHERE
-            id(q) = {id}
-        OPTIONAL MATCH
-            (u:User)-[:ANSWERS]->(a)
-        WITH
-            q,
-            a AS answers,
-            count(DISTINCT u) as numOfUsersThatAnswered
+        MATCH (q:Question)<-[:IS_ANSWER_OF]-(a:Answer)
+        WHERE id(q) = {id}
+        OPTIONAL MATCH (u:User)-[:ANSWERS]->(a)
+        WITH q, a AS answers, COUNT(DISTINCT u) as numOfUsersThatAnswered
         WITH
             q,
             length(collect(answers)) AS numOfAnswers,
@@ -383,26 +324,14 @@ class QuestionModel
         WITH
             q,
             1- (standardDeviation*1.0/totalAnswers) AS ranking
-        OPTIONAL MATCH
-            (u:User)-[r:RATES]->(q)
-        WITH
-            q,
-            ranking,
-            (1.0/50) * avg(r.rating) AS rating
-        WITH
-            q,
-            0.9 * ranking + 0.1 * rating AS questionRanking
-        SET
-            q.ranking = questionRanking
-        RETURN
-            q.ranking AS questionRanking
+        OPTIONAL MATCH (u:User)-[r:RATES]->(q)
+        WITH q, ranking, (1.0/50) * avg(r.rating) AS rating
+        WITH q, 0.9 * ranking + 0.1 * rating AS questionRanking
+        SET q.ranking = questionRanking
+        RETURN q.ranking AS questionRanking
         ";
 
-        $query = new Query(
-            $this->client,
-            $template,
-            $data
-        );
+        $query = $this->gm->createQuery($template, $data);
 
         $result = $query->getResultSet();
 
@@ -430,11 +359,7 @@ class QuestionModel
         RETURN q.ranking AS questionRanking
         ";
 
-        $query = new Query(
-            $this->client,
-            $template,
-            $data
-        );
+        $query = $this->gm->createQuery($template, $data);
 
         $result = $query->getResultSet();
 
@@ -457,7 +382,7 @@ class QuestionModel
 
         $template = "MATCH (q:Question) WHERE id(q) = {id} RETURN q AS Question";
 
-        $query = new Query($this->client, $template, $data);
+        $query = $this->gm->createQuery($template, $data);
 
         $result = $query->getResultSet();
 

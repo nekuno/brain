@@ -2,6 +2,7 @@
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
+use Model\Exception\ValidationException;
 
 //Request::setTrustedProxies(array('127.0.0.1'));
 
@@ -88,6 +89,12 @@ $app->error(
 
         $response = array('error' => $e->getMessage());
 
+        $headers = $e instanceof HttpExceptionInterface ? $e->getHeaders() : array();
+
+        if ($e instanceof ValidationException) {
+            $response['validationErrors'] = $e->getErrors();
+        }
+
         if ($app['debug']) {
             $response['debug'] = array(
                 'file' => $e->getFile(),
@@ -95,8 +102,6 @@ $app->error(
                 'trace' => $e->getTrace(),
             );
         }
-
-        $headers = $e instanceof HttpExceptionInterface ? $e->getHeaders() : array();
 
         return $app->json($response, $code, $headers);
     }
