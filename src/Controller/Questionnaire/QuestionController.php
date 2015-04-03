@@ -6,8 +6,6 @@ use Model\Questionnaire\QuestionModel;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpKernel\Exception\HttpException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class QuestionController
 {
@@ -28,7 +26,7 @@ class QuestionController
 
         $questions = $model->getAll($locale, $skip, $limit);
 
-        return $app->json($questions, 200);
+        return $app->json($questions);
 
     }
 
@@ -42,9 +40,6 @@ class QuestionController
     {
 
         $userId = $request->query->get('userId');
-        if (!$userId) {
-            throw new NotFoundHttpException('User not found');
-        }
 
         $locale = $this->getLocale($request, $app['locale.options']['default']);
         /* @var QuestionModel $model */
@@ -52,7 +47,7 @@ class QuestionController
 
         $question = $model->getNextByUser($userId, $locale);
 
-        return $app->json($question, 200);
+        return $app->json($question);
     }
 
     /**
@@ -70,7 +65,7 @@ class QuestionController
 
         $question = $model->getById($id, $locale);
 
-        return $app->json($question, 200);
+        return $app->json($question);
     }
 
     /**
@@ -102,9 +97,6 @@ class QuestionController
 
         $id = $request->attributes->get('id');
         $userId = $request->request->get('userId');
-        if (!$userId) {
-            throw new NotFoundHttpException('User not found');
-        }
 
         $locale = $this->getLocale($request, $app['locale.options']['default']);
         /* @var QuestionModel $model */
@@ -114,7 +106,7 @@ class QuestionController
 
         $model->skip($id, $userId);
 
-        return $app->json($question, 200);
+        return $app->json($question);
     }
 
     /**
@@ -129,9 +121,6 @@ class QuestionController
         $id = $request->attributes->get('id');
         $userId = $request->request->get('userId');
         $reason = $request->request->get('reason');
-        if (!$userId) {
-            throw new NotFoundHttpException('User not found');
-        }
 
         $locale = $this->getLocale($request, $app['locale.options']['default']);
         /* @var QuestionModel $model */
@@ -141,7 +130,7 @@ class QuestionController
 
         $model->report($id, $userId, $reason);
 
-        return $app->json($question, 200);
+        return $app->json($question);
     }
 
     /**
@@ -162,7 +151,7 @@ class QuestionController
 
         $stats = $model->getQuestionStats($id);
 
-        return $app->json($stats, 200);
+        return $app->json($stats);
     }
 
     protected function getLocale(Request $request, $defaultLocale)

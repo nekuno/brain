@@ -32,7 +32,7 @@ class AffinityCommand extends ApplicationAwareCommand
         $user = $input->getOption('user');
         $linkId = $input->getOption('link');
 
-        $users = null === $user ? $userModel->getAll() : $userModel->getById($user);
+        $users = null === $user ? $userModel->getAll() : array($userModel->getById($user));
 
         try {
 

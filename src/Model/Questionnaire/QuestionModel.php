@@ -6,6 +6,7 @@ use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
+use Model\UserModel;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
@@ -21,12 +22,19 @@ class QuestionModel
     protected $gm;
 
     /**
-     * @param GraphManager $gm
+     * @var UserModel
      */
-    public function __construct(GraphManager $gm)
+    protected $um;
+
+    /**
+     * @param GraphManager $gm
+     * @param UserModel $um
+     */
+    public function __construct(GraphManager $gm, UserModel $um)
     {
 
         $this->gm = $gm;
+        $this->um = $um;
     }
 
     public function getAll($locale, $skip = null, $limit = null)
@@ -63,10 +71,12 @@ class QuestionModel
     public function getNextByUser($userId, $locale, $sortByRanking = true)
     {
 
+        $user = $this->um->getById($userId);
+
         $qb = $this->gm->createQueryBuilder();
         $qb
             ->match('(user:User {qnoow_id: { userId }})')
-            ->setParameter('userId', (integer)$userId)
+            ->setParameter('userId', $user['qnoow_id'])
             ->optionalMatch('(user)-[:ANSWERS]->(a:Answer)-[:IS_ANSWER_OF]->(answered:Question)')
             ->optionalMatch('(user)-[:SKIPS]->(skip:Question)')
             ->optionalMatch('(:User)-[:REPORTS]->(report:Question)')
@@ -214,11 +224,13 @@ class QuestionModel
     public function skip($id, $userId)
     {
 
+        $user = $this->um->getById($userId);
+
         $qb = $this->gm->createQueryBuilder();
         $qb
             ->match('(q:Question)', '(u:User)')
             ->where('u.qnoow_id = { userId } AND id(q) = { id }')
-            ->setParameter('userId', (integer)$userId)
+            ->setParameter('userId', $user['qnoow_id'])
             ->setParameter('id', (integer)$id)
             ->createUnique('(u)-[r:SKIPS]->(q)')
             ->set('r.timestamp = timestamp()')
@@ -242,10 +254,12 @@ class QuestionModel
     public function report($id, $userId, $reason)
     {
 
+        $user = $this->um->getById($userId);
+
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(q:Question)', '(u:User)')
             ->where('u.qnoow_id = { userId } AND id(q) = { id }')
-            ->setParameter('userId', (integer)$userId)
+            ->setParameter('userId', $user['qnoow_id'])
             ->setParameter('id', (integer)$id)
             ->createUnique('(u)-[r:REPORTS]->(q)')
             ->set('r.reason = { reason }', 'r.timestamp = timestamp()')

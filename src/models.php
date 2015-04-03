@@ -87,7 +87,7 @@ $app['users.recommendation.content.tag.model'] = function ($app) {
 
 $app['questionnaire.questions.model'] = function ($app) {
 
-    return new \Model\Questionnaire\QuestionModel($app['neo4j.graph_manager']);
+    return new \Model\Questionnaire\QuestionModel($app['neo4j.graph_manager'], $app['users.model']);
 };
 
 $app['links.model'] = function ($app) {

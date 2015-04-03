@@ -43,15 +43,7 @@ class Neo4jLoadQuestionsCommand extends ApplicationAwareCommand
 
         /* @var UserModel $usersModel */
         $usersModel = $this->app['users.model'];
-        $users = $usersModel->getById($userId);
-
-        if (count($users) === 0) {
-
-            $output->writeln(sprintf('User with id "%s" not found', $userId));
-
-            return;
-        }
-        $user = array_shift($users);
+        $user = $usersModel->getById($userId);
 
         if (!is_readable($file)) {
 
