@@ -9,10 +9,6 @@ use Model\Neo4j\GraphManager;
 use Model\UserModel;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-/**
- * Class QuestionModel
- * @package Model\Questionnaire
- */
 class QuestionModel
 {
 
@@ -187,12 +183,14 @@ class QuestionModel
             unset($data['answers']);
         }
 
-        $template = "MATCH (q:Question)"
-            . " WHERE id(q) = {id}"
-            . " SET q.text_$locale = {text}"
-            . " RETURN q;";
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(q:Question)')
+            ->where('id(q) = { id }')
+            ->set("q.text_$locale = { text }")
+            ->returns('q')
+            ->setParameters($data);
 
-        $query = $this->gm->createQuery($template, $data);
+        $query = $qb->getQuery();
 
         $query->getResultSet();
 
@@ -203,12 +201,14 @@ class QuestionModel
                 'text' => $answer,
             );
 
-            $template = "MATCH (a:Answer)"
-                . " WHERE id(a) = {id}"
-                . " SET a.text_$locale = {text}"
-                . " RETURN a;";
+            $qb = $this->gm->createQueryBuilder();
+            $qb->match('(a:Answer)')
+                ->where('id(a) = { id }')
+                ->set("a.text_$locale = { text }")
+                ->returns('a')
+                ->setParameters($answerData);
 
-            $query = $this->gm->createQuery($template, $answerData);
+            $query = $qb->getQuery();
 
             $query->getResultSet();
         }
@@ -313,39 +313,23 @@ class QuestionModel
         return $stats;
     }
 
-    /**
-     * @param $id
-     * @return mixed
-     * @throws \Exception
-     */
     public function setOrUpdateRankingForQuestion($id)
     {
 
-        $data = array(
-            'id' => $id
-        );
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(q:Question)<-[:IS_ANSWER_OF]-(a:Answer)')
+            ->where('id(q) = { id }')
+            ->setParameter('id', (integer)$id)
+            ->with('q', 'a AS answers', 'COUNT(DISTINCT u) as numOfUsersThatAnswered')
+            ->with('q', 'length(collect(answers)) AS numOfAnswers', 'sum(numOfUsersThatAnswered) AS totalAnswers', 'stdevp(numOfUsersThatAnswered) AS standardDeviation')
+            ->with('q', '1 - (standardDeviation*1.0/totalAnswers) AS ranking')
+            ->optionalMatch('(u:User)-[r:RATES]->(q)')
+            ->with('q', 'ranking, (1.0/50) * avg(r.rating) AS rating')
+            ->with('q', '0.9 * ranking + 0.1 * rating AS questionRanking')
+            ->set('q.ranking = questionRanking')
+            ->returns('q.ranking AS questionRanking');
 
-        $template = "
-        MATCH (q:Question)<-[:IS_ANSWER_OF]-(a:Answer)
-        WHERE id(q) = {id}
-        OPTIONAL MATCH (u:User)-[:ANSWERS]->(a)
-        WITH q, a AS answers, COUNT(DISTINCT u) as numOfUsersThatAnswered
-        WITH
-            q,
-            length(collect(answers)) AS numOfAnswers,
-            sum(numOfUsersThatAnswered) AS totalAnswers,
-            stdevp(numOfUsersThatAnswered) AS standardDeviation
-        WITH
-            q,
-            1- (standardDeviation*1.0/totalAnswers) AS ranking
-        OPTIONAL MATCH (u:User)-[r:RATES]->(q)
-        WITH q, ranking, (1.0/50) * avg(r.rating) AS rating
-        WITH q, 0.9 * ranking + 0.1 * rating AS questionRanking
-        SET q.ranking = questionRanking
-        RETURN q.ranking AS questionRanking
-        ";
-
-        $query = $this->gm->createQuery($template, $data);
+        $query = $qb->getQuery();
 
         $result = $query->getResultSet();
 
@@ -355,25 +339,16 @@ class QuestionModel
 
     }
 
-    /**
-     * @param $id
-     * @return mixed
-     * @throws \Exception
-     */
     public function getRankingForQuestion($id)
     {
 
-        $data = array(
-            'id' => $id
-        );
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(q:Question)')
+            ->where('id(q) = { id }')
+            ->setParameter('id', (integer)$id)
+            ->returns('q.ranking AS questionRanking');
 
-        $template = "
-        MATCH (q:Question)
-        WHERE id(q) = {id}
-        RETURN q.ranking AS questionRanking
-        ";
-
-        $query = $this->gm->createQuery($template, $data);
+        $query = $qb->getQuery();
 
         $result = $query->getResultSet();
 
@@ -383,20 +358,16 @@ class QuestionModel
 
     }
 
-    /**
-     * @param $questionId
-     * @return bool
-     */
     public function existsQuestion($id)
     {
 
-        $data = array(
-            'id' => (integer)$id,
-        );
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(q:Question)')
+            ->where('id(q) = { id }')
+            ->setParameter('id', (integer)$id)
+            ->returns('q');
 
-        $template = "MATCH (q:Question) WHERE id(q) = {id} RETURN q AS Question";
-
-        $query = $this->gm->createQuery($template, $data);
+        $query = $qb->getQuery();
 
         $result = $query->getResultSet();
 
@@ -423,8 +394,12 @@ class QuestionModel
             $errors['text'] = 'The text of the question is required';
         }
 
-        if ($includeUser && !isset($data['userId'])) {
-            $errors['userId'] = 'The userId is required';
+        if ($includeUser) {
+            try {
+                $this->um->getById($data['userId']);
+            } catch (NotFoundHttpException $e) {
+                $errors['userId'] = $e->getMessage();
+            }
         }
 
         if (!isset($data['answers']) || !is_array($data['answers']) || count($data['answers']) <= 1) {
