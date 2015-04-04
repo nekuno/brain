@@ -261,6 +261,7 @@ class Fixtures
                         'isPrivate' => false,
                         'rating' => 3,
                         'explanation' => '',
+                        'locale' => 'en',
                     )
                 );
             }

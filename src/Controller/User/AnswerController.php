@@ -4,6 +4,7 @@ namespace Controller\User;
 
 use Model\Questionnaire\QuestionModel;
 use Model\User\AnswerModel;
+use Model\User\QuestionPaginatedModel;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -15,18 +16,19 @@ class AnswerController
 
         $data = $request->request->all();
         $data['userId'] = (integer)$request->attributes->get('userId');
+        $data['locale'] = $this->getLocale($request, $app['locale.options']['default']);
 
-        /* @var AnswerModel $model */
+        /* @var $model AnswerModel */
         $model = $app['users.answers.model'];
 
-        $model->create($data);
+        $userAnswer = $model->create($data);
 
         // TODO: Refactor this to listener
         /* @var $questionModel QuestionModel */
         $questionModel = $app['questionnaire.questions.model'];
         $questionModel->setOrUpdateRankingForQuestion($data['questionId']);
 
-        return $app->json(array('Resource created successful'), 201);
+        return $app->json($userAnswer, 201);
     }
 
     public function updateAction(Request $request, Application $app)
@@ -34,160 +36,102 @@ class AnswerController
 
         $data = $request->request->all();
         $data['userId'] = (integer)$request->attributes->get('userId');
+        $data['locale'] = $this->getLocale($request, $app['locale.options']['default']);
 
-        /* @var AnswerModel $model */
+        /* @var $model AnswerModel */
         $model = $app['users.answers.model'];
 
-        $model->update($data);
+        $userAnswer = $model->update($data);
 
         // TODO: Refactor this to listener
         /* @var $questionModel QuestionModel */
         $questionModel = $app['questionnaire.questions.model'];
         $questionModel->setOrUpdateRankingForQuestion($data['questionId']);
 
-        return $app->json(array("Resource updated successful"), 200);
+        return $app->json($userAnswer);
     }
 
     public function explainAction(Request $request, Application $app)
     {
 
         $data = $request->request->all();
+        $data['userId'] = (integer)$request->attributes->get('userId');
+        $data['locale'] = $this->getLocale($request, $app['locale.options']['default']);
 
-        /* @var AnswerModel $model */
+        /* @var $model AnswerModel */
         $model = $app['users.answers.model'];
-        $model->explain($data);
+        $userAnswer = $model->explain($data);
 
-        return $app->json(array("Resource updated successful"), 200);
+        return $app->json($userAnswer);
     }
 
     public function indexAction(Request $request, Application $app)
     {
 
         $id = $request->get('userId');
-        $locale = $request->get('locale');
-
-        if (null === $id || null === $locale) {
-            return $app->json(array(), 400);
-        }
+        $locale = $this->getLocale($request, $app['locale.options']['default']);
 
         /* @var $paginator \Paginator\Paginator */
         $paginator = $app['paginator'];
 
         $filters = array('id' => $id, 'locale' => $locale);
-        /* @var $model \Model\User\QuestionPaginatedModel */
+        /* @var $model QuestionPaginatedModel */
         $model = $app['users.questions.model'];
 
         $result = $paginator->paginate($filters, $model, $request);
 
-        return $app->json($result, !empty($result) ? 201 : 200);
+        return $app->json($result);
     }
 
-    /**
-     * @param Request $request
-     * @param Application $app
-     * @return \Symfony\Component\HttpFoundation\JsonResponse
-     * @throws \Exception
-     */
     public function countAction(Request $request, Application $app)
     {
-
+        // TODO: Refactor this
         $userId = $request->get('userId');
 
-        try {
-            /* @var AnswerModel $model */
-            $model = $app['users.answers.model'];
-            $userAnswerResult = $model->getNumberOfUserAnswers($userId);
+        /* @var AnswerModel $model */
+        $model = $app['users.answers.model'];
+        $userAnswerResult = $model->getNumberOfUserAnswers($userId);
 
-            $data = array(
-                'userId' => $userId,
-            );
+        $data = array(
+            'userId' => $userId,
+        );
 
-            foreach ($userAnswerResult as $row) {
-                $data['nOfAnswers'] = $row['nOfAnswers'];
-            }
-
-            if (empty($data)) {
-                return $app->json('The user has not answered to any question', 404);
-            }
-
-            return $app->json($data, 200);
-
-        } catch (\Exception $e) {
-            if ($app['env'] == 'dev') {
-                throw $e;
-            }
-
-            return $app->json(array('error' => 'An error ocurred'), 500);
+        foreach ($userAnswerResult as $row) {
+            $data['nOfAnswers'] = $row['nOfAnswers'];
         }
+
+        if (empty($data)) {
+            return $app->json('The user has not answered to any question', 404);
+        }
+
+        return $app->json($data);
+
     }
 
-    /**
-     * @param Request $request
-     * @param Application $app
-     * @return \Symfony\Component\HttpFoundation\JsonResponse
-     * @throws \Exception
-     */
     public function getAnswerAction(Request $request, Application $app)
     {
 
-        $userId = $request->get('userId');
-        $questionId = $request->get('questionId');
-        $locale = $request->get('locale');
+        $userId = $request->attributes->get('userId');
+        $questionId = $request->attributes->get('questionId');
+        $locale = $this->getLocale($request, $app['locale.options']['default']);
 
-        try {
-            /* @var AnswerModel $model */
-            $model = $app['users.answers.model'];
+        /* @var $model AnswerModel */
+        $model = $app['users.answers.model'];
 
-            $result = $model->getUserAnswer($userId, $questionId, $locale);
+        $result = $model->getUserAnswer($userId, $questionId, $locale);
 
-            /* @var QuestionModel $questionModel */
-            $questionModel = $app['questionnaire.questions.model'];
-            $stats = $questionModel->getQuestionStats($questionId);
-            $data = array();
+        return $app->json($result);
 
-            foreach ($result as $row) {
-                $data['question']['id'] = $row['question']->getId();
-                $data['question']['text'] = $row['question']->getProperty('text_' . $locale);
-                $data['question']['totalAnswers'] = 0;
-                foreach ($row['answers'] as $answer) {
-                    //$data['question']['answers'][$answer->getId()] = $answer->getProperty('text_' . $locale);
-                    //$stats = $this->qm->getQuestionStats($question->getId());
-                    $data['question']['answers'][$answer->getId()] = array(
-                        'id' => $answer->getId(),
-                        'text' => $answer->getProperty('text_' . $locale),
-                        'nAnswers' => $stats[$questionId]['answers'][$answer->getId()]['nAnswers']
-                    );
-                    $data['question']['totalAnswers'] += $stats[$questionId]['answers'][$answer->getId()]['nAnswers'];
-                }
-                $data['question']['answers'][$row['answer']->getId()] = array(
-                    'id' => $row['answer']->getId(),
-                    'text' => $row['answer']->getProperty('text_' . $locale),
-                    'nAnswers' => $stats[$questionId]['answers'][$row['answer']->getId()]['nAnswers']
-                );
-                $data['question']['totalAnswers'] += $stats[$questionId]['answers'][$row['answer']->getId()]['nAnswers'];
-
-                $data['answer']['answerId'] = $row['answer']->getId();
-                $data['answer']['explanation'] = $row['userAnswer']->getProperty('explanation');
-                $data['answer']['answeredAt'] = $row['userAnswer']->getProperty('answeredAt');
-                $data['answer']['isPrivate'] = $row['userAnswer']->getProperty('private');
-                $data['answer']['rating'] = $row['rates']->getProperty('rating');
-                foreach ($row['accepts'] as $acceptedAnswer) {
-                    $data['answer']['acceptedAnswers'][] = $acceptedAnswer->getId();
-                }
-            }
-
-            if (empty($data)) {
-                return $app->json(array('error' => 'The user has not answered to any question'), 404);
-            }
-
-            return $app->json($data, 200);
-
-        } catch (\Exception $e) {
-            if ($app['env'] == 'dev') {
-                throw $e;
-            }
-
-            return $app->json(array('error' => 'An error ocurred'), 500);
-        }
     }
+
+    protected function getLocale(Request $request, $defaultLocale)
+    {
+        $locale = $request->query->get('locale', $defaultLocale);
+        if (!in_array($locale, array('en', 'es'))) {
+            $locale = $defaultLocale;
+        }
+
+        return $locale;
+    }
+
 }

@@ -3,9 +3,12 @@
 namespace Model\User;
 
 use Event\AnswerEvent;
+use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
+use Everyman\Neo4j\Relationship;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
+use Model\Questionnaire\QuestionModel;
 use Model\UserModel;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -19,6 +22,11 @@ class AnswerModel
     protected $gm;
 
     /**
+     * @var QuestionModel
+     */
+    protected $qm;
+
+    /**
      * @var UserModel
      */
     protected $um;
@@ -28,19 +36,15 @@ class AnswerModel
      */
     protected $eventDispatcher;
 
-    public function __construct(GraphManager $gm, UserModel $um, EventDispatcher $eventDispatcher)
+    public function __construct(GraphManager $gm, QuestionModel $qm, UserModel $um, EventDispatcher $eventDispatcher)
     {
 
         $this->gm = $gm;
+        $this->qm = $qm;
         $this->um = $um;
         $this->eventDispatcher = $eventDispatcher;
     }
 
-    /**
-     * Counts the total results
-     * @param array $filters
-     * @return int
-     */
     public function countTotal(array $filters)
     {
 
@@ -66,10 +70,6 @@ class AnswerModel
         return $count;
     }
 
-    /**
-     * @param array $data
-     * @return \Everyman\Neo4j\Query\ResultSet
-     */
     public function create(array $data)
     {
 
@@ -89,18 +89,14 @@ class AnswerModel
 
         $query = $qb->getQuery();
 
-        $result = $query->getResultSet();
+        $query->getResultSet();
 
         $this->handleAnswerAddedEvent($data);
 
-        return $result;
+        return $this->getUserAnswer($data['userId'], $data['questionId'], $data['locale']);
 
     }
 
-    /**
-     * @param array $data
-     * @return \Everyman\Neo4j\Query\ResultSet
-     */
     public function update(array $data)
     {
 
@@ -132,17 +128,13 @@ class AnswerModel
 
         $query = $qb->getQuery();
 
-        $result = $query->getResultSet();
+        $query->getResultSet();
 
         $this->handleAnswerAddedEvent($data);
 
-        return $result;
+        return $this->getUserAnswer($data['userId'], $data['questionId'], $data['locale']);
     }
 
-    /**
-     * @param array $data
-     * @return \Everyman\Neo4j\Query\ResultSet
-     */
     public function explain(array $data)
     {
 
@@ -158,32 +150,10 @@ class AnswerModel
 
         $query = $qb->getQuery();
 
-        return $query->getResultSet();
+        $query->getResultSet();
 
-    }
+        return $this->getUserAnswer($data['userId'], $data['questionId'], $data['locale']);
 
-    /**
-     * @param $userId
-     * @return \Everyman\Neo4j\Query\ResultSet
-     */
-    public function getUserAnswers($userId)
-    {
-
-        $data['userId'] = (integer)$userId;
-
-        $qb = $this->gm->createQueryBuilder();
-        $qb->match('(a:Answer)<-[ua:ANSWERS]-(u:User), (a)-[:IS_ANSWER_OF]-(q:Question)')
-            ->with('u', 'a', 'q', 'ua')
-            ->where('u.qnoow_id = { userId }')
-            ->optionalMatch('(a2:Answer)-[:IS_ANSWER_OF]->(q)')
-            ->with('u AS user', 'a AS answer', 'ua.answeredAt AS answeredAt', 'ua.explanation AS explanation', 'q AS question', 'collect(a2) AS answers')
-            ->returns('user', 'answer', 'answeredAt', 'explanation', 'question', ' answers')
-            ->orderBy('answeredAt DESC')
-            ->setParameters($data);
-
-        $query = $qb->getQuery();
-
-        return $query->getResultSet();
     }
 
     /**
@@ -207,11 +177,14 @@ class AnswerModel
     public function getUserAnswer($userId, $questionId, $locale)
     {
 
+        $user = $this->um->getById($userId);
+        $question = $this->qm->getById($questionId, $locale);
+
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(q:Question)', '(u:User)')
             ->where('u.qnoow_id = { userId }', 'id(q) = { questionId }', "HAS(q.text_$locale)")
-            ->setParameter('userId', (integer)$userId)
-            ->setParameter('questionId', (integer)$questionId)
+            ->setParameter('userId', $user['qnoow_id'])
+            ->setParameter('questionId', $question['id'])
             ->with('u', 'q')
             ->match('(u)-[ua:ANSWERS]->(a:Answer)-[:IS_ANSWER_OF]->(q)')
             ->match('(u)-[r:RATES]->(q)')
@@ -223,7 +196,44 @@ class AnswerModel
 
         $query = $qb->getQuery();
 
-        return $query->getResultSet();
+        $result = $query->getResultSet();
+
+        /* @var $row Row */
+        $row = $result->current();
+
+        return $this->build($row, $locale);
+    }
+
+    protected function build(Row $row, $locale)
+    {
+        /* @var $question Node */
+        $question = $row->offsetGet('question');
+        /* @var $answer Node */
+        $answer = $row->offsetGet('answer');
+        /* @var $userAnswer Node */
+        $userAnswer = $row->offsetGet('userAnswer');
+        /* @var $rates Relationship */
+        $rates = $row->offsetGet('rates');
+        /* @var $accepts Relationship */
+        $accepts = $row->offsetGet('accepts');
+
+        $accepted = array();
+        foreach ($accepts as $acceptedAnswer) {
+            /* @var $acceptedAnswer Node */
+            $accepted[] = $acceptedAnswer->getId();
+        }
+
+        return array(
+            'answer' => array(
+                'answerId' => $answer->getId(),
+                'explanation' => $userAnswer->getProperty('explanation'),
+                'answeredAt' => $userAnswer->getProperty('answeredAt'),
+                'isPrivate' => $userAnswer->getProperty('private'),
+                'rating' => $rates->getProperty('rating'),
+                'acceptedAnswers' => $accepted,
+            ),
+            'question' => $this->qm->getById($question->getId(), $locale),
+        );
     }
 
     /**
@@ -249,7 +259,7 @@ class AnswerModel
 
         foreach ($this->getFieldsMetadata() as $fieldName => $fieldMetadata) {
 
-            $fieldValue = $data[$fieldName];
+            $fieldValue = $fieldMetadata['required'] === true ? $data[$fieldName] : null;
 
             switch ($fieldName) {
                 case 'answerId':
@@ -324,7 +334,7 @@ class AnswerModel
             ),
             'isPrivate' => array(
                 'type' => 'checkbox',
-                'required' => false,
+                'required' => true,
                 'multiple' => false
             ),
             'rating' => array(
@@ -336,7 +346,7 @@ class AnswerModel
             ),
             'explanation' => array(
                 'type' => 'text',
-                'required' => false
+                'required' => true
             ),
             'userId' => array(
                 'type' => 'id',
