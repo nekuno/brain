@@ -320,6 +320,7 @@ class QuestionModel
         $qb->match('(q:Question)<-[:IS_ANSWER_OF]-(a:Answer)')
             ->where('id(q) = { id }')
             ->setParameter('id', (integer)$id)
+            ->optionalMatch('(u:User)-[:ANSWERS]->(a)')
             ->with('q', 'a AS answers', 'COUNT(DISTINCT u) as numOfUsersThatAnswered')
             ->with('q', 'length(collect(answers)) AS numOfAnswers', 'sum(numOfUsersThatAnswered) AS totalAnswers', 'stdevp(numOfUsersThatAnswered) AS standardDeviation')
             ->with('q', '1 - (standardDeviation*1.0/totalAnswers) AS ranking')
