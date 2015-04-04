@@ -73,6 +73,8 @@ class AnswerModel
     public function create(array $data)
     {
 
+        $this->validate($data);
+
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(user:User)', '(question:Question)', '(answer:Answer)')
             ->where('user.qnoow_id = { userId } AND id(question) = { questionId } AND id(answer) = { answerId }')
@@ -101,6 +103,8 @@ class AnswerModel
      */
     public function update(array $data)
     {
+
+        $this->validate($data);
 
         $data['userId'] = intval($data['userId']);
         $data['questionId'] = intval($data['questionId']);
@@ -226,7 +230,7 @@ class AnswerModel
      * @param array $data
      * @throws ValidationException
      */
-    public function validate(array $data)
+    protected function validate(array $data)
     {
 
         $errors = array();
@@ -245,6 +249,8 @@ class AnswerModel
 
         foreach ($this->getFieldsMetadata() as $fieldName => $fieldMetadata) {
 
+            $fieldValue = $data[$fieldName];
+
             switch ($fieldName) {
                 case 'answerId':
                     if (!$this->existsAnswer($data['questionId'], $data['answerId'])) {
@@ -252,11 +258,11 @@ class AnswerModel
                     }
                     break;
                 case 'acceptedAnswers':
-                    $acceptedAnswersNum = count($data[$fieldName]);
+                    $acceptedAnswersNum = count($fieldValue);
                     if ($acceptedAnswersNum === 0) {
                         $errors['acceptedAnswers'] = 'At least one accepted answer needed';
                     } else {
-                        foreach ($data[$fieldName] as $acceptedAnswer) {
+                        foreach ($fieldValue as $acceptedAnswer) {
                             if (!$this->existsAnswer($data['questionId'], $acceptedAnswer)) {
                                 $errors['acceptedAnswers'] = 'Invalid accepted answer ID';
                                 break;
@@ -265,24 +271,27 @@ class AnswerModel
                     }
                     break;
                 case 'rating':
-                    if (!in_array($data[$fieldName], range($fieldMetadata['min'], $fieldMetadata['max']))) {
+                    if (!in_array($fieldValue, range($fieldMetadata['min'], $fieldMetadata['max']))) {
                         $errors['rating'] = sprintf('Invalid importance value. Should be between both %d and %d included', $fieldMetadata['min'], $fieldMetadata['max']);
                     }
                     break;
                 case 'isPrivate':
+                    if (!is_bool($fieldValue)) {
+                        $errors['isPrivate'] = 'isPrivate must be boolean';
+                    }
                     break;
                 case 'explanation':
                     break;
                 case 'userId':
                     try {
-                        $this->um->getById($data[$fieldName]);
+                        $this->um->getById($fieldValue);
                     } catch (NotFoundHttpException $e) {
                         $errors['userId'] = $e->getMessage();
                     }
                     break;
                 case 'questionId':
-                    if (!$this->existsQuestion($data[$fieldName])) {
-                        $errors[] = 'Invalid question ID';
+                    if (!$this->existsQuestion($fieldValue)) {
+                        $errors['questionId'] = 'Invalid question ID';
                     }
                     break;
                 default:

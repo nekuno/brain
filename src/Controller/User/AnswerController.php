@@ -2,128 +2,64 @@
 
 namespace Controller\User;
 
-use Event\AnswerEvent;
 use Model\Questionnaire\QuestionModel;
 use Model\User\AnswerModel;
 use Silex\Application;
-use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\Request;
 
-/**
- * Class AnswerController
- * @package Controller\User
- */
 class AnswerController
 {
 
-    /**
-     * @param Request $request
-     * @param Application $app
-     * @return \Symfony\Component\HttpFoundation\JsonResponse
-     * @throws \Exception
-     */
     public function createAction(Request $request, Application $app)
     {
 
         $data = $request->request->all();
+        $data['userId'] = (integer)$request->attributes->get('userId');
 
         /* @var AnswerModel $model */
         $model = $app['users.answers.model'];
 
-        if ($data['userId'] != $request->get('userId')) {
-            return $app->json(array('errors' => 'User ids mismatch'), 400);
-        }
+        $model->create($data);
 
-        if (count($errors = $model->validate($data))) {
-            return $app->json(array('errors' => $errors), 400);
-        }
-
-        try {
-
-            $model->create($data);
-
-            // TODO: Refactor this to listener
-            $questionModel = $app['questionnaire.questions.model'];
-            $questionModel->setOrUpdateRankingForQuestion($data['questionId']);
-
-        } catch (\Exception $e) {
-
-            return $app->json(array($e->getMessage()), 500);
-        }
+        // TODO: Refactor this to listener
+        /* @var $questionModel QuestionModel */
+        $questionModel = $app['questionnaire.questions.model'];
+        $questionModel->setOrUpdateRankingForQuestion($data['questionId']);
 
         return $app->json(array('Resource created successful'), 201);
     }
 
-    /**
-     * @param Request $request
-     * @param Application $app
-     * @return \Symfony\Component\HttpFoundation\JsonResponse
-     * @throws \Exception
-     */
     public function updateAction(Request $request, Application $app)
     {
 
         $data = $request->request->all();
-
-        if ($data['userId'] != $request->get('userId')) {
-            return $app->json(array('errors' => 'User mismatch'), 400);
-        }
+        $data['userId'] = (integer)$request->attributes->get('userId');
 
         /* @var AnswerModel $model */
         $model = $app['users.answers.model'];
 
-        if (count($errors = $model->validate($data))) {
-            return $app->json(array('errors' => $errors), 400);
-        }
+        $model->update($data);
 
-        try {
-
-            $model->update($data);
-
-            // TODO: Refactor this to listener
-            $questionModel = $app['questionnaire.questions.model'];
-            $questionModel->setOrUpdateRankingForQuestion($data['questionId']);
-
-        } catch (\Exception $e) {
-
-            return $app->json(array($e->getMessage()), 500);
-        }
+        // TODO: Refactor this to listener
+        /* @var $questionModel QuestionModel */
+        $questionModel = $app['questionnaire.questions.model'];
+        $questionModel->setOrUpdateRankingForQuestion($data['questionId']);
 
         return $app->json(array("Resource updated successful"), 200);
     }
 
-    /**
-     * @param Request $request
-     * @param Application $app
-     * @return \Symfony\Component\HttpFoundation\JsonResponse
-     * @throws \Exception
-     */
     public function explainAction(Request $request, Application $app)
     {
 
         $data = $request->request->all();
 
-        try {
-            /* @var AnswerModel $model */
-            $model = $app['users.answers.model'];
-            $model->explain($data);
-        } catch (\Exception $e) {
-            if ($app['env'] == 'dev') {
-                throw $e;
-            }
-
-            return $app->json(array($e->getMessage()), 500);
-        }
+        /* @var AnswerModel $model */
+        $model = $app['users.answers.model'];
+        $model->explain($data);
 
         return $app->json(array("Resource updated successful"), 200);
     }
 
-    /**
-     * @param Request $request
-     * @param Application $app
-     * @return \Symfony\Component\HttpFoundation\JsonResponse
-     * @throws \Exception
-     */
     public function indexAction(Request $request, Application $app)
     {
 
@@ -204,7 +140,7 @@ class AnswerController
 
             $result = $model->getUserAnswer($userId, $questionId, $locale);
 
-            /** @var QuestionModel $questionModel */
+            /* @var QuestionModel $questionModel */
             $questionModel = $app['questionnaire.questions.model'];
             $stats = $questionModel->getQuestionStats($questionId);
             $data = array();
@@ -217,15 +153,15 @@ class AnswerController
                     //$data['question']['answers'][$answer->getId()] = $answer->getProperty('text_' . $locale);
                     //$stats = $this->qm->getQuestionStats($question->getId());
                     $data['question']['answers'][$answer->getId()] = array(
-                        'id'    => $answer->getId(),
-                        'text'  => $answer->getProperty('text_' . $locale),
+                        'id' => $answer->getId(),
+                        'text' => $answer->getProperty('text_' . $locale),
                         'nAnswers' => $stats[$questionId]['answers'][$answer->getId()]['nAnswers']
                     );
                     $data['question']['totalAnswers'] += $stats[$questionId]['answers'][$answer->getId()]['nAnswers'];
                 }
                 $data['question']['answers'][$row['answer']->getId()] = array(
-                    'id'    => $row['answer']->getId(),
-                    'text'  => $row['answer']->getProperty('text_' . $locale),
+                    'id' => $row['answer']->getId(),
+                    'text' => $row['answer']->getProperty('text_' . $locale),
                     'nAnswers' => $stats[$questionId]['answers'][$row['answer']->getId()]['nAnswers']
                 );
                 $data['question']['totalAnswers'] += $stats[$questionId]['answers'][$row['answer']->getId()]['nAnswers'];
