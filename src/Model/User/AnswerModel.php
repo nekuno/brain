@@ -4,13 +4,12 @@ namespace Model\User;
 
 use Event\AnswerEvent;
 use Everyman\Neo4j\Query\Row;
+use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
+use Model\UserModel;
 use Symfony\Component\EventDispatcher\EventDispatcher;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-/**
- * Class AnswerModel
- * @package Model\User
- */
 class AnswerModel
 {
 
@@ -20,14 +19,20 @@ class AnswerModel
     protected $gm;
 
     /**
+     * @var UserModel
+     */
+    protected $um;
+
+    /**
      * @var EventDispatcher
      */
     protected $eventDispatcher;
 
-    public function __construct(GraphManager $gm, EventDispatcher $eventDispatcher)
+    public function __construct(GraphManager $gm, UserModel $um, EventDispatcher $eventDispatcher)
     {
 
         $this->gm = $gm;
+        $this->um = $um;
         $this->eventDispatcher = $eventDispatcher;
     }
 
@@ -140,13 +145,14 @@ class AnswerModel
         $data['userId'] = (integer)$data['userId'];
         $data['questionId'] = (integer)$data['questionId'];
 
-        $template = "MATCH"
-            . " (user:User)-[r:ANSWERS]->(answer:Answer)-[:IS_ANSWER_OF]->(question:Question)"
-            . " WHERE user.qnoow_id = {userId} AND id(question) = {questionId}"
-            . " SET r.explanation = {explanation}"
-            . " RETURN answer";
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(user:User)-[r:ANSWERS]->(answer:Answer)-[:IS_ANSWER_OF]->(question:Question)')
+            ->where('user.qnoow_id = { userId } AND id(question) = { questionId }')
+            ->set('r.explanation = { explanation }')
+            ->returns('answer')
+            ->setParameters($data);
 
-        $query = $this->gm->createQuery($template, $data);
+        $query = $qb->getQuery();
 
         return $query->getResultSet();
 
@@ -161,15 +167,17 @@ class AnswerModel
 
         $data['userId'] = (integer)$userId;
 
-        $template = "MATCH (a:Answer)<-[ua:ANSWERS]-(u:User), (a)-[:IS_ANSWER_OF]-(q:Question)"
-            . " WITH u, a, q, ua"
-            . " WHERE u.qnoow_id = {userId}"
-            . " OPTIONAL MATCH (a2:Answer)-[:IS_ANSWER_OF]->(q)"
-            . " WITH u AS user, a AS answer, ua.answeredAt AS answeredAt, ua.explanation AS explanation, q AS question, collect(a2) AS answers"
-            . " RETURN user, answer, answeredAt, explanation, question, answers"
-            . " ORDER BY answeredAt DESC;";
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(a:Answer)<-[ua:ANSWERS]-(u:User), (a)-[:IS_ANSWER_OF]-(q:Question)')
+            ->with('u', 'a', 'q', 'ua')
+            ->where('u.qnoow_id = { userId }')
+            ->optionalMatch('(a2:Answer)-[:IS_ANSWER_OF]->(q)')
+            ->with('u AS user', 'a AS answer', 'ua.answeredAt AS answeredAt', 'ua.explanation AS explanation', 'q AS question', 'collect(a2) AS answers')
+            ->returns('user', 'answer', 'answeredAt', 'explanation', 'question', ' answers')
+            ->orderBy('answeredAt DESC')
+            ->setParameters($data);
 
-        $query = $this->gm->createQuery($template, $data);
+        $query = $qb->getQuery();
 
         return $query->getResultSet();
     }
@@ -181,13 +189,13 @@ class AnswerModel
     public function getNumberOfUserAnswers($userId)
     {
 
-        $data['userId'] = (integer)$userId;
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(a:Answer)<-[ua:ANSWERS]-(u:User)')
+            ->where('u.qnoow_id = { userId }')
+            ->setParameter('userId', (integer)$userId)
+            ->returns('count(ua) AS nOfAnswers');
 
-        $template = "MATCH (a:Answer)<-[ua:ANSWERS]-(u:User)"
-            . " WHERE u.qnoow_id = {userId}"
-            . " RETURN count(ua) AS nOfAnswers;";
-
-        $query = $this->gm->createQuery($template, $data);
+        $query = $qb->getQuery();
 
         return $query->getResultSet();
     }
@@ -195,45 +203,44 @@ class AnswerModel
     public function getUserAnswer($userId, $questionId, $locale)
     {
 
-        $data['userId'] = (integer)$userId;
-        $data['questionId'] = (integer)$questionId;
-        $data['locale'] = $locale;
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(q:Question)', '(u:User)')
+            ->where('u.qnoow_id = { userId }', 'id(q) = { questionId }', "HAS(q.text_$locale)")
+            ->setParameter('userId', (integer)$userId)
+            ->setParameter('questionId', (integer)$questionId)
+            ->with('u', 'q')
+            ->match('(u)-[ua:ANSWERS]->(a:Answer)-[:IS_ANSWER_OF]->(q)')
+            ->match('(u)-[r:RATES]->(q)')
+            ->with('u', 'a', 'q', 'ua', 'r')
+            ->match('(a1:Answer)-[:IS_ANSWER_OF]->(q)', '(u)-[:ACCEPTS]->(a2:Answer)-[:IS_ANSWER_OF]->(q)')
+            ->with('u AS user', 'a AS answer', 'collect(DISTINCT a2) AS accepts', 'ua AS userAnswer', 'r AS rates', 'q AS question', 'collect(DISTINCT a1) AS answers')
+            ->returns('user', 'answer', 'userAnswer', 'accepts', 'question', 'answers', 'rates')
+            ->limit(1);
 
-        $template = "MATCH (q:Question), (u:User)"
-            . " WHERE u.qnoow_id = {userId} AND id(q) = {questionId} AND HAS(q.text_$locale)"
-            . " WITH u, q"
-            . " MATCH (u)-[ua:ANSWERS]->(a:Answer)-[:IS_ANSWER_OF]->(q)"
-            . " MATCH (u)-[r:RATES]->(q)"
-            . " WITH u, a, q, ua, r"
-            . " MATCH (a1:Answer)-[:IS_ANSWER_OF]->(q), "
-            . " (u)-[:ACCEPTS]->(a2:Answer)-[:IS_ANSWER_OF]->(q)"
-            . " WITH u AS user, a AS answer, collect(DISTINCT a2) AS accepts, ua AS userAnswer, r AS rates,"
-            . " q AS question, collect(DISTINCT a1) AS answers"
-            . " RETURN user, answer, userAnswer, accepts, question, answers, rates"
-            . " LIMIT 1;";
-
-        $query = $this->gm->createQuery($template, $data);
+        $query = $qb->getQuery();
 
         return $query->getResultSet();
     }
 
     /**
-     * @param $data
-     * @return array
+     * @param array $data
+     * @throws ValidationException
      */
-    public function validate($data)
+    public function validate(array $data)
     {
 
         $errors = array();
 
         foreach ($this->getFieldsMetadata() as $fieldName => $fieldMetadata) {
             if ($fieldMetadata['required'] === true && !array_key_exists($fieldName, $data)) {
-                $errors[] = 'The field ' . $fieldName . ' is required';
+                $errors[$fieldName] = 'The field ' . $fieldName . ' is required';
             }
         }
 
-        if (count($errors)) {
-            return $errors;
+        if (count($errors) > 0) {
+            $e = new ValidationException('Validation error');
+            $e->setErrors($errors);
+            throw $e;
         }
 
         foreach ($this->getFieldsMetadata() as $fieldName => $fieldMetadata) {
@@ -241,25 +248,25 @@ class AnswerModel
             switch ($fieldName) {
                 case 'answerId':
                     if (!$this->existsAnswer($data['questionId'], $data['answerId'])) {
-                        $errors[] = 'Invalid answer ID';
+                        $errors['answerId'] = 'Invalid answer ID';
                     }
                     break;
                 case 'acceptedAnswers':
                     $acceptedAnswersNum = count($data[$fieldName]);
                     if ($acceptedAnswersNum === 0) {
-                        $errors[] = '1 accepted answers is needed at least';
+                        $errors['acceptedAnswers'] = 'At least one accepted answer needed';
                     } else {
                         foreach ($data[$fieldName] as $acceptedAnswer) {
                             if (!$this->existsAnswer($data['questionId'], $acceptedAnswer)) {
-                                $errors[] = 'Invalid accepted answer ID';
+                                $errors['acceptedAnswers'] = 'Invalid accepted answer ID';
+                                break;
                             }
                         }
                     }
-
                     break;
                 case 'rating':
                     if (!in_array($data[$fieldName], range($fieldMetadata['min'], $fieldMetadata['max']))) {
-                        $errors[] = 'Invalid importance value. Should be between both 0 and 3 included';
+                        $errors['rating'] = sprintf('Invalid importance value. Should be between both %d and %d included', $fieldMetadata['min'], $fieldMetadata['max']);
                     }
                     break;
                 case 'isPrivate':
@@ -267,8 +274,10 @@ class AnswerModel
                 case 'explanation':
                     break;
                 case 'userId':
-                    if (!$this->existsUser($data[$fieldName])) {
-                        $errors[] = 'Invalid user ID';
+                    try {
+                        $this->um->getById($data[$fieldName]);
+                    } catch (NotFoundHttpException $e) {
+                        $errors['userId'] = $e->getMessage();
                     }
                     break;
                 case 'questionId':
@@ -281,17 +290,17 @@ class AnswerModel
             }
         }
 
-        // has one answer at least
-        // has one accepted answer at least
-        // has importance set
-
-        return $errors;
+        if (count($errors) > 0) {
+            $e = new ValidationException('Validation error');
+            $e->setErrors($errors);
+            throw $e;
+        }
     }
 
     /**
      * @return array
      */
-    public function getFieldsMetadata()
+    protected function getFieldsMetadata()
     {
 
         $metadata = array(
@@ -337,78 +346,43 @@ class AnswerModel
      * @param $questionId
      * @param $answerId
      * @return bool
+     * @throws \Exception
      */
-    public function existsAnswer($questionId, $answerId)
+    protected function existsAnswer($questionId, $answerId)
     {
 
-        $data = array(
-            'questionId' => (integer)$questionId,
-            'answerId' => (integer)$answerId,
-        );
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(q:Question)<-[:IS_ANSWER_OF]-(a:Answer)')
+            ->where('id(q) = { questionId }', 'id(a) = { answerId }')
+            ->setParameter('questionId', (integer)$questionId)
+            ->setParameter('answerId', (integer)$answerId)
+            ->returns('a AS answer');
 
-        $template = "MATCH (q:Question)<-[:IS_ANSWER_OF]-(a:Answer)"
-            . " WHERE id(q) = {questionId} AND id(a) = {answerId}"
-            . " RETURN a AS answer";
-
-        $query = $this->gm->createQuery($template, $data);
+        $query = $qb->getQuery();
 
         $result = $query->getResultSet();
 
-        foreach ($result as $row) {
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * @param $userId
-     * @return bool
-     */
-    public function existsUser($userId)
-    {
-
-        $data = array(
-            'userId' => (integer)$userId,
-        );
-
-        $template = "MATCH (u:User)"
-            . " WHERE u.qnoow_id = {userId}"
-            . " RETURN u AS user";
-
-        $query = $this->gm->createQuery($template, $data);
-
-        $result = $query->getResultSet();
-
-        foreach ($result as $row) {
-            return true;
-        }
-
-        return false;
+        return $result->count() > 0;
     }
 
     /**
      * @param $questionId
      * @return bool
+     * @throws \Exception
      */
-    public function existsQuestion($questionId)
+    protected function existsQuestion($questionId)
     {
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(q:Question)')
+            ->where('id(q) = { questionId }')
+            ->setParameter('questionId', (integer)$questionId)
+            ->returns('q AS question');
 
-        $data = array(
-            'questionId' => (integer)$questionId,
-        );
-
-        $template = "MATCH (q:Question) WHERE id(q) = {questionId} RETURN q AS Question";
-
-        $query = $this->gm->createQuery($template, $data);
+        $query = $qb->getQuery();
 
         $result = $query->getResultSet();
 
-        foreach ($result as $row) {
-            return true;
-        }
-
-        return false;
+        return $result->count() > 0;
     }
 
     protected function handleAnswerAddedEvent(array $data)
