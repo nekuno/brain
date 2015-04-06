@@ -2,6 +2,7 @@
 
 namespace Controller\User;
 
+use Model\Exception\ValidationException;
 use Model\Questionnaire\QuestionModel;
 use Model\User\AnswerModel;
 use Model\User\QuestionPaginatedModel;
@@ -51,6 +52,20 @@ class AnswerController
         return $app->json($userAnswer);
     }
 
+    public function validateAction(Request $request, Application $app)
+    {
+
+        $data = $request->request->all();
+        $data['userId'] = (integer)$request->attributes->get('userId');
+        $data['locale'] = $this->getLocale($request, $app['locale.options']['default']);
+
+        /* @var $model AnswerModel */
+        $model = $app['users.answers.model'];
+        $model->validate($data);
+
+        return $app->json(array(), 200);
+    }
+
     public function explainAction(Request $request, Application $app)
     {
 
@@ -67,7 +82,7 @@ class AnswerController
 
     public function indexAction(Request $request, Application $app)
     {
-
+        // TODO: Refactor this
         $id = $request->get('userId');
         $locale = $this->getLocale($request, $app['locale.options']['default']);
 
@@ -111,8 +126,8 @@ class AnswerController
     public function getAnswerAction(Request $request, Application $app)
     {
 
-        $userId = $request->attributes->get('userId');
-        $questionId = $request->attributes->get('questionId');
+        $userId = (integer)$request->attributes->get('userId');
+        $questionId = (integer)$request->attributes->get('questionId');
         $locale = $this->getLocale($request, $app['locale.options']['default']);
 
         /* @var $model AnswerModel */

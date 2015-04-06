@@ -119,6 +119,8 @@ class QuestionModel
         $qb->match('(q:Question)<-[:IS_ANSWER_OF]-(a:Answer)')
             ->where('id(q) = { id }', "HAS(q.text_$locale)")
             ->setParameter('id', (integer)$id)
+            ->with('q', 'a')
+            ->orderBy('id(a)')
             ->with('q, COLLECT(a) AS answers')
             ->returns('q, answers')
             ->limit(1);
@@ -288,8 +290,9 @@ class QuestionModel
             ->setParameter('id', (integer)$id)
             ->with('q, a')
             ->optionalMatch('ua = (u:User)-[x:ANSWERS]->(a)')
-            ->with('id(a) AS answer', 'COUNT(x) AS nAnswers')
-            ->returns('answer, nAnswers');
+            ->with('id(a) AS answer', 'COUNT(x) AS answersCount')
+            ->orderBy('id(a)')
+            ->returns('answer, answersCount');
 
         $query = $qb->getQuery();
 
@@ -297,17 +300,16 @@ class QuestionModel
 
         $stats = array();
         foreach ($result as $row) {
-            $stats[$id]['answers'][$row['answer']] = array(
-                'id' => $row['answer'],
-                'nAnswers' => $row['nAnswers'],
+            $stats['answers'][] = array(
+                'answerId' => $row['answer'],
+                'answersCount' => $row['answersCount'],
             );
-            if (isset($stats[$id]['totalAnswers'])) {
-                $stats[$id]['totalAnswers'] += $row['nAnswers'];
+            if (isset($stats['answersCount'])) {
+                $stats['answersCount'] += $row['answersCount'];
             } else {
-                $stats[$id]['totalAnswers'] = $row['nAnswers'];
+                $stats['answersCount'] = $row['answersCount'];
             }
 
-            $stats[$id]['id'] = $id;
         }
 
         return $stats;
@@ -386,27 +388,27 @@ class QuestionModel
 
         $locales = array('en', 'es');
         if (!isset($data['locale'])) {
-            $errors['locale'] = 'The locale is required';
+            $errors['locale'] = array('The locale is required');
         } elseif (!in_array($data['locale'], $locales)) {
-            $errors['locale'] = 'The locale must be one of "' . implode('", "', $locales) . '"';
+            $errors['locale'] = array(sprintf('The locale must be one of "%s")', implode('", "', $locales)));
         }
 
         if (!isset($data['text']) || $data['text'] == '') {
-            $errors['text'] = 'The text of the question is required';
+            $errors['text'] = array('The text of the question is required');
         }
 
         if ($includeUser) {
             try {
                 $this->um->getById($data['userId']);
             } catch (NotFoundHttpException $e) {
-                $errors['userId'] = $e->getMessage();
+                $errors['userId'] = array($e->getMessage());
             }
         }
 
         if (!isset($data['answers']) || !is_array($data['answers']) || count($data['answers']) <= 1) {
-            $errors['answers'] = 'At least, two answers are required';
+            $errors['answers'] = array('At least, two answers are required');
         } elseif (6 < count($data['answers'])) {
-            $errors['answers'] = 'Maximum of 6 answers allowed';
+            $errors['answers'] = array('Maximum of 6 answers allowed');
         }
 
         if (count($errors) > 0) {
@@ -418,29 +420,34 @@ class QuestionModel
 
     protected function build(Row $row, $locale)
     {
-        /* @var $node Node */
-        $node = $row->offsetGet('question');
+        /* @var $question Node */
+        $question = $row->offsetGet('question');
 
-        $stats = $this->getQuestionStats($node->getId());
+        $stats = $this->getQuestionStats($question->getId());
+        $answersStats = array();
+        foreach ($stats['answers'] as $answer) {
+            $answersStats[$answer['answerId']] = $answer['answersCount'];
+        }
 
-        $question = array(
-            'id' => $node->getId(),
-            'text' => $node->getProperty('text_' . $locale),
-            'totalAnswers' => $stats[$node->getId()]['totalAnswers'],
+        $return = array(
+            'questionId' => $question->getId(),
+            'text' => $question->getProperty('text_' . $locale),
+            'answersCount' => $stats['answersCount'],
+            'answers' => array(),
         );
 
         foreach ($row->offsetGet('answers') as $answer) {
 
             /* @var $answer Node */
-            $question['answers'][$answer->getId()] = array(
-                'id' => $answer->getId(),
+            $return['answers'][] = array(
+                'answerId' => $answer->getId(),
                 'text' => $answer->getProperty('text_' . $locale),
-                'nAnswers' => $stats[$node->getId()]['answers'][$answer->getId()]['nAnswers'],
+                'answersCount' => $answersStats[$answer->getId()],
             );
         }
 
-        $question['locale'] = $locale;
+        $return['locale'] = $locale;
 
-        return $question;
+        return $return;
     }
 }

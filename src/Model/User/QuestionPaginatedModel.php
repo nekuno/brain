@@ -99,11 +99,15 @@ class QuestionPaginatedModel implements PaginatedInterface
             $question = $row['question'];
 
             $stats = $this->qm->getQuestionStats($question->getId());
+            $answersStats = array();
+            foreach ($stats['answers'] as $answer) {
+                $answersStats[$answer['answerId']] = $answer['answersCount'];
+            }
 
             $responseQuestion = array(
                 'id' => $question->getId(),
                 'text' => $question->getProperty('text_' . $locale),
-                'totalAnswers' => $stats[$question->getId()]['totalAnswers'],
+                'totalAnswers' => $stats['answersCount'],
             );
 
             foreach ($row['possible_answers'] as $possibleAnswer) {
@@ -112,7 +116,7 @@ class QuestionPaginatedModel implements PaginatedInterface
                 $responseQuestion['answers'][] = array(
                     'id' => $possibleAnswer->getId(),
                     'text' => $possibleAnswer->getProperty('text_' . $locale),
-                    'nAnswers' => $stats[$question->getId()]['answers'][$possibleAnswer->getId()]['nAnswers'],
+                    'nAnswers' => $answersStats[$possibleAnswer->getId()],
                 );
 
             }
