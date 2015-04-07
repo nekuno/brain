@@ -190,8 +190,10 @@ class AnswerModel
             ->match('(u)-[r:RATES]->(q)')
             ->with('u', 'a', 'q', 'ua', 'r')
             ->match('(answers:Answer)-[:IS_ANSWER_OF]->(q)', '(u)-[:ACCEPTS]->(acceptedAnswers:Answer)-[:IS_ANSWER_OF]->(q)')
-            ->with('u AS user', 'a AS answer', 'ua AS userAnswer', 'COLLECT(DISTINCT acceptedAnswers) AS acceptedAnswers', 'q AS question', 'r AS rates', 'answers')
-            ->returns('user', 'answer', 'userAnswer', 'acceptedAnswers', 'question', 'rates', 'COLLECT(DISTINCT answers) AS answers')
+            ->with('u', 'a', 'ua', 'acceptedAnswers', 'q', 'r', 'answers')
+            ->orderBy('ID(answers)')
+            ->with('u AS user', 'a AS answer', 'ua AS userAnswer', 'COLLECT(DISTINCT acceptedAnswers) AS acceptedAnswers', 'q AS question', 'r AS rates', 'COLLECT(DISTINCT answers) AS answers')
+            ->returns('user', 'answer', 'userAnswer', 'acceptedAnswers', 'question', 'rates', 'answers')
             ->limit(1);
 
         $query = $qb->getQuery();
