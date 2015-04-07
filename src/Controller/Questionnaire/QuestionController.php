@@ -60,12 +60,25 @@ class QuestionController
 
         $id = $request->get('id');
         $locale = $this->getLocale($request, $app['locale.options']['default']);
-        /* @var QuestionModel $model */
+        /* @var $model QuestionModel */
         $model = $app['questionnaire.questions.model'];
 
         $question = $model->getById($id, $locale);
 
         return $app->json($question);
+    }
+
+    public function validateAction(Request $request, Application $app)
+    {
+
+        $data = $request->request->all();
+        $data['locale'] = $this->getLocale($request, $app['locale.options']['default']);
+
+        /* @var $model QuestionModel */
+        $model = $app['questionnaire.questions.model'];
+        $model->validate($data);
+
+        return $app->json(array(), 200);
     }
 
     /**
@@ -77,10 +90,13 @@ class QuestionController
     public function postQuestionAction(Request $request, Application $app)
     {
 
+        $data = $request->request->all();
+        $data['locale'] = $this->getLocale($request, $app['locale.options']['default']);
+
         /* @var $model QuestionModel */
         $model = $app['questionnaire.questions.model'];
 
-        $question = $model->create($request->request->all());
+        $question = $model->create($data);
 
         return $app->json($question, 201);
 

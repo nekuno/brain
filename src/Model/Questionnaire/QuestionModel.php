@@ -393,15 +393,19 @@ class QuestionModel
             $errors['locale'] = array(sprintf('The locale must be one of "%s")', implode('", "', $locales)));
         }
 
-        if (!isset($data['text']) || $data['text'] == '') {
+        if (!isset($data['text']) || $data['text'] === '' || !is_string($data['text'])) {
             $errors['text'] = array('The text of the question is required');
         }
 
         if ($includeUser) {
-            try {
-                $this->um->getById($data['userId']);
-            } catch (NotFoundHttpException $e) {
-                $errors['userId'] = array($e->getMessage());
+            if (!isset($data['userId']) || !is_int($data['userId'])) {
+                $errors['userId'] = array(sprintf('"userId" is required and must be integer'));
+            } else {
+                try {
+                    $this->um->getById($data['userId']);
+                } catch (NotFoundHttpException $e) {
+                    $errors['userId'] = array($e->getMessage());
+                }
             }
         }
 
@@ -409,6 +413,12 @@ class QuestionModel
             $errors['answers'] = array('At least, two answers are required');
         } elseif (6 < count($data['answers'])) {
             $errors['answers'] = array('Maximum of 6 answers allowed');
+        } else {
+            foreach ($data['answers'] as $answer) {
+                if (!is_string($answer)) {
+                    $errors['answers'] = array('Answers must be strings');
+                }
+            }
         }
 
         if (count($errors) > 0) {
