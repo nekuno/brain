@@ -67,7 +67,7 @@ class QuestionPaginatedModel implements PaginatedInterface
             ->optionalMatch('(u)-[:ACCEPTS]-(acceptedAnswers:Answer)-[:IS_ANSWER_OF]-(q)')
             ->optionalMatch('(u)-[r:RATES]-(q)')
             ->with('a', 'ua', 'q', 'acceptedAnswers', 'r', 'answers')
-            ->orderBy('ID(answers)')
+            ->orderBy('ID(answers)', 'ID(acceptedAnswers)')
             ->with('a', 'ua', 'q', 'COLLECT(DISTINCT acceptedAnswers) AS acceptedAnswers', 'r', 'COLLECT(DISTINCT answers) AS answers')
             ->returns('a AS answer', 'ua AS userAnswer', 'acceptedAnswers', 'q AS question', 'r AS rates', 'answers')
             ->orderBy('ua.answeredAt DESC')

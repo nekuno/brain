@@ -189,9 +189,10 @@ class AnswerModel
             ->match('(u)-[ua:ANSWERS]->(a:Answer)-[:IS_ANSWER_OF]->(q)')
             ->match('(u)-[r:RATES]->(q)')
             ->with('u', 'a', 'q', 'ua', 'r')
-            ->match('(answers:Answer)-[:IS_ANSWER_OF]->(q)', '(u)-[:ACCEPTS]->(acceptedAnswers:Answer)-[:IS_ANSWER_OF]->(q)')
+            ->match('(answers:Answer)-[:IS_ANSWER_OF]->(q)')
+            ->match('(u)-[:ACCEPTS]->(acceptedAnswers:Answer)-[:IS_ANSWER_OF]->(q)')
             ->with('u', 'a', 'ua', 'acceptedAnswers', 'q', 'r', 'answers')
-            ->orderBy('ID(answers)')
+            ->orderBy('ID(answers)', 'ID(acceptedAnswers)')
             ->with('u AS user', 'a AS answer', 'ua AS userAnswer', 'COLLECT(DISTINCT acceptedAnswers) AS acceptedAnswers', 'q AS question', 'r AS rates', 'COLLECT(DISTINCT answers) AS answers')
             ->returns('user', 'answer', 'userAnswer', 'acceptedAnswers', 'question', 'rates', 'answers')
             ->limit(1);
