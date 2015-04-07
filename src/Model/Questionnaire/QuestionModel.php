@@ -40,7 +40,7 @@ class QuestionModel
         $qb->match('(q:Question)')
             ->where("HAS(q.text_$locale)")
             ->optionalMatch('(q)<-[:IS_ANSWER_OF]-(a:Answer)')
-            ->returns('q, collect(a) AS answers')
+            ->returns('q as question, collect(a) AS answers')
             ->orderBy('q.ranking DESC');
 
         if (!is_null($skip)) {
@@ -121,8 +121,8 @@ class QuestionModel
             ->setParameter('id', (integer)$id)
             ->with('q', 'a')
             ->orderBy('id(a)')
-            ->with('q, COLLECT(a) AS answers')
-            ->returns('q, answers')
+            ->with('q as question, COLLECT(a) AS answers')
+            ->returns('question, answers')
             ->limit(1);
 
         $query = $qb->getQuery();
@@ -418,8 +418,16 @@ class QuestionModel
         }
     }
 
-    protected function build(Row $row, $locale)
+    public function build(Row $row, $locale)
     {
+
+        $keys = array('question', 'answers');
+        foreach ($keys as $key) {
+            if (!$row->offsetExists($key)) {
+                throw new \RuntimeException(sprintf('"%s" key needed in row', $key));
+            }
+        }
+
         /* @var $question Node */
         $question = $row->offsetGet('question');
 

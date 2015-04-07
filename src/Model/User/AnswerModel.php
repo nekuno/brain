@@ -120,9 +120,9 @@ class AnswerModel
             ->createUnique('(u)-[r4:ANSWERS]->(a)', '(u)-[r5:RATES]->(q)')
             ->set('r5.rating = { rating }', 'r4.private = { isPrivate }', 'r4.answeredAt = timestamp()', 'r4.explanation = { explanation }')
             ->with('u', 'q', 'a')
-            ->optionalMatch('(a1:Answer)-[:IS_ANSWER_OF]->(q)')
-            ->where('id(a1) IN { acceptedAnswers }')
-            ->createUnique('(u)-[:ACCEPTS]->(a1)')
+            ->optionalMatch('(answers:Answer)-[:IS_ANSWER_OF]->(q)')
+            ->where('id(answers) IN { acceptedAnswers }')
+            ->createUnique('(u)-[:ACCEPTS]->(answers)')
             ->returns('a AS answer')
             ->setParameters($data);
 
@@ -189,9 +189,9 @@ class AnswerModel
             ->match('(u)-[ua:ANSWERS]->(a:Answer)-[:IS_ANSWER_OF]->(q)')
             ->match('(u)-[r:RATES]->(q)')
             ->with('u', 'a', 'q', 'ua', 'r')
-            ->match('(a1:Answer)-[:IS_ANSWER_OF]->(q)', '(u)-[:ACCEPTS]->(a2:Answer)-[:IS_ANSWER_OF]->(q)')
-            ->with('u AS user', 'a AS answer', 'collect(DISTINCT a2) AS accepts', 'ua AS userAnswer', 'r AS rates', 'q AS question', 'collect(DISTINCT a1) AS answers')
-            ->returns('user', 'answer', 'userAnswer', 'accepts', 'question', 'answers', 'rates')
+            ->match('(answers:Answer)-[:IS_ANSWER_OF]->(q)', '(u)-[:ACCEPTS]->(acceptedAnswers:Answer)-[:IS_ANSWER_OF]->(q)')
+            ->with('u AS user', 'a AS answer', 'ua AS userAnswer', 'COLLECT(DISTINCT acceptedAnswers) AS acceptedAnswers', 'q AS question', 'r AS rates', 'answers')
+            ->returns('user', 'answer', 'userAnswer', 'acceptedAnswers', 'question', 'rates', 'COLLECT(DISTINCT answers) AS answers')
             ->limit(1);
 
         $query = $qb->getQuery();
@@ -199,7 +199,7 @@ class AnswerModel
         $result = $query->getResultSet();
 
         if ($result->count() < 1) {
-            throw new NotFoundHttpException(sprintf('There is not answer for user "%s" to question "%s"', $user['qnoow_id'], $question['questionId']    ));
+            throw new NotFoundHttpException(sprintf('There is not answer for user "%s" to question "%s"', $user['qnoow_id'], $question['questionId']));
         }
 
         /* @var $row Row */
@@ -302,8 +302,25 @@ class AnswerModel
         }
     }
 
-    protected function build(Row $row, $locale)
+    public function build(Row $row, $locale)
     {
+
+        return array(
+            'userAnswer' => $this->buildUserAnswer($row),
+            'question' => $this->qm->build($row, $locale),
+        );
+    }
+
+    protected function buildUserAnswer(Row $row)
+    {
+
+        $keys = array('question', 'answer', 'userAnswer', 'rates', 'acceptedAnswers');
+        foreach ($keys as $key) {
+            if (!$row->offsetExists($key)) {
+                throw new \RuntimeException(sprintf('"%s" key needed in row', $key));
+            }
+        }
+
         /* @var $question Node */
         $question = $row->offsetGet('question');
         /* @var $answer Node */
@@ -312,26 +329,21 @@ class AnswerModel
         $userAnswer = $row->offsetGet('userAnswer');
         /* @var $rates Relationship */
         $rates = $row->offsetGet('rates');
-        /* @var $accepts Relationship */
-        $accepts = $row->offsetGet('accepts');
 
-        $accepted = array();
-        foreach ($accepts as $acceptedAnswer) {
+        $acceptedAnswers = array();
+        foreach ($row->offsetGet('acceptedAnswers') as $acceptedAnswer) {
             /* @var $acceptedAnswer Node */
-            $accepted[] = $acceptedAnswer->getId();
+            $acceptedAnswers[] = $acceptedAnswer->getId();
         }
 
         return array(
-            'userAnswer' => array(
-                'questionId' => $question->getId(),
-                'answerId' => $answer->getId(),
-                'acceptedAnswers' => $accepted,
-                'rating' => $rates->getProperty('rating'),
-                'explanation' => $userAnswer->getProperty('explanation'),
-                'isPrivate' => $userAnswer->getProperty('private'),
-                'answeredAt' => $userAnswer->getProperty('answeredAt'),
-            ),
-            'question' => $this->qm->getById($question->getId(), $locale),
+            'questionId' => $question->getId(),
+            'answerId' => $answer->getId(),
+            'acceptedAnswers' => $acceptedAnswers,
+            'rating' => $rates->getProperty('rating'),
+            'explanation' => $userAnswer->getProperty('explanation'),
+            'isPrivate' => $userAnswer->getProperty('private'),
+            'answeredAt' => $userAnswer->getProperty('answeredAt'),
         );
     }
 

@@ -22,7 +22,7 @@ $app['users.answers.model'] = function ($app) {
 
 $app['users.questions.model'] = function ($app) {
 
-    return new \Model\User\QuestionPaginatedModel($app['neo4j.graph_manager'], $app['questionnaire.questions.model']);
+    return new \Model\User\QuestionPaginatedModel($app['neo4j.graph_manager'], $app['users.answers.model']);
 };
 
 $app['users.questions.compare.model'] = function ($app) {

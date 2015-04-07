@@ -2,7 +2,6 @@
 
 namespace Controller\User;
 
-use Model\Exception\ValidationException;
 use Model\Questionnaire\QuestionModel;
 use Model\User\AnswerModel;
 use Model\User\QuestionPaginatedModel;
