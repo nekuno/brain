@@ -140,7 +140,7 @@ class AnswerController
 
     protected function getLocale(Request $request, $defaultLocale)
     {
-        $locale = $request->query->get('locale', $defaultLocale);
+        $locale = $request->get('locale', $defaultLocale);
         if (!in_array($locale, array('en', 'es'))) {
             $locale = $defaultLocale;
         }
