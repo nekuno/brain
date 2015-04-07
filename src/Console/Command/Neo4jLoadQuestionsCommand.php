@@ -221,18 +221,18 @@ class Neo4jLoadQuestionsCommand extends ApplicationAwareCommand
 
                     $answers_es = $answers_en = array();
                     foreach ($allQuestion['answers'] as $answer) {
-                        $answers_es[$answer['id']] = $answer['text_es'];
-                        $answers_en[$answer['id']] = $answer['text_en'];
+                        $answers_es[] = array('answerId' => $answer['id'], 'text' => $answer['text_es']);
+                        $answers_en[] = array('answerId' => $answer['id'], 'text' => $answer['text_en']);
                     }
 
                     $question_es = array(
-                        'id' => $allQuestion['id'],
+                        'questionId' => $allQuestion['id'],
                         'text' => $allQuestion['text_es'],
                         'locale' => 'es',
                         'answers' => $answers_es,
                     );
                     $question_en = array(
-                        'id' => $allQuestion['id'],
+                        'questionId' => $allQuestion['id'],
                         'text' => $allQuestion['text_en'],
                         'locale' => 'en',
                         'answers' => $answers_en,
@@ -253,7 +253,7 @@ class Neo4jLoadQuestionsCommand extends ApplicationAwareCommand
                 // Create from scratch
                 $answers_es = array();
                 foreach ($csvQuestion['answers'] as $answer) {
-                    $answers_es[] = $answer['text_es'];
+                    $answers_es[] = array('text' => $answer['text_es']);
                 }
                 $question_es = array(
                     'text' => $csvQuestion['text_es'],
@@ -270,12 +270,12 @@ class Neo4jLoadQuestionsCommand extends ApplicationAwareCommand
                         'locale' => 'en',
                     );
                     $answers_en = array();
-                    foreach ($question['answers'] as $id => $answer) {
+                    foreach ($question['answers'] as $answer) {
 
-                        $keyAnswer = $this->find($answer, $csvQuestion['answers']);
+                        $keyAnswer = $this->find($answer['answerId'], $csvQuestion['answers']);
 
                         if (!is_null($keyAnswer)) {
-                            $answers_en[$id] = $csvQuestion['answers'][$keyAnswer]['text_en'];
+                            $answers_en[] = array('answerId' => $answer['answerId'], 'text' => $csvQuestion['answers'][$keyAnswer]['text_en']);
                         }
                     }
                     $question_en['answers'] = $answers_en;

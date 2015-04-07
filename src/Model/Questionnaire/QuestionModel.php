@@ -150,7 +150,12 @@ class QuestionModel
 
         $locale = $data['locale'];
         $data['userId'] = (integer)$data['userId'];
-        $data['answers'] = array_values($data['answers']);
+        $data['answers'] = array_map(
+            function ($i) {
+                return $i['text'];
+            },
+            $data['answers']
+        );
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(u:User {qnoow_id: { userId }})')
@@ -176,7 +181,7 @@ class QuestionModel
 
         $this->validate($data, false);
 
-        $data['id'] = (integer)$data['id'];
+        $data['questionId'] = (integer)$data['questionId'];
         $locale = $data['locale'];
 
         $answers = array();
@@ -187,7 +192,7 @@ class QuestionModel
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(q:Question)')
-            ->where('id(q) = { id }')
+            ->where('id(q) = { questionId }')
             ->set("q.text_$locale = { text }")
             ->returns('q')
             ->setParameters($data);
@@ -196,16 +201,16 @@ class QuestionModel
 
         $query->getResultSet();
 
-        foreach ($answers as $id => $answer) {
+        foreach ($answers as $answer) {
 
             $answerData = array(
-                'id' => (integer)$id,
-                'text' => $answer,
+                'answerId' => (integer)$answer['answerId'],
+                'text' => $answer['text'],
             );
 
             $qb = $this->gm->createQueryBuilder();
             $qb->match('(a:Answer)')
-                ->where('id(a) = { id }')
+                ->where('id(a) = { answerId }')
                 ->set("a.text_$locale = { text }")
                 ->returns('a')
                 ->setParameters($answerData);
@@ -215,7 +220,7 @@ class QuestionModel
             $query->getResultSet();
         }
 
-        return $this->getById($data['id'], $locale);
+        return $this->getById($data['questionId'], $locale);
     }
 
     /**
@@ -415,8 +420,8 @@ class QuestionModel
             $errors['answers'] = array('Maximum of 6 answers allowed');
         } else {
             foreach ($data['answers'] as $answer) {
-                if (!is_string($answer)) {
-                    $errors['answers'] = array('Answers must be strings');
+                if (!isset($answer['text']) || !is_string($answer['text'])) {
+                    $errors['answers'] = array('Each answer must be an array with key "text" string');
                 }
             }
         }
