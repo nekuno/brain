@@ -48,7 +48,7 @@ class EnqueueFetchingCommand extends ApplicationAwareCommand
         if ($userId == null) {
             $users = $usersModel->getAll();
         } else {
-            $users = $usersModel->getById($userId);
+            $users = array($usersModel->getById($userId));
         }
 
         if(empty($users)){

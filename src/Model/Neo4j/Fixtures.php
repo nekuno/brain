@@ -177,7 +177,7 @@ class Fixtures
 
             $answers = array();
             for ($j = 1; $j <= 3; $j++) {
-                $answers[] = 'Answer ' . $j . ' to Question ' . $i;
+                $answers[] = array('text' => 'Answer ' . $j . ' to Question ' . $i);
             }
 
             $question = $this->qm->create(
@@ -192,7 +192,7 @@ class Fixtures
             $answers = $question['answers'];
             $j = 1;
             foreach ($answers as $id => $text) {
-                $answers[$id] = 'Respuesta ' . $j . ' a la pregunta ' . $i;
+                $answers[$id] = array('text' => 'Respuesta ' . $j . ' a la pregunta ' . $i);
                 $j++;
             }
 
@@ -261,6 +261,7 @@ class Fixtures
                         'isPrivate' => false,
                         'rating' => 3,
                         'explanation' => '',
+                        'locale' => 'en',
                     )
                 );
             }

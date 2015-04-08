@@ -35,23 +35,25 @@ $app->get('/users/{userId}/affinity/{linkId}', 'users.controller:getAffinityActi
 
 $app->post('/users/{userId}/answers/explain', 'users.answers.controller:explainAction');
 $app->get('/users/{userId}/answers', 'users.answers.controller:indexAction');
-$app->post('/users/{userId}/answers', 'users.answers.controller:createAction');
+$app->post('/users/{userId}/answers', 'users.answers.controller:createAction'); // TODO: rename to answerAction
 $app->get('/users/{userId}/answers/count', 'users.answers.controller:countAction');
 $app->get('/users/{userId}/answers/{questionId}', 'users.answers.controller:getAnswerAction');
-$app->post('/users/{userId}/answers/{questionId}', 'users.answers.controller:updateAction');
+$app->post('/users/{userId}/answers/{questionId}', 'users.answers.controller:updateAction'); // TODO: Remove this
+$app->post('/answers/validate', 'users.answers.controller:validateAction');
 
 $app->get('/users/{userId}/data/status', 'users.data.controller:getStatusAction')->value('resourceOwner', null);
 
 /**
  * Questionnaire routes
  */
+$app->get('/questionnaire/questions', 'questionnaire.questions.controller:getQuestionsAction')->value('limit', 20);
 $app->get('/questionnaire/questions/next', 'questionnaire.questions.controller:getNextQuestionAction');
 $app->post('/questionnaire/questions', 'questionnaire.questions.controller:postQuestionAction');
-$app->get('/questionnaire/questions', 'questionnaire.questions.controller:getQuestionsAction')->value('limit', 20);
+$app->post('/questionnaire/questions/validate', 'questionnaire.questions.controller:validateAction');
 $app->get('/questionnaire/questions/{id}', 'questionnaire.questions.controller:getQuestionAction');
+$app->get('/questionnaire/questions/{id}/stats', 'questionnaire.questions.controller:statsAction');
 $app->post('/questionnaire/questions/{id}/skip', 'questionnaire.questions.controller:skipAction');
 $app->post('/questionnaire/questions/{id}/report', 'questionnaire.questions.controller:reportAction');
-$app->get('/questionnaire/questions/{id}/stats', 'questionnaire.questions.controller:statsAction');
 
 /**
  * Content routes
