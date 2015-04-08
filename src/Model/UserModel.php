@@ -116,13 +116,12 @@ class UserModel implements PaginatedInterface
 
     }
 
-    /**
-     * @param null $id
-     * @return array
-     * @throws \Exception
-     */
-    public function getById($id = null)
+    public function getById($id)
     {
+
+        if (!$id) {
+            throw new NotFoundHttpException('User not found');
+        }
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(u:User {qnoow_id: { id }})')
@@ -136,7 +135,7 @@ class UserModel implements PaginatedInterface
             throw new NotFoundHttpException('User not found');
         }
 
-        return $this->parseResultSet($result);
+        return $this->parseRow($result->current());
 
     }
 
@@ -498,15 +497,19 @@ class UserModel implements PaginatedInterface
         $users = array();
 
         foreach ($resultSet as $row) {
-            $user = array(
-                'qnoow_id' => $row['u']->getProperty('qnoow_id'),
-                'username' => $row['u']->getProperty('username'),
-                'email' => $row['u']->getProperty('email'),
-            );
-            $users[] = $user;
+            $users[] = $this->parseRow($row);
         }
 
         return $users;
 
+    }
+
+    private function parseRow($row)
+    {
+        return array(
+            'qnoow_id' => $row['u']->getProperty('qnoow_id'),
+            'username' => $row['u']->getProperty('username'),
+            'email' => $row['u']->getProperty('email'),
+        );
     }
 }

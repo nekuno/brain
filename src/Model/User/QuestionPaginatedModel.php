@@ -4,6 +4,7 @@ namespace Model\User;
 
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
+use Everyman\Neo4j\Relationship;
 use Model\Neo4j\GraphManager;
 use Model\Questionnaire\QuestionModel;
 use Paginator\PaginatedInterface;
@@ -17,17 +18,17 @@ class QuestionPaginatedModel implements PaginatedInterface
     protected $gm;
 
     /**
-     * @var QuestionModel
+     * @var AnswerModel
      */
-    protected $qm;
+    protected $am;
 
     /**
      * @param GraphManager $gm
      */
-    public function __construct(GraphManager $gm, QuestionModel $qm)
+    public function __construct(GraphManager $gm, AnswerModel $am)
     {
         $this->gm = $gm;
-        $this->qm = $qm;
+        $this->am = $am;
     }
 
     /**
@@ -52,38 +53,24 @@ class QuestionPaginatedModel implements PaginatedInterface
      */
     public function slice(array $filters, $offset, $limit)
     {
-        $id = (integer)$filters['id'];
+        $userId = (integer)$filters['id'];
         $locale = $filters['locale'];
         $response = array();
 
         $qb = $this->gm->createQueryBuilder();
         $qb
-            ->match('(u:User {qnoow_id: { id }})')
-            ->setParameter('id', $id)
-            ->match('(u)-[r1:ANSWERS]-(answer:Answer)-[:IS_ANSWER_OF]-(question:Question)')
-            ->where("HAS(answer.text_$locale)")
-            ->optionalMatch('(possible_answers:Answer)-[:IS_ANSWER_OF]-(question)')
-            ->optionalMatch('(u)-[:ACCEPTS]-(accepted_answers:Answer)-[:IS_ANSWER_OF]-(question)')
-            ->optionalMatch('(u)-[rate:RATES]-(question)')
-            ->with(
-                'question, possible_answers',
-                'ID(answer) AS answer',
-                'r1.explanation AS explanation',
-                'r1.answeredAt AS answeredAt',
-                'COLLECT(DISTINCT id(accepted_answers)) AS accepted_answers',
-                'rate.rating AS rating'
-            )
-            ->orderBy('id(possible_answers)')
-            ->returns(
-                'question',
-                'COLLECT(DISTINCT possible_answers) AS possible_answers',
-                'answer',
-                'explanation',
-                'answeredAt',
-                'accepted_answers',
-                'rating'
-            )
-            ->orderBy('answeredAt DESC')
+            ->match('(u:User {qnoow_id: { userId }})')
+            ->setParameter('userId', $userId)
+            ->match('(u)-[ua:ANSWERS]-(a:Answer)-[:IS_ANSWER_OF]-(q:Question)')
+            ->where("HAS(q.text_$locale)")
+            ->optionalMatch('(answers:Answer)-[:IS_ANSWER_OF]-(q)')
+            ->optionalMatch('(u)-[:ACCEPTS]-(acceptedAnswers:Answer)-[:IS_ANSWER_OF]-(q)')
+            ->optionalMatch('(u)-[r:RATES]-(q)')
+            ->with('a', 'ua', 'q', 'acceptedAnswers', 'r', 'answers')
+            ->orderBy('ID(answers)', 'ID(acceptedAnswers)')
+            ->with('a', 'ua', 'q', 'COLLECT(DISTINCT acceptedAnswers) AS acceptedAnswers', 'r', 'COLLECT(DISTINCT answers) AS answers')
+            ->returns('a AS answer', 'ua AS userAnswer', 'acceptedAnswers', 'q AS question', 'r AS rates', 'answers')
+            ->orderBy('ua.answeredAt DESC')
             ->skip('{ offset }')
             ->setParameter('offset', (integer)$offset)
             ->limit('{ limit }')
@@ -93,47 +80,10 @@ class QuestionPaginatedModel implements PaginatedInterface
 
         $result = $query->getResultSet();
 
+        /* @var $row Row */
         foreach ($result as $row) {
 
-            /* @var $question Node */
-            $question = $row['question'];
-
-            $stats = $this->qm->getQuestionStats($question->getId());
-
-            $responseQuestion = array(
-                'id' => $question->getId(),
-                'text' => $question->getProperty('text_' . $locale),
-                'totalAnswers' => $stats[$question->getId()]['totalAnswers'],
-            );
-
-            foreach ($row['possible_answers'] as $possibleAnswer) {
-
-                /* @var $possibleAnswer Node */
-                $responseQuestion['answers'][] = array(
-                    'id' => $possibleAnswer->getId(),
-                    'text' => $possibleAnswer->getProperty('text_' . $locale),
-                    'nAnswers' => $stats[$question->getId()]['answers'][$possibleAnswer->getId()]['nAnswers'],
-                );
-
-            }
-
-            $user = array(
-                'id' => $id,
-                'answer' => $row['answer'],
-                'answeredAt' => floor($row['answeredAt'] / 1000),
-                'explanation' => $row['explanation'],
-                'accepted_answers' => array(),
-                'rating' => $row['rating'],
-            );
-
-            foreach ($row['accepted_answers'] as $acceptedAnswer) {
-                $user['accepted_answers'][] = $acceptedAnswer;
-            }
-
-            $response[] = array(
-                'question' => $responseQuestion,
-                'user_answers' => $user,
-            );
+            $response[] = $this->am->build($row, $locale);
         }
 
         return $response;
