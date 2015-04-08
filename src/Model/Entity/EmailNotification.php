@@ -30,7 +30,6 @@ class EmailNotification
     protected $notificationId;
 
     /**
-     * @Id()
      * @Column(name="user_id", type="integer", nullable=false)
      */
     protected $userId;

@@ -67,6 +67,8 @@ class ChatMessageNotifications
 
         foreach($usersIds as $userId)
         {
+            $userId = (int) $userId['user_to'];
+
             $chatMessages = $this->getUnReadMessagesByUser($userId);
 
             $output->writeln( count($chatMessages) . ' unread messages found for user ' . $userId );
@@ -81,7 +83,7 @@ class ChatMessageNotifications
                 $output->writeln('User or Profile not found');
             }
 
-            if($profile['options']['InterfaceLanguage']['id'])
+            if(isset($profile['options']['InterfaceLanguage']['id']) && $profile['options']['InterfaceLanguage']['id'])
             {
                 $this->translator->setLocale($profile['options']['InterfaceLanguage']['id']);
             }
@@ -151,8 +153,7 @@ class ChatMessageNotifications
             ->where('chat_message.readed = 0')
             ->where('chat_message.createdAt > :yesterday')
             ->orderBy('chat_message.createdAt', 'asc')
-            ->setMaxResults(':limit')
-            ->setParameter('limit', $limit)
+            ->setMaxResults($limit)
             ->setParameter('yesterday', $yesterday->getTimestamp());
 
         return $qb->execute()->fetchAll();
@@ -168,11 +169,11 @@ class ChatMessageNotifications
     {
         $yesterday = new \DateTime('-1 day');
         $qb = $this->driver->createQueryBuilder('chat_message')
-            ->select('chat_message')
+            ->select('*')
             ->from('chat_message')
             ->where('chat_message.readed = 0')
             ->where('chat_message.createdAt > :yesterday')
-            ->where('chat_message.user_to = :user')
+            ->where('chat_message.user_to = :user_to')
             ->groupBy('chat_message.user_from')
             ->orderBy('chat_message.createdAt', 'desc')
             ->setParameter('user_to', $userId)

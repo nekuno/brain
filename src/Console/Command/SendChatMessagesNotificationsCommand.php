@@ -15,12 +15,18 @@ class SendChatMessagesNotificationsCommand extends ApplicationAwareCommand
     {
         $this->setName('chat-email-notifications:send')
             ->setDescription('Send chat notifications (unread messages since last 24h)')
-            ->addOption('limit', 'lim', InputOption::VALUE_REQUIRED, 'Notifications limit', 99999);
+            ->addOption('limit', 'lim', InputOption::VALUE_OPTIONAL, 'Notifications limit', 99999);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $limit = $input->getOption('limit');
+
+        if($limit === 0)
+        {
+            $limit = 99999;
+        }
+
 
         if (! is_int($limit)) {
             $output->writeln(sprintf('Limit must be an integer, %s given.', gettype($limit)));
