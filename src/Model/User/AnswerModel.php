@@ -213,14 +213,18 @@ class AnswerModel
 
     /**
      * @param array $data
-     * @throws ValidationException
+     * @param bool $userRequired
      */
-    public function validate(array $data)
+    public function validate(array $data, $userRequired = true)
     {
 
         $errors = array();
 
         foreach ($this->getFieldsMetadata() as $fieldName => $fieldMetadata) {
+
+            if ($userRequired && $fieldName === 'userId') {
+                $fieldMetadata['required'] = true;
+            }
 
             $fieldErrors = array();
 
@@ -230,7 +234,7 @@ class AnswerModel
 
             } else {
 
-                $fieldValue = $fieldMetadata['required'] === true ? $data[$fieldName] : null;
+                $fieldValue = isset($data[$fieldName]) ? $data[$fieldName] : null;
 
                 switch ($fieldName) {
                     case 'questionId':
@@ -281,10 +285,16 @@ class AnswerModel
                     case 'explanation':
                         break;
                     case 'userId':
-                        try {
-                            $this->um->getById($fieldValue);
-                        } catch (NotFoundHttpException $e) {
-                            $fieldErrors[] = $e->getMessage();
+                        if ($fieldValue) {
+                            if (!is_int($fieldValue)) {
+                                $fieldErrors[] = 'userId must be an integer';
+                            } else {
+                                try {
+                                    $this->um->getById($fieldValue);
+                                } catch (NotFoundHttpException $e) {
+                                    $fieldErrors[] = $e->getMessage();
+                                }
+                            }
                         }
                         break;
                     default:
@@ -358,7 +368,7 @@ class AnswerModel
 
         $metadata = array(
             'questionId' => array(
-                'required' => true
+                'required' => true,
             ),
             'answerId' => array(
                 'required' => true,
@@ -372,13 +382,13 @@ class AnswerModel
                 'max' => 3,
             ),
             'explanation' => array(
-                'required' => true
+                'required' => true,
             ),
             'isPrivate' => array(
                 'required' => true,
             ),
             'userId' => array(
-                'required' => true
+                'required' => false,
             ),
 
         );

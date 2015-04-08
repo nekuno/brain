@@ -35,11 +35,11 @@ $app->get('/users/{userId}/affinity/{linkId}', 'users.controller:getAffinityActi
 
 $app->post('/users/{userId}/answers/explain', 'users.answers.controller:explainAction');
 $app->get('/users/{userId}/answers', 'users.answers.controller:indexAction');
-$app->post('/users/{userId}/answers/validate', 'users.answers.controller:validateAction');
 $app->post('/users/{userId}/answers', 'users.answers.controller:createAction'); // TODO: rename to answerAction
 $app->get('/users/{userId}/answers/count', 'users.answers.controller:countAction');
 $app->get('/users/{userId}/answers/{questionId}', 'users.answers.controller:getAnswerAction');
 $app->post('/users/{userId}/answers/{questionId}', 'users.answers.controller:updateAction'); // TODO: Remove this
+$app->post('/answers/validate', 'users.answers.controller:validateAction');
 
 $app->get('/users/{userId}/data/status', 'users.data.controller:getStatusAction')->value('resourceOwner', null);
 

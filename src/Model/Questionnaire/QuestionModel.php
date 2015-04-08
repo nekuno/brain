@@ -39,7 +39,9 @@ class QuestionModel
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(q:Question)')
             ->where("HAS(q.text_$locale)")
-            ->optionalMatch('(q)<-[:IS_ANSWER_OF]-(a:Answer)')
+            ->match('(q)<-[:IS_ANSWER_OF]-(a:Answer)')
+            ->with('q', 'a')
+            ->orderBy('id(a)')
             ->returns('q as question, collect(a) AS answers')
             ->orderBy('q.ranking DESC');
 
@@ -384,9 +386,9 @@ class QuestionModel
 
     /**
      * @param array $data
-     * @throws ValidationException
+     * @param bool $userRequired
      */
-    public function validate(array $data, $includeUser = true)
+    public function validate(array $data, $userRequired = true)
     {
 
         $errors = array();
@@ -402,7 +404,7 @@ class QuestionModel
             $errors['text'] = array('The text of the question is required');
         }
 
-        if ($includeUser) {
+        if ($userRequired) {
             if (!isset($data['userId']) || !is_int($data['userId'])) {
                 $errors['userId'] = array(sprintf('"userId" is required and must be integer'));
             } else {

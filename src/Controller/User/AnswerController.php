@@ -15,7 +15,6 @@ class AnswerController
     {
 
         $data = $request->request->all();
-        $data['userId'] = (integer)$request->attributes->get('userId');
         $data['locale'] = $this->getLocale($request, $app['locale.options']['default']);
 
         /* @var $model AnswerModel */
@@ -35,7 +34,6 @@ class AnswerController
     {
 
         $data = $request->request->all();
-        $data['userId'] = (integer)$request->attributes->get('userId');
         $data['locale'] = $this->getLocale($request, $app['locale.options']['default']);
 
         /* @var $model AnswerModel */
@@ -55,12 +53,11 @@ class AnswerController
     {
 
         $data = $request->request->all();
-        $data['userId'] = (integer)$request->attributes->get('userId');
         $data['locale'] = $this->getLocale($request, $app['locale.options']['default']);
 
         /* @var $model AnswerModel */
         $model = $app['users.answers.model'];
-        $model->validate($data);
+        $model->validate($data, false);
 
         return $app->json(array(), 200);
     }
