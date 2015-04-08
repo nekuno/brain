@@ -1,4 +1,4 @@
-<?
+<?php
 
 namespace Service;
 
@@ -8,10 +8,9 @@ use Model\User\ProfileModel;
 use Model\UserModel;
 use Doctrine\DBAL\Connection;
 use Service\EmailNotifications;
-use Silex\Application\TranslationTrait;
+use Silex\Translator;
 use Silex\Application;
 use Symfony\Component\Console\Output\OutputInterface as Output;
-use Symfony\Component\HttpFoundation\Request;
 
 /**
  * ChatMessageNotifications
@@ -35,7 +34,7 @@ class ChatMessageNotifications
     protected $driver;
 
     /**
-     * @var TranslationTrait
+     * @var Translator
      */
     protected $translator;
 
@@ -49,13 +48,8 @@ class ChatMessageNotifications
      */
     protected $profileModel;
 
-    /**
-     * @var Request
-     */
-    protected $request;
 
-
-    function __construct(EmailNotifications $emailNotifications, EntityManager $em, Connection $driver, TranslationTrait $translator,  UserModel $userModel, ProfileModel $profileModel, Request $request)
+    function __construct(EmailNotifications $emailNotifications, EntityManager $em, Connection $driver, Translator $translator,  UserModel $userModel, ProfileModel $profileModel)
     {
         $this->emailNotifications = $emailNotifications;
         $this->em = $em;
@@ -63,7 +57,6 @@ class ChatMessageNotifications
         $this->translator = $translator;
         $this->userModel = $userModel;
         $this->profileModel = $profileModel;
-        $this->request = $request;
     }
 
     function sendUnreadChatMessages($limit = 9999999999, Output $output)
@@ -88,7 +81,10 @@ class ChatMessageNotifications
                 $output->writeln('User or Profile not found');
             }
 
-            $this->request->getSession()->set('_locale', $profile['options']['InterfaceLanguage']['id']);
+            if($profile['options']['InterfaceLanguage']['id'])
+            {
+                $this->translator->setLocale($profile['options']['InterfaceLanguage']['id']);
+            }
 
             $this->emailNotifications->send(EmailNotification::create()
                 ->setType(1)
@@ -149,7 +145,9 @@ class ChatMessageNotifications
     protected function getUsersWithUnreadMessages($limit = 999999999999)
     {
         $yesterday = new \DateTime('-1 day');
-        $qb = $this->driver->createQueryBuilder('chat_message.user_to')
+        $qb = $this->driver->createQueryBuilder('chat_message')
+            ->select('chat_message.user_to')
+            ->from('chat_message')
             ->where('chat_message.readed = 0')
             ->where('chat_message.createdAt > :yesterday')
             ->orderBy('chat_message.createdAt', 'asc')
@@ -169,12 +167,14 @@ class ChatMessageNotifications
     protected function getUnReadMessagesByUser($userId)
     {
         $yesterday = new \DateTime('-1 day');
-        $qb = $this->driver->createQueryBuilder('chat_message as ch')
-            ->where('ch.readed = 0')
-            ->where('ch.createdAt > :yesterday')
-            ->where('n.user_to = :user')
-            ->groupBy('ch.user_from')
-            ->orderBy('ch.createdAt', 'desc')
+        $qb = $this->driver->createQueryBuilder('chat_message')
+            ->select('chat_message')
+            ->from('chat_message')
+            ->where('chat_message.readed = 0')
+            ->where('chat_message.createdAt > :yesterday')
+            ->where('chat_message.user_to = :user')
+            ->groupBy('chat_message.user_from')
+            ->orderBy('chat_message.createdAt', 'desc')
             ->setParameter('user_to', $userId)
             ->setParameter('yesterday', $yesterday->getTimestamp());
 
