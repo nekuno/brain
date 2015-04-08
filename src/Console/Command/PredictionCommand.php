@@ -36,7 +36,7 @@ class PredictionCommand extends ApplicationAwareCommand
 
         try {
 
-            $users = null === $user ? $userModel->getAll() : $userModel->getById($user);
+            $users = null === $user ? $userModel->getAll() : array($userModel->getById($user));
 
             $limit = $limit ?: 10;
 
