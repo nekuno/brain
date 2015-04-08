@@ -25,7 +25,7 @@ $console->addCommands(
         new \Console\Command\LinksRemoveDuplicatesCommand($app),
         new \Console\Command\LinksFindPseudoduplicatesCommand($app),
         new \Console\Command\LinksFuseCommand($app),
-        new \Console\Command\SendChatMessagesNotifications($app),
+        new \Console\Command\SendChatMessagesNotificationsCommand($app),
     )
 );
 

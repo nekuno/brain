@@ -18,9 +18,9 @@ $app['translator'] = $app->share($app->extend('translator', function($translator
     return $translator;
 }));
 
-$app['chatMessageNotifications.service'] = function ($app, Request $request) {
+$app['chatMessageNotifications.service'] = $app->share(function ($app, Request $request) {
     return new \Service\ChatMessageNotifications($app['emailNotification.service'], $app['orm.ems']['mysql_brain'], $app['dbs']['mysql_social'], $app['translator'], $app['users.model'], $app['users.profile.model'], $request);
-};
+});
 
 
 /**
