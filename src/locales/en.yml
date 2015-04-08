@@ -1,0 +1,11 @@
+notifications:
+  header: 'Hello %name%'
+  messages:
+    unread:
+      subject: 'You have unread messages'
+      body:
+        title: 'You have %count% unread message.|You have %count% unread messages.'
+        latest: 'Latest unread message:|Latest unread messages:'
+        message: 'Unread message from user %user% at %datetime%:'
+
+footer: 'Regards from Nekuno team'
