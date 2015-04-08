@@ -42,7 +42,11 @@ class QuestionModel
             ->match('(q)<-[:IS_ANSWER_OF]-(a:Answer)')
             ->with('q', 'a')
             ->orderBy('id(a)')
-            ->returns('q as question, collect(a) AS answers')
+            ->with('q, collect(a) AS answers')
+            ->optionalMatch('(q)<-[s:SKIPS]-(u:User)')
+            ->with('q', 'answers', 'COUNT(s) as count')
+            ->where('count <= 3')
+            ->returns('q AS question', 'answers')
             ->orderBy('q.ranking DESC');
 
         if (!is_null($skip)) {
