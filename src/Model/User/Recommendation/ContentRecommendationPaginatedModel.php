@@ -27,7 +27,7 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
 
     public function getValidTypes()
     {
-        return Self::$validTypes;
+        return self::$validTypes;
     }
 
     /**
@@ -61,6 +61,10 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
     public function slice(array $filters, $offset, $limit)
     {
         $id = $filters['id'];
+
+        if ((integer)$limit == 0) {
+            return array();
+        }
         $response = array();
 
         $params = array(
@@ -126,28 +130,63 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
         }
 
         //If there is not enough content, we pick recent suitable content and add it to response
-        if (count($response) < (integer)$limit) {
+
+        //Obtain maximum number of available links
+        if((count($response) < (integer)$limit)) {
+            $qb = $this->gm->createQueryBuilder();
+            $params = array(
+                'UserId' => (integer)$id
+            );
+            $qb->match('(user:User {qnoow_id: {UserId}})');
+            if (isset($filters['tag'])) {
+                $qb->match('(content:' . $linkType . ')-[:TAGGED]->(filterTag:Tag)');
+
+                $params['tag'] = $filters['tag'];
+            } else {
+                $qb->match('(content:' . $linkType . ')');
+
+            }
+            $qb->with('user,count(distinct(content)) as contents');
+            $qb->optionalMatch('(user)-[:AFFINITY|:LIKES|:DISLIKES]->(used:' . $linkType . ')');
+            $qb->setParameters($params);
+            $qb->returns('contents-count(distinct(used)) AS max');
+            $query = $qb->getQuery();
+            $result = $query->getResultSet();
+
+            $max = $result[0]->offsetGet('max');
+        }
+
+        //We get desired links using an internal pagination
+        $internalLoops=0;
+        $internalLimit=100;
+        while (((count($response) < (integer)$limit)
+            && ((integer)$offset + ($internalLimit * $internalLoops) < $max))
+        ) {
 
             $qb = $this->gm->createQueryBuilder();
 
             $params = array(
                 'UserId' => (integer)$id,
-                'offset' => (integer)$offset,
-                'limit' => (integer)$limit - count($response)
+                'offset' => (integer)$offset + ($internalLimit * $internalLoops),
+                'limit' => (integer)$limit - count($response),
+                'internalLimit' => $internalLimit,
             );
+
+            $qb->match('(user:User {qnoow_id: {UserId}})');
 
             if (isset($filters['tag'])) {
                 $qb->match('(content:' . $linkType . ')-[:TAGGED]->(filterTag:Tag)')
-                    //TODO: Using index
+                    ->with('user,content')
+                    ->limit('{internalLimit}')
                     ->where('filterTag.name = { tag }',
-                        'NOT (user:User {qnoow_id: {UserId}})-[affinity:AFFINITY]->(content)',
-                        'NOT (user)-[:LIKES|:DISLIKES]->(content)');
+                        'NOT (user)-[:AFFINITY|:LIKES|:DISLIKES]->(content)');
 
                 $params['tag'] = $filters['tag'];
             } else {
                 $qb->match('(content:' . $linkType . ')')
-                    ->where('NOT (user:User {qnoow_id: {UserId}})-[affinity:AFFINITY]->(content)',
-                        'NOT (user)-[:LIKES|:DISLIKES]->(content)');
+                    ->with('user,content')
+                    ->limit('{internalLimit}')
+                    ->where('NOT (user)-[:AFFINITY|:LIKES|:DISLIKES]->(content)');
             }
 
             $qb->with('content')
@@ -155,8 +194,13 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
                 ->skip('{offset}')
                 ->limit('{limit}');
             $qb->setParameters($params);
-
-            $qb->returns('content');
+            $qb->optionalMatch('(content)-[:TAGGED]->(tag:Tag)')
+                ->returns(
+                    'id(content) as id',
+                    'content',
+                    'collect(distinct tag.name) as tags',
+                    'labels(content) as types'
+                );
             $query = $qb->getQuery();
             $result = $query->getResultSet();
 
@@ -177,21 +221,21 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
                     $content['embed']['id'] = $row['content']->getProperty('embed_id');
                 }
 
-                $content['match'] = $row['affinity']->getProperty('affinity');
+                $content['match'] = "?";
 
                 if (!in_array($content, $response)) {
                     $response[] = $content;
                 }
 
             }
+            $internalLoops++;
+        }
+        //TODO Eliminar esto, debug
+        if (isset($max)){
+            $response['max']=$max;
         }
 
-        if (count($response) > $limit) {
-            for ($i = $limit + 1; count($response); $i++) {
-                unset($limit[$i]);
-            }
-        }
-
+        $response['internalLoops']=$internalLoops;
         return $response;
     }
 
@@ -217,17 +261,18 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
 
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match('(content:' . $linkType . ')')
-            ->where('NOT (user:User {qnoow_id: {UserId}})-[:LIKES|:DISLIKES]->(content)');
-
         if (isset($filters['tag'])) {
-            $qb->match('(content)-[:TAGGED]->(filterTag:Tag)')
+            $qb->match('(content:' . $linkType . ')-[:TAGGED]->(filterTag:Tag)')
                 ->where('filterTag.name = { tag }');
 
             $params['tag'] = $filters['tag'];
+        } else {
+            $qb->match('(content:' . $linkType . ')');
         }
 
-        $qb->returns('COUNT(distinct content) AS total');
+        $qb->with('count(content) AS max');
+        $qb->optionalMatch('(user:User {qnoow_id: {UserId}})-[:LIKES|:DISLIKES]->(l:' . $linkType . ')');
+        $qb->returns('max-count(distinct(l)) AS total');
 
         $qb->setParameters($params);
 
