@@ -33,6 +33,7 @@ class EmailNotifications
     {
         $message = \Swift_Message::newInstance()
             ->setSubject($notification->getSubject())
+            ->setFrom('info@nekuno.com', 'Nekuno')
             ->setTo($notification->getRecipient())
             ->setContentType('text/html')
             ->setBody($this->tp->render(
