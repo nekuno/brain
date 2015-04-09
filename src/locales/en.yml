@@ -9,4 +9,4 @@ notifications:
         message: 'Unread message from user %user% at %datetime%:'
         linkAnchor: 'See all your messages'
 
-  footer: 'Regards from Nekuno team\n<a href="https://nekuno.com/">nekuno.com</a>'
+  footer: 'Regards from Nekuno team'

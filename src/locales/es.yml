@@ -9,4 +9,4 @@ notifications:
         message: 'Mensaje sin leer del usuario %user% en %datetime%:'
         linkAnchor: 'Mira todos tus mensages'
 
-  footer: 'Saludos del equipo de Nekuno\n<a href="https://nekuno.com/">nekuno.com</a>'
+  footer: 'Saludos del equipo de Nekuno'
