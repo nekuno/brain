@@ -339,8 +339,9 @@ class UserModel implements PaginatedInterface
             $query = $qb->getQuery();
             $query->getResultSet();
 
-            $this->driver->update('users', array('status' => $status->getStatus()), array('id' => (integer)$id));
         }
+
+        $this->driver->update('users', array('status' => $status->getStatus()), array('id' => (integer)$id));
 
         return $status;
     }
