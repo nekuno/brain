@@ -132,7 +132,8 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
         //If there is not enough content, we pick recent suitable content and add it to response
 
         //Obtain maximum number of available links
-        if((count($response) < (integer)$limit)) {
+        $max = 0;
+        if ((count($response) < (integer)$limit)) {
             $qb = $this->gm->createQueryBuilder();
             $params = array(
                 'UserId' => (integer)$id
@@ -157,8 +158,8 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
         }
 
         //We get desired links using an internal pagination
-        $internalLoops=0;
-        $internalLimit=100;
+        $internalLoops = 0;
+        $internalLimit = 100;
         while (((count($response) < (integer)$limit)
             && ((integer)$offset + ($internalLimit * $internalLoops) < $max))
         ) {
@@ -199,8 +200,8 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
                     'id(content) as id',
                     'content',
                     'collect(distinct tag.name) as tags',
-                    'labels(content) as types'
-                );
+                    'labels(content) as types')
+                ->orderBy('content.timestamp DESC');
             $query = $qb->getQuery();
             $result = $query->getResultSet();
 
@@ -223,19 +224,17 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
 
                 $content['match'] = "?";
 
-                if (!in_array($content, $response)) {
                     $response[] = $content;
-                }
 
             }
             $internalLoops++;
         }
         //TODO Eliminar esto, debug
-        if (isset($max)){
-            $response['max']=$max;
-        }
-
-        $response['internalLoops']=$internalLoops;
+//        if (isset($max)){
+//            $response['max']=$max;
+//        }
+//
+//        $response['internalLoops']=$internalLoops;
         return $response;
     }
 
