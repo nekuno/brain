@@ -8,7 +8,7 @@
 
     <p>{{ 'notifications.messages.unread.body.message'|trans({'%user%': message.username_from, '%datetime%': message.createdAt}) }}</p>
 
-    <p>{{ message.text }}</p>
+    <p><strong>{{ message.text }}</strong></p>
 
 {% endfor %}
 
