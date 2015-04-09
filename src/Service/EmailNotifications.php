@@ -37,7 +37,7 @@ class EmailNotifications
             ->setContentType('text/html')
             ->setBody($this->tp->render(
                 'email-notifications/unread-messages-notification.html.twig',
-                array('info' => $notification->getInfo())));
+                $notification->getInfo()));
 
 
         if (! $this->mailer->send($message)) {

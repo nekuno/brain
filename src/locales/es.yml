@@ -7,5 +7,6 @@ notifications:
         title: 'Tienes %count% mensaje sin leer.|Tienes %count% mensajes sin leer.'
         latest: 'Último mensaje sin leer:|Últimos %count% mensajes sin leer:'
         message: 'Mensaje sin leer del usuario %user% en %datetime%:'
+        linkAnchor: 'Mira todos tus mensages'
 
-  footer: 'Saludos del equipo de Nekuno'
+  footer: 'Saludos del equipo de Nekuno\n<a href="https://nekuno.com/">nekuno.com</a>'

@@ -163,7 +163,7 @@ class ChatMessageNotifications
     {
         $yesterday = new \DateTime('-1 day');
         $qb = $this->driver->createQueryBuilder('chat_message')
-            ->select('chat_message.user_to')
+            ->select('DISTINCT chat_message.user_to')
             ->from('chat_message')
             ->where('chat_message.readed = 0')
             ->where('chat_message.createdAt > :yesterday')
@@ -189,7 +189,7 @@ class ChatMessageNotifications
             ->where('chat_message.readed = 0')
             ->where('chat_message.createdAt > :yesterday')
             ->where('chat_message.user_to = :user_to')
-            ->groupBy('chat_message.user_from')
+            ->orderBy('chat_message.user_from', 'asc')
             ->orderBy('chat_message.createdAt', 'desc')
             ->setParameter('user_to', $userId)
             ->setParameter('yesterday', $yesterday->getTimestamp());

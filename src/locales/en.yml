@@ -5,7 +5,8 @@ notifications:
       subject: 'You have unread messages'
       body:
         title: 'You have %count% unread message.|You have %count% unread messages.'
-        latest: 'Latest unread message:|Latest unread messages:'
+        latest: 'Latest %count% unread message:|Latest %count% unread messages:'
         message: 'Unread message from user %user% at %datetime%:'
+        linkAnchor: 'See all your messages'
 
-footer: 'Regards from Nekuno team'
+  footer: 'Regards from Nekuno team\n<a href="https://nekuno.com/">nekuno.com</a>'
