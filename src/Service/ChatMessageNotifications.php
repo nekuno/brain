@@ -97,16 +97,16 @@ class ChatMessageNotifications
             }
 
             if (! $profile && OutputInterface::VERBOSITY_VERBOSE <= $output->getVerbosity()) {
-                $output->writeln( 'Profile ' . $userId . ' not found. Using default locale.' );
+                $output->writeln( 'Profile ' . $userId . ' not found. Using default locale (' . $this->translator->getLocale() . ').' );
             }
 
-            if(isset($profile['InterfaceLanguage']) && $profile['InterfaceLanguage'])
+            if(isset($profile['interfaceLanguage']) && $profile['interfaceLanguage'])
             {
-                $this->translator->setLocale($profile['InterfaceLanguage']);
+                $this->translator->setLocale($profile['interfaceLanguage']);
 
                 if (OutputInterface::VERBOSITY_VERBOSE <= $output->getVerbosity())
                 {
-                    $output->writeln( 'Profile ' . $userId . ' found. Using locale ' . $profile['InterfaceLanguage'] );
+                    $output->writeln( 'Profile ' . $userId . ' found. Using locale ' . $profile['interfaceLanguage'] );
                 }
 
             }

@@ -13,7 +13,7 @@ $app['translator'] = $app->share($app->extend('translator', function($translator
     $translator->addLoader('yaml', new YamlFileLoader());
 
     $translator->addResource('yaml', __DIR__.'/locales/en.yml', 'en');
-    $translator->addResource('yaml', __DIR__.'/locales/de.yml', 'de');
+    $translator->addResource('yaml', __DIR__.'/locales/es.yml', 'es');
 
     return $translator;
 }));
