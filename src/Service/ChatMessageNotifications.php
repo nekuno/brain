@@ -11,6 +11,7 @@ use Service\EmailNotifications;
 use Silex\Translator;
 use Silex\Application;
 use Symfony\Component\Console\Output\OutputInterface;
+use Console\Command\SendChatMessagesNotificationsCommand;
 
 /**
  * ChatMessageNotifications
@@ -59,7 +60,7 @@ class ChatMessageNotifications
         $this->profileModel = $profileModel;
     }
 
-    function sendUnreadChatMessages($limit = 99999, OutputInterface $output)
+    function sendUnreadChatMessages($limit = 99999, OutputInterface $output, SendChatMessagesNotificationsCommand $chatMessagesNotificationsCommand)
     {
         $usersIds = $this->getUsersWithUnreadMessages($limit);
 
@@ -81,10 +82,11 @@ class ChatMessageNotifications
                 foreach($filteredChatMessages as $message)
                 {
                     $output->writeln( 'Message for user ' . $userId );
-                    foreach($message as $messageData)
-                    {
-                        $output->writeln( $messageData );
-                    }
+                    $table = $chatMessagesNotificationsCommand->getHelper('table');
+
+                    $table->setHeaders(array_keys($message))
+                        ->setRows(array($message))
+                        ->render($output);
                 }
             }
 

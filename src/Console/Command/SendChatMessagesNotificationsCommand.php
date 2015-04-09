@@ -39,7 +39,7 @@ class SendChatMessagesNotificationsCommand extends ApplicationAwareCommand
 
         try {
 
-            $chatMessageNotifications->sendUnreadChatMessages($limit, $output);
+            $chatMessageNotifications->sendUnreadChatMessages($limit, $output, $this);
 
             $style = new OutputFormatterStyle('green', 'black', array('bold', 'blink'));
             $output->getFormatter()->setStyle('success', $style);
