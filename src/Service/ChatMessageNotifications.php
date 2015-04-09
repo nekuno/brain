@@ -157,16 +157,9 @@ class ChatMessageNotifications
                     $thisUserChatMessages[] = $chatMessage;
                 }
             }
-            foreach($thisUserChatMessages as $indexMessUser => $thisUserChatMessage)
-            {
-                if( $indexMessUser > count($thisUserChatMessages) - 4 )
-                {
-                    $return[] = $thisUserChatMessage;
 
-                    // Maximum 1 message per user
-                    break;
-                }
-            }
+            // Maximum 1 message per user
+            $return[] = $thisUserChatMessages[count($thisUserChatMessages) - 1];
         }
 
         return $return;
