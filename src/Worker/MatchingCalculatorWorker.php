@@ -3,6 +3,7 @@
 
 namespace Worker;
 
+use Doctrine\DBAL\Connection;
 use Model\User\Matching\MatchingModel;
 use Model\User\Similarity\SimilarityModel;
 use Model\UserModel;
@@ -43,13 +44,19 @@ class MatchingCalculatorWorker implements RabbitMQConsumerInterface, LoggerAware
      */
     protected $similarityModel;
 
-    public function __construct(AMQPChannel $channel, UserModel $userModel, MatchingModel $matchingModel, SimilarityModel $similarityModel)
+    /**
+     * @var Connection
+     */
+    protected $driver;
+
+    public function __construct(AMQPChannel $channel, UserModel $userModel, MatchingModel $matchingModel, SimilarityModel $similarityModel, Connection $driver)
     {
 
         $this->channel = $channel;
         $this->userModel = $userModel;
         $this->matchingModel = $matchingModel;
         $this->similarityModel = $similarityModel;
+        $this->driver = $driver;
     }
 
     /**
@@ -79,6 +86,11 @@ class MatchingCalculatorWorker implements RabbitMQConsumerInterface, LoggerAware
      */
     public function callback(AMQPMessage $message)
     {
+
+        if ($this->driver->ping() === false) {
+            $this->driver->close();
+            $this->driver->connect();
+        }
 
         $data = json_decode($message->body, true);
 
