@@ -116,7 +116,7 @@ class ChatMessageNotifications
                 ->setUserId($userId)
                 ->setRecipient($user['email'])
                 ->setSubject($this->translator->trans('notifications.messages.unread.subject'))
-                ->setInfo($this->saveInfo($user, $filteredChatMessages))
+                ->setInfo($this->saveInfo($user, $filteredChatMessages, count($chatMessages)))
             );
 
             if (OutputInterface::VERBOSITY_VERBOSE <= $output->getVerbosity()) {
@@ -206,7 +206,7 @@ class ChatMessageNotifications
         return $qb->execute()->fetchAll();
     }
 
-    protected function saveInfo(array $user, array $chatMessages)
+    protected function saveInfo(array $user, array $chatMessages, $totalMessages)
     {
         foreach($chatMessages as $index => $chatMessage)
         {
@@ -214,7 +214,7 @@ class ChatMessageNotifications
         }
 
         return array(
-            'unReadMessagesCount' => count($chatMessages),
+            'unReadMessagesCount' => $totalMessages,
             'username' => $user['username'],
             'email' => $user['email'],
             'messages' => $chatMessages
