@@ -96,9 +96,19 @@ class ChatMessageNotifications
                 throw new \Exception('User not found', 404);
             }
 
+            if (! $profile && OutputInterface::VERBOSITY_VERBOSE <= $output->getVerbosity()) {
+                $output->writeln( 'Profile ' . $userId . ' not found. Using default locale.' );
+            }
+
             if(isset($profile['options']['InterfaceLanguage']['id']) && $profile['options']['InterfaceLanguage']['id'])
             {
                 $this->translator->setLocale($profile['options']['InterfaceLanguage']['id']);
+
+                if (OutputInterface::VERBOSITY_VERBOSE <= $output->getVerbosity())
+                {
+                    $output->writeln( 'Profile ' . $userId . ' found. Using locale ' . $profile['options']['InterfaceLanguage']['id'] );
+                }
+
             }
 
             $this->emailNotifications->send(EmailNotification::create()
