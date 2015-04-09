@@ -5,22 +5,16 @@ namespace Worker;
 
 use ApiConsumer\Auth\UserProviderInterface;
 use ApiConsumer\Fetcher\FetcherService;
+use Doctrine\DBAL\Connection;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Message\AMQPMessage;
-use Psr\Log\LoggerAwareInterface;
-use Psr\Log\LoggerInterface;
 
 /**
  * Class LinkProcessorWorker
  * @package Worker
  */
-class LinkProcessorWorker implements RabbitMQConsumerInterface, LoggerAwareInterface
+class LinkProcessorWorker extends LoggerAwareWorker implements RabbitMQConsumerInterface
 {
-
-    /**
-     * @var LoggerInterface
-     */
-    protected $logger;
 
     /**
      * @var AMQPChannel
@@ -38,27 +32,17 @@ class LinkProcessorWorker implements RabbitMQConsumerInterface, LoggerAwareInter
     protected $fetcherService;
 
     /**
-     * @var array
+     * @var Connection
      */
-    protected $config;
+    protected $driver;
 
-    /**
-     * @param AMQPChannel $channel
-     * @param FetcherService $fetcherService
-     * @param UserProviderInterface $userProvider
-     * @param array $config
-     */
-    public function __construct(
-        AMQPChannel $channel,
-        FetcherService $fetcherService,
-        UserProviderInterface $userProvider,
-        $config = array()
-    ) {
+    public function __construct(AMQPChannel $channel, FetcherService $fetcherService, UserProviderInterface $userProvider, Connection $driver)
+    {
 
         $this->channel = $channel;
         $this->fetcherService = $fetcherService;
         $this->userProvider = $userProvider;
-        $this->config = $config;
+        $this->driver = $driver;
     }
 
     /**
@@ -89,6 +73,11 @@ class LinkProcessorWorker implements RabbitMQConsumerInterface, LoggerAwareInter
     public function callback(AMQPMessage $message)
     {
 
+        if ($this->driver->ping() === false) {
+            $this->driver->close();
+            $this->driver->connect();
+        }
+
         $data = json_decode($message->body, true);
         $resourceOwner = $data['resourceOwner'];
         $userId = $data['userId'];
@@ -100,27 +89,13 @@ class LinkProcessorWorker implements RabbitMQConsumerInterface, LoggerAwareInter
             try {
                 $this->fetcherService->fetch($user['id'], $resourceOwner);
             } catch (\Exception $e) {
-                $this->logger->error(
-                    sprintf(
-                        'Worker -> %s',
-                        $e->getMessage()
-                    )
-                );
+                $this->logger->error(sprintf('Worker -> %s', $e->getMessage()));
             }
         }
 
         $message->delivery_info['channel']->basic_ack($message->delivery_info['delivery_tag']);
+
+        $this->memory();
     }
 
-    /**
-     * Sets a logger instance on the object
-     *
-     * @param LoggerInterface $logger
-     * @return null
-     */
-    public function setLogger(LoggerInterface $logger)
-    {
-
-        $this->logger = $logger;
-    }
 }

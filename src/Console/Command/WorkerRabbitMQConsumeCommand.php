@@ -12,7 +12,6 @@ use Psr\Log\LogLevel;
 use Silex\Application;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
@@ -79,7 +78,7 @@ class WorkerRabbitMQConsumeCommand extends ApplicationAwareCommand
             case 'fetching':
                 /* @var $channel AMQPChannel */
                 $channel = $connection->channel();
-                $worker = new LinkProcessorWorker($channel, $fetcher, $userProvider);
+                $worker = new LinkProcessorWorker($channel, $fetcher, $userProvider, $this->app['dbs']['mysql_social']);
                 $worker->setLogger($logger);
                 $logger->notice('Processing fetching queue');
                 $worker->consume();
@@ -88,7 +87,7 @@ class WorkerRabbitMQConsumeCommand extends ApplicationAwareCommand
             case 'matching':
                 /* @var $channel AMQPChannel */
                 $channel = $connection->channel();
-                $worker = new MatchingCalculatorWorker($channel, $this->app['users.model'], $this->app['users.matching.model'], $this->app['users.similarity.model']);
+                $worker = new MatchingCalculatorWorker($channel, $this->app['users.model'], $this->app['users.matching.model'], $this->app['users.similarity.model'], $this->app['dbs']['mysql_social']);
                 $worker->setLogger($logger);
                 $logger->notice('Processing matching queue');
                 $worker->consume();
