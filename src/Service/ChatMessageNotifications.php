@@ -149,14 +149,19 @@ class ChatMessageNotifications
                 break;
             }
 
+            $indexMessUser = 0;
             foreach($chatMessages as $indexMessage => $chatMessage)
             {
-                if( $chatMessage['user_from'] === $userFrom && $indexMessage > count($chatMessages) - 4 )
+                if( $chatMessage['user_from'] === $userFrom )
                 {
-                    $return[] = $chatMessage;
+                    $indexMessUser++;
+                    if( $indexMessUser > count($chatMessages) - 4 )
+                    {
+                        $return[] = $chatMessage;
 
-                    // Maximum 1 message per user
-                    break;
+                        // Maximum 1 message per user
+                        break;
+                    }
                 }
             }
         }
