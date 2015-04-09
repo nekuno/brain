@@ -3,4 +3,4 @@ monolog.logfile: "%app_root_dir%/../var/logs/silex_prod.log"
 swiftmailer:
     spool:
       type: file
-      path: "%app_root_dir%/../var/swiftmailer/spool"
+      path: "%app_root_dir%/../var/spool"
