@@ -147,9 +147,9 @@ class ChatMessageNotifications
                 break;
             }
 
-            foreach($chatMessages as $chatMessage)
+            foreach($chatMessages as $indexMessage => $chatMessage)
             {
-                if($chatMessage['user_from'] === $userFrom)
+                if( $chatMessage['user_from'] === $userFrom && $indexMessage > count($chatMessages) - 4 )
                 {
                     $return[] = $chatMessage;
 
@@ -177,7 +177,7 @@ class ChatMessageNotifications
             ->from('chat_message')
             ->where('chat_message.readed = 0')
             ->where('chat_message.createdAt > :yesterday')
-            ->orderBy('chat_message.createdAt', 'asc')
+            ->orderBy('chat_message.createdAt', 'desc')
             ->setMaxResults($limit)
             ->setParameter('yesterday', $yesterday->getTimestamp());
 
@@ -199,7 +199,6 @@ class ChatMessageNotifications
             ->where('chat_message.readed = 0')
             ->where('chat_message.createdAt > :yesterday')
             ->where('chat_message.user_to = :user_to')
-            ->orderBy('chat_message.user_from', 'asc')
             ->orderBy('chat_message.createdAt', 'desc')
             ->setParameter('user_to', $userId)
             ->setParameter('yesterday', $yesterday->getTimestamp());
