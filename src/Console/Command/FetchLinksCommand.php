@@ -95,6 +95,5 @@ class FetchLinksCommand extends ApplicationAwareCommand
         }
 
         $output->writeln('Success!');
-        $output->writeln(sprintf('Memory consumed: %s', $this->formatBytes(memory_get_peak_usage(true))));
     }
 }

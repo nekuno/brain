@@ -8,20 +8,13 @@ use ApiConsumer\Fetcher\FetcherService;
 use Doctrine\DBAL\Connection;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Message\AMQPMessage;
-use Psr\Log\LoggerAwareInterface;
-use Psr\Log\LoggerInterface;
 
 /**
  * Class LinkProcessorWorker
  * @package Worker
  */
-class LinkProcessorWorker implements RabbitMQConsumerInterface, LoggerAwareInterface
+class LinkProcessorWorker extends LoggerAwareWorker implements RabbitMQConsumerInterface
 {
-
-    /**
-     * @var LoggerInterface
-     */
-    protected $logger;
 
     /**
      * @var AMQPChannel
@@ -101,17 +94,8 @@ class LinkProcessorWorker implements RabbitMQConsumerInterface, LoggerAwareInter
         }
 
         $message->delivery_info['channel']->basic_ack($message->delivery_info['delivery_tag']);
+
+        $this->memory();
     }
 
-    /**
-     * Sets a logger instance on the object
-     *
-     * @param LoggerInterface $logger
-     * @return null
-     */
-    public function setLogger(LoggerInterface $logger)
-    {
-
-        $this->logger = $logger;
-    }
 }
