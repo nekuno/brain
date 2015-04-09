@@ -100,13 +100,13 @@ class ChatMessageNotifications
                 $output->writeln( 'Profile ' . $userId . ' not found. Using default locale.' );
             }
 
-            if(isset($profile['options']['InterfaceLanguage']['id']) && $profile['options']['InterfaceLanguage']['id'])
+            if(isset($profile['InterfaceLanguage']) && $profile['InterfaceLanguage'])
             {
-                $this->translator->setLocale($profile['options']['InterfaceLanguage']['id']);
+                $this->translator->setLocale($profile['InterfaceLanguage']);
 
                 if (OutputInterface::VERBOSITY_VERBOSE <= $output->getVerbosity())
                 {
-                    $output->writeln( 'Profile ' . $userId . ' found. Using locale ' . $profile['options']['InterfaceLanguage']['id'] );
+                    $output->writeln( 'Profile ' . $userId . ' found. Using locale ' . $profile['InterfaceLanguage'] );
                 }
 
             }
