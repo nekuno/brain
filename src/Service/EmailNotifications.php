@@ -43,5 +43,6 @@ class EmailNotifications
         if (! $this->mailer->send($message)) {
             throw new \RuntimeException("Email could not be sent");
         }
+
     }
 }

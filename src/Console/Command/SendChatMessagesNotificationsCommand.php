@@ -7,6 +7,7 @@ use Service\ChatMessageNotifications;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Formatter\OutputFormatterStyle;
 
 class SendChatMessagesNotificationsCommand extends ApplicationAwareCommand
 {
@@ -40,9 +41,16 @@ class SendChatMessagesNotificationsCommand extends ApplicationAwareCommand
 
             $chatMessageNotifications->sendUnreadChatMessages($limit, $output);
 
+            $style = new OutputFormatterStyle('green', 'black', array('bold', 'blink'));
+            $output->getFormatter()->setStyle('success', $style);
+            $output->writeln('<success>Success</success>');
+
         } catch (\Exception $e) {
 
-            $output->writeln('Error trying to send emails: ' . $e->getMessage());
+            $style = new OutputFormatterStyle('red', 'black', array('bold', 'blink'));
+            $output->getFormatter()->setStyle('error', $style);
+            $output->writeln('<error>Error trying to send emails: ' . $e->getMessage() . '</error>');
+            $output->writeln('<error>Fail</error>');
         }
 
         $output->writeln('Done.');

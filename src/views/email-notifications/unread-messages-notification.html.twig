@@ -1,12 +1,12 @@
 {% include 'email-notifications/partials/header-notification.html.twig' %}
 
-<p>{{ 'notifications.messages.unread.body.title'|transChoice({'%count%': unReadMessagesCount}) }}</p>
+<p>{{ 'notifications.messages.unread.body.title'|transchoice({'%count%': unReadMessagesCount}) }}</p>
 
-<p>{{ 'notifications.messages.unread.body.latest'|transChoice({'%count%': messages|length}) }}</p>
+<p>{{ 'notifications.messages.unread.body.latest'|transchoice({'%count%': messages|length}) }} </p>
 
 {% for message in messages %}
 
-    <p>{{ 'notifications.messages.unread.body.message'|transChoice({'%user%': message.username_from, '%datetime%': message.createdAt|date}) }}</p>
+    <p>{{ 'notifications.messages.unread.body.message'|transchoice({'%user%': message.username_from, '%datetime%': message.createdAt}) }}</p>
 
     <p>{{ message.text }}</p>
 

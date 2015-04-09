@@ -10,7 +10,7 @@ use Doctrine\DBAL\Connection;
 use Service\EmailNotifications;
 use Silex\Translator;
 use Silex\Application;
-use Symfony\Component\Console\Output\OutputInterface as Output;
+use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * ChatMessageNotifications
@@ -59,7 +59,7 @@ class ChatMessageNotifications
         $this->profileModel = $profileModel;
     }
 
-    function sendUnreadChatMessages($limit = 9999999999, Output $output)
+    function sendUnreadChatMessages($limit = 99999, OutputInterface $output)
     {
         $usersIds = $this->getUsersWithUnreadMessages($limit);
 
@@ -71,16 +71,29 @@ class ChatMessageNotifications
 
             $chatMessages = $this->getUnReadMessagesByUser($userId);
 
-            $output->writeln( count($chatMessages) . ' unread messages found for user ' . $userId );
+            if (OutputInterface::VERBOSITY_VERBOSE <= $output->getVerbosity()) {
+                $output->writeln( count($chatMessages) . ' unread messages found for user ' . $userId );
+            }
 
             $filteredChatMessages = $this->filterMessages($chatMessages);
+
+            if (OutputInterface::VERBOSITY_VERY_VERBOSE <= $output->getVerbosity()) {
+                foreach($filteredChatMessages as $message)
+                {
+                    $output->writeln( 'Message for user ' . $userId );
+                    foreach($message as $messageData)
+                    {
+                        $output->writeln( $messageData );
+                    }
+                }
+            }
 
             $user = $this->userModel->getById($userId);
             $profile = $this->profileModel->getById($userId);
 
-            if(! $user || ! $profile)
+            if(! $user)
             {
-                $output->writeln('User or Profile not found');
+                throw new \Exception('User not found', 404);
             }
 
             if(isset($profile['options']['InterfaceLanguage']['id']) && $profile['options']['InterfaceLanguage']['id'])
@@ -89,14 +102,16 @@ class ChatMessageNotifications
             }
 
             $this->emailNotifications->send(EmailNotification::create()
-                ->setType(1)
+                ->setType(EmailNotification::UNREAD_CHAT_MESSAGES)
                 ->setUserId($userId)
                 ->setRecipient($user['email'])
                 ->setSubject($this->translator->trans('notifications.messages.unread.subject'))
                 ->setInfo($this->saveInfo($user, $filteredChatMessages))
             );
 
-            $output->writeln( 'Email sent to ' . $userId . ' with ' .  count($filteredChatMessages) . 'messages.' );
+            if (OutputInterface::VERBOSITY_VERBOSE <= $output->getVerbosity()) {
+                $output->writeln( 'Email sent to user ' . $userId . ' with ' .  count($filteredChatMessages) . ' messages.' );
+            }
         }
     }
 

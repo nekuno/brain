@@ -13,6 +13,6 @@ $env = $input->getParameterOption(array('--env', '-e'), getenv('SYMFONY_ENV') ?:
 $app = require __DIR__.'/../src/app.php';
 
 require __DIR__.'/../src/models.php';
-require __DIR__.'/../src/services.php';
+require __DIR__ . '/../src/consoleServices.php';
 $console = require __DIR__.'/../src/console.php';
 $console->run();

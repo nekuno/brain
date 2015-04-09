@@ -45,6 +45,7 @@ swiftmailer.options:
     password: %swiftmailer.password%
     encryption: %swiftmailer.encryption%
     auth_mode: %swiftmailer.auth_mode%
+    spool:      { type: memory }
 
 amqp.options:
     host: %rabbitmq.host%

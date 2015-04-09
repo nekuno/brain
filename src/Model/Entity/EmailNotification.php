@@ -46,7 +46,8 @@ class EmailNotification
     protected $subject;
 
     /**
-     * @Choice(choices={"getTypes"})
+     * @Column(name="type", nullable=false)
+     * @Choice(callback={"getTypes"})
      * @ORM\Column
      */
     protected $type;
@@ -144,7 +145,7 @@ class EmailNotification
     /**
      * Get type
      *
-     * @return string
+     * @return int
      */
     public function getType()
     {
@@ -155,7 +156,7 @@ class EmailNotification
     /**
      * Set type
      *
-     * @param string $type
+     * @param int $type
      * @return EmailNotification
      */
     public function setType($type)
@@ -169,9 +170,9 @@ class EmailNotification
     /**
      * Get types
      *
-     * @return string
+     * @return array
      */
-    public function getTypes()
+    public static function getTypes()
     {
         return array(
             self::UNREAD_CHAT_MESSAGES
