@@ -43,16 +43,18 @@ class SendChatMessagesNotificationsCommand extends ApplicationAwareCommand
 
             $style = new OutputFormatterStyle('green', 'black', array('bold', 'blink'));
             $output->getFormatter()->setStyle('success', $style);
-            $output->writeln('<success>Success</success>');
+            $output->writeln('<success>SUCCESS</success>');
 
         } catch (\Exception $e) {
 
             $style = new OutputFormatterStyle('red', 'black', array('bold', 'blink'));
             $output->getFormatter()->setStyle('error', $style);
             $output->writeln('<error>Error trying to send emails: ' . $e->getMessage() . '</error>');
-            $output->writeln('<error>Fail</error>');
+            $output->writeln('<error>FAIL</error>');
         }
 
+        $this->app['swiftmailer.spooltransport']->getSpool()->flushQueue($this->app['swiftmailer.transport']);
+        $output->writeln('Spool sent.');
         $output->writeln('Done.');
 
     }
