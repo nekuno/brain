@@ -17,7 +17,9 @@ class UserStatsModel {
 
     protected $numberOfUserLikes;
 
-    function __construct($numberOfContentLikes, $numberOfVideoLikes, $numberOfAudioLikes, $numberOfImageLikes, $numberOfReceivedLikes, $numberOfUserLikes)
+    protected $numberOfQuestionsAnswered;
+
+    function __construct($numberOfContentLikes, $numberOfVideoLikes, $numberOfAudioLikes, $numberOfImageLikes, $numberOfReceivedLikes, $numberOfUserLikes, $numberOfQuestionsAnswered)
     {
         $this->numberOfContentLikes = $numberOfContentLikes;
         $this->numberOfVideoLikes = $numberOfVideoLikes;
@@ -25,6 +27,7 @@ class UserStatsModel {
         $this->numberOfImageLikes = $numberOfImageLikes;
         $this->numberOfReceivedLikes = $numberOfReceivedLikes;
         $this->numberOfUserLikes = $numberOfUserLikes;
+        $this->numberOfQuestionsAnswered = $numberOfQuestionsAnswered;
     }
 
     /**
@@ -75,6 +78,14 @@ class UserStatsModel {
         return $this->numberOfUserLikes;
     }
 
+    /**
+     * @return mixed
+     */
+    public function getNumberOfQuestionsAnswered()
+    {
+        return $this->numberOfQuestionsAnswered;
+    }
+
     public function toArray(){
         return array('numberOfContentLikes' => $this->numberOfContentLikes,
                      'numberOfVideoLikes' => $this->numberOfVideoLikes,
@@ -82,6 +93,7 @@ class UserStatsModel {
                      'numberOfImageLikes' => $this->numberOfImageLikes,
                      'numberOfReceivedLikes' => $this->numberOfReceivedLikes,
                      'numberOfUserLikes' => $this->numberOfUserLikes,
+                     'numberOfQuestionsAnswered' => $this->numberOfQuestionsAnswered,
         );
     }
 

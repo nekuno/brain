@@ -269,7 +269,9 @@ class UserModel implements PaginatedInterface
             ->optionalMatch('(u)-[r:LIKES]->(:Audio)')
             ->with('u,contentLikes,videoLikes,count(r) AS audioLikes')
             ->optionalMatch('(u)-[r:LIKES]->(:Image)')
-            ->returns('contentLikes', 'videoLikes', 'audioLikes', 'COUNT(r) AS imageLikes');
+            ->with('u,contentLikes,videoLikes,audioLikes,count(r) AS imageLikes')
+            ->optionalMatch('(u)-[r:ANSWERS]->(:Answer)')
+            ->returns('contentLikes', 'videoLikes', 'audioLikes', 'imageLikes', 'count(r) AS questionsAnswered');
 
         $query = $qb->getQuery();
 
@@ -290,6 +292,7 @@ class UserModel implements PaginatedInterface
             $row->offsetGet('videoLikes'),
             $row->offsetGet('audioLikes'),
             $row->offsetGet('imageLikes'),
+            $row->offsetGet('questionsAnswered'),
             (integer)$numberOfReceivedLikes,
             (integer)$numberOfUserLikes
         );
