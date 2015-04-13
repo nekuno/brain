@@ -10,6 +10,7 @@ use Model\User\UserStatsModel;
 use Model\User\UserStatusModel;
 use Paginator\PaginatedInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Doctrine\ORM\EntityManager;
 
 /**
  * Class UserModel
@@ -34,11 +35,18 @@ class UserModel implements PaginatedInterface
      */
     protected $driver;
 
-    public function __construct(GraphManager $gm, ProfileModel $pm, Connection $driver)
+    /**
+     * @var EntityManager
+     */
+    protected $em;
+
+
+    public function __construct(GraphManager $gm, ProfileModel $pm, Connection $driver, EntityManager $entityManager)
     {
         $this->gm = $gm;
         $this->pm = $pm;
         $this->driver = $driver;
+        $this->em = $entityManager;
     }
 
     /**
@@ -287,6 +295,13 @@ class UserModel implements PaginatedInterface
         $numberOfReceivedLikes = $this->driver->executeQuery('SELECT COUNT(*) AS numberOfReceivedLikes FROM user_like WHERE user_to = :user_to', array('user_to' => (integer)$id))->fetchColumn();
         $numberOfUserLikes = $this->driver->executeQuery('SELECT COUNT(*) AS numberOfUserLikes FROM user_like WHERE user_from = :user_from', array('user_from' => (integer)$id))->fetchColumn();
 
+        $dataStatusRepository = $this->em->getRepository('\Model\Entity\DataStatus');
+
+        $twitterStatus = $dataStatusRepository->findOneBy(array('userId' => (int)$id, 'resourceOwner' => 'twitter'));
+        $facebookStatus = $dataStatusRepository->findOneBy(array('userId' => (int)$id, 'resourceOwner' => 'facebook'));
+        $googleStatus = $dataStatusRepository->findOneBy(array('userId' => (int)$id, 'resourceOwner' => 'google'));
+        $spotifyStatus = $dataStatusRepository->findOneBy(array('userId' => (int)$id, 'resourceOwner' => 'spotify'));
+
         $userStats = new UserStatsModel(
             $row->offsetGet('contentLikes'),
             $row->offsetGet('videoLikes'),
@@ -294,7 +309,15 @@ class UserModel implements PaginatedInterface
             $row->offsetGet('imageLikes'),
             $row->offsetGet('questionsAnswered'),
             (integer)$numberOfReceivedLikes,
-            (integer)$numberOfUserLikes
+            (integer)$numberOfUserLikes,
+            !empty($twitterStatus) ? (boolean)$twitterStatus->getFetched() : false,
+            !empty($twitterStatus) ? (boolean)$twitterStatus->getProcessed() : false,
+            !empty($facebookStatus) ? (boolean)$facebookStatus->getFetched() : false,
+            !empty($facebookStatus) ? (boolean)$facebookStatus->getProcessed() : false,
+            !empty($googleStatus) ? (boolean)$googleStatus->getFetched() : false,
+            !empty($googleStatus) ? (boolean)$googleStatus->getProcessed() : false,
+            !empty($spotifyStatus) ? (boolean)$spotifyStatus->getFetched() : false,
+            !empty($spotifyStatus) ? (boolean)$spotifyStatus->getProcessed() : false
         );
 
         return $userStats;
