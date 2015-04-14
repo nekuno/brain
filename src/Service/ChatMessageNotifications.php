@@ -182,7 +182,7 @@ class ChatMessageNotifications
             ->where('chat_message.createdAt > :yesterday')
             ->orderBy('chat_message.createdAt', 'desc')
             ->setMaxResults($limit)
-            ->setParameter('yesterday', $yesterday->getTimestamp());
+            ->setParameter('yesterday', $yesterday);
 
         return $qb->execute()->fetchAll();
     }
@@ -204,7 +204,7 @@ class ChatMessageNotifications
             ->where('chat_message.user_to = :user_to')
             ->orderBy('chat_message.createdAt', 'desc')
             ->setParameter('user_to', $userId)
-            ->setParameter('yesterday', $yesterday->getTimestamp());
+            ->setParameter('yesterday', $yesterday);
 
         return $qb->execute()->fetchAll();
     }
