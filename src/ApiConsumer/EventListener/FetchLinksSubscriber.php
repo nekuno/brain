@@ -41,8 +41,6 @@ class FetchLinksSubscriber implements EventSubscriberInterface
             \AppEvents::FETCHING_FINISH => array('onFetchingFinish'),
             \AppEvents::PROCESS_START => array('onProcessStart'),
             \AppEvents::PROCESS_LINK => array('onProcessLink'),
-            \AppEvents::PROCESS_STORING_START => array('onProcessStoringStart'),
-            \AppEvents::PROCESS_STORING_FINISH => array('onProcessStoringFinish'),
             \AppEvents::PROCESS_FINISH => array('onProcessFinish'),
         );
     }
@@ -79,16 +77,6 @@ class FetchLinksSubscriber implements EventSubscriberInterface
             $url = $link['url'];
             $this->output->writeln(sprintf(' "%s"', $url));
         }
-    }
-
-    public function onProcessStoringStart(ProcessLinksEvent $event)
-    {
-        $this->output->writeln(sprintf('[%s] Storing "%d" links for user "%d" with fetcher "%s" from resource owner "%s"', date('Y-m-d H:i:s'), count($event->getLinks()), $event->getUser(), $event->getFetcher(), $event->getResourceOwner()));
-    }
-
-    public function onProcessStoringFinish(ProcessLinksEvent $event)
-    {
-        $this->output->writeln(sprintf('[%s] Stored "%d" links for user "%d" with fetcher "%s" from resource owner "%s"', date('Y-m-d H:i:s'), count($event->getLinks()), $event->getUser(), $event->getFetcher(), $event->getResourceOwner()));
     }
 
     public function onProcessFinish(ProcessLinksEvent $event)

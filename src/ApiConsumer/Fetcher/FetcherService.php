@@ -5,10 +5,10 @@ namespace ApiConsumer\Fetcher;
 use ApiConsumer\Auth\UserProviderInterface;
 use ApiConsumer\Factory\FetcherFactory;
 use ApiConsumer\LinkProcessor\LinkProcessor;
-use ApiConsumer\Storage\StorageInterface;
 use Event\FetchingEvent;
 use Event\ProcessLinkEvent;
 use Event\ProcessLinksEvent;
+use Model\LinkModel;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
@@ -36,9 +36,9 @@ class FetcherService implements LoggerAwareInterface
     protected $linkProcessor;
 
     /**
-     * @var StorageInterface
+     * @var LinkModel
      */
-    protected $storage;
+    protected $linkModel;
 
     /**
      * @var FetcherFactory
@@ -58,7 +58,7 @@ class FetcherService implements LoggerAwareInterface
     /**
      * @param UserProviderInterface $userProvider
      * @param LinkProcessor $linkProcessor
-     * @param StorageInterface $storage
+     * @param LinkModel $linkModel
      * @param FetcherFactory $fetcherFactory
      * @param EventDispatcher $dispatcher
      * @param array $options
@@ -66,7 +66,7 @@ class FetcherService implements LoggerAwareInterface
     public function __construct(
         UserProviderInterface $userProvider,
         LinkProcessor $linkProcessor,
-        StorageInterface $storage,
+        LinkModel $linkModel,
         FetcherFactory $fetcherFactory,
         EventDispatcher $dispatcher,
         array $options
@@ -74,7 +74,7 @@ class FetcherService implements LoggerAwareInterface
 
         $this->userProvider = $userProvider;
         $this->linkProcessor = $linkProcessor;
-        $this->storage = $storage;
+        $this->linkModel = $linkModel;
         $this->fetcherFactory = $fetcherFactory;
         $this->dispatcher = $dispatcher;
         $this->options = $options;
@@ -128,20 +128,15 @@ class FetcherService implements LoggerAwareInterface
 
                     foreach ($links as $key => $link) {
                         try {
-                            $event['link'] = $link;
                             $this->dispatcher->dispatch(\AppEvents::PROCESS_LINK, new ProcessLinkEvent($userId, $resourceOwner, $fetcher, $link));
-                            $links[$key] = $this->linkProcessor->process($link);
+                            $linkProcessed = $this->linkProcessor->process($link);
+                            $linkProcessed['userId'] = $userId;
+                            $this->linkModel->addLink($linkProcessed);
+                            $links[$key] = $linkProcessed;
                         } catch (\Exception $e) {
                             $this->logger->error(sprintf('Fetcher: Error processing link "%s" from resource "%s". Reason: %s', $link['url'], $resourceOwner, $e->getMessage()));
                         }
                     }
-
-                    $this->dispatcher->dispatch(\AppEvents::PROCESS_STORING_START, new ProcessLinksEvent($userId, $resourceOwner, $fetcher, $links));
-                    $this->storage->storeLinks($userId, $links);
-                    foreach ($this->storage->getErrors() as $error) {
-                        $this->logger->error(sprintf('Error saving link: %s', $error));
-                    }
-                    $this->dispatcher->dispatch(\AppEvents::PROCESS_STORING_FINISH, new ProcessLinksEvent($userId, $resourceOwner, $fetcher, $links));
 
                     $this->dispatcher->dispatch(\AppEvents::PROCESS_FINISH, new ProcessLinksEvent($userId, $resourceOwner, $fetcher, $links));
                 }

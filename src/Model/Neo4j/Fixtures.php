@@ -140,10 +140,25 @@ class Fixtures
 
             if ($i <= 50) {
                 $link['additionalLabels'] = array('Video');
+                $link['tags'] = array(
+                    array('name' => 'Video Tag 1'),
+                    array('name' => 'Video Tag 2'),
+                    array('name' => 'Video Tag 3'),
+                );
             } elseif ($i <= 150) {
                 $link['additionalLabels'] = array('Audio');
+                $link['tags'] = array(
+                    array('name' => 'Audio Tag 4'),
+                    array('name' => 'Audio Tag 5'),
+                    array('name' => 'Audio Tag 6'),
+                );
             } elseif ($i <= 350) {
                 $link['additionalLabels'] = array('Image');
+                $link['tags'] = array(
+                    array('name' => 'Image Tag 7'),
+                    array('name' => 'Image Tag 8'),
+                    array('name' => 'Image Tag 9'),
+                );
             }
 
             $this->lm->addLink($link);
@@ -191,14 +206,14 @@ class Fixtures
 
             $answers = $question['answers'];
             $j = 1;
-            foreach ($answers as $id => $text) {
-                $answers[$id] = array('text' => 'Respuesta ' . $j . ' a la pregunta ' . $i);
+            foreach ($answers as $answer) {
+                $answers[] = array('answerId' => $answer['answerId'], 'text' => 'Respuesta ' . $j . ' a la pregunta ' . $i);
                 $j++;
             }
 
             $this->qm->update(
                 array(
-                    'id' => $question['id'],
+                    'questionId' => $question['questionId'],
                     'locale' => 'es',
                     'text' => 'Pregunta ' . $i,
                     'answers' => $answers,
@@ -249,8 +264,11 @@ class Fixtures
 
             foreach (range($answer['questionFrom'], $answer['questionTo']) as $i) {
 
-                $answerIds = array_keys($this->questions[$i]['answers']);
-                $questionId = $this->questions[$i]['id'];
+                $answerIds = array();
+                foreach ($this->questions[$i]['answers'] as $questionAnswer) {
+                    $answerIds[] = $questionAnswer['answerId'];
+                }
+                $questionId = $this->questions[$i]['questionId'];
                 $answerId = $answerIds[$answer['answer'] - 1];
                 $this->am->create(
                     array(

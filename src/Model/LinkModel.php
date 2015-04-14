@@ -99,10 +99,6 @@ class LinkModel
         return $links;
     }
 
-    /**
-     * @param array $data
-     * @return \Everyman\Neo4j\Query\ResultSet
-     */
     public function addLink(array $data)
     {
 
@@ -168,7 +164,14 @@ class LinkModel
 
         $query = $qb->getQuery();
 
-        return $query->getResultSet();
+        $query->getResultSet();
+
+        if (isset($data['tags'])) {
+            foreach ($data['tags'] as $tag) {
+                $this->createTag($tag);
+                $this->addTag($data, $tag);
+            }
+        }
     }
 
     public function updateLink(array $data, $processed = false)

@@ -1,6 +1,8 @@
 locale.options:
     default: %locale.default%
 
+instant.host: %instant.host%
+
 dbs.options:
     mysql_social:
         driver: %dbs.mysql_social.driver%

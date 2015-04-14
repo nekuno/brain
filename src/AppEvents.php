@@ -37,16 +37,6 @@ final class AppEvents
     const PROCESS_LINK = 'process.link';
 
     /**
-     * Fired before storing links
-     */
-    const PROCESS_STORING_START = 'process.storing.start';
-
-    /**
-     * Fired after storing links
-     */
-    const PROCESS_STORING_FINISH = 'process.storing.finish';
-
-    /**
      * Fired when links process is finished
      */
     const PROCESS_FINISH = 'process.finish';
