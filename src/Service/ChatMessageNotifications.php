@@ -175,6 +175,7 @@ class ChatMessageNotifications
     protected function getUsersWithUnreadMessages($limit = 999999999999)
     {
         $yesterday = new \DateTime('-1 day');
+        $yesterday = $yesterday->format("Y-m-d H:m:i");
         $qb = $this->driver->createQueryBuilder('chat_message')
             ->select('DISTINCT chat_message.user_to')
             ->from('chat_message')
@@ -196,6 +197,7 @@ class ChatMessageNotifications
     protected function getUnReadMessagesByUser($userId)
     {
         $yesterday = new \DateTime('-1 day');
+        $yesterday = $yesterday->format("Y-m-d H:m:i");
         $qb = $this->driver->createQueryBuilder('chat_message')
             ->select('*')
             ->from('chat_message')
