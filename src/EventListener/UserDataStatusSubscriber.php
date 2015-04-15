@@ -4,7 +4,7 @@
 namespace EventListener;
 
 use Doctrine\ORM\EntityManager;
-use Event\FetchingEvent;
+use Event\FetchEvent;
 use Event\MatchingExpiredEvent;
 use Event\ProcessLinksEvent;
 use Event\ContentRatedEvent;
@@ -48,8 +48,8 @@ class UserDataStatusSubscriber implements EventSubscriberInterface
     {
 
         return array(
-            \AppEvents::FETCHING_START => array('onFetchStart'),
-            \AppEvents::FETCHING_FINISH => array('onFetchFinish'),
+            \AppEvents::FETCH_START => array('onFetchStart'),
+            \AppEvents::FETCH_FINISH => array('onFetchFinish'),
             \AppEvents::PROCESS_START => array('onProcessStart'),
             \AppEvents::PROCESS_FINISH => array('onProcessFinish'),
             \AppEvents::MATCHING_EXPIRED => array('onMatchingExpired'),
@@ -57,7 +57,7 @@ class UserDataStatusSubscriber implements EventSubscriberInterface
         );
     }
 
-    public function onFetchStart(FetchingEvent $event)
+    public function onFetchStart(FetchEvent $event)
     {
 
         $status = $this->getCurrentDataStatus($event);
@@ -67,7 +67,7 @@ class UserDataStatusSubscriber implements EventSubscriberInterface
         $this->saveStatus($status);
     }
 
-    public function getCurrentDataStatus(FetchingEvent $event)
+    public function getCurrentDataStatus(FetchEvent $event)
     {
 
         $user = $event->getUser();
@@ -95,7 +95,7 @@ class UserDataStatusSubscriber implements EventSubscriberInterface
         $this->entityManager->flush();
     }
 
-    public function onFetchFinish(FetchingEvent $event)
+    public function onFetchFinish(FetchEvent $event)
     {
 
         $dataStatus = $this->getCurrentDataStatus($event);
