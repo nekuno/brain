@@ -47,12 +47,12 @@ class FetchLinksSubscriber implements EventSubscriberInterface
 
     public function onFetchStart(FetchEvent $event)
     {
-        $this->output->writeln(sprintf('[%s] Fetching links for user "%d" with fetcher "%s" from resource owner "%s"', date('Y-m-d H:i:s'), $event->getUser(), $event->getFetcher(), $event->getResourceOwner()));
+        $this->output->writeln(sprintf('[%s] Fetching links for user "%d" from resource owner "%s"', date('Y-m-d H:i:s'), $event->getUser(), $event->getResourceOwner()));
     }
 
     public function onFetchFinish(FetchEvent $event)
     {
-        $this->output->writeln(sprintf('[%s] Fetched links for user "%d" with fetcher "%s" from resource owner "%s"', date('Y-m-d H:i:s'), $event->getUser(), $event->getFetcher(), $event->getResourceOwner()));
+        $this->output->writeln(sprintf('[%s] Fetched links for user "%d" from resource owner "%s"', date('Y-m-d H:i:s'), $event->getUser(), $event->getResourceOwner()));
     }
 
     public function onProcessStart(ProcessLinksEvent $event)
@@ -61,7 +61,7 @@ class FetchLinksSubscriber implements EventSubscriberInterface
         $this->progress = new ProgressBar($this->output, count($event->getLinks()));
 
         if (OutputInterface::VERBOSITY_NORMAL < $this->output->getVerbosity()) {
-            $this->output->writeln(sprintf('[%s] Processing "%d" links for user "%d" with fetcher "%s" from resource owner "%s"', date('Y-m-d H:i:s'), count($event->getLinks()), $event->getUser(), $event->getFetcher(), $event->getResourceOwner()));
+            $this->output->writeln(sprintf('[%s] Processing "%d" links for user "%d" from resource owner "%s"', date('Y-m-d H:i:s'), count($event->getLinks()), $event->getUser(), $event->getResourceOwner()));
             $this->progress->start();
         }
     }

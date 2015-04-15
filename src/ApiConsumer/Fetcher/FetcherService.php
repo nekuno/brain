@@ -109,50 +109,41 @@ class FetcherService implements LoggerAwareInterface
                 $user = $user[0];
             }
 
+            $this->dispatcher->dispatch(\AppEvents::FETCH_START, new FetchEvent($userId, $resourceOwner));
+
             foreach ($this->options as $fetcher => $fetcherConfig) {
 
                 if ($fetcherConfig['resourceOwner'] === $resourceOwner) {
 
-                    $this->dispatcher->dispatch(\AppEvents::FETCH_START, new FetchEvent($userId, $resourceOwner, $fetcher));
-
                     try {
-                        $links = $this->fetcherFactory->build($fetcher)->fetchLinksFromUserFeed($user);
+                        $links = array_merge($links, $this->fetcherFactory->build($fetcher)->fetchLinksFromUserFeed($user));
                     } catch (\Exception $e) {
                         $this->logger->error(sprintf('Fetcher: Error fetching feed for user "%s" with fetcher "%s" from resource "%s". Reason: %s', $userId, $fetcher, $resourceOwner, $e->getMessage()));
                         continue;
                     }
 
-                    $this->dispatcher->dispatch(\AppEvents::FETCH_FINISH, new FetchEvent($userId, $resourceOwner, $fetcher));
-
-                    $this->dispatcher->dispatch(\AppEvents::PROCESS_START, new ProcessLinksEvent($userId, $resourceOwner, $fetcher, $links));
-
-                    foreach ($links as $key => $link) {
-                        try {
-                            $this->dispatcher->dispatch(\AppEvents::PROCESS_LINK, new ProcessLinkEvent($userId, $resourceOwner, $fetcher, $link));
-                            $linkProcessed = $this->linkProcessor->process($link);
-                            $linkProcessed['userId'] = $userId;
-                            $this->linkModel->addLink($linkProcessed);
-                            $links[$key] = $linkProcessed;
-                        } catch (\Exception $e) {
-                            $this->logger->error(sprintf('Fetcher: Error processing link "%s" from resource "%s". Reason: %s', $link['url'], $resourceOwner, $e->getMessage()));
-                        }
-                    }
-
-                    $this->dispatcher->dispatch(\AppEvents::PROCESS_FINISH, new ProcessLinksEvent($userId, $resourceOwner, $fetcher, $links));
                 }
             }
+            $this->dispatcher->dispatch(\AppEvents::FETCH_FINISH, new FetchEvent($userId, $resourceOwner));
+
+            $this->dispatcher->dispatch(\AppEvents::PROCESS_START, new ProcessLinksEvent($userId, $resourceOwner, $links));
+
+            foreach ($links as $key => $link) {
+                try {
+                    $this->dispatcher->dispatch(\AppEvents::PROCESS_LINK, new ProcessLinkEvent($userId, $resourceOwner, $link));
+                    $linkProcessed = $this->linkProcessor->process($link);
+                    $linkProcessed['userId'] = $userId;
+                    $this->linkModel->addLink($linkProcessed);
+                    $links[$key] = $linkProcessed;
+                } catch (\Exception $e) {
+                    $this->logger->error(sprintf('Fetcher: Error processing link "%s" from resource "%s". Reason: %s', $link['url'], $resourceOwner, $e->getMessage()));
+                }
+            }
+
+            $this->dispatcher->dispatch(\AppEvents::PROCESS_FINISH, new ProcessLinksEvent($userId, $resourceOwner, $links));
+
         } catch (\Exception $e) {
-            throw new \Exception(
-                sprintf(
-                    'Fetcher: Error fetching %s for user %d. Message: %s on file %s in line %d',
-                    ucfirst($resourceOwner),
-                    $userId,
-                    $e->getMessage(),
-                    $e->getFile(),
-                    $e->getLine()
-                ),
-                1
-            );
+            throw new \Exception(sprintf('Fetcher: Error fetching from resource "%s" for user "%d". Message: %s on file %s in line %d', $resourceOwner, $userId, $e->getMessage(), $e->getFile(), $e->getLine()), 1);
         }
 
         return $links;

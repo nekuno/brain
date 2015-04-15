@@ -8,10 +8,10 @@ class ProcessLinkEvent extends FetchEvent
 
     protected $link;
 
-    public function __construct($user, $resourceOwner, $fetcher, $link)
+    public function __construct($user, $resourceOwner, $link)
     {
 
-        parent::__construct($user, $resourceOwner, $fetcher);
+        parent::__construct($user, $resourceOwner);
         $this->link = $link;
     }
 
