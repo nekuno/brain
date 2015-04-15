@@ -3,7 +3,7 @@
 
 namespace ApiConsumer\EventListener;
 
-use Event\FetchingEvent;
+use Event\FetchEvent;
 use Event\ProcessLinkEvent;
 use Event\ProcessLinksEvent;
 use Symfony\Component\Console\Helper\ProgressBar;
@@ -37,20 +37,20 @@ class FetchLinksSubscriber implements EventSubscriberInterface
     {
 
         return array(
-            \AppEvents::FETCHING_START => array('onFetchingStart'),
-            \AppEvents::FETCHING_FINISH => array('onFetchingFinish'),
+            \AppEvents::FETCH_START => array('onFetchStart'),
+            \AppEvents::FETCH_FINISH => array('onFetchFinish'),
             \AppEvents::PROCESS_START => array('onProcessStart'),
             \AppEvents::PROCESS_LINK => array('onProcessLink'),
             \AppEvents::PROCESS_FINISH => array('onProcessFinish'),
         );
     }
 
-    public function onFetchingStart(FetchingEvent $event)
+    public function onFetchStart(FetchEvent $event)
     {
         $this->output->writeln(sprintf('[%s] Fetching links for user "%d" with fetcher "%s" from resource owner "%s"', date('Y-m-d H:i:s'), $event->getUser(), $event->getFetcher(), $event->getResourceOwner()));
     }
 
-    public function onFetchingFinish(FetchingEvent $event)
+    public function onFetchFinish(FetchEvent $event)
     {
         $this->output->writeln(sprintf('[%s] Fetched links for user "%d" with fetcher "%s" from resource owner "%s"', date('Y-m-d H:i:s'), $event->getUser(), $event->getFetcher(), $event->getResourceOwner()));
     }

@@ -5,7 +5,7 @@ namespace Event;
 
 use Symfony\Component\EventDispatcher\Event;
 
-class FetchingEvent extends Event
+class FetchEvent extends Event
 {
 
     protected $user;

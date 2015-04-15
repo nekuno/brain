@@ -5,7 +5,7 @@ namespace ApiConsumer\Fetcher;
 use ApiConsumer\Auth\UserProviderInterface;
 use ApiConsumer\Factory\FetcherFactory;
 use ApiConsumer\LinkProcessor\LinkProcessor;
-use Event\FetchingEvent;
+use Event\FetchEvent;
 use Event\ProcessLinkEvent;
 use Event\ProcessLinksEvent;
 use Model\LinkModel;
@@ -113,7 +113,7 @@ class FetcherService implements LoggerAwareInterface
 
                 if ($fetcherConfig['resourceOwner'] === $resourceOwner) {
 
-                    $this->dispatcher->dispatch(\AppEvents::FETCHING_START, new FetchingEvent($userId, $resourceOwner, $fetcher));
+                    $this->dispatcher->dispatch(\AppEvents::FETCH_START, new FetchEvent($userId, $resourceOwner, $fetcher));
 
                     try {
                         $links = $this->fetcherFactory->build($fetcher)->fetchLinksFromUserFeed($user);
@@ -122,7 +122,7 @@ class FetcherService implements LoggerAwareInterface
                         continue;
                     }
 
-                    $this->dispatcher->dispatch(\AppEvents::FETCHING_FINISH, new FetchingEvent($userId, $resourceOwner, $fetcher));
+                    $this->dispatcher->dispatch(\AppEvents::FETCH_FINISH, new FetchEvent($userId, $resourceOwner, $fetcher));
 
                     $this->dispatcher->dispatch(\AppEvents::PROCESS_START, new ProcessLinksEvent($userId, $resourceOwner, $fetcher, $links));
 

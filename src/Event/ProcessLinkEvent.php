@@ -3,7 +3,7 @@
 
 namespace Event;
 
-class ProcessLinkEvent extends FetchingEvent
+class ProcessLinkEvent extends FetchEvent
 {
 
     protected $link;
