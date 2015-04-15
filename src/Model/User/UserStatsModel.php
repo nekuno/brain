@@ -35,7 +35,21 @@ class UserStatsModel {
 
     protected $spotifyProcessed;
 
-    function __construct($numberOfContentLikes, $numberOfVideoLikes, $numberOfAudioLikes, $numberOfImageLikes, $numberOfReceivedLikes, $numberOfUserLikes, $numberOfQuestionsAnswered, $twitterFetched, $twitterProcessed, $facebookFetched, $facebookProcessed, $googleFetched, $googleProcessed, $spotifyFetched, $spotifyProcessed)
+    function __construct($numberOfContentLikes,
+                         $numberOfVideoLikes,
+                         $numberOfAudioLikes,
+                         $numberOfImageLikes,
+                         $numberOfReceivedLikes,
+                         $numberOfUserLikes,
+                         $numberOfQuestionsAnswered,
+                         $twitterFetched,
+                         $twitterProcessed,
+                         $facebookFetched,
+                         $facebookProcessed,
+                         $googleFetched,
+                         $googleProcessed,
+                         $spotifyFetched,
+                         $spotifyProcessed)
     {
         $this->numberOfContentLikes = $numberOfContentLikes;
         $this->numberOfVideoLikes = $numberOfVideoLikes;
