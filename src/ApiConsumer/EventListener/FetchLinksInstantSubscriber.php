@@ -7,6 +7,7 @@ use Event\FetchEvent;
 use Event\ProcessLinkEvent;
 use Event\ProcessLinksEvent;
 use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Exception\RequestException;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class FetchLinksInstantSubscriber implements EventSubscriberInterface
@@ -53,13 +54,21 @@ class FetchLinksInstantSubscriber implements EventSubscriberInterface
     public function onFetchStart(FetchEvent $event)
     {
         $json = array('resource' => $event->getResourceOwner());
-        $this->client->post($this->host . 'api/fetch/start', array('json' => $json));
+        try {
+            $this->client->post($this->host . 'api/fetch/start', array('json' => $json));
+        } catch (RequestException $e) {
+
+        }
     }
 
     public function onFetchFinish(FetchEvent $event)
     {
         $json = array('resource' => $event->getResourceOwner());
-        $this->client->post($this->host . 'api/fetch/finish', array('json' => $json));
+        try {
+            $this->client->post($this->host . 'api/fetch/finish', array('json' => $json));
+        } catch (RequestException $e) {
+
+        }
     }
 
     public function onProcessStart(ProcessLinksEvent $event)
@@ -67,19 +76,31 @@ class FetchLinksInstantSubscriber implements EventSubscriberInterface
         $this->current = 0;
         $this->links = count($event->getLinks());
         $json = array('resource' => $event->getResourceOwner());
-        $this->client->post($this->host . 'api/process/start', array('json' => $json));
+        try {
+            $this->client->post($this->host . 'api/process/start', array('json' => $json));
+        } catch (RequestException $e) {
+
+        }
     }
 
     public function onProcessLink(ProcessLinkEvent $event)
     {
         $percentage = floor($this->current++ / $this->links * 100);
         $json = array('resource' => $event->getResourceOwner(), 'percentage' => $percentage);
-        $this->client->post($this->host . 'api/process/link', array('json' => $json));
+        try {
+            $this->client->post($this->host . 'api/process/link', array('json' => $json));
+        } catch (RequestException $e) {
+
+        }
     }
 
     public function onProcessFinish(ProcessLinksEvent $event)
     {
         $json = array('resource' => $event->getResourceOwner());
-        $this->client->post($this->host . 'api/process/finish', array('json' => $json));
+        try {
+            $this->client->post($this->host . 'api/process/finish', array('json' => $json));
+        } catch (RequestException $e) {
+
+        }
     }
 }
