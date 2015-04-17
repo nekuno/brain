@@ -33,20 +33,19 @@ class UserModel implements PaginatedInterface
     /**
      * @var Connection
      */
-    protected $driver;
+    protected $connectionSocial;
 
     /**
      * @var EntityManager
      */
-    protected $em;
+    protected $entityManagerBrain;
 
-
-    public function __construct(GraphManager $gm, ProfileModel $pm, Connection $driver, EntityManager $entityManager)
+    public function __construct(GraphManager $gm, ProfileModel $pm, Connection $connectionSocial, EntityManager $entityManagerBrain)
     {
         $this->gm = $gm;
         $this->pm = $pm;
-        $this->driver = $driver;
-        $this->em = $entityManager;
+        $this->connectionSocial = $connectionSocial;
+        $this->entityManagerBrain = $entityManagerBrain;
     }
 
     /**
@@ -292,10 +291,10 @@ class UserModel implements PaginatedInterface
         /* @var $row Row */
         $row = $result->current();
 
-        $numberOfReceivedLikes = $this->driver->executeQuery('SELECT COUNT(*) AS numberOfReceivedLikes FROM user_like WHERE user_to = :user_to', array('user_to' => (integer)$id))->fetchColumn();
-        $numberOfUserLikes = $this->driver->executeQuery('SELECT COUNT(*) AS numberOfUserLikes FROM user_like WHERE user_from = :user_from', array('user_from' => (integer)$id))->fetchColumn();
+        $numberOfReceivedLikes = $this->connectionSocial->executeQuery('SELECT COUNT(*) AS numberOfReceivedLikes FROM user_like WHERE user_to = :user_to', array('user_to' => (integer)$id))->fetchColumn();
+        $numberOfUserLikes = $this->connectionSocial->executeQuery('SELECT COUNT(*) AS numberOfUserLikes FROM user_like WHERE user_from = :user_from', array('user_from' => (integer)$id))->fetchColumn();
 
-        $dataStatusRepository = $this->em->getRepository('\Model\Entity\DataStatus');
+        $dataStatusRepository = $this->entityManagerBrain->getRepository('\Model\Entity\DataStatus');
 
         $twitterStatus = $dataStatusRepository->findOneBy(array('userId' => (int)$id, 'resourceOwner' => 'twitter'));
         $facebookStatus = $dataStatusRepository->findOneBy(array('userId' => (int)$id, 'resourceOwner' => 'facebook'));
@@ -367,7 +366,7 @@ class UserModel implements PaginatedInterface
 
         }
 
-        $this->driver->update('users', array('status' => $status->getStatus()), array('id' => (integer)$id));
+        $this->connectionSocial->update('users', array('status' => $status->getStatus()), array('id' => (integer)$id));
 
         return $status;
     }
