@@ -40,16 +40,22 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
     /**
      * @var Connection
      */
-    protected $driver;
+    protected $connectionSocial;
 
-    public function __construct(AMQPChannel $channel, UserModel $userModel, MatchingModel $matchingModel, SimilarityModel $similarityModel, Connection $driver)
+    /**
+     * @var Connection
+     */
+    protected $connectionBrain;
+
+    public function __construct(AMQPChannel $channel, UserModel $userModel, MatchingModel $matchingModel, SimilarityModel $similarityModel, Connection $connectionSocial, Connection $connectionBrain)
     {
 
         $this->channel = $channel;
         $this->userModel = $userModel;
         $this->matchingModel = $matchingModel;
         $this->similarityModel = $similarityModel;
-        $this->driver = $driver;
+        $this->connectionSocial = $connectionSocial;
+        $this->connectionBrain = $connectionBrain;
     }
 
     /**
@@ -80,9 +86,15 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
     public function callback(AMQPMessage $message)
     {
 
-        if ($this->driver->ping() === false) {
-            $this->driver->close();
-            $this->driver->connect();
+        // Verify mysql connections are alive
+        if ($this->connectionSocial->ping() === false) {
+            $this->connectionSocial->close();
+            $this->connectionSocial->connect();
+        }
+
+        if ($this->connectionBrain->ping() === false) {
+            $this->connectionBrain->close();
+            $this->connectionBrain->connect();
         }
 
         $data = json_decode($message->body, true);
