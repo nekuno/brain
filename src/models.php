@@ -77,7 +77,7 @@ $app['users.affinity.model'] = function ($app) {
 
 $app['users.recommendation.content.model'] = function ($app) {
 
-    return new \Model\User\Recommendation\ContentRecommendationPaginatedModel($app['neo4j.graph_manager']);
+    return new \Model\User\Recommendation\ContentRecommendationPaginatedModel($app['neo4j.graph_manager'], $app['users.affinity.model']);
 };
 
 $app['users.recommendation.content.tag.model'] = function ($app) {

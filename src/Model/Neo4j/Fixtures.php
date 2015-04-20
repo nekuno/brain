@@ -140,6 +140,7 @@ class Fixtures
 
             if ($i <= 50) {
                 $link['additionalLabels'] = array('Video');
+                $link['additionalFields'] = array('embed_type' => 'youtube', 'embed_id' => 'youtube-id-' . $i);
                 $link['tags'] = array(
                     array('name' => 'Video Tag 1'),
                     array('name' => 'Video Tag 2'),
@@ -147,6 +148,7 @@ class Fixtures
                 );
             } elseif ($i <= 150) {
                 $link['additionalLabels'] = array('Audio');
+                $link['additionalFields'] = array('embed_type' => 'spotify', 'embed_id' => 'spotify:track:' . $i);
                 $link['tags'] = array(
                     array('name' => 'Audio Tag 4'),
                     array('name' => 'Audio Tag 5'),
