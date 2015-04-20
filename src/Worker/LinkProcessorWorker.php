@@ -34,15 +34,21 @@ class LinkProcessorWorker extends LoggerAwareWorker implements RabbitMQConsumerI
     /**
      * @var Connection
      */
-    protected $driver;
+    protected $connectionSocial;
 
-    public function __construct(AMQPChannel $channel, FetcherService $fetcherService, UserProviderInterface $userProvider, Connection $driver)
+    /**
+     * @var Connection
+     */
+    protected $connectionBrain;
+
+    public function __construct(AMQPChannel $channel, FetcherService $fetcherService, UserProviderInterface $userProvider, Connection $connectionSocial, Connection $connectionBrain)
     {
 
         $this->channel = $channel;
         $this->fetcherService = $fetcherService;
         $this->userProvider = $userProvider;
-        $this->driver = $driver;
+        $this->connectionSocial = $connectionSocial;
+        $this->connectionBrain = $connectionBrain;
     }
 
     /**
@@ -73,9 +79,15 @@ class LinkProcessorWorker extends LoggerAwareWorker implements RabbitMQConsumerI
     public function callback(AMQPMessage $message)
     {
 
-        if ($this->driver->ping() === false) {
-            $this->driver->close();
-            $this->driver->connect();
+        // Verify mysql connections are alive
+        if ($this->connectionSocial->ping() === false) {
+            $this->connectionSocial->close();
+            $this->connectionSocial->connect();
+        }
+
+        if ($this->connectionBrain->ping() === false) {
+            $this->connectionBrain->close();
+            $this->connectionBrain->connect();
         }
 
         $data = json_decode($message->body, true);

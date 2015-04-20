@@ -81,7 +81,7 @@ class WorkerRabbitMQConsumeCommand extends ApplicationAwareCommand
                 $dispatcher->addSubscriber($fetchLinksInstantSubscriber);
                 /* @var $channel AMQPChannel */
                 $channel = $connection->channel();
-                $worker = new LinkProcessorWorker($channel, $fetcher, $userProvider, $this->app['dbs']['mysql_social']);
+                $worker = new LinkProcessorWorker($channel, $fetcher, $userProvider, $this->app['dbs']['mysql_social'], $this->app['dbs']['mysql_brain']);
                 $worker->setLogger($logger);
                 $logger->notice('Processing fetching queue');
                 $worker->consume();
@@ -90,7 +90,7 @@ class WorkerRabbitMQConsumeCommand extends ApplicationAwareCommand
             case 'matching':
                 /* @var $channel AMQPChannel */
                 $channel = $connection->channel();
-                $worker = new MatchingCalculatorWorker($channel, $this->app['users.model'], $this->app['users.matching.model'], $this->app['users.similarity.model'], $this->app['dbs']['mysql_social']);
+                $worker = new MatchingCalculatorWorker($channel, $this->app['users.model'], $this->app['users.matching.model'], $this->app['users.similarity.model'], $this->app['dbs']['mysql_social'], $this->app['dbs']['mysql_brain']);
                 $worker->setLogger($logger);
                 $logger->notice('Processing matching queue');
                 $worker->consume();

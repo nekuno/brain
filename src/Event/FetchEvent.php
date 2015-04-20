@@ -15,7 +15,7 @@ class FetchEvent extends Event
     public function __construct($user, $resourceOwner)
     {
 
-        $this->user = $user;
+        $this->user = (integer)$user;
         $this->resourceOwner = $resourceOwner;
     }
 

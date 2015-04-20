@@ -7,7 +7,6 @@ use Doctrine\ORM\EntityManager;
 use Model\User\ProfileModel;
 use Model\UserModel;
 use Doctrine\DBAL\Connection;
-use Service\EmailNotifications;
 use Silex\Translator;
 use Silex\Application;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -22,17 +21,17 @@ class ChatMessageNotifications
     /**
      * @var EmailNotifications
      */
-    private $emailNotifications;
+    protected $emailNotifications;
 
     /**
      * @var \Doctrine\ORM\EntityManager
      */
-    private $em;
+    protected $entityManagerBrain;
 
     /**
      * @var Connection
      */
-    protected $driver;
+    protected $connectionSocial;
 
     /**
      * @var Translator
@@ -49,12 +48,11 @@ class ChatMessageNotifications
      */
     protected $profileModel;
 
-
-    function __construct(EmailNotifications $emailNotifications, EntityManager $em, Connection $driver, Translator $translator,  UserModel $userModel, ProfileModel $profileModel)
+    function __construct(EmailNotifications $emailNotifications, EntityManager $entityManagerBrain, Connection $connectionSocial, Translator $translator, UserModel $userModel, ProfileModel $profileModel)
     {
         $this->emailNotifications = $emailNotifications;
-        $this->em = $em;
-        $this->driver = $driver;
+        $this->entityManagerBrain = $entityManagerBrain;
+        $this->connectionSocial = $connectionSocial;
         $this->translator = $translator;
         $this->userModel = $userModel;
         $this->profileModel = $profileModel;
@@ -64,24 +62,22 @@ class ChatMessageNotifications
     {
         $usersIds = $this->getUsersWithUnreadMessages($limit);
 
-        $output->writeln( count($usersIds) . ' users with unread messages found');
+        $output->writeln(count($usersIds) . ' users with unread messages found');
 
-        foreach($usersIds as $userId)
-        {
-            $userId = (int) $userId['user_to'];
+        foreach ($usersIds as $userId) {
+            $userId = (int)$userId['user_to'];
 
             $chatMessages = $this->getUnReadMessagesByUser($userId);
 
             if (OutputInterface::VERBOSITY_VERBOSE <= $output->getVerbosity()) {
-                $output->writeln( count($chatMessages) . ' unread messages found for user ' . $userId );
+                $output->writeln(count($chatMessages) . ' unread messages found for user ' . $userId);
             }
 
             $filteredChatMessages = $this->filterMessages($chatMessages);
 
             if (OutputInterface::VERBOSITY_VERY_VERBOSE <= $output->getVerbosity()) {
-                foreach($filteredChatMessages as $message)
-                {
-                    $output->writeln( 'Message for user ' . $userId );
+                foreach ($filteredChatMessages as $message) {
+                    $output->writeln('Message for user ' . $userId);
                     $table = $chatMessagesNotificationsCommand->getHelper('table');
 
                     $table->setHeaders(array_keys($message))
@@ -93,36 +89,34 @@ class ChatMessageNotifications
             $user = $this->userModel->getById($userId);
             $profile = $this->profileModel->getById($userId);
 
-            if(! $user)
-            {
+            if (!$user) {
                 throw new \Exception('User not found', 404);
             }
 
-            if (! $profile && OutputInterface::VERBOSITY_VERBOSE <= $output->getVerbosity()) {
-                $output->writeln( 'Profile ' . $userId . ' not found. Using default locale (' . $this->translator->getLocale() . ').' );
+            if (!$profile && OutputInterface::VERBOSITY_VERBOSE <= $output->getVerbosity()) {
+                $output->writeln('Profile ' . $userId . ' not found. Using default locale (' . $this->translator->getLocale() . ').');
             }
 
-            if(isset($profile['interfaceLanguage']) && $profile['interfaceLanguage'])
-            {
+            if (isset($profile['interfaceLanguage']) && $profile['interfaceLanguage']) {
                 $this->translator->setLocale($profile['interfaceLanguage']);
 
-                if (OutputInterface::VERBOSITY_VERBOSE <= $output->getVerbosity())
-                {
-                    $output->writeln( 'Profile ' . $userId . ' found. Using locale ' . $profile['interfaceLanguage'] );
+                if (OutputInterface::VERBOSITY_VERBOSE <= $output->getVerbosity()) {
+                    $output->writeln('Profile ' . $userId . ' found. Using locale ' . $profile['interfaceLanguage']);
                 }
 
             }
 
-            $this->emailNotifications->send(EmailNotification::create()
-                ->setType(EmailNotification::UNREAD_CHAT_MESSAGES)
-                ->setUserId($userId)
-                ->setRecipient($user['email'])
-                ->setSubject($this->translator->trans('notifications.messages.unread.subject'))
-                ->setInfo($this->saveInfo($user, $filteredChatMessages, count($chatMessages)))
+            $this->emailNotifications->send(
+                EmailNotification::create()
+                    ->setType(EmailNotification::UNREAD_CHAT_MESSAGES)
+                    ->setUserId($userId)
+                    ->setRecipient($user['email'])
+                    ->setSubject($this->translator->trans('notifications.messages.unread.subject'))
+                    ->setInfo($this->saveInfo($user, $filteredChatMessages, count($chatMessages)))
             );
 
             if (OutputInterface::VERBOSITY_VERBOSE <= $output->getVerbosity()) {
-                $output->writeln( 'Email sent to user ' . $userId . ' with ' .  count($filteredChatMessages) . ' messages.' );
+                $output->writeln('Email sent to user ' . $userId . ' with ' . count($filteredChatMessages) . ' messages.');
             }
         }
     }
@@ -134,26 +128,22 @@ class ChatMessageNotifications
         $return = array();
 
         // Get users_from
-        foreach($chatMessages as $chatMessage)
-        {
-            if(! in_array($chatMessage['user_from'], $usersFrom))
+        foreach ($chatMessages as $chatMessage) {
+            if (!in_array($chatMessage['user_from'], $usersFrom)) {
                 $usersFrom[] = $chatMessage['user_from'];
+            }
         }
 
         // Get filtered messages
-        foreach($usersFrom as $indexUser => $userFrom)
-        {
+        foreach ($usersFrom as $indexUser => $userFrom) {
             // Maximum 3 users
-            if($indexUser > 3)
-            {
+            if ($indexUser > 3) {
                 break;
             }
 
             $thisUserChatMessages = array();
-            foreach($chatMessages as $chatMessage)
-            {
-                if( $chatMessage['user_from'] === $userFrom )
-                {
+            foreach ($chatMessages as $chatMessage) {
+                if ($chatMessage['user_from'] === $userFrom) {
                     $thisUserChatMessages[] = $chatMessage;
                 }
             }
@@ -176,7 +166,7 @@ class ChatMessageNotifications
     {
         $yesterday = new \DateTime('-1 day');
         $yesterday = $yesterday->format("Y-m-d H:m:i");
-        $qb = $this->driver->createQueryBuilder('chat_message')
+        $qb = $this->connectionSocial->createQueryBuilder('chat_message')
             ->select('DISTINCT chat_message.user_to')
             ->from('chat_message')
             ->where('chat_message.readed = 0')
@@ -198,7 +188,7 @@ class ChatMessageNotifications
     {
         $yesterday = new \DateTime('-1 day');
         $yesterday = $yesterday->format("Y-m-d H:m:i");
-        $qb = $this->driver->createQueryBuilder('chat_message')
+        $qb = $this->connectionSocial->createQueryBuilder('chat_message')
             ->select('*')
             ->from('chat_message')
             ->where('chat_message.readed = 0')
@@ -213,8 +203,7 @@ class ChatMessageNotifications
 
     protected function saveInfo(array $user, array $chatMessages, $totalMessages)
     {
-        foreach($chatMessages as $index => $chatMessage)
-        {
+        foreach ($chatMessages as $index => $chatMessage) {
             $chatMessages[$index]['username_from'] = $this->userModel->getById($chatMessage['user_from'])['username'];
         }
 
