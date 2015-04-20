@@ -188,7 +188,7 @@ class Fixtures
     {
         $this->logger->notice(sprintf('Loading %d questions', self::NUM_OF_QUESTIONS));
 
-        for ($i = 1; $i <= self::NUM_OF_QUESTIONS; $i++) {
+        for ($i = 1; $i < (int)round(self::NUM_OF_QUESTIONS/2); $i++) {
 
             $answers = array();
             for ($j = 1; $j <= 3; $j++) {
@@ -222,6 +222,40 @@ class Fixtures
 
             $this->questions[$i] = $question;
 
+        }
+
+        for ($i = (int)round(self::NUM_OF_QUESTIONS/2); $i <= self::NUM_OF_QUESTIONS; $i++) {
+            $answers = array();
+            for ($j = 1; $j <= 3; $j++) {
+                $answers[] = array('text' => 'Answer ' . $j . ' to Question ' . $i . '. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed vestibulum augue dolor, non malesuada tellus suscipit quis.');
+            }
+
+            $question = $this->qm->create(
+                array(
+                    'locale' => 'en',
+                    'text' => 'Question ' . $i . '. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed vestibulum augue dolor, non malesuada tellus suscipit quis. Sed in elementum risus.',
+                    'userId' => 1,
+                    'answers' => $answers,
+                )
+            );
+
+            $answers = $question['answers'];
+            $j = 1;
+            foreach ($answers as $answer) {
+                $answers[] = array('answerId' => $answer['answerId'], 'text' => 'Respuesta ' . $j . ' a la pregunta ' . $i . '. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed vestibulum augue dolor, non malesuada tellus suscipit quis.');
+                $j++;
+            }
+
+            $this->qm->update(
+                array(
+                    'questionId' => $question['questionId'],
+                    'locale' => 'es',
+                    'text' => 'Pregunta ' . $i . '. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed vestibulum augue dolor, non malesuada tellus suscipit quis.',
+                    'answers' => $answers,
+                )
+            );
+
+            $this->questions[$i] = $question;
         }
     }
 
