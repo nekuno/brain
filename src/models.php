@@ -2,7 +2,7 @@
 
 $app['users.model'] = function ($app) {
 
-    return new \Model\UserModel($app['neo4j.graph_manager'], $app['users.profile.model'], $app['dbs']['mysql_social']);
+    return new \Model\UserModel($app['neo4j.graph_manager'], $app['users.profile.model'], $app['dbs']['mysql_social'], $app['orm.ems']['mysql_brain']);
 };
 
 $app['users.profile.model'] = function ($app) {
@@ -17,12 +17,12 @@ $app['users.profile.tag.model'] = function ($app) {
 
 $app['users.answers.model'] = function ($app) {
 
-    return new \Model\User\AnswerModel($app['neo4j.graph_manager'], $app['dispatcher']);
+    return new \Model\User\AnswerModel($app['neo4j.graph_manager'], $app['questionnaire.questions.model'], $app['users.model'], $app['dispatcher']);
 };
 
 $app['users.questions.model'] = function ($app) {
 
-    return new \Model\User\QuestionPaginatedModel($app['neo4j.graph_manager'], $app['questionnaire.questions.model']);
+    return new \Model\User\QuestionPaginatedModel($app['neo4j.graph_manager'], $app['users.answers.model']);
 };
 
 $app['users.questions.compare.model'] = function ($app) {
@@ -87,7 +87,7 @@ $app['users.recommendation.content.tag.model'] = function ($app) {
 
 $app['questionnaire.questions.model'] = function ($app) {
 
-    return new \Model\Questionnaire\QuestionModel($app['neo4j.client']);
+    return new \Model\Questionnaire\QuestionModel($app['neo4j.graph_manager'], $app['users.model']);
 };
 
 $app['links.model'] = function ($app) {

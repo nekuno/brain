@@ -2,58 +2,26 @@
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
-use Model\Exception\ValidationException;
+use Symfony\Component\Translation\Loader\YamlFileLoader;
 
-//Request::setTrustedProxies(array('127.0.0.1'));
 
-$app['users.controller'] = $app->share(
-    function () {
+$app['emailNotification.service'] = function ($app) {
+    return new \Service\EmailNotifications($app['mailer'], $app['orm.ems']['mysql_brain'], $app['twig']);
+};
 
-        return new \Controller\User\UserController;
-    }
-);
+$app['translator'] = $app->share($app->extend('translator', function($translator) {
+    $translator->addLoader('yaml', new YamlFileLoader());
 
-$app['users.profile.controller'] = $app->share(
-    function () {
+    $translator->addResource('yaml', __DIR__.'/locales/en.yml', 'en');
+    $translator->addResource('yaml', __DIR__.'/locales/es.yml', 'es');
 
-        return new \Controller\User\ProfileController();
-    }
-);
+    return $translator;
+}));
 
-$app['users.data.controller'] = $app->share(
-    function () {
+$app['chatMessageNotifications.service'] = function (Silex\Application $app) {
+    return new \Service\ChatMessageNotifications($app['emailNotification.service'], $app['orm.ems']['mysql_brain'], $app['dbs']['mysql_social'], $app['translator'], $app['users.model'], $app['users.profile.model']);
+};
 
-        return new \Controller\User\DataController();
-    }
-);
-
-$app['questionnaire.questions.controller'] = $app->share(
-    function () {
-
-        return new Controller\Questionnaire\QuestionController;
-    }
-);
-
-$app['users.answers.controller'] = $app->share(
-    function () {
-
-        return new \Controller\User\AnswerController;
-    }
-);
-
-$app['users.groups.controller'] = $app->share(
-    function () {
-
-        return new \Controller\User\GroupController;
-    }
-);
-
-$app['fetch.controller'] = $app->share(
-    function () {
-
-        return new Controller\FetchController;
-    }
-);
 
 /**
  * Middleware for filter some request
@@ -89,12 +57,6 @@ $app->error(
 
         $response = array('error' => $e->getMessage());
 
-        $headers = $e instanceof HttpExceptionInterface ? $e->getHeaders() : array();
-
-        if ($e instanceof ValidationException) {
-            $response['validationErrors'] = $e->getErrors();
-        }
-
         if ($app['debug']) {
             $response['debug'] = array(
                 'file' => $e->getFile(),
@@ -102,6 +64,8 @@ $app->error(
                 'trace' => $e->getTrace(),
             );
         }
+
+        $headers = $e instanceof HttpExceptionInterface ? $e->getHeaders() : array();
 
         return $app->json($response, $code, $headers);
     }

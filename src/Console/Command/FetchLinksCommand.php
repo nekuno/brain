@@ -3,6 +3,7 @@
 namespace Console\Command;
 
 use ApiConsumer\Auth\DBUserProvider;
+use ApiConsumer\EventListener\FetchLinksInstantSubscriber;
 use ApiConsumer\EventListener\FetchLinksSubscriber;
 use ApiConsumer\Fetcher\FetcherService;
 use Psr\Log\LogLevel;
@@ -73,9 +74,11 @@ class FetchLinksCommand extends ApplicationAwareCommand
         $fetcher->setLogger($logger);
 
         $fetchLinksSubscriber = new FetchLinksSubscriber($output);
+        $fetchLinksInstantSubscriber = new FetchLinksInstantSubscriber($this->app['guzzle.client'], $this->app['instant.host']);
         $dispatcher = $this->app['dispatcher'];
         /* @var $dispatcher EventDispatcher */
         $dispatcher->addSubscriber($fetchLinksSubscriber);
+        $dispatcher->addSubscriber($fetchLinksInstantSubscriber);
 
         foreach ($users as $user) {
             try {
@@ -95,6 +98,5 @@ class FetchLinksCommand extends ApplicationAwareCommand
         }
 
         $output->writeln('Success!');
-        $output->writeln(sprintf('Memory consumed: %s', $this->formatBytes(memory_get_peak_usage(true))));
     }
 }

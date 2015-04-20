@@ -1,6 +1,8 @@
 locale.options:
     default: %locale.default%
 
+instant.host: %instant.host%
+
 dbs.options:
     mysql_social:
         driver: %dbs.mysql_social.driver%
@@ -45,6 +47,7 @@ swiftmailer.options:
     password: %swiftmailer.password%
     encryption: %swiftmailer.encryption%
     auth_mode: %swiftmailer.auth_mode%
+    spool:      { type: memory }
 
 amqp.options:
     host: %rabbitmq.host%
