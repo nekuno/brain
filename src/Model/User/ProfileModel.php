@@ -354,7 +354,7 @@ class ProfileModel
                     }
                 }
             } else {
-                if (isset($fieldData['required']) && $fieldData['required']) {
+                if (isset($fieldData['required']) && $fieldData['required'] === true) {
                     $fieldErrors[] = 'It\'s required.';
                 }
             }
