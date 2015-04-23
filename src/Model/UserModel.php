@@ -26,11 +26,6 @@ class UserModel implements PaginatedInterface
     protected $gm;
 
     /**
-     * @var ProfileModel
-     */
-    protected $pm;
-
-    /**
      * @var Connection
      */
     protected $connectionSocial;
@@ -40,10 +35,9 @@ class UserModel implements PaginatedInterface
      */
     protected $entityManagerBrain;
 
-    public function __construct(GraphManager $gm, ProfileModel $pm, Connection $connectionSocial, EntityManager $entityManagerBrain)
+    public function __construct(GraphManager $gm, Connection $connectionSocial, EntityManager $entityManagerBrain)
     {
         $this->gm = $gm;
-        $this->pm = $pm;
         $this->connectionSocial = $connectionSocial;
         $this->entityManagerBrain = $entityManagerBrain;
     }
@@ -71,8 +65,6 @@ class UserModel implements PaginatedInterface
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();
-
-        $this->pm->create($user['id'], array());
 
         return $this->parseResultSet($result);
     }

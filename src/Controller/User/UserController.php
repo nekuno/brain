@@ -80,6 +80,7 @@ class UserController
         // Create and persist the User
 
         try {
+            /* @var $model UserModel */
             $model = $app['users.model'];
             $result = $model->create($request->request->all());
         } catch (\Exception $e) {
@@ -593,10 +594,12 @@ class UserController
         }
 
         if ($result['pagination']['nextLink'] != null) {
-            if ($foreign!=null) {
-                $result['pagination']['nextLink'] = str_replace('foreign=' . $foreign,
+            if ($foreign != null) {
+                $result['pagination']['nextLink'] = str_replace(
+                    'foreign=' . $foreign,
                     'foreign=' . ($foreign + $newForeign),
-                    $result['pagination']['nextLink']);
+                    $result['pagination']['nextLink']
+                );
             } else {
                 $result['pagination']['nextLink'] .= ('&foreign=' . $newForeign);
             }
