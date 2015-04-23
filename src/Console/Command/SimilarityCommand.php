@@ -43,9 +43,11 @@ class SimilarityCommand extends ApplicationAwareCommand
                 1 => $userB
             )
         );
+
+        /* @var $userModel UserModel */
+        $userModel = $this->app['users.model'];
+
         if (null === $userA || null === $userB) {
-            /* @var $userModel UserModel */
-            $userModel = $this->app['users.model'];
             $combinations = $userModel->getAllCombinations();
         }
 
@@ -56,8 +58,10 @@ class SimilarityCommand extends ApplicationAwareCommand
                 $userB = $users[1];
 
                 $similarity = $model->getSimilarity($userA, $userB);
+                $status = $userModel->calculateStatus($userA);
 
                 if (OutputInterface::VERBOSITY_NORMAL < $output->getVerbosity()) {
+                    $output->writeln(sprintf('Calculating user "%s" new status: "%s"', $userA, $status->getStatus()));
                     $output->writeln(sprintf('[%s] Similarity between user %d - %d', date('Y-m-d H:i:s'), $userA, $userB));
                     $this->getTable($similarity)->render($output);
                 }
