@@ -5,7 +5,6 @@ namespace Model;
 use Doctrine\DBAL\Connection;
 use Everyman\Neo4j\Query\Row;
 use Model\Neo4j\GraphManager;
-use Model\User\ProfileModel;
 use Model\User\UserStatsModel;
 use Model\User\UserStatusModel;
 use Paginator\PaginatedInterface;

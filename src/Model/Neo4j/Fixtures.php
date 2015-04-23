@@ -86,6 +86,7 @@ class Fixtures
         $this->loadLinkTags();
         $this->loadLikes();
         $this->loadAnswers();
+        $this->calculateStatus();
     }
 
     protected function clean()
@@ -190,7 +191,7 @@ class Fixtures
     {
         $this->logger->notice(sprintf('Loading %d questions', self::NUM_OF_QUESTIONS));
 
-        $halfQuestions = (int)round(self::NUM_OF_QUESTIONS/2);
+        $halfQuestions = (int)round(self::NUM_OF_QUESTIONS / 2);
         for ($i = 1; $i <= self::NUM_OF_QUESTIONS; $i++) {
 
             $answers = array();
@@ -294,6 +295,17 @@ class Fixtures
             }
         }
 
+    }
+
+    protected function calculateStatus()
+    {
+        $this->logger->notice(sprintf('Calculating status for %d users', self::NUM_OF_USERS));
+
+        for ($i = 1; $i <= self::NUM_OF_USERS; $i++) {
+
+            $status = $this->um->calculateStatus($i);
+            $this->logger->notice(sprintf('Calculating user "%s" new status: "%s"', $i, $status->getStatus()));
+        }
     }
 
     protected function createUserLikesLinkRelationship($user, $link)
