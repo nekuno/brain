@@ -191,7 +191,7 @@ class Fixtures
         $this->logger->notice(sprintf('Loading %d questions', self::NUM_OF_QUESTIONS));
 
         $halfQuestions = (int)round(self::NUM_OF_QUESTIONS/2);
-        for ($i = 1; $i < self::NUM_OF_QUESTIONS; $i++) {
+        for ($i = 1; $i <= self::NUM_OF_QUESTIONS; $i++) {
 
             $answers = array();
 
