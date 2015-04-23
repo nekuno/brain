@@ -3,15 +3,15 @@
 
 namespace Event;
 
-class ProcessLinksEvent extends FetchingEvent
+class ProcessLinksEvent extends FetchEvent
 {
 
     protected $links;
 
-    public function __construct($user, $resourceOwner, $fetcher, $links)
+    public function __construct($user, $resourceOwner, $links)
     {
 
-        parent::__construct($user, $resourceOwner, $fetcher);
+        parent::__construct($user, $resourceOwner);
         $this->links = $links;
     }
 

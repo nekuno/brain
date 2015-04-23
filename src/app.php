@@ -17,6 +17,8 @@ use Silex\Provider\ServiceControllerServiceProvider;
 use Silex\Provider\SwiftmailerServiceProvider;
 use Silex\Provider\UrlGeneratorServiceProvider;
 use Silex\Provider\ValidatorServiceProvider;
+use Silex\Provider\TwigServiceProvider;
+use Silex\Provider\TranslationServiceProvider;
 
 $app = new Application();
 
@@ -39,6 +41,9 @@ $app->register(new PaginatorServiceProvider());
 
 $app->register(new SwiftmailerServiceProvider());
 $app->register(new AMQPServiceProvider());
+
+$app->register(new TwigServiceProvider(), array('twig.path' => __DIR__.'/views'));
+$app->register(new TranslationServiceProvider(), array('locale_fallbacks' => array('en', 'es')));
 
 //Config
 $app->register(new Igorw\Silex\ConfigServiceProvider(__DIR__ . "/../config/params.yml"));

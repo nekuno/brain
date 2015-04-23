@@ -19,12 +19,12 @@ final class AppEvents
     /**
      * Fired when fetch process starts
      */
-    const FETCHING_START = 'fetching.start';
+    const FETCH_START = 'fetch.start';
 
     /**
      * Fired when fetch process finish
      */
-    const FETCHING_FINISH = 'fetching.finish';
+    const FETCH_FINISH = 'fetch.finish';
 
     /**
      * Fired when links process starts
@@ -35,16 +35,6 @@ final class AppEvents
      * Fired with each link process
      */
     const PROCESS_LINK = 'process.link';
-
-    /**
-     * Fired before storing links
-     */
-    const PROCESS_STORING_START = 'process.storing.start';
-
-    /**
-     * Fired after storing links
-     */
-    const PROCESS_STORING_FINISH = 'process.storing.finish';
 
     /**
      * Fired when links process is finished

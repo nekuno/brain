@@ -5,11 +5,11 @@ namespace Model;
 use Doctrine\DBAL\Connection;
 use Everyman\Neo4j\Query\Row;
 use Model\Neo4j\GraphManager;
-use Model\User\ProfileModel;
 use Model\User\UserStatsModel;
 use Model\User\UserStatusModel;
 use Paginator\PaginatedInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Doctrine\ORM\EntityManager;
 
 /**
  * Class UserModel
@@ -25,20 +25,20 @@ class UserModel implements PaginatedInterface
     protected $gm;
 
     /**
-     * @var ProfileModel
-     */
-    protected $pm;
-
-    /**
      * @var Connection
      */
-    protected $driver;
+    protected $connectionSocial;
 
-    public function __construct(GraphManager $gm, ProfileModel $pm, Connection $driver)
+    /**
+     * @var EntityManager
+     */
+    protected $entityManagerBrain;
+
+    public function __construct(GraphManager $gm, Connection $connectionSocial, EntityManager $entityManagerBrain)
     {
         $this->gm = $gm;
-        $this->pm = $pm;
-        $this->driver = $driver;
+        $this->connectionSocial = $connectionSocial;
+        $this->entityManagerBrain = $entityManagerBrain;
     }
 
     /**
@@ -64,8 +64,6 @@ class UserModel implements PaginatedInterface
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();
-
-        $this->pm->create($user['id'], array());
 
         return $this->parseResultSet($result);
     }
@@ -269,7 +267,9 @@ class UserModel implements PaginatedInterface
             ->optionalMatch('(u)-[r:LIKES]->(:Audio)')
             ->with('u,contentLikes,videoLikes,count(r) AS audioLikes')
             ->optionalMatch('(u)-[r:LIKES]->(:Image)')
-            ->returns('contentLikes', 'videoLikes', 'audioLikes', 'COUNT(r) AS imageLikes');
+            ->with('u,contentLikes,videoLikes,audioLikes,count(r) AS imageLikes')
+            ->optionalMatch('(u)-[r:ANSWERS]->(:Answer)')
+            ->returns('contentLikes', 'videoLikes', 'audioLikes', 'imageLikes', 'count(r) AS questionsAnswered');
 
         $query = $qb->getQuery();
 
@@ -282,8 +282,15 @@ class UserModel implements PaginatedInterface
         /* @var $row Row */
         $row = $result->current();
 
-        $numberOfReceivedLikes = $this->driver->executeQuery('SELECT COUNT(*) AS numberOfReceivedLikes FROM user_like WHERE user_to = :user_to', array('user_to' => (integer)$id))->fetchColumn();
-        $numberOfUserLikes = $this->driver->executeQuery('SELECT COUNT(*) AS numberOfUserLikes FROM user_like WHERE user_from = :user_from', array('user_from' => (integer)$id))->fetchColumn();
+        $numberOfReceivedLikes = $this->connectionSocial->executeQuery('SELECT COUNT(*) AS numberOfReceivedLikes FROM user_like WHERE user_to = :user_to', array('user_to' => (integer)$id))->fetchColumn();
+        $numberOfUserLikes = $this->connectionSocial->executeQuery('SELECT COUNT(*) AS numberOfUserLikes FROM user_like WHERE user_from = :user_from', array('user_from' => (integer)$id))->fetchColumn();
+
+        $dataStatusRepository = $this->entityManagerBrain->getRepository('\Model\Entity\DataStatus');
+
+        $twitterStatus = $dataStatusRepository->findOneBy(array('userId' => (int)$id, 'resourceOwner' => 'twitter'));
+        $facebookStatus = $dataStatusRepository->findOneBy(array('userId' => (int)$id, 'resourceOwner' => 'facebook'));
+        $googleStatus = $dataStatusRepository->findOneBy(array('userId' => (int)$id, 'resourceOwner' => 'google'));
+        $spotifyStatus = $dataStatusRepository->findOneBy(array('userId' => (int)$id, 'resourceOwner' => 'spotify'));
 
         $userStats = new UserStatsModel(
             $row->offsetGet('contentLikes'),
@@ -291,7 +298,16 @@ class UserModel implements PaginatedInterface
             $row->offsetGet('audioLikes'),
             $row->offsetGet('imageLikes'),
             (integer)$numberOfReceivedLikes,
-            (integer)$numberOfUserLikes
+            (integer)$numberOfUserLikes,
+            $row->offsetGet('questionsAnswered'),
+            !empty($twitterStatus) ? (boolean)$twitterStatus->getFetched() : false,
+            !empty($twitterStatus) ? (boolean)$twitterStatus->getProcessed() : false,
+            !empty($facebookStatus) ? (boolean)$facebookStatus->getFetched() : false,
+            !empty($facebookStatus) ? (boolean)$facebookStatus->getProcessed() : false,
+            !empty($googleStatus) ? (boolean)$googleStatus->getFetched() : false,
+            !empty($googleStatus) ? (boolean)$googleStatus->getProcessed() : false,
+            !empty($spotifyStatus) ? (boolean)$spotifyStatus->getFetched() : false,
+            !empty($spotifyStatus) ? (boolean)$spotifyStatus->getProcessed() : false
         );
 
         return $userStats;
@@ -341,7 +357,7 @@ class UserModel implements PaginatedInterface
 
         }
 
-        $this->driver->update('users', array('status' => $status->getStatus()), array('id' => (integer)$id));
+        $this->connectionSocial->update('users', array('status' => $status->getStatus()), array('id' => (integer)$id));
 
         return $status;
     }

@@ -2,7 +2,7 @@
 
 $app['users.model'] = function ($app) {
 
-    return new \Model\UserModel($app['neo4j.graph_manager'], $app['users.profile.model'], $app['dbs']['mysql_social']);
+    return new \Model\UserModel($app['neo4j.graph_manager'], $app['dbs']['mysql_social'], $app['orm.ems']['mysql_brain']);
 };
 
 $app['users.profile.model'] = function ($app) {
@@ -77,7 +77,7 @@ $app['users.affinity.model'] = function ($app) {
 
 $app['users.recommendation.content.model'] = function ($app) {
 
-    return new \Model\User\Recommendation\ContentRecommendationPaginatedModel($app['neo4j.graph_manager']);
+    return new \Model\User\Recommendation\ContentRecommendationPaginatedModel($app['neo4j.graph_manager'], $app['users.affinity.model']);
 };
 
 $app['users.recommendation.content.tag.model'] = function ($app) {

@@ -86,6 +86,7 @@ class Fixtures
         $this->loadLinkTags();
         $this->loadLikes();
         $this->loadAnswers();
+        $this->calculateStatus();
     }
 
     protected function clean()
@@ -140,10 +141,27 @@ class Fixtures
 
             if ($i <= 50) {
                 $link['additionalLabels'] = array('Video');
+                $link['additionalFields'] = array('embed_type' => 'youtube', 'embed_id' => 'youtube-id-' . $i);
+                $link['tags'] = array(
+                    array('name' => 'Video Tag 1'),
+                    array('name' => 'Video Tag 2'),
+                    array('name' => 'Video Tag 3'),
+                );
             } elseif ($i <= 150) {
                 $link['additionalLabels'] = array('Audio');
+                $link['additionalFields'] = array('embed_type' => 'spotify', 'embed_id' => 'spotify:track:' . $i);
+                $link['tags'] = array(
+                    array('name' => 'Audio Tag 4'),
+                    array('name' => 'Audio Tag 5'),
+                    array('name' => 'Audio Tag 6'),
+                );
             } elseif ($i <= 350) {
                 $link['additionalLabels'] = array('Image');
+                $link['tags'] = array(
+                    array('name' => 'Image Tag 7'),
+                    array('name' => 'Image Tag 8'),
+                    array('name' => 'Image Tag 9'),
+                );
             }
 
             $this->lm->addLink($link);
@@ -173,17 +191,22 @@ class Fixtures
     {
         $this->logger->notice(sprintf('Loading %d questions', self::NUM_OF_QUESTIONS));
 
+        $halfQuestions = (int)round(self::NUM_OF_QUESTIONS / 2);
         for ($i = 1; $i <= self::NUM_OF_QUESTIONS; $i++) {
 
             $answers = array();
+
             for ($j = 1; $j <= 3; $j++) {
-                $answers[] = array('text' => 'Answer ' . $j . ' to Question ' . $i);
+                $answers[] = $i < $halfQuestions ?
+                    array('text' => 'Answer ' . $j . ' to Question ' . $i) :
+                    array('text' => 'Answer ' . $j . ' to Question ' . $i . '. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed vestibulum augue dolor, non malesuada tellus suscipit quis.');
             }
 
+            $questionText = $i < $halfQuestions ? 'Question ' . $i : 'Question ' . $i . '. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed vestibulum augue dolor, non malesuada tellus suscipit quis.';
             $question = $this->qm->create(
                 array(
                     'locale' => 'en',
-                    'text' => 'Question ' . $i,
+                    'text' => $questionText,
                     'userId' => 1,
                     'answers' => $answers,
                 )
@@ -191,22 +214,24 @@ class Fixtures
 
             $answers = $question['answers'];
             $j = 1;
-            foreach ($answers as $id => $text) {
-                $answers[$id] = array('text' => 'Respuesta ' . $j . ' a la pregunta ' . $i);
+            foreach ($answers as $answer) {
+                $answers[] = $i < $halfQuestions ?
+                    array('answerId' => $answer['answerId'], 'text' => 'Respuesta ' . $j . ' a la pregunta ' . $i) :
+                    array('answerId' => $answer['answerId'], 'text' => 'Respuesta ' . $j . ' a la pregunta ' . $i . '. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed vestibulum augue dolor, non malesuada tellus suscipit quis.');
                 $j++;
             }
 
+            $questionText = $i < $halfQuestions ? 'Pregunta ' . $i : 'Pregunta ' . $i . '. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed vestibulum augue dolor, non malesuada tellus suscipit quis.';
             $this->qm->update(
                 array(
-                    'id' => $question['id'],
+                    'questionId' => $question['questionId'],
                     'locale' => 'es',
-                    'text' => 'Pregunta ' . $i,
+                    'text' => $questionText,
                     'answers' => $answers,
                 )
             );
 
             $this->questions[$i] = $question;
-
         }
     }
 
@@ -249,8 +274,11 @@ class Fixtures
 
             foreach (range($answer['questionFrom'], $answer['questionTo']) as $i) {
 
-                $answerIds = array_keys($this->questions[$i]['answers']);
-                $questionId = $this->questions[$i]['id'];
+                $answerIds = array();
+                foreach ($this->questions[$i]['answers'] as $questionAnswer) {
+                    $answerIds[] = $questionAnswer['answerId'];
+                }
+                $questionId = $this->questions[$i]['questionId'];
                 $answerId = $answerIds[$answer['answer'] - 1];
                 $this->am->create(
                     array(
@@ -267,6 +295,17 @@ class Fixtures
             }
         }
 
+    }
+
+    protected function calculateStatus()
+    {
+        $this->logger->notice(sprintf('Calculating status for %d users', self::NUM_OF_USERS));
+
+        for ($i = 1; $i <= self::NUM_OF_USERS; $i++) {
+
+            $status = $this->um->calculateStatus($i);
+            $this->logger->notice(sprintf('Calculating user "%s" new status: "%s"', $i, $status->getStatus()));
+        }
     }
 
     protected function createUserLikesLinkRelationship($user, $link)

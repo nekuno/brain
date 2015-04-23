@@ -6,7 +6,6 @@ use ApiConsumer\Auth\DBUserProvider;
 use ApiConsumer\Factory\FetcherFactory;
 use ApiConsumer\Fetcher\FetcherService;
 use ApiConsumer\Registry\Registry;
-use ApiConsumer\Storage\DBStorage;
 use Http\OAuth\Factory\ResourceOwnerFactory;
 use Psr\Log\LoggerAwareInterface;
 use Silex\Application;
@@ -47,6 +46,7 @@ class ApiConsumerServiceProvider implements ServiceProviderInterface
             function ($app) {
 
                 $resourceOwnerFactory = $app['api_consumer.resource_owner_factory'];
+
                 /* @var $resourceOwnerFactory ResourceOwnerFactory */
 
                 return $resourceOwnerFactory->build('google');
@@ -57,6 +57,7 @@ class ApiConsumerServiceProvider implements ServiceProviderInterface
             function ($app) {
 
                 $resourceOwnerFactory = $app['api_consumer.resource_owner_factory'];
+
                 /* @var $resourceOwnerFactory ResourceOwnerFactory */
 
                 return $resourceOwnerFactory->build('spotify');
@@ -70,16 +71,6 @@ class ApiConsumerServiceProvider implements ServiceProviderInterface
                 $registry = new Registry($app['orm.ems']['mysql_brain']);
 
                 return $registry;
-            }
-        );
-
-        //Storage
-        $app['api_consumer.storage'] = $app->share(
-            function ($app) {
-
-                $storage = new DBStorage($app['links.model']);
-
-                return $storage;
             }
         );
 
@@ -99,7 +90,7 @@ class ApiConsumerServiceProvider implements ServiceProviderInterface
                 $fetcher = new FetcherService(
                     $app['api_consumer.user_provider'],
                     $app['api_consumer.link_processor'],
-                    $app['api_consumer.storage'],
+                    $app['links.model'],
                     $app['api_consumer.fetcher_factory'],
                     $app['dispatcher'],
                     $app['api_consumer.config']['fetcher']

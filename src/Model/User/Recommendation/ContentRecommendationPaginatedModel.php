@@ -2,6 +2,7 @@
 
 namespace Model\User\Recommendation;
 
+use Model\User\Affinity\AffinityModel;
 use Paginator\PaginatedInterface;
 use Model\Neo4j\GraphManager;
 
@@ -18,16 +19,22 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
     protected $gm;
 
     /**
+     * @var AffinityModel
+     */
+    protected $am;
+
+    /**
      * @param GraphManager $gm
      */
-    public function __construct(GraphManager $gm)
+    public function __construct(GraphManager $gm, AffinityModel $am)
     {
         $this->gm = $gm;
+        $this->am = $am;
     }
 
     public function getValidTypes()
     {
-        return Self::$validTypes;
+        return self::$validTypes;
     }
 
     /**
@@ -61,10 +68,14 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
     public function slice(array $filters, $offset, $limit)
     {
         $id = $filters['id'];
+
+        if ((integer)$limit == 0) {
+            return array();
+        }
         $response = array();
 
         $params = array(
-            'UserId' => (integer)$id,
+            'userId' => (integer)$id,
             'offset' => (integer)$offset,
             'limit' => (integer)$limit
         );
@@ -74,15 +85,19 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
             $linkType = $filters['type'];
         }
 
+        $foreign=0;
+        if (isset($filters['foreign'])){
+            $foreign=$filters['foreign'];
+        }
+
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match('(user:User {qnoow_id: {UserId}})-[affinity:AFFINITY]->(content:' . $linkType .')')
+        $qb->match('(user:User {qnoow_id: { userId }})-[affinity:AFFINITY]->(content:' . $linkType . ')')
             ->where('NOT (user)-[:LIKES|:DISLIKES]->(content) AND affinity.affinity > 0');
 
         if (isset($filters['tag'])) {
             $qb->match('(content)-[:TAGGED]->(filterTag:Tag)')
-                ->where('filterTag.name = { tag }')
-            ;
+                ->where('filterTag.name = { tag }');
 
             $params['tag'] = $filters['tag'];
         }
@@ -97,8 +112,7 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
             )
             ->orderBy('affinity.affinity DESC, affinity.updated ASC')
             ->skip('{ offset }')
-            ->limit('{ limit }')
-        ;
+            ->limit('{ limit }');
 
         $qb->setParameters($params);
 
@@ -127,6 +141,70 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
             $response[] = $content;
         }
 
+        // If there is not enough content, we pick recent suitable content and add it to response
+        if ((integer)$limit - count($response) > 0) {
+
+            $qb = $this->gm->createQueryBuilder();
+
+            $params = array(
+                'userId' => (integer)$id,
+                'limit' => (integer)$limit - count($response),
+                'offset' => (integer)$foreign
+            );
+
+            $qb->match('(user:User {qnoow_id: { userId }})');
+
+            if (isset($filters['tag'])) {
+                $qb->match('(content:' . $linkType . ')-[:TAGGED]->(filterTag:Tag)')
+                    ->where('filterTag.name = { tag }', 'NOT (user)-[:AFFINITY|:LIKES|:DISLIKES]->(content)');
+
+                $params['tag'] = $filters['tag'];
+            } else {
+                $qb->match('(content:' . $linkType . ')')
+                    ->where('NOT (user)-[:AFFINITY|:LIKES|:DISLIKES]->(content)');
+            }
+
+            $qb->with('content')
+                ->orderBy('content.timestamp DESC')
+                ->skip('{offset}')
+                ->limit('{ limit }');
+            $qb->setParameters($params);
+            $qb->optionalMatch('(content)-[:TAGGED]->(tag:Tag)')
+                ->returns(
+                    'id(content) as id',
+                    'content',
+                    'collect(distinct tag.name) as tags',
+                    'labels(content) as types'
+                )
+                ->orderBy('content.timestamp DESC');
+            $query = $qb->getQuery();
+            $result = $query->getResultSet();
+
+            foreach ($result as $row) {
+                $content = array();
+                $content['id'] = $row['id'];
+                $content['url'] = $row['content']->getProperty('url');
+                $content['title'] = $row['content']->getProperty('title');
+                $content['description'] = $row['content']->getProperty('description');
+                foreach ($row['tags'] as $tag) {
+                    $content['tags'][] = $tag;
+                }
+                foreach ($row['types'] as $type) {
+                    $content['types'][] = $type;
+                }
+                if ($row['content']->getProperty('embed_type')) {
+                    $content['embed']['type'] = $row['content']->getProperty('embed_type');
+                    $content['embed']['id'] = $row['content']->getProperty('embed_id');
+                }
+
+                $affinity = $this->am->getAffinity((integer)$id, $row['id']);
+                $content['match'] = $affinity['affinity'];
+
+                $response[] = $content;
+
+            }
+        }
+
         return $response;
     }
 
@@ -142,7 +220,7 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
         $count = 0;
 
         $params = array(
-            'UserId' => (integer)$id,
+            'userId' => (integer)$id,
         );
 
         $linkType = 'Link';
@@ -152,18 +230,18 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
 
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match('(user:User {qnoow_id: {UserId}})-[affinity:AFFINITY]->(content:' . $linkType .')')
-            ->where('NOT (user)-[:LIKES|:DISLIKES]->(content) AND affinity.affinity > 0');
-
         if (isset($filters['tag'])) {
-            $qb->match('(content)-[:TAGGED]->(filterTag:Tag)')
-                ->where('filterTag.name = { tag }')
-            ;
+            $qb->match('(content:' . $linkType . ')-[:TAGGED]->(filterTag:Tag)')
+                ->where('filterTag.name = { tag }');
 
             $params['tag'] = $filters['tag'];
+        } else {
+            $qb->match('(content:' . $linkType . ')');
         }
 
-        $qb->returns('COUNT(distinct affinity) AS total');
+        $qb->with('count(content) AS max');
+        $qb->optionalMatch('(user:User {qnoow_id: { userId }})-[:LIKES|:DISLIKES]->(l:' . $linkType . ')');
+        $qb->returns('max-count(distinct(l)) AS total');
 
         $qb->setParameters($params);
 

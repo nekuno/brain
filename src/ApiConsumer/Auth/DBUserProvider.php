@@ -11,12 +11,12 @@ class DBUserProvider implements UserProviderInterface
     /**
      * @var Connection
      */
-    protected $driver;
+    protected $connectionSocial;
 
-    public function __construct(Connection $driver)
+    public function __construct(Connection $connectionSocial)
     {
 
-        $this->driver = $driver;
+        $this->connectionSocial = $connectionSocial;
     }
 
     /**
@@ -47,7 +47,7 @@ class DBUserProvider implements UserProviderInterface
 
         try {
 
-            return $this->driver->fetchAll($sql, $params);
+            return $this->connectionSocial->fetchAll($sql, $params);
         } catch (DBALException $e) {
             throw $e;
         }
@@ -76,7 +76,7 @@ class DBUserProvider implements UserProviderInterface
 
         try {
 
-            return $this->driver->executeUpdate($sql, $params);
+            return $this->connectionSocial->executeUpdate($sql, $params);
 
         } catch (\Exception $e) {
             throw $e;

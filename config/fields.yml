@@ -8,6 +8,7 @@ profile:
             es: 'Sobre mí'
     birthday:
         type: birthday
+        required: true
         label:
             en: 'Birthday'
             es: 'Cumpleaños'
@@ -58,6 +59,7 @@ profile:
             es: 'Idiomas'
     gender:
         type: choice
+        required: true
         label:
             en: 'Gender'
             es: 'Género'
@@ -188,6 +190,7 @@ profile:
             es: '¿Saldrías con una persona con hijos?'
     interfaceLanguage:
         type: choice
+        required: true
         filterable: false
         label:
             en: 'What interface language do you prefer?'
@@ -214,6 +217,7 @@ profile:
             es: 'Educación'
     location:
         type: location
+        required: true
         filterable: false
         label:
             en: 'Location'
