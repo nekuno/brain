@@ -306,10 +306,13 @@ class ProfileModel
 
                         case 'birthday':
                             $date = \DateTime::createFromFormat('Y-m-d', $fieldValue);
+                            $now = new \DateTime();
                             if (!($date && $date->format('Y-m-d') == $fieldValue)) {
-                                $fieldErrors[] = 'Invalid date format, valid format is "Y-m-d".';
-                            } elseif (new \DateTime() < $date) {
-                                $fieldErrors[] = 'Invalid birthday date, can not be on the future.';
+                                $fieldErrors[] = 'Invalid date format, valid format is "YYYY-MM-DD".';
+                            } elseif ($now < $date) {
+                                $fieldErrors[] = 'Invalid birthday date, can not be in the future.';
+                            } elseif ($now->modify('-14 year') < $date) {
+                                $fieldErrors[] = 'Invalid birthday date, you must be older than 14 years.';
                             }
                             break;
 
@@ -330,24 +333,25 @@ class ProfileModel
                             if (!is_array($fieldValue)) {
                                 $fieldErrors[] = sprintf('The value "%s" is not valid, it should be an array with "latitude" and "longitude" keys', $fieldValue);
                             } else {
-                                if (!isset($fieldValue['latitude']) || !preg_match("/^-?([1-8]?[1-9]|[1-9]0)\.{1}\d+$/", $fieldValue['latitude'])) {
-                                    $fieldErrors[] = 'Latitude not valid';
-                                } elseif (!is_float($fieldValue['latitude'])) {
-                                    $fieldErrors[] = 'Latitude must be float';
-                                }
-                                if (!isset($fieldValue['longitude']) || !preg_match("/^-?([1]?[1-7][1-9]|[1]?[1-8][0]|[1-9]?[0-9])\.{1}\d+$/", $fieldValue['longitude'])) {
-                                    $fieldErrors[] = 'Longitude not valid';
-                                } elseif (!is_float($fieldValue['longitude'])) {
-                                    $fieldErrors[] = 'Longitude must be float';
-                                }
                                 if (!isset($fieldValue['address']) || !$fieldValue['address'] || !is_string($fieldValue['address'])) {
                                     $fieldErrors[] = 'Address required';
-                                }
-                                if (!isset($fieldValue['locality']) || !$fieldValue['locality'] || !is_string($fieldValue['locality'])) {
-                                    $fieldErrors[] = 'Locality required';
-                                }
-                                if (!isset($fieldValue['country']) || !$fieldValue['country'] || !is_string($fieldValue['country'])) {
-                                    $fieldErrors[] = 'Country required';
+                                } else {
+                                    if (!isset($fieldValue['latitude']) || !preg_match("/^-?([1-8]?[1-9]|[1-9]0)\.{1}\d+$/", $fieldValue['latitude'])) {
+                                        $fieldErrors[] = 'Latitude not valid';
+                                    } elseif (!is_float($fieldValue['latitude'])) {
+                                        $fieldErrors[] = 'Latitude must be float';
+                                    }
+                                    if (!isset($fieldValue['longitude']) || !preg_match("/^-?([1]?[1-7][1-9]|[1]?[1-8][0]|[1-9]?[0-9])\.{1}\d+$/", $fieldValue['longitude'])) {
+                                        $fieldErrors[] = 'Longitude not valid';
+                                    } elseif (!is_float($fieldValue['longitude'])) {
+                                        $fieldErrors[] = 'Longitude must be float';
+                                    }
+                                    if (!isset($fieldValue['locality']) || !$fieldValue['locality'] || !is_string($fieldValue['locality'])) {
+                                        $fieldErrors[] = 'Locality required';
+                                    }
+                                    if (!isset($fieldValue['country']) || !$fieldValue['country'] || !is_string($fieldValue['country'])) {
+                                        $fieldErrors[] = 'Country required';
+                                    }
                                 }
                             }
                             break;
