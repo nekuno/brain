@@ -85,6 +85,11 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
             $linkType = $filters['type'];
         }
 
+        $foreign=0;
+        if (isset($filters['foreign'])){
+            $foreign=$filters['foreign'];
+        }
+
         $qb = $this->gm->createQueryBuilder();
 
         $qb->match('(user:User {qnoow_id: { userId }})-[affinity:AFFINITY]->(content:' . $linkType . ')')
@@ -144,6 +149,7 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
             $params = array(
                 'userId' => (integer)$id,
                 'limit' => (integer)$limit - count($response),
+                'offset' => (integer)$foreign
             );
 
             $qb->match('(user:User {qnoow_id: { userId }})');
@@ -160,6 +166,7 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
 
             $qb->with('content')
                 ->orderBy('content.timestamp DESC')
+                ->skip('{offset}')
                 ->limit('{ limit }');
             $qb->setParameters($params);
             $qb->optionalMatch('(content)-[:TAGGED]->(tag:Tag)')

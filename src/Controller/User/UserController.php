@@ -110,8 +110,8 @@ class UserController
         try {
             $model = $app['users.model'];
             $result = $model->getById($request->get('id'));
-            $groupModel= $app['users.groups.model'];
-            $result['groups']= $groupModel->getByUser((integer)($request->get('id')));
+            $groupModel = $app['users.groups.model'];
+            $result['groups'] = $groupModel->getByUser((integer)($request->get('id')));
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;
@@ -549,6 +549,7 @@ class UserController
         $id = $request->get('id');
         $tag = $request->get('tag', null);
         $type = $request->get('type', null);
+        $foreign = $request->get('foreign', null);
 
         if (null === $id) {
             return $app->json(array(), 400);
@@ -567,6 +568,10 @@ class UserController
             $filters['type'] = urldecode($type);
         }
 
+        if ($foreign) {
+            $filters['foreign'] = urldecode($foreign);
+        }
+
         /* @var $model \Model\User\Recommendation\ContentRecommendationPaginatedModel */
         $model = $app['users.recommendation.content.model'];
 
@@ -578,6 +583,23 @@ class UserController
             }
 
             return $app->json(array(), 500);
+        }
+
+        $newForeign = 0;
+        foreach ($result['items'] as $item) {
+            if ($item['match'] == 0) {
+                $newForeign++;
+            }
+        }
+
+        if ($result['pagination']['nextLink'] != null) {
+            if ($foreign!=null) {
+                $result['pagination']['nextLink'] = str_replace('foreign=' . $foreign,
+                    'foreign=' . ($foreign + $newForeign),
+                    $result['pagination']['nextLink']);
+            } else {
+                $result['pagination']['nextLink'] .= ('&foreign=' . $newForeign);
+            }
         }
 
         return $app->json($result, !empty($result) ? 201 : 200);
