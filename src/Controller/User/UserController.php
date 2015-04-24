@@ -3,6 +3,7 @@
 namespace Controller\User;
 
 use Model\User\ContentPaginatedModel;
+use Model\User\GroupModel;
 use Model\User\RateModel;
 use Model\UserModel;
 use Silex\Application;
@@ -473,6 +474,7 @@ class UserController
         $id = $request->get('id');
         $order = $request->get('order', false);
         $profileFilters = $request->get('filters', array());
+        $groups = $request->get('groups', array());
 
         if (null === $id) {
             return $app->json(array(), 400);
@@ -484,11 +486,21 @@ class UserController
         $filters = array(
             'id' => $id,
             'profileFilters' => $profileFilters,
+            'groups' => $groups
         );
 
         if ($order) {
             $filters['order'] = $order;
         }
+
+        /** @var GroupModel $groupModel */
+        $groupModel= $app['users.groups.model'];
+        foreach($groups as $groupName){
+            if (!$groupModel->isUserFromGroup($groupName,$id)){
+                return $app->json(array(), 403);
+            }
+        }
+
 
         /* @var $model \Model\User\Recommendation\UserRecommendationPaginatedModel */
         $model = $app['users.recommendation.users.model'];
