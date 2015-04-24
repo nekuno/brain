@@ -33,6 +33,7 @@ params:
     swiftmailer.password: nekuno
     swiftmailer.encryption: null
     swiftmailer.auth_mode: null
+    swiftmailer.sender_address: null
 
     ## RabbitMQ
     rabbitmq.host: 127.0.0.1
