@@ -3,6 +3,7 @@
 namespace Console\Command;
 
 use EventListener\UserAnswerSubscriber;
+use Model\Exception\ValidationException;
 use Model\Neo4j\Fixtures;
 use Silex\Application;
 use Symfony\Component\Console\Input\InputArgument;
@@ -35,7 +36,7 @@ class Neo4jFixturesCommand extends ApplicationAwareCommand
 
         $scenario = $input->getArgument('scenario');
 
-        $fixtures = new Fixtures($this->app['neo4j.graph_manager'], $this->app['users.model'], $this->app['links.model'], $this->app['questionnaire.questions.model'], $this->app['users.answers.model'], $this->getScenario($scenario));
+        $fixtures = new Fixtures($this->app, $this->getScenario($scenario));
 
         $logger = new ConsoleLogger($output);
         $fixtures->setLogger($logger);
@@ -48,6 +49,16 @@ class Neo4jFixturesCommand extends ApplicationAwareCommand
             $output->writeln(
                 'Error loading neo4j fixtures with message: ' . $e->getMessage()
             );
+            if ($e instanceof ValidationException) {
+                $errors = $e->getErrors();
+                foreach ($errors as $fieldName=>$error) {
+                    foreach ($error as $fieldError) {
+                        $output->writeln(
+                            'Error in ' . $fieldName . ': ' . $fieldError
+                        );
+                    }
+                }
+            }
 
             return;
         }

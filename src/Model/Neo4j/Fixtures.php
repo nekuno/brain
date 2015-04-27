@@ -2,11 +2,14 @@
 
 namespace Model\Neo4j;
 
+use Everyman\Neo4j\Client;
 use Model\LinkModel;
 use Model\Questionnaire\QuestionModel;
 use Model\User\AnswerModel;
+use Model\User\ProfileModel;
 use Model\UserModel;
 use Psr\Log\LoggerInterface;
+use Silex\Application;
 
 class Fixtures
 {
@@ -16,6 +19,10 @@ class Fixtures
     const NUM_OF_TAGS = 200;
     const NUM_OF_QUESTIONS = 200;
 
+    /**
+     * @var Client
+     */
+    protected $client;
     /**
      * @var LoggerInterface
      */
@@ -47,6 +54,11 @@ class Fixtures
     protected $am;
 
     /**
+     * @var ProfileModel
+     */
+    protected $pm;
+
+    /**
      * @var array
      */
     protected $scenario = array();
@@ -56,13 +68,15 @@ class Fixtures
      */
     protected $questions = array();
 
-    public function __construct(GraphManager $gm, UserModel $um, LinkModel $lm, QuestionModel $qm, AnswerModel $am, $scenario)
+    public function __construct(Application $app, $scenario)
     {
-        $this->gm = $gm;
-        $this->um = $um;
-        $this->lm = $lm;
-        $this->qm = $qm;
-        $this->am = $am;
+        $this->client = $app['neo4j.client'];
+        $this->gm = $app['neo4j.graph_manager'];
+        $this->um = $app['users.model'];
+        $this->lm = $app['links.model'];
+        $this->qm = $app['questionnaire.questions.model'];
+        $this->am = $app['users.answers.model'];
+        $this->pm = $app['users.profile.model'];
         $this->scenario = $scenario;
     }
 
@@ -79,6 +93,7 @@ class Fixtures
     {
 
         $this->clean();
+        $this->loadProfileOptions();
         $this->loadUsers();
         $this->loadLinks();
         $this->loadTags();
@@ -121,6 +136,15 @@ class Fixtures
                     'email' => 'user' . $i . '@nekuno.com',
                 )
             );
+            $profileData = array('birthday' => '1970-01-01',
+                'gender' => 'male',
+                'interfaceLanguage' => 'es',
+                'location' => array('latitude' => 40.4,
+                    'longitude' => 3.683,
+                    'address' => 'Madrid',
+                    'locality' => 'Madrid',
+                    'country' => 'Spain'));
+            $this->pm->create($i, $profileData);
         }
     }
 
@@ -336,6 +360,28 @@ class Fixtures
         $query = $qb->getQuery();
         $query->getResultSet();
 
+    }
+
+    private function loadProfileOptions()
+    {
+        $profileOptions = new ProfileOptions($this->client);
+
+        $logger = $this->logger;
+        $profileOptions->setLogger($logger);
+
+        try {
+            $result = $profileOptions->load();
+        } catch (\Exception $e) {
+            $logger->notice(
+                'Error loading neo4j profile options with message: ' . $e->getMessage()
+            );
+
+            return;
+        }
+
+        $logger->notice(sprintf('%d new profile options processed.', $result->getTotal()));
+        $logger->notice(sprintf('%d new profile options updated.', $result->getUpdated()));
+        $logger->notice(sprintf('%d new profile options created.', $result->getCreated()));
     }
 
 }
