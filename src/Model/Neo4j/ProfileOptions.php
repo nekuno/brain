@@ -3,7 +3,6 @@
 namespace Model\Neo4j;
 
 use Everyman\Neo4j\Client;
-use Everyman\Neo4j\Cypher\Query;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 
