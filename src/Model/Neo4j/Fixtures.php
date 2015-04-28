@@ -20,10 +20,6 @@ class Fixtures
     const NUM_OF_QUESTIONS = 200;
 
     /**
-     * @var Client
-     */
-    protected $client;
-    /**
      * @var LoggerInterface
      */
     protected $logger;
@@ -70,7 +66,6 @@ class Fixtures
 
     public function __construct(Application $app, $scenario)
     {
-        $this->client = $app['neo4j.client'];
         $this->gm = $app['neo4j.graph_manager'];
         $this->um = $app['users.model'];
         $this->lm = $app['links.model'];
@@ -136,14 +131,18 @@ class Fixtures
                     'email' => 'user' . $i . '@nekuno.com',
                 )
             );
-            $profileData = array('birthday' => '1970-01-01',
+            $profileData = array(
+                'birthday' => '1970-01-01',
                 'gender' => 'male',
                 'interfaceLanguage' => 'es',
-                'location' => array('latitude' => 40.4,
+                'location' => array(
+                    'latitude' => 40.4,
                     'longitude' => 3.683,
                     'address' => 'Madrid',
                     'locality' => 'Madrid',
-                    'country' => 'Spain'));
+                    'country' => 'Spain'
+                )
+            );
             $this->pm->create($i, $profileData);
         }
     }
@@ -371,7 +370,7 @@ class Fixtures
 
     private function loadProfileOptions()
     {
-        $profileOptions = new ProfileOptions($this->client);
+        $profileOptions = new ProfileOptions($this->gm);
 
         $logger = $this->logger;
         $profileOptions->setLogger($logger);
