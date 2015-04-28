@@ -365,6 +365,54 @@ class UserModel implements PaginatedInterface
     /**
      * @inheritdoc
      */
+    public function getFilters($locale = null, $groups=null, $filter=true)
+    {
+        $locale = $this->getLocale($locale);
+        $metadata = array('groups' => array('labelFilter' => array('en' => 'Groups',
+                                                                   'es' => 'Grupos'),
+                                            'type' => 'choice',
+                                            'choices' => array(),
+                                            'filterable' => true));
+
+
+        foreach($groups as $group){
+            $metadata['groups']['choices'][$group['groupName']]=$group['groupName'];
+        }
+
+        foreach ($metadata as $key => &$item) {
+            if (isset($item['labelFilter'])) {
+                $item['label'] = $item['labelFilter'][$locale];
+                unset($item['labelFilter']);
+            }
+            if (isset($item['filterable']) && $item['filterable'] === false) {
+                unset($metadata[$key]);
+            }
+        }
+
+        //mimics profileModel->getMetadata
+        if ($filter) {
+            foreach ($metadata as &$item) {
+                if (isset($item['labelFilter'])) {
+                    unset($item['labelFilter']);
+                }
+                if (isset($item['filterable'])) {
+                    unset($item['filterable']);
+                }
+            }
+        }
+
+        //check user-dependent choices existence
+
+        if ($groups=null||$groups==array()){
+            unset($metadata['groups']);
+        }
+
+        return $metadata;
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function validateFilters(array $filters)
     {
         return true;
@@ -528,5 +576,15 @@ class UserModel implements PaginatedInterface
             'username' => $row['u']->getProperty('username'),
             'email' => $row['u']->getProperty('email'),
         );
+    }
+
+    protected function getLocale($locale)
+    {
+
+        if (!$locale || !in_array($locale, array('en', 'es'))) {
+            $locale = 'en'; //TODO: Check if add default locale to constructor or create localeManager
+        }
+
+        return $locale;
     }
 }

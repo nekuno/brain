@@ -4,9 +4,11 @@ namespace Controller\User;
 
 use Model\User\ContentPaginatedModel;
 use Model\User\GroupModel;
+use Model\User\ProfileModel;
 use Model\User\RateModel;
 use Model\UserModel;
 use Silex\Application;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -473,8 +475,7 @@ class UserController
         // Get params
         $id = $request->get('id');
         $order = $request->get('order', false);
-        $profileFilters = $request->get('filters', array());
-        $groups = $request->get('groups', array());
+        $filters = $request->get('filters', array());
 
         if (null === $id) {
             return $app->json(array(), 400);
@@ -485,8 +486,8 @@ class UserController
 
         $filters = array(
             'id' => $id,
-            'profileFilters' => $profileFilters,
-            'groups' => $groups
+            'profileFilters' => $filters,
+            'groups' => isset($filters['groups'])? $filters['groups'] : array()
         );
 
         if ($order) {
@@ -495,12 +496,11 @@ class UserController
 
         /** @var GroupModel $groupModel */
         $groupModel= $app['users.groups.model'];
-        foreach($groups as $groupName){
+        foreach($filters['groups'] as $groupName){
             if (!$groupModel->isUserFromGroup($groupName,$id)){
                 return $app->json(array(), 403);
             }
         }
-
 
         /* @var $model \Model\User\Recommendation\UserRecommendationPaginatedModel */
         $model = $app['users.recommendation.users.model'];
@@ -655,6 +655,30 @@ class UserController
         }
 
         return $app->json($result, !empty($result) ? 201 : 200);
+    }
+
+    /**
+     * @param Request $request
+     * @param Application $app
+     * @return JsonResponse
+     */
+    public function getAllFiltersAction(Request $request, Application $app)
+    {
+        $locale = $request->query->get('locale');
+        $id=$request->get('id');
+        $filters=array();
+        /* @var $model ProfileModel */
+        $profileModel = $app['users.profile.model'];
+        $filters=array_merge($filters,$profileModel->getFilters($locale));
+
+        /** @var GroupModel $groupModel */
+        $groupModel=$app['users.groups.model'];
+        $groups=$groupModel->getByUser((integer)$id);
+        /* @var $model UserModel */
+        $userModel = $app['users.model'];
+        $filters=array_merge($filters,$userModel->getFilters($locale, $groups));
+
+        return $app->json($filters, 200);
     }
 
     /**

@@ -48,7 +48,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
     public function slice(array $filters, $offset, $limit)
     {
         $id = $filters['id'];
-        $groups = isset($filters['groups']) ? $filters['groups'] : null;
+        $groups = isset($filters['groups']) ? $filters['groups'] : array();
         $response = array();
 
         $parameters = array(
@@ -56,11 +56,6 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
             'limit' => (integer)$limit,
             'userId' => (integer)$id
         );
-        $i=0;
-        foreach($groups as $groupName){
-            $parameters["groupName$i"] = $groupName;
-            $i++;
-        }
 
         $profileFilters = $this->getProfileFilters($filters['profileFilters']);
         $orderQuery = ' matching_questions DESC, similarity DESC ';
@@ -84,9 +79,8 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                 array('(matching_questions > 0 OR similarity > 0)'),
                 $profileFilters['conditions']))
             ->match($profileFilters['matches']);
-        $i=0;
-        foreach($groups as $groupName){
-            $qb->match("(anyUser)-[:BELONGS_TO]->(g:Group{groupName:{groupName$i}})");
+        foreach ($groups as $groupName) {
+            $qb->match("(anyUser)-[:BELONGS_TO]->(g:Group{groupName: '$groupName' })");
         }
 
         $qb->returns('DISTINCT anyUser.qnoow_id AS id,
@@ -130,11 +124,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         $qb = $this->gm->createQueryBuilder();
 
         $parameters = array('userId' => (integer)$id);
-        $i=0;
-        foreach($groups as $groupName){
-            $parameters["groupName$i"] = $groupName;
-            $i++;
-        }
+
         $qb->setParameters($parameters);
 
         $qb->match('(u:User {qnoow_id: {userId}})-[:MATCHES|SIMILARITY]-(anyUser:User)')
@@ -149,9 +139,8 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                 array('(matching_questions > 0 OR similarity > 0)'),
                 $profileFilters['conditions']))
             ->match($profileFilters['matches']);
-        $i=0;
-        foreach($groups as $groupName){
-            $qb->match("(anyUser)-[:BELONGS_TO]->(g:Group{groupName:{groupName$i}})");
+        foreach ($groups as $groupName) {
+            $qb->match("(anyUser)-[:BELONGS_TO]->(g:Group{groupName:'$groupName'})");
         }
 
         $qb->returns('COUNT(DISTINCT anyUser) as total');
