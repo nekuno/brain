@@ -33,8 +33,8 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
     {
         $hasId = isset($filters['id']);
         $hasProfileFilters = isset($filters['profileFilters']);
-
-        return $hasId && $hasProfileFilters;
+        $notMultipleGroups = count($filters['groups']) <= 1;
+        return $hasId && $hasProfileFilters && $notMultipleGroups;
     }
 
     /**
@@ -48,7 +48,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
     public function slice(array $filters, $offset, $limit)
     {
         $id = $filters['id'];
-        $groups = isset($filters['groups']) ? $filters['groups'] : array();
+        $groups = isset($filters['groups']) ? $filters['groups'] : null;
         $response = array();
 
         $parameters = array(
@@ -79,9 +79,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                 array('(matching_questions > 0 OR similarity > 0)'),
                 $profileFilters['conditions']))
             ->match($profileFilters['matches']);
-        foreach ($groups as $groupName) {
-            $qb->match("(anyUser)-[:BELONGS_TO]->(g:Group{groupName: '$groupName' })");
-        }
+        if ($groups) $qb->match("(anyUser)-[:BELONGS_TO]->(g:Group{groupName: '".reset($groups)."' })");
 
         $qb->returns('DISTINCT anyUser.qnoow_id AS id,
                     anyUser.username AS username,
@@ -139,9 +137,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                 array('(matching_questions > 0 OR similarity > 0)'),
                 $profileFilters['conditions']))
             ->match($profileFilters['matches']);
-        foreach ($groups as $groupName) {
-            $qb->match("(anyUser)-[:BELONGS_TO]->(g:Group{groupName:'$groupName'})");
-        }
+        if ($groups) $qb->match("(anyUser)-[:BELONGS_TO]->(g:Group{groupName: '".reset($groups)."' })");
 
         $qb->returns('COUNT(DISTINCT anyUser) as total');
         $query = $qb->getQuery();

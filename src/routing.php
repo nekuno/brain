@@ -2,6 +2,7 @@
 
 /**
  * Users routes
+ * @var $app Silex\Application
  */
 $app->get('/users', 'users.controller:indexAction');
 $app->post('/users', 'users.controller:addAction');
