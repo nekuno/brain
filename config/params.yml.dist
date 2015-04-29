@@ -5,6 +5,7 @@ params:
 
     ## Instant
     instant.host: 'http://localhost:8008/'
+    guzzle.verify: null
 
     ## Doctrine
     dbs.mysql_social.driver: pdo_mysql
