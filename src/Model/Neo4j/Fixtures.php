@@ -20,10 +20,6 @@ class Fixtures
     const NUM_OF_QUESTIONS = 200;
 
     /**
-     * @var Client
-     */
-    protected $client;
-    /**
      * @var LoggerInterface
      */
     protected $logger;
@@ -70,7 +66,6 @@ class Fixtures
 
     public function __construct(Application $app, $scenario)
     {
-        $this->client = $app['neo4j.client'];
         $this->gm = $app['neo4j.graph_manager'];
         $this->um = $app['users.model'];
         $this->lm = $app['links.model'];
@@ -136,14 +131,18 @@ class Fixtures
                     'email' => 'user' . $i . '@nekuno.com',
                 )
             );
-            $profileData = array('birthday' => '1970-01-01',
+            $profileData = array(
+                'birthday' => '1970-01-01',
                 'gender' => 'male',
                 'interfaceLanguage' => 'es',
-                'location' => array('latitude' => 40.4,
+                'location' => array(
+                    'latitude' => 40.4,
                     'longitude' => 3.683,
                     'address' => 'Madrid',
                     'locality' => 'Madrid',
-                    'country' => 'Spain'));
+                    'country' => 'Spain'
+                )
+            );
             $this->pm->create($i, $profileData);
         }
     }
@@ -164,20 +163,27 @@ class Fixtures
             );
 
             if ($i <= 50) {
+                $link['url'] = 'https://www.youtube.com/watch?v=OPf0YbXqDm0' . '?' . $i;
+                $link['title'] = 'Mark Ronson - Uptown Funk ft. Bruno Mars - YouTube';
+                $link['description'] = 'Mark Ronson - Uptown Funk ft. Bruno Mars - YouTube';
                 $link['additionalLabels'] = array('Video');
-                $link['additionalFields'] = array('embed_type' => 'youtube', 'embed_id' => 'youtube-id-' . $i);
+                $link['additionalFields'] = array('embed_type' => 'youtube', 'embed_id' => 'OPf0YbXqDm0');
                 $link['tags'] = array(
                     array('name' => 'Video Tag 1'),
                     array('name' => 'Video Tag 2'),
                     array('name' => 'Video Tag 3'),
                 );
             } elseif ($i <= 150) {
+                $link['url'] = 'https://open.spotify.com/album/3vLaOYCNCzngDf8QdBg2V1/32OlwWuMpZ6b0aN2RZOeMS' . '?' . $i;
+                $link['title'] = 'Uptown Funk';
+                $link['description'] = 'Uptown Special : Mark Ronson, Bruno Mars';
                 $link['additionalLabels'] = array('Audio');
-                $link['additionalFields'] = array('embed_type' => 'spotify', 'embed_id' => 'spotify:track:' . $i);
+                $link['additionalFields'] = array('embed_type' => 'spotify', 'embed_id' => 'spotify:track:32OlwWuMpZ6b0aN2RZOeMS');
                 $link['tags'] = array(
-                    array('name' => 'Audio Tag 4'),
-                    array('name' => 'Audio Tag 5'),
-                    array('name' => 'Audio Tag 6'),
+                    array('name' => 'Uptown Funk', 'additionalLabels' => array('Song'), 'additionalFields' => array('spotifyId' => '32OlwWuMpZ6b0aN2RZOeMS', 'isrc' => 'GBARL1401524')),
+                    array('name' => 'Bruno Mars', 'additionalLabels' => array('Artist'), 'additionalFields' => array('spotifyId' => '0du5cEVh5yTK9QJze8zA0C')),
+                    array('name' => 'Mark Ronson', 'additionalLabels' => array('Artist'), 'additionalFields' => array('spotifyId' => '3hv9jJF3adDNsBSIQDqcjp')),
+                    array('name' => 'Uptown Special', 'additionalLabels' => array('Album'), 'additionalFields' => array('spotifyId' => '3vLaOYCNCzngDf8QdBg2V1')),
                 );
             } elseif ($i <= 350) {
                 $link['additionalLabels'] = array('Image');
@@ -364,7 +370,7 @@ class Fixtures
 
     private function loadProfileOptions()
     {
-        $profileOptions = new ProfileOptions($this->client);
+        $profileOptions = new ProfileOptions($this->gm);
 
         $logger = $this->logger;
         $profileOptions->setLogger($logger);

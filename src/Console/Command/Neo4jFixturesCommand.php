@@ -51,11 +51,9 @@ class Neo4jFixturesCommand extends ApplicationAwareCommand
             );
             if ($e instanceof ValidationException) {
                 $errors = $e->getErrors();
-                foreach ($errors as $fieldName=>$error) {
+                foreach ($errors as $fieldName => $error) {
                     foreach ($error as $fieldError) {
-                        $output->writeln(
-                            'Error in ' . $fieldName . ': ' . $fieldError
-                        );
+                        $output->writeln('Error in ' . $fieldName . ': ' . $fieldError);
                     }
                 }
             }
