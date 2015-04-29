@@ -2,6 +2,7 @@ locale.options:
     default: %locale.default%
 
 instant.host: %instant.host%
+guzzle.verify: %guzzle.verify%
 
 dbs.options:
     mysql_social:

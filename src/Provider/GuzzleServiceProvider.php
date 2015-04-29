@@ -17,10 +17,17 @@ class GuzzleServiceProvider implements ServiceProviderInterface
     public function register(Application $app)
     {
 
-        $app['guzzle.client'] = $app->share(function () use ($app) {
+        $app['guzzle.client'] = $app->share(
+            function () use ($app) {
 
-            return new Client();
-        });
+                $c = new Client();
+                if ($app['guzzle.verify']) {
+                    $c->setDefaultOption('verify', $app['guzzle.verify']);
+                }
+
+                return $c;
+            }
+        );
     }
 
     public function boot(Application $app)
