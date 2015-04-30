@@ -172,6 +172,7 @@ class GroupController
         }
 
         try {
+            /** @var GroupModel $model */
             $model = $app['users.groups.model'];
             $isBelonging=$model->isUserFromGroup($request->get('groupName'),
                                                 $request->request->get('id'));

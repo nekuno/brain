@@ -32,6 +32,7 @@ $app->get('/users/{id}/recommendations/content', 'users.controller:getContentRec
 $app->get('/users/{id}/recommendations/content/tags', 'users.controller:getContentRecommendationTagsAction');
 $app->get('/users/{id}/status', 'users.controller:statusAction');
 $app->get('/users/{id}/stats', 'users.controller:statsAction');
+$app->get('/users/{id1}/stats/compare/{id2}', 'users.controller:statsCompareAction');
 
 $app->get('/users/{userId}/affinity/{linkId}', 'users.controller:getAffinityAction');
 

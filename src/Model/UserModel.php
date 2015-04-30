@@ -268,8 +268,10 @@ class UserModel implements PaginatedInterface
             ->with('u,contentLikes,videoLikes,count(r) AS audioLikes')
             ->optionalMatch('(u)-[r:LIKES]->(:Image)')
             ->with('u,contentLikes,videoLikes,audioLikes,count(r) AS imageLikes')
+            ->optionalMatch('(u)-[:BELONGS_TO]->(g:Group)')
+            ->with('u,contentLikes,videoLikes,audioLikes,imageLikes,collect(g.groupName) AS groupsBelonged')
             ->optionalMatch('(u)-[r:ANSWERS]->(:Answer)')
-            ->returns('contentLikes', 'videoLikes', 'audioLikes', 'imageLikes', 'count(r) AS questionsAnswered');
+            ->returns('contentLikes', 'videoLikes', 'audioLikes', 'imageLikes', 'groupsBelonged', 'count(r) AS questionsAnswered');
 
         $query = $qb->getQuery();
 
@@ -281,6 +283,11 @@ class UserModel implements PaginatedInterface
 
         /* @var $row Row */
         $row = $result->current();
+
+        $groups = array();
+        foreach ($row->offsetGet('groupsBelonged') as $group) {
+            $groups[] = $group;
+        }
 
         $numberOfReceivedLikes = $this->connectionSocial->executeQuery('SELECT COUNT(*) AS numberOfReceivedLikes FROM user_like WHERE user_to = :user_to', array('user_to' => (integer)$id))->fetchColumn();
         $numberOfUserLikes = $this->connectionSocial->executeQuery('SELECT COUNT(*) AS numberOfUserLikes FROM user_like WHERE user_from = :user_from', array('user_from' => (integer)$id))->fetchColumn();
@@ -299,6 +306,7 @@ class UserModel implements PaginatedInterface
             $row->offsetGet('imageLikes'),
             (integer)$numberOfReceivedLikes,
             (integer)$numberOfUserLikes,
+            $groups,
             $row->offsetGet('questionsAnswered'),
             !empty($twitterStatus) ? (boolean)$twitterStatus->getFetched() : false,
             !empty($twitterStatus) ? (boolean)$twitterStatus->getProcessed() : false,
@@ -312,6 +320,58 @@ class UserModel implements PaginatedInterface
 
         return $userStats;
 
+    }
+
+    /**
+     * @param $id1
+     * @param $id2
+     * @return UserStatsModel
+     * @throws \Exception
+     */
+    public function getComparedStats($id1, $id2)
+    {
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->setParameters(array('id1' => (integer)$id1,
+            'id2' => (integer)$id2));
+
+        $qb->match('(u:User {qnoow_id: { id1 }}), (u2:User {qnoow_id: { id2 }})')
+            ->match('(u)-[:BELONGS_TO]->(g:Group)<-[:BELONGS_TO]-(u2)');
+        //TODO: Add stats comparation to fill returned UserStatsModel
+        $qb->returns('collect(g.groupName) AS groupsBelonged');
+
+        $query = $qb->getQuery();
+
+        $result = $query->getResultSet();
+
+        /* @var $row Row */
+        $row = $result->current();
+
+        $groups = array();
+        foreach ($row->offsetGet('groupsBelonged') as $group) {
+            $groups[] = $group;
+        }
+
+        $userStats = new UserStatsModel(
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            $groups,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        );
+
+        return $userStats;
     }
 
     /**
@@ -365,18 +425,18 @@ class UserModel implements PaginatedInterface
     /**
      * @inheritdoc
      */
-    public function getFilters($locale = null, $groups=null, $filter=true)
+    public function getFilters($locale = null, $groups = null, $filter = true)
     {
         $locale = $this->getLocale($locale);
         $metadata = array('groups' => array('labelFilter' => array('en' => 'Groups',
-                                                                   'es' => 'Grupos'),
-                                            'type' => 'choice',
-                                            'choices' => array(),
-                                            'filterable' => true));
+            'es' => 'Grupos'),
+            'type' => 'choice',
+            'choices' => array(),
+            'filterable' => true));
 
 
-        foreach($groups as $group){
-            $metadata['groups']['choices'][$group['groupName']]=$group['groupName'];
+        foreach ($groups as $group) {
+            $metadata['groups']['choices'][$group['groupName']] = $group['groupName'];
         }
 
         foreach ($metadata as $key => &$item) {
@@ -403,7 +463,7 @@ class UserModel implements PaginatedInterface
 
         //check user-dependent choices existence
 
-        if ($groups=null||$groups==array()){
+        if ($groups = null || $groups == array()) {
             unset($metadata['groups']);
         }
 

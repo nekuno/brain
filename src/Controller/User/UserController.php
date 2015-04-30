@@ -487,7 +487,7 @@ class UserController
         $filters = array(
             'id' => $id,
             'profileFilters' => $filters,
-            'groups' => isset($filters['groups'])? $filters['groups'] : array()
+            'groups' => isset($filters['groups']) ? $filters['groups'] : array()
         );
 
         if ($order) {
@@ -495,9 +495,9 @@ class UserController
         }
 
         /** @var GroupModel $groupModel */
-        $groupModel= $app['users.groups.model'];
-        foreach($filters['groups'] as $groupName){
-            if (!$groupModel->isUserFromGroup($groupName,$id)){
+        $groupModel = $app['users.groups.model'];
+        foreach ($filters['groups'] as $groupName) {
+            if (!$groupModel->isUserFromGroup($groupName, $id)) {
                 return $app->json(array(), 403);
             }
         }
@@ -665,18 +665,18 @@ class UserController
     public function getAllFiltersAction(Request $request, Application $app)
     {
         $locale = $request->query->get('locale');
-        $id=$request->get('id');
-        $filters=array();
+        $id = $request->get('id');
+        $filters = array();
         /* @var $model ProfileModel */
         $profileModel = $app['users.profile.model'];
-        $filters=array_merge($filters,$profileModel->getFilters($locale));
+        $filters = array_merge($filters, $profileModel->getFilters($locale));
 
         /** @var GroupModel $groupModel */
-        $groupModel=$app['users.groups.model'];
-        $groups=$groupModel->getByUser((integer)$id);
+        $groupModel = $app['users.groups.model'];
+        $groups = $groupModel->getByUser((integer)$id);
         /* @var $model UserModel */
         $userModel = $app['users.model'];
-        $filters=array_merge($filters,$userModel->getFilters($locale, $groups));
+        $filters = array_merge($filters, $userModel->getFilters($locale, $groups));
 
         return $app->json($filters, 200);
     }
@@ -717,5 +717,24 @@ class UserController
         $stats = $model->getStats($id);
 
         return $app->json($stats->toArray());
+    }
+
+    public function statsCompareAction(Request $request, Application $app)
+    {
+        $id1 = (integer)$request->get('id1');
+        $id2 = (integer)$request->get('id2');
+        if (null === $id1 || null === $id2) {
+            throw new NotFoundHttpException('User not found');
+        }
+        if ($id1 === $id2){
+            return $app->json(array(), 400);
+        }
+        /* @var $model UserModel */
+        $model = $app['users.model'];
+
+        $stats = $model->getComparedStats($id1, $id2);
+
+        return $app->json($stats->toArray());
+
     }
 }
