@@ -669,14 +669,18 @@ class UserController
         $filters = array();
         /* @var $model ProfileModel */
         $profileModel = $app['users.profile.model'];
-        $filters = array_merge($filters, $profileModel->getFilters($locale));
+        $filters['profileFilters']=$profileModel->getFilters($locale);
+//        $filters = array_merge($filters, $profileModel->getFilters($locale));
 
+        //user-dependent filters
+        $dynamicFilters=array();
         /** @var GroupModel $groupModel */
         $groupModel = $app['users.groups.model'];
-        $groups = $groupModel->getByUser((integer)$id);
+        $dynamicFilters['groups']=$groupModel->getByUser((integer)$id);
         /* @var $model UserModel */
         $userModel = $app['users.model'];
-        $filters = array_merge($filters, $userModel->getFilters($locale, $groups));
+        $filters['userFilters']=$userModel->getFilters($locale,$dynamicFilters);
+//        $filters = array_merge($filters, $userModel->getFilters($locale, $groups));
 
         return $app->json($filters, 200);
     }

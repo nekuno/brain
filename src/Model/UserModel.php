@@ -34,11 +34,20 @@ class UserModel implements PaginatedInterface
      */
     protected $entityManagerBrain;
 
-    public function __construct(GraphManager $gm, Connection $connectionSocial, EntityManager $entityManagerBrain)
+    /**
+     * @var array
+     */
+    protected $metadata;
+
+    protected $defaultLocale;
+
+    public function __construct(GraphManager $gm, Connection $connectionSocial, EntityManager $entityManagerBrain, array $metadata, $defaultLocale)
     {
         $this->gm = $gm;
         $this->connectionSocial = $connectionSocial;
         $this->entityManagerBrain = $entityManagerBrain;
+        $this->metadata = $metadata;
+        $this->defaultLocale= $defaultLocale;
     }
 
     /**
@@ -423,19 +432,23 @@ class UserModel implements PaginatedInterface
     }
 
     /**
-     * @inheritdoc
+     * @param null $locale
+     * @param array $dynamicFilters User-dependent filters, not set in this model
+     * @param bool $filter Filter non-public attributes
+     * @return array
      */
-    public function getFilters($locale = null, $groups = null, $filter = true)
+    public function getFilters($locale = null, $dynamicFilters = array(), $filter = true)
     {
         $locale = $this->getLocale($locale);
-        $metadata = array('groups' => array('labelFilter' => array('en' => 'Groups',
-            'es' => 'Grupos'),
-            'type' => 'choice',
-            'choices' => array(),
-            'filterable' => true));
+        $metadata = $this->getMetadata($locale, $dynamicFilters, $filter);
 
+//        $metadata = array('groups' => array('labelFilter' => array('en' => 'Groups',
+//            'es' => 'Grupos'),
+//            'type' => 'choice',
+//            'choices' => array(),
+//            'filterable' => true));
 
-        foreach ($groups as $group) {
+        foreach ($dynamicFilters['groups'] as $group) {
             $metadata['groups']['choices'][$group['groupName']] = $group['groupName'];
         }
 
@@ -449,9 +462,46 @@ class UserModel implements PaginatedInterface
             }
         }
 
-        //mimics profileModel->getMetadata
+        //check user-dependent choices existence for not showing up to user
+
+        if ($dynamicChoices['groups'] = null || $dynamicFilters['groups'] == array()) {
+            unset($metadata['groups']);
+        }
+
+        return $metadata;
+    }
+
+    /**
+     * @param null $locale
+     * @param array $dynamicChoices user-dependent choices (cannot be set from this model)
+     * @param bool $filter
+     * @return array
+     */
+    protected function getMetadata($locale = null, array $dynamicChoices = array(), $filter = true){
+
+        $locale = $this->getLocale($locale);
+
+        $publicMetadata = $dynamicChoices;
+        $choiceOptions = $this->getChoiceOptions();
+
+        foreach ($this->metadata as $name => $values) {
+            $publicField = $values;
+            $publicField['label'] = $values['label'][$locale];
+
+            if ($values['type'] === 'choice') {
+                $publicField['choices'] = array();
+                if (isset($choiceOptions[$name])) {
+                    $publicField['choices'] = $choiceOptions[$name];
+                }
+            } elseif ($values['type'] === 'tags') {
+                $publicField['top'] = $this->getTopUserTags($name);
+            }
+
+            $publicMetadata[$name] = $publicField;
+        }
+
         if ($filter) {
-            foreach ($metadata as &$item) {
+            foreach ($publicMetadata as &$item) {
                 if (isset($item['labelFilter'])) {
                     unset($item['labelFilter']);
                 }
@@ -461,13 +511,7 @@ class UserModel implements PaginatedInterface
             }
         }
 
-        //check user-dependent choices existence
-
-        if ($groups = null || $groups == array()) {
-            unset($metadata['groups']);
-        }
-
-        return $metadata;
+        return $publicMetadata;
     }
 
     /**
@@ -642,9 +686,26 @@ class UserModel implements PaginatedInterface
     {
 
         if (!$locale || !in_array($locale, array('en', 'es'))) {
-            $locale = 'en'; //TODO: Check if add default locale to constructor or create localeManager
+            $locale = $this->defaultLocale;
         }
 
         return $locale;
+    }
+
+    /** Returns statically defined options
+     * @return array
+     */
+    private function getChoiceOptions()
+    {
+        return array();
+    }
+
+    /** Returns User tags to use when created user tags
+     * @param $name
+     * @return array
+     */
+    private function getTopUserTags($type)
+    {
+        return array();
     }
 }
