@@ -66,6 +66,7 @@ $app->get('/fetch/links', 'fetch.controller:fetchLinksAction')->value('userId', 
  */
 
 $app->post('/groups', 'users.groups.controller:addAction');
+$app->get('/groups', 'users.groups.controller:getAllAction');
 $app->get('/groups/{groupName}', 'users.groups.controller:showAction');
 $app->delete('/groups/{groupName}', 'users.groups.controller:deleteAction');
 $app->post('/groups/{groupName}/links', 'users.groups.controller:addUserAction');
