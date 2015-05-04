@@ -37,10 +37,9 @@ class GroupModel
     {
         $qb = $this->gm->createQueryBuilder();
 
-            $qb ->create('(g:Group{groupName:{groupName}})')
+            $qb ->merge('(g:Group{groupName:{groupName}})')
                 ->returns('g');
-        
-          
+
         $qb->setParameters(
             array(
                 'groupName'=>$groupName
@@ -78,6 +77,24 @@ class GroupModel
     }
 
     /**
+     * @param int $groupId
+     * @throws \Exception
+     * @return array
+     */
+    public function getAll()
+    {
+
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(g:Group)')
+            ->returns('g');
+
+        $query = $qb->getQuery();
+        return $this->parseResultSet($query->getResultSet());
+    }
+
+    /**
+     * Gets all data from a group with its id
      * @param $groupId
      * @throws \Exception
      * @return array

@@ -177,6 +177,7 @@ class GroupController
             $isBelonging=$model->isUserFromGroup($request->get('groupName'),
                                                 $request->request->get('id'));
             if (!$isBelonging){
+                $model->create($request->get('groupName'));
                 $model->addUserToGroup(array('id'=>$request->request->get('id'),
                                              'groupName'=>$request->get('groupName')));
             }
@@ -236,6 +237,23 @@ class GroupController
         }
 
         return $app->json(array(), 200);
+    }
+
+    public function getAllAction(Request $request, Application $app)
+    {
+        try {
+            /** @var GroupModel $model */
+            $model = $app['users.groups.model'];
+
+            return  $app->json($model->getAll(), 200);
+        } catch (\Exception $e) {
+            if ($app['env'] == 'dev') {
+                throw $e;
+            }
+
+            return $app->json(array(), 500);
+        }
+
     }
 
 }

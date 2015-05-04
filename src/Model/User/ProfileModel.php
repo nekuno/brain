@@ -358,6 +358,11 @@ class ProfileModel
                     }
                 }
             } else {
+
+                if ($fieldName === 'orientation' && isset($data['orientationRequired']) && $data['orientationRequired'] === false) {
+                    continue;
+                }
+
                 if (isset($fieldData['required']) && $fieldData['required'] === true) {
                     $fieldErrors[] = 'It\'s required.';
                 }
