@@ -20,7 +20,7 @@ class GroupModel
     protected $gm;
 
     /**
-     * @param GraphManager gm
+     * @param GraphManager $gm
      */
     public function __construct(GraphManager $gm)
     {
@@ -52,7 +52,8 @@ class GroupModel
 
         return $result;
     }
-    /*
+
+    /**
      * @param $groupName
      * @returns array
      */
@@ -60,7 +61,6 @@ class GroupModel
     {
         $qb = $this->gm->createQueryBuilder();
 
-            //needs to delete all relationships too
             $qb ->match('(g:Group{groupName:{groupName}})')
                 ->optionalMatch('(g)-[r]-()')
                 ->delete('r,g');
@@ -95,13 +95,14 @@ class GroupModel
 
     /**
      * Gets all data from a group with its id
-     * @param int $groupId
+     * @param $groupId
      * @throws \Exception
      * @return array
      */
-    public function getById(int $groupId)
+    public function getById($groupId)
     {
 
+        $groupId=(integer)$groupId;
         $qb = $this->gm->createQueryBuilder();
 
         $qb->match('(g:Group)')
@@ -119,9 +120,8 @@ class GroupModel
     }
 
     /**
-     * Gets all data from a group with its name
      * This method accepts returning multiple groups
-     * @param $groupId
+     * @param $groupName
      * @throws \Exception
      * @return array
      */
@@ -171,14 +171,6 @@ class GroupModel
     public function addUserToGroup(array $data)
     {
         $qb = $this->gm->createQueryBuilder();
-
-        $result=array();
-       // $group=getByName($data['groupName']);
-        //$groupId=$group['groupId'];
-
-       /* if (isUserFromGroup($groupId,$data['id'])){
-            $result['wasBelonging']=true;
-        } else {*/
             
             $qb ->match('(g:Group{groupName:{groupName}})')
                 ->match('(u:User{qnoow_id:{userId}})')
@@ -196,23 +188,19 @@ class GroupModel
             $query = $qb->getQuery();
             $result=$query->getResultSet();
 
-            //$result['wasBelonging']=false;
-        //}
-
         return $result;
     }
 
     /**
-     * @param array data
+     * @param $groupName
+     * @param $id
+     * @return bool
      * @throws \Exception
-     * @return boolean
      */
 
     public function removeUserFromGroup($groupName,$id){
 
         $qb = $this->gm->createQueryBuilder();
-
-        $result=array();
 
             $qb ->match('(g:Group{groupName:{groupName}})')
                 ->match('(u:User{qnoow_id:{userId}})')
@@ -233,15 +221,12 @@ class GroupModel
     }
 
      /**
-     * Check if a given group already exists
-     * @param $groupId
+     * @param $groupName
      * @throws \Exception
      * @return boolean
      */
     public function isAlreadyCreated($groupName)
     {
-        $qb = $this->gm->createQueryBuilder();
-
         if (count($this->getByName($groupName))>0){
             return true;
         } else {
@@ -258,6 +243,8 @@ class GroupModel
      */
     public function isUserFromGroup($groupName,$id)
     {
+        if (!$groupName) return true;
+
         $qb = $this->gm->createQueryBuilder();
 
         $qb->match('(g:Group{groupName:{groupName}})')

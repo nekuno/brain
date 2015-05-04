@@ -229,3 +229,9 @@ profile:
         label:
             en: 'Location'
             es: 'Ubicación'
+user:
+    groups:
+        type: choice
+        label:
+            en: 'Groups'
+            es: 'Grupos'

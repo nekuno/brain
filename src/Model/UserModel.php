@@ -34,11 +34,20 @@ class UserModel implements PaginatedInterface
      */
     protected $entityManagerBrain;
 
-    public function __construct(GraphManager $gm, Connection $connectionSocial, EntityManager $entityManagerBrain)
+    /**
+     * @var array
+     */
+    protected $metadata;
+
+    protected $defaultLocale;
+
+    public function __construct(GraphManager $gm, Connection $connectionSocial, EntityManager $entityManagerBrain, array $metadata, $defaultLocale)
     {
         $this->gm = $gm;
         $this->connectionSocial = $connectionSocial;
         $this->entityManagerBrain = $entityManagerBrain;
+        $this->metadata = $metadata;
+        $this->defaultLocale= $defaultLocale;
     }
 
     /**
@@ -268,8 +277,10 @@ class UserModel implements PaginatedInterface
             ->with('u,contentLikes,videoLikes,count(r) AS audioLikes')
             ->optionalMatch('(u)-[r:LIKES]->(:Image)')
             ->with('u,contentLikes,videoLikes,audioLikes,count(r) AS imageLikes')
+            ->optionalMatch('(u)-[:BELONGS_TO]->(g:Group)')
+            ->with('u,contentLikes,videoLikes,audioLikes,imageLikes,collect(g.groupName) AS groupsBelonged')
             ->optionalMatch('(u)-[r:ANSWERS]->(:Answer)')
-            ->returns('contentLikes', 'videoLikes', 'audioLikes', 'imageLikes', 'count(r) AS questionsAnswered');
+            ->returns('contentLikes', 'videoLikes', 'audioLikes', 'imageLikes', 'groupsBelonged', 'count(r) AS questionsAnswered');
 
         $query = $qb->getQuery();
 
@@ -281,6 +292,11 @@ class UserModel implements PaginatedInterface
 
         /* @var $row Row */
         $row = $result->current();
+
+        $groups = array();
+        foreach ($row->offsetGet('groupsBelonged') as $group) {
+            $groups[] = $group;
+        }
 
         $numberOfReceivedLikes = $this->connectionSocial->executeQuery('SELECT COUNT(*) AS numberOfReceivedLikes FROM user_like WHERE user_to = :user_to', array('user_to' => (integer)$id))->fetchColumn();
         $numberOfUserLikes = $this->connectionSocial->executeQuery('SELECT COUNT(*) AS numberOfUserLikes FROM user_like WHERE user_from = :user_from', array('user_from' => (integer)$id))->fetchColumn();
@@ -299,6 +315,7 @@ class UserModel implements PaginatedInterface
             $row->offsetGet('imageLikes'),
             (integer)$numberOfReceivedLikes,
             (integer)$numberOfUserLikes,
+            $groups,
             $row->offsetGet('questionsAnswered'),
             !empty($twitterStatus) ? (boolean)$twitterStatus->getFetched() : false,
             !empty($twitterStatus) ? (boolean)$twitterStatus->getProcessed() : false,
@@ -312,6 +329,58 @@ class UserModel implements PaginatedInterface
 
         return $userStats;
 
+    }
+
+    /**
+     * @param $id1
+     * @param $id2
+     * @return UserStatsModel
+     * @throws \Exception
+     */
+    public function getComparedStats($id1, $id2)
+    {
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->setParameters(array('id1' => (integer)$id1,
+            'id2' => (integer)$id2));
+
+        $qb->match('(u:User {qnoow_id: { id1 }}), (u2:User {qnoow_id: { id2 }})')
+            ->match('(u)-[:BELONGS_TO]->(g:Group)<-[:BELONGS_TO]-(u2)');
+        //TODO: Add stats comparation to fill returned UserStatsModel
+        $qb->returns('collect(g.groupName) AS groupsBelonged');
+
+        $query = $qb->getQuery();
+
+        $result = $query->getResultSet();
+
+        /* @var $row Row */
+        $row = $result->current();
+
+        $groups = array();
+        foreach ($row->offsetGet('groupsBelonged') as $group) {
+            $groups[] = $group;
+        }
+
+        $userStats = new UserStatsModel(
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            $groups,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        );
+
+        return $userStats;
     }
 
     /**
@@ -360,6 +429,89 @@ class UserModel implements PaginatedInterface
         $this->connectionSocial->update('users', array('status' => $status->getStatus()), array('id' => (integer)$id));
 
         return $status;
+    }
+
+    /**
+     * @param null $locale
+     * @param array $dynamicFilters User-dependent filters, not set in this model
+     * @param bool $filter Filter non-public attributes
+     * @return array
+     */
+    public function getFilters($locale = null, $dynamicFilters = array(), $filter = true)
+    {
+        $locale = $this->getLocale($locale);
+        $metadata = $this->getMetadata($locale, $dynamicFilters, $filter);
+
+//        $metadata = array('groups' => array('labelFilter' => array('en' => 'Groups',
+//            'es' => 'Grupos'),
+//            'type' => 'choice',
+//            'choices' => array(),
+//            'filterable' => true));
+
+        foreach ($dynamicFilters['groups'] as $group) {
+            $metadata['groups']['choices'][$group['groupName']] = $group['groupName'];
+        }
+
+        foreach ($metadata as $key => &$item) {
+            if (isset($item['labelFilter'])) {
+                $item['label'] = $item['labelFilter'][$locale];
+                unset($item['labelFilter']);
+            }
+            if (isset($item['filterable']) && $item['filterable'] === false) {
+                unset($metadata[$key]);
+            }
+        }
+
+        //check user-dependent choices existence for not showing up to user
+
+        if ($dynamicChoices['groups'] = null || $dynamicFilters['groups'] == array()) {
+            unset($metadata['groups']);
+        }
+
+        return $metadata;
+    }
+
+    /**
+     * @param null $locale
+     * @param array $dynamicChoices user-dependent choices (cannot be set from this model)
+     * @param bool $filter
+     * @return array
+     */
+    protected function getMetadata($locale = null, array $dynamicChoices = array(), $filter = true){
+
+        $locale = $this->getLocale($locale);
+
+        $publicMetadata = $dynamicChoices;
+        $choiceOptions = $this->getChoiceOptions();
+
+        foreach ($this->metadata as $name => $values) {
+            $publicField = $values;
+            $publicField['label'] = $values['label'][$locale];
+
+            if ($values['type'] === 'choice') {
+                $publicField['choices'] = array();
+                if (isset($choiceOptions[$name])) {
+                    $publicField['choices'] = $choiceOptions[$name];
+                }
+            } elseif ($values['type'] === 'tags') {
+                $publicField['top'] = $this->getTopUserTags($name);
+            }
+
+            $publicMetadata[$name] = $publicField;
+        }
+
+        if ($filter) {
+            foreach ($publicMetadata as &$item) {
+                if (isset($item['labelFilter'])) {
+                    unset($item['labelFilter']);
+                }
+                if (isset($item['filterable'])) {
+                    unset($item['filterable']);
+                }
+            }
+        }
+
+        return $publicMetadata;
     }
 
     /**
@@ -528,5 +680,32 @@ class UserModel implements PaginatedInterface
             'username' => $row['u']->getProperty('username'),
             'email' => $row['u']->getProperty('email'),
         );
+    }
+
+    protected function getLocale($locale)
+    {
+
+        if (!$locale || !in_array($locale, array('en', 'es'))) {
+            $locale = $this->defaultLocale;
+        }
+
+        return $locale;
+    }
+
+    /** Returns statically defined options
+     * @return array
+     */
+    private function getChoiceOptions()
+    {
+        return array();
+    }
+
+    /** Returns User tags to use when created user tags
+     * @param $name
+     * @return array
+     */
+    private function getTopUserTags($type)
+    {
+        return array();
     }
 }

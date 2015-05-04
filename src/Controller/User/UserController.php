@@ -3,9 +3,12 @@
 namespace Controller\User;
 
 use Model\User\ContentPaginatedModel;
+use Model\User\GroupModel;
+use Model\User\ProfileModel;
 use Model\User\RateModel;
 use Model\UserModel;
 use Silex\Application;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -472,7 +475,6 @@ class UserController
         // Get params
         $id = $request->get('id');
         $order = $request->get('order', false);
-        $profileFilters = $request->get('filters', array());
 
         if (null === $id) {
             return $app->json(array(), 400);
@@ -483,11 +485,21 @@ class UserController
 
         $filters = array(
             'id' => $id,
-            'profileFilters' => $profileFilters,
+            'profileFilters' => $request->get('profileFilters', array()),
+            'userFilters' => $request->get('userFilters', array()),
         );
 
         if ($order) {
             $filters['order'] = $order;
+        }
+
+        /** @var GroupModel $groupModel */
+        $groupModel = $app['users.groups.model'];
+        if (isset($filters['userFilters']['groups'])
+            && null !== $filters['userFilters']['groups']) {
+            if (!$groupModel->isUserFromGroup(reset($filters['userFilters']['groups']), $id)) {
+                return $app->json(array(), 403);
+            }
         }
 
         /* @var $model \Model\User\Recommendation\UserRecommendationPaginatedModel */
@@ -648,6 +660,32 @@ class UserController
     /**
      * @param Request $request
      * @param Application $app
+     * @return JsonResponse
+     */
+    public function getAllFiltersAction(Request $request, Application $app)
+    {
+        $locale = $request->query->get('locale');
+        $id = $request->get('id');
+        $filters = array();
+        /* @var $model ProfileModel */
+        $profileModel = $app['users.profile.model'];
+        $filters['profileFilters'] = $profileModel->getFilters($locale);
+
+        //user-dependent filters
+        $dynamicFilters = array();
+        /** @var GroupModel $groupModel */
+        $groupModel = $app['users.groups.model'];
+        $dynamicFilters['groups'] = $groupModel->getByUser((integer)$id);
+        /* @var $model UserModel */
+        $userModel = $app['users.model'];
+        $filters['userFilters'] = $userModel->getFilters($locale, $dynamicFilters);
+
+        return $app->json($filters, 200);
+    }
+
+    /**
+     * @param Request $request
+     * @param Application $app
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      * @throws \Exception
      */
@@ -681,5 +719,24 @@ class UserController
         $stats = $model->getStats($id);
 
         return $app->json($stats->toArray());
+    }
+
+    public function statsCompareAction(Request $request, Application $app)
+    {
+        $id1 = (integer)$request->get('id1');
+        $id2 = (integer)$request->get('id2');
+        if (null === $id1 || null === $id2) {
+            throw new NotFoundHttpException('User not found');
+        }
+        if ($id1 === $id2) {
+            return $app->json(array(), 400);
+        }
+        /* @var $model UserModel */
+        $model = $app['users.model'];
+
+        $stats = $model->getComparedStats($id1, $id2);
+
+        return $app->json($stats->toArray());
+
     }
 }
