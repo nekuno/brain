@@ -475,7 +475,6 @@ class UserController
         // Get params
         $id = $request->get('id');
         $order = $request->get('order', false);
-        $filters = $request->get('filters', array());
 
         if (null === $id) {
             return $app->json(array(), 400);
@@ -486,8 +485,8 @@ class UserController
 
         $filters = array(
             'id' => $id,
-            'profileFilters' => $filters,
-            'groups' => isset($filters['groups']) ? $filters['groups'] : array()
+            'profileFilters' => $request->get('profileFilters', array()),
+            'userFilters' => $request->get('userFilters', array()),
         );
 
         if ($order) {
@@ -496,8 +495,9 @@ class UserController
 
         /** @var GroupModel $groupModel */
         $groupModel = $app['users.groups.model'];
-        foreach ($filters['groups'] as $groupName) {
-            if (!$groupModel->isUserFromGroup($groupName, $id)) {
+        if (isset($filters['userFilters']['groups'])
+            && null !== $filters['userFilters']['groups']) {
+            if (!$groupModel->isUserFromGroup(reset($filters['userFilters']['groups']), $id)) {
                 return $app->json(array(), 403);
             }
         }
@@ -669,18 +669,16 @@ class UserController
         $filters = array();
         /* @var $model ProfileModel */
         $profileModel = $app['users.profile.model'];
-        $filters['profileFilters']=$profileModel->getFilters($locale);
-//        $filters = array_merge($filters, $profileModel->getFilters($locale));
+        $filters['profileFilters'] = $profileModel->getFilters($locale);
 
         //user-dependent filters
-        $dynamicFilters=array();
+        $dynamicFilters = array();
         /** @var GroupModel $groupModel */
         $groupModel = $app['users.groups.model'];
-        $dynamicFilters['groups']=$groupModel->getByUser((integer)$id);
+        $dynamicFilters['groups'] = $groupModel->getByUser((integer)$id);
         /* @var $model UserModel */
         $userModel = $app['users.model'];
-        $filters['userFilters']=$userModel->getFilters($locale,$dynamicFilters);
-//        $filters = array_merge($filters, $userModel->getFilters($locale, $groups));
+        $filters['userFilters'] = $userModel->getFilters($locale, $dynamicFilters);
 
         return $app->json($filters, 200);
     }
@@ -730,7 +728,7 @@ class UserController
         if (null === $id1 || null === $id2) {
             throw new NotFoundHttpException('User not found');
         }
-        if ($id1 === $id2){
+        if ($id1 === $id2) {
             return $app->json(array(), 400);
         }
         /* @var $model UserModel */

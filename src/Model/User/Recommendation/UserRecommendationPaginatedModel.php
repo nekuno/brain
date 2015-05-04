@@ -33,7 +33,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
     {
         $hasId = isset($filters['id']);
         $hasProfileFilters = isset($filters['profileFilters']);
-        $notMultipleGroups = count($filters['groups']) <= 1;
+        $notMultipleGroups = !(isset($filters['userFilters']['groups']) && count($filters['userFilters']['groups']) > 1);
         return $hasId && $hasProfileFilters && $notMultipleGroups;
     }
 
@@ -48,7 +48,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
     public function slice(array $filters, $offset, $limit)
     {
         $id = $filters['id'];
-        $groups = isset($filters['groups']) ? $filters['groups'] : null;
+        $group = isset($filters['userFilters']['groups']) ? $filters['userFilters']['groups'] : null;
         $response = array();
 
         $parameters = array(
@@ -79,7 +79,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                 array('(matching_questions > 0 OR similarity > 0)'),
                 $profileFilters['conditions']))
             ->match($profileFilters['matches']);
-        if ($groups) $qb->match("(anyUser)-[:BELONGS_TO]->(g:Group{groupName: '".reset($groups)."' })");
+        if ($group) $qb->match("(anyUser)-[:BELONGS_TO]->(g:Group{groupName: '" . reset($group) . "' })");
 
         $qb->returns('DISTINCT anyUser.qnoow_id AS id,
                     anyUser.username AS username,
@@ -115,7 +115,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         $id = $filters['id'];
         $count = 0;
 
-        $groups = isset($filters['groups']) ? $filters['groups'] : null;
+        $group = isset($filters['userFilters']['groups']) ? $filters['userFilters']['groups'] : null;
 
         $profileFilters = $this->getProfileFilters($filters['profileFilters']);
 
@@ -137,7 +137,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                 array('(matching_questions > 0 OR similarity > 0)'),
                 $profileFilters['conditions']))
             ->match($profileFilters['matches']);
-        if ($groups) $qb->match("(anyUser)-[:BELONGS_TO]->(g:Group{groupName: '".reset($groups)."' })");
+        if ($group) $qb->match("(anyUser)-[:BELONGS_TO]->(g:Group{groupName: '" . reset($group) . "' })");
 
         $qb->returns('COUNT(DISTINCT anyUser) as total');
         $query = $qb->getQuery();
