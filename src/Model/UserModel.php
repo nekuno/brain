@@ -5,6 +5,7 @@ namespace Model;
 use Doctrine\DBAL\Connection;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
+use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
 use Model\User\UserStatsModel;
 use Model\User\UserStatusModel;
@@ -51,31 +52,79 @@ class UserModel implements PaginatedInterface
         $this->defaultLocale = $defaultLocale;
     }
 
-    /**
-     * Creates an new User and returns the query result
-     *
-     * @param array $user
-     * @throws \Exception
-     * @return \Everyman\Neo4j\Query\ResultSet
-     */
-    public function create(array $user = array())
+    public function validate(array $data)
     {
-        if (!isset($user['email'])) {
-            $user['email'] = '';
+        $errors = array();
+
+        $metadata = array(
+            'id' => array('type' => 'integer', 'required' => true),
+            'username' => array('type' => 'string', 'required' => true),
+            'email' => array('type' => 'string'),
+        );
+
+        foreach ($metadata as $fieldName => $fieldData) {
+
+            $fieldErrors = array();
+
+            if (!isset($data[$fieldName]) || !$data[$fieldName]) {
+                if (isset($fieldData['required']) && $fieldData['required'] === true) {
+                    $fieldErrors[] = sprintf('"%s" is required', $fieldName);
+                }
+            } else {
+
+                $fieldValue = $data[$fieldName];
+
+                switch ($fieldData['type']) {
+                    case 'integer':
+                        if (!is_integer($fieldValue)) {
+                            $fieldErrors[] = sprintf('"%s" must be an integer', $fieldName);
+                        }
+                        break;
+                    case 'string':
+                        if (!is_string($fieldValue)) {
+                            $fieldErrors[] = sprintf('"%s" must be an string', $fieldName);
+                        }
+                        break;
+                }
+            }
+
+            if (count($fieldErrors) > 0) {
+                $errors[$fieldName] = $fieldErrors;
+            }
+
+        }
+
+        if (count($errors) > 0) {
+            $e = new ValidationException('Validation error');
+            $e->setErrors($errors);
+            throw $e;
+        }
+    }
+
+    public function create(array $data)
+    {
+
+        $this->validate($data);
+
+        if (!isset($data['email'])) {
+            $data['email'] = '';
         }
 
         $qb = $this->gm->createQueryBuilder();
         $qb->create('(u:User {qnoow_id: { qnoow_id }, status: { status }, username: { username }, email: { email }})')
-            ->setParameter('qnoow_id', $user['id'])
+            ->setParameter('qnoow_id', $data['id'])
             ->setParameter('status', UserStatusModel::USER_STATUS_INCOMPLETE)
-            ->setParameter('username', $user['username'])
-            ->setParameter('email', $user['email'])
+            ->setParameter('username', $data['username'])
+            ->setParameter('email', $data['email'])
             ->returns('u');
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();
 
-        return $this->parseResultSet($result);
+        /* @var $row Row */
+        $row = $result->current();
+
+        return $this->parseRow($row);
     }
 
     /**
@@ -694,7 +743,7 @@ class UserModel implements PaginatedInterface
 
     }
 
-    private function parseRow($row)
+    private function parseRow(Row $row)
     {
         return array(
             'qnoow_id' => $row['u']->getProperty('qnoow_id'),

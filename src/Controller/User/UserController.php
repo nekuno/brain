@@ -66,35 +66,11 @@ class UserController
     public function addAction(Request $request, Application $app)
     {
 
-        // Basic data validation
-        if (array() !== $request->request->all()) {
-            if (null == $request->request->get('id') || null == $request->request->get('username')
-            ) {
-                return $app->json(array(), 400);
-            }
+        /* @var $model UserModel */
+        $model = $app['users.model'];
+        $result = $model->create($request->request->all());
 
-            if (!is_int($request->request->get('id'))) {
-                return $app->json(array(), 400);
-            }
-        } else {
-            return $app->json(array(), 400);
-        }
-
-        // Create and persist the User
-
-        try {
-            /* @var $model UserModel */
-            $model = $app['users.model'];
-            $result = $model->create($request->request->all());
-        } catch (\Exception $e) {
-            if ($app['env'] == 'dev') {
-                throw $e;
-            }
-
-            return $app->json(array(), 500);
-        }
-
-        return $app->json($result, !empty($result) ? 201 : 200);
+        return $app->json($result, 201);
     }
 
     /**
