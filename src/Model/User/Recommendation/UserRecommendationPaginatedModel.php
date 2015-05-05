@@ -34,6 +34,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         $hasId = isset($filters['id']);
         $hasProfileFilters = isset($filters['profileFilters']);
         $notMultipleGroups = !(isset($filters['userFilters']['groups']) && count($filters['userFilters']['groups']) > 1);
+
         return $hasId && $hasProfileFilters && $notMultipleGroups;
     }
 
@@ -48,7 +49,14 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
     public function slice(array $filters, $offset, $limit)
     {
         $id = $filters['id'];
-        $group = isset($filters['userFilters']['groups']) ? $filters['userFilters']['groups'] : null;
+        $groups = isset($filters['userFilters']['groups']) ? $filters['userFilters']['groups'] : array();
+        $groups = array_map(
+            function ($i) {
+                return (integer)$i;
+            },
+            $groups
+        );
+
         $response = array();
 
         $parameters = array(
@@ -71,23 +79,35 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
             ->where('u <> anyUser')
             ->optionalMatch('(u)-[m:MATCHES]-(anyUser)')
             ->optionalMatch('(u)-[s:SIMILARITY]-(anyUser)')
-            ->with('u, anyUser,
+            ->with(
+                'u, anyUser,
                 (CASE WHEN HAS(m.matching_questions) THEN m.matching_questions ELSE 0 END) AS matching_questions,
-                (CASE WHEN HAS(s.similarity) THEN s.similarity ELSE 0 END) AS similarity')
+                (CASE WHEN HAS(s.similarity) THEN s.similarity ELSE 0 END) AS similarity'
+            )
             ->match('(anyUser)<-[:PROFILE_OF]-(p:Profile)')
-            ->where(array_merge(
-                array('(matching_questions > 0 OR similarity > 0)'),
-                $profileFilters['conditions']))
+            ->where(
+                array_merge(
+                    array('(matching_questions > 0 OR similarity > 0)'),
+                    $profileFilters['conditions']
+                )
+            )
             ->match($profileFilters['matches']);
-        if ($group) $qb->match("(anyUser)-[:BELONGS_TO]->(g:Group{groupName: '" . reset($group) . "' })");
 
-        $qb->returns('DISTINCT anyUser.qnoow_id AS id,
+        if ($groups) {
+            $qb->match('(anyUser)-[:BELONGS_TO]->(g:Group)')
+                ->where('id(g) IN { groups }')
+                ->setParameter('groups', $groups);
+        }
+
+        $qb->returns(
+            'DISTINCT anyUser.qnoow_id AS id,
                     anyUser.username AS username,
                     matching_questions,
-                    similarity')
+                    similarity'
+        )
             ->orderBy($orderQuery)
-            ->skip('{offset}')
-            ->limit('{limit}');
+            ->skip('{ offset }')
+            ->limit('{ limit }');
         $query = $qb->getQuery();
 
         $result = $query->getResultSet();
@@ -101,6 +121,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
 
             $response[] = $user;
         }
+
         return $response;
     }
 
@@ -115,7 +136,13 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         $id = $filters['id'];
         $count = 0;
 
-        $group = isset($filters['userFilters']['groups']) ? $filters['userFilters']['groups'] : null;
+        $groups = isset($filters['userFilters']['groups']) ? $filters['userFilters']['groups'] : array();
+        $groups = array_map(
+            function ($i) {
+                return (integer)$i;
+            },
+            $groups
+        );
 
         $profileFilters = $this->getProfileFilters($filters['profileFilters']);
 
@@ -129,15 +156,25 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
             ->where('u <> anyUser')
             ->optionalMatch('(u)-[m:MATCHES]-(anyUser)')
             ->optionalMatch('(u)-[s:SIMILARITY]-(anyUser)')
-            ->with('u, anyUser,
+            ->with(
+                'u, anyUser,
             (CASE WHEN HAS(m.matching_questions) THEN m.matching_questions ELSE 0 END) AS matching_questions,
-            (CASE WHEN HAS(s.similarity) THEN s.similarity ELSE 0 END) AS similarity')
+            (CASE WHEN HAS(s.similarity) THEN s.similarity ELSE 0 END) AS similarity'
+            )
             ->match('(anyUser)<-[:PROFILE_OF]-(p:Profile)')
-            ->where(array_merge(
-                array('(matching_questions > 0 OR similarity > 0)'),
-                $profileFilters['conditions']))
+            ->where(
+                array_merge(
+                    array('(matching_questions > 0 OR similarity > 0)'),
+                    $profileFilters['conditions']
+                )
+            )
             ->match($profileFilters['matches']);
-        if ($group) $qb->match("(anyUser)-[:BELONGS_TO]->(g:Group{groupName: '" . reset($group) . "' })");
+
+        if ($groups) {
+            $qb->match('(anyUser)-[:BELONGS_TO]->(g:Group)')
+                ->where('id(g) IN { groups }')
+                ->setParameter('groups', $groups);
+        }
 
         $qb->returns('COUNT(DISTINCT anyUser) as total');
         $query = $qb->getQuery();
