@@ -66,35 +66,11 @@ class UserController
     public function addAction(Request $request, Application $app)
     {
 
-        // Basic data validation
-        if (array() !== $request->request->all()) {
-            if (null == $request->request->get('id') || null == $request->request->get('username')
-            ) {
-                return $app->json(array(), 400);
-            }
+        /* @var $model UserModel */
+        $model = $app['users.model'];
+        $result = $model->create($request->request->all());
 
-            if (!is_int($request->request->get('id'))) {
-                return $app->json(array(), 400);
-            }
-        } else {
-            return $app->json(array(), 400);
-        }
-
-        // Create and persist the User
-
-        try {
-            /* @var $model UserModel */
-            $model = $app['users.model'];
-            $result = $model->create($request->request->all());
-        } catch (\Exception $e) {
-            if ($app['env'] == 'dev') {
-                throw $e;
-            }
-
-            return $app->json(array(), 500);
-        }
-
-        return $app->json($result, !empty($result) ? 201 : 200);
+        return $app->json($result, 201);
     }
 
     /**
@@ -493,10 +469,9 @@ class UserController
             $filters['order'] = $order;
         }
 
-        /** @var GroupModel $groupModel */
+        /* @var $groupModel GroupModel */
         $groupModel = $app['users.groups.model'];
-        if (isset($filters['userFilters']['groups'])
-            && null !== $filters['userFilters']['groups']) {
+        if (isset($filters['userFilters']['groups']) && null !== $filters['userFilters']['groups']) {
             if (!$groupModel->isUserFromGroup(reset($filters['userFilters']['groups']), $id)) {
                 return $app->json(array(), 403);
             }
@@ -673,10 +648,10 @@ class UserController
 
         //user-dependent filters
         $dynamicFilters = array();
-        /** @var GroupModel $groupModel */
+        /* @var $groupModel GroupModel */
         $groupModel = $app['users.groups.model'];
         $dynamicFilters['groups'] = $groupModel->getByUser((integer)$id);
-        /* @var $model UserModel */
+        /* @var $userModel UserModel */
         $userModel = $app['users.model'];
         $filters['userFilters'] = $userModel->getFilters($locale, $dynamicFilters);
 

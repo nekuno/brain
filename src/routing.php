@@ -1,9 +1,9 @@
 <?php
 
-/**
- * Users routes
- * @var $app Silex\Application
- */
+/* @var $app Silex\Application */
+/* @var $controllers \Silex\Controller */
+$controllers = $app['controllers'];
+
 $app->get('/users', 'users.controller:indexAction');
 $app->post('/users', 'users.controller:addAction');
 $app->get('/users/{id}', 'users.controller:showAction')->value('id', null);
@@ -67,10 +67,27 @@ $app->get('/fetch/links', 'fetch.controller:fetchLinksAction')->value('userId', 
 /**
  * Group routes
  */
-
-$app->post('/groups', 'users.groups.controller:addAction');
 $app->get('/groups', 'users.groups.controller:getAllAction');
-$app->get('/groups/{groupName}', 'users.groups.controller:showAction');
-$app->delete('/groups/{groupName}', 'users.groups.controller:deleteAction');
-$app->post('/groups/{groupName}/links', 'users.groups.controller:addUserAction');
-$app->delete('/groups/{groupName}/links/{id}', 'users.groups.controller:removeUserAction');
+$app->get('/groups/{id}', 'users.groups.controller:getAction');
+$app->post('/groups', 'users.groups.controller:postAction');
+$app->put('/groups/{id}', 'users.groups.controller:putAction');
+$app->delete('/groups/{id}', 'users.groups.controller:deleteAction');
+$app->post('/groups/validate', 'users.groups.controller:validateAction');
+$app->post('/groups/{id}/users/{userId}', 'users.groups.controller:addUserAction');
+$app->delete('/groups/{id}/users/{userId}', 'users.groups.controller:removeUserAction');
+
+$controllers
+    ->assert('id', '\d+')
+    ->convert(
+        'id',
+        function ($id) {
+            return (integer)$id;
+        }
+    )
+    ->assert('userId', '\d+')
+    ->convert(
+        'userId',
+        function ($id) {
+            return (integer)$id;
+        }
+    );

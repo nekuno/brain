@@ -2,15 +2,13 @@
 
 namespace Model\User;
 
-use Event\UserDataEvent;
-use Everyman\Neo4j\Cypher\Query;
+use Everyman\Neo4j\Node;
+use Everyman\Neo4j\Query\Row;
+use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
+use Model\UserModel;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-/**
- * Class GroupModel
- *
- * @package Model\User
- */
 class GroupModel
 {
 
@@ -20,244 +18,226 @@ class GroupModel
     protected $gm;
 
     /**
-     * @param GraphManager $gm
+     * @var UserModel
      */
-    public function __construct(GraphManager $gm)
+    protected $um;
+
+    /**
+     * @param GraphManager $gm
+     * @param UserModel $um
+     */
+    public function __construct(GraphManager $gm, UserModel $um)
     {
 
         $this->gm = $gm;
+        $this->um = $um;
     }
 
-    /**
-     * @param $groupName
-     * @throws \Exception
-     * @return array
-     */
-    public function create($groupName)
-    {
-        $qb = $this->gm->createQueryBuilder();
-
-            $qb ->merge('(g:Group{groupName:{groupName}})')
-                ->returns('g');
-
-        $qb->setParameters(
-            array(
-                'groupName'=>$groupName
-            )
-        );
-
-        $query = $qb->getQuery();
-
-        $result=$this->parseResultSet($query->getResultSet());
-
-        return $result;
-    }
-
-    /**
-     * @param $groupName
-     * @returns array
-     */
-    public function remove($groupName)
-    {
-        $qb = $this->gm->createQueryBuilder();
-
-            $qb ->match('(g:Group{groupName:{groupName}})')
-                ->optionalMatch('(g)-[r]-()')
-                ->delete('r,g');
-
-            $qb->setParameters(
-                array(
-                    'groupName' => $groupName
-                )
-            );
-
-        $query = $qb->getQuery();
-        return $this->parseResultSet($query->getResultSet());
-        
-    }
-
-    /**
-     * @param int $groupId
-     * @throws \Exception
-     * @return array
-     */
     public function getAll()
     {
 
         $qb = $this->gm->createQueryBuilder();
-
         $qb->match('(g:Group)')
             ->returns('g');
 
         $query = $qb->getQuery();
-        return $this->parseResultSet($query->getResultSet());
+
+        $result = $query->getResultSet();
+
+        $return = array();
+
+        foreach ($result as $row) {
+            $return[] = $this->build($row);
+        }
+
+        return $return;
     }
 
-    /**
-     * Gets all data from a group with its id
-     * @param $groupId
-     * @throws \Exception
-     * @return array
-     */
-    public function getById($groupId)
+    public function getById($id)
     {
 
-        $groupId=(integer)$groupId;
         $qb = $this->gm->createQueryBuilder();
-
         $qb->match('(g:Group)')
-           ->where('id(g)={groupId}')
-           ->returns('g');
-       
-        $qb->setParameters(
-            array(
-                'groupId' => $groupId
-            )
-        );
+            ->where('id(g)= { id }')
+            ->setParameter('id', (integer)$id)
+            ->returns('g');
 
         $query = $qb->getQuery();
-        return $this->parseResultSet($query->getResultSet());
+
+        $result = $query->getResultSet();
+
+        if (count($result) < 1) {
+            throw new NotFoundHttpException('Group not found');
+        }
+
+        /* @var $row Row */
+        $row = $result->current();
+
+        return $this->build($row);
     }
 
-    /**
-     * This method accepts returning multiple groups
-     * @param $groupName
-     * @throws \Exception
-     * @return array
-     */
-    public function getByName($groupName)
+    public function validate(array $data)
     {
-        $qb = $this->gm->createQueryBuilder();
+        $errors = array();
 
-        $qb->match('(g:Group{groupName:{groupName}})')
-           ->returns('g');
-       
-        $qb->setParameters(
-            array(
-                'groupName' => $groupName
-            )
-        );
+        if (!isset($data['name']) || !$data['name']) {
+            $errors['name'] = array('"name" is required');
+        } elseif (!is_string($data['name'])) {
+            $errors['name'] = array('"name" must be string');
+        }
 
-        $query = $qb->getQuery();
-        return $this->parseResultSet($query->getResultSet());
+        if (!isset($data['html']) || !$data['html']) {
+            $errors['html'] = array('"html" is required');
+        } elseif (!is_string($data['html'])) {
+            $errors['html'] = array('"html" must be string');
+        }
+
+        if (count($errors) > 0) {
+            $e = new ValidationException('Validation error');
+            $e->setErrors($errors);
+            throw $e;
+        }
     }
 
-     /**
-     * @param integer $userId
-     * @throws \Exception
-     * @return array
-     */
-    public function getByUser($userId){
+    public function create(array $data)
+    {
+
+        $this->validate($data);
 
         $qb = $this->gm->createQueryBuilder();
-        $qb ->match('(u:User{qnoow_id:{userId}})')
+        $qb->create('(g:Group {name:{ name }, html: { html }})')
+            ->setParameter('name', $data['name'])
+            ->setParameter('html', $data['html'])
+            ->returns('g');
+
+        $query = $qb->getQuery();
+
+        $result = $query->getResultSet();
+
+        /* @var $row Row */
+        $row = $result->current();
+
+        return $this->build($row);
+    }
+
+    public function update($id, array $data)
+    {
+
+        $this->getById($id);
+
+        $this->validate($data);
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(g:Group)')
+            ->where('id(g) = { id }')
+            ->setParameter('id', (integer)$id)
+            ->set('g.name = { name }')
+            ->setParameter('name', $data['name'])
+            ->set('g.html = { html }')
+            ->setParameter('html', $data['html'])
+            ->returns('g');
+
+        $query = $qb->getQuery();
+
+        $result = $query->getResultSet();
+
+        /* @var $row Row */
+        $row = $result->current();
+
+        return $this->build($row);
+    }
+
+    public function remove($id)
+    {
+
+        $group = $this->getById($id);
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(g:Group)')
+            ->where('id(g) = { id }')
+            ->setParameter('id', (integer)$id)
+            ->optionalMatch('(g)-[r]-()')
+            ->delete('g', 'r');
+
+        $query = $qb->getQuery();
+
+        $query->getResultSet();
+
+        return $group;
+
+    }
+
+    public function getByUser($userId)
+    {
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User {qnoow_id: { userId }})')
+            ->setParameter('userId', (integer)$userId)
             ->match('(u)-[r:BELONGS_TO]->(g:Group)')
             ->returns('g');
-        $qb ->setParameters(
-            array(
-                'userId'=>$userId
-            )
-        );
 
         $query = $qb->getQuery();
-        return $this->parseResultSet($query->getResultSet());
-    }
 
-     /**
-     * @param array $data
-     * @throws \Exception
-     * @return array
-     */
-    public function addUserToGroup(array $data)
-    {
-        $qb = $this->gm->createQueryBuilder();
-            
-            $qb ->match('(g:Group{groupName:{groupName}})')
-                ->match('(u:User{qnoow_id:{userId}})')
-                ->create('(u)-[r:BELONGS_TO]->(g)')
-                ->set('r.created=timestamp()');
-            $qb ->returns('r');
-           
-            $qb->setParameters(
-                array(
-                    'groupName'   => $data['groupName'],
-                    'userId'      => $data['id']
-                )
-            );
+        $result = $query->getResultSet();
 
-            $query = $qb->getQuery();
-            $result=$query->getResultSet();
+        $return = array();
 
-        return $result;
-    }
-
-    /**
-     * @param $groupName
-     * @param $id
-     * @return bool
-     * @throws \Exception
-     */
-
-    public function removeUserFromGroup($groupName,$id){
-
-        $qb = $this->gm->createQueryBuilder();
-
-            $qb ->match('(g:Group{groupName:{groupName}})')
-                ->match('(u:User{qnoow_id:{userId}})')
-                ->match('(u)-[r:BELONGS_TO]->(g)')
-                ->delete('r');
-           
-            $qb->setParameters(
-                array(
-                    'groupName'   => $groupName,
-                    'userId'    => (int)$id
-                )
-            );
-
-            $query = $qb->getQuery();
-            $result=$query->getResultSet();
-
-        return $result;
-    }
-
-     /**
-     * @param $groupName
-     * @throws \Exception
-     * @return boolean
-     */
-    public function isAlreadyCreated($groupName)
-    {
-        if (count($this->getByName($groupName))>0){
-            return true;
-        } else {
-            return false;
+        foreach ($result as $row) {
+            $return[] = $this->build($row);
         }
-       
+
+        return $return;
     }
 
-    /**
-     * Check if a given user belongs to a given group
-     * @param $groupName
-     * @param $id
-     * @return bool
-     */
-    public function isUserFromGroup($groupName,$id)
+    public function addUser($id, $userId)
     {
-        if (!$groupName) return true;
+
+        $this->getById($id);
+        $this->um->getById($userId);
 
         $qb = $this->gm->createQueryBuilder();
+        $qb->match('(g:Group)')
+            ->where('id(g) = { id }')
+            ->setParameter('id', (integer)$id)
+            ->match('(u:User { qnoow_id: { userId } })')
+            ->setParameter('userId', (integer)$userId)
+            ->merge('(u)-[r:BELONGS_TO]->(g)')
+            ->set('r.created = timestamp()')
+            ->returns('r');
 
-        $qb->match('(g:Group{groupName:{groupName}})')
-           ->match('(u:User{qnoow_id:{userId}})')
-           ->match('(u)-[r:BELONGS_TO]->(g)')
-           ->returns('r');
-       
-        $qb->setParameters(
-            array(
-                'groupName'   => $groupName,
-                'userId'    => (int)$id
-            )
-        );
+        $query = $qb->getQuery();
+        $query->getResultSet();
+    }
+
+    public function removeUser($id, $userId)
+    {
+
+        $this->getById($id);
+        $this->um->getById($userId);
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(g:Group)')
+            ->where('id(g) = { id }')
+            ->setParameter('id', (integer)$id)
+            ->match('(u:User { qnoow_id: { userId } })')
+            ->setParameter('userId', (integer)$userId)
+            ->match('(u)-[r:BELONGS_TO]->(g)')
+            ->delete('r');
+
+        $query = $qb->getQuery();
+        $query->getResultSet();
+    }
+
+    public function isUserFromGroup($id, $userId)
+    {
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(g:Group)')
+            ->where('id(g) = { id }')
+            ->setParameter('id', (integer)$id)
+            ->match('(u:User { qnoow_id: { userId } })')
+            ->setParameter('userId', (integer)$userId)
+            ->match('(u)-[r:BELONGS_TO]->(g)')
+            ->returns('r');
 
         $query = $qb->getQuery();
 
@@ -270,24 +250,16 @@ class GroupModel
         return false;
     }
 
-    /**
-     * Gets data from a resultSet of groups: Id and name of each one
-     * @param $resultSet
-     * @return array
-     */
-    private function parseResultSet($resultSet)
+    protected function build(Row $row)
     {
-        $groups = array();
+        /* @var $group Node */
+        $group = $row->offsetGet('g');
 
-        foreach ($resultSet as $row) {
-            $group = array(
-                'groupName' => $row['g']->getProperty('groupName'),
-            );
-            $groups[] = $group;
-        }
-
-        return $groups;
-
+        return array(
+            'id' => $group->getId(),
+            'name' => $group->getProperty('name'),
+            'html' => $group->getProperty('html'),
+        );
     }
 
 }
