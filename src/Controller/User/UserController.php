@@ -493,10 +493,9 @@ class UserController
             $filters['order'] = $order;
         }
 
-        /** @var GroupModel $groupModel */
+        /* @var $groupModel GroupModel */
         $groupModel = $app['users.groups.model'];
-        if (isset($filters['userFilters']['groups'])
-            && null !== $filters['userFilters']['groups']) {
+        if (isset($filters['userFilters']['groups']) && null !== $filters['userFilters']['groups']) {
             if (!$groupModel->isUserFromGroup(reset($filters['userFilters']['groups']), $id)) {
                 return $app->json(array(), 403);
             }
@@ -673,10 +672,10 @@ class UserController
 
         //user-dependent filters
         $dynamicFilters = array();
-        /** @var GroupModel $groupModel */
+        /* @var $groupModel GroupModel */
         $groupModel = $app['users.groups.model'];
         $dynamicFilters['groups'] = $groupModel->getByUser((integer)$id);
-        /* @var $model UserModel */
+        /* @var $userModel UserModel */
         $userModel = $app['users.model'];
         $filters['userFilters'] = $userModel->getFilters($locale, $dynamicFilters);
 

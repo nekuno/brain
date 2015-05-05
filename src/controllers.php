@@ -42,9 +42,9 @@ $app['users.answers.controller'] = $app->share(
 );
 
 $app['users.groups.controller'] = $app->share(
-    function () {
+    function () use ($app) {
 
-        return new \Controller\User\GroupController;
+        return new \Controller\User\GroupController($app['users.groups.model']);
     }
 );
 
