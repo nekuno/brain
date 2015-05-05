@@ -501,14 +501,8 @@ class UserModel implements PaginatedInterface
         $locale = $this->getLocale($locale);
         $metadata = $this->getMetadata($locale, $dynamicFilters, $filter);
 
-//        $metadata = array('groups' => array('labelFilter' => array('en' => 'Groups',
-//            'es' => 'Grupos'),
-//            'type' => 'choice',
-//            'choices' => array(),
-//            'filterable' => true));
-
         foreach ($dynamicFilters['groups'] as $group) {
-            $metadata['groups']['choices'][$group['name']] = $group['name'];
+            $metadata['groups']['choices'][$group['id']] = $group['name'];
         }
 
         foreach ($metadata as $key => &$item) {
