@@ -406,7 +406,7 @@ class UserModel implements PaginatedInterface
         $qb->match('(u:User {qnoow_id: { id1 }}), (u2:User {qnoow_id: { id2 }})')
             ->match('(u)-[:BELONGS_TO]->(g:Group)<-[:BELONGS_TO]-(u2)');
         //TODO: Add stats comparation to fill returned UserStatsModel
-        $qb->returns('collect(g.name) AS groupsBelonged');
+        $qb->returns('collect(g) AS groupsBelonged');
 
         $query = $qb->getQuery();
 
@@ -417,7 +417,12 @@ class UserModel implements PaginatedInterface
 
         $groups = array();
         foreach ($row->offsetGet('groupsBelonged') as $group) {
-            $groups[] = $group;
+            /* @var $group Node */
+            $groups[] = array(
+                'id' => $group->getId(),
+                'name' => $group->getProperty('name'),
+                'html' => $group->getProperty('html'),
+            );
         }
 
         $userStats = new UserStatsModel(
