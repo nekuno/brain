@@ -7,9 +7,11 @@ use Model\User\GroupModel;
 use Model\User\ProfileModel;
 use Model\User\RateModel;
 use Model\UserModel;
+use Paginator\Paginator;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
@@ -439,24 +441,12 @@ class UserController
         return $app->json($result, !empty($result) ? 201 : 200);
     }
 
-    /**
-     * @param Request $request
-     * @param Application $app
-     * @return \Symfony\Component\HttpFoundation\JsonResponse
-     * @throws \Exception
-     */
-    public function getUserRecommendationAction(Request $request, Application $app)
+    public function getUserRecommendationAction(Request $request, Application $app, $id)
     {
 
-        // Get params
-        $id = $request->get('id');
         $order = $request->get('order', false);
 
-        if (null === $id) {
-            return $app->json(array(), 400);
-        }
-
-        /* @var $paginator \Paginator\Paginator */
+        /* @var $paginator Paginator */
         $paginator = $app['paginator'];
 
         $filters = array(
@@ -472,25 +462,19 @@ class UserController
         /* @var $groupModel GroupModel */
         $groupModel = $app['users.groups.model'];
         if (isset($filters['userFilters']['groups']) && null !== $filters['userFilters']['groups']) {
-            if (!$groupModel->isUserFromGroup(reset($filters['userFilters']['groups']), $id)) {
-                return $app->json(array(), 403);
+            foreach ($filters['userFilters']['groups'] as $group) {
+                if (!$groupModel->isUserFromGroup($group, $id)) {
+                    throw new AccessDeniedHttpException(sprintf('Not allowed to filter on group "%s"', $group));
+                }
             }
         }
 
         /* @var $model \Model\User\Recommendation\UserRecommendationPaginatedModel */
         $model = $app['users.recommendation.users.model'];
 
-        try {
-            $result = $paginator->paginate($filters, $model, $request);
-        } catch (\Exception $e) {
-            if ($app['env'] == 'dev') {
-                throw $e;
-            }
+        $result = $paginator->paginate($filters, $model, $request);
 
-            return $app->json(array(), 500);
-        }
-
-        return $app->json($result, !empty($result) ? 201 : 200);
+        return $app->json($result);
     }
 
     /**
