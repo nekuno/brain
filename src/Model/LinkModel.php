@@ -107,6 +107,14 @@ class LinkModel
             $additionalLabels = ':' . implode(':', $data['additionalLabels']);
         }
 
+        if (!isset($data['resource']) || null == $data['resource']) {
+            $data['resource'] = 'nekuno';
+        }
+
+        if (!isset($data['timestamp']) || null == $data['timestamp']) {
+            $data['timestamp'] = time();
+        }
+
         $qb = $this->gm->createQueryBuilder();
 
         if (false === $this->isAlreadySaved($data['url'])) {
@@ -130,13 +138,21 @@ class LinkModel
             }
 
             $qb->create('(u)-[r:LIKES]->(l)')
+                ->set('r.' . $data['resource'] . '={timestamp}')
+                ->set('r.lastLiked=r.' . $data['resource'])
                 ->returns('l');
 
         } else {
 
             $qb->match('(u:User)', '(l:Link)')
                 ->where('u.qnoow_id = { userId }', 'l.url = { url }')
-                ->merge('(u)-[r:LIKES]->(l)');
+                ->merge('(u)-[r:LIKES]->(l)')
+                ->set('r.' . $data['resource'] . '=
+                 COALESCE(r.' . $data['resource'] . ', {timestamp})')
+                ->with('u, l, r')
+                //max(x,y)=(x+y+abs(x-y))/2
+                ->set('r.lastLiked=(r.lastLiked + r.' . $data['resource'] . '
+                                        +ABS(r.lastLiked - r.' . $data['resource'] . '))/2');
 
             $qb->with('u, l')
                 ->optionalMatch('(u)-[a:AFFINITY]-(l)')
@@ -153,6 +169,7 @@ class LinkModel
                 'url' => $data['url'],
                 'userId' => (integer)$data['userId'],
                 'language' => isset($data['language']) ? $data['language'] : null,
+                'timestamp' => (integer)$data['timestamp'],
             )
         );
 
@@ -164,7 +181,7 @@ class LinkModel
 
         $query = $qb->getQuery();
 
-        $query->getResultSet();
+        $result = $query->getResultSet();
 
         if (isset($data['tags'])) {
             foreach ($data['tags'] as $tag) {
@@ -172,6 +189,8 @@ class LinkModel
                 $this->addTag($data, $tag);
             }
         }
+
+        return $result;
     }
 
     public function updateLink(array $data, $processed = false)

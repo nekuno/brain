@@ -33,6 +33,6 @@ class Oauth1GenericResourceOwner extends AbstractResourceOwner
             'auth' => 'oauth',
         );
 
-        return $this->httpClient->createRequest('GET', $url, $clientConfig);
+        return $this->httpClient->get($url, $clientConfig);
     }
 }
