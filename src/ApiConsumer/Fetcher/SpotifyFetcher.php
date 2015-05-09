@@ -71,8 +71,16 @@ class SpotifyFetcher extends AbstractFetcher
                     $artistList[] = $artist['name'];
                 }
 
+                $timestamp=null;
+                if(array_key_exists('added_at', $item)){
+                    $date=new \DateTime($item['added_at']);
+                    $timestamp=$date->getTimestamp();
+                }
+
                 $link['description'] = $item['track']['album']['name'] . ' : ' . implode(', ', $artistList);
                 $link['resourceItemId'] = $item['track']['id'];
+                $link['timestamp'] = $timestamp;
+
                 $link['resource'] = 'spotify';
 
                 $parsed[] = $link;

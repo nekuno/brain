@@ -138,8 +138,8 @@ class LinkModel
             }
 
             $qb->create('(u)-[r:LIKES]->(l)')
-                ->set('r.' . $data['resource'] . '={timestamp}')
-                ->set('r.lastLiked=r.' . $data['resource'])
+                ->set('r.' . $data['resource'] . '={ timestamp }',
+                    'r.last_liked={ timestamp }')
                 ->returns('l');
 
         } else {
@@ -148,11 +148,10 @@ class LinkModel
                 ->where('u.qnoow_id = { userId }', 'l.url = { url }')
                 ->merge('(u)-[r:LIKES]->(l)')
                 ->set('r.' . $data['resource'] . '=
-                 COALESCE(r.' . $data['resource'] . ', {timestamp})')
-                ->with('u, l, r')
-                //max(x,y)=(x+y+abs(x-y))/2
-                ->set('r.lastLiked=(r.lastLiked + r.' . $data['resource'] . '
-                                        +ABS(r.lastLiked - r.' . $data['resource'] . '))/2');
+                 COALESCE(r.' . $data['resource'] . ', { timestamp }) ')
+                    //max(x,y)=(x+y+abs(x-y))/2
+                ->set('r.last_liked=(COALESCE(r.last_liked,0) + COALESCE(r.' . $data['resource'] . ', { timestamp })
+                     +ABS(COALESCE(r.last_liked,0) - COALESCE(r.' . $data['resource'] . ', { timestamp })))/2 ');
 
             $qb->with('u, l')
                 ->optionalMatch('(u)-[a:AFFINITY]-(l)')
