@@ -25,7 +25,7 @@ class GoogleFetcher extends BasicPaginationFetcher
 
     protected function getItemsFromResponse($response)
     {
-        return $response['items'] ? : array();
+        return $response['items'] ?: array();
     }
 
     protected function getPaginationIdFromResponse($response)
@@ -59,13 +59,13 @@ class GoogleFetcher extends BasicPaginationFetcher
                 continue;
             }
 
-            $timestamp=null;
-            if(array_key_exists('updated', $item)){
-                $date=new \DateTime($item['updated']);
-                $timestamp=$date->getTimestamp();
-            } else if (array_key_exists('published', $item)){
-                $date=new \DateTime($item['published']);
-                $timestamp=$date->getTimestamp();
+            $timestamp = null;
+            if (array_key_exists('updated', $item)) {
+                $date = new \DateTime($item['updated']);
+                $timestamp = ($date->getTimestamp()) * 1000;
+            } else if (array_key_exists('published', $item)) {
+                $date = new \DateTime($item['published']);
+                $timestamp = $date->getTimestamp();
             }
 
             $item = $item['object']['attachments'][0];

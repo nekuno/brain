@@ -108,10 +108,10 @@ abstract class AbstractFacebookFetcher extends BasicPaginationFetcher
         $link['description'] = null;
         $link['resourceItemId'] = $id;
 
-        $timestamp=null;
-        if(array_key_exists('created_time', $item)){
-            $date=new \DateTime($item['created_time']);
-            $timestamp=$date->getTimestamp();
+        $timestamp = null;
+        if (array_key_exists('created_time', $item)) {
+            $date = new \DateTime($item['created_time']);
+            $timestamp = ($date->getTimestamp()) * 1000;
         }
         $link['timestamp'] = $timestamp;
 

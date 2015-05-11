@@ -58,10 +58,10 @@ class TwitterFetcher extends BasicPaginationFetcher
                 ? $item['entities']['urls'][0]['expanded_url']
                 : $item['entities']['urls'][0]['url'];
 
-            $timestamp=null;
-            if(array_key_exists('created_at', $item)){
-                $date=new \DateTime($item['created_at']);
-                $timestamp=$date->getTimestamp();
+            $timestamp = null;
+            if (array_key_exists('created_at', $item)) {
+                $date = new \DateTime($item['created_at']);
+                $timestamp = ($date->getTimestamp()) * 1000;
             }
 
             $link = array();

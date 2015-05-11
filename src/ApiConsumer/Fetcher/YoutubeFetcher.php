@@ -26,7 +26,7 @@ class YoutubeFetcher extends BasicPaginationFetcher
 
     protected function getItemsFromResponse($response)
     {
-        return $response['items'] ? : array();
+        return $response['items'] ?: array();
     }
 
     protected function getPaginationIdFromResponse($response)
@@ -128,10 +128,10 @@ class YoutubeFetcher extends BasicPaginationFetcher
                 continue;
             }
 
-            $timestamp=null;
-            if(array_key_exists('publishedAt', $item['snippet'])){
-                $date=new \DateTime($item['snippet']['publishedAt']);
-                $timestamp=$date->getTimestamp();
+            $timestamp = null;
+            if (array_key_exists('publishedAt', $item['snippet'])) {
+                $date = new \DateTime($item['snippet']['publishedAt']);
+                $timestamp = ($date->getTimestamp()) * 1000;
             }
 
             $link['url'] = $url;
