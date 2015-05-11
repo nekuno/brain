@@ -66,8 +66,9 @@ abstract class AbstractFacebookFetcher extends BasicPaginationFetcher
         foreach ($rawFeed as $item) {
             $url = $item['link'];
             $id = $item['id'];
-            $parsed[] = $this->getLinkArrayFromUrl($url, $id);
+            $parsed[] = $this->getLinkArrayFromUrl($url, $id, $item);
 
+            //if it's a like
             if (isset($item['website'])) {
                 $website = $item['website'];
 
@@ -79,10 +80,10 @@ abstract class AbstractFacebookFetcher extends BasicPaginationFetcher
 
                 $counter = 1;
                 foreach ($websiteUrlsArray as $websiteUrl) {
-                    if (substr($websiteUrl,0,3) == 'www') {
+                    if (substr($websiteUrl, 0, 3) == 'www') {
                         $websiteUrl = 'http://' . $websiteUrl;
                     }
-                    $parsed[] = $this->getLinkArrayFromUrl(trim($websiteUrl), $id.'-'.$counter);
+                    $parsed[] = $this->getLinkArrayFromUrl(trim($websiteUrl), $id . '-' . $counter, $item);
                     $counter++;
                 }
             }
@@ -92,13 +93,12 @@ abstract class AbstractFacebookFetcher extends BasicPaginationFetcher
     }
 
     /**
-     * Get the link array from a url and an id
-     *
      * @param $url
      * @param $id
+     * @param $item
      * @return array
      */
-    private function getLinkArrayFromUrl($url, $id)
+    private function getLinkArrayFromUrl($url, $id, $item)
     {
         $link = array();
 
@@ -107,6 +107,14 @@ abstract class AbstractFacebookFetcher extends BasicPaginationFetcher
         $link['title'] = null;
         $link['description'] = null;
         $link['resourceItemId'] = $id;
+
+        $timestamp=null;
+        if(array_key_exists('created_time', $item)){
+            $date=new \DateTime($item['created_time']);
+            $timestamp=$date->getTimestamp();
+        }
+        $link['timestamp'] = $timestamp;
+
         $link['resource'] = 'facebook';
 
         return $link;
