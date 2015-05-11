@@ -65,7 +65,7 @@ class GoogleFetcher extends BasicPaginationFetcher
                 $timestamp = ($date->getTimestamp()) * 1000;
             } else if (array_key_exists('published', $item)) {
                 $date = new \DateTime($item['published']);
-                $timestamp = $date->getTimestamp();
+                $timestamp = $date->getTimestamp() * 1000;
             }
 
             $item = $item['object']['attachments'][0];
