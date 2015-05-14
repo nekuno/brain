@@ -107,6 +107,10 @@ class LinkModel
             $additionalLabels = ':' . implode(':', $data['additionalLabels']);
         }
 
+        if (!isset($data['resource']) || null == $data['resource']) {
+            $data['resource'] = 'nekuno';
+        }
+
         $qb = $this->gm->createQueryBuilder();
 
         if (false === $this->isAlreadySaved($data['url'])) {
@@ -130,13 +134,20 @@ class LinkModel
             }
 
             $qb->create('(u)-[r:LIKES]->(l)')
+                ->set('r.' . $data['resource'] . '= COALESCE({ timestamp }, timestamp())',
+                    'r.last_liked=COALESCE({ timestamp }, timestamp())')
                 ->returns('l');
 
         } else {
 
             $qb->match('(u:User)', '(l:Link)')
                 ->where('u.qnoow_id = { userId }', 'l.url = { url }')
-                ->merge('(u)-[r:LIKES]->(l)');
+                ->merge('(u)-[r:LIKES]->(l)')
+                ->set('r.' . $data['resource'] . '= COALESCE({ timestamp }, timestamp())')
+                    //max(x,y)=(x+y+abs(x-y))/2
+                ->set('r.last_liked=( COALESCE(r.last_liked, 0) + COALESCE({ timestamp }, timestamp())
+                                    + ABS(COALESCE(r.last_liked, 0) -  COALESCE({ timestamp }, timestamp()))
+                                    )/2 ');
 
             $qb->with('u, l')
                 ->optionalMatch('(u)-[a:AFFINITY]-(l)')
@@ -153,6 +164,7 @@ class LinkModel
                 'url' => $data['url'],
                 'userId' => (integer)$data['userId'],
                 'language' => isset($data['language']) ? $data['language'] : null,
+                'timestamp' => !empty($data['timestamp'])? (integer)$data['timestamp'] : null,
             )
         );
 
@@ -164,7 +176,7 @@ class LinkModel
 
         $query = $qb->getQuery();
 
-        $query->getResultSet();
+        $result = $query->getResultSet();
 
         if (isset($data['tags'])) {
             foreach ($data['tags'] as $tag) {
@@ -172,6 +184,8 @@ class LinkModel
                 $this->addTag($data, $tag);
             }
         }
+
+        return $result;
     }
 
     public function updateLink(array $data, $processed = false)

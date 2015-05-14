@@ -13,7 +13,7 @@ class FacebookLikesFetcher extends AbstractFacebookFetcher
     protected function getQuery()
     {
         return array_merge(
-            array('fields' => 'link,website'),
+            array('fields' => 'link,website,created_time'),
             parent::getQuery()
         );
     }

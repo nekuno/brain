@@ -42,6 +42,7 @@ class TwitterFetcher extends BasicPaginationFetcher
     }
 
     /**
+     * @param $rawFeed array
      * @return array
      */
     protected function parseLinks(array $rawFeed)
@@ -57,11 +58,18 @@ class TwitterFetcher extends BasicPaginationFetcher
                 ? $item['entities']['urls'][0]['expanded_url']
                 : $item['entities']['urls'][0]['url'];
 
+            $timestamp = null;
+            if (array_key_exists('created_at', $item)) {
+                $date = new \DateTime($item['created_at']);
+                $timestamp = ($date->getTimestamp()) * 1000;
+            }
+
             $link = array();
             $link['url'] = $url;
             $link['title'] = array_key_exists('text', $item) ? $item['text'] : null;
             $link['description'] = null;
             $link['resourceItemId'] = array_key_exists('id', $item) ? $item['id'] : null;
+            $link['timestamp'] = $timestamp;
             $link['resource'] = 'twitter';
 
             $formatted[] = $link;

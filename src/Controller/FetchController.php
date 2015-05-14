@@ -2,6 +2,7 @@
 
 namespace Controller;
 
+use Model\LinkModel;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -22,7 +23,7 @@ class FetchController
         $data = $request->request->all();
 
         try {
-            /** @var LinkModel $model */
+            /* @var $model LinkModel */
             $model  = $app['links.model'];
             $result = $model->addLink($data);
         } catch (\Exception $e) {
