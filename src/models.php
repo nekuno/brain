@@ -47,7 +47,7 @@ $app['users.content.tag.model'] = function ($app) {
 
 $app['users.rate.model'] = function ($app) {
 
-    return new \Model\User\RateModel($app['dispatcher'], $app['neo4j.client']);
+    return new \Model\User\RateModel($app['dispatcher'], $app['neo4j.client'], $app['neo4j.graph_manager']);
 };
 
 $app['users.matching.model'] = function ($app) {

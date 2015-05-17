@@ -7,6 +7,7 @@ use Model\LinkModel;
 use Model\Questionnaire\QuestionModel;
 use Model\User\AnswerModel;
 use Model\User\ProfileModel;
+use Model\User\RateModel;
 use Model\UserModel;
 use Psr\Log\LoggerInterface;
 use Silex\Application;
@@ -64,6 +65,11 @@ class Fixtures
      */
     protected $questions = array();
 
+    /**
+     * @var RateModel
+     */
+    protected $rm;
+
     public function __construct(Application $app, $scenario)
     {
         $this->gm = $app['neo4j.graph_manager'];
@@ -72,6 +78,7 @@ class Fixtures
         $this->qm = $app['questionnaire.questions.model'];
         $this->am = $app['users.answers.model'];
         $this->pm = $app['users.profile.model'];
+        $this->rm = $app['users.rate.model'];
         $this->scenario = $scenario;
     }
 
@@ -90,11 +97,11 @@ class Fixtures
         $this->clean();
         $this->loadProfileOptions();
         $this->loadUsers();
-        $this->loadLinks();
+        $createdLinks=$this->loadLinks();
         $this->loadTags();
         $this->loadQuestions();
         $this->loadLinkTags();
-        $this->loadLikes();
+        $this->loadLikes($createdLinks);
         $this->loadAnswers();
         $this->calculateStatus();
     }
@@ -153,10 +160,11 @@ class Fixtures
 
         $this->logger->notice(sprintf('Loading %d links', self::NUM_OF_LINKS));
 
+        $createdLinks=array();
+
         for ($i = 1; $i <= self::NUM_OF_LINKS; $i++) {
 
             $link = array(
-                'userId' => 1,
                 'title' => 'Title ' . $i,
                 'description' => 'Description ' . $i,
                 'url' => 'https://www.nekuno.com/link' . $i,
@@ -195,9 +203,11 @@ class Fixtures
                 );
             }
 
-            $this->lm->addLink($link);
+            $createdLinks[$i]=$this->lm->addLink($link);
 
         }
+
+        return $createdLinks;
     }
 
     protected function loadTags()
@@ -281,16 +291,20 @@ class Fixtures
         }
     }
 
-    protected function loadLikes()
+    protected function loadLikes(array $createdLinks)
     {
 
         $this->logger->notice('Loading likes');
 
         $likes = $this->scenario['likes'];
 
+        foreach($createdLinks as $link){
+            $this->rm->userRateLink(1,$link,RateModel::LIKE);
+        }
+
         foreach ($likes as $like) {
             foreach (range($like['linkFrom'], $like['linkTo']) as $i) {
-                $this->createUserLikesLinkRelationship($like['user'], $i);
+                $this->rm->userRateLink($like['user'],$createdLinks[$i],RateModel::LIKE);
             }
         }
     }
@@ -337,21 +351,6 @@ class Fixtures
             $status = $this->um->calculateStatus($i);
             $this->logger->notice(sprintf('Calculating user "%s" new status: "%s"', $i, $status->getStatus()));
         }
-    }
-
-    protected function createUserLikesLinkRelationship($user, $link)
-    {
-
-        $qb = $this->gm->createQueryBuilder();
-        $qb->match('(l:Link {url: { url } })', '(u:User {qnoow_id: { qnoow_id } })')
-            ->setParameter('url', 'https://www.nekuno.com/link' . $link)
-            ->setParameter('qnoow_id', $user)
-            ->createUnique('(l)<-[r:LIKES]-(u)')
-            ->returns('l', 'u');
-
-        $query = $qb->getQuery();
-        $query->getResultSet();
-
     }
 
     protected function createUserDisLikesLinkRelationship($user, $link)

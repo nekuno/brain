@@ -16,6 +16,10 @@ class Query extends \Everyman\Neo4j\Cypher\Query implements LoggerAwareInterface
      */
     protected $logger;
 
+    /**
+     * @return \Everyman\Neo4j\Query\ResultSet
+     * @throws \Exception
+     */
     public function getResultSet()
     {
 
