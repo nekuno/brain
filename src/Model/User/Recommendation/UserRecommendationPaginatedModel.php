@@ -90,8 +90,10 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                     array('(matching_questions > 0 OR similarity > 0)'),
                     $profileFilters['conditions']
                 )
-            )
-            ->match($profileFilters['matches']);
+            );
+            foreach ($profileFilters['matches'] as $match){
+                $qb->match($match);
+            }
 
         if ($groups) {
             $qb->match('(anyUser)-[:BELONGS_TO]->(g:Group)')
@@ -167,8 +169,11 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                     array('(matching_questions > 0 OR similarity > 0)'),
                     $profileFilters['conditions']
                 )
-            )
-            ->match($profileFilters['matches']);
+            );
+            foreach ($profileFilters['matches'] as $match){
+                $qb->match($match);
+            }
+
 
         if ($groups) {
             $qb->match('(anyUser)-[:BELONGS_TO]->(g:Group)')
@@ -222,11 +227,11 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                     case 'choice':
                         $profileLabelName = ucfirst($name);
                         $value = implode("', '", $value);
-                        $matches[] = "(p)<-[:OPTION_OF]-(option:$profileLabelName) WHERE option.id IN ['$value']";
+                        $matches[] = "(p)<-[:OPTION_OF]-(option$name:$profileLabelName) WHERE option$name.id IN ['$value']";
                         break;
                     case 'tags':
                         $tagLabelName = ucfirst($name);
-                        $matches[] = "(p)<-[:TAGGED]-(tag:$tagLabelName) WHERE tag.name = '$value'";
+                        $matches[] = "(p)<-[:TAGGED]-(tag$name:$tagLabelName) WHERE tag$name.name = '$value'";
                         break;
                     case 'location':
                         break;
