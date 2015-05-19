@@ -75,7 +75,8 @@ class FetchLinksSubscriber implements EventSubscriberInterface
         if (OutputInterface::VERBOSITY_VERBOSE < $this->output->getVerbosity()) {
             $link = $event->getLink();
             $url = $link['url'];
-            $this->output->writeln(sprintf(' "%s"', $url));
+            $timestamp = $link['timestamp'];
+            $this->output->writeln(sprintf(' url: "%s" at timestamp: %s', $url, $timestamp));
         }
     }
 

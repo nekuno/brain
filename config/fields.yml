@@ -150,9 +150,16 @@ profile:
             es: '¿Quieres tener hijos?'
     orientation:
         type: choice
+        required: true
         label:
             en: 'Orientation'
             es: 'Orientación'
+    orientationRequired:
+        type: boolean
+        filterable: false
+        label:
+            en: 'Orientation required'
+            es: 'Orientación obligatoria'
     relationshipInterest:
         type: choice
         label:
@@ -222,3 +229,9 @@ profile:
         label:
             en: 'Location'
             es: 'Ubicación'
+user:
+    groups:
+        type: choice
+        label:
+            en: 'Groups'
+            es: 'Grupos'

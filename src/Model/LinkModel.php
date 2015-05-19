@@ -27,7 +27,7 @@ class LinkModel
 
     /**
      * @param string $url
-     * @return array|boolean the the link or false
+     * @return array|boolean the link or false
      * @throws \Exception on failure
      */
     public function findLinkByUrl($url)
@@ -99,8 +99,18 @@ class LinkModel
         return $links;
     }
 
+    /**
+     * @param array $data
+     * @return array
+     * @throws \Exception
+     */
     public function addLink(array $data)
     {
+        if (!isset($data['url'])) return array();
+
+        if ($saved=$this->findLinkByUrl($data['url'])){
+            return $saved;
+        }
 
         $additionalLabels = '';
         if (isset($data['additionalLabels'])) {
@@ -109,49 +119,29 @@ class LinkModel
 
         $qb = $this->gm->createQueryBuilder();
 
-        if (false === $this->isAlreadySaved($data['url'])) {
+        $qb ->create('(l:Link' . $additionalLabels . ')')
+            ->set(
+                'l.url = { url }',
+                'l.title = { title }',
+                'l.description = { description }',
+                'l.language = { language }',
+                'l.processed = 1',
+                'l.created =  timestamp()'
+            );
 
-            $qb->match('(u:User)')
-                ->where('u.qnoow_id = { userId }')
-                ->create('(l:Link' . $additionalLabels . ')')
-                ->set(
-                    'l.url = { url }',
-                    'l.title = { title }',
-                    'l.description = { description }',
-                    'l.language = { language }',
-                    'l.processed = 1',
-                    'l.created =  timestamp()'
-                );
-
-            if (isset($data['additionalFields'])) {
-                foreach ($data['additionalFields'] as $field => $value) {
-                    $qb->set(sprintf('l.%s = { %s }', $field, $field));
-                }
+        if (isset($data['additionalFields'])) {
+            foreach ($data['additionalFields'] as $field => $value) {
+                $qb->set(sprintf('l.%s = { %s }', $field, $field));
             }
-
-            $qb->create('(u)-[r:LIKES]->(l)')
-                ->returns('l');
-
-        } else {
-
-            $qb->match('(u:User)', '(l:Link)')
-                ->where('u.qnoow_id = { userId }', 'l.url = { url }')
-                ->merge('(u)-[r:LIKES]->(l)');
-
-            $qb->with('u, l')
-                ->optionalMatch('(u)-[a:AFFINITY]-(l)')
-                ->delete('a');
-
-            $qb->returns('l');
-
         }
+
+        $qb->returns('l');
 
         $qb->setParameters(
             array(
                 'title' => $data['title'],
                 'description' => $data['description'],
                 'url' => $data['url'],
-                'userId' => (integer)$data['userId'],
                 'language' => isset($data['language']) ? $data['language'] : null,
             )
         );
@@ -164,7 +154,7 @@ class LinkModel
 
         $query = $qb->getQuery();
 
-        $query->getResultSet();
+        $result = $query->getResultSet();
 
         if (isset($data['tags'])) {
             foreach ($data['tags'] as $tag) {
@@ -172,6 +162,20 @@ class LinkModel
                 $this->addTag($data, $tag);
             }
         }
+
+        /* @var $row Row */
+        $linkArray=array();
+        foreach ($result as $row) {
+
+            /** @var $link Node */
+            $link = $row->offsetGet('l');
+            foreach ($link->getProperties() as $key => $value) {
+                $linkArray[$key] = $value;
+            }
+            $linkArray['id'] = $link->getId();
+        }
+
+        return $linkArray;
     }
 
     public function updateLink(array $data, $processed = false)
@@ -417,7 +421,7 @@ class LinkModel
 
     /**
      * @param $url
-     * @return array
+     * @return boolean
      */
     private function isAlreadySaved($url)
     {

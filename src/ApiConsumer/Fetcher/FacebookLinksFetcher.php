@@ -13,7 +13,7 @@ class FacebookLinksFetcher extends AbstractFacebookFetcher
     protected function getQuery()
     {
         return array_merge(
-            array('fields' => 'link'),
+            array('fields' => 'link,created_time'),
             parent::getQuery()
         );
     }

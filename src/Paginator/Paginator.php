@@ -2,6 +2,7 @@
 
 namespace Paginator;
 
+use Model\Exception\ValidationException;
 use Symfony\Component\HttpFoundation\Request;
 
 class Paginator
@@ -39,7 +40,8 @@ class Paginator
         $offset = $request->get('offset', 0);
 
         if (!$paginated->validateFilters($filters)) {
-            return array();
+            $e = new ValidationException(sprintf('Invalid filters in "%s"', get_class($paginated)));
+            throw $e;
         }
 
         $items = $paginated->slice($filters, $offset, $limit);

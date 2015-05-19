@@ -1,8 +1,9 @@
 <?php
 
-/**
- * Users routes
- */
+/* @var $app Silex\Application */
+/* @var $controllers \Silex\Controller */
+$controllers = $app['controllers'];
+
 $app->get('/users', 'users.controller:indexAction');
 $app->post('/users', 'users.controller:addAction');
 $app->get('/users/{id}', 'users.controller:showAction')->value('id', null);
@@ -25,11 +26,13 @@ $app->get('/users/{id}/content', 'users.controller:getUserContentAction');
 $app->get('/users/{id}/content/compare/{id2}', 'users.controller:getUserContentCompareAction');
 $app->get('/users/{id}/content/tags', 'users.controller:getUserContentTagsAction');
 $app->post('/users/{id}/content/rate', 'users.controller:rateContentAction');
+$app->get('/users/{id}/filters', 'users.controller:getAllFiltersAction');
 $app->get('/users/{id}/recommendations/users', 'users.controller:getUserRecommendationAction');
 $app->get('/users/{id}/recommendations/content', 'users.controller:getContentRecommendationAction');
 $app->get('/users/{id}/recommendations/content/tags', 'users.controller:getContentRecommendationTagsAction');
 $app->get('/users/{id}/status', 'users.controller:statusAction');
 $app->get('/users/{id}/stats', 'users.controller:statsAction');
+$app->get('/users/{id1}/stats/compare/{id2}', 'users.controller:statsCompareAction');
 
 $app->get('/users/{userId}/affinity/{linkId}', 'users.controller:getAffinityAction');
 
@@ -64,9 +67,27 @@ $app->get('/fetch/links', 'fetch.controller:fetchLinksAction')->value('userId', 
 /**
  * Group routes
  */
+$app->get('/groups', 'users.groups.controller:getAllAction');
+$app->get('/groups/{id}', 'users.groups.controller:getAction');
+$app->post('/groups', 'users.groups.controller:postAction');
+$app->put('/groups/{id}', 'users.groups.controller:putAction');
+$app->delete('/groups/{id}', 'users.groups.controller:deleteAction');
+$app->post('/groups/validate', 'users.groups.controller:validateAction');
+$app->post('/groups/{id}/users/{userId}', 'users.groups.controller:addUserAction');
+$app->delete('/groups/{id}/users/{userId}', 'users.groups.controller:removeUserAction');
 
-$app->post('/groups', 'users.groups.controller:addAction');
-$app->get('/groups/{groupName}', 'users.groups.controller:showAction');
-$app->delete('/groups/{groupName}', 'users.groups.controller:deleteAction');
-$app->post('/groups/{groupName}/links', 'users.groups.controller:addUserAction');
-$app->delete('/groups/{groupName}/links/{id}', 'users.groups.controller:removeUserAction');
+$controllers
+    ->assert('id', '\d+')
+    ->convert(
+        'id',
+        function ($id) {
+            return (integer)$id;
+        }
+    )
+    ->assert('userId', '\d+')
+    ->convert(
+        'userId',
+        function ($id) {
+            return (integer)$id;
+        }
+    );

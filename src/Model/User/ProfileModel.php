@@ -286,7 +286,7 @@ class ProfileModel
                                 $fieldErrors[] = 'Must be an integer';
                             }
                             if (isset($fieldData['min'])) {
-                                if ($fieldValue < $fieldData['min']) {
+                                if (!empty($fieldValue) && $fieldValue < $fieldData['min']) {
                                     $fieldErrors[] = 'Must be greater than ' . $fieldData['min'];
                                 }
                             }
@@ -358,6 +358,11 @@ class ProfileModel
                     }
                 }
             } else {
+
+                if ($fieldName === 'orientation' && isset($data['orientationRequired']) && $data['orientationRequired'] === false) {
+                    continue;
+                }
+
                 if (isset($fieldData['required']) && $fieldData['required'] === true) {
                     $fieldErrors[] = 'It\'s required.';
                 }

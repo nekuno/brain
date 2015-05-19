@@ -2,6 +2,9 @@
 
 namespace Controller;
 
+use Model\LinkModel;
+use Model\User\RateModel;
+use Model\UserModel;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -14,7 +17,10 @@ class FetchController
 {
 
     /**
-     * Add link action
+     * @param Request $request
+     * @param Application $app
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @throws \Exception
      */
     public function addLinkAction(Request $request, Application $app)
     {
@@ -22,9 +28,24 @@ class FetchController
         $data = $request->request->all();
 
         try {
-            /** @var LinkModel $model */
-            $model  = $app['links.model'];
-            $result = $model->addLink($data);
+            /* @var $linkModel LinkModel */
+            $linkModel = $app['links.model'];
+            $link = $linkModel->addLink($data);
+
+            if (empty($link)){
+                $link=$linkModel->findLinkByUrl($data['url']);
+            }
+
+            $link['resource']=$data['resource'];
+            $link['timestamp']=$data['timestamp'];
+
+            if (isset($data['userId'])) {
+                /* @var $rateModel RateModel */
+                $rateModel = $app['users.rate.model'];
+                $rateModel->userRateLink($data['userId'], $link, RateModel::LIKE);
+            }
+
+
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;
@@ -33,23 +54,26 @@ class FetchController
             return $app->json(array(), 500);
         }
 
-        return $app->json($result, empty($result) ? 200 : 201);
+        return $app->json($link, empty($createdLink) ? 200 : 201);
     }
 
     /**
      * Fetch links action. if user
+     * @param Request $request
+     * @param Application $app
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
      */
     public function fetchLinksAction(Request $request, Application $app)
     {
 
-        $userId   = $request->query->get('userId');
+        $userId = $request->query->get('userId');
         $resource = $request->query->get('resource');
 
         if (null === $userId || null === $resource) {
             return $app->json(array(), 400);
         }
 
-        /** @var UserModel $userModel */
+        /* @var $userModel UserModel*/
         $userModel = $app['users.model'];
 
         $hasUser = count($userModel->getById($userId)) > 0;

@@ -21,7 +21,7 @@ class Neo4jProfileOptionsCommand extends ApplicationAwareCommand
     protected function execute(InputInterface $input, OutputInterface $output)
     {
 
-        $profileOptions = new ProfileOptions($this->app['neo4j.client']);
+        $profileOptions = new ProfileOptions($this->app['neo4j.graph_manager']);
 
         $verbosityLevelMap = array(
             LogLevel::NOTICE => OutputInterface::VERBOSITY_NORMAL,

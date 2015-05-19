@@ -3,16 +3,15 @@
 namespace Model\Neo4j;
 
 use Everyman\Neo4j\Client;
-use Everyman\Neo4j\Cypher\Query;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 
 class ProfileOptions implements LoggerAwareInterface
 {
     /**
-     * @var \Everyman\Neo4j\Client
+     * @var GraphManager
      */
-    protected $client;
+    protected $gm;
 
     /**
      * @var LoggerInterface
@@ -24,13 +23,10 @@ class ProfileOptions implements LoggerAwareInterface
      */
     protected $result;
 
-    /**
-     * @param \Everyman\Neo4j\Client $client
-     */
-    public function __construct(Client $client)
+    public function __construct(GraphManager $gm)
     {
 
-        $this->client = $client;
+        $this->gm = $gm;
     }
 
     /**
@@ -619,34 +615,24 @@ class ProfileOptions implements LoggerAwareInterface
 
                 $this->result->incrementUpdated();
                 $this->logger->info(sprintf('Updating ProfileOption:%s id: "%s", name_en: "%s", name_es: "%s"', $type, $id, $names['name_en'], $names['name_es']));
-                $params = array('type' => $type, 'id' => $id);
-                $params = array_merge($params, $names);
-                $query = "MATCH (o:ProfileOption) WHERE {type} IN labels(o) AND o.id = {id} SET o.name_en = {name_en}, o.name_es = {name_es} RETURN o;";
+                $parameters = array('type' => $type, 'id' => $id);
+                $parameters = array_merge($parameters, $names);
+                $cypher = "MATCH (o:ProfileOption) WHERE {type} IN labels(o) AND o.id = {id} SET o.name_en = {name_en}, o.name_es = {name_es} RETURN o;";
 
-                $neo4jQuery = new Query(
-                    $this->client,
-                    $query,
-                    $params
-                );
-
-                $neo4jQuery->getResultSet();
+                $query = $this->gm->createQuery($cypher, $parameters);
+                $query->getResultSet();
             }
 
         } else {
 
             $this->result->incrementCreated();
             $this->logger->info(sprintf('Creating ProfileOption:%s id: "%s", name_en: "%s", name_es: "%s"', $type, $id, $names['name_en'], $names['name_es']));
-            $params = array('id' => $id);
-            $params = array_merge($params, $names);
-            $query = "CREATE (:ProfileOption:" . $type . " { id: {id}, name_en: {name_en}, name_es: {name_es} })";
+            $parameters = array('id' => $id);
+            $parameters = array_merge($parameters, $names);
+            $cypher = "CREATE (:ProfileOption:" . $type . " { id: {id}, name_en: {name_en}, name_es: {name_es} })";
 
-            $neo4jQuery = new Query(
-                $this->client,
-                $query,
-                $params
-            );
-
-            $neo4jQuery->getResultSet();
+            $query = $this->gm->createQuery($cypher, $parameters);
+            $query->getResultSet();
         }
     }
 
@@ -659,21 +645,16 @@ class ProfileOptions implements LoggerAwareInterface
      */
     public function optionExists($type, $id, $names = array())
     {
-        $params = array('type' => $type, 'id' => $id);
-        $query = "MATCH (o:ProfileOption) WHERE {type} IN labels(o) AND o.id = {id}\n";
+        $parameters = array('type' => $type, 'id' => $id);
+        $cypher = "MATCH (o:ProfileOption) WHERE {type} IN labels(o) AND o.id = {id}\n";
         if (!empty($names)) {
-            $params = array_merge($params, $names);
-            $query .= "AND o.name_es = {name_es} AND o.name_en = {name_en}\n";
+            $parameters = array_merge($parameters, $names);
+            $cypher .= "AND o.name_es = {name_es} AND o.name_en = {name_en}\n";
         }
-        $query .= "RETURN o;";
+        $cypher .= "RETURN o;";
 
-        $neo4jQuery = new Query(
-            $this->client,
-            $query,
-            $params
-        );
-
-        $result = $neo4jQuery->getResultSet();
+        $query = $this->gm->createQuery($cypher, $parameters);
+        $result = $query->getResultSet();
 
         return count($result) > 0;
     }

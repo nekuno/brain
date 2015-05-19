@@ -3,7 +3,9 @@
 namespace Model;
 
 use Doctrine\DBAL\Connection;
+use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
+use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
 use Model\User\UserStatsModel;
 use Model\User\UserStatusModel;
@@ -34,38 +36,95 @@ class UserModel implements PaginatedInterface
      */
     protected $entityManagerBrain;
 
-    public function __construct(GraphManager $gm, Connection $connectionSocial, EntityManager $entityManagerBrain)
+    /**
+     * @var array
+     */
+    protected $metadata;
+
+    protected $defaultLocale;
+
+    public function __construct(GraphManager $gm, Connection $connectionSocial, EntityManager $entityManagerBrain, array $metadata, $defaultLocale)
     {
         $this->gm = $gm;
         $this->connectionSocial = $connectionSocial;
         $this->entityManagerBrain = $entityManagerBrain;
+        $this->metadata = $metadata;
+        $this->defaultLocale = $defaultLocale;
     }
 
-    /**
-     * Creates an new User and returns the query result
-     *
-     * @param array $user
-     * @throws \Exception
-     * @return \Everyman\Neo4j\Query\ResultSet
-     */
-    public function create(array $user = array())
+    public function validate(array $data)
     {
-        if (!isset($user['email'])) {
-            $user['email'] = '';
+        $errors = array();
+
+        $metadata = array(
+            'id' => array('type' => 'integer', 'required' => true),
+            'username' => array('type' => 'string', 'required' => true),
+            'email' => array('type' => 'string'),
+        );
+
+        foreach ($metadata as $fieldName => $fieldData) {
+
+            $fieldErrors = array();
+
+            if (!isset($data[$fieldName]) || !$data[$fieldName]) {
+                if (isset($fieldData['required']) && $fieldData['required'] === true) {
+                    $fieldErrors[] = sprintf('"%s" is required', $fieldName);
+                }
+            } else {
+
+                $fieldValue = $data[$fieldName];
+
+                switch ($fieldData['type']) {
+                    case 'integer':
+                        if (!is_integer($fieldValue)) {
+                            $fieldErrors[] = sprintf('"%s" must be an integer', $fieldName);
+                        }
+                        break;
+                    case 'string':
+                        if (!is_string($fieldValue)) {
+                            $fieldErrors[] = sprintf('"%s" must be an string', $fieldName);
+                        }
+                        break;
+                }
+            }
+
+            if (count($fieldErrors) > 0) {
+                $errors[$fieldName] = $fieldErrors;
+            }
+
+        }
+
+        if (count($errors) > 0) {
+            $e = new ValidationException('Validation error');
+            $e->setErrors($errors);
+            throw $e;
+        }
+    }
+
+    public function create(array $data)
+    {
+
+        $this->validate($data);
+
+        if (!isset($data['email'])) {
+            $data['email'] = '';
         }
 
         $qb = $this->gm->createQueryBuilder();
         $qb->create('(u:User {qnoow_id: { qnoow_id }, status: { status }, username: { username }, email: { email }})')
-            ->setParameter('qnoow_id', $user['id'])
+            ->setParameter('qnoow_id', $data['id'])
             ->setParameter('status', UserStatusModel::USER_STATUS_INCOMPLETE)
-            ->setParameter('username', $user['username'])
-            ->setParameter('email', $user['email'])
+            ->setParameter('username', $data['username'])
+            ->setParameter('email', $data['email'])
             ->returns('u');
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();
 
-        return $this->parseResultSet($result);
+        /* @var $row Row */
+        $row = $result->current();
+
+        return $this->parseRow($row);
     }
 
     /**
@@ -118,7 +177,7 @@ class UserModel implements PaginatedInterface
     {
 
         if (!$id) {
-            throw new NotFoundHttpException('User not found');
+            throw new NotFoundHttpException(sprintf('User "%d" not found', $id));
         }
 
         $qb = $this->gm->createQueryBuilder();
@@ -130,7 +189,7 @@ class UserModel implements PaginatedInterface
         $result = $query->getResultSet();
 
         if ($result->count() < 1) {
-            throw new NotFoundHttpException('User not found');
+            throw new NotFoundHttpException(sprintf('User "%d" not found', $id));
         }
 
         return $this->parseRow($result->current());
@@ -268,8 +327,10 @@ class UserModel implements PaginatedInterface
             ->with('u,contentLikes,videoLikes,count(r) AS audioLikes')
             ->optionalMatch('(u)-[r:LIKES]->(:Image)')
             ->with('u,contentLikes,videoLikes,audioLikes,count(r) AS imageLikes')
+            ->optionalMatch('(u)-[:BELONGS_TO]->(g:Group)')
+            ->with('u,contentLikes, videoLikes, audioLikes, imageLikes, collect(g) AS groupsBelonged')
             ->optionalMatch('(u)-[r:ANSWERS]->(:Answer)')
-            ->returns('contentLikes', 'videoLikes', 'audioLikes', 'imageLikes', 'count(r) AS questionsAnswered');
+            ->returns('contentLikes', 'videoLikes', 'audioLikes', 'imageLikes', 'groupsBelonged', 'count(r) AS questionsAnswered');
 
         $query = $qb->getQuery();
 
@@ -281,6 +342,16 @@ class UserModel implements PaginatedInterface
 
         /* @var $row Row */
         $row = $result->current();
+
+        $groups = array();
+        foreach ($row->offsetGet('groupsBelonged') as $group) {
+            /* @var $group Node */
+            $groups[] = array(
+                'id' => $group->getId(),
+                'name' => $group->getProperty('name'),
+                'html' => $group->getProperty('html'),
+            );
+        }
 
         $numberOfReceivedLikes = $this->connectionSocial->executeQuery('SELECT COUNT(*) AS numberOfReceivedLikes FROM user_like WHERE user_to = :user_to', array('user_to' => (integer)$id))->fetchColumn();
         $numberOfUserLikes = $this->connectionSocial->executeQuery('SELECT COUNT(*) AS numberOfUserLikes FROM user_like WHERE user_from = :user_from', array('user_from' => (integer)$id))->fetchColumn();
@@ -299,6 +370,7 @@ class UserModel implements PaginatedInterface
             $row->offsetGet('imageLikes'),
             (integer)$numberOfReceivedLikes,
             (integer)$numberOfUserLikes,
+            $groups,
             $row->offsetGet('questionsAnswered'),
             !empty($twitterStatus) ? (boolean)$twitterStatus->getFetched() : false,
             !empty($twitterStatus) ? (boolean)$twitterStatus->getProcessed() : false,
@@ -312,6 +384,67 @@ class UserModel implements PaginatedInterface
 
         return $userStats;
 
+    }
+
+    /**
+     * @param $id1
+     * @param $id2
+     * @return UserStatsModel
+     * @throws \Exception
+     */
+    public function getComparedStats($id1, $id2)
+    {
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->setParameters(
+            array(
+                'id1' => (integer)$id1,
+                'id2' => (integer)$id2
+            )
+        );
+
+        $qb->match('(u:User {qnoow_id: { id1 }}), (u2:User {qnoow_id: { id2 }})')
+            ->match('(u)-[:BELONGS_TO]->(g:Group)<-[:BELONGS_TO]-(u2)');
+        //TODO: Add stats comparation to fill returned UserStatsModel
+        $qb->returns('collect(g) AS groupsBelonged');
+
+        $query = $qb->getQuery();
+
+        $result = $query->getResultSet();
+
+        /* @var $row Row */
+        $row = $result->current();
+
+        $groups = array();
+        foreach ($row->offsetGet('groupsBelonged') as $group) {
+            /* @var $group Node */
+            $groups[] = array(
+                'id' => $group->getId(),
+                'name' => $group->getProperty('name'),
+                'html' => $group->getProperty('html'),
+            );
+        }
+
+        $userStats = new UserStatsModel(
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            $groups,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        );
+
+        return $userStats;
     }
 
     /**
@@ -334,7 +467,7 @@ class UserModel implements PaginatedInterface
         $result = $query->getResultSet();
 
         if ($result->count() < 1) {
-            throw new NotFoundHttpException('User not found');
+            throw new NotFoundHttpException(sprintf('User "%d" not found', $id));
         }
 
         /* @var $row Row */
@@ -360,6 +493,40 @@ class UserModel implements PaginatedInterface
         $this->connectionSocial->update('users', array('status' => $status->getStatus()), array('id' => (integer)$id));
 
         return $status;
+    }
+
+    /**
+     * @param null $locale
+     * @param array $dynamicFilters User-dependent filters, not set in this model
+     * @param bool $filter Filter non-public attributes
+     * @return array
+     */
+    public function getFilters($locale = null, $dynamicFilters = array(), $filter = true)
+    {
+        $locale = $this->getLocale($locale);
+        $metadata = $this->getMetadata($locale, $dynamicFilters, $filter);
+
+        foreach ($dynamicFilters['groups'] as $group) {
+            $metadata['groups']['choices'][$group['id']] = $group['name'];
+        }
+
+        foreach ($metadata as $key => &$item) {
+            if (isset($item['labelFilter'])) {
+                $item['label'] = $item['labelFilter'][$locale];
+                unset($item['labelFilter']);
+            }
+            if (isset($item['filterable']) && $item['filterable'] === false) {
+                unset($metadata[$key]);
+            }
+        }
+
+        //check user-dependent choices existence for not showing up to user
+
+        if ($dynamicChoices['groups'] = null || $dynamicFilters['groups'] == array()) {
+            unset($metadata['groups']);
+        }
+
+        return $metadata;
     }
 
     /**
@@ -506,6 +673,60 @@ class UserModel implements PaginatedInterface
     }
 
     /**
+     * @param null $locale
+     * @param array $dynamicChoices user-dependent choices (cannot be set from this model)
+     * @param bool $filter
+     * @return array
+     */
+    protected function getMetadata($locale = null, array $dynamicChoices = array(), $filter = true)
+    {
+
+        $locale = $this->getLocale($locale);
+
+        $publicMetadata = $dynamicChoices;
+        $choiceOptions = $this->getChoiceOptions();
+
+        foreach ($this->metadata as $name => $values) {
+            $publicField = $values;
+            $publicField['label'] = $values['label'][$locale];
+
+            if ($values['type'] === 'choice') {
+                $publicField['choices'] = array();
+                if (isset($choiceOptions[$name])) {
+                    $publicField['choices'] = $choiceOptions[$name];
+                }
+            } elseif ($values['type'] === 'tags') {
+                $publicField['top'] = $this->getTopUserTags($name);
+            }
+
+            $publicMetadata[$name] = $publicField;
+        }
+
+        if ($filter) {
+            foreach ($publicMetadata as &$item) {
+                if (isset($item['labelFilter'])) {
+                    unset($item['labelFilter']);
+                }
+                if (isset($item['filterable'])) {
+                    unset($item['filterable']);
+                }
+            }
+        }
+
+        return $publicMetadata;
+    }
+
+    protected function getLocale($locale)
+    {
+
+        if (!$locale || !in_array($locale, array('en', 'es'))) {
+            $locale = $this->defaultLocale;
+        }
+
+        return $locale;
+    }
+
+    /**
      * @param $resultSet
      * @return array
      */
@@ -521,12 +742,29 @@ class UserModel implements PaginatedInterface
 
     }
 
-    private function parseRow($row)
+    private function parseRow(Row $row)
     {
         return array(
             'qnoow_id' => $row['u']->getProperty('qnoow_id'),
             'username' => $row['u']->getProperty('username'),
             'email' => $row['u']->getProperty('email'),
         );
+    }
+
+    /** Returns statically defined options
+     * @return array
+     */
+    private function getChoiceOptions()
+    {
+        return array();
+    }
+
+    /** Returns User tags to use when created user tags
+     * @param $name
+     * @return array
+     */
+    private function getTopUserTags($type)
+    {
+        return array();
     }
 }

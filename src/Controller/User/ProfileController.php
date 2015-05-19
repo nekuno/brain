@@ -2,12 +2,12 @@
 
 namespace Controller\User;
 
-use Model\Exception\ValidationException;
 use Model\User\ProfileModel;
+use Model\User\ProfileTagModel;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * Class ProfileController
@@ -19,7 +19,6 @@ class ProfileController
      * @param Request $request
      * @param Application $app
      * @return JsonResponse
-     * @throws \Exception
      */
     public function getAction(Request $request, Application $app)
     {
@@ -28,20 +27,15 @@ class ProfileController
         /* @var $model ProfileModel */
         $model = $app['users.profile.model'];
 
-        try {
-            $profile = $model->getById($id);
-        } catch (HttpException $e) {
-            return $app->json(array('error' => $e->getMessage()), $e->getStatusCode(), $e->getHeaders());
-        }
+        $profile = $model->getById($id);
 
-        return $app->json($profile, 200);
+        return $app->json($profile);
     }
 
     /**
      * @param Request $request
      * @param Application $app
      * @return JsonResponse
-     * @throws \Exception
      */
     public function postAction(Request $request, Application $app)
     {
@@ -50,13 +44,7 @@ class ProfileController
         /* @var $model ProfileModel */
         $model = $app['users.profile.model'];
 
-        try {
-            $profile = $model->create($id, $request->request->all());
-        } catch (HttpException $e) {
-            return $app->json(array('error' => $e->getMessage()), $e->getStatusCode(), $e->getHeaders());
-        } catch (ValidationException $e) {
-            return $app->json(array('validationErrors' => $e->getErrors()), 500);
-        }
+        $profile = $model->create($id, $request->request->all());
 
         return $app->json($profile, 201);
     }
@@ -65,7 +53,6 @@ class ProfileController
      * @param Request $request
      * @param Application $app
      * @return JsonResponse
-     * @throws \Exception
      */
     public function putAction(Request $request, Application $app)
     {
@@ -74,22 +61,15 @@ class ProfileController
         /* @var $model ProfileModel */
         $model = $app['users.profile.model'];
 
-        try {
-            $profile = $model->update($id, $request->request->all());
-        } catch (HttpException $e) {
-            return $app->json(array('error' => $e->getMessage()), $e->getStatusCode(), $e->getHeaders());
-        } catch (ValidationException $e) {
-            return $app->json(array('validationErrors' => $e->getErrors()), 500);
-        }
+        $profile = $model->update($id, $request->request->all());
 
-        return $app->json($profile, 200);
+        return $app->json($profile);
     }
 
     /**
      * @param Request $request
      * @param Application $app
      * @return JsonResponse
-     * @throws \Exception
      */
     public function deleteAction(Request $request, Application $app)
     {
@@ -98,14 +78,10 @@ class ProfileController
         /* @var $model ProfileModel */
         $model = $app['users.profile.model'];
 
-        try {
-            $profile = $model->getById($id);
-            $model->remove($id);
-        } catch (HttpException $e) {
-            return $app->json(array('error' => $e->getMessage()), $e->getStatusCode(), $e->getHeaders());
-        }
+        $profile = $model->getById($id);
+        $model->remove($id);
 
-        return $app->json($profile, 200);
+        return $app->json($profile);
     }
 
     /**
@@ -121,7 +97,7 @@ class ProfileController
         $model = $app['users.profile.model'];
         $metadata = $model->getMetadata($locale);
 
-        return $app->json($metadata, 200);
+        return $app->json($metadata);
     }
 
     /**
@@ -137,7 +113,7 @@ class ProfileController
         $model = $app['users.profile.model'];
         $filters = $model->getFilters($locale);
 
-        return $app->json($filters, 200);
+        return $app->json($filters);
     }
 
     /**
@@ -150,20 +126,15 @@ class ProfileController
         /* @var $model ProfileModel */
         $model = $app['users.profile.model'];
 
-        try {
-            $model->validate($request->request->all());
-        } catch (ValidationException $e) {
-            return $app->json($e->getErrors(), 500);
-        }
+        $model->validate($request->request->all());
 
-        return $app->json(array(), 200);
+        return $app->json();
     }
 
     /**
      * @param Request $request
      * @param Application $app
      * @return \Symfony\Component\HttpFoundation\JsonResponse
-     * @throws \Exception
      */
     public function getProfileTagsAction(Request $request, Application $app)
     {
@@ -173,26 +144,18 @@ class ProfileController
         $limit = $request->get('limit', 0);
 
         if (null === $type) {
-            return $app->json(array(), 400);
+            throw new NotFoundHttpException('type needed');
         }
 
         if ($search) {
             $search = urldecode($search);
         }
 
-        /** @var $model \Model\User\ProfileTagModel */
+        /* @var $model ProfileTagModel */
         $model = $app['users.profile.tag.model'];
 
-        try {
-            $result = $model->getProfileTags($type, $search, $limit);
-        } catch (\Exception $e) {
-            if ($app['env'] == 'dev') {
-                throw $e;
-            }
+        $result = $model->getProfileTags($type, $search, $limit);
 
-            return $app->json(array(), 500);
-        }
-
-        return $app->json($result, !empty($result) ? 201 : 200);
+        return $app->json($result);
     }
 }

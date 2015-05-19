@@ -19,13 +19,13 @@ class GoogleFetcher extends BasicPaginationFetcher
     {
         return array(
             'maxResults' => $this->pageLength,
-            'fields' => 'items(object(attachments(content,displayName,id,objectType,url)),title),nextPageToken'
+            'fields' => 'items(object(attachments(content,displayName,id,objectType,url)),title,published,updated),nextPageToken'
         );
     }
 
     protected function getItemsFromResponse($response)
     {
-        return $response['items'] ? : array();
+        return $response['items'] ?: array();
     }
 
     protected function getPaginationIdFromResponse($response)
@@ -47,6 +47,7 @@ class GoogleFetcher extends BasicPaginationFetcher
     }
 
     /**
+     * @param $rawFeed array
      * @return array
      */
     protected function parseLinks(array $rawFeed)
@@ -58,12 +59,22 @@ class GoogleFetcher extends BasicPaginationFetcher
                 continue;
             }
 
+            $timestamp = null;
+            if (array_key_exists('updated', $item)) {
+                $date = new \DateTime($item['updated']);
+                $timestamp = ($date->getTimestamp()) * 1000;
+            } else if (array_key_exists('published', $item)) {
+                $date = new \DateTime($item['published']);
+                $timestamp = $date->getTimestamp() * 1000;
+            }
+
             $item = $item['object']['attachments'][0];
 
             $link['url'] = $item['url'];
             $link['title'] = array_key_exists('displayName', $item) ? $item['displayName'] : null;
             $link['description'] = array_key_exists('content', $item) ? $item['content'] : null;
             $link['resourceItemId'] = array_key_exists('id', $item) ? $item['id'] : null;
+            $link['timestamp'] = $timestamp;
             $link['resource'] = 'google';
 
             $parsed[] = $link;

@@ -2,11 +2,15 @@
 
 namespace Model\Neo4j;
 
+use Everyman\Neo4j\Client;
 use Model\LinkModel;
 use Model\Questionnaire\QuestionModel;
 use Model\User\AnswerModel;
+use Model\User\ProfileModel;
+use Model\User\RateModel;
 use Model\UserModel;
 use Psr\Log\LoggerInterface;
+use Silex\Application;
 
 class Fixtures
 {
@@ -47,6 +51,11 @@ class Fixtures
     protected $am;
 
     /**
+     * @var ProfileModel
+     */
+    protected $pm;
+
+    /**
      * @var array
      */
     protected $scenario = array();
@@ -56,13 +65,20 @@ class Fixtures
      */
     protected $questions = array();
 
-    public function __construct(GraphManager $gm, UserModel $um, LinkModel $lm, QuestionModel $qm, AnswerModel $am, $scenario)
+    /**
+     * @var RateModel
+     */
+    protected $rm;
+
+    public function __construct(Application $app, $scenario)
     {
-        $this->gm = $gm;
-        $this->um = $um;
-        $this->lm = $lm;
-        $this->qm = $qm;
-        $this->am = $am;
+        $this->gm = $app['neo4j.graph_manager'];
+        $this->um = $app['users.model'];
+        $this->lm = $app['links.model'];
+        $this->qm = $app['questionnaire.questions.model'];
+        $this->am = $app['users.answers.model'];
+        $this->pm = $app['users.profile.model'];
+        $this->rm = $app['users.rate.model'];
         $this->scenario = $scenario;
     }
 
@@ -79,12 +95,13 @@ class Fixtures
     {
 
         $this->clean();
+        $this->loadProfileOptions();
         $this->loadUsers();
-        $this->loadLinks();
+        $createdLinks=$this->loadLinks();
         $this->loadTags();
         $this->loadQuestions();
         $this->loadLinkTags();
-        $this->loadLikes();
+        $this->loadLikes($createdLinks);
         $this->loadAnswers();
         $this->calculateStatus();
     }
@@ -121,6 +138,20 @@ class Fixtures
                     'email' => 'user' . $i . '@nekuno.com',
                 )
             );
+            $profileData = array(
+                'birthday' => '1970-01-01',
+                'gender' => 'male',
+                'orientation' => 'heterosexual',
+                'interfaceLanguage' => 'es',
+                'location' => array(
+                    'latitude' => 40.4,
+                    'longitude' => 3.683,
+                    'address' => 'Madrid',
+                    'locality' => 'Madrid',
+                    'country' => 'Spain'
+                )
+            );
+            $this->pm->create($i, $profileData);
         }
     }
 
@@ -129,10 +160,11 @@ class Fixtures
 
         $this->logger->notice(sprintf('Loading %d links', self::NUM_OF_LINKS));
 
+        $createdLinks=array();
+
         for ($i = 1; $i <= self::NUM_OF_LINKS; $i++) {
 
             $link = array(
-                'userId' => 1,
                 'title' => 'Title ' . $i,
                 'description' => 'Description ' . $i,
                 'url' => 'https://www.nekuno.com/link' . $i,
@@ -140,20 +172,27 @@ class Fixtures
             );
 
             if ($i <= 50) {
+                $link['url'] = 'https://www.youtube.com/watch?v=OPf0YbXqDm0' . '?' . $i;
+                $link['title'] = 'Mark Ronson - Uptown Funk ft. Bruno Mars - YouTube';
+                $link['description'] = 'Mark Ronson - Uptown Funk ft. Bruno Mars - YouTube';
                 $link['additionalLabels'] = array('Video');
-                $link['additionalFields'] = array('embed_type' => 'youtube', 'embed_id' => 'youtube-id-' . $i);
+                $link['additionalFields'] = array('embed_type' => 'youtube', 'embed_id' => 'OPf0YbXqDm0');
                 $link['tags'] = array(
                     array('name' => 'Video Tag 1'),
                     array('name' => 'Video Tag 2'),
                     array('name' => 'Video Tag 3'),
                 );
             } elseif ($i <= 150) {
+                $link['url'] = 'https://open.spotify.com/album/3vLaOYCNCzngDf8QdBg2V1/32OlwWuMpZ6b0aN2RZOeMS' . '?' . $i;
+                $link['title'] = 'Uptown Funk';
+                $link['description'] = 'Uptown Special : Mark Ronson, Bruno Mars';
                 $link['additionalLabels'] = array('Audio');
-                $link['additionalFields'] = array('embed_type' => 'spotify', 'embed_id' => 'spotify:track:' . $i);
+                $link['additionalFields'] = array('embed_type' => 'spotify', 'embed_id' => 'spotify:track:32OlwWuMpZ6b0aN2RZOeMS');
                 $link['tags'] = array(
-                    array('name' => 'Audio Tag 4'),
-                    array('name' => 'Audio Tag 5'),
-                    array('name' => 'Audio Tag 6'),
+                    array('name' => 'Uptown Funk', 'additionalLabels' => array('Song'), 'additionalFields' => array('spotifyId' => '32OlwWuMpZ6b0aN2RZOeMS', 'isrc' => 'GBARL1401524')),
+                    array('name' => 'Bruno Mars', 'additionalLabels' => array('Artist'), 'additionalFields' => array('spotifyId' => '0du5cEVh5yTK9QJze8zA0C')),
+                    array('name' => 'Mark Ronson', 'additionalLabels' => array('Artist'), 'additionalFields' => array('spotifyId' => '3hv9jJF3adDNsBSIQDqcjp')),
+                    array('name' => 'Uptown Special', 'additionalLabels' => array('Album'), 'additionalFields' => array('spotifyId' => '3vLaOYCNCzngDf8QdBg2V1')),
                 );
             } elseif ($i <= 350) {
                 $link['additionalLabels'] = array('Image');
@@ -164,9 +203,11 @@ class Fixtures
                 );
             }
 
-            $this->lm->addLink($link);
+            $createdLinks[$i]=$this->lm->addLink($link);
 
         }
+
+        return $createdLinks;
     }
 
     protected function loadTags()
@@ -250,16 +291,20 @@ class Fixtures
         }
     }
 
-    protected function loadLikes()
+    protected function loadLikes(array $createdLinks)
     {
 
         $this->logger->notice('Loading likes');
 
         $likes = $this->scenario['likes'];
 
+        foreach($createdLinks as $link){
+            $this->rm->userRateLink(1,$link,RateModel::LIKE);
+        }
+
         foreach ($likes as $like) {
             foreach (range($like['linkFrom'], $like['linkTo']) as $i) {
-                $this->createUserLikesLinkRelationship($like['user'], $i);
+                $this->rm->userRateLink($like['user'],$createdLinks[$i],RateModel::LIKE);
             }
         }
     }
@@ -308,21 +353,6 @@ class Fixtures
         }
     }
 
-    protected function createUserLikesLinkRelationship($user, $link)
-    {
-
-        $qb = $this->gm->createQueryBuilder();
-        $qb->match('(l:Link {url: { url } })', '(u:User {qnoow_id: { qnoow_id } })')
-            ->setParameter('url', 'https://www.nekuno.com/link' . $link)
-            ->setParameter('qnoow_id', $user)
-            ->createUnique('(l)<-[r:LIKES]-(u)')
-            ->returns('l', 'u');
-
-        $query = $qb->getQuery();
-        $query->getResultSet();
-
-    }
-
     protected function createUserDisLikesLinkRelationship($user, $link)
     {
 
@@ -336,6 +366,28 @@ class Fixtures
         $query = $qb->getQuery();
         $query->getResultSet();
 
+    }
+
+    private function loadProfileOptions()
+    {
+        $profileOptions = new ProfileOptions($this->gm);
+
+        $logger = $this->logger;
+        $profileOptions->setLogger($logger);
+
+        try {
+            $result = $profileOptions->load();
+        } catch (\Exception $e) {
+            $logger->notice(
+                'Error loading neo4j profile options with message: ' . $e->getMessage()
+            );
+
+            return;
+        }
+
+        $logger->notice(sprintf('%d new profile options processed.', $result->getTotal()));
+        $logger->notice(sprintf('%d new profile options updated.', $result->getUpdated()));
+        $logger->notice(sprintf('%d new profile options created.', $result->getCreated()));
     }
 
 }

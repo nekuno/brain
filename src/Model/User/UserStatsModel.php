@@ -3,7 +3,8 @@
 namespace Model\User;
 
 
-class UserStatsModel {
+class UserStatsModel
+{
 
     protected $numberOfContentLikes;
 
@@ -16,6 +17,8 @@ class UserStatsModel {
     protected $numberOfReceivedLikes;
 
     protected $numberOfUserLikes;
+
+    protected $groupsBelonged;
 
     protected $numberOfQuestionsAnswered;
 
@@ -41,6 +44,7 @@ class UserStatsModel {
                          $numberOfImageLikes,
                          $numberOfReceivedLikes,
                          $numberOfUserLikes,
+                         $groupsBelonged,
                          $numberOfQuestionsAnswered,
                          $twitterFetched,
                          $twitterProcessed,
@@ -57,6 +61,7 @@ class UserStatsModel {
         $this->numberOfImageLikes = $numberOfImageLikes;
         $this->numberOfReceivedLikes = $numberOfReceivedLikes;
         $this->numberOfUserLikes = $numberOfUserLikes;
+        $this->groupsBelonged = $groupsBelonged;
         $this->numberOfQuestionsAnswered = $numberOfQuestionsAnswered;
         $this->twitterFetched = $twitterFetched;
         $this->twitterProcessed = $twitterProcessed;
@@ -114,6 +119,14 @@ class UserStatsModel {
     public function getNumberOfUserLikes()
     {
         return $this->numberOfUserLikes;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getGroupsBelonged()
+    {
+        return $this->groupsBelonged;
     }
 
     /**
@@ -195,6 +208,7 @@ class UserStatsModel {
                      'numberOfImageLikes' => $this->numberOfImageLikes,
                      'numberOfReceivedLikes' => $this->numberOfReceivedLikes,
                      'numberOfUserLikes' => $this->numberOfUserLikes,
+                     'groupsBelonged' => $this->groupsBelonged,
                      'numberOfQuestionsAnswered' => $this->numberOfQuestionsAnswered,
                      'twitterFetched' => $this->twitterFetched,
                      'twitterProcessed' => $this->twitterProcessed,

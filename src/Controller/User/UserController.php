@@ -3,10 +3,15 @@
 namespace Controller\User;
 
 use Model\User\ContentPaginatedModel;
+use Model\User\GroupModel;
+use Model\User\ProfileModel;
 use Model\User\RateModel;
 use Model\UserModel;
+use Paginator\Paginator;
 use Silex\Application;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
@@ -63,35 +68,11 @@ class UserController
     public function addAction(Request $request, Application $app)
     {
 
-        // Basic data validation
-        if (array() !== $request->request->all()) {
-            if (null == $request->request->get('id') || null == $request->request->get('username')
-            ) {
-                return $app->json(array(), 400);
-            }
+        /* @var $model UserModel */
+        $model = $app['users.model'];
+        $result = $model->create($request->request->all());
 
-            if (!is_int($request->request->get('id'))) {
-                return $app->json(array(), 400);
-            }
-        } else {
-            return $app->json(array(), 400);
-        }
-
-        // Create and persist the User
-
-        try {
-            /* @var $model UserModel */
-            $model = $app['users.model'];
-            $result = $model->create($request->request->all());
-        } catch (\Exception $e) {
-            if ($app['env'] == 'dev') {
-                throw $e;
-            }
-
-            return $app->json(array(), 500);
-        }
-
-        return $app->json($result, !empty($result) ? 201 : 200);
+        return $app->json($result, 201);
     }
 
     /**
@@ -438,17 +419,20 @@ class UserController
     public function rateContentAction(Request $request, Application $app)
     {
         $userId = $request->get('id');
-        $linkId = $request->request->get('linkId');
         $rate = $request->request->get('rate');
+        $data = $request->request->all();
+        if (isset($data['linkId']) && !isset($data['id'])){
+            $data['id'] = $data['linkId'];
+        }
 
-        if (null == $userId || null == $linkId || null == $rate) {
-            return $app->json(array('text' => 'Link Not Found', 'id' => $userId, 'linkId' => $linkId), 400);
+        if (null == $userId || null == $data['linkId'] || null == $rate) {
+            return $app->json(array('text' => 'Link Not Found', 'id' => $userId, 'linkId' => $data['linkId']), 400);
         }
 
         try {
             /* @var RateModel $model */
             $model = $app['users.rate.model'];
-            $result = $model->userRateLink($userId, $linkId, $rate);
+            $result = $model->userRateLink($userId,$data, $rate);
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;
@@ -460,50 +444,40 @@ class UserController
         return $app->json($result, !empty($result) ? 201 : 200);
     }
 
-    /**
-     * @param Request $request
-     * @param Application $app
-     * @return \Symfony\Component\HttpFoundation\JsonResponse
-     * @throws \Exception
-     */
-    public function getUserRecommendationAction(Request $request, Application $app)
+    public function getUserRecommendationAction(Request $request, Application $app, $id)
     {
 
-        // Get params
-        $id = $request->get('id');
         $order = $request->get('order', false);
-        $profileFilters = $request->get('filters', array());
 
-        if (null === $id) {
-            return $app->json(array(), 400);
-        }
-
-        /* @var $paginator \Paginator\Paginator */
+        /* @var $paginator Paginator */
         $paginator = $app['paginator'];
 
         $filters = array(
             'id' => $id,
-            'profileFilters' => $profileFilters,
+            'profileFilters' => $request->get('profileFilters', array()),
+            'userFilters' => $request->get('userFilters', array()),
         );
 
         if ($order) {
             $filters['order'] = $order;
         }
 
+        /* @var $groupModel GroupModel */
+        $groupModel = $app['users.groups.model'];
+        if (isset($filters['userFilters']['groups']) && null !== $filters['userFilters']['groups']) {
+            foreach ($filters['userFilters']['groups'] as $group) {
+                if (!$groupModel->isUserFromGroup($group, $id)) {
+                    throw new AccessDeniedHttpException(sprintf('Not allowed to filter on group "%s"', $group));
+                }
+            }
+        }
+
         /* @var $model \Model\User\Recommendation\UserRecommendationPaginatedModel */
         $model = $app['users.recommendation.users.model'];
 
-        try {
-            $result = $paginator->paginate($filters, $model, $request);
-        } catch (\Exception $e) {
-            if ($app['env'] == 'dev') {
-                throw $e;
-            }
+        $result = $paginator->paginate($filters, $model, $request);
 
-            return $app->json(array(), 500);
-        }
-
-        return $app->json($result, !empty($result) ? 201 : 200);
+        return $app->json($result);
     }
 
     /**
@@ -648,6 +622,32 @@ class UserController
     /**
      * @param Request $request
      * @param Application $app
+     * @return JsonResponse
+     */
+    public function getAllFiltersAction(Request $request, Application $app)
+    {
+        $locale = $request->query->get('locale');
+        $id = $request->get('id');
+        $filters = array();
+        /* @var $model ProfileModel */
+        $profileModel = $app['users.profile.model'];
+        $filters['profileFilters'] = $profileModel->getFilters($locale);
+
+        //user-dependent filters
+        $dynamicFilters = array();
+        /* @var $groupModel GroupModel */
+        $groupModel = $app['users.groups.model'];
+        $dynamicFilters['groups'] = $groupModel->getByUser((integer)$id);
+        /* @var $userModel UserModel */
+        $userModel = $app['users.model'];
+        $filters['userFilters'] = $userModel->getFilters($locale, $dynamicFilters);
+
+        return $app->json($filters, 200);
+    }
+
+    /**
+     * @param Request $request
+     * @param Application $app
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      * @throws \Exception
      */
@@ -681,5 +681,24 @@ class UserController
         $stats = $model->getStats($id);
 
         return $app->json($stats->toArray());
+    }
+
+    public function statsCompareAction(Request $request, Application $app)
+    {
+        $id1 = (integer)$request->get('id1');
+        $id2 = (integer)$request->get('id2');
+        if (null === $id1 || null === $id2) {
+            throw new NotFoundHttpException('User not found');
+        }
+        if ($id1 === $id2) {
+            return $app->json(array(), 400);
+        }
+        /* @var $model UserModel */
+        $model = $app['users.model'];
+
+        $stats = $model->getComparedStats($id1, $id2);
+
+        return $app->json($stats->toArray());
+
     }
 }

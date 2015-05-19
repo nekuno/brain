@@ -9,6 +9,7 @@ use Event\FetchEvent;
 use Event\ProcessLinkEvent;
 use Event\ProcessLinksEvent;
 use Model\LinkModel;
+use Model\User\RateModel;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
@@ -59,6 +60,7 @@ class FetcherService implements LoggerAwareInterface
      * @param UserProviderInterface $userProvider
      * @param LinkProcessor $linkProcessor
      * @param LinkModel $linkModel
+     * @param RateModel $rateModel
      * @param FetcherFactory $fetcherFactory
      * @param EventDispatcher $dispatcher
      * @param array $options
@@ -67,14 +69,17 @@ class FetcherService implements LoggerAwareInterface
         UserProviderInterface $userProvider,
         LinkProcessor $linkProcessor,
         LinkModel $linkModel,
+        RateModel $rateModel,
         FetcherFactory $fetcherFactory,
         EventDispatcher $dispatcher,
         array $options
-    ) {
+    )
+    {
 
         $this->userProvider = $userProvider;
         $this->linkProcessor = $linkProcessor;
         $this->linkModel = $linkModel;
+        $this->rateModel = $rateModel;
         $this->fetcherFactory = $fetcherFactory;
         $this->dispatcher = $dispatcher;
         $this->options = $options;
@@ -131,9 +136,14 @@ class FetcherService implements LoggerAwareInterface
             foreach ($links as $key => $link) {
                 try {
                     $this->dispatcher->dispatch(\AppEvents::PROCESS_LINK, new ProcessLinkEvent($userId, $resourceOwner, $link));
+
                     $linkProcessed = $this->linkProcessor->process($link);
-                    $linkProcessed['userId'] = $userId;
-                    $this->linkModel->addLink($linkProcessed);
+
+                    $linkCreated = $this->linkModel->addLink($linkProcessed);
+
+                    $linkProcessed['id']=$linkCreated['id'];
+                    $this->rateModel->userRateLink($userId, $linkProcessed, RateModel::LIKE);
+
                     $links[$key] = $linkProcessed;
                 } catch (\Exception $e) {
                     $this->logger->error(sprintf('Fetcher: Error processing link "%s" from resource "%s". Reason: %s', $link['url'], $resourceOwner, $e->getMessage()));

@@ -2,7 +2,7 @@
 
 $app['users.model'] = function ($app) {
 
-    return new \Model\UserModel($app['neo4j.graph_manager'], $app['dbs']['mysql_social'], $app['orm.ems']['mysql_brain']);
+    return new \Model\UserModel($app['neo4j.graph_manager'], $app['dbs']['mysql_social'], $app['orm.ems']['mysql_brain'], $app['fields']['user'], $app['locale.options']['default']);
 };
 
 $app['users.profile.model'] = function ($app) {
@@ -47,7 +47,7 @@ $app['users.content.tag.model'] = function ($app) {
 
 $app['users.rate.model'] = function ($app) {
 
-    return new \Model\User\RateModel($app['dispatcher'], $app['neo4j.client']);
+    return new \Model\User\RateModel($app['dispatcher'], $app['neo4j.client'], $app['neo4j.graph_manager']);
 };
 
 $app['users.matching.model'] = function ($app) {
@@ -97,5 +97,5 @@ $app['links.model'] = function ($app) {
 
 $app['users.groups.model'] = function ($app) {
 
-    return new \Model\User\GroupModel($app['neo4j.graph_manager']);
+    return new \Model\User\GroupModel($app['neo4j.graph_manager'], $app['users.model']);
 };
