@@ -479,4 +479,94 @@ class QuestionModel
 
         return $return;
     }
+
+    /**
+     * @param $size integer how many questions are grouped
+     * @param $preselected integer how many questions are preselected by rating to be analyzed
+     * @return array( rating1 => array(questionId1, questionId2..) , rating2 => array(...))
+     */
+    public function getUncorrelatedQuestions($size = 4, $preselected = 50)
+    {
+        $qb = $this->gm->createQueryBuilder();
+
+        //   -Preselect questions ordering by rating
+        $parameters = array('size' => (integer)$size,
+            'preselected' => (integer)$preselected);
+        $qb->setParameters($parameters);
+
+        $qb->match('(q1:Question)')
+            ->with('q1,q1.ranking AS ranking1')
+            ->orderBy('ranking1 ASC');
+        if ($preselected !== 0) {
+            $qb->limit('{preselected}');
+        }
+        $qb->match('(q2:Question)')
+            ->with('q1,q2,q2.ranking AS ranking2')
+            ->orderBy('ranking2 ASC');
+        if ($preselected !== 0) {
+            $qb->limit('{preselected}');
+        }
+        $qb->with('q1,q2')
+            ->where('id(q1)<id(q2)');
+
+        $qb->match('(q1)<-[:IS_ANSWER_OF]-(a1:Answer)<-[:ANSWERS]-(u:User)')
+            ->match('(q2)<-[:IS_ANSWER_OF]-(a2:Answer)<-[:ANSWERS]-(u)')
+            ->returns('id(q1) AS q1,id(q2) AS q2,id(a1) AS a1,id(a2) AS a2,count(u) AS users');
+
+        $query = $qb->getQuery();
+//        return $query->getExecutableQuery();
+        $result = $query->getResultSet();
+//        return $result->count();
+
+        //Place variables in arrays and get correlations:
+
+        $totalUsers = array();
+        /* @var $row Row */
+        foreach ($result as $row) {
+            if (empty($totalUsers[$row->offsetGet('q1')][$row->offsetGet('q2')])){
+                $totalUsers[$row->offsetGet('q1')][$row->offsetGet('q2')]=0;
+            }
+            $totalUsers[$row->offsetGet('q1')][$row->offsetGet('q2')] += $row->offsetGet('users');
+        }
+        $result->rewind();
+
+        $percentages = array();
+        /* @var $row Row */
+        foreach ($result as $row) {
+            if ($totalUsers[$row->offsetGet('q1')][$row->offsetGet('q2')] === 0) {
+                $percentages[$row->offsetGet('q1')][$row->offsetGet('q2')][$row->offsetGet('a1')][$row->offsetGet('a2')] = 0;
+            } else {
+                $percentages[$row->offsetGet('q1')][$row->offsetGet('q2')][$row->offsetGet('a1')][$row->offsetGet('a2')] =
+                    $row->offsetGet('users') / $totalUsers[$row->offsetGet('q1')][$row->offsetGet('q2')];
+            }
+        }
+
+        $distributions = array();
+        foreach ($percentages as $q1 => $percentagesFromQ1) {
+            foreach ($percentagesFromQ1 as $q2 => $percentagesFromQuestions) {
+                $distributions[$q1][$q2] = array();
+                foreach ($percentagesFromQuestions as $percentagesFromA1) {
+                    foreach ($percentagesFromA1 as $percentageFromAnswers) {
+                        $distributions[$q1][$q2][] = $percentageFromAnswers;
+                    }
+                }
+            }
+        }
+
+        $correlations = array();
+        foreach ($percentages as $q1 => $percentagesFromQ1) {
+            foreach ($percentagesFromQ1 as $q2 => $percentagesFromQuestions) {
+                $correlations[$q1][$q2] = 2.0 * stats_standard_deviation($distributions[$q1][$q2]); //0 to 1
+            }
+        }
+
+        //TODO: php group selection
+        //-Evaluate sum of correlation in every combination of $size questions
+        //-Order them by correlation, minimum first
+
+        //TODO: return like phpdoc
+
+        return $correlations;
+//        return array();
+    }
 }
