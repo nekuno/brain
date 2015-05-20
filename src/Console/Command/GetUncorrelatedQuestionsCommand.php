@@ -15,7 +15,6 @@ class GetUncorrelatedQuestionsCommand extends ApplicationAwareCommand
     {
         $this->setName('questions:get-uncorrelated')
             ->setDescription("Get a selection of uncorrelated questions groups.")
-            ->addArgument('size', InputArgument::REQUIRED, 'How many questions do you want in each group')
             ->addArgument('preselect', InputArgument::OPTIONAL, 'How many top rating questions are analyzed', 50);
     }
 
@@ -25,34 +24,30 @@ class GetUncorrelatedQuestionsCommand extends ApplicationAwareCommand
         $model = $this->app['questionnaire.questions.model'];
 
         $preselected = $input->getArgument('preselect');
-        $size = $input->getArgument('size');
 
-        $questions = $model->getUncorrelatedQuestions($size, $preselected);
+        $result = $model->getUncorrelatedQuestions($preselected);
 
-//        $output->writeln($questions);
-//        return;
-
-        if (array() === $questions) {
+        if (array() === $result['questions']) {
             $output->writeln('We couldn´t get the questions');
-
             return;
         }
 
-        foreach ($questions as $question1=>$questions2) {
-            foreach($questions2 as $question2=>$correlation){
-                $output->writeln(sprintf('Correlation %f between question %s and question %s ', $correlation, $question1, $question2));
-
-            }
-        }
-
+        //for debugging, modify return to appropriate array in QuestionModel.php
+//          $this->outputCorrelations($result,$output);
+//          $this->outputDistributions($result,$output);
+//          $this->outputPercentages($result,$output);
 
 
         try {
 
-//            /* @var $questionGroup array */
-//            foreach ($questions AS $rating => $questionGroup) {
-//                $output->writeln(sprintf('Rating %f for question group of ids: %s ', $rating, $questionGroup));
-//            }
+            $output->writeln(sprintf('Total correlation %s with questions %s, %s, %s and %s',
+                $result['totalCorrelation'],
+                $result['questions']['q1'],
+                $result['questions']['q2'],
+                $result['questions']['q3'],
+                $result['questions']['q4']
+            ));
+            $output->writeln('Total correlation: ' . $result['totalCorrelation']);
 
         } catch (\Exception $e) {
 
@@ -62,4 +57,53 @@ class GetUncorrelatedQuestionsCommand extends ApplicationAwareCommand
         }
 
     }
+
+    /**
+     * @param $result array
+     * @param $output OutputInterface
+     */
+    protected function outputCorrelations($result, $output)
+    {
+        $size = 0;
+        foreach ($result as $question1 => $questions2) {
+            foreach ($questions2 as $question2 => $correlation) {
+                $output->writeln(sprintf('Correlation %f between question %s and question %s ', $correlation, $question1, $question2));
+                $size++;
+            }
+        }
+
+        $output->writeln($size);
+    }
+
+    /**
+     * @param $result array
+     * @param $output OutputInterface
+     */
+    protected function outputPercentages($result, $output)
+    {
+        foreach ($result as $q1 => $q1array) {
+            foreach ($q1array as $q2 => $q2array) {
+                foreach ($q2array as $a1 => $a1array) {
+                    foreach ($a1array as $a2 => $a2array) {
+                        $output->writeln('Respuesta ' . $a1 . ' y ' . $a2 . ': ' . $a2array);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * @param $result array
+     * @param $output OutputInterface
+     */
+    protected function outputDistributions($result, $output)
+    {
+        foreach ($result as $question1 => $dist1) {
+            foreach ($dist1 as $question2 => $dist2) {
+                $output->writeln('Escribiendo ' . $question1 . ' y ' . $question2);
+                $output->writeln($dist2);
+            }
+        }
+    }
+
 }

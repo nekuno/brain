@@ -481,17 +481,15 @@ class QuestionModel
     }
 
     /**
-     * @param $size integer how many questions are grouped
      * @param $preselected integer how many questions are preselected by rating to be analyzed
-     * @return array( rating1 => array(questionId1, questionId2..) , rating2 => array(...))
+     * @return array
      */
-    public function getUncorrelatedQuestions($size = 4, $preselected = 50)
+    public function getUncorrelatedQuestions($preselected = 50)
     {
         $qb = $this->gm->createQueryBuilder();
 
-        //   -Preselect questions ordering by rating
-        $parameters = array('size' => (integer)$size,
-            'preselected' => (integer)$preselected);
+        $parameters = array('preselected' => (integer)$preselected,
+            'combinations' => (((integer)$preselected) * ((integer)$preselected - 1)) / 2);
         $qb->setParameters($parameters);
 
         $qb->match('(q1:Question)')
@@ -504,13 +502,14 @@ class QuestionModel
             ->with('q1,q2,q2.ranking AS ranking2')
             ->orderBy('ranking2 ASC');
         if ($preselected !== 0) {
-            $qb->limit('{preselected}');
+            $qb->limit('{combinations}');
         }
         $qb->with('q1,q2')
             ->where('id(q1)<id(q2)');
 
-        $qb->match('(q1)<-[:IS_ANSWER_OF]-(a1:Answer)<-[:ANSWERS]-(u:User)')
-            ->match('(q2)<-[:IS_ANSWER_OF]-(a2:Answer)<-[:ANSWERS]-(u)')
+        $qb->match('(q1)<-[:IS_ANSWER_OF]-(a1:Answer)')
+            ->match('(q2)<-[:IS_ANSWER_OF]-(a2:Answer)')
+            ->optionalMatch('(a1)<-[:ANSWERS]-(u:User)-[:ANSWERS]->(a2)')
             ->returns('id(q1) AS q1,id(q2) AS q2,id(a1) AS a1,id(a2) AS a2,count(u) AS users');
 
         $query = $qb->getQuery();
@@ -523,8 +522,8 @@ class QuestionModel
         $totalUsers = array();
         /* @var $row Row */
         foreach ($result as $row) {
-            if (empty($totalUsers[$row->offsetGet('q1')][$row->offsetGet('q2')])){
-                $totalUsers[$row->offsetGet('q1')][$row->offsetGet('q2')]=0;
+            if (empty($totalUsers[$row->offsetGet('q1')][$row->offsetGet('q2')])) {
+                $totalUsers[$row->offsetGet('q1')][$row->offsetGet('q2')] = 0;
             }
             $totalUsers[$row->offsetGet('q1')][$row->offsetGet('q2')] += $row->offsetGet('users');
         }
@@ -556,17 +555,51 @@ class QuestionModel
         $correlations = array();
         foreach ($percentages as $q1 => $percentagesFromQ1) {
             foreach ($percentagesFromQ1 as $q2 => $percentagesFromQuestions) {
-                $correlations[$q1][$q2] = 2.0 * stats_standard_deviation($distributions[$q1][$q2]); //0 to 1
+                if (!($q1<$q2)){
+                    continue;
+                }
+                $correlations[$q1][$q2] = sqrt(count($distributions[$q1][$q2])) * stats_standard_deviation($distributions[$q1][$q2]); //0 to 1
+//                $correlations[$q1][$q2] = stats_standard_deviation($distributions[$q1][$q2]); //0 to 1
             }
         }
 
-        //TODO: php group selection
-        //-Evaluate sum of correlation in every combination of $size questions
-        //-Order them by correlation, minimum first
+        //Size fixed at 4 questions / set
+        $minimum = 6;
+        $foursome = 6;
+        $questions = array();
+        foreach ($correlations as $q1 => $c1) {
+            foreach ($correlations as $q2 => $c2) {
+                foreach ($correlations as $q3 => $c3) {
+                    foreach ($correlations as $q4 => $c4) {
+                        if (!($q1 < $q2 && $q2 < $q3 && $q3 < $q4)) {
+                            continue;
+                        }
+                        $foursome[] = $correlations[$q1][$q2] +
+                            $correlations[$q2][$q3] +
+                            $correlations[$q1][$q3] +
+                            $correlations[$q1][$q4] +
+                            $correlations[$q2][$q4] +
+                            $correlations[$q3][$q4];
+                        if ($foursome < $minimum) {
+                            $minimum = $foursome;
+                            $questions = array('q1' => $q1,
+                                'q2' => $q2,
+                                'q3' => $q3,
+                                'q4' => $q4);
+                        }
+                    }
+                }
+            }
+        }
+//
+        return array('totalCorrelation' => $foursome,
+            'questions' => $questions);
 
-        //TODO: return like phpdoc
-
-        return $correlations;
+        //Partial returns  for debugging
+//        return $percentages;
+//        return $distributions;
+//        asort($correlations);
+//        return $correlations;
 //        return array();
     }
 }
