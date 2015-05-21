@@ -488,24 +488,19 @@ class QuestionModel
     {
         $qb = $this->gm->createQueryBuilder();
 
-        $parameters = array('preselected' => (integer)$preselected,
-            'combinations' => (((integer)$preselected) * ((integer)$preselected - 1)) / 2);
+        $n=(integer)$preselected;
+        $parameters = array('preselected'=>$n);
         $qb->setParameters($parameters);
 
-        $qb->match('(q1:Question)')
-            ->with('q1,q1.ranking AS ranking1')
-            ->orderBy('ranking1 ASC');
-        if ($preselected !== 0) {
-            $qb->limit('{preselected}');
-        }
-        $qb->match('(q2:Question)')
-            ->with('q1,q2,q2.ranking AS ranking2')
-            ->orderBy('ranking2 ASC');
-        if ($preselected !== 0) {
-            $qb->limit('{combinations}');
-        }
-        $qb->with('q1,q2')
-            ->where('id(q1)<id(q2)');
+        $qb->match('(q:Question)')
+            ->with('q')
+            ->orderBy('q.ranking DESC')
+            ->limit('{preselected}')
+            ->with('collect(q) AS questions')
+            ->match('(q1:Question),(q2:Question)')
+            ->where('(q1 in questions) AND (q2 in questions)',
+                    'id(q1)<id(q2)')
+            ->with('q1,q2');
 
         $qb->match('(q1)<-[:IS_ANSWER_OF]-(a1:Answer)')
             ->match('(q2)<-[:IS_ANSWER_OF]-(a2:Answer)')
@@ -513,11 +508,8 @@ class QuestionModel
             ->returns('id(q1) AS q1,id(q2) AS q2,id(a1) AS a1,id(a2) AS a2,count(u) AS users');
 
         $query = $qb->getQuery();
-//        return $query->getExecutableQuery();
         $result = $query->getResultSet();
-//        return $result->count();
 
-        //Place variables in arrays and get correlations:
 
         $totalUsers = array();
         /* @var $row Row */
@@ -543,6 +535,9 @@ class QuestionModel
         $distributions = array();
         foreach ($percentages as $q1 => $percentagesFromQ1) {
             foreach ($percentagesFromQ1 as $q2 => $percentagesFromQuestions) {
+                if (!($q1 < $q2)) {
+                    continue;
+                }
                 $distributions[$q1][$q2] = array();
                 foreach ($percentagesFromQuestions as $percentagesFromA1) {
                     foreach ($percentagesFromA1 as $percentageFromAnswers) {
@@ -555,17 +550,16 @@ class QuestionModel
         $correlations = array();
         foreach ($percentages as $q1 => $percentagesFromQ1) {
             foreach ($percentagesFromQ1 as $q2 => $percentagesFromQuestions) {
-                if (!($q1<$q2)){
+                if (!($q1 < $q2)) {
                     continue;
                 }
-                $correlations[$q1][$q2] = sqrt(count($distributions[$q1][$q2])) * stats_standard_deviation($distributions[$q1][$q2]); //0 to 1
-//                $correlations[$q1][$q2] = stats_standard_deviation($distributions[$q1][$q2]); //0 to 1
+                //Normalize to 1
+                $correlations[$q1][$q2] = sqrt(count($distributions[$q1][$q2])) * stats_standard_deviation($distributions[$q1][$q2]);
             }
         }
 
         //Size fixed at 4 questions / set
         $minimum = 6;
-        $foursome = 6;
         $questions = array();
         foreach ($correlations as $q1 => $c1) {
             foreach ($correlations as $q2 => $c2) {
@@ -574,7 +568,7 @@ class QuestionModel
                         if (!($q1 < $q2 && $q2 < $q3 && $q3 < $q4)) {
                             continue;
                         }
-                        $foursome[] = $correlations[$q1][$q2] +
+                        $foursome = $correlations[$q1][$q2] +
                             $correlations[$q2][$q3] +
                             $correlations[$q1][$q3] +
                             $correlations[$q1][$q4] +
@@ -591,15 +585,9 @@ class QuestionModel
                 }
             }
         }
-//
-        return array('totalCorrelation' => $foursome,
+
+        return array('totalCorrelation' => $minimum,
             'questions' => $questions);
 
-        //Partial returns  for debugging
-//        return $percentages;
-//        return $distributions;
-//        asort($correlations);
-//        return $correlations;
-//        return array();
     }
 }

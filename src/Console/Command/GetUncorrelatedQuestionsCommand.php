@@ -15,7 +15,7 @@ class GetUncorrelatedQuestionsCommand extends ApplicationAwareCommand
     {
         $this->setName('questions:get-uncorrelated')
             ->setDescription("Get a selection of uncorrelated questions groups.")
-            ->addArgument('preselect', InputArgument::OPTIONAL, 'How many top rating questions are analyzed', 50);
+            ->addArgument('preselect', InputArgument::OPTIONAL, 'How many top ranking questions are analyzed', 50);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -33,28 +33,11 @@ class GetUncorrelatedQuestionsCommand extends ApplicationAwareCommand
         }
 
         //for debugging, modify return to appropriate array in QuestionModel.php
-//          $this->outputCorrelations($result,$output);
-//          $this->outputDistributions($result,$output);
-//          $this->outputPercentages($result,$output);
+//        $this->outputPercentages($result, $output);
+//        $this->outputDistributions($result, $output);
+//        $this->outputCorrelations($result, $output);
 
-
-        try {
-
-            $output->writeln(sprintf('Total correlation %s with questions %s, %s, %s and %s',
-                $result['totalCorrelation'],
-                $result['questions']['q1'],
-                $result['questions']['q2'],
-                $result['questions']['q3'],
-                $result['questions']['q4']
-            ));
-            $output->writeln('Total correlation: ' . $result['totalCorrelation']);
-
-        } catch (\Exception $e) {
-
-            $output->writeln(sprintf('Error trying to get the uncorrelated questions: %s', $e->getMessage()));
-
-            return;
-        }
+        $this->outputResult($result, $output);
 
     }
 
@@ -103,6 +86,31 @@ class GetUncorrelatedQuestionsCommand extends ApplicationAwareCommand
                 $output->writeln('Escribiendo ' . $question1 . ' y ' . $question2);
                 $output->writeln($dist2);
             }
+        }
+    }
+
+    /**
+     * @param $result array
+     * @param $output OutputInterface
+     */
+    protected function outputResult($result, $output)
+    {
+        try {
+
+            $output->writeln(sprintf('Total correlation %s with questions %s, %s, %s and %s',
+                $result['totalCorrelation'],
+                $result['questions']['q1'],
+                $result['questions']['q2'],
+                $result['questions']['q3'],
+                $result['questions']['q4']
+            ));
+            $output->writeln('Total correlation: ' . $result['totalCorrelation']);
+
+        } catch (\Exception $e) {
+
+            $output->writeln(sprintf('Error trying to get the uncorrelated questions: %s', $e->getMessage()));
+
+            return;
         }
     }
 
