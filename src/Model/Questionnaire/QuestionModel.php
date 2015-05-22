@@ -488,8 +488,8 @@ class QuestionModel
     {
         $qb = $this->gm->createQueryBuilder();
 
-        $n=(integer)$preselected;
-        $parameters = array('preselected'=>$n);
+        $n = (integer)$preselected;
+        $parameters = array('preselected' => $n);
         $qb->setParameters($parameters);
 
         $qb->match('(q:Question)')
@@ -499,81 +499,54 @@ class QuestionModel
             ->with('collect(q) AS questions')
             ->match('(q1:Question),(q2:Question)')
             ->where('(q1 in questions) AND (q2 in questions)',
-                    'id(q1)<id(q2)')
+                'id(q1)<id(q2)')
             ->with('q1,q2');
 
         $qb->match('(q1)<-[:IS_ANSWER_OF]-(a1:Answer)')
             ->match('(q2)<-[:IS_ANSWER_OF]-(a2:Answer)')
             ->optionalMatch('(a1)<-[:ANSWERS]-(u:User)-[:ANSWERS]->(a2)')
-            ->returns('id(q1) AS q1,id(q2) AS q2,id(a1) AS a1,id(a2) AS a2,count(u) AS users');
+            ->with('id(q1) AS q1,id(q2) AS q2,id(a1) AS a1,id(a2) AS a2,count(distinct(u)) AS users')
+            ->with('q1, q2, sum(users) as totalUsers,  stdevp(users) AS std, (count(distinct(a1))+count(distinct(a2))) AS answers')
+            ->where('totalUsers>0')
+            ->with('q1, q2, std/totalUsers as normstd, answers')
+            ->with('q1,q2,normstd*sqrt(answers) as finalstd')
+            ->returns('q1,q2,finalstd');
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();
 
-
-        $totalUsers = array();
-        /* @var $row Row */
-        foreach ($result as $row) {
-            if (empty($totalUsers[$row->offsetGet('q1')][$row->offsetGet('q2')])) {
-                $totalUsers[$row->offsetGet('q1')][$row->offsetGet('q2')] = 0;
-            }
-            $totalUsers[$row->offsetGet('q1')][$row->offsetGet('q2')] += $row->offsetGet('users');
-        }
-        $result->rewind();
-
-        $percentages = array();
-        /* @var $row Row */
-        foreach ($result as $row) {
-            if ($totalUsers[$row->offsetGet('q1')][$row->offsetGet('q2')] === 0) {
-                $percentages[$row->offsetGet('q1')][$row->offsetGet('q2')][$row->offsetGet('a1')][$row->offsetGet('a2')] = 0;
-            } else {
-                $percentages[$row->offsetGet('q1')][$row->offsetGet('q2')][$row->offsetGet('a1')][$row->offsetGet('a2')] =
-                    $row->offsetGet('users') / $totalUsers[$row->offsetGet('q1')][$row->offsetGet('q2')];
-            }
-        }
-
-        $distributions = array();
-        foreach ($percentages as $q1 => $percentagesFromQ1) {
-            foreach ($percentagesFromQ1 as $q2 => $percentagesFromQuestions) {
-                if (!($q1 < $q2)) {
-                    continue;
-                }
-                $distributions[$q1][$q2] = array();
-                foreach ($percentagesFromQuestions as $percentagesFromA1) {
-                    foreach ($percentagesFromA1 as $percentageFromAnswers) {
-                        $distributions[$q1][$q2][] = $percentageFromAnswers;
-                    }
-                }
-            }
-        }
-
         $correlations = array();
-        foreach ($percentages as $q1 => $percentagesFromQ1) {
-            foreach ($percentagesFromQ1 as $q2 => $percentagesFromQuestions) {
-                if (!($q1 < $q2)) {
-                    continue;
-                }
-                //Normalize to 1
-                $correlations[$q1][$q2] = sqrt(count($distributions[$q1][$q2])) * stats_standard_deviation($distributions[$q1][$q2]);
+        /* @var $row Row */
+        foreach ($result as $row) {
+            $correlations[$row->offsetGet('q1')][$row->offsetGet('q2')] = $row->offsetGet('finalstd');
+        }
+
+        $correctCorrelations=array();
+        foreach($correlations as $q1=>$array){
+            foreach($correlations as $q2=>$array2){
+                if (!($q1<$q2)) continue;
+                $correctCorrelations[$q1][$q2]=isset($correlations[$q1][$q2])? $correlations[$q1][$q2] : 1;
             }
         }
+
+//        return $correlations;
 
         //Size fixed at 4 questions / set
-        $minimum = 6;
+        $minimum = 600;
         $questions = array();
-        foreach ($correlations as $q1 => $c1) {
-            foreach ($correlations as $q2 => $c2) {
-                foreach ($correlations as $q3 => $c3) {
-                    foreach ($correlations as $q4 => $c4) {
+        foreach ($correctCorrelations as $q1 => $c1) {
+            foreach ($correctCorrelations as $q2 => $c2) {
+                foreach ($correctCorrelations as $q3 => $c3) {
+                    foreach ($correctCorrelations as $q4 => $c4) {
                         if (!($q1 < $q2 && $q2 < $q3 && $q3 < $q4)) {
                             continue;
                         }
-                        $foursome = $correlations[$q1][$q2] +
-                            $correlations[$q2][$q3] +
-                            $correlations[$q1][$q3] +
-                            $correlations[$q1][$q4] +
-                            $correlations[$q2][$q4] +
-                            $correlations[$q3][$q4];
+                        $foursome = $correctCorrelations[$q1][$q2] +
+                            $correctCorrelations[$q2][$q3] +
+                            $correctCorrelations[$q1][$q3] +
+                            $correctCorrelations[$q1][$q4] +
+                            $correctCorrelations[$q2][$q4] +
+                            $correctCorrelations[$q3][$q4];
                         if ($foursome < $minimum) {
                             $minimum = $foursome;
                             $questions = array('q1' => $q1,

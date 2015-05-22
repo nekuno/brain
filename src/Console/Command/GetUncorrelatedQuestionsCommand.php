@@ -32,11 +32,8 @@ class GetUncorrelatedQuestionsCommand extends ApplicationAwareCommand
             return;
         }
 
-        //for debugging, modify return to appropriate array in QuestionModel.php
-//        $this->outputPercentages($result, $output);
-//        $this->outputDistributions($result, $output);
+        //for debugging, modify return to appropriate array in QuestionModel.php;
 //        $this->outputCorrelations($result, $output);
-
         $this->outputResult($result, $output);
 
     }
@@ -56,37 +53,6 @@ class GetUncorrelatedQuestionsCommand extends ApplicationAwareCommand
         }
 
         $output->writeln($size);
-    }
-
-    /**
-     * @param $result array
-     * @param $output OutputInterface
-     */
-    protected function outputPercentages($result, $output)
-    {
-        foreach ($result as $q1 => $q1array) {
-            foreach ($q1array as $q2 => $q2array) {
-                foreach ($q2array as $a1 => $a1array) {
-                    foreach ($a1array as $a2 => $a2array) {
-                        $output->writeln('Respuesta ' . $a1 . ' y ' . $a2 . ': ' . $a2array);
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * @param $result array
-     * @param $output OutputInterface
-     */
-    protected function outputDistributions($result, $output)
-    {
-        foreach ($result as $question1 => $dist1) {
-            foreach ($dist1 as $question2 => $dist2) {
-                $output->writeln('Escribiendo ' . $question1 . ' y ' . $question2);
-                $output->writeln($dist2);
-            }
-        }
     }
 
     /**
