@@ -108,7 +108,7 @@ class LinkModel
     {
         if (!isset($data['url'])) return array();
 
-        if ($saved=$this->findLinkByUrl($data['url'])){
+        if ($saved = $this->findLinkByUrl($data['url'])) {
             return $saved;
         }
 
@@ -119,7 +119,7 @@ class LinkModel
 
         $qb = $this->gm->createQueryBuilder();
 
-        $qb ->create('(l:Link' . $additionalLabels . ')')
+        $qb->create('(l:Link' . $additionalLabels . ')')
             ->set(
                 'l.url = { url }',
                 'l.title = { title }',
@@ -164,7 +164,7 @@ class LinkModel
         }
 
         /* @var $row Row */
-        $linkArray=array();
+        $linkArray = array();
         foreach ($result as $row) {
 
             /** @var $link Node */
@@ -384,21 +384,26 @@ class LinkModel
 
     /**
      * @param integer $userId
-     * @param integer $limit Max Number of content to return
+     * @param integer $limit
+     * @param bool $includeAffinity For recalculating affinities
      * @return array
      * @throws \Exception
      */
-    public function getPredictedContentForAUser($userId, $limit = 10)
+    public function getPredictedContentForAUser($userId, $limit = 10, $includeAffinity = false)
     {
 
         $qb = $this->gm->createQueryBuilder();
-        $qb->match('(u:User {qnoow_id: { uid } })')
+        $qb->match('(u:User {qnoow_id: { userId } })')
             ->match('(u)-[r:SIMILARITY]-(users:User)')
             ->with('users,u,r.similarity AS m')
             ->orderby('m DESC');
 
-        $qb->match('(users)-[d:LIKES]->(l:Link)')
-            ->where('NOT(u)-[:LIKES|:DISLIKES|:AFFINITY]-(l)')
+        $qb->match('(users)-[d:LIKES]->(l:Link)');
+        $conditions = array('(NOT (u)-[:LIKES|:DISLIKES]-(l))');
+        if (!$includeAffinity) {
+            $conditions[] = '(NOT (u)-[:AFFINITY]-(l))';
+        };
+        $qb->where($conditions)
             ->with('id(l) AS id, avg(m) AS average, count(d) AS amount')
             ->where('amount>=2')
             ->returns('id')
@@ -407,7 +412,7 @@ class LinkModel
 
         $qb->setParameters(
             array(
-                'uid' => (integer)$userId,
+                'userId' => (integer)$userId,
                 'limit' => (integer)$limit,
             )
         );
@@ -419,11 +424,37 @@ class LinkModel
 
     }
 
+    public function setLinkNotified($userId, $linkId)
+    {
+
+        if ($linkId == null || $userId == null) {
+            return false;
+        }
+
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(l:Link), (u:User{qnoow_id:{userId}})')
+            ->where('id(l)={linkId}')
+            ->optionalMatch('(u)-[n2:NOTIFIED]->(l)')
+            ->merge('(u)-[n:NOTIFIED]->(l)
+                        ON CREATE SET n.timestamp = timestamp()')
+            ->returns('(NOT n2 IS NULL) as existed');
+        $qb->setParameters(array('userId' => (integer)$userId,
+            'linkId' => (integer)$linkId));
+
+        $query=$qb->getQuery();
+        $resultSet= $query->getResultSet();
+        /* @var $row Row */
+        $row=$resultSet->offsetGet(0);
+        return $row->offsetGet('existed');
+
+    }
+
     /**
      * @param $url
      * @return boolean
      */
-    private function isAlreadySaved($url)
+    protected function isAlreadySaved($url)
     {
 
         $qb = $this->gm->createQueryBuilder();

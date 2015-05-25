@@ -21,6 +21,7 @@ class EmailNotification
 {
 
     const UNREAD_CHAT_MESSAGES = 1;
+    const EXCEPTIONAL_LINKS = 2;
 
     /**
      * @Id()
@@ -175,7 +176,8 @@ class EmailNotification
     public static function getTypes()
     {
         return array(
-            self::UNREAD_CHAT_MESSAGES
+            self::UNREAD_CHAT_MESSAGES,
+            self::EXCEPTIONAL_LINKS,
         );
     }
 

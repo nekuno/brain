@@ -31,13 +31,28 @@ class EmailNotifications
 
     private function mail(EmailNotification $notification)
     {
+
+        switch($notification->getType()){
+            case EmailNotification::UNREAD_CHAT_MESSAGES :
+                $view='email-notifications/unread-messages-notification.html.twig';
+                break;
+
+            case EmailNotification::EXCEPTIONAL_LINKS :
+                $view='email-notifications/exceptional_links_notification.html.twig';
+                break;
+
+            default:
+                $view=null;
+                break;
+        }
+
         $message = \Swift_Message::newInstance()
             ->setSubject($notification->getSubject())
             ->setFrom('enredos@nekuno.com', 'Nekuno')
             ->setTo($notification->getRecipient())
             ->setContentType('text/html')
             ->setBody($this->tp->render(
-                'email-notifications/unread-messages-notification.html.twig',
+                $view,
                 $notification->getInfo()));
 
 
