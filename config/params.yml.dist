@@ -4,7 +4,7 @@ params:
     locale.default: en
 
     ## Instant
-    instant.host: 'http://localhost:8008/'
+    instant.host: http://localhost:8008/
     guzzle.verify: null
 
     ## Doctrine
