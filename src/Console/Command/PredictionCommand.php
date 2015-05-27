@@ -7,6 +7,7 @@ use Model\Entity\EmailNotification;
 use Model\LinkModel;
 use Model\User\Affinity\AffinityModel;
 use Model\UserModel;
+use Service\AffinityRecalculations;
 use Service\EmailNotifications;
 use Silex\Application;
 use Symfony\Component\Console\Input\InputInterface;
@@ -22,8 +23,8 @@ class PredictionCommand extends ApplicationAwareCommand
             ->setDescription('Calculate the predicted high affinity links for a user.')
             ->addOption('user', null, InputOption::VALUE_OPTIONAL, 'The id of the user')
             ->addOption('limit', null, InputOption::VALUE_OPTIONAL, 'Max links to calculate per user')
-            ->addOption('recalculate', null, InputOption::VALUE_OPTIONAL, 'Include already calculated affinities')
-            ->addOption('notify', null, InputOption::VALUE_OPTIONAL, 'Email users who get 90%+ affinity contents');
+            ->addOption('recalculate', null, InputOption::VALUE_NONE, 'Include already calculated affinities (Updates those links)')
+            ->addOption('notify', null, InputOption::VALUE_OPTIONAL, 'Email users who get links with more affinity than this value');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -44,58 +45,46 @@ class PredictionCommand extends ApplicationAwareCommand
 
             $users = null === $user ? $userModel->getAll() : array($userModel->getById($user));
 
-            $limit = $limit ?: 10;
+            $limit = $limit ?: 40;
 
             $recalculate = $recalculate ? true : false;
 
-            $notify = $notify ? true : false;
+            $notify = $notify ?: 99999;
 
-            foreach ($users as $user) {
+            if (!$recalculate) {
+                foreach ($users as $user) {
 
-                $userId = $user['qnoow_id'];
-                /* @var $links ResultSet */
-                $links = $linkModel->getPredictedContentForAUser($userId, $limit, $recalculate);
+                    $linkIds = $linkModel->getPredictedContentForAUser($user['qnoow_id'], $limit, false);
+                    foreach ($linkIds as $linkId) {
 
-                $linkNotifications = array();
-                foreach ($links as $link) {
-
-                    $linkId = $link['id'];
-                    $affinity = $affinityModel->getAffinity($userId, $linkId);
-
-                    if (OutputInterface::VERBOSITY_NORMAL <= $output->getVerbosity()) {
-                        $output->writeln(sprintf('User: %d --> Link: %d (Affinity: %f)', $userId, $linkId, $affinity['affinity']));
-                    }
-
-                    if ($notify && ($affinity['affinity'] > 0.9)) {
-                        $output->writeln('Found exceptional link: ' . $linkId);
-                        $wasNotified = $linkModel->setLinkNotified($userId, $linkId);
-                        if (!$wasNotified) {
-                            $linkNotifications[] = $linkId;
+                        $affinity = $affinityModel->getAffinity($user['qnoow_id'], $linkId);
+                        if (OutputInterface::VERBOSITY_NORMAL <= $output->getVerbosity()) {
+                            $output->writeln(sprintf('User: %d --> Link: %d (Affinity: %f)', $user['qnoow_id'], $linkId, $affinity['affinity']));
                         }
                     }
-
                 }
-                if (!empty($linkNotifications)) {
-                    $notification = EmailNotification::create()
-                        ->setType(EmailNotification::EXCEPTIONAL_LINKS)
-                        ->setSubject($this->app['translator']->trans('notifications.links.exceptional.subject'))
-                        ->setRecipient($user['email'])
-                        ->setInfo(array(
-                            'links'=> implode(', ', $linkNotifications), //TODO: Cambiar a nombres
-                            'amount' => count($linkNotifications),
-                            'username' => $user['username'],
-                        ));
-                    $notificationsService = $this->app['emailNotification.service'];
-                    /* @var $notificationsService EmailNotifications */
-                    $notificationsService->send($notification);
-                    $output->writeln('Sent email to user : ' . $userId . ' with notifications for links: ' . $linkIds);
+            } else {
+                /* @var $affinityRecalculations AffinityRecalculations */
+                $affinityRecalculations = $this->app['affinityRecalculations.service'];
+                foreach ($users as $user) {
+
+                    $result = $affinityRecalculations->recalculateAffinities($user['qnoow_id'], $limit, $notify);
+                    foreach ($result['affinities'] as $linkId => $affinity) {
+                        $output->writeln(sprintf('User: %d --> Link: %d (Affinity: %f)', $user['qnoow_id'], $linkId, $affinity));
+                    }
+                    if(!empty($result['emailInfo'])){
+                        $emailInfo=$result['emailInfo'];
+                        $linkIds=array();
+                        foreach($emailInfo['links'] as $link ){
+                            $linkIds[]=$link['id'];
+                        }
+                        $output->writeln(sprintf('Email sent to user: %s with links: %s', $user['qnoow_id'], implode(', ',$linkIds)));
+                    }
                 }
             }
 
         } catch (\Exception $e) {
-
             $output->writeln('Error trying to recalculate predicted links with message: ' . $e->getMessage());
-
             return;
         }
 

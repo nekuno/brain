@@ -52,10 +52,39 @@ class LinkModel
         /* @var $row Row */
         $row = $result->current();
         /* @var $node Node */
-        $node = $row->offsetGet('link');
+        $link = $this->buildLink($row->offsetGet('link'));
 
-        $link = $node->getProperties();
-        $link['id'] = $node->getId();
+        return $link;
+    }
+
+    /**
+     * @param integer $linkId
+     * @return array|boolean the link or false
+     * @throws \Exception on failure
+     */
+    public function findLinkById($linkId)
+    {
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(l:Link)')
+            ->where('id(l) = { linkId } ')
+            ->returns('l AS link')
+            ->limit('1');
+
+        $qb->setParameter('linkId', (integer)$linkId);
+
+        $query = $qb->getQuery();
+
+        $result = $query->getResultSet();
+
+        if (count($result) <= 0) {
+            return false;
+        }
+
+        /* @var $row Row */
+        $row = $result->current();
+        /* @var $node Node */
+        $link = $this->buildLink($row->offsetGet('link'));
 
         return $link;
     }
@@ -404,9 +433,9 @@ class LinkModel
             $conditions[] = '(NOT (u)-[:AFFINITY]-(l))';
         };
         $qb->where($conditions)
-            ->with('id(l) AS id, avg(m) AS average, count(d) AS amount')
+            ->with('l, avg(m) AS average, count(d) AS amount')
             ->where('amount>=2')
-            ->returns('id')
+            ->returns('l as link')
             ->orderby('average DESC')
             ->limit('{ limit }');
 
@@ -420,10 +449,22 @@ class LinkModel
         $query = $qb->getQuery();
         $result = $query->getResultSet();
 
-        return $result;
+        $links=array();
+        foreach ($result as $row){
+            /* @var $row Row */
+            $links[]=$this->buildLink($row->offsetGet('link'));
+        }
+
+        return $links;
 
     }
 
+    /**
+     * @param $userId
+     * @param $linkId
+     * @return bool If the link was already notified to the user
+     * @throws \Exception
+     */
     public function setLinkNotified($userId, $linkId)
     {
 
@@ -451,6 +492,35 @@ class LinkModel
     }
 
     /**
+     * @param $userId
+     * @param $linkId
+     * @return bool If the link was notified
+     * @throws \Exception
+     */
+    public function unsetLinkNotified($userId, $linkId){
+
+        if ($linkId == null || $userId == null) {
+            return false;
+        }
+
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(l:Link), (u:User{qnoow_id:{userId}})')
+            ->where('id(l)={linkId}')
+            ->optionalMatch('(u)-[n:NOTIFIED]->(l)')
+            ->delete('n')
+            ->returns('(NOT (n IS NULL)) as existed');
+        $qb->setParameters(array('userId' => (integer)$userId,
+            'linkId' => (integer)$linkId));
+
+        $query=$qb->getQuery();
+        $resultSet= $query->getResultSet();
+        /* @var $row Row */
+        $row=$resultSet->offsetGet(0);
+        return $row->offsetGet('existed');
+    }
+
+    /**
      * @param $url
      * @return boolean
      */
@@ -475,5 +545,17 @@ class LinkModel
         }
 
         return false;
+    }
+
+    /**
+     * @param $node Node
+     * @return array
+     */
+    protected function buildLink(Node $node){
+
+        $link = $node->getProperties();
+        $link['id']=$node->getId();
+
+        return $link;
     }
 }

@@ -8,5 +8,12 @@ notifications:
         latest: 'Último mensaje sin leer:|Últimos %count% mensajes sin leer:'
         message: 'Mensaje sin leer del usuario %user% en %datetime%:'
         linkAnchor: 'Mira todos tus mensages'
+    exceptional_links:
+      subject: 'Hemos encontrado contenido que querrás ver'
+      body:
+        introduction_1: 'En Nekuno trabajamos sin descanso para encontrar contenido recomendado especialmente para ti'
+        introduction_2: 'Hemos encontrado este que te encantará:|Hemos encontrado %count% que te encantarán:'
+        content: 'Enlace: '
+        enter: '{1}Vuelve a entrar para verlo:|{2,3}Vuelve a entrar para verlos|{ [4,Inf[ }Vuelve a entrar para verlos todos'
 
   footer: 'Saludos del equipo de Nekuno'
