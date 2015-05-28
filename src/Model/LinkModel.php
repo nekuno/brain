@@ -194,6 +194,7 @@ class LinkModel
                         'synonymousUrl' => $synonymous['url'],
                         'synonymousTitle' => $synonymous['title'],
                         'synonymousDescription' => $synonymous['description'],
+                        'url' => $synonymous['url'],
                         'synonymousLanguage' => isset($synonymous['language']) ? $synonymous['language'] : null,
                     )
                 );
