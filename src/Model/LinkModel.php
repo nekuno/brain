@@ -175,6 +175,31 @@ class LinkModel
             $linkArray['id'] = $link->getId();
         }
 
+        if(isset($data['synonymous']) && ! empty($data['synonymous']))
+        {
+            foreach($data['synonymous'] as $synonymous) {
+                $this->addLink($synonymous);
+                $qb ->create('(l:Link { id : { id } })-[r:SYNONYMOUS]->(synonymousLink:Link)')
+                    ->set(
+                        'synonymousLink.url = { url }',
+                        'synonymousLink.title = { synonymousTitle }',
+                        'synonymousLink.description = { synonymousDescription }',
+                        'synonymousLink.language = { synonymousLanguage }',
+                        'synonymousLink.processed = 1',
+                        'synonymousLink.created =  timestamp()'
+                    );
+                $qb->setParameters(
+                    array(
+                        'id' => $synonymous['id'],
+                        'synonymousUrl' => $synonymous['url'],
+                        'synonymousTitle' => $synonymous['title'],
+                        'synonymousDescription' => $synonymous['description'],
+                        'synonymousLanguage' => isset($synonymous['language']) ? $synonymous['language'] : null,
+                    )
+                );
+            }
+        }
+
         return $linkArray;
     }
 
