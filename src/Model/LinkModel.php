@@ -129,6 +129,9 @@ class LinkModel
                 'l.created =  timestamp()'
             );
 
+        if(isset($data['thumbnail']) && $data['thumbnail']) {
+            $qb->set('l.thumbnail = { thumbnail }');
+        }
         if (isset($data['additionalFields'])) {
             foreach ($data['additionalFields'] as $field => $value) {
                 $qb->set(sprintf('l.%s = { %s }', $field, $field));
@@ -143,6 +146,7 @@ class LinkModel
                 'description' => $data['description'],
                 'url' => $data['url'],
                 'language' => isset($data['language']) ? $data['language'] : null,
+                'thumbnail' => isset($data['thumbnail']) ? $data['thumbnail'] : null,
             )
         );
 
@@ -177,26 +181,15 @@ class LinkModel
 
         if(isset($data['synonymous']) && ! empty($data['synonymous']))
         {
+            $originalLinkId = $linkArray['id'];
             foreach($data['synonymous'] as $synonymous) {
                 $this->addLink($synonymous);
-                $qb ->create('(l:Link { id : { id } })-[r:SYNONYMOUS]->(synonymousLink:Link)')
-                    ->set(
-                        'synonymousLink.url = { synonymousUrl }',
-                        'synonymousLink.title = { synonymousTitle }',
-                        'synonymousLink.description = { synonymousDescription }',
-                        'synonymousLink.language = { synonymousLanguage }',
-                        'synonymousLink.processed = 1',
-                        'synonymousLink.created =  timestamp()'
-                    )
+                $qb ->create('(l:Link { id : { id } })-[r:SYNONYMOUS]->(synonymousLink:Link { id : { synonymousId } })')
                     ->returns('synonymousLink')
-
                     ->setParameters(
                     array(
-                        'id' => $linkArray['id'],
-                        'synonymousUrl' => $synonymous['url'],
-                        'synonymousTitle' => $synonymous['title'],
-                        'synonymousDescription' => $synonymous['description'],
-                        'synonymousLanguage' => isset($synonymous['language']) ? $synonymous['language'] : null,
+                        'id' => $originalLinkId,
+                        'synonymousId' => $synonymous['id'],
                     )
                 );
 
@@ -236,6 +229,10 @@ class LinkModel
                 'l.updated = timestamp()'
             );
 
+        if(isset($data['thumbnail']) && $data['thumbnail']) {
+            $qb->set('l.thumbnail = { thumbnail }');
+        }
+
         if (isset($data['additionalFields'])) {
             foreach ($data['additionalFields'] as $field => $value) {
                 $qb->set(sprintf('l.%s = { %s }', $field, $field));
@@ -258,6 +255,7 @@ class LinkModel
                 'description' => $data['description'],
                 'language' => isset($data['language']) ? $data['language'] : null,
                 'processed' => (integer)$processed,
+                'thumbnail' => isset($data['thumbnail']) ? $data['thumbnail'] : null,
             )
         );
 
@@ -285,26 +283,16 @@ class LinkModel
 
         if(isset($data['synonymous']) && ! empty($data['synonymous']))
         {
+            $originalLinkId = $linkArray['id'];
             foreach($data['synonymous'] as $synonymous) {
                 $this->updateLink($synonymous);
-                $qb ->match('(l:Link { id : { id } })-[r:SYNONYMOUS]->(synonymousLink:Link)')
+                $qb ->match('(l:Link { id : { id } })-[r:SYNONYMOUS]->(synonymousLink:Link { id: { { synonymousId } } })')
                     ->where('synonymousLink.id = { synonymousId }')
-                    ->set(
-                        'synonymousLink.url = { synonymousUrl }',
-                        'synonymousLink.title = { synonymousTitle }',
-                        'synonymousLink.description = { synonymousDescription }',
-                        'synonymousLink.language = { synonymousLanguage }',
-                        'synonymousLink.processed = 1',
-                        'synonymousLink.created =  timestamp()'
-                    );
-                $qb->setParameters(
+                    ->returns('synonymousLink')
+                    ->setParameters(
                     array(
-                        'id' => $linkArray['id'],
+                        'id' => $originalLinkId,
                         'synonymousId' => $synonymous['id'],
-                        'synonymousUrl' => $synonymous['url'],
-                        'synonymousTitle' => $synonymous['title'],
-                        'synonymousDescription' => $synonymous['description'],
-                        'synonymousLanguage' => isset($synonymous['language']) ? $synonymous['language'] : null,
                     )
                 );
 

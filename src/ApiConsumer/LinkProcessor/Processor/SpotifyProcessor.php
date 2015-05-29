@@ -117,6 +117,7 @@ class SpotifyProcessor implements ProcessorInterface
 
                 $link['title'] = $track['name'];
                 $link['description'] = $track['album']['name'] . ' : ' . implode(', ', $artistList);
+                $link['thumbnail'] = isset($track['album']['images'][1]['url']) ? $track['album']['images'][1]['url'] : null;
                 $link['additionalLabels'] = array('Audio');
                 $link['additionalFields'] = array(
                     'embed_type' => 'spotify',
