@@ -237,8 +237,9 @@ class SpotifyProcessor implements ProcessorInterface
 
         $url = 'youtube/v3/search';
         $query = array(
-            'part' => 'snippet,statistics,topicDetails',
             'q' => $queryString,
+            'part' => 'snippet',
+            'type' => 'video'
         );
         $response = $this->googleResourceOwner->authorizedAPIRequest($url, $query);
 
