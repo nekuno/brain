@@ -109,7 +109,7 @@ class LinkModel
         if (!isset($data['url'])) return array();
 
         if ($saved=$this->findLinkByUrl($data['url'])){
-            $saved = isset($saved['synonymous']) ? array_merge($saved, $this->addSynonymousLink($saved['id'], $saved['synonymous'])) : $saved;
+            $saved = isset($data['synonymous']) ? array_merge($saved, $this->addSynonymousLink($saved['id'], $data['synonymous'])) : $saved;
             return $saved;
         }
 
@@ -180,7 +180,7 @@ class LinkModel
             $linkArray['id'] = $link->getId();
         }
 
-        $linkArray = isset($linkArray['synonymous']) ? array_merge($linkArray, $this->addSynonymousLink($linkArray['id'], $linkArray['synonymous'])) : $linkArray;
+        $linkArray = isset($data['synonymous']) ? array_merge($linkArray, $this->addSynonymousLink($linkArray['id'], $data['synonymous'])) : $linkArray;
 
         return $linkArray;
     }
@@ -253,39 +253,7 @@ class LinkModel
             $linkArray['id'] = $link->getId();
         }
 
-        if(isset($data['synonymous']) && ! empty($data['synonymous']))
-        {
-            $originalLinkId = $linkArray['id'];
-            foreach($data['synonymous'] as $synonymous) {
-                $this->updateLink($synonymous);
-                $qb ->match('(l:Link { id : { id } })-[r:SYNONYMOUS]->(synonymousLink:Link { id: { { synonymousId } } })')
-                    ->where('synonymousLink.id = { synonymousId }')
-                    ->returns('synonymousLink')
-                    ->setParameters(
-                    array(
-                        'id' => $originalLinkId,
-                        'synonymousId' => $synonymous['id'],
-                    )
-                );
-
-                $query = $qb->getQuery();
-
-                $result = $query->getResultSet();
-
-                $linkArray['synonymous'] = array();
-                foreach ($result as $index => $row) {
-
-                    /** @var $link Node */
-                    $link = $row->offsetGet('synonymousLink');
-                    foreach ($link->getProperties() as $key => $value) {
-                        $linkArray[$index][$key] = $value;
-                    }
-                    $linkArray[$index]['id'] = $link->getId();
-                }
-
-
-            }
-        }
+        $linkArray = isset($data['synonymous']) ? array_merge($linkArray, $this->addSynonymousLink($linkArray['id'], $data['synonymous'])) : $linkArray;
 
         return $linkArray;
 
