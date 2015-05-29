@@ -257,6 +257,7 @@ class SpotifyProcessor implements ProcessorInterface
                     {
                         $link['synonymous'] = array();
                         $link['synonymous'][$i] = array();
+                        $link['synonymous'][$i]['url'] = 'https://www.youtube.com/watch?v=' . $info['id']['videoId'];
                         $link['synonymous'][$i]['tags'] = array();
                         $link['synonymous'][$i]['title'] = $info['snippet']['title'];
                         $link['synonymous'][$i]['description'] = $info['snippet']['description'];
