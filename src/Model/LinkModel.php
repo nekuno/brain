@@ -485,7 +485,11 @@ class LinkModel
         if (!empty($synonymousLinks)) {
             foreach ($synonymousLinks as $synonymous) {
                 $synonymous = $this->addLink($synonymous);
-                $qb->create('(l:Link { id : { id } })-[r:SYNONYMOUS]->(synonymousLink:Link { id : { synonymousId } })')
+                $qb->match('(l:Link)')
+                    ->where('id(l) = { id }')
+                    ->match('(synonymousLink:Link)')
+                    ->where('id(synonymousLink) = { synonymousId }')
+                    ->merge('(l)-[:SYNONYMOUS]-(synonymousLink)')
                     ->returns('synonymousLink')
                     ->setParameters(
                         array(
