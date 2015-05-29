@@ -479,12 +479,13 @@ class LinkModel
 
     private function addSynonymousLink($id, $synonymousLinks)
     {
-        $qb = $this->gm->createQueryBuilder();
+
         $linkArray = array();
 
         if (!empty($synonymousLinks)) {
             foreach ($synonymousLinks as $synonymous) {
                 $synonymous = $this->addLink($synonymous);
+                $qb = $this->gm->createQueryBuilder();
                 $qb->match('(l:Link)')
                     ->where('id(l) = { id }')
                     ->match('(synonymousLink:Link)')
