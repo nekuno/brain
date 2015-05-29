@@ -124,7 +124,7 @@ class SpotifyProcessor implements ProcessorInterface
                     'embed_id' => $track['uri']);
             }
 
-            $link = $this->addYoutubeSynonymousLinks($track['name'], $track['album'], $link, 2);
+            $link = $this->addYoutubeSynonymousLinks($track['name'], $track['album']['name'], $link, 2);
         }
 
         return $link;
@@ -233,10 +233,13 @@ class SpotifyProcessor implements ProcessorInterface
         $artists_trimmed = str_replace(' ', '+', $artists);
         $artists_ready = str_replace(',', '+', $artists_trimmed);
         $song_ready = str_replace(' ', '+', $song);
-        $query = $artists_ready . '+-+' . $song_ready;
+        $queryString = $artists_ready . '+-+' . $song_ready;
 
         $url = 'youtube/v3/search';
-
+        $query = array(
+            'part' => 'snippet,statistics,topicDetails',
+            'q' => $queryString,
+        );
         $response = $this->googleResourceOwner->authorizedAPIRequest($url, $query);
 
         if (isset($response['items']) && is_array($response['items']) && count($response['items']) > 0) {
