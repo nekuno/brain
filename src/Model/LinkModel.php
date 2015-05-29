@@ -106,10 +106,13 @@ class LinkModel
      */
     public function addLink(array $data)
     {
-        if (!isset($data['url'])) return array();
+        if (!isset($data['url'])) {
+            return array();
+        }
 
-        if ($saved=$this->findLinkByUrl($data['url'])){
+        if ($saved = $this->findLinkByUrl($data['url'])) {
             $saved = isset($data['synonymous']) ? array_merge($saved, $this->addSynonymousLink($saved['id'], $data['synonymous'])) : $saved;
+
             return $saved;
         }
 
@@ -120,7 +123,7 @@ class LinkModel
 
         $qb = $this->gm->createQueryBuilder();
 
-        $qb ->create('(l:Link' . $additionalLabels . ')')
+        $qb->create('(l:Link' . $additionalLabels . ')')
             ->set(
                 'l.url = { url }',
                 'l.title = { title }',
@@ -130,7 +133,7 @@ class LinkModel
                 'l.created =  timestamp()'
             );
 
-        if(isset($data['thumbnail']) && $data['thumbnail']) {
+        if (isset($data['thumbnail']) && $data['thumbnail']) {
             $qb->set('l.thumbnail = { thumbnail }');
         }
         if (isset($data['additionalFields'])) {
@@ -169,7 +172,7 @@ class LinkModel
         }
 
         /* @var $row Row */
-        $linkArray=array();
+        $linkArray = array();
         foreach ($result as $row) {
 
             /** @var $link Node */
@@ -201,7 +204,7 @@ class LinkModel
                 'l.updated = timestamp()'
             );
 
-        if(isset($data['thumbnail']) && $data['thumbnail']) {
+        if (isset($data['thumbnail']) && $data['thumbnail']) {
             $qb->set('l.thumbnail = { thumbnail }');
         }
 
@@ -242,7 +245,7 @@ class LinkModel
         $result = $query->getResultSet();
 
         /* @var $row Row */
-        $linkArray=array();
+        $linkArray = array();
         foreach ($result as $row) {
 
             /** @var $link Node */
@@ -479,11 +482,10 @@ class LinkModel
         $qb = $this->gm->createQueryBuilder();
         $linkArray = array();
 
-        if(! empty($synonymousLinks))
-        {
-            foreach($synonymousLinks as $synonymous) {
-                $this->addLink($synonymous);
-                $qb ->create('(l:Link { id : { id } })-[r:SYNONYMOUS]->(synonymousLink:Link { id : { synonymousId } })')
+        if (!empty($synonymousLinks)) {
+            foreach ($synonymousLinks as $synonymous) {
+                $synonymous = $this->addLink($synonymous);
+                $qb->create('(l:Link { id : { id } })-[r:SYNONYMOUS]->(synonymousLink:Link { id : { synonymousId } })')
                     ->returns('synonymousLink')
                     ->setParameters(
                         array(
@@ -508,6 +510,7 @@ class LinkModel
                 }
             }
         }
+
         return $linkArray;
     }
 }
