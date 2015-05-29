@@ -216,10 +216,10 @@ class SpotifyProcessor implements ProcessorInterface
         {
             similar_text($youtubeLinkSnippetInfo['title'], $link['title'], $percent);
 
-            if($percent > 50 && isset($youtubeLinkSnippetInfo['description']) && isset($link['description']))
+            if($percent > 5 && isset($youtubeLinkSnippetInfo['description']) && isset($link['description']))
             {
                 similar_text($youtubeLinkSnippetInfo['description'], $link['title'], $percent);
-                if($percent > 20)
+                if($percent > 2)
                 {
                     return true;
                 }
