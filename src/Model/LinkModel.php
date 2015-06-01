@@ -135,9 +135,13 @@ class LinkModel
      */
     public function addLink(array $data)
     {
-        if (!isset($data['url'])) return array();
+        if (!isset($data['url'])) {
+            return array();
+        }
 
         if ($saved = $this->findLinkByUrl($data['url'])) {
+            $saved = isset($data['synonymous']) ? array_merge($saved, $this->addSynonymousLink($saved['id'], $data['synonymous'])) : $saved;
+
             return $saved;
         }
 
@@ -158,6 +162,9 @@ class LinkModel
                 'l.created =  timestamp()'
             );
 
+        if (isset($data['thumbnail']) && $data['thumbnail']) {
+            $qb->set('l.thumbnail = { thumbnail }');
+        }
         if (isset($data['additionalFields'])) {
             foreach ($data['additionalFields'] as $field => $value) {
                 $qb->set(sprintf('l.%s = { %s }', $field, $field));
@@ -172,6 +179,7 @@ class LinkModel
                 'description' => $data['description'],
                 'url' => $data['url'],
                 'language' => isset($data['language']) ? $data['language'] : null,
+                'thumbnail' => isset($data['thumbnail']) ? $data['thumbnail'] : null,
             )
         );
 
@@ -204,6 +212,8 @@ class LinkModel
             $linkArray['id'] = $link->getId();
         }
 
+        $linkArray = isset($data['synonymous']) ? array_merge($linkArray, $this->addSynonymousLink($linkArray['id'], $data['synonymous'])) : $linkArray;
+
         return $linkArray;
     }
 
@@ -222,6 +232,10 @@ class LinkModel
                 'l.processed = { processed }',
                 'l.updated = timestamp()'
             );
+
+        if (isset($data['thumbnail']) && $data['thumbnail']) {
+            $qb->set('l.thumbnail = { thumbnail }');
+        }
 
         if (isset($data['additionalFields'])) {
             foreach ($data['additionalFields'] as $field => $value) {
@@ -245,6 +259,7 @@ class LinkModel
                 'description' => $data['description'],
                 'language' => isset($data['language']) ? $data['language'] : null,
                 'processed' => (integer)$processed,
+                'thumbnail' => isset($data['thumbnail']) ? $data['thumbnail'] : null,
             )
         );
 
@@ -256,7 +271,23 @@ class LinkModel
 
         $query = $qb->getQuery();
 
-        return $query->getResultSet();
+        $result = $query->getResultSet();
+
+        /* @var $row Row */
+        $linkArray = array();
+        foreach ($result as $row) {
+
+            /** @var $link Node */
+            $link = $row->offsetGet('l');
+            foreach ($link->getProperties() as $key => $value) {
+                $linkArray[$key] = $value;
+            }
+            $linkArray['id'] = $link->getId();
+        }
+
+        $linkArray = isset($data['synonymous']) ? array_merge($linkArray, $this->addSynonymousLink($linkArray['id'], $data['synonymous'])) : $linkArray;
+
+        return $linkArray;
 
     }
 
@@ -523,7 +554,7 @@ class LinkModel
      * @param $url
      * @return boolean
      */
-    protected function isAlreadySaved($url)
+    private function isAlreadySaved($url)
     {
         $qb = $this->gm->createQueryBuilder();
 
@@ -556,4 +587,47 @@ class LinkModel
 
         return $link;
     }
+
+    private function addSynonymousLink($id, $synonymousLinks)
+    {
+
+        $linkArray = array();
+
+        if (!empty($synonymousLinks)) {
+            foreach ($synonymousLinks as $synonymous) {
+                $synonymous = $this->addLink($synonymous);
+                $qb = $this->gm->createQueryBuilder();
+                $qb->match('(l:Link)')
+                    ->where('id(l) = { id }')
+                    ->match('(synonymousLink:Link)')
+                    ->where('id(synonymousLink) = { synonymousId }')
+                    ->merge('(l)-[:SYNONYMOUS]-(synonymousLink)')
+                    ->returns('synonymousLink')
+                    ->setParameters(
+                        array(
+                            'id' => $id,
+                            'synonymousId' => $synonymous['id'],
+                        )
+                    );
+
+                $query = $qb->getQuery();
+
+                $result = $query->getResultSet();
+
+                $linkArray['synonymous'] = array();
+                foreach ($result as $index => $row) {
+
+                    /** @var $link Node */
+                    $link = $row->offsetGet('synonymousLink');
+                    foreach ($link->getProperties() as $key => $value) {
+                        $linkArray['synonymous'][$index][$key] = $value;
+                    }
+                    $linkArray['synonymous'][$index]['id'] = $link->getId();
+                }
+            }
+        }
+
+        return $linkArray;
+    }
+
 }
