@@ -83,7 +83,7 @@ class ContentComparePaginatedModel implements PaginatedInterface
         }
 
         $qb->optionalMatch("(u2)-[a:AFFINITY]->(content)")
-            ->optionalMatch("(content)-[synonymous:SYNONYMOUS]->(synonymousLink:Link)")
+            ->optionalMatch("(content)-[:SYNONYMOUS]->(synonymousLink:Link)")
             ->returns("id(content) as id,  type(r) as rate1, type(r2) as rate2, content, a.affinity as affinity, collect(distinct tag.name) as tags, labels(content) as types, synonymousLink AS synonymous")
             ->skip("{ offset }")
             ->limit("{ limit }")
@@ -110,7 +110,13 @@ class ContentComparePaginatedModel implements PaginatedInterface
             $content['synonymous'] = array();
 
             if(isset($row['synonymous'])) {
-                foreach ($row['synonymous'] as $synonymous) {
+                foreach ($row['synonymous'] as $synonymousLink) {
+                    $synonymous = array();
+                    $synonymous['id'] = $synonymousLink->getProperty('id');
+                    $synonymous['url'] = $synonymousLink->getProperty('url');
+                    $synonymous['title'] = $synonymousLink->getProperty('title');
+                    $synonymous['thumbnail'] = $synonymousLink->getProperty('thumbnail');
+
                     $content['synonymous'][] = $synonymous;
                 }
             }

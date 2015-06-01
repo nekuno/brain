@@ -76,7 +76,7 @@ class ContentPaginatedModel implements PaginatedInterface
                     ->where("filterTag.name = { tag }");
             }
 
-        $qb->optionalMatch("(content)-[synonymous:SYNONYMOUS]->(synonymousLink:Link)")
+        $qb->optionalMatch("(content)-[:SYNONYMOUS]->(synonymousLink:Link)")
             ->returns("id(content) as id, type(r) as rate, content, collect(distinct tag.name) as tags, labels(content) as types, synonymousLink AS synonymous")
             ->orderBy("content.created DESC")
             ->skip("{ offset }")
@@ -104,7 +104,13 @@ class ContentPaginatedModel implements PaginatedInterface
             $content['synonymous'] = array();
 
             if(isset($row['synonymous'])) {
-                foreach ($row['synonymous'] as $synonymous) {
+                foreach ($row['synonymous'] as $synonymousLink) {
+                    $synonymous = array();
+                    $synonymous['id'] = $synonymousLink->getProperty('id');
+                    $synonymous['url'] = $synonymousLink->getProperty('url');
+                    $synonymous['title'] = $synonymousLink->getProperty('title');
+                    $synonymous['thumbnail'] = $synonymousLink->getProperty('thumbnail');
+
                     $content['synonymous'][] = $synonymous;
                 }
             }
