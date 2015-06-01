@@ -47,17 +47,18 @@ class AffinityRecalculations
 
     /**
      * @param null $userId
-     * @param int $limit
+     * @param int $limitContent
+     * @param int $limitUsers
      * @param int $notifyLimit
      * @param int $seconds Affinities (re)calculated before this value are untouched, null to default
      * @return array
      * @throws \Exception
      */
-    public function recalculateAffinities($userId, $limit = 40, $notifyLimit = 99999, $seconds = null)
+    public function recalculateAffinities($userId, $limitContent = 40, $limitUsers=20, $notifyLimit = 99999, $seconds = null)
     {
         $user = $this->userModel->getById((integer)$userId);
 
-        $links = $this->linkModel->getPredictedContentForAUser($userId, $limit, true);
+        $links = $this->linkModel->getPredictedContentForAUser($userId, (integer)$limitContent, (integer)$limitUsers, true);
 
         $affinities = array();
         $linksToEmail = array();
@@ -96,7 +97,7 @@ class AffinityRecalculations
     {
         $emailInfo = $this->saveInfo($links, $user['username']);
 
-        $this->emailNotifications->send(
+        $recipients=$this->emailNotifications->send(
             EmailNotification::create()
                 ->setType(EmailNotification::EXCEPTIONAL_LINKS)
                 ->setSubject($this->translator->trans('notifications.messages.exceptional_links.subject'))
@@ -104,6 +105,7 @@ class AffinityRecalculations
                 ->setRecipient($user['email'])
                 ->setInfo($emailInfo));
 
+        $emailInfo['recipients']=$recipients;
         return $emailInfo;
     }
 

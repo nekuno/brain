@@ -22,7 +22,8 @@ class PredictionCommand extends ApplicationAwareCommand
         $this->setName('prediction:calculate')
             ->setDescription('Calculate the predicted high affinity links for a user.')
             ->addOption('user', null, InputOption::VALUE_OPTIONAL, 'The id of the user')
-            ->addOption('limit', null, InputOption::VALUE_OPTIONAL, 'Max links to calculate per user')
+            ->addOption('limitContent', null, InputOption::VALUE_OPTIONAL, 'Max links to calculate per user')
+            ->addOption('limitUsers', null, InputOption::VALUE_OPTIONAL, 'Max similar users to get links from')
             ->addOption('recalculate', null, InputOption::VALUE_NONE, 'Include already calculated affinities (Updates those links)')
             ->addOption('notify', null, InputOption::VALUE_OPTIONAL, 'Email users who get links with more affinity than this value');
     }
@@ -37,15 +38,14 @@ class PredictionCommand extends ApplicationAwareCommand
         $affinityModel = $this->app['users.affinity.model'];
 
         $user = $input->getOption('user');
-        $limit = $input->getOption('limit');
+        $limitContent = $input->getOption('limitContent')?: 40;
+        $limitUsers = $input->getOption('limitUsers')?: 20;
         $recalculate = $input->getOption('recalculate');
         $notify = $input->getOption('notify');
 
         try {
 
             $users = null === $user ? $userModel->getAll() : array($userModel->getById($user));
-
-            $limit = $limit ?: 40;
 
             $recalculate = $recalculate ? true : false;
 
@@ -54,7 +54,7 @@ class PredictionCommand extends ApplicationAwareCommand
             if (!$recalculate) {
                 foreach ($users as $user) {
 
-                    $linkIds = $linkModel->getPredictedContentForAUser($user['qnoow_id'], $limit, false);
+                    $linkIds = $linkModel->getPredictedContentForAUser($user['qnoow_id'], $limitContent, $limitUsers, false);
                     foreach ($linkIds as $linkId) {
 
                         $affinity = $affinityModel->getAffinity($user['qnoow_id'], $linkId);
@@ -67,8 +67,8 @@ class PredictionCommand extends ApplicationAwareCommand
                 /* @var $affinityRecalculations AffinityRecalculations */
                 $affinityRecalculations = $this->app['affinityRecalculations.service'];
                 foreach ($users as $user) {
+                    $result = $affinityRecalculations->recalculateAffinities($user['qnoow_id'], $limitContent, $limitUsers, $notify);
 
-                    $result = $affinityRecalculations->recalculateAffinities($user['qnoow_id'], $limit, $notify);
                     foreach ($result['affinities'] as $linkId => $affinity) {
                         $output->writeln(sprintf('User: %d --> Link: %d (Affinity: %f)', $user['qnoow_id'], $linkId, $affinity));
                     }
@@ -78,6 +78,7 @@ class PredictionCommand extends ApplicationAwareCommand
                         foreach($emailInfo['links'] as $link ){
                             $linkIds[]=$link['id'];
                         }
+                        $output->writeln(sprintf('Email sent to %s users', $emailInfo['recipients']));
                         $output->writeln(sprintf('Email sent to user: %s with links: %s', $user['qnoow_id'], implode(', ',$linkIds)));
                     }
                 }
