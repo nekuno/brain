@@ -2,6 +2,7 @@
 
 namespace Model\User;
 
+use Everyman\Neo4j\Node;
 use Paginator\PaginatedInterface;
 use Model\Neo4j\GraphManager;
 
@@ -84,16 +85,18 @@ class ContentComparePaginatedModel implements PaginatedInterface
 
         $qb->optionalMatch("(u2)-[a:AFFINITY]->(content)")
             ->optionalMatch("(content)-[:SYNONYMOUS]->(synonymousLink:Link)")
-            ->returns("id(content) as id,  type(r) as rate1, type(r2) as rate2, content, a.affinity as affinity, collect(distinct tag.name) as tags, labels(content) as types, synonymousLink AS synonymous")
+            ->returns("id(content) as id,  type(r) as rate1, type(r2) as rate2, content, a.affinity as affinity, collect(distinct tag.name) as tags, labels(content) as types, COLLECT (DISTINCT synonymousLink) AS synonymous")
             ->skip("{ offset }")
             ->limit("{ limit }")
-            ->setParameters(array(
-                'userId' => $id,
-                'userId2' => $id2,
-                'tag' => isset($filters['tag']) ? $filters['tag'] : null,
-                'offset' => (integer)$offset,
-                'limit' => (integer)$limit,
-            ));
+            ->setParameters(
+                array(
+                    'userId' => $id,
+                    'userId2' => $id2,
+                    'tag' => isset($filters['tag']) ? $filters['tag'] : null,
+                    'offset' => (integer)$offset,
+                    'limit' => (integer)$limit,
+                )
+            );
 
         $query = $qb->getQuery();
 
@@ -109,10 +112,11 @@ class ContentComparePaginatedModel implements PaginatedInterface
             $content['thumbnail'] = $row['content']->getProperty('thumbnail');
             $content['synonymous'] = array();
 
-            if(isset($row['synonymous'])) {
+            if (isset($row['synonymous'])) {
                 foreach ($row['synonymous'] as $synonymousLink) {
+                    /* @var $synonymousLink Node */
                     $synonymous = array();
-                    $synonymous['id'] = $synonymousLink->getProperty('id');
+                    $synonymous['id'] = $synonymousLink->getId();
                     $synonymous['url'] = $synonymousLink->getProperty('url');
                     $synonymous['title'] = $synonymousLink->getProperty('title');
                     $synonymous['thumbnail'] = $synonymousLink->getProperty('thumbnail');
@@ -192,13 +196,14 @@ class ContentComparePaginatedModel implements PaginatedInterface
         }
 
         $qb->returns("count(r) as total")
-            ->setParameters(array(
-                'userId' => (integer)$id,
-                'userId2' => isset($filters['id2']) ? (integer)$filters['id2'] : null,
-                'tag' => isset($filters['tag']) ? $filters['tag'] : null,
+            ->setParameters(
+                array(
+                    'userId' => (integer)$id,
+                    'userId2' => isset($filters['id2']) ? (integer)$filters['id2'] : null,
+                    'tag' => isset($filters['tag']) ? $filters['tag'] : null,
 
-
-            ));
+                )
+            );
 
         $query = $qb->getQuery();
 

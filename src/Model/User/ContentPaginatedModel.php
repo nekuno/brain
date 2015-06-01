@@ -2,6 +2,7 @@
 
 namespace Model\User;
 
+use Everyman\Neo4j\Node;
 use Paginator\PaginatedInterface;
 use Model\Neo4j\GraphManager;
 
@@ -71,22 +72,24 @@ class ContentPaginatedModel implements PaginatedInterface
             ->match("(u)-[r:LIKES|DISLIKES]->(content:" . $linkType . ")")
             ->optionalMatch("(content)-[:TAGGED]->(tag:Tag)");
 
-            if (isset($filters['tag'])) {
-                $qb->match("(content)-[:TAGGED]->(filterTag:Tag)")
-                    ->where("filterTag.name = { tag }");
-            }
+        if (isset($filters['tag'])) {
+            $qb->match("(content)-[:TAGGED]->(filterTag:Tag)")
+                ->where("filterTag.name = { tag }");
+        }
 
         $qb->optionalMatch("(content)-[:SYNONYMOUS]->(synonymousLink:Link)")
-            ->returns("id(content) as id, type(r) as rate, content, collect(distinct tag.name) as tags, labels(content) as types, synonymousLink AS synonymous")
+            ->returns("id(content) as id, type(r) as rate, content, collect(distinct tag.name) as tags, labels(content) as types, COLLECT (DISTINCT synonymousLink) AS synonymous")
             ->orderBy("content.created DESC")
             ->skip("{ offset }")
             ->limit("{ limit }")
-            ->setParameters(array(
-                'tag' => isset($filters['tag']) ? $filters['tag'] : null,
-                'userId' => (integer)$id,
-                'offset' => (integer)$offset,
-                'limit' => (integer)$limit,
-            ));
+            ->setParameters(
+                array(
+                    'tag' => isset($filters['tag']) ? $filters['tag'] : null,
+                    'userId' => (integer)$id,
+                    'offset' => (integer)$offset,
+                    'limit' => (integer)$limit,
+                )
+            );
 
         $query = $qb->getQuery();
 
@@ -103,10 +106,11 @@ class ContentPaginatedModel implements PaginatedInterface
             $content['thumbnail'] = $row['content']->getProperty('thumbnail');
             $content['synonymous'] = array();
 
-            if(isset($row['synonymous'])) {
+            if (isset($row['synonymous'])) {
                 foreach ($row['synonymous'] as $synonymousLink) {
+                    /* @var $synonymousLink Node */
                     $synonymous = array();
-                    $synonymous['id'] = $synonymousLink->getProperty('id');
+                    $synonymous['id'] = $synonymousLink->getId();
                     $synonymous['url'] = $synonymousLink->getProperty('url');
                     $synonymous['title'] = $synonymousLink->getProperty('title');
                     $synonymous['thumbnail'] = $synonymousLink->getProperty('thumbnail');
@@ -136,7 +140,7 @@ class ContentPaginatedModel implements PaginatedInterface
             $response[] = $content;
         }
 
-    return $response;
+        return $response;
     }
 
     /**
@@ -166,11 +170,12 @@ class ContentPaginatedModel implements PaginatedInterface
         }
 
         $qb->returns("count(r) as total")
-            ->setParameters(array(
-                'tag' => isset($filters['tag']) ? $filters['tag'] : null,
-                'userId' => (integer)$id,
-            ));
-
+            ->setParameters(
+                array(
+                    'tag' => isset($filters['tag']) ? $filters['tag'] : null,
+                    'userId' => (integer)$id,
+                )
+            );
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();
