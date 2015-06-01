@@ -149,6 +149,8 @@ class ContentComparePaginatedModel implements PaginatedInterface
                 $content['url'] = $row['content']->getProperty('url');
                 $content['title'] = $row['content']->getProperty('title');
                 $content['description'] = $row['content']->getProperty('description');
+                $content['thumbnail'] = $row['content']->getProperty('thumbnail');
+                $content['synonymous'] = $row['content']->getProperty('synonymous');
 
                 foreach ($row['tags'] as $tag) {
                     $content['tags'][] = $tag;
