@@ -4,6 +4,8 @@ namespace ApiConsumer\LinkProcessor\Processor;
 
 use Http\OAuth\ResourceOwner\SpotifyResourceOwner;
 use ApiConsumer\LinkProcessor\UrlParser\SpotifyUrlParser;
+use Http\OAuth\ResourceOwner\GoogleResourceOwner;
+use ApiConsumer\LinkProcessor\UrlParser\YoutubeUrlParser;
 
 class SpotifyProcessor implements ProcessorInterface
 {
@@ -17,10 +19,22 @@ class SpotifyProcessor implements ProcessorInterface
      */
     protected $parser;
 
-    public function __construct(SpotifyResourceOwner $resourceOwner, SpotifyUrlParser $parser)
+    /**
+     * @var GoogleResourceOwner
+     */
+    protected $googleResourceOwner;
+
+    /**
+     * @var YoutubeUrlParser
+     */
+    protected $youtubeUrlParser;
+
+    public function __construct(SpotifyResourceOwner $resourceOwner, SpotifyUrlParser $parser, GoogleResourceOwner $googleResourceOwner, YoutubeUrlParser $youtubeUrlParser)
     {
         $this->resourceOwner = $resourceOwner;
         $this->parser = $parser;
+        $this->googleResourceOwner = $googleResourceOwner;
+        $this->youtubeUrlParser = $youtubeUrlParser;
     }
 
     /**
@@ -58,8 +72,8 @@ class SpotifyProcessor implements ProcessorInterface
         }
 
         $urlTrack = 'tracks/' . $id;
-        $querytrack = array();
-        $track = $this->resourceOwner->authorizedAPIRequest($urlTrack, $querytrack);
+        $queryTrack = array();
+        $track = $this->resourceOwner->authorizedAPIRequest($urlTrack, $queryTrack);
 
         if (isset($track['name']) && isset($track['album']) && isset($track['artists'])) {
             $urlAlbum = 'albums/' . $track['album']['id'];
@@ -102,12 +116,16 @@ class SpotifyProcessor implements ProcessorInterface
 
                 $link['title'] = $track['name'];
                 $link['description'] = $track['album']['name'] . ' : ' . implode(', ', $artistList);
+                $link['thumbnail'] = isset($track['album']['images'][1]['url']) ? $track['album']['images'][1]['url'] : null;
                 $link['additionalLabels'] = array('Audio');
                 $link['additionalFields'] = array(
                     'embed_type' => 'spotify',
-                    'embed_id' => $track['uri']);
+                    'embed_id' => $track['uri']
+                );
             }
-        } 
+
+            $link = $this->addYoutubeSynonymousLinks($track['name'], $track['album']['name'], $link, 2);
+        }
 
         return $link;
     }
@@ -132,6 +150,7 @@ class SpotifyProcessor implements ProcessorInterface
                 $link['tags'][] = $tag;
             }
 
+            $artistList = array();
             foreach ($album['artists'] as $artist) {
                 $tag = array();
                 $tag['name'] = $artist['name'];
@@ -141,7 +160,7 @@ class SpotifyProcessor implements ProcessorInterface
 
                 $artistList[] = $artist['name'];
             }
-                
+
             $tag = array();
             $tag['name'] = $album['name'];
             $tag['additionalLabels'][] = 'Album';
@@ -153,9 +172,10 @@ class SpotifyProcessor implements ProcessorInterface
             $link['additionalLabels'] = array('Audio');
             $link['additionalFields'] = array(
                 'embed_type' => 'spotify',
-                'embed_id' => $album['uri']);
-        } 
-        
+                'embed_id' => $album['uri']
+            );
+        }
+
         return $link;
     }
 
@@ -169,7 +189,7 @@ class SpotifyProcessor implements ProcessorInterface
 
         $urlArtist = 'artists/' . $id;
         $queryArtist = array();
-        $artist= $this->resourceOwner->authorizedAPIRequest($urlArtist, $queryArtist);
+        $artist = $this->resourceOwner->authorizedAPIRequest($urlArtist, $queryArtist);
 
         if (isset($artist['name']) && isset($artist['genres'])) {
             foreach ($artist['genres'] as $genre) {
@@ -184,10 +204,82 @@ class SpotifyProcessor implements ProcessorInterface
             $tag['additionalLabels'][] = 'Artist';
             $tag['additionalFields']['spotifyId'] = $artist['id'];
             $link['tags'][] = $tag;
-            
+
             $link['title'] = $artist['name'];
-        } 
-        
+        }
+
+        return $link;
+    }
+
+    protected function isYoutubeLinkSynonymous($link, $youtubeLinkSnippetInfo)
+    {
+        if (isset($youtubeLinkSnippetInfo['title']) && isset($link['title'])) {
+            similar_text($youtubeLinkSnippetInfo['title'], $link['title'], $percent);
+
+            if ($percent > 5 && isset($youtubeLinkSnippetInfo['description']) && isset($link['description'])) {
+                similar_text($youtubeLinkSnippetInfo['description'], $link['title'], $percent);
+                if ($percent > 2) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    protected function addYoutubeSynonymousLinks($song, $artists, $link, $numLinks = 1)
+    {
+        $artists_trimmed = str_replace(' ', '+', $artists);
+        $artists_ready = str_replace(',', '+', $artists_trimmed);
+        $song_ready = str_replace(' ', '+', $song);
+        $queryString = $artists_ready . '+-+' . $song_ready;
+
+        $url = 'youtube/v3/search';
+        $query = array(
+            'q' => $queryString,
+            'part' => 'snippet',
+            'type' => 'video'
+        );
+        $response = $this->googleResourceOwner->authorizedAPIRequest($url, $query);
+
+        if (isset($response['items']) && is_array($response['items']) && count($response['items']) > 0) {
+
+            $items = $response['items'];
+
+            $link['synonymous'] = array();
+
+            for ($i = 0; $i < $numLinks; $i++) {
+                if (isset($items[$i])) {
+                    $info = $items[$i];
+
+                    if ($this->isYoutubeLinkSynonymous($link, $info['snippet'])) {
+
+                        $synonymous = array();
+                        $synonymous['url'] = 'https://www.youtube.com/watch?v=' . $info['id']['videoId'];
+                        $synonymous['tags'] = array();
+                        $synonymous['title'] = $info['snippet']['title'];
+                        $synonymous['description'] = $info['snippet']['description'];
+                        $synonymous['additionalLabels'] = array('Video');
+                        $synonymous['additionalFields'] = array(
+                            'embed_type' => 'youtube',
+                            'embed_id' => $info['id']['videoId']
+                        );
+
+                        if (isset($info['topicDetails']['topicIds'])) {
+                            foreach ($info['topicDetails']['topicIds'] as $tagName) {
+                                $synonymous['tags'][] = array(
+                                    'name' => $tagName,
+                                    'additionalLabels' => array('Freebase'),
+                                );
+                            }
+                        }
+
+                        $link['synonymous'][] = $synonymous;
+                    }
+                }
+            }
+        }
+
         return $link;
     }
 }
