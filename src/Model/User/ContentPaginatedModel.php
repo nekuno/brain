@@ -129,7 +129,32 @@ class ContentPaginatedModel implements PaginatedInterface
                 $content['title'] = $row['content']->getProperty('title');
                 $content['description'] = $row['content']->getProperty('description');
                 $content['thumbnail'] = $row['content']->getProperty('thumbnail');
-                $content['synonymous'] = $row['content']->getProperty('synonymous');
+
+                $params = array('linkId' => $content['id']);
+                $query = "
+                    MATCH
+                    (l:Link)-[synonymous:SYNONYMOUS]->(synonymousLink:Link)
+                    WHERE l.id = { linkId }
+                    RETURN synonymousLink
+                ";
+                //Create the Neo4j query object
+                $contentQuery = new Query(
+                    $this->client,
+                    $query,
+                    $params
+                );
+
+                $content['synonymous'] = array();
+
+                //Execute query
+                try {
+                    $synonymousResult = $contentQuery->getResultSet();
+                    foreach ($synonymousResult as $synonymousRow) {
+                        $content['synonymous']['url'] = $synonymousRow['content']->getProperty('url');
+                    }
+                } catch (\Exception $e) {
+                    throw $e;
+                }
 
                 foreach ($row['tags'] as $tag) {
                     $content['tags'][] = $tag;
