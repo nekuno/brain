@@ -259,7 +259,7 @@ class SpotifyProcessor implements ProcessorInterface
                         $synonymous['tags'] = array();
                         $synonymous['title'] = $info['snippet']['title'];
                         $synonymous['description'] = $info['snippet']['description'];
-                        $synonymous['thumbnail'] = 'http://img.youtube.com/vi/' . $info['id']['videoId'] . '/mqdefault.jpg';
+                        $synonymous['thumbnail'] = 'https://img.youtube.com/vi/' . $info['id']['videoId'] . '/mqdefault.jpg';
                         $synonymous['additionalLabels'] = array('Video');
                         $synonymous['additionalFields'] = array(
                             'embed_type' => 'youtube',
