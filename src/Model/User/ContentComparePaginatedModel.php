@@ -3,9 +3,7 @@
 namespace Model\User;
 
 use Paginator\PaginatedInterface;
-
-use Everyman\Neo4j\Client;
-use Everyman\Neo4j\Cypher\Query;
+use Model\Neo4j\GraphManager;
 
 class ContentComparePaginatedModel implements PaginatedInterface
 {
@@ -14,22 +12,14 @@ class ContentComparePaginatedModel implements PaginatedInterface
      */
     private static $validTypes = array('Audio', 'Video', 'Image');
 
-    /**
-     * @var \Everyman\Neo4j\Client
-     */
-    protected $client;
-
-    /**
-     * @param \Everyman\Neo4j\Client $client
-     */
-    public function __construct(Client $client)
+    public function __construct(GraphManager $gm)
     {
-        $this->client = $client;
+        $this->gm = $gm;
     }
 
     public function getValidTypes()
     {
-        return Self::$validTypes;
+        return self::$validTypes;
     }
 
     /**
@@ -65,38 +55,11 @@ class ContentComparePaginatedModel implements PaginatedInterface
         $response = array();
         $id = $filters['id'];
         $id2 = $filters['id2'];
+        $qb = $this->gm->createQueryBuilder();
 
         $showOnlyCommon = false;
         if (isset($filters['showOnlyCommon'])) {
             $showOnlyCommon = $filters['showOnlyCommon'];
-        }
-
-        $params = array(
-            'UserId' => (integer)$id,
-            'UserId2' => (integer)$id2,
-            'offset' => (integer)$offset,
-            'limit' => (integer)$limit
-        );
-
-        $tagQuery = '';
-        if (isset($filters['tag'])) {
-            $tagQuery = "
-                MATCH
-                (content)-[:TAGGED]->(filterTag:Tag)
-                WHERE filterTag.name = {tag}
-            ";
-            $params['tag'] = $filters['tag'];
-        }
-
-        $commonQuery = "
-                OPTIONAL MATCH
-                (u2)-[r2:LIKES|DISLIKES]->(content)
-            ";
-        if ($showOnlyCommon) {
-            $commonQuery = "
-                MATCH
-                (u2)-[r2:LIKES|DISLIKES]->(content)
-            ";
         }
 
         $linkType = 'Link';
@@ -104,111 +67,82 @@ class ContentComparePaginatedModel implements PaginatedInterface
             $linkType = $filters['type'];
         }
 
-        $query = "
-            MATCH
-            (u:User), (u2:User)
-            WHERE u.qnoow_id = {UserId} AND u2.qnoow_id = {UserId2}
-            MATCH
-            (u)-[r:LIKES|DISLIKES]->(content:" . $linkType .")
-        ";
-        $query .= $tagQuery;
-        $query .= $commonQuery;
-        $query .= "
-            OPTIONAL MATCH
-            (content)-[:TAGGED]->(tag:Tag)
-            OPTIONAL MATCH
-            (u2)-[a:AFFINITY]->(content)
-            RETURN
-            id(content) as id,
-            type(r) as rate1,
-            type(r2) as rate2,
-            content,
-            a.affinity as affinity,
-            collect(distinct tag.name) as tags,
-            labels(content) as types
-            SKIP {offset}
-            LIMIT {limit}
-            ;
-         ";
+        $qb->match("(u:User), (u2:User)")
+            ->where("u.qnoow_id = { userId } AND u2.qnoow_id = { userId2 }")
+            ->match("(u)-[r:LIKES|DISLIKES]->(content:" . $linkType . ")")
+            ->optionalMatch("(content)-[:TAGGED]->(tag:Tag)");
 
-        //Create the Neo4j query object
-        $contentQuery = new Query(
-            $this->client,
-            $query,
-            $params
-        );
+        if (isset($filters['tag'])) {
+            $qb->match("(content)-[:TAGGED]->(filterTag:Tag)")
+                ->where("filterTag.name = { tag }");
+        }
+        if ($showOnlyCommon) {
+            $qb->match("(u2)-[r2:LIKES|DISLIKES]->(content)");
+        } else {
+            $qb->optionalMatch("(u2)-[r2:LIKES|DISLIKES]->(content)");
+        }
 
-        //Execute query
-        try {
-            $result = $contentQuery->getResultSet();
+        $qb->optionalMatch("(u2)-[a:AFFINITY]->(content)")
+            ->optionalMatch("(content)-[synonymous:SYNONYMOUS]->(synonymousLink:Link)")
+            ->returns("id(content) as id,  type(r) as rate1, type(r2) as rate2, content, a.affinity as affinity, collect(distinct tag.name) as tags, labels(content) as types, synonymousLink AS synonymous")
+            ->skip("{ offset }")
+            ->limit("{ limit }")
+            ->setParameters(array(
+                'userId' => $id,
+                'userId2' => $id2,
+                'tag' => isset($filters['tag']) ? $filters['tag'] : null,
+                'offset' => (integer)$offset,
+                'limit' => (integer)$limit,
+            ));
 
-            foreach ($result as $row) {
-                $content = array();
+        $query = $qb->getQuery();
 
-                $content['id'] = $row['id'];
-                $content['url'] = $row['content']->getProperty('url');
-                $content['title'] = $row['content']->getProperty('title');
-                $content['description'] = $row['content']->getProperty('description');
-                $content['thumbnail'] = $row['content']->getProperty('thumbnail');
+        $result = $query->getResultSet();
 
-                $params = array('linkId' => $content['id']);
-                $query = "
-                    MATCH
-                    (l:Link)-[synonymous:SYNONYMOUS]->(synonymousLink:Link)
-                    WHERE l.id = { linkId }
-                    RETURN synonymousLink
-                ";
-                //Create the Neo4j query object
-                $contentQuery = new Query(
-                    $this->client,
-                    $query,
-                    $params
-                );
+        foreach ($result as $row) {
+            $content = array();
 
-                $content['synonymous'] = array();
+            $content['id'] = $row['id'];
+            $content['url'] = $row['content']->getProperty('url');
+            $content['title'] = $row['content']->getProperty('title');
+            $content['description'] = $row['content']->getProperty('description');
+            $content['thumbnail'] = $row['content']->getProperty('thumbnail');
+            $content['synonymous'] = array();
 
-                //Execute query
-                try {
-                    $synonymousResult = $contentQuery->getResultSet();
-                    foreach ($synonymousResult as $synonymousRow) {
-                        $content['synonymous']['url'] = $synonymousRow['content']->getProperty('url');
-                    }
-                } catch (\Exception $e) {
-                    throw $e;
+            if(isset($row['synonymous'])) {
+                foreach ($row['synonymous'] as $synonymous) {
+                    $content['synonymous'][] = $synonymous;
                 }
-
-                foreach ($row['tags'] as $tag) {
-                    $content['tags'][] = $tag;
-                }
-
-                foreach ($row['types'] as $type) {
-                    $content['types'][] = $type;
-                }
-
-                $user1 = array();
-                $user1['user']['id'] = $id;
-                $user1['rate'] = $row['rate1'];
-                $content['user_rates'][] = $user1;
-
-                if (null != $row['rate2']) {
-                    $user2 = array();
-                    $user2['user']['id'] = $id2;
-                    $user2['rate'] = $row['rate2'];
-                    $content['user_rates'][] = $user2;
-                }
-
-                if ($row['content']->getProperty('embed_type')) {
-                    $content['embed']['type'] = $row['content']->getProperty('embed_type');
-                    $content['embed']['id'] = $row['content']->getProperty('embed_id');
-                }
-
-                $content['match'] = $row['affinity'];
-
-                $response[] = $content;
             }
 
-        } catch (\Exception $e) {
-            throw $e;
+            foreach ($row['tags'] as $tag) {
+                $content['tags'][] = $tag;
+            }
+
+            foreach ($row['types'] as $type) {
+                $content['types'][] = $type;
+            }
+
+            $user1 = array();
+            $user1['user']['id'] = $id;
+            $user1['rate'] = $row['rate1'];
+            $content['user_rates'][] = $user1;
+
+            if (null != $row['rate2']) {
+                $user2 = array();
+                $user2['user']['id'] = $id2;
+                $user2['rate'] = $row['rate2'];
+                $content['user_rates'][] = $user2;
+            }
+
+            if ($row['content']->getProperty('embed_type')) {
+                $content['embed']['type'] = $row['content']->getProperty('embed_type');
+                $content['embed']['id'] = $row['content']->getProperty('embed_id');
+            }
+
+            $content['match'] = $row['affinity'];
+
+            $response[] = $content;
         }
 
         return $response;
@@ -224,32 +158,11 @@ class ContentComparePaginatedModel implements PaginatedInterface
     {
         $id = $filters['id'];
         $count = 0;
+        $qb = $this->gm->createQueryBuilder();
 
-        $params = array(
-            'UserId' => (integer)$id,
-        );
-
-        $commonQuery = '';
+        $showOnlyCommon = false;
         if (isset($filters['showOnlyCommon'])) {
-            $id2 = $filters['id2'];
-            if ($filters['showOnlyCommon']) {
-                $commonQuery = "
-                    MATCH
-                    (u2)-[:LIKES|DISLIKES]->(content)
-                    WHERE u2.qnoow_id = {UserId2}
-                ";
-                $params['UserId2'] = (integer)$id2;
-            }
-        }
-
-        $tagQuery = '';
-        if (isset($filters['tag'])) {
-            $tagQuery = "
-                MATCH
-                (content)-[:TAGGED]->(filterTag:Tag)
-                WHERE filterTag.name = {tag}
-            ";
-            $params['tag'] = $filters['tag'];
+            $showOnlyCommon = $filters['showOnlyCommon'];
         }
 
         $linkType = 'Link';
@@ -257,38 +170,36 @@ class ContentComparePaginatedModel implements PaginatedInterface
             $linkType = $filters['type'];
         }
 
-        $query = "
-            MATCH
-            (u:User)
-            WHERE u.qnoow_id = {UserId}
-            MATCH
-            (u)-[r:LIKES|DISLIKES]->(content:" . $linkType . ")
-        ";
-        $query .= $commonQuery;
-        $query .= $tagQuery;
-        $query .= "
-            RETURN
-            count(r) as total
-            ;
-         ";
+        $qb->match("(u:User)")
+            ->where("u.qnoow_id = { userId }")
+            ->match("(u)-[r:LIKES|DISLIKES]->(content:" . $linkType . ")");
 
-        //Create the Neo4j query object
-        $contentQuery = new Query(
-            $this->client,
-            $query,
-            $params
-        );
+        if ($showOnlyCommon) {
+            $qb->match("(u2:User)-[:LIKES|DISLIKES]->(content)")
+                ->where("u2.qnoow_id = { userId2 }");
+        }
+        if (isset($filters['tag'])) {
+            $qb->match("(content)-[:TAGGED]->(filterTag:Tag)")
+                ->where("filterTag.name = { tag }");
 
-        //Execute query
-        try {
-            $result = $contentQuery->getResultSet();
+            $params['tag'] = $filters['tag'];
+        }
 
-            foreach ($result as $row) {
-                $count = $row['total'];
-            }
+        $qb->returns("count(r) as total")
+            ->setParameters(array(
+                'userId' => (integer)$id,
+                'userId2' => isset($filters['id2']) ? (integer)$filters['id2'] : null,
+                'tag' => isset($filters['tag']) ? $filters['tag'] : null,
 
-        } catch (\Exception $e) {
-            throw $e;
+
+            ));
+
+        $query = $qb->getQuery();
+
+        $result = $query->getResultSet();
+
+        foreach ($result as $row) {
+            $count = $row['total'];
         }
 
         return $count;
