@@ -55,8 +55,9 @@ class PredictionCommand extends ApplicationAwareCommand
                 foreach ($users as $user) {
 
                     $linkIds = $linkModel->getPredictedContentForAUser($user['qnoow_id'], $limitContent, $limitUsers, false);
-                    foreach ($linkIds as $linkId) {
+                    foreach ($linkIds as $link) {
 
+                        $linkId = $link['id'];
                         $affinity = $affinityModel->getAffinity($user['qnoow_id'], $linkId);
                         if (OutputInterface::VERBOSITY_NORMAL <= $output->getVerbosity()) {
                             $output->writeln(sprintf('User: %d --> Link: %d (Affinity: %f)', $user['qnoow_id'], $linkId, $affinity['affinity']));
@@ -89,6 +90,8 @@ class PredictionCommand extends ApplicationAwareCommand
             return;
         }
 
+        $this->app['swiftmailer.spooltransport']->getSpool()->flushQueue($this->app['swiftmailer.transport']);
+        $output->writeln('Spool sent.');
         $output->writeln('Done.');
 
     }

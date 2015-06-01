@@ -13,7 +13,6 @@ notifications:
       body:
         introduction_1: 'En Nekuno trabajamos sin descanso para encontrar contenido recomendado especialmente para ti'
         introduction_2: 'Hemos encontrado este que te encantará:|Hemos encontrado %count% que te encantarán:'
-        content: 'Enlace: '
-        enter: '{1}Vuelve a entrar para verlo:|{2,3}Vuelve a entrar para verlos|{ [4,Inf[ }Vuelve a entrar para verlos todos'
+        enter: '{1} Vuelve a entrar para verlo:|{2,3} Vuelve a entrar para verlos|[4,Inf[ Vuelve a entrar para verlos todos'
 
   footer: 'Saludos del equipo de Nekuno'

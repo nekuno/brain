@@ -517,7 +517,7 @@ class LinkModel
         $query = $qb->getQuery();
         $resultSet = $query->getResultSet();
         /* @var $row Row */
-        $row = $resultSet->offsetGet(0);
+        $row = $resultSet->current();
         return $row->offsetGet('existed');
     }
 
@@ -546,7 +546,7 @@ class LinkModel
         $query = $qb->getQuery();
         $resultSet = $query->getResultSet();
         /* @var $row Row */
-        $row = $resultSet->offsetGet(0);
+        $row = $resultSet->current();
         return $row->offsetGet('existed');
     }
 

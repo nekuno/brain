@@ -5,7 +5,7 @@
 <p>{{ 'notifications.messages.exceptional_links.body.introduction_2'|transchoice(totalCount, {'%count%':totalCount}) }}</p>
 
 {% for link in links %}
-    <p>{{ 'notifications.messages.exceptional_links.body.content'|trans }}</p>
+    <p><a href="{{ link.url }}">{{ link.title }}</a></p>
 {% endfor %}
 
 {% if totalCount>3 %}
