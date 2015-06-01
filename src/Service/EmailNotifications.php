@@ -20,30 +20,46 @@ class EmailNotifications
 
     function send(EmailNotification $notification)
     {
-        if (! $notification->getRecipient()) throw new \Exception("Recipient not set");
+        if (!$notification->getRecipient()) throw new \Exception("Recipient not set");
 
         $this->em->persist($notification);
         $this->em->flush();
 
-        $this->mail($notification);
+        return $this->mail($notification);
 
     }
 
     private function mail(EmailNotification $notification)
     {
+
+        switch ($notification->getType()) {
+            case EmailNotification::UNREAD_CHAT_MESSAGES :
+                $view = 'email-notifications/unread-messages-notification.html.twig';
+                break;
+
+            case EmailNotification::EXCEPTIONAL_LINKS :
+                $view = 'email-notifications/exceptional_links_notification.html.twig';
+                break;
+
+            default:
+                $view = null;
+                break;
+        }
+
         $message = \Swift_Message::newInstance()
             ->setSubject($notification->getSubject())
             ->setFrom('enredos@nekuno.com', 'Nekuno')
             ->setTo($notification->getRecipient())
             ->setContentType('text/html')
             ->setBody($this->tp->render(
-                'email-notifications/unread-messages-notification.html.twig',
+                $view,
                 $notification->getInfo()));
 
 
-        if (! $this->mailer->send($message)) {
+        $recipients = $this->mailer->send($message);
+        if (!$recipients) {
             throw new \RuntimeException("Email could not be sent");
         }
-
+        return $recipients;
     }
 }

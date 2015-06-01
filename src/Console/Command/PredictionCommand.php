@@ -3,9 +3,12 @@
 namespace Console\Command;
 
 use Everyman\Neo4j\Query\ResultSet;
+use Model\Entity\EmailNotification;
 use Model\LinkModel;
 use Model\User\Affinity\AffinityModel;
 use Model\UserModel;
+use Service\AffinityRecalculations;
+use Service\EmailNotifications;
 use Silex\Application;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -18,8 +21,11 @@ class PredictionCommand extends ApplicationAwareCommand
     {
         $this->setName('prediction:calculate')
             ->setDescription('Calculate the predicted high affinity links for a user.')
-            ->addOption('user', null, InputOption::VALUE_OPTIONAL, 'the id of the user')
-            ->addOption('limit', null, InputOption::VALUE_OPTIONAL, 'Max links to calculate per user');
+            ->addOption('user', null, InputOption::VALUE_OPTIONAL, 'The id of the user')
+            ->addOption('limitContent', null, InputOption::VALUE_OPTIONAL, 'Max links to calculate per user')
+            ->addOption('limitUsers', null, InputOption::VALUE_OPTIONAL, 'Max similar users to get links from')
+            ->addOption('recalculate', null, InputOption::VALUE_NONE, 'Include already calculated affinities (Updates those links)')
+            ->addOption('notify', null, InputOption::VALUE_OPTIONAL, 'Email users who get links with more affinity than this value');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -32,38 +38,60 @@ class PredictionCommand extends ApplicationAwareCommand
         $affinityModel = $this->app['users.affinity.model'];
 
         $user = $input->getOption('user');
-        $limit = $input->getOption('limit');
+        $limitContent = $input->getOption('limitContent')?: 40;
+        $limitUsers = $input->getOption('limitUsers')?: 20;
+        $recalculate = $input->getOption('recalculate');
+        $notify = $input->getOption('notify');
 
         try {
 
             $users = null === $user ? $userModel->getAll() : array($userModel->getById($user));
 
-            $limit = $limit ?: 10;
+            $recalculate = $recalculate ? true : false;
 
-            foreach ($users as $user) {
+            $notify = $notify ?: 99999;
 
-                $userId = $user['qnoow_id'];
-                /* @var $links ResultSet */
-                $links = $linkModel->getPredictedContentForAUser($userId, $limit);
+            if (!$recalculate) {
+                foreach ($users as $user) {
 
-                foreach ($links as $link) {
+                    $linkIds = $linkModel->getPredictedContentForAUser($user['qnoow_id'], $limitContent, $limitUsers, false);
+                    foreach ($linkIds as $link) {
 
-                    $linkId = $link['id'];
-                    $affinity = $affinityModel->getAffinity($userId, $linkId);
+                        $linkId = $link['id'];
+                        $affinity = $affinityModel->getAffinity($user['qnoow_id'], $linkId);
+                        if (OutputInterface::VERBOSITY_NORMAL <= $output->getVerbosity()) {
+                            $output->writeln(sprintf('User: %d --> Link: %d (Affinity: %f)', $user['qnoow_id'], $linkId, $affinity['affinity']));
+                        }
+                    }
+                }
+            } else {
+                /* @var $affinityRecalculations AffinityRecalculations */
+                $affinityRecalculations = $this->app['affinityRecalculations.service'];
+                foreach ($users as $user) {
+                    $result = $affinityRecalculations->recalculateAffinities($user['qnoow_id'], $limitContent, $limitUsers, $notify);
 
-                    if (OutputInterface::VERBOSITY_NORMAL <= $output->getVerbosity()) {
-                        $output->writeln(sprintf('User: %d --> Link: %d (Affinity: %f)', $userId, $linkId, $affinity['affinity']));
+                    foreach ($result['affinities'] as $linkId => $affinity) {
+                        $output->writeln(sprintf('User: %d --> Link: %d (Affinity: %f)', $user['qnoow_id'], $linkId, $affinity));
+                    }
+                    if(!empty($result['emailInfo'])){
+                        $emailInfo=$result['emailInfo'];
+                        $linkIds=array();
+                        foreach($emailInfo['links'] as $link ){
+                            $linkIds[]=$link['id'];
+                        }
+                        $output->writeln(sprintf('Email sent to %s users', $emailInfo['recipients']));
+                        $output->writeln(sprintf('Email sent to user: %s with links: %s', $user['qnoow_id'], implode(', ',$linkIds)));
                     }
                 }
             }
 
         } catch (\Exception $e) {
-
             $output->writeln('Error trying to recalculate predicted links with message: ' . $e->getMessage());
-
             return;
         }
 
+        $this->app['swiftmailer.spooltransport']->getSpool()->flushQueue($this->app['swiftmailer.transport']);
+        $output->writeln('Spool sent.');
         $output->writeln('Done.');
 
     }

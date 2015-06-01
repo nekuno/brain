@@ -8,5 +8,11 @@ notifications:
         latest: 'Latest %count% unread message:|Latest %count% unread messages:'
         message: 'Unread message from user %user% at %datetime%:'
         linkAnchor: 'See all your messages'
+    exceptional_links:
+      subject: 'We found content you want to see'
+      body:
+        introduction_1: 'Here at Nekuno we are tirelessly working to find content specially recommended for you.'
+        introduction_2: 'We have found this one that you will love:|We have found %count% that you will love:'
+        enter: '{1} Come back to see it:|{2,3} Come back to see them|[4,Inf[ Come back to see all of them'
 
   footer: 'Regards from Nekuno team'

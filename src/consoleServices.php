@@ -22,6 +22,10 @@ $app['chatMessageNotifications.service'] = function (Silex\Application $app) {
     return new \Service\ChatMessageNotifications($app['emailNotification.service'], $app['orm.ems']['mysql_brain'], $app['dbs']['mysql_social'], $app['translator'], $app['users.model'], $app['users.profile.model']);
 };
 
+$app['affinityRecalculations.service'] = function (Silex\Application $app) {
+    return new \Service\AffinityRecalculations($app['emailNotification.service'], $app['translator'], $app['neo4j.graph_manager'], $app['links.model'], $app['users.model'], $app['users.affinity.model']);
+};
+
 
 /**
  * Middleware for filter some request

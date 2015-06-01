@@ -1,0 +1,17 @@
+{% include 'email-notifications/partials/header-notification.html.twig' %}
+
+<p>{{ 'notifications.messages.exceptional_links.body.introduction_1'|trans }}</p>
+
+<p>{{ 'notifications.messages.exceptional_links.body.introduction_2'|transchoice(totalCount, {'%count%':totalCount}) }}</p>
+
+{% for link in links %}
+    <p><a href="{{ link.url }}">{{ link.title }}</a></p>
+{% endfor %}
+
+{% if totalCount>3 %}
+    <p>...</p>
+{% endif %}
+
+<p><a href="https://nekuno.com/discover/content">{{ 'notifications.messages.exceptional_links.body.enter'|transchoice(totalCount) }}</a></p>
+
+{% include 'email-notifications/partials/footer-notification.html.twig' %}

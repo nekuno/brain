@@ -10,8 +10,8 @@ class AffinityModel
     const numberOfSecondsToCache = 86400;
 
     /**
-    * @var GraphManager
-    */
+     * @var GraphManager
+     */
     protected $gm;
 
     public function __construct(GraphManager $gm)
@@ -19,11 +19,12 @@ class AffinityModel
         $this->gm = $gm;
     }
 
-    public function getAffinity($userId, $linkId)
+    public function getAffinity($userId, $linkId, $seconds = null)
     {
         $affinity = $this->getCurrentAffinity($userId, $linkId);
 
-        $minTimestampForCache  = time() - self::numberOfSecondsToCache;
+        $numberOfSecondsToCache = $seconds ?: self::numberOfSecondsToCache;
+        $minTimestampForCache = time() - $numberOfSecondsToCache;
         $hasToRecalculate = ($affinity['updated'] / 1000) < $minTimestampForCache;
 
         if ($hasToRecalculate) {
@@ -45,8 +46,7 @@ class AffinityModel
                 'a.affinity AS affinity',
                 'a.updated AS updated'
             )
-            ->returns('affinity, updated')
-        ;
+            ->returns('affinity, updated');
 
         $qb->setParameters(
             array(
@@ -65,8 +65,8 @@ class AffinityModel
         if ($result->count() > 0) {
             /* @var $row Row */
             $row = $result->current();
-            $affinity['affinity']  = $row->offsetGet('affinity');
-            $affinity['updated']  = $row->offsetGet('updated');
+            $affinity['affinity'] = $row->offsetGet('affinity');
+            $affinity['updated'] = $row->offsetGet('updated');
         }
 
         return $affinity;
@@ -97,8 +97,7 @@ class AffinityModel
                 'REDUCE(totalInverse = 1.0, i IN COLLECT(inverseSimilarity) | totalInverse * i) AS totalInverse'
             )
             ->with('user, link, totalInverse ^ (1.0/numUsers) AS inverseGeometricMean')
-            ->with('user, link, 1 - inverseGeometricMean AS affinity')
-        ;
+            ->with('user, link, 1 - inverseGeometricMean AS affinity');
 
         $qb
             ->merge('(user)-[a:AFFINITY]->(link)')
@@ -106,8 +105,7 @@ class AffinityModel
                 'a.affinity = affinity',
                 'a.updated = timestamp()'
             )
-            ->returns('affinity')
-        ;
+            ->returns('affinity');
 
         $qb->setParameters(
             array(

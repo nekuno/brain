@@ -52,10 +52,39 @@ class LinkModel
         /* @var $row Row */
         $row = $result->current();
         /* @var $node Node */
-        $node = $row->offsetGet('link');
+        $link = $this->buildLink($row->offsetGet('link'));
 
-        $link = $node->getProperties();
-        $link['id'] = $node->getId();
+        return $link;
+    }
+
+    /**
+     * @param integer $linkId
+     * @return array|boolean the link or false
+     * @throws \Exception on failure
+     */
+    public function findLinkById($linkId)
+    {
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(l:Link)')
+            ->where('id(l) = { linkId } ')
+            ->returns('l AS link')
+            ->limit('1');
+
+        $qb->setParameter('linkId', (integer)$linkId);
+
+        $query = $qb->getQuery();
+
+        $result = $query->getResultSet();
+
+        if (count($result) <= 0) {
+            return false;
+        }
+
+        /* @var $row Row */
+        $row = $result->current();
+        /* @var $node Node */
+        $link = $this->buildLink($row->offsetGet('link'));
 
         return $link;
     }
@@ -415,39 +444,110 @@ class LinkModel
 
     /**
      * @param integer $userId
-     * @param integer $limit Max Number of content to return
+     * @param int $limitContent
+     * @param int $limitUsers
+     * @param bool $includeAffinity For recalculating affinities
      * @return array
      * @throws \Exception
      */
-    public function getPredictedContentForAUser($userId, $limit = 10)
+    public function getPredictedContentForAUser($userId, $limitContent = 40, $limitUsers = 20, $includeAffinity = false)
     {
-
         $qb = $this->gm->createQueryBuilder();
-        $qb->match('(u:User {qnoow_id: { uid } })')
+        $qb->match('(u:User {qnoow_id: { userId } })')
             ->match('(u)-[r:SIMILARITY]-(users:User)')
             ->with('users,u,r.similarity AS m')
-            ->orderby('m DESC');
+            ->orderby('m DESC')
+            ->limit('{limitUsers}');
 
-        $qb->match('(users)-[d:LIKES]->(l:Link)')
-            ->where('NOT(u)-[:LIKES|:DISLIKES|:AFFINITY]-(l)')
-            ->with('id(l) AS id, avg(m) AS average, count(d) AS amount')
+        $qb->match('(users)-[d:LIKES]->(l:Link)');
+        $conditions = array('(NOT (u)-[:LIKES|:DISLIKES]-(l))');
+        if (!$includeAffinity) {
+            $conditions[] = '(NOT (u)-[:AFFINITY]-(l))';
+        };
+        $qb->where($conditions)
+            ->with('l, avg(m) AS average, count(d) AS amount')
             ->where('amount>=2')
-            ->returns('id')
+            ->returns('l as link')
             ->orderby('average DESC')
-            ->limit('{ limit }');
+            ->limit('{limitContent}');
 
         $qb->setParameters(
             array(
-                'uid' => (integer)$userId,
-                'limit' => (integer)$limit,
+                'userId' => (integer)$userId,
+                'limitContent' => (integer)$limitContent,
+                'limitUsers' => (integer)$limitUsers,
             )
         );
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();
 
-        return $result;
+        $links = array();
+        foreach ($result as $row) {
+            /* @var $row Row */
+            $links[] = $this->buildLink($row->offsetGet('link'));
+        }
 
+        return $links;
+    }
+
+    /**
+     * @param $userId
+     * @param $linkId
+     * @return bool If the link was already notified to the user
+     * @throws \Exception
+     */
+    public function setLinkNotified($userId, $linkId)
+    {
+        if ($linkId == null || $userId == null) {
+            return false;
+        }
+
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(l:Link), (u:User{qnoow_id:{userId}})')
+            ->where('id(l)={linkId}')
+            ->optionalMatch('(u)-[n2:NOTIFIED]->(l)')
+            ->merge('(u)-[n:NOTIFIED]->(l)
+                        ON CREATE SET n.timestamp = timestamp()')
+            ->returns('(NOT n2 IS NULL) as existed');
+        $qb->setParameters(array('userId' => (integer)$userId,
+            'linkId' => (integer)$linkId));
+
+        $query = $qb->getQuery();
+        $resultSet = $query->getResultSet();
+        /* @var $row Row */
+        $row = $resultSet->current();
+        return $row->offsetGet('existed');
+    }
+
+    /**
+     * @param $userId
+     * @param $linkId
+     * @return bool If the link was notified
+     * @throws \Exception
+     */
+    public function unsetLinkNotified($userId, $linkId)
+    {
+        if ($linkId == null || $userId == null) {
+            return false;
+        }
+
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(l:Link), (u:User{qnoow_id:{userId}})')
+            ->where('id(l)={linkId}')
+            ->optionalMatch('(u)-[n:NOTIFIED]->(l)')
+            ->delete('n')
+            ->returns('(NOT (n IS NULL)) as existed');
+        $qb->setParameters(array('userId' => (integer)$userId,
+            'linkId' => (integer)$linkId));
+
+        $query = $qb->getQuery();
+        $resultSet = $query->getResultSet();
+        /* @var $row Row */
+        $row = $resultSet->current();
+        return $row->offsetGet('existed');
     }
 
     /**
@@ -456,7 +556,6 @@ class LinkModel
      */
     private function isAlreadySaved($url)
     {
-
         $qb = $this->gm->createQueryBuilder();
 
         $qb->match('(l:Link)')
@@ -475,6 +574,18 @@ class LinkModel
         }
 
         return false;
+    }
+
+    /**
+     * @param $node Node
+     * @return array
+     */
+    protected function buildLink(Node $node)
+    {
+        $link = $node->getProperties();
+        $link['id'] = $node->getId();
+
+        return $link;
     }
 
     private function addSynonymousLink($id, $synonymousLinks)
@@ -518,4 +629,5 @@ class LinkModel
 
         return $linkArray;
     }
+
 }
