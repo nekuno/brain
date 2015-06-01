@@ -87,44 +87,44 @@ class SpotifyProcessor implements ProcessorInterface
                     $tag['additionalLabels'][] = 'MusicalGenre';
                     $link['tags'][] = $tag;
                 }
-
-                $artistList = array();
-                foreach ($track['artists'] as $artist) {
-                    $tag = array();
-                    $tag['name'] = $artist['name'];
-                    $tag['additionalLabels'][] = 'Artist';
-                    $tag['additionalFields']['spotifyId'] = $artist['id'];
-                    $link['tags'][] = $tag;
-
-                    $artistList[] = $artist['name'];
-                }
-
-                $tag = array();
-                $tag['name'] = $track['album']['name'];
-                $tag['additionalLabels'][] = 'Album';
-                $tag['additionalFields']['spotifyId'] = $track['album']['id'];
-                $link['tags'][] = $tag;
-
-                $tag = array();
-                $tag['name'] = $track['name'];
-                $tag['additionalLabels'][] = 'Song';
-                $tag['additionalFields']['spotifyId'] = $track['id'];
-                if (isset($track['external_ids']['isrc'])) {
-                    $tag['additionalFields']['isrc'] = $track['external_ids']['isrc'];
-                }
-                $link['tags'][] = $tag;
-
-                $link['title'] = $track['name'];
-                $link['description'] = $track['album']['name'] . ' : ' . implode(', ', $artistList);
-                $link['thumbnail'] = isset($track['album']['images'][1]['url']) ? $track['album']['images'][1]['url'] : null;
-                $link['additionalLabels'] = array('Audio');
-                $link['additionalFields'] = array(
-                    'embed_type' => 'spotify',
-                    'embed_id' => $track['uri']
-                );
             }
 
-            $link = $this->addYoutubeSynonymousLinks($track['name'], $track['album']['name'], $link, 2);
+            $artistList = array();
+            foreach ($track['artists'] as $artist) {
+                $tag = array();
+                $tag['name'] = $artist['name'];
+                $tag['additionalLabels'][] = 'Artist';
+                $tag['additionalFields']['spotifyId'] = $artist['id'];
+                $link['tags'][] = $tag;
+
+                $artistList[] = $artist['name'];
+            }
+
+            $tag = array();
+            $tag['name'] = $track['album']['name'];
+            $tag['additionalLabels'][] = 'Album';
+            $tag['additionalFields']['spotifyId'] = $track['album']['id'];
+            $link['tags'][] = $tag;
+
+            $tag = array();
+            $tag['name'] = $track['name'];
+            $tag['additionalLabels'][] = 'Song';
+            $tag['additionalFields']['spotifyId'] = $track['id'];
+            if (isset($track['external_ids']['isrc'])) {
+                $tag['additionalFields']['isrc'] = $track['external_ids']['isrc'];
+            }
+            $link['tags'][] = $tag;
+
+            $link['title'] = $track['name'];
+            $link['description'] = $track['album']['name'] . ' : ' . implode(', ', $artistList);
+            $link['thumbnail'] = isset($track['album']['images'][1]['url']) ? $track['album']['images'][1]['url'] : null;
+            $link['additionalLabels'] = array('Audio');
+            $link['additionalFields'] = array(
+                'embed_type' => 'spotify',
+                'embed_id' => $track['uri']
+            );
+
+            $link = $this->addYoutubeSynonymousLinks($track['name'], $artistList, $link);
         }
 
         return $link;
@@ -214,25 +214,21 @@ class SpotifyProcessor implements ProcessorInterface
     protected function isYoutubeLinkSynonymous($link, $youtubeLinkSnippetInfo)
     {
         if (isset($youtubeLinkSnippetInfo['title']) && isset($link['title'])) {
+            
             similar_text($youtubeLinkSnippetInfo['title'], $link['title'], $percent);
 
-            if ($percent > 50 && isset($youtubeLinkSnippetInfo['description']) && isset($link['description'])) {
-                similar_text($youtubeLinkSnippetInfo['description'], $link['title'], $percent);
-                if ($percent > 20) {
-                    return true;
-                }
+            if ($percent > 30) {
+                return true;
             }
         }
 
         return false;
     }
 
-    protected function addYoutubeSynonymousLinks($song, $artists, $link, $numLinks = 1)
+    protected function addYoutubeSynonymousLinks($song, $artists, $link, $numLinks = 3)
     {
-        $artists_trimmed = str_replace(' ', '+', $artists);
-        $artists_ready = str_replace(',', '+', $artists_trimmed);
-        $song_ready = str_replace(' ', '+', $song);
-        $queryString = $artists_ready . '+-+' . $song_ready;
+
+        $queryString = implode(', ', $artists) . ' ' . $song;
 
         $url = 'youtube/v3/search';
         $query = array(
