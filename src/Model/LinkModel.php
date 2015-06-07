@@ -551,6 +551,37 @@ class LinkModel
     }
 
     /**
+     * @param $userId
+     * @param $linkId
+     * @return integer|null
+     * @throws \Exception
+     */
+    public function getWhenNotified($userId, $linkId)
+    {
+        if ($linkId == null || $userId == null) {
+            return false;
+        }
+
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(l:Link), (u:User{qnoow_id:{userId}})')
+            ->where('id(l)={linkId}')
+            ->optionalMatch('(u)-[n:NOTIFIED]->(l)')
+            ->returns('n.timestamp as when');
+        $qb->setParameters(array('userId' => (integer)$userId,
+            'linkId' => (integer)$linkId));
+
+        $query = $qb->getQuery();
+        $resultSet = $query->getResultSet();
+        /* @var $row Row */
+        if ($resultSet->count() == 0) {
+            return null;
+        }
+        $row = $resultSet->current();
+        return $row->offsetGet('when');
+    }
+
+    /**
      * @param $url
      * @return boolean
      */

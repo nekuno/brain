@@ -54,7 +54,7 @@ class AffinityRecalculations
      * @return array
      * @throws \Exception
      */
-    public function recalculateAffinities($userId, $limitContent = 40, $limitUsers=20, $notifyLimit = 99999, $seconds = null)
+    public function recalculateAffinities($userId, $limitContent = 40, $limitUsers = 20, $notifyLimit = 99999, $seconds = null)
     {
         $user = $this->userModel->getById((integer)$userId);
 
@@ -62,20 +62,27 @@ class AffinityRecalculations
 
         $affinities = array();
         $linksToEmail = array();
-        $result=array();
+        $result = array();
+        $counterNotified = 0;
         foreach ($links as $link) {
             $affinity = $this->affinityModel->getAffinity($userId, $link['id'], $seconds);
             $affinities[$link['id']] = $affinity['affinity'];
             if ($affinity['affinity'] > $notifyLimit) {
-                $wasNotified = $this->linkModel->setLinkNotified($userId, $link['id']);
-                if (!$wasNotified) {
-                    $linksToEmail[] = $link;
+                $whenNotified = $this->linkModel->getWhenNotified($userId, $link['id']);
+                if ($whenNotified !== null) {
+                    continue;
+                }
+                $linksToEmail[] = $link;
+                if ($counterNotified < $this->linksToEmail) {
+                    $this->linkModel->setLinkNotified($userId, $link['id']);
+                    $counterNotified++;
                 }
             }
         }
+
         try {
             if (!empty($linksToEmail)) {
-                $result['emailInfo']=$this->sendEmail($linksToEmail, $user);
+                $result['emailInfo'] = $this->sendEmail($linksToEmail, $user);
             }
         } catch (\Exception $ex) {
             foreach ($linksToEmail as $link) {
@@ -83,7 +90,7 @@ class AffinityRecalculations
             }
             throw $ex;
         }
-        $result['affinities']=$affinities;
+        $result['affinities'] = $affinities;
         return $result;
     }
 
@@ -97,7 +104,7 @@ class AffinityRecalculations
     {
         $emailInfo = $this->saveInfo($links, $user['username']);
 
-        $recipients=$this->emailNotifications->send(
+        $recipients = $this->emailNotifications->send(
             EmailNotification::create()
                 ->setType(EmailNotification::EXCEPTIONAL_LINKS)
                 ->setSubject($this->translator->trans('notifications.messages.exceptional_links.subject'))
@@ -105,7 +112,7 @@ class AffinityRecalculations
                 ->setRecipient($user['email'])
                 ->setInfo($emailInfo));
 
-        $emailInfo['recipients']=$recipients;
+        $emailInfo['recipients'] = $recipients;
         return $emailInfo;
     }
 
@@ -117,8 +124,8 @@ class AffinityRecalculations
     protected function saveInfo(array $links, $username)
     {
         $info = array();
-        $info['totalCount']=count($links);
-        $amount=min($this->linksToEmail, count($links));
+        $info['totalCount'] = count($links);
+        $amount = min($this->linksToEmail, count($links));
         for ($i = 0; $i < $amount; $i++) {
             $info['links'][] = $links[$i];
         }
