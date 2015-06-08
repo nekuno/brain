@@ -479,4 +479,88 @@ class QuestionModel
 
         return $return;
     }
+
+    /**
+     * @param $preselected integer how many questions are preselected by rating to be analyzed
+     * @return array
+     */
+    public function getUncorrelatedQuestions($preselected = 50)
+    {
+        $qb = $this->gm->createQueryBuilder();
+
+        $n = (integer)$preselected;
+        $parameters = array('preselected' => $n);
+        $qb->setParameters($parameters);
+
+        $qb->match('(q:Question)')
+            ->with('q')
+            ->orderBy('q.ranking DESC')
+            ->limit('{preselected}')
+            ->with('collect(q) AS questions')
+            ->match('(q1:Question),(q2:Question)')
+            ->where('(q1 in questions) AND (q2 in questions)',
+                'id(q1)<id(q2)')
+            ->with('q1,q2');
+
+        $qb->match('(q1)<-[:IS_ANSWER_OF]-(a1:Answer)')
+            ->match('(q2)<-[:IS_ANSWER_OF]-(a2:Answer)')
+            ->optionalMatch('(a1)<-[:ANSWERS]-(u:User)-[:ANSWERS]->(a2)')
+            ->with('id(q1) AS q1,id(q2) AS q2,id(a1) AS a1,id(a2) AS a2,count(distinct(u)) AS users')
+            ->with('q1, q2, sum(users) as totalUsers,  stdevp(users) AS std, (count(distinct(a1))+count(distinct(a2))) AS answers')
+            ->where('totalUsers>0')
+            ->with('q1, q2, std/totalUsers as normstd, answers')
+            ->with('q1,q2,normstd*sqrt(answers) as finalstd')
+            ->returns('q1,q2,finalstd');
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        $correlations = array();
+        /* @var $row Row */
+        foreach ($result as $row) {
+            $correlations[$row->offsetGet('q1')][$row->offsetGet('q2')] = $row->offsetGet('finalstd');
+        }
+
+        $correctCorrelations=array();
+        foreach($correlations as $q1=>$array){
+            foreach($correlations as $q2=>$array2){
+                if (!($q1<$q2)) continue;
+                $correctCorrelations[$q1][$q2]=isset($correlations[$q1][$q2])? $correlations[$q1][$q2] : 1;
+            }
+        }
+
+//        return $correlations;
+
+        //Size fixed at 4 questions / set
+        $minimum = 600;
+        $questions = array();
+        foreach ($correctCorrelations as $q1 => $c1) {
+            foreach ($correctCorrelations as $q2 => $c2) {
+                foreach ($correctCorrelations as $q3 => $c3) {
+                    foreach ($correctCorrelations as $q4 => $c4) {
+                        if (!($q1 < $q2 && $q2 < $q3 && $q3 < $q4)) {
+                            continue;
+                        }
+                        $foursome = $correctCorrelations[$q1][$q2] +
+                            $correctCorrelations[$q2][$q3] +
+                            $correctCorrelations[$q1][$q3] +
+                            $correctCorrelations[$q1][$q4] +
+                            $correctCorrelations[$q2][$q4] +
+                            $correctCorrelations[$q3][$q4];
+                        if ($foursome < $minimum) {
+                            $minimum = $foursome;
+                            $questions = array('q1' => $q1,
+                                'q2' => $q2,
+                                'q3' => $q3,
+                                'q4' => $q4);
+                        }
+                    }
+                }
+            }
+        }
+
+        return array('totalCorrelation' => $minimum,
+            'questions' => $questions);
+
+    }
 }

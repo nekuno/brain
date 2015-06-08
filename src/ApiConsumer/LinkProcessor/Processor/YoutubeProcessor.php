@@ -69,6 +69,7 @@ class YoutubeProcessor implements ProcessorInterface
             $info = $items[0];
             $link['title'] = $info['snippet']['title'];
             $link['description'] = $info['snippet']['description'];
+            $link['thumbnail'] = 'https://img.youtube.com/vi/' . $id . '/mqdefault.jpg';
             $link['additionalLabels'] = array('Video');
             $link['additionalFields'] = array(
                 'embed_type' => 'youtube',

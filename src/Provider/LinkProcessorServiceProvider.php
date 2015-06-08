@@ -15,6 +15,7 @@ use ApiConsumer\LinkProcessor\Processor\ScraperProcessor;
 use ApiConsumer\LinkProcessor\Processor\SpotifyProcessor;
 use ApiConsumer\LinkProcessor\Processor\YoutubeProcessor;
 use Goutte\Client;
+use Http\OAuth\ResourceOwner\GoogleResourceOwner;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
 
@@ -53,7 +54,7 @@ class LinkProcessorServiceProvider implements ServiceProviderInterface
 
         $app['api_consumer.link_processor.processor.spotify'] = $app->share(
             function ($app) {
-                return new SpotifyProcessor($app['api_consumer.resource_owner.spotify'], new SpotifyUrlParser());
+                return new SpotifyProcessor($app['api_consumer.resource_owner.spotify'], new SpotifyUrlParser(), $app['api_consumer.resource_owner.google'], new YoutubeUrlParser());
             }
         );
 

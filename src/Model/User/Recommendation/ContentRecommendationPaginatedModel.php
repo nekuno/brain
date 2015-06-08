@@ -93,7 +93,8 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
         $qb = $this->gm->createQueryBuilder();
 
         $qb->match('(user:User {qnoow_id: { userId }})-[affinity:AFFINITY]->(content:' . $linkType . ')')
-            ->where('NOT (user)-[:LIKES|:DISLIKES]->(content) AND affinity.affinity > 0');
+            ->where('NOT (user)-[:LIKES|:DISLIKES]->(content) AND affinity.affinity > 0')
+            ->optionalMatch("(content)-[:SYNONYMOUS]->(synonymousLink:Link)");
 
         if (isset($filters['tag'])) {
             $qb->match('(content)-[:TAGGED]->(filterTag:Tag)')
@@ -108,7 +109,8 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
                 'id(content) as id',
                 'content',
                 'collect(distinct tag.name) as tags',
-                'labels(content) as types'
+                'labels(content) as types',
+                'COLLECT (DISTINCT synonymousLink) AS synonymous'
             )
             ->orderBy('affinity.affinity DESC, affinity.updated ASC')
             ->skip('{ offset }')
@@ -125,6 +127,20 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
             $content['url'] = $row['content']->getProperty('url');
             $content['title'] = $row['content']->getProperty('title');
             $content['description'] = $row['content']->getProperty('description');
+            $content['thumbnail'] = $row['content']->getProperty('thumbnail');
+            $content['synonymous'] = array();
+            if (isset($row['synonymous'])) {
+                foreach ($row['synonymous'] as $synonymousLink) {
+                    /* @var $synonymousLink Node */
+                    $synonymous = array();
+                    $synonymous['id'] = $synonymousLink->getId();
+                    $synonymous['url'] = $synonymousLink->getProperty('url');
+                    $synonymous['title'] = $synonymousLink->getProperty('title');
+                    $synonymous['thumbnail'] = $synonymousLink->getProperty('thumbnail');
+
+                    $content['synonymous'][] = $synonymous;
+                }
+            }
             foreach ($row['tags'] as $tag) {
                 $content['tags'][] = $tag;
             }
@@ -170,11 +186,13 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
                 ->limit('{ limit }');
             $qb->setParameters($params);
             $qb->optionalMatch('(content)-[:TAGGED]->(tag:Tag)')
+                ->optionalMatch("(content)-[:SYNONYMOUS]->(synonymousLink:Link)")
                 ->returns(
                     'id(content) as id',
                     'content',
                     'collect(distinct tag.name) as tags',
-                    'labels(content) as types'
+                    'labels(content) as types',
+                    'COLLECT (DISTINCT synonymousLink) AS synonymous'
                 )
                 ->orderBy('content.timestamp DESC');
             $query = $qb->getQuery();
@@ -186,6 +204,20 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
                 $content['url'] = $row['content']->getProperty('url');
                 $content['title'] = $row['content']->getProperty('title');
                 $content['description'] = $row['content']->getProperty('description');
+                $content['thumbnail'] = $row['content']->getProperty('thumbnail');
+                $content['synonymous'] = array();
+                if (isset($row['synonymous'])) {
+                    foreach ($row['synonymous'] as $synonymousLink) {
+                        /* @var $synonymousLink Node */
+                        $synonymous = array();
+                        $synonymous['id'] = $synonymousLink->getId();
+                        $synonymous['url'] = $synonymousLink->getProperty('url');
+                        $synonymous['title'] = $synonymousLink->getProperty('title');
+                        $synonymous['thumbnail'] = $synonymousLink->getProperty('thumbnail');
+
+                        $content['synonymous'][] = $synonymous;
+                    }
+                }
                 foreach ($row['tags'] as $tag) {
                     $content['tags'][] = $tag;
                 }

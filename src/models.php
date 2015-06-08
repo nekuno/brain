@@ -32,12 +32,12 @@ $app['users.questions.compare.model'] = function ($app) {
 
 $app['users.content.model'] = function ($app) {
 
-    return new \Model\User\ContentPaginatedModel($app['neo4j.client']);
+    return new \Model\User\ContentPaginatedModel($app['neo4j.graph_manager']);
 };
 
 $app['users.content.compare.model'] = function ($app) {
 
-    return new \Model\User\ContentComparePaginatedModel($app['neo4j.client']);
+    return new \Model\User\ContentComparePaginatedModel($app['neo4j.graph_manager']);
 };
 
 $app['users.content.tag.model'] = function ($app) {
