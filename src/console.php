@@ -5,6 +5,7 @@ use Symfony\Component\Console\Input\InputOption;
 
 $console = new Application('Nekuno Brain', '0.*');
 $console->getDefinition()->addOption(new InputOption('--env', '-e', InputOption::VALUE_REQUIRED, 'The Environment name.', 'dev'));
+/* @var $app Silex\Application*/
 $console->setDispatcher($app['dispatcher']);
 
 $console->addCommands(
@@ -22,8 +23,7 @@ $console->addCommands(
         new \Console\Command\AffinityCommand($app),
         new \Console\Command\PredictionCommand($app),
         new \Console\Command\EnqueueFetchingCommand($app),
-        new \Console\Command\LinksRemoveDuplicatesCommand($app),
-        new \Console\Command\LinksFindPseudoduplicatesCommand($app),
+        new \Console\Command\LinksFindDuplicatesCommand($app),
         new \Console\Command\LinksFuseCommand($app),
         new \Console\Command\GetUncorrelatedQuestionsCommand($app),
         new \Console\Command\SendChatMessagesNotificationsCommand($app),
