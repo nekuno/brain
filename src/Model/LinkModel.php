@@ -582,6 +582,85 @@ class LinkModel
     }
 
     /**
+     * @param $id
+     * @return array
+     * @throws \Exception
+     */
+    public function cleanInconsistencies($id)
+    {
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(l:Link)')
+            ->where('id(l)={id}')
+            ->match('(l)<-[r1:LIKES]-(u)')
+            ->optionalMatch('(l)<-[r2:DISLIKES]-(u)')
+            ->optionalMatch('(l)<-[r3:AFFINITY]-(u)')
+            ->delete('r2,r3')
+            ->returns('count(r2) AS dislikes, count(r3) AS affinities');
+        $qb->setParameter('id', (integer)$id);
+        $rs = $qb->getQuery()->getResultSet();
+        /* @var $row Row */
+        $row = $rs->current();
+        $result = array();
+        $result['affinities'] = $row->offsetGet('affinities');
+        $result['dislikes'] = $row->offsetGet('dislikes');
+        return $result;
+    }
+
+    /**
+     * @return \Everyman\Neo4j\Query\ResultSet
+     * @throws \Exception
+     */
+    public function findDuplicates()
+    {
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(l:Link)')
+            ->with('l.url AS url, COLLECT(ID(l)) AS ids, COUNT(*) AS count')
+            ->where('count > 1')
+            ->returns('url, ids');
+
+        $rs = $qb->getQuery()->getResultSet();
+        $result = array();
+        /** @var $row Row */
+        foreach ($rs as $row) {
+            for ($i = 1; $i < count($row->offsetGet('ids')); $i++) {
+                $duplicate = array();
+                $duplicate['main'] = array('id' => $row->offsetGet('ids')[0],
+                    'url' => $row->offsetGet('url'));
+                $duplicate['duplicate'] = array('id' => $row->offsetGet('ids')[$i],
+                    'url' => $row->offsetGet('url'));
+                $result[] = $duplicate;
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * @return array
+     * @throws \Exception
+     */
+    public function findPseudoduplicates()
+    {
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(l1:Link), (l2:Link)')
+            ->where('l2.url=l1.url+"/" OR l2.url=l1.url+"?" OR l2.url=l1.url+"&"')
+            ->returns('id(l1) AS id1, l1.url AS url1, id(l2) AS id2, l2.url AS url2');
+        $rs = $qb->getQuery()->getResultSet();
+        $result = array();
+        /** @var $row Row */
+        foreach ($rs as $row) {
+            $duplicate = array();
+            $duplicate['main'] = array('id' => $row->offsetGet('id1'),
+                'url' => $row->offsetGet('url1'));
+            $duplicate['duplicate'] = array('id' => $row->offsetGet('id2'),
+                'url' => $row->offsetGet('url2'));
+            $result[] = $duplicate;
+        }
+        return $result;
+    }
+
+    /**
      * @param $url
      * @return boolean
      */
@@ -646,6 +725,7 @@ class LinkModel
                 $result = $query->getResultSet();
 
                 $linkArray['synonymous'] = array();
+                /* @var $row Row */
                 foreach ($result as $index => $row) {
 
                     /** @var $link Node */
