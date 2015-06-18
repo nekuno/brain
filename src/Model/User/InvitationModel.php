@@ -7,7 +7,6 @@ use Everyman\Neo4j\Query\Row;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
 use Model\UserModel;
-use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class InvitationModel
@@ -51,8 +50,8 @@ class InvitationModel
         $result = $query->getResultSet();
 
         if ($result->count() > 0) {
-            $row = $result->current();
             /* @var $row Row */
+            $row = $result->current();
             $count = $row->offsetGet('total');
         }
 
@@ -61,6 +60,7 @@ class InvitationModel
 
     public function getById($id)
     {
+
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(inv:Invitation)')
             ->where('id(inv) = { invitationId }')
@@ -71,33 +71,40 @@ class InvitationModel
 
         $result = $query->getResultSet();
 
-        /* @var $row Row */
-        $row = $result->current();
+        if ($result->count() > 0) {
+            /* @var $row Row */
+            $row = $result->current();
+            return $this->build($row);
+        }
 
-        return $this->build($row);
-
+        throw new NotFoundHttpException(sprintf('There is not invitation with ID %s', $id));
     }
 
     public function getCountByUserId($userId)
     {
+
+        $count = 0;
+
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(inv:Invitation)')
             ->where('inv.userId = { userId }')
             ->setParameter('userId', $userId)
-            ->returns('COUNT(inv) as totalInvitations');
+            ->returns('COUNT(inv) as total');
 
         $query = $qb->getQuery();
 
         $result = $query->getResultSet();
 
-        /* @var $row Row */
-        $row = $result->current();
+        if ($result->count() > 0) {
+            /* @var $row Row */
+            $row = $result->current();
+            $count = $row->offsetGet('total');
+        }
 
-        return $row->offsetGet('totalInvitations');
-
+        return $count;
     }
 
-    public function getPaginatedInvitations($limit, $offset)
+    public function getPaginatedInvitations($offset, $limit)
     {
         $qb = $this->gm->createQueryBuilder();
         $qb->match("(inv:Invitation)")
@@ -123,11 +130,11 @@ class InvitationModel
         return $invitations;
     }
 
-    public function getPaginatedInvitationsByUser($limit, $offset, $userId)
+    public function getPaginatedInvitationsByUser($offset, $limit, $userId)
     {
         $qb = $this->gm->createQueryBuilder();
-        $qb->match("(inv:Invitation)", "(u:User)")
-            ->where("u.qnoowId = { userId }")
+        $qb->match("(inv:Invitation)<-[:CREATED_INVITATION]-(u:User)")
+            ->where("u.qnoow_id = { userId }")
             ->returns('inv AS invitation')
             ->skip("{ offset }")
             ->limit("{ limit }")
@@ -157,21 +164,23 @@ class InvitationModel
         $this->validate($data, false);
 
         $qb = $this->gm->createQueryBuilder();
-        $qb->createUnique('(inv:Invitation)')
+        $qb->create('(inv:Invitation)')
             ->set('inv.consumed = 0', 'inv.createdAt = timestamp()');
 
-        foreach($data as $index => $parameter)
-            $qb->set('inv.' . $index . ' = ' . $parameter);
+        foreach($data as $index => $parameter) {
+            $parameter = (string)$parameter === (string)(int)$parameter ? $parameter : "'" . $parameter . "'";
+            $qb->set('inv.' . $index . ' = ' . $parameter );
+        }
 
         if(isset($data['userId']))
         {
-             $qb
-                ->with('inv')
-                ->createUnique('(user:User)-[:CREATED_INVITATION]->(inv)')
-                ->where('user.qnoow_id = { userId }')
-                ->returns('inv AS invitation')
-                ->setParameters($data);
+             $qb->with('inv')
+                 ->match('(user:User)')
+                 ->where('user.qnoow_id = { userId }')
+                 ->createUnique('(user)-[:CREATED_INVITATION]->(inv)')
+                 ->setParameter('userId', $data['userId']);
         }
+        $qb->returns('inv AS invitation');
 
         $query = $qb->getQuery();
 
@@ -192,8 +201,10 @@ class InvitationModel
         $qb->match('(inv:Invitation)')
             ->where('id(inv) = { invitationId }');
 
-        foreach($data as $index => $parameter)
+        foreach($data as $index => $parameter) {
+            $parameter = (string)$parameter === (string)(int)$parameter ? $parameter : "'" . $parameter . "'";
             $qb->set('inv.' . $index . ' = ' . $parameter);
+        }
 
         $qb->returns('inv AS invitation')
             ->setParameters(array(
@@ -216,14 +227,14 @@ class InvitationModel
             throw new \RuntimeException('invitation ID must be an integer');
         }
         if(!$this->existsInvitation($invitationId)) {
-            throw new NotFoundHttpException(sprintf('There is not invitation with ID "%s"', $invitationId));
+            throw new NotFoundHttpException(sprintf('There is not invitation with ID %s', $invitationId));
         }
         $qb = $this->gm->createQueryBuilder();
 
         $qb->match('(inv:Invitation)')
+            ->where('id(inv) = { invitationId }')
             ->optionalMatch('(:User)-[created:CREATED_INVITATION]->(inv)')
             ->optionalMatch('(:User)-[consumed:CONSUMED_INVITATION]->(inv)')
-            ->where('id(inv) = { invitationId }')
             ->setParameter('invitationId', $invitationId)
             ->delete('inv', 'created', 'consumed');
 
@@ -241,10 +252,10 @@ class InvitationModel
             throw new \RuntimeException('user ID must be an integer');
         }
         if(!$this->existsInvitation($invitationId)) {
-            throw new NotFoundHttpException(sprintf('There is not invitation with ID "%s"', $invitationId));
+            throw new NotFoundHttpException(sprintf('There is not invitation with ID %s', $invitationId));
         }
         if($this->getAvailableInvitations($invitationId) < 1) {
-            throw new NotFoundHttpException(sprintf('There are no more available usages for invitation with ID "%s"', $invitationId));
+            throw new NotFoundHttpException(sprintf('There are no more available usages for invitation with ID %s', $invitationId));
         }
 
         $qb = $this->gm->createQueryBuilder();
@@ -320,82 +331,85 @@ class InvitationModel
 
             if ($fieldMetadata['required'] === true && !isset($data[$fieldName])) {
 
-                $fieldErrors[] = sprintf('The field "%s" is required', $fieldName);
+                $fieldErrors[] = sprintf('The field %s is required', $fieldName);
 
             } else {
 
                 $fieldValue = isset($data[$fieldName]) ? $data[$fieldName] : null;
 
-                switch ($fieldName) {
-                    case 'invitationId':
-                        if (!is_int($fieldValue)) {
-                            $fieldErrors[] = 'invitationId must be an integer';
-                        } elseif (!$this->existsInvitation($fieldValue)) {
-                            $fieldErrors[] = 'Invalid invitation ID';
-                        }
-                        break;
-                    case 'token':
-                        if (!is_string($fieldValue) && !is_numeric($fieldValue)) {
-                            $fieldErrors[] = 'token must be a string or a numeric';
-                        }
-                        break;
-                    case 'available':
-                        if (!is_int($fieldValue)) {
-                            $fieldErrors[] = 'available must be an integer';
-                        }
-                        break;
-                    case 'email':
-                        if (!filter_var($fieldValue, FILTER_VALIDATE_EMAIL)) {
-                            $fieldErrors[] = 'email must be a valid email';
-                        }
-                        break;
-                    case 'expiresAt':
-                        if (!(string)(int)$fieldErrors === (string)$fieldErrors) {
-                            $fieldErrors[] = 'expiresAt must be a valid timestamp';
-                        }
-                        break;
-                    case 'groupId':
-                        if (!is_int($fieldValue)) {
-                            $fieldErrors[] = 'groupId must be an integer';
-                        } elseif (!$this->groupM->existsGroup($fieldValue)) {
-                            $fieldErrors[] = 'Invalid group ID';
-                        }
-                        break;
-                    case 'htmlText':
-                        if (!is_string($fieldValue)) {
-                            $fieldErrors[] = 'htmlText must be a string';
-                        }
-                        break;
-                    case 'slogan':
-                        if (!is_string($fieldValue)) {
-                            $fieldErrors[] = 'slogan must be a string';
-                        }
-                        break;
-                    case 'image_url':
-                        if (!filter_var($fieldValue, FILTER_VALIDATE_URL)) {
-                            $fieldErrors[] = 'image_url must be a valid URL';
-                        }
-                        break;
-                    case 'orientationRequired':
-                        if (!is_bool($fieldErrors)) {
-                            $fieldErrors[] = 'orientationRequired must be a boolean';
-                        }
-                        break;
-                    case 'userId':
-                        if ($fieldValue) {
-                            if (!is_int($fieldValue)) {
-                                $fieldErrors[] = 'userId must be an integer';
-                            } else {
-                                try {
-                                    $this->um->getById($fieldValue);
-                                } catch (NotFoundHttpException $e) {
-                                    $fieldErrors[] = $e->getMessage();
+                if(null !== $fieldValue)
+                {
+                    switch ($fieldName) {
+                        case 'invitationId':
+                            if ((string)(int)$fieldValue !== (string)$fieldValue) {
+                                $fieldErrors[] = 'invitationId must be an integer';
+                            } elseif (!$this->existsInvitation($fieldValue)) {
+                                $fieldErrors[] = 'Invalid invitation ID';
+                            }
+                            break;
+                        case 'token':
+                            if (!is_string($fieldValue) && !is_numeric($fieldValue)) {
+                                $fieldErrors[] = 'token must be a string or a numeric';
+                            }
+                            break;
+                        case 'available':
+                            if ((string)(int)$fieldValue !== (string)$fieldValue) {
+                                $fieldErrors[] = 'available must be an integer';
+                            }
+                            break;
+                        case 'email':
+                            if (!filter_var($fieldValue, FILTER_VALIDATE_EMAIL)) {
+                                $fieldErrors[] = 'email must be a valid email';
+                            }
+                            break;
+                        case 'expiresAt':
+                            if ((string)(int)$fieldValue !== (string)$fieldValue) {
+                                $fieldErrors[] = 'expiresAt must be a valid timestamp';
+                            }
+                            break;
+                        case 'groupId':
+                            if ((string)(int)$fieldValue !== (string)$fieldValue) {
+                                $fieldErrors[] = 'groupId must be an integer';
+                            } elseif (!$this->groupM->existsGroup($fieldValue)) {
+                                $fieldErrors[] = 'Invalid group ID';
+                            }
+                            break;
+                        case 'htmlText':
+                            if (!is_string($fieldValue)) {
+                                $fieldErrors[] = 'htmlText must be a string';
+                            }
+                            break;
+                        case 'slogan':
+                            if (!is_string($fieldValue)) {
+                                $fieldErrors[] = 'slogan must be a string';
+                            }
+                            break;
+                        case 'image_url':
+                            if (!filter_var($fieldValue, FILTER_VALIDATE_URL)) {
+                                $fieldErrors[] = 'image_url must be a valid URL';
+                            }
+                            break;
+                        case 'orientationRequired':
+                            if (!is_bool($fieldValue)) {
+                                $fieldErrors[] = 'orientationRequired must be a boolean';
+                            }
+                            break;
+                        case 'userId':
+                            if ($fieldValue) {
+                                if ((string)(int)$fieldValue !== (string)$fieldValue) {
+                                    $fieldErrors[] = 'userId must be an integer';
+                                } else {
+                                    try {
+                                        $this->um->getById($fieldValue);
+                                    } catch (NotFoundHttpException $e) {
+                                        $fieldErrors[] = $e->getMessage();
+                                    }
                                 }
                             }
-                        }
-                        break;
-                    default:
-                        break;
+                            break;
+                        default:
+                            break;
+                    }
                 }
             }
 
@@ -431,7 +445,7 @@ class InvitationModel
         $properties = $invitation->getProperties();
         foreach ($requiredKeys as $key) {
             if (!in_array($key, $properties)) {
-                throw new \RuntimeException(sprintf('"%s" key needed in row', $key));
+                throw new \RuntimeException(sprintf('%s key needed in row', $key));
             }
             $invitationArray[$key] = $invitation->getProperty($key);
         }
@@ -469,9 +483,6 @@ class InvitationModel
             ),
             'expiresAt' => array(
                 'required' => false,
-            ),
-            'createdAt' => array(
-                'required' => true,
             ),
             'userId' => array(
                 'required' => false,

@@ -16,7 +16,7 @@ class InvitationController
         /* @var $model InvitationModel */
         $model = $app['users.invitations.model'];
 
-        $result = $model->getPaginatedInvitations($request->get('offset'), $request->get('limit'));
+        $result = $model->getPaginatedInvitations($request->get('offset') ?: 0, $request->get('limit') ?: 20);
 
         return $app->json($result);
     }
@@ -27,7 +27,7 @@ class InvitationController
         /* @var $model InvitationModel */
         $model = $app['users.invitations.model'];
 
-        $result = $model->getPaginatedInvitationsByUser($request->get('offset'), $request->get('limit'), $id);
+        $result = $model->getPaginatedInvitationsByUser($request->get('offset') ?: 0, $request->get('limit') ?: 20, $id);
 
         return $app->json($result);
     }
