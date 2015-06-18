@@ -7,7 +7,10 @@ use Everyman\Neo4j\Query\Row;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
 use Model\UserModel;
+use Service\TokenGenerator;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\PropertyAccess\Exception\RuntimeException;
+use Symfony\Component\Security\Acl\Exception\Exception;
 
 class InvitationModel
 {
@@ -158,22 +161,31 @@ class InvitationModel
         return $invitations;
     }
 
-    public function create(array $data)
+    public function create(array $data, TokenGenerator $tokenGenerator)
     {
 
         $this->validate($data, false);
 
+        $data += array('token' => null);
         $qb = $this->gm->createQueryBuilder();
         $qb->create('(inv:Invitation)')
             ->set('inv.consumed = 0', 'inv.createdAt = timestamp()');
 
         foreach($data as $index => $parameter) {
+            if($index === 'userId')
+                continue;
+            if($index === 'token') {
+                // set auto-created token if invitation has user or token is not set
+                if(isset($data['userId']) || !$data['token']) {
+                    $qb->set('inv.token = "' . $tokenGenerator->generateToken() . '"');
+                    continue;
+                }
+            }
             $parameter = (string)$parameter === (string)(int)$parameter ? $parameter : "'" . $parameter . "'";
             $qb->set('inv.' . $index . ' = ' . $parameter );
         }
 
-        if(isset($data['userId']))
-        {
+        if(isset($data['userId'])) {
              $qb->with('inv')
                  ->match('(user:User)')
                  ->where('user.qnoow_id = { userId }')
@@ -315,12 +327,11 @@ class InvitationModel
      */
     public function validate(array $data, $userRequired = true, $invitationIdRequired = false)
     {
-
         $errors = array();
 
         foreach ($this->getFieldsMetadata() as $fieldName => $fieldMetadata) {
 
-            if ($userRequired && $fieldName === 'userRequired') {
+            if ($userRequired && $fieldName === 'userId') {
                 $fieldMetadata['required'] = true;
             }
             if ($invitationIdRequired && $fieldName === 'invitationId') {
@@ -348,6 +359,9 @@ class InvitationModel
                             }
                             break;
                         case 'token':
+                            if(isset($data['userId'])) {
+                                $fieldErrors[] = 'You cannot set the token';
+                            }
                             if (!is_string($fieldValue) && !is_numeric($fieldValue)) {
                                 $fieldErrors[] = 'token must be a string or a numeric';
                             }
@@ -439,22 +453,20 @@ class InvitationModel
 
         /** @var Node $invitation */
         $invitation = $row->offsetGet('invitation');
+
         $optionalKeys = array('email', 'expiresAt', 'groupId', 'htmlText', 'slogan', 'image_url', 'orientationRequired');
         $requiredKeys = array('token', 'available', 'consumed', 'createdAt');
         $invitationArray = array();
-        $properties = $invitation->getProperties();
+
         foreach ($requiredKeys as $key) {
-            if (!in_array($key, $properties)) {
+            if (!$invitation->getProperty($key)) {
                 throw new \RuntimeException(sprintf('%s key needed in row', $key));
             }
             $invitationArray[$key] = $invitation->getProperty($key);
+
         }
         foreach ($optionalKeys as $key) {
-            if (in_array($key, $properties)) {
-                $invitationArray[$key] = $invitation->getProperty($key);
-            } else {
-                $invitationArray[$key] = null;
-            }
+            $invitationArray[$key] = $invitation->getProperty($key);
         }
 
         $invitationArray += array('invitationId' => $invitation->getId());
@@ -473,7 +485,7 @@ class InvitationModel
                 'required' => false,
             ),
             'token' => array(
-                'required' => true,
+                'required' => false,
             ),
             'available' => array(
                 'required' => true,
