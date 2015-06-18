@@ -2,7 +2,6 @@
 
 namespace Model\User;
 
-use Event\AnswerEvent;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Exception\ValidationException;
@@ -29,31 +28,23 @@ class InvitationModel
      */
     protected $um;
 
-    /**
-     * @var EventDispatcher
-     */
-    protected $eventDispatcher;
 
-    public function __construct(GraphManager $gm, GroupModel $groupModel, UserModel $um, EventDispatcher $eventDispatcher)
+    public function __construct(GraphManager $gm, GroupModel $groupModel, UserModel $um)
     {
 
         $this->gm = $gm;
         $this->groupM = $groupModel;
         $this->um = $um;
-        $this->eventDispatcher = $eventDispatcher;
     }
 
-/*    public function countTotal(array $filters)
+    public function getCountTotal()
     {
 
         $count = 0;
 
         $qb = $this->gm->createQueryBuilder();
-        $qb->match('(u:User)')
-            ->where('u.qnoow_id = { userId }')
-            ->setParameter('userId', (integer)$filters['id'])
-            ->match('(u)-[r:RATES]->(q:Question)')
-            ->returns('COUNT(DISTINCT r) AS total');
+        $qb->match('(inv:Invitation)')
+            ->returns('COUNT(DISTINCT inv) AS total');
 
         $query = $qb->getQuery();
 
@@ -62,12 +53,12 @@ class InvitationModel
         if ($result->count() > 0) {
             $row = $result->current();
             /* @var $row Row */
-/*            $count = $row->offsetGet('total');
+            $count = $row->offsetGet('total');
         }
 
         return $count;
     }
-*/
+
     public function getById($id)
     {
         $qb = $this->gm->createQueryBuilder();
@@ -106,6 +97,60 @@ class InvitationModel
 
     }
 
+    public function getPaginatedInvitations($limit, $offset)
+    {
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match("(inv:Invitation)")
+            ->returns('inv AS invitation')
+            ->skip("{ offset }")
+            ->limit("{ limit }")
+            ->setParameters(
+                array(
+                    'offset' => (integer)$offset,
+                    'limit' => (integer)$limit,
+                )
+            );
+
+        $query = $qb->getQuery();
+
+        $result = $query->getResultSet();
+
+        $invitations = array();
+        foreach ($result as $row) {
+            $invitations[] = $this->build($row);
+        }
+
+        return $invitations;
+    }
+
+    public function getPaginatedInvitationsByUser($limit, $offset, $userId)
+    {
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match("(inv:Invitation)", "(u:User)")
+            ->where("u.qnoowId = { userId }")
+            ->returns('inv AS invitation')
+            ->skip("{ offset }")
+            ->limit("{ limit }")
+            ->setParameters(
+                array(
+                    'offset' => (integer)$offset,
+                    'limit' => (integer)$limit,
+                    'userId' => (integer)$userId,
+                )
+            );
+
+        $query = $qb->getQuery();
+
+        $result = $query->getResultSet();
+
+        $invitations = array();
+        foreach ($result as $row) {
+            $invitations[] = $this->build($row);
+        }
+
+        return $invitations;
+    }
+
     public function create(array $data)
     {
 
@@ -135,14 +180,66 @@ class InvitationModel
         /* @var $row Row */
         $row = $result->current();
 
-        $this->handleAnswerAddedEvent($data);
+        return $this->build($row);
+    }
+
+    public function update(array $data)
+    {
+
+        $this->validate($data, false, true);
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(inv:Invitation)')
+            ->where('id(inv) = { invitationId }');
+
+        foreach($data as $index => $parameter)
+            $qb->set('inv.' . $index . ' = ' . $parameter);
+
+        $qb->returns('inv AS invitation')
+            ->setParameters(array(
+                    'invitationId' => $data['invitationId'])
+            );
+
+        $query = $qb->getQuery();
+
+        $result = $query->getResultSet();
+
+        /* @var $row Row */
+        $row = $result->current();
 
         return $this->build($row);
     }
 
+    public function remove($invitationId)
+    {
+        if(!is_int($invitationId)) {
+            throw new \RuntimeException('invitation ID must be an integer');
+        }
+        if(!$this->existsInvitation($invitationId)) {
+            throw new NotFoundHttpException(sprintf('There is not invitation with ID "%s"', $invitationId));
+        }
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(inv:Invitation)')
+            ->optionalMatch('(:User)-[created:CREATED_INVITATION]->(inv)')
+            ->optionalMatch('(:User)-[consumed:CONSUMED_INVITATION]->(inv)')
+            ->where('id(inv) = { invitationId }')
+            ->setParameter('invitationId', $invitationId)
+            ->delete('inv', 'created', 'consumed');
+
+        $query = $qb->getQuery();
+
+        $query->getResultSet();
+    }
+
     public function consume($invitationId, $userId)
     {
-
+        if(!is_int($invitationId)) {
+            throw new \RuntimeException('invitation ID must be an integer');
+        }
+        if(!is_int($userId)) {
+            throw new \RuntimeException('user ID must be an integer');
+        }
         if(!$this->existsInvitation($invitationId)) {
             throw new NotFoundHttpException(sprintf('There is not invitation with ID "%s"', $invitationId));
         }
@@ -171,52 +268,32 @@ class InvitationModel
         return $this->build($row);
     }
 
-    public function update(array $data)
+    public function prepareSend($id, $userId, array $data)
     {
+        if(!is_int($id)) {
+            throw new \RuntimeException('invitation ID must be an integer');
+        }
+        if(!is_int($userId)) {
+            throw new \RuntimeException('user ID must be an integer');
+        }
 
-        $this->validate($data, false, true);
+        $user = $this->um->getById($data['userId']);
+        $invitation = $this->getById($id);
 
-        $qb = $this->gm->createQueryBuilder();
-        $qb->match('(inv:Invitation)')
-            ->where('id(inv) = { invitationId }');
+        /* TODO should we get the stored email? */
+        if(!isset($data['email'])) {
+            throw new \RuntimeException('email must be set');
+        }
+        if(!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+            throw new \RuntimeException('email is not valid');
+        }
 
-        foreach($data as $index => $parameter)
-            $qb->set('inv.' . $index . ' = ' . $parameter);
-
-        $qb->returns('inv AS invitation')
-           ->setParameters(array(
-                'invitationId' => $data['invitationId'])
-            );
-
-
-        $query = $qb->getQuery();
-
-        $result = $query->getResultSet();
-
-        /* @var $row Row */
-        $row = $result->current();
-
-        $this->handleAnswerAddedEvent($data);
-
-        return $this->build($row);
-    }
-
-    /**
-     * @param $userId
-     * @return \Everyman\Neo4j\Query\ResultSet
-     */
-    public function getNumberOfUserAnswers($userId)
-    {
-
-        $qb = $this->gm->createQueryBuilder();
-        $qb->match('(a:Answer)<-[ua:ANSWERS]-(u:User)')
-            ->where('u.qnoow_id = { userId }')
-            ->setParameter('userId', (integer)$userId)
-            ->returns('count(ua) AS nOfAnswers');
-
-        $query = $qb->getQuery();
-
-        return $query->getResultSet();
+        return array(
+            'email' => $data['email'],
+            'name' => $user['name'],
+            'url' => '//nekuno.com/invitation/' . $invitation['token'],
+            'expiresAt' => $invitation['expiresAt'],
+        );
     }
 
     /**
@@ -335,7 +412,7 @@ class InvitationModel
         }
     }
 
-    public function build(Row $row)
+    protected function build(Row $row)
     {
 
         return array(
@@ -458,11 +535,5 @@ class InvitationModel
         $row = $result->current();
 
         return $this->build($row);
-    }
-
-    protected function handleAnswerAddedEvent(array $data)
-    {
-        $event = new AnswerEvent($data['userId'], $data['questionId']);
-        $this->eventDispatcher->dispatch(\AppEvents::ANSWER_ADDED, $event);
     }
 }

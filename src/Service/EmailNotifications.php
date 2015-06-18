@@ -41,6 +41,9 @@ class EmailNotifications
                 $view = 'email-notifications/exceptional_links_notification.html.twig';
                 break;
 
+            case EmailNotification::INVITATION :
+                $view = 'email-notifications/invitation.html.twig';
+                break;
             default:
                 $view = null;
                 break;

@@ -22,6 +22,7 @@ class EmailNotification
 
     const UNREAD_CHAT_MESSAGES = 1;
     const EXCEPTIONAL_LINKS = 2;
+    const INVITATION = 3;
 
     /**
      * @Id()
@@ -178,6 +179,7 @@ class EmailNotification
         return array(
             self::UNREAD_CHAT_MESSAGES,
             self::EXCEPTIONAL_LINKS,
+            self::INVITATION,
         );
     }
 

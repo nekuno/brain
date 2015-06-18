@@ -91,3 +91,18 @@ $controllers
             return (integer)$id;
         }
     );
+
+/**
+ * Invitation routes
+ */
+$app->get('/invitations', 'users.invitations.controller:indexAction');
+$app->get('/user/{id}/invitations', 'users.invitations.controller:indexByUserAction');
+$app->get('/invitations/{id}', 'users.invitations.controller:getAction');
+$app->post('/invitations', 'users.invitations.controller:postAction');
+$app->put('/invitations/{id}', 'users.invitations.controller:putAction');
+$app->delete('/invitations/{id}', 'users.invitations.controller:deleteAction');
+$app->post('/invitations/validate', 'users.invitations.controller:validateAction');
+$app->post('/invitations/{id}/users/{userId}/consume', 'users.invitations.controller:consumeAction');
+$app->get('/invitations/count', 'users.invitations.controller:countTotalAction');
+$app->get('/invitations/users/{id}/count', 'users.invitations.controller:countByUser');
+$app->post('/invitations/{id}/users/{userId}/send', 'users.invitations.controller:send');

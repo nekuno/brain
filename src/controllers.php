@@ -48,12 +48,20 @@ $app['users.groups.controller'] = $app->share(
     }
 );
 
+$app['users.invitations.controller'] = $app->share(
+    function () use ($app) {
+
+        return new \Controller\User\InvitationController($app['users.invitations.model']);
+    }
+);
+
 $app['fetch.controller'] = $app->share(
     function () {
 
         return new Controller\FetchController;
     }
 );
+
 
 /**
  * Middleware for filter some request
