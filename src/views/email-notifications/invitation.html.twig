@@ -1,7 +1,7 @@
 {% include 'email-notifications/partials/header-notification.html.twig' with { '%name%': email } %}
 
 
-<p>{{ 'notifications.messages.invitation.email_html'|trans({'%name%': name, '%url%': url, , '%expiresAt%': expiresAt|date}) }}</p>
+<p>{{ 'notifications.messages.invitation.email_html'|trans({'%name%': name, '%url%': url, '%expiresAt%': expiresAt|date}) }}</p>
 
 
 {% include 'email-notifications/partials/footer-notification.html.twig' %}

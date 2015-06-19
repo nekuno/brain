@@ -83,6 +83,17 @@ class InvitationController
         return $app->json($invitation);
     }
 
+    public function deleteAllAction(Application $app)
+    {
+
+        /* @var $model InvitationModel */
+        $model = $app['users.invitations.model'];
+
+        $model->removeAll();
+
+        return true;
+    }
+
     public function validateAction(Request $request, Application $app)
     {
 
@@ -129,18 +140,18 @@ class InvitationController
     public function sendAction(Request $request, Application $app, $id, $userId)
     {
         $data = $request->request->all();
-
+        $recipients = 0;
         /* @var $model InvitationModel */
         $model = $app['users.invitations.model'];
         if($sendData = $model->prepareSend($id, $userId, $data))
         {
-            $app['emailNotification.service']->send(EmailNotification::create()
+            $recipients = $app['emailNotification.service']->send(EmailNotification::create()
                 ->setType(EmailNotification::INVITATION)
                 ->setUserId($userId)
                 ->setRecipient($data['email'])
                 ->setSubject($app['translator']->trans('notifications.messages.invitation.subject'))
                 ->setInfo($sendData));
         }
-
+        return $recipients;
     }
 }

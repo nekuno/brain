@@ -85,11 +85,12 @@ $app->get('/invitations/{id}', 'users.invitations.controller:getAction');
 $app->post('/invitations', 'users.invitations.controller:postAction');
 $app->put('/invitations/{id}', 'users.invitations.controller:putAction');
 $app->delete('/invitations/{id}', 'users.invitations.controller:deleteAction');
+$app->delete('/invitations', 'users.invitations.controller:deleteAllAction');
 $app->post('/invitations/validate', 'users.invitations.controller:validateAction');
 $app->post('/invitations/{id}/users/{userId}/consume', 'users.invitations.controller:consumeAction');
 $app->get('/invitations/count', 'users.invitations.controller:countTotalAction');
-$app->get('/invitations/users/{id}/count', 'users.invitations.controller:countByUser');
-$app->post('/invitations/{id}/users/{userId}/send', 'users.invitations.controller:send');
+$app->get('/invitations/users/{id}/count', 'users.invitations.controller:countByUserAction');
+$app->post('/invitations/{id}/users/{userId}/send', 'users.invitations.controller:sendAction');
 
 
 $controllers

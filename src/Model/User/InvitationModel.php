@@ -9,8 +9,6 @@ use Model\Neo4j\GraphManager;
 use Model\UserModel;
 use Service\TokenGenerator;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\PropertyAccess\Exception\RuntimeException;
-use Symfony\Component\Security\Acl\Exception\Exception;
 
 class InvitationModel
 {
@@ -89,9 +87,9 @@ class InvitationModel
         $count = 0;
 
         $qb = $this->gm->createQueryBuilder();
-        $qb->match('(inv:Invitation)')
-            ->where('inv.userId = { userId }')
-            ->setParameter('userId', $userId)
+        $qb->match('(inv:Invitation)<-[:CREATED_INVITATION]-(u:User)')
+            ->where('u.qnoow_id = { userId }')
+            ->setParameter('userId', (integer)$userId)
             ->returns('COUNT(inv) as total');
 
         $query = $qb->getQuery();
@@ -181,7 +179,8 @@ class InvitationModel
                     continue;
                 }
             }
-            $parameter = (string)$parameter === (string)(int)$parameter ? $parameter : "'" . $parameter . "'";
+            $parameter = ((string)$parameter === (string)(int)$parameter) ? (integer)$parameter :
+                ((string)$parameter !== "true" && (string)$parameter !== "false" ? "'" . $parameter . "'" : $parameter);
             $qb->set('inv.' . $index . ' = ' . $parameter );
         }
 
@@ -189,8 +188,8 @@ class InvitationModel
              $qb->with('inv')
                  ->match('(user:User)')
                  ->where('user.qnoow_id = { userId }')
-                 ->createUnique('(user)-[:CREATED_INVITATION]->(inv)')
-                 ->setParameter('userId', $data['userId']);
+                 ->createUnique('(user)-[r:CREATED_INVITATION]->(inv)')
+                 ->setParameter('userId', (integer)$data['userId']);
         }
         $qb->returns('inv AS invitation');
 
@@ -214,13 +213,14 @@ class InvitationModel
             ->where('id(inv) = { invitationId }');
 
         foreach($data as $index => $parameter) {
-            $parameter = (string)$parameter === (string)(int)$parameter ? $parameter : "'" . $parameter . "'";
+            $parameter = (string)$parameter === (string)(int)$parameter ? (integer)$parameter :
+                ((string)$parameter !== "true" && (string)$parameter !== "false" ? "'" . $parameter . "'" : $parameter);
             $qb->set('inv.' . $index . ' = ' . $parameter);
         }
 
         $qb->returns('inv AS invitation')
             ->setParameters(array(
-                    'invitationId' => $data['invitationId'])
+                    'invitationId' => (integer)$data['invitationId'])
             );
 
         $query = $qb->getQuery();
@@ -255,12 +255,27 @@ class InvitationModel
         $query->getResultSet();
     }
 
+    public function removeAll()
+    {
+
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(inv:Invitation)')
+            ->optionalMatch('(:User)-[created:CREATED_INVITATION]->(inv)')
+            ->optionalMatch('(:User)-[consumed:CONSUMED_INVITATION]->(inv)')
+            ->delete('inv', 'created', 'consumed');
+
+        $query = $qb->getQuery();
+
+        $query->getResultSet();
+    }
+
     public function consume($invitationId, $userId)
     {
-        if(!is_int($invitationId)) {
+        if((string)$invitationId !== (string)(int)$invitationId) {
             throw new \RuntimeException('invitation ID must be an integer');
         }
-        if(!is_int($userId)) {
+        if((string)$userId !== (string)(int)$userId) {
             throw new \RuntimeException('user ID must be an integer');
         }
         if(!$this->existsInvitation($invitationId)) {
@@ -277,8 +292,8 @@ class InvitationModel
             ->set('inv.available = inv.available - 1', 'inv.consumed = inv.consumed + 1')
             ->returns('inv AS invitation')
             ->setParameters(array(
-                'invitationId' => $invitationId,
-                'userId' => $userId,
+                'invitationId' => (integer)$invitationId,
+                'userId' => (integer)$userId,
             ));
 
         $query = $qb->getQuery();
@@ -293,14 +308,14 @@ class InvitationModel
 
     public function prepareSend($id, $userId, array $data)
     {
-        if(!is_int($id)) {
+        if((string)$id !== (string)(int)$id) {
             throw new \RuntimeException('invitation ID must be an integer');
         }
-        if(!is_int($userId)) {
+        if((string)$userId !== (string)(int)$userId) {
             throw new \RuntimeException('user ID must be an integer');
         }
 
-        $user = $this->um->getById($data['userId']);
+        $user = $this->um->getById($userId);
         $invitation = $this->getById($id);
 
         /* TODO should we get the stored email? */
@@ -315,7 +330,7 @@ class InvitationModel
             'email' => $data['email'],
             'name' => $user['name'],
             'url' => '//nekuno.com/invitation/' . $invitation['token'],
-            'expiresAt' => $invitation['expiresAt'],
+            'expiresAt' => (integer)$invitation['expiresAt'],
         );
     }
 
@@ -404,7 +419,7 @@ class InvitationModel
                             }
                             break;
                         case 'orientationRequired':
-                            if (!is_bool($fieldValue)) {
+                            if ((string)$fieldValue !== "true" && (string)$fieldValue !== "false") {
                                 $fieldErrors[] = 'orientationRequired must be a boolean';
                             }
                             break;
@@ -422,6 +437,7 @@ class InvitationModel
                             }
                             break;
                         default:
+                            $fieldErrors[] = $fieldName . ' cannot be set';
                             break;
                     }
                 }
@@ -459,7 +475,7 @@ class InvitationModel
         $invitationArray = array();
 
         foreach ($requiredKeys as $key) {
-            if (!$invitation->getProperty($key)) {
+            if (null === $invitation->getProperty($key)) {
                 throw new \RuntimeException(sprintf('%s key needed in row', $key));
             }
             $invitationArray[$key] = $invitation->getProperty($key);
@@ -490,10 +506,16 @@ class InvitationModel
             'available' => array(
                 'required' => true,
             ),
+            'consumed' => array(
+                'required' => false,
+            ),
             'email' => array(
                 'required' => false,
             ),
             'expiresAt' => array(
+                'required' => false,
+            ),
+            'createdAt' => array(
                 'required' => false,
             ),
             'userId' => array(
@@ -557,6 +579,6 @@ class InvitationModel
         /* @var $row Row */
         $row = $result->current();
 
-        return $this->build($row);
+        return (integer)$row->offsetGet('available');
     }
 }
