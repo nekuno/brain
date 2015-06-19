@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * Created by Manolo Salsas (manolez@gmail.com)
+ */
+
 namespace EventListener;
 
 use Model\User\AnswerModel;
@@ -9,11 +13,12 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class InvitationSubscriber implements EventSubscriberInterface
 {
-
-
     /**
      * @var AnswerModel
      */
+
+    const INVITATIONS_PER_HUNDRED_ANSWERS = 10;
+
     protected $answerModel;
 
     public function __construct(AnswerModel $answerModel, InvitationModel $invitationModel)
@@ -35,14 +40,9 @@ class InvitationSubscriber implements EventSubscriberInterface
         $user = $event->getUser();
 
         $userAnswersCount = $this->answerModel->getNumberOfUserAnswers($user->getId())->offsetGet('nOfAnswers');
-        $availableInvitations = $this->invitationModel->getUserAvailable($user->getId());
 
-        $invitationsShouldHave = $userAnswersCount['nOfAnswers'] / 10;
-
-        if (($newInvitations = $invitationsShouldHave - $availableInvitations) > 0) {
-            if ($newInvitations >= 10) {
-                $this->invitationModel->setUserAvailable($user->getId(), $invitationsShouldHave);
-            }
+        if($userAnswersCount['nOfAnswers'] % 100 === 0) {
+            $this->invitationModel->addUserAvailable($user->getId(), self::INVITATIONS_PER_HUNDRED_ANSWERS);
         }
     }
 }

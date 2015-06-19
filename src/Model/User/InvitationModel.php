@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * Created by Manolo Salsas (manolez@gmail.com)
+ */
+
 namespace Model\User;
 
 use Everyman\Neo4j\Node;
@@ -10,9 +14,12 @@ use Model\UserModel;
 use Service\TokenGenerator;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
+/**
+ * Class InvitationModel
+ * @package Model\User
+ */
 class InvitationModel
 {
-
     /**
      * @var GraphManager
      */
@@ -31,7 +38,6 @@ class InvitationModel
 
     public function __construct(GraphManager $gm, GroupModel $groupModel, UserModel $um)
     {
-
         $this->gm = $gm;
         $this->groupM = $groupModel;
         $this->um = $um;
@@ -39,7 +45,6 @@ class InvitationModel
 
     public function getCountTotal()
     {
-
         $count = 0;
 
         $qb = $this->gm->createQueryBuilder();
@@ -61,7 +66,6 @@ class InvitationModel
 
     public function getById($id)
     {
-
         if((string)$id !== (string)(int)$id) {
             throw new \RuntimeException('invitationId ID must be an integer');
         }
@@ -87,7 +91,6 @@ class InvitationModel
 
     public function getCountByUserId($userId)
     {
-
         $count = 0;
 
         $qb = $this->gm->createQueryBuilder();
@@ -111,7 +114,6 @@ class InvitationModel
 
     public function getPaginatedInvitations($offset, $limit)
     {
-
         if((string)$offset !== (string)(int)$offset) {
             throw new \RuntimeException('offset must be an integer');
         }
@@ -145,7 +147,6 @@ class InvitationModel
 
     public function getPaginatedInvitationsByUser($offset, $limit, $userId)
     {
-
         if((string)$offset !== (string)(int)$offset) {
             throw new \RuntimeException('offset must be an integer');
         }
@@ -184,7 +185,6 @@ class InvitationModel
 
     public function create(array $data, TokenGenerator $tokenGenerator)
     {
-
         $this->validate($data, false);
 
         $userAvailable = 0;
@@ -237,7 +237,6 @@ class InvitationModel
 
     public function update(array $data)
     {
-
         $this->validate($data, false, true);
 
         $qb = $this->gm->createQueryBuilder();
@@ -289,7 +288,6 @@ class InvitationModel
 
     public function removeAll()
     {
-
         $qb = $this->gm->createQueryBuilder();
 
         $qb->match('(inv:Invitation)')
@@ -366,6 +364,7 @@ class InvitationModel
         );
     }
 
+    /* Not used
     public function setUserAvailable($userId, $nOfAvailable)
     {
         if((string)$nOfAvailable !== (string)(int)$nOfAvailable) {
@@ -387,7 +386,29 @@ class InvitationModel
         $query = $qb->getQuery();
 
         $query->getResultSet();
+    }*/
 
+    public function addUserAvailable($userId, $nOfAvailable)
+    {
+        if((string)$nOfAvailable !== (string)(int)$nOfAvailable) {
+            throw new \RuntimeException('nOfAvailable must be an integer');
+        }
+        if((string)$userId !== (string)(int)$userId) {
+            throw new \RuntimeException('userId ID must be an integer');
+        }
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User)')
+            ->where('u.qnoow_id = { userId }')
+            ->set('u.available_invitations = u.available_invitations + { nOfAvailable }')
+            ->setParameters(array(
+                'nOfAvailable' => (integer)$nOfAvailable,
+                'userId' => (integer)$userId,
+            ));
+
+        $query = $qb->getQuery();
+
+        $query->getResultSet();
     }
 
     public function getUserAvailable($userId)
@@ -409,7 +430,6 @@ class InvitationModel
         $result = $query->getResultSet();
 
         return $result->offsetGet('available_invitations');
-
     }
 
     /**
@@ -536,7 +556,6 @@ class InvitationModel
 
     protected function build(Row $row)
     {
-
         return array(
             'invitation' => $this->buildInvitation($row),
         );
@@ -544,7 +563,6 @@ class InvitationModel
 
     protected function buildInvitation(Row $row)
     {
-
         /** @var Node $invitation */
         $invitation = $row->offsetGet('invitation');
 
@@ -573,7 +591,6 @@ class InvitationModel
      */
     protected function getFieldsMetadata()
     {
-
         $metadata = array(
             'invitationId' => array(
                 'required' => false,
@@ -614,7 +631,6 @@ class InvitationModel
             'orientationRequired' => array(
                 'required' => false,
             ),
-
         );
 
         return $metadata;
@@ -627,7 +643,6 @@ class InvitationModel
      */
     protected function existsInvitation($invitationId)
     {
-
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(inv:Invitation)')
             ->where('id(inv) = { invitationId }')
@@ -643,7 +658,6 @@ class InvitationModel
 
     protected function getAvailableInvitations($invitationId)
     {
-
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(inv:Invitation)')
             ->where('id(inv) = { invitationId }')
