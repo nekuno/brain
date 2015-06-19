@@ -34,7 +34,7 @@ class InvitationSubscriber implements EventSubscriberInterface
 
         $user = $event->getUser();
 
-        $userAnswersCount = $this->answerModel->getNumberOfUserAnswers($user->getId());
+        $userAnswersCount = $this->answerModel->getNumberOfUserAnswers($user->getId())->offsetGet('nOfAnswers');
         $availableInvitations = $this->invitationModel->getUserAvailable($user->getId());
 
         $invitationsShouldHave = $userAnswersCount['nOfAnswers'] / 10;
