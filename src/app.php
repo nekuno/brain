@@ -4,6 +4,7 @@ use ApiConsumer\EventListener\OAuthTokenSubscriber;
 use Dflydev\Silex\Provider\DoctrineOrm\DoctrineOrmServiceProvider;
 use EventListener\UserAnswerSubscriber;
 use EventListener\UserDataStatusSubscriber;
+use EventListener\InvitationSubscriber;
 use Provider\AMQPServiceProvider;
 use Provider\ApiConsumerServiceProvider;
 use Provider\GuzzleServiceProvider;
@@ -75,6 +76,9 @@ $dispatcher->addSubscriber($statusSubscriber);
 
 $answerSubscriber = new UserAnswerSubscriber($app['amqp']);
 $dispatcher->addSubscriber($answerSubscriber);
+
+$invitationSubscriber = new InvitationSubscriber($app['users.answers.model'], $app['users.invitations.model']);
+$dispatcher->addSubscriber($invitationSubscriber);
 
 /**
  * Services configuration.

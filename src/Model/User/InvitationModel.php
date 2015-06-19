@@ -62,10 +62,14 @@ class InvitationModel
     public function getById($id)
     {
 
+        if((string)$id !== (string)(int)$id) {
+            throw new \RuntimeException('invitationId ID must be an integer');
+        }
+
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(inv:Invitation)')
             ->where('id(inv) = { invitationId }')
-            ->setParameter('invitationId', $id)
+            ->setParameter('invitationId', (integer)$id)
             ->returns('inv as invitation');
 
         $query = $qb->getQuery();
@@ -107,6 +111,14 @@ class InvitationModel
 
     public function getPaginatedInvitations($offset, $limit)
     {
+
+        if((string)$offset !== (string)(int)$offset) {
+            throw new \RuntimeException('offset must be an integer');
+        }
+        if((string)$limit !== (string)(int)$limit) {
+            throw new \RuntimeException('limit must be an integer');
+        }
+
         $qb = $this->gm->createQueryBuilder();
         $qb->match("(inv:Invitation)")
             ->returns('inv AS invitation')
@@ -133,6 +145,17 @@ class InvitationModel
 
     public function getPaginatedInvitationsByUser($offset, $limit, $userId)
     {
+
+        if((string)$offset !== (string)(int)$offset) {
+            throw new \RuntimeException('offset must be an integer');
+        }
+        if((string)$limit !== (string)(int)$limit) {
+            throw new \RuntimeException('limit must be an integer');
+        }
+        if((string)$userId !== (string)(int)$userId) {
+            throw new \RuntimeException('$userId ID must be an integer');
+        }
+
         $qb = $this->gm->createQueryBuilder();
         $qb->match("(inv:Invitation)<-[:CREATED_INVITATION]-(u:User)")
             ->where("u.qnoow_id = { userId }")
@@ -164,6 +187,11 @@ class InvitationModel
 
         $this->validate($data, false);
 
+        $userAvailable = 0;
+        if(isset($data['userId']) && !$userAvailable = $this->getUserAvailable($data['userId'])) {
+            throw new \RuntimeException(sprintf('User %s has not available invitations', $data['userId']));
+        }
+
         $data += array('token' => null);
         $qb = $this->gm->createQueryBuilder();
         $qb->create('(inv:Invitation)')
@@ -189,7 +217,11 @@ class InvitationModel
                  ->match('(user:User)')
                  ->where('user.qnoow_id = { userId }')
                  ->createUnique('(user)-[r:CREATED_INVITATION]->(inv)')
-                 ->setParameter('userId', (integer)$data['userId']);
+                 ->set('user.available_invitations = { userAvailable } - 1')
+                 ->setParameters(array(
+                     'userId' => (integer)$data['userId'],
+                     'userAvailable' => (integer)$userAvailable,
+                 ));
         }
         $qb->returns('inv AS invitation');
 
@@ -247,7 +279,7 @@ class InvitationModel
             ->where('id(inv) = { invitationId }')
             ->optionalMatch('(:User)-[created:CREATED_INVITATION]->(inv)')
             ->optionalMatch('(:User)-[consumed:CONSUMED_INVITATION]->(inv)')
-            ->setParameter('invitationId', $invitationId)
+            ->setParameter('invitationId', (integer)$invitationId)
             ->delete('inv', 'created', 'consumed');
 
         $query = $qb->getQuery();
@@ -332,6 +364,52 @@ class InvitationModel
             'url' => '//nekuno.com/invitation/' . $invitation['token'],
             'expiresAt' => (integer)$invitation['expiresAt'],
         );
+    }
+
+    public function setUserAvailable($userId, $nOfAvailable)
+    {
+        if((string)$nOfAvailable !== (string)(int)$nOfAvailable) {
+            throw new \RuntimeException('nOfAvailable must be an integer');
+        }
+        if((string)$userId !== (string)(int)$userId) {
+            throw new \RuntimeException('userId ID must be an integer');
+        }
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User)')
+            ->where('u.qnoow_id = { userId }')
+            ->set('u.available_invitations = { nOfAvailable }')
+            ->setParameters(array(
+                'nOfAvailable' => (integer)$nOfAvailable,
+                'userId' => (integer)$userId,
+            ));
+
+        $query = $qb->getQuery();
+
+        $query->getResultSet();
+
+    }
+
+    public function getUserAvailable($userId)
+    {
+        if((string)$userId !== (string)(int)$userId) {
+            throw new \RuntimeException('userId ID must be an integer');
+        }
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User)')
+            ->where('u.qnoow_id = { userId }')
+            ->returns('u.available_invitations AS available_invitations')
+            ->setParameters(array(
+                'userId' => (integer)$userId,
+            ));
+
+        $query = $qb->getQuery();
+
+        $result = $query->getResultSet();
+
+        return $result->offsetGet('available_invitations');
+
     }
 
     /**
