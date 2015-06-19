@@ -77,7 +77,7 @@ $dispatcher->addSubscriber($statusSubscriber);
 $answerSubscriber = new UserAnswerSubscriber($app['amqp']);
 $dispatcher->addSubscriber($answerSubscriber);
 
-$invitationSubscriber = new InvitationSubscriber($app['users.answers.model'], $app['users.invitations.model']);
+$invitationSubscriber = new InvitationSubscriber($app['neo4j.graph_manager']);
 $dispatcher->addSubscriber($invitationSubscriber);
 
 /**

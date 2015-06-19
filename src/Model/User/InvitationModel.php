@@ -388,6 +388,7 @@ class InvitationModel
         $query->getResultSet();
     }*/
 
+    /* Already user in subscriber
     public function addUserAvailable($userId, $nOfAvailable)
     {
         if((string)$nOfAvailable !== (string)(int)$nOfAvailable) {
@@ -409,7 +410,7 @@ class InvitationModel
         $query = $qb->getQuery();
 
         $query->getResultSet();
-    }
+    }*/
 
     public function getUserAvailable($userId)
     {
