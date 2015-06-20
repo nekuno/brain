@@ -170,7 +170,7 @@ class ChatMessageNotifications
             ->select('DISTINCT chat_message.user_to')
             ->from('chat_message')
             ->where('chat_message.readed = 0')
-            ->where('chat_message.createdAt > :yesterday')
+            ->andWhere('chat_message.createdAt > :yesterday')
             ->orderBy('chat_message.createdAt', 'desc')
             ->setMaxResults($limit)
             ->setParameter('yesterday', $yesterday);
@@ -192,8 +192,8 @@ class ChatMessageNotifications
             ->select('*')
             ->from('chat_message')
             ->where('chat_message.readed = 0')
-            ->where('chat_message.createdAt > :yesterday')
-            ->where('chat_message.user_to = :user_to')
+            ->andWhere('chat_message.createdAt > :yesterday')
+            ->andWhere('chat_message.user_to = :user_to')
             ->orderBy('chat_message.createdAt', 'desc')
             ->setParameter('user_to', $userId)
             ->setParameter('yesterday', $yesterday);
