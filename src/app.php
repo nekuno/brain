@@ -4,6 +4,7 @@ use ApiConsumer\EventListener\OAuthTokenSubscriber;
 use Dflydev\Silex\Provider\DoctrineOrm\DoctrineOrmServiceProvider;
 use EventListener\UserAnswerSubscriber;
 use EventListener\UserDataStatusSubscriber;
+use EventListener\InvitationSubscriber;
 use Provider\AMQPServiceProvider;
 use Provider\ApiConsumerServiceProvider;
 use Provider\GuzzleServiceProvider;
@@ -19,6 +20,7 @@ use Silex\Provider\UrlGeneratorServiceProvider;
 use Silex\Provider\ValidatorServiceProvider;
 use Silex\Provider\TwigServiceProvider;
 use Silex\Provider\TranslationServiceProvider;
+use Symfony\Component\Translation\Loader\YamlFileLoader;
 
 $app = new Application();
 
@@ -74,5 +76,29 @@ $dispatcher->addSubscriber($statusSubscriber);
 
 $answerSubscriber = new UserAnswerSubscriber($app['amqp']);
 $dispatcher->addSubscriber($answerSubscriber);
+
+$invitationSubscriber = new InvitationSubscriber($app['neo4j.graph_manager']);
+$dispatcher->addSubscriber($invitationSubscriber);
+
+/**
+ * Services configuration.
+ */
+$app['emailNotification.service'] = function (Silex\Application $app) {
+    return new \Service\EmailNotifications($app['mailer'], $app['orm.ems']['mysql_brain'], $app['twig']);
+};
+
+$app['translator'] = $app->share($app->extend('translator', function($translator) {
+    $translator->addLoader('yaml', new YamlFileLoader());
+
+    $translator->addResource('yaml', __DIR__.'/locales/en.yml', 'en');
+    $translator->addResource('yaml', __DIR__.'/locales/es.yml', 'es');
+
+    return $translator;
+}));
+
+$app['tokenGenerator.service'] = function () {
+    return new \Service\TokenGenerator();
+};
+
 
 return $app;

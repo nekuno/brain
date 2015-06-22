@@ -262,4 +262,23 @@ class GroupModel
         );
     }
 
+    /**
+     * @param $groupId
+     * @return bool
+     * @throws \Exception
+     */
+    public function existsGroup($groupId)
+    {
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(g:Group)')
+            ->where('id(g) = { groupId }')
+            ->setParameter('groupId', (integer)$groupId)
+            ->returns('g AS group');
+
+        $query = $qb->getQuery();
+
+        $result = $query->getResultSet();
+
+        return $result->count() > 0;
+    }
 }
