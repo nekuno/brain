@@ -116,6 +116,15 @@ class InvitationController
         return true;
     }
 
+    public function validateTokenAction(Application $app, $token)
+    {
+        /* @var $model InvitationModel */
+        $model = $app['users.invitations.model'];
+        $invitation = $model->validateToken($token);
+
+        return $app->json($invitation, 200);
+    }
+
     public function validateAction(Request $request, Application $app)
     {
 
@@ -128,13 +137,13 @@ class InvitationController
         return $app->json(array(), 200);
     }
 
-    public function consumeAction(Application $app, $id, $userId)
+    public function consumeAction(Application $app, $token, $userId)
     {
 
         /* @var $model InvitationModel */
         $model = $app['users.invitations.model'];
 
-        $invitation = $model->consume($id, $userId);
+        $invitation = $model->consume($token, $userId);
 
         return $app->json($invitation);
     }

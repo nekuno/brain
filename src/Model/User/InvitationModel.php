@@ -198,7 +198,7 @@ class InvitationModel
             ->set('inv.consumed = 0', 'inv.createdAt = timestamp()');
 
         foreach($data as $index => $parameter) {
-            if($index === 'userId')
+            if($index === 'userId' || $index === 'createdAt' || $index === 'consumed')
                 continue;
             if($index === 'token') {
                 // set auto-created token if invitation has user or token is not set
@@ -207,9 +207,17 @@ class InvitationModel
                     continue;
                 }
             }
-            $parameter = ((string)$parameter === (string)(int)$parameter) ? (integer)$parameter :
-                ((string)$parameter !== "true" && (string)$parameter !== "false" ? "'" . $parameter . "'" : $parameter);
-            $qb->set('inv.' . $index . ' = ' . $parameter );
+            if($index === 'orientationRequired') {
+                if(isset($data['orientationRequired'])) {
+                    $data['orientationRequired'] = $data['orientationRequired'] ? 'true' : 'false';
+                    $qb->set('inv.orientationRequired = ' . $data['orientationRequired']);
+                    continue;
+                }
+            }
+            if(isset($data[$index])) {
+                $parameter = (ctype_digit((string)$parameter)) ? (integer)$parameter : "'" . $parameter . "'";
+                $qb->set('inv.' . $index . ' = ' . $parameter );
+            }
         }
 
         if(isset($data['userId'])) {
@@ -244,9 +252,17 @@ class InvitationModel
             ->where('id(inv) = { invitationId }');
 
         foreach($data as $index => $parameter) {
-            $parameter = (string)$parameter === (string)(int)$parameter ? (integer)$parameter :
-                ((string)$parameter !== "true" && (string)$parameter !== "false" ? "'" . $parameter . "'" : $parameter);
-            $qb->set('inv.' . $index . ' = ' . $parameter);
+            if($index === 'orientationRequired') {
+                if(isset($data['orientationRequired'])) {
+                    $data['orientationRequired'] = $data['orientationRequired'] ? 'true' : 'false';
+                    $qb->set('inv.orientationRequired = ' . $data['orientationRequired']);
+                    continue;
+                }
+            }
+            if(isset($data[$index])) {
+                $parameter = (ctype_digit((string)$parameter)) ? (integer)$parameter : "'" . $parameter . "'";
+                $qb->set('inv.' . $index . ' = ' . $parameter );
+            }
         }
 
         $qb->returns('inv AS invitation')
@@ -300,29 +316,23 @@ class InvitationModel
         $query->getResultSet();
     }
 
-    public function consume($invitationId, $userId)
+    public function consume($token, $userId)
     {
-        if((string)$invitationId !== (string)(int)$invitationId) {
-            throw new \RuntimeException('invitation ID must be an integer');
+        if(!is_numeric($token) && !is_string($token)) {
+            throw new \RuntimeException('token must be numeric or string');
         }
         if((string)$userId !== (string)(int)$userId) {
             throw new \RuntimeException('user ID must be an integer');
         }
-        if(!$this->existsInvitation($invitationId)) {
-            throw new NotFoundHttpException(sprintf('There is not invitation with ID %s', $invitationId));
-        }
-        if($this->getAvailableInvitations($invitationId) < 1) {
-            throw new NotFoundHttpException(sprintf('There are no more available usages for invitation with ID %s', $invitationId));
-        }
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(inv:Invitation)', '(u:User)')
-            ->where('id(inv) = { invitationId } AND u.qnoow_id = { userId }')
+            ->where('inv.token = { token } AND coalesce(inv.available, 0) > 0 AND u.qnoow_id = { userId }')
             ->createUnique('(u)-[r:CONSUMED_INVITATION]->(inv)')
             ->set('inv.available = inv.available - 1', 'inv.consumed = inv.consumed + 1')
             ->returns('inv AS invitation')
             ->setParameters(array(
-                'invitationId' => (integer)$invitationId,
+                'token' => (string)$token,
                 'userId' => (integer)$userId,
             ));
 
@@ -330,10 +340,13 @@ class InvitationModel
 
         $result = $query->getResultSet();
 
-        /* @var $row Row */
-        $row = $result->current();
+        if ($result->count() > 0) {
+            /* @var $row Row */
+            $row = $result->current();
+            return $this->build($row);
+        }
 
-        return $this->build($row);
+        throw new NotFoundHttpException(sprintf('There is not invitation available with token %s', $token));
     }
 
     public function prepareSend($id, $userId, array $data)
@@ -436,6 +449,29 @@ class InvitationModel
         return $row->offsetGet('available_invitations');
     }
 
+    public function validateToken($token)
+    {
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(inv:Invitation)')
+            ->where('inv.token = { token }')
+            ->returns('inv AS invitation')
+            ->setParameters(array(
+                'token' => (string)$token,
+            ));
+
+        $query = $qb->getQuery();
+
+        $result = $query->getResultSet();
+
+        if ($result->count() > 0) {
+            /* @var $row Row */
+            $row = $result->current();
+            return $this->build($row);
+        }
+
+        throw new ValidationException(sprintf('There is not invitation available with token %s', $token));
+    }
+
     /**
      * @param array $data
      * @param bool $userRequired
@@ -521,7 +557,7 @@ class InvitationModel
                             }
                             break;
                         case 'orientationRequired':
-                            if ((string)$fieldValue !== "true" && (string)$fieldValue !== "false") {
+                            if (!is_bool($fieldValue)) {
                                 $fieldErrors[] = 'orientationRequired must be a boolean';
                             }
                             break;
