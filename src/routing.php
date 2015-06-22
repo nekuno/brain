@@ -81,6 +81,8 @@ $app->delete('/groups/{id}/users/{userId}', 'users.groups.controller:removeUserA
  */
 $app->get('/invitations', 'users.invitations.controller:indexAction');
 $app->get('/user/{id}/invitations', 'users.invitations.controller:indexByUserAction');
+$app->get('/user/{id}/invitations/available', 'users.invitations.controller:getAvailableByUserAction');
+$app->post('/user/{id}/invitations/available/{nOfAvailable}', 'users.invitations.controller:setUserAvailableAction');
 $app->get('/invitations/{id}', 'users.invitations.controller:getAction');
 $app->post('/invitations', 'users.invitations.controller:postAction');
 $app->put('/invitations/{id}', 'users.invitations.controller:putAction');

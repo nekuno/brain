@@ -1,22 +1,22 @@
 <?php
 
 /**
- * Created by Manolo Salsas (manolez@gmail.com)
+ * @author by Manolo Salsas (manolez@gmail.com)
  */
 
 namespace EventListener;
 
 use Model\Neo4j\GraphManager;
-use Model\User\AnswerModel;
+use Everyman\Neo4j\Query\Row;
 use Event\AnswerEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
+/**
+ * Class InvitationSubscriber
+ * @package EventListener
+ */
 class InvitationSubscriber implements EventSubscriberInterface
 {
-    /**
-     * @var AnswerModel
-     */
-
     const INVITATIONS_PER_HUNDRED_ANSWERS = 10;
 
     protected $gm;
@@ -35,12 +35,12 @@ class InvitationSubscriber implements EventSubscriberInterface
 
     public function onAnswerAdded(AnswerEvent $event)
     {
-        $user = $event->getUser();
+        $userId = $event->getUser();
 
-        $userAnswersCount = $this->getNumberOfUserAnswers($user->getId());
+        $userAnswersCount = $this->getNumberOfUserAnswers($userId);
 
-        if($userAnswersCount['nOfAnswers'] % 100 === 0) {
-            $this->addUserAvailable($user->getId(), self::INVITATIONS_PER_HUNDRED_ANSWERS);
+        if((int)$userAnswersCount % 100 === 0) {
+            $this->addUserAvailable($userId, self::INVITATIONS_PER_HUNDRED_ANSWERS);
         }
     }
 
@@ -56,7 +56,7 @@ class InvitationSubscriber implements EventSubscriberInterface
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(u:User)')
             ->where('u.qnoow_id = { userId }')
-            ->set('u.available_invitations = u.available_invitations + { nOfAvailable }')
+            ->set('u.available_invitations = coalesce(u.available_invitations, 0) + { nOfAvailable }')
             ->setParameters(array(
                 'nOfAvailable' => (integer)$nOfAvailable,
                 'userId' => (integer)$userId,
@@ -69,6 +69,8 @@ class InvitationSubscriber implements EventSubscriberInterface
 
     private function getNumberOfUserAnswers($userId)
     {
+        $count = 0;
+
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(a:Answer)<-[ua:ANSWERS]-(u:User)')
             ->where('u.qnoow_id = { userId }')
@@ -77,6 +79,14 @@ class InvitationSubscriber implements EventSubscriberInterface
 
         $query = $qb->getQuery();
 
-        return $query->getResultSet()->offsetGet('nOfAnswers');
+        $result = $query->getResultSet();
+
+        if ($result->count() > 0) {
+            /* @var $row Row */
+            $row = $result->current();
+            $count = $row->offsetGet('nOfAnswers');
+        }
+
+        return $count;
     }
 }

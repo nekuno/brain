@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Created by Manolo Salsas (manolez@gmail.com)
+ * @author Manolo Salsas (manolez@gmail.com)
  */
 
 namespace Model\User;
@@ -364,7 +364,7 @@ class InvitationModel
         );
     }
 
-    /* Not used
+    /* Not used but may needed to initialize available invitations */
     public function setUserAvailable($userId, $nOfAvailable)
     {
         if((string)$nOfAvailable !== (string)(int)$nOfAvailable) {
@@ -386,7 +386,7 @@ class InvitationModel
         $query = $qb->getQuery();
 
         $query->getResultSet();
-    }*/
+    }
 
     /* Already user in subscriber
     public function addUserAvailable($userId, $nOfAvailable)
@@ -430,7 +430,10 @@ class InvitationModel
 
         $result = $query->getResultSet();
 
-        return $result->offsetGet('available_invitations');
+        /* @var $row Row */
+        $row = $result->current();
+
+        return $row->offsetGet('available_invitations');
     }
 
     /**

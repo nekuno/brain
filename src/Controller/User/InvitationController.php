@@ -42,6 +42,28 @@ class InvitationController
         return $app->json($result);
     }
 
+    public function getAvailableByUserAction(Application $app, $id)
+    {
+        /* @var $model InvitationModel */
+        $model = $app['users.invitations.model'];
+
+        $result = $model->getUserAvailable($id);
+
+        return $app->json($result);
+    }
+
+    public function setUserAvailableAction(Application $app, $id, $nOfAvailable)
+    {
+        /* @var $model InvitationModel */
+        $model = $app['users.invitations.model'];
+
+        $model->setUserAvailable($id, $nOfAvailable);
+
+        $nOfAvailable = $model->getUserAvailable($id);
+
+        return $nOfAvailable;
+    }
+
     public function postAction(Request $request, Application $app)
     {
 

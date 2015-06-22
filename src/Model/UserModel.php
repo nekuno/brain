@@ -330,7 +330,7 @@ class UserModel implements PaginatedInterface
             ->optionalMatch('(u)-[:BELONGS_TO]->(g:Group)')
             ->with('u,contentLikes, videoLikes, audioLikes, imageLikes, collect(g) AS groupsBelonged')
             ->optionalMatch('(u)-[r:ANSWERS]->(:Answer)')
-            ->returns('contentLikes', 'videoLikes', 'audioLikes', 'imageLikes', 'groupsBelonged', 'count(r) AS questionsAnswered');
+            ->returns('contentLikes', 'videoLikes', 'audioLikes', 'imageLikes', 'groupsBelonged', 'count(r) AS questionsAnswered', 'u.available_invitations AS available_invitations');
 
         $query = $qb->getQuery();
 
@@ -379,7 +379,8 @@ class UserModel implements PaginatedInterface
             !empty($googleStatus) ? (boolean)$googleStatus->getFetched() : false,
             !empty($googleStatus) ? (boolean)$googleStatus->getProcessed() : false,
             !empty($spotifyStatus) ? (boolean)$spotifyStatus->getFetched() : false,
-            !empty($spotifyStatus) ? (boolean)$spotifyStatus->getProcessed() : false
+            !empty($spotifyStatus) ? (boolean)$spotifyStatus->getProcessed() : false,
+            $row->offsetGet('available_invitations')
         );
 
         return $userStats;
