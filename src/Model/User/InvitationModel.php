@@ -73,8 +73,9 @@ class InvitationModel
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(inv:Invitation)')
             ->where('id(inv) = { invitationId }')
+            ->optionalMatch('(inv)-[:HAS_GROUP]->(g:Group)')
             ->setParameter('invitationId', (integer)$id)
-            ->returns('inv as invitation');
+            ->returns('inv as invitation', 'g AS group');
 
         $query = $qb->getQuery();
 
@@ -123,7 +124,8 @@ class InvitationModel
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match("(inv:Invitation)")
-            ->returns('inv AS invitation')
+            ->optionalMatch('(inv)-[:HAS_GROUP]->(g:Group)')
+            ->returns('inv AS invitation', 'g AS group')
             ->skip("{ offset }")
             ->limit("{ limit }")
             ->setParameters(
@@ -159,8 +161,9 @@ class InvitationModel
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match("(inv:Invitation)<-[:CREATED_INVITATION]-(u:User)")
+            ->optionalMatch('(inv)-[:HAS_GROUP]->(g:Group)')
             ->where("u.qnoow_id = { userId }")
-            ->returns('inv AS invitation')
+            ->returns('inv AS invitation', 'g AS group')
             ->skip("{ offset }")
             ->limit("{ limit }")
             ->setParameters(
@@ -198,7 +201,7 @@ class InvitationModel
             ->set('inv.consumed = 0', 'inv.createdAt = timestamp()');
 
         foreach($data as $index => $parameter) {
-            if($index === 'userId' || $index === 'createdAt' || $index === 'consumed')
+            if($index === 'userId' || $index === 'createdAt' || $index === 'consumed' || $index === 'groupId')
                 continue;
             if($index === 'token') {
                 // set auto-created token if invitation has user or token is not set
@@ -220,8 +223,17 @@ class InvitationModel
             }
         }
 
+        if(isset($data['groupId'])) {
+            $qb->with('inv')
+                ->match('(g:Group)')
+                ->where('id(g) = { groupId }')
+                ->createUnique('(inv)-[:HAS_GROUP]->(g)')
+                ->setParameters(array(
+                    'groupId' => (integer)$data['groupId'],
+                ));
+        }
         if(isset($data['userId'])) {
-             $qb->with('inv')
+            isset($data['groupId']) ? $qb->with('inv', 'g') : $qb->with('inv')
                  ->match('(user:User)')
                  ->where('user.qnoow_id = { userId }')
                  ->createUnique('(user)-[r:CREATED_INVITATION]->(inv)')
@@ -229,9 +241,14 @@ class InvitationModel
                  ->setParameters(array(
                      'userId' => (integer)$data['userId'],
                      'userAvailable' => (integer)$userAvailable,
+                     'groupId' => (integer)$data['groupId'],
                  ));
         }
-        $qb->returns('inv AS invitation');
+        if(isset($data['groupId'])) {
+            $qb->returns('inv AS invitation', 'g AS group');
+        } else {
+            $qb->returns('inv AS invitation');
+        }
 
         $query = $qb->getQuery();
 
@@ -252,6 +269,8 @@ class InvitationModel
             ->where('id(inv) = { invitationId }');
 
         foreach($data as $index => $parameter) {
+            if($index === 'userId' || $index === 'createdAt' || $index === 'consumed' || $index === 'groupId')
+                continue;
             if($index === 'orientationRequired') {
                 if(isset($data['orientationRequired'])) {
                     $data['orientationRequired'] = $data['orientationRequired'] ? 'true' : 'false';
@@ -264,11 +283,37 @@ class InvitationModel
                 $qb->set('inv.' . $index . ' = ' . $parameter );
             }
         }
+        $qb->setParameters(array(
+                'invitationId' => (integer)$data['invitationId'])
+        );
 
-        $qb->returns('inv AS invitation')
-            ->setParameters(array(
-                    'invitationId' => (integer)$data['invitationId'])
-            );
+        if(isset($data['groupId'])) {
+            $qb->with('inv')
+                ->match('(g:Group)')
+                ->where('id(g) = { groupId }')
+                ->createUnique('(inv)-[:HAS_GROUP]->(g)')
+                ->setParameters(array(
+                    'groupId' => (integer)$data['groupId'],
+                    'invitationId' => (integer)$data['invitationId'],
+                ));
+        }
+        if(isset($data['userId'])) {
+            $qb->with('inv')
+                ->match('(user:User)')
+                ->where('user.qnoow_id = { userId }')
+                ->createUnique('(user)-[r:CREATED_INVITATION]->(inv)')
+                ->setParameters(array(
+                    'userId' => (integer)$data['userId'],
+                    'groupId' => (integer)$data['groupId'],
+                    'invitationId' => (integer)$data['invitationId'],
+                ));
+        }
+
+        if(isset($data['groupId'])) {
+            $qb->returns('inv AS invitation', 'g AS group');
+        } else {
+            $qb->returns('inv AS invitation');
+        }
 
         $query = $qb->getQuery();
 
@@ -294,8 +339,9 @@ class InvitationModel
             ->where('id(inv) = { invitationId }')
             ->optionalMatch('(:User)-[created:CREATED_INVITATION]->(inv)')
             ->optionalMatch('(:User)-[consumed:CONSUMED_INVITATION]->(inv)')
+            ->optionalMatch('(inv)-[has_group:HAS_GROUP]->(:Group)')
             ->setParameter('invitationId', (integer)$invitationId)
-            ->delete('inv', 'created', 'consumed');
+            ->delete('inv', 'created', 'consumed', 'has_group');
 
         $query = $qb->getQuery();
 
@@ -309,6 +355,7 @@ class InvitationModel
         $qb->match('(inv:Invitation)')
             ->optionalMatch('(:User)-[created:CREATED_INVITATION]->(inv)')
             ->optionalMatch('(:User)-[consumed:CONSUMED_INVITATION]->(inv)')
+            ->optionalMatch('(inv)-[has_group:HAS_GROUP]->(:Group)')
             ->delete('inv', 'created', 'consumed');
 
         $query = $qb->getQuery();
@@ -330,7 +377,10 @@ class InvitationModel
             ->where('inv.token = { token } AND coalesce(inv.available, 0) > 0 AND u.qnoow_id = { userId }')
             ->createUnique('(u)-[r:CONSUMED_INVITATION]->(inv)')
             ->set('inv.available = inv.available - 1', 'inv.consumed = inv.consumed + 1')
-            ->returns('inv AS invitation')
+            ->with('inv', 'u')
+            ->match('(inv)-[:HAS_GROUP]->(g:Group)')
+            ->createUnique('(u)->[:BELONGS_TO]->(g:Group)')
+            ->returns('inv AS invitation', 'g AS group')
             ->setParameters(array(
                 'token' => (string)$token,
                 'userId' => (integer)$userId,
@@ -605,8 +655,10 @@ class InvitationModel
     {
         /** @var Node $invitation */
         $invitation = $row->offsetGet('invitation');
+        /** @var Node $group */
+        $group = $row->offsetExists('group') ? $row->offsetGet('group') : null;
 
-        $optionalKeys = array('email', 'expiresAt', 'groupId', 'htmlText', 'slogan', 'image_url', 'orientationRequired');
+        $optionalKeys = array('email', 'expiresAt', 'htmlText', 'slogan', 'image_url', 'orientationRequired');
         $requiredKeys = array('token', 'available', 'consumed', 'createdAt');
         $invitationArray = array();
 
@@ -622,6 +674,14 @@ class InvitationModel
         }
 
         $invitationArray += array('invitationId' => $invitation->getId());
+
+        if($group) {
+            $invitationArray += array('group' => array(
+                'id' => $group->getId(),
+                'name' => $group->getProperty('name'),
+                'html' => $group->getProperty('html'),
+            ));
+        }
 
         return $invitationArray;
     }

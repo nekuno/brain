@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @author by Manolo Salsas (manolez@gmail.com)
+ * @author Manolo Salsas (manolez@gmail.com)
  */
 
 namespace EventListener;
