@@ -453,7 +453,7 @@ class InvitationModel
     {
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(inv:Invitation)')
-            ->where('inv.token = { token }')
+            ->where('inv.token = { token } AND coalesce(inv.available, 0) > 0')
             ->returns('inv AS invitation')
             ->setParameters(array(
                 'token' => (string)$token,
