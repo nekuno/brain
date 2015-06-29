@@ -217,8 +217,14 @@ class InvitationModel
                     continue;
                 }
             }
-            if(isset($data[$index])) {
-                $parameter = (ctype_digit((string)$parameter)) ? (integer)$parameter : "'" . $parameter . "'";
+            if(array_key_exists($index, $data)) {
+                if(ctype_digit((string)$parameter)) {
+                    $parameter = (integer)$parameter;
+                } elseif(is_null($parameter)) {
+                    $parameter = 'null';
+                } else {
+                    $parameter = "'" . $parameter . "'";
+                }
                 $qb->set('inv.' . $index . ' = ' . $parameter );
             }
         }
@@ -278,8 +284,14 @@ class InvitationModel
                     continue;
                 }
             }
-            if(isset($data[$index])) {
-                $parameter = (ctype_digit((string)$parameter)) ? (integer)$parameter : "'" . $parameter . "'";
+            if(array_key_exists($index, $data)) {
+                if(ctype_digit((string)$parameter)) {
+                    $parameter = (integer)$parameter;
+                } elseif(is_null($parameter)) {
+                    $parameter = 'null';
+                } else {
+                    $parameter = "'" . $parameter . "'";
+                }
                 $qb->set('inv.' . $index . ' = ' . $parameter );
             }
         }
