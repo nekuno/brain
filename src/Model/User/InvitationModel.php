@@ -334,7 +334,7 @@ class InvitationModel
                 ->createUnique('(user)-[r:CREATED_INVITATION]->(inv)')
                 ->setParameters(array(
                     'userId' => (integer)$data['userId'],
-                    'groupId' => (integer)$data['groupId'],
+                    'groupId' => isset($data['groupId']) ? (integer)$data['groupId'] : null,
                     'invitationId' => (integer)$data['invitationId'],
                 ));
 
