@@ -53,13 +53,14 @@ class RateModel
      * @param $userId
      * @param $data array
      * @param $rate
+     * @param bool $fireEvent
      * @return array
      * @throws \Exception
      */
-    public function userRateLink($userId, array $data, $rate)
+    public function userRateLink($userId, array $data, $rate, $fireEvent = true)
     {
         if ($rate !== self::LIKE && $rate != self::DISLIKE && $rate != self::IGNORE) {
-            throw new \Exception('"' . $rate . '" is not a valid rate');
+            throw new \Exception(sprintf('%s is not a valid rate', $rate));
         }
 
         switch ($rate) {
@@ -70,7 +71,9 @@ class RateModel
                 return array();
         }
 
-        $this->dispatcher->dispatch(\AppEvents::CONTENT_RATED, new ContentRatedEvent($userId));
+        if ($fireEvent) {
+            $this->dispatcher->dispatch(\AppEvents::CONTENT_RATED, new ContentRatedEvent($userId));
+        }
 
         return $result;
     }
