@@ -452,7 +452,7 @@ class InvitationModel
 
         return array(
             'email' => $data['email'],
-            'name' => $user['name'],
+            'name' => $user['username'],
             'url' => '//nekuno.com/invitation/' . $invitation['token'],
             'expiresAt' => (integer)$invitation['expiresAt'],
         );
