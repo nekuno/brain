@@ -180,7 +180,7 @@ class InvitationController
                 ->setType(EmailNotification::INVITATION)
                 ->setUserId($userId)
                 ->setRecipient($data['email'])
-                ->setSubject($app['translator']->trans('notifications.messages.invitation.subject'))
+                ->setSubject($app['translator']->trans('notifications.messages.invitation.subject', array('name' => $sendData['username'] )))
                 ->setInfo($sendData));
         }
         return $recipients;
