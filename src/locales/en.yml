@@ -15,7 +15,7 @@ notifications:
         introduction_2: 'We have found this one that you will love:|We have found %count% that you will love:'
         enter: '{1} Come back to see it:|{2,3} Come back to see them|[4,Inf[ Come back to see all of them'
     invitation:
-        subject: "Invitación recivida de %name%"
+        subject: "Invitation received from %name%"
         email_txt: "%name% has sent you an invitation to join Nekuno.\nClick on this link %url% to register and enjoy.\nThis invitation expires on %expiresAt%.\n"
         email_html: "%name% has sent you an invitation to join Nekuno.</p>\n<p>Click on this link <a href=\"%url%\">%url%</a> to register and enjoy.</p>\n<p>This invitation expires on %expiresAt%.</p>\n"
 
