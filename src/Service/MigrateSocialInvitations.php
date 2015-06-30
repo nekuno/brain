@@ -63,7 +63,13 @@ class MigrateSocialInvitations
         $imageName = '';
         $imagePath = '';
         if($invitation['image_id'] && $imagePath = $this->getImagePath($invitation['image_id'])) {
-            $imageName = substr($imagePath, strlen('uploads/invitation-gallery/'));
+            $imageName = substr($imagePath, strpos($imagePath, 'uploads/invitation-gallery/') + strlen('uploads/invitation-gallery/'));
+            if (!is_dir('../admin/web/uploads')) {
+                mkdir('../admin/web/uploads');
+            }
+            if (!is_dir('../admin/web/uploads/invitation-gallery')) {
+                mkdir('../admin/web/uploads/invitation-gallery');
+            }
             rename('../social/web/uploads/invitation-gallery/' . $imageName, '../admin/web/uploads/invitation-gallery/' . $imageName);
             $qb->set('inv.image_url = { image_url }');
         }
