@@ -174,6 +174,11 @@ class InvitationController
         $recipients = 0;
         /* @var $model InvitationModel */
         $model = $app['users.invitations.model'];
+
+        if(isset($data['locale'])) {
+            $app['translator']->setLocale($data['locale']);
+        }
+
         if($sendData = $model->prepareSend($id, $userId, $data))
         {
             $recipients = $app['emailNotification.service']->send(EmailNotification::create()
