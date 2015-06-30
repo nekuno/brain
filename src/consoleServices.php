@@ -12,6 +12,10 @@ $app['affinityRecalculations.service'] = function (Silex\Application $app) {
     return new \Service\AffinityRecalculations($app['emailNotification.service'], $app['translator'], $app['neo4j.graph_manager'], $app['links.model'], $app['users.model'], $app['users.affinity.model']);
 };
 
+$app['migrateSocialInvitations.service'] = function (Silex\Application $app) {
+    return new \Service\MigrateSocialInvitations($app['neo4j.graph_manager'], $app['dbs']['mysql_social'], $app['admin_domain_plus_post']);
+};
+
 
 /**
  * Middleware for filter some request

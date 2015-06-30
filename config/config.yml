@@ -81,3 +81,5 @@ api_consumer.config:
         facebook:
             consumer_key: %facebook.consumer_key%
             consumer_secret: %facebook.consumer_secret%
+
+admin_domain_plus_post: %admin.domain_plus_port%
