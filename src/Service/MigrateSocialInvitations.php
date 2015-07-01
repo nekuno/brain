@@ -16,13 +16,11 @@ class MigrateSocialInvitations
 {
     protected $sm;
     protected $gm;
-    protected $adminDomain;
 
-    public function __construct(GraphManager $gm, Connection $sm, $adminDomain)
+    public function __construct(GraphManager $gm, Connection $sm)
     {
         $this->gm = $gm;
         $this->sm = $sm;
-        $this->adminDomain = $adminDomain;
     }
 
     public function migrateInvitations(OutputInterface $output)
@@ -45,7 +43,7 @@ class MigrateSocialInvitations
         }
     }
 
-    protected function migrateInvitation(array $invitation, OutputInterface $output)
+    protected function migrateInvitation(array $invitation)
     {
         $qb = $this->gm->createQueryBuilder();
 
@@ -60,7 +58,6 @@ class MigrateSocialInvitations
             ->set('inv.orientationRequired = { orientationRequired }')
             ->set('inv.slogan = { slogan }');
 
-        $imageName = '';
         $imagePath = '';
         if($invitation['image_id'] && $imagePath = $this->getImagePath($invitation['image_id'])) {
             $imageName = substr($imagePath, strpos($imagePath, 'uploads/invitation-gallery/') + strlen('uploads/invitation-gallery/'));
@@ -71,7 +68,7 @@ class MigrateSocialInvitations
                 mkdir('../admin/web/uploads/invitation-gallery');
             }
             rename('../social/web/uploads/invitation-gallery/' . $imageName, '../admin/web/uploads/invitation-gallery/' . $imageName);
-            $qb->set('inv.image_url = { image_url }');
+            $qb->set('inv.image_path = { image_path }');
         }
 
         if($invitation['groupId']) {
@@ -108,7 +105,7 @@ class MigrateSocialInvitations
             'htmlText' => $invitation['htmlText'],
             'orientationRequired' => (boolean)$invitation['orientationRequired'],
             'slogan' => $invitation['slogan'],
-            'image_url' => $imagePath ? $this->adminDomain . 'uploads/invitation-gallery/' . $imageName : null,
+            'image_path' => $imagePath ?: null,
             'groupId' => $invitation['groupId']? (int)$invitation['groupId'] : null,
             'user_id' => $invitation['user_id'] ? (int)$invitation['user_id'] : null,
         ))

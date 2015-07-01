@@ -13,7 +13,7 @@ $app['affinityRecalculations.service'] = function (Silex\Application $app) {
 };
 
 $app['migrateSocialInvitations.service'] = function (Silex\Application $app) {
-    return new \Service\MigrateSocialInvitations($app['neo4j.graph_manager'], $app['dbs']['mysql_social'], $app['admin_domain_plus_post']);
+    return new \Service\MigrateSocialInvitations($app['neo4j.graph_manager'], $app['dbs']['mysql_social']);
 };
 
 
