@@ -59,6 +59,7 @@ class MigrateSocialInvitations
             ->set('inv.slogan = { slogan }');
 
         $imagePath = '';
+        $imageName = '';
         if($invitation['image_id'] && $imagePath = $this->getImagePath($invitation['image_id'])) {
             $imageName = substr($imagePath, strpos($imagePath, 'uploads/invitation-gallery/') + strlen('uploads/invitation-gallery/'));
             if (!is_dir('../admin/web/uploads')) {
@@ -105,7 +106,7 @@ class MigrateSocialInvitations
             'htmlText' => $invitation['htmlText'],
             'orientationRequired' => (boolean)$invitation['orientationRequired'],
             'slogan' => $invitation['slogan'],
-            'image_path' => $imagePath ?: null,
+            'image_path' => $imagePath ? 'uploads/invitation-gallery/' . $imageName : null,
             'groupId' => $invitation['groupId']? (int)$invitation['groupId'] : null,
             'user_id' => $invitation['user_id'] ? (int)$invitation['user_id'] : null,
         ))
