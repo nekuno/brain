@@ -35,12 +35,17 @@ class InvitationModel
      */
     protected $um;
 
+    /**
+     * @var string
+     */
+    protected $adminDomain;
 
-    public function __construct(GraphManager $gm, GroupModel $groupModel, UserModel $um)
+    public function __construct(GraphManager $gm, GroupModel $groupModel, UserModel $um, $adminDomain)
     {
         $this->gm = $gm;
         $this->groupM = $groupModel;
         $this->um = $um;
+        $this->adminDomain = $adminDomain;
     }
 
     public function getCountTotal()
@@ -639,6 +644,11 @@ class InvitationModel
                                 $fieldErrors[] = 'image_url must be a valid URL';
                             }
                             break;
+                        case 'image_path':
+                            if (!preg_match('/^[\w\/\\-]+\.(png|jpe?g|gif|tiff)$/i', $fieldValue)) {
+                                $fieldErrors[] = 'image_path must be a valid path';
+                            }
+                            break;
                         case 'orientationRequired':
                             if (!is_bool($fieldValue)) {
                                 $fieldErrors[] = 'orientationRequired must be a boolean';
@@ -693,7 +703,7 @@ class InvitationModel
 
         $userId = $row->offsetExists('userId') ? $row->offsetGet('userId') : null;
 
-        $optionalKeys = array('email', 'expiresAt', 'htmlText', 'slogan', 'image_url', 'orientationRequired');
+        $optionalKeys = array('email', 'expiresAt', 'htmlText', 'slogan', 'image_url', 'image_path', 'orientationRequired');
         $requiredKeys = array('token', 'available', 'consumed', 'createdAt');
         $invitationArray = array();
 
@@ -720,6 +730,10 @@ class InvitationModel
 
         if($userId) {
             $invitationArray += array('userId' => $userId);
+        }
+
+        if(isset($invitationArray['image_path'])) {
+            $invitationArray['image_url'] = $this->adminDomain . $invitationArray['image_path'];
         }
 
         return $invitationArray;
@@ -765,6 +779,9 @@ class InvitationModel
                 'required' => false,
             ),
             'image_url' => array(
+                'required' => false,
+            ),
+            'image_path' => array(
                 'required' => false,
             ),
             'orientationRequired' => array(
