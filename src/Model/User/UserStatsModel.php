@@ -38,6 +38,8 @@ class UserStatsModel
 
     protected $spotifyProcessed;
 
+    protected $available_invitations;
+
     function __construct($numberOfContentLikes,
                          $numberOfVideoLikes,
                          $numberOfAudioLikes,
@@ -53,7 +55,8 @@ class UserStatsModel
                          $googleFetched,
                          $googleProcessed,
                          $spotifyFetched,
-                         $spotifyProcessed)
+                         $spotifyProcessed,
+                         $available_invitations)
     {
         $this->numberOfContentLikes = $numberOfContentLikes;
         $this->numberOfVideoLikes = $numberOfVideoLikes;
@@ -71,6 +74,7 @@ class UserStatsModel
         $this->googleProcessed = $googleProcessed;
         $this->spotifyFetched = $spotifyFetched;
         $this->spotifyProcessed = $spotifyProcessed;
+        $this->available_invitations = $available_invitations;
     }
 
     /**
@@ -201,6 +205,14 @@ class UserStatsModel
         return $this->spotifyProcessed;
     }
 
+    /**
+     * @return integer
+     */
+    public function getAvailableInvitations()
+    {
+        return $this->available_invitations;
+    }
+
     public function toArray(){
         return array('numberOfContentLikes' => $this->numberOfContentLikes,
                      'numberOfVideoLikes' => $this->numberOfVideoLikes,
@@ -218,6 +230,7 @@ class UserStatsModel
                      'googleProcessed' => $this->googleProcessed,
                      'spotifyFetched' => $this->spotifyFetched,
                      'spotifyProcessed' => $this->spotifyProcessed,
+                     'available_invitations' => $this->available_invitations,
         );
     }
 

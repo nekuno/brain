@@ -2,21 +2,7 @@
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
-use Symfony\Component\Translation\Loader\YamlFileLoader;
 
-
-$app['emailNotification.service'] = function ($app) {
-    return new \Service\EmailNotifications($app['mailer'], $app['orm.ems']['mysql_brain'], $app['twig']);
-};
-
-$app['translator'] = $app->share($app->extend('translator', function($translator) {
-    $translator->addLoader('yaml', new YamlFileLoader());
-
-    $translator->addResource('yaml', __DIR__.'/locales/en.yml', 'en');
-    $translator->addResource('yaml', __DIR__.'/locales/es.yml', 'es');
-
-    return $translator;
-}));
 
 $app['chatMessageNotifications.service'] = function (Silex\Application $app) {
     return new \Service\ChatMessageNotifications($app['emailNotification.service'], $app['orm.ems']['mysql_brain'], $app['dbs']['mysql_social'], $app['translator'], $app['users.model'], $app['users.profile.model']);
@@ -24,6 +10,10 @@ $app['chatMessageNotifications.service'] = function (Silex\Application $app) {
 
 $app['affinityRecalculations.service'] = function (Silex\Application $app) {
     return new \Service\AffinityRecalculations($app['emailNotification.service'], $app['translator'], $app['neo4j.graph_manager'], $app['links.model'], $app['users.model'], $app['users.affinity.model']);
+};
+
+$app['migrateSocialInvitations.service'] = function (Silex\Application $app) {
+    return new \Service\MigrateSocialInvitations($app['neo4j.graph_manager'], $app['dbs']['mysql_social']);
 };
 
 

@@ -28,6 +28,7 @@ $console->addCommands(
         new \Console\Command\GetUncorrelatedQuestionsCommand($app),
         new \Console\Command\SendChatMessagesNotificationsCommand($app),
         new \Console\Command\SwiftMailerSpoolSendCommand($app),
+        new \Console\Command\MigrateSocialInvitationsCommand($app),
     )
 );
 

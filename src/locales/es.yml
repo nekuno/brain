@@ -14,5 +14,9 @@ notifications:
         introduction_1: 'En Nekuno trabajamos sin descanso para encontrar contenido recomendado especialmente para ti'
         introduction_2: 'Hemos encontrado este que te encantará:|Hemos encontrado %count% que te encantarán:'
         enter: '{1} Vuelve a entrar para verlo:|{2,3} Vuelve a entrar para verlos|[4,Inf[ Vuelve a entrar para verlos todos'
+    invitation:
+        subject: "Invitación recibida de %name%"
+        email_txt: "%name% te ha enviado una invitación para unirte a Nekuno.\nHaz click en este enlace %url% para registrarte y comenzar a distrutar.\nEsta invitación caduca el día %expiresAt%.\n"
+        email_html: "<p>%name% te ha enviado una invitación para unirte a Nekuno.</p>\n<p>Haz click en este enlace <a href=\"%url%\">%url%</a> para registrarte y distrutar.</p>\n<p>Esta invitación caduca el día %expiresAt%.</p>\n"
 
   footer: 'Saludos del equipo de Nekuno'
