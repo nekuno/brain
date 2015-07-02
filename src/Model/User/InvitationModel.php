@@ -435,7 +435,7 @@ class InvitationModel
         throw new NotFoundHttpException(sprintf('There is not invitation available with token %s', $token));
     }
 
-    public function prepareSend($id, $userId, array $data)
+    public function prepareSend($id, $userId, array $data, $socialHost)
     {
         if((string)$id !== (string)(int)$id) {
             throw new \RuntimeException('invitation ID must be an integer');
@@ -458,7 +458,7 @@ class InvitationModel
         return array(
             'email' => $data['email'],
             'username' => $user['username'],
-            'url' => '//nekuno.com/invitation/' . (string)$invitation['invitation']['token'],
+            'url' => $socialHost . 'invitation/' . (string)$invitation['invitation']['token'],
             'expiresAt' => (integer)$invitation['invitation']['expiresAt'],
         );
     }

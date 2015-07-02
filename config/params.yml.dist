@@ -63,3 +63,6 @@ params:
 
     ##Invitations migration
     admin.domain_plus_port: 'https://admin.local.nekuno.com:443/'
+
+    ##Social host
+    social.host: 'https://local.nekuno.com/'

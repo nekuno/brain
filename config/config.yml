@@ -83,3 +83,4 @@ api_consumer.config:
             consumer_secret: %facebook.consumer_secret%
 
 admin_domain_plus_post: %admin.domain_plus_port%
+social_host: %social.host%
