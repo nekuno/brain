@@ -70,8 +70,7 @@ class ContentComparePaginatedModel implements PaginatedInterface
 
         $qb->match("(u:User), (u2:User)")
             ->where("u.qnoow_id = { userId } AND u2.qnoow_id = { userId2 }")
-            ->match("(u)-[r:LIKES|DISLIKES]->(content:" . $linkType . ")")
-            ->optionalMatch("(content)-[:TAGGED]->(tag:Tag)");
+            ->match("(u)-[r:LIKES|DISLIKES]->(content:" . $linkType . ")");
 
         if (isset($filters['tag'])) {
             $qb->match("(content)-[:TAGGED]->(filterTag:Tag)")
@@ -83,7 +82,8 @@ class ContentComparePaginatedModel implements PaginatedInterface
             $qb->optionalMatch("(u2)-[r2:LIKES|DISLIKES]->(content)");
         }
 
-        $qb->optionalMatch("(u2)-[a:AFFINITY]->(content)")
+        $qb->optionalMatch("(content)-[:TAGGED]->(tag:Tag)")
+            ->optionalMatch("(u2)-[a:AFFINITY]->(content)")
             ->optionalMatch("(content)-[:SYNONYMOUS]->(synonymousLink:Link)")
             ->returns("id(content) as id,  type(r) as rate1, type(r2) as rate2, content, a.affinity as affinity, collect(distinct tag.name) as tags, labels(content) as types, COLLECT (DISTINCT synonymousLink) AS synonymous")
             ->skip("{ offset }")
