@@ -70,16 +70,16 @@ class ContentComparePaginatedModel implements PaginatedInterface
 
         $qb->match("(u:User), (u2:User)")
             ->where("u.qnoow_id = { userId } AND u2.qnoow_id = { userId2 }")
-            ->match("(u)-[r:LIKES|DISLIKES]->(content:" . $linkType . ")");
+            ->match("(u)-[r:LIKES]->(content:" . $linkType . ")");
 
         if (isset($filters['tag'])) {
             $qb->match("(content)-[:TAGGED]->(filterTag:Tag)")
                 ->where("filterTag.name = { tag }");
         }
         if ($showOnlyCommon) {
-            $qb->match("(u2)-[r2:LIKES|DISLIKES]->(content)");
+            $qb->match("(u2)-[r2:LIKES]->(content)");
         } else {
-            $qb->optionalMatch("(u2)-[r2:LIKES|DISLIKES]->(content)");
+            $qb->optionalMatch("(u2)-[r2:LIKES]->(content)");
         }
 
         $qb->optionalMatch("(content)-[:TAGGED]->(tag:Tag)")
