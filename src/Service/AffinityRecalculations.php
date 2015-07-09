@@ -116,6 +116,12 @@ class AffinityRecalculations
         return $emailInfo;
     }
 
+    public function estimateTime($count)
+    {
+        $estimatedTime = 10 + 1 * (pow(10, -7)) * (pow($count, 2)); //TODO: Improve formula with more data at low users
+        return $estimatedTime;
+    }
+
     /**
      * @param array $links Ordered by prediction
      * @param $username
