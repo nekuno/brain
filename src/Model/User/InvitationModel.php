@@ -413,10 +413,7 @@ class InvitationModel
             ->where('inv.token = { token } AND coalesce(inv.available, 0) > 0 AND u.qnoow_id = { userId }')
             ->createUnique('(u)-[r:CONSUMED_INVITATION]->(inv)')
             ->set('inv.available = inv.available - 1', 'inv.consumed = inv.consumed + 1')
-            ->with('inv', 'u')
-            ->match('(inv)-[:HAS_GROUP]->(g:Group)')
-            ->createUnique('(u)-[:BELONGS_TO]->(g)')
-            ->returns('inv AS invitation', 'g AS group')
+            ->returns('inv AS invitation')
             ->setParameters(array(
                 'token' => (string)$token,
                 'userId' => (integer)$userId,
