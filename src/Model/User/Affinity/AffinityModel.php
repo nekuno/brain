@@ -8,6 +8,8 @@ use Everyman\Neo4j\Query\Row;
 class AffinityModel
 {
     const numberOfSecondsToCache = 86400;
+    const numberOfSecondsToCalculateAffinity = 45;
+    const minimumUsersToPredict = 4;
 
     /**
      * @var GraphManager
@@ -125,6 +127,44 @@ class AffinityModel
         }
 
         return $affinity;
+    }
+
+    /**
+     * @param int $userId
+     * @param int $userLimit
+     * @return int|null
+     * @throws \Exception
+     */
+    public function countPotentialAffinities($userId, $userLimit = 999999)
+    {
+        if ($userId === null) return null;
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->setParameters(
+            array(
+                'userId' => (integer)$userId,
+                'userLimit' => (integer)$userLimit,
+            )
+        );
+
+        $qb->match('(u:User{qnoow_id:{userId}})-[r:SIMILARITY]-(u2:User)')
+            ->with('r.similarity AS sim,u2')
+            ->orderBy('sim DESC')
+            ->limit('{userLimit}')
+            ->match('(u2)-[:LIKES]->(l:Link)')
+            ->returns('count(l) AS c');
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        if ($result->count() > 0) {
+            /* @var $row Row */
+            $row = $result->current();
+            $count = $row->offsetGet('c');
+        } else {
+            $count=null;
+        }
+
+        return (integer)$count;
     }
 
 }

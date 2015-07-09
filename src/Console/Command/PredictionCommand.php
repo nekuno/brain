@@ -38,8 +38,8 @@ class PredictionCommand extends ApplicationAwareCommand
         $affinityModel = $this->app['users.affinity.model'];
 
         $user = $input->getOption('user');
-        $limitContent = $input->getOption('limitContent')?: 40;
-        $limitUsers = $input->getOption('limitUsers')?: 20;
+        $limitContent = $input->getOption('limitContent') ?: 40;
+        $limitUsers = $input->getOption('limitUsers') ?: 10;
         $recalculate = $input->getOption('recalculate');
         $notify = $input->getOption('notify');
 
@@ -68,19 +68,30 @@ class PredictionCommand extends ApplicationAwareCommand
                 /* @var $affinityRecalculations AffinityRecalculations */
                 $affinityRecalculations = $this->app['affinityRecalculations.service'];
                 foreach ($users as $user) {
+                    $count = $affinityModel->countPotentialAffinities($user['qnoow_id'], $limitUsers);
+                    $estimatedTime = $affinityRecalculations->estimateTime($count);
+                    $targetTime = AffinityModel::numberOfSecondsToCalculateAffinity;
+                    if ($estimatedTime > $targetTime) {
+                        $usedLimitUsers = max(AffinityModel::minimumUsersToPredict,
+                            intval($limitUsers * sqrt($targetTime / $estimatedTime)));
+                    } else {
+                        $usedLimitUsers = $limitUsers;
+                    }
+                    $output->writeln(sprintf('%s potential affinities for user %s', $count, $user['qnoow_id']));
+                    $output->writeln($estimatedTime . '  ' . $usedLimitUsers);
                     $result = $affinityRecalculations->recalculateAffinities($user['qnoow_id'], $limitContent, $limitUsers, $notify);
 
                     foreach ($result['affinities'] as $linkId => $affinity) {
                         $output->writeln(sprintf('User: %d --> Link: %d (Affinity: %f)', $user['qnoow_id'], $linkId, $affinity));
                     }
-                    if(!empty($result['emailInfo'])){
-                        $emailInfo=$result['emailInfo'];
-                        $linkIds=array();
-                        foreach($emailInfo['links'] as $link ){
-                            $linkIds[]=$link['id'];
+                    if (!empty($result['emailInfo'])) {
+                        $emailInfo = $result['emailInfo'];
+                        $linkIds = array();
+                        foreach ($emailInfo['links'] as $link) {
+                            $linkIds[] = $link['id'];
                         }
                         $output->writeln(sprintf('Email sent to %s users', $emailInfo['recipients']));
-                        $output->writeln(sprintf('Email sent to user: %s with links: %s', $user['qnoow_id'], implode(', ',$linkIds)));
+                        $output->writeln(sprintf('Email sent to user: %s with links: %s', $user['qnoow_id'], implode(', ', $linkIds)));
                     }
                 }
             }
