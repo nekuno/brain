@@ -442,6 +442,7 @@ class UserModel implements PaginatedInterface
             null,
             null,
             null,
+            null,
             null
         );
 
