@@ -38,7 +38,8 @@ class GroupModel
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(g:Group)')
-            ->returns('g');
+            ->optionalMatch('(g)-[:LOCATION]->(l:Location)')
+            ->returns('g', 'l');
 
         $query = $qb->getQuery();
 
@@ -59,8 +60,10 @@ class GroupModel
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(g:Group)')
             ->where('id(g)= { id }')
+            ->with('g')
+            ->optionalMatch('(g)-[:LOCATION]->(l:Location)')
             ->setParameter('id', (integer)$id)
-            ->returns('g');
+            ->returns('g', 'l');
 
         $query = $qb->getQuery();
 
@@ -217,7 +220,9 @@ class GroupModel
         $qb->match('(u:User {qnoow_id: { userId }})')
             ->setParameter('userId', (integer)$userId)
             ->match('(u)-[r:BELONGS_TO]->(g:Group)')
-            ->returns('g');
+            ->with('g')
+            ->optionalMatch('(g)-[:LOCATION]->(l:Location)')
+            ->returns('g', 'l');
 
         $query = $qb->getQuery();
 
@@ -306,11 +311,11 @@ class GroupModel
             'name' => $group->getProperty('name'),
             'html' => $group->getProperty('html'),
             'location' => array(
-                'address' => $location->getProperty('address'),
-                'latitude' => $location->getProperty('latitude'),
-                'longitude' => $location->getProperty('longitude'),
-                'locality' => $location->getProperty('locality'),
-                'country' => $location->getProperty('country'),
+                'address' => $location ? $location->getProperty('address') : null,
+                'latitude' => $location ? $location->getProperty('latitude') : null,
+                'longitude' => $location ? $location->getProperty('longitude') : null,
+                'locality' => $location ? $location->getProperty('locality') : null,
+                'country' => $location ? $location->getProperty('country') : null,
             ),
         );
     }
