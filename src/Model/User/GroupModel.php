@@ -92,6 +92,31 @@ class GroupModel
             $errors['html'] = array('"html" must be string');
         }
 
+        if (!isset($data['location']) || !is_array($data['location'])) {
+            $errors['location'] = sprintf('The value "%s" is not valid, it should be an array with "latitude" and "longitude" keys', $data['location']);
+        } elseif(isset($data['location'])) {
+            if (!isset($data['location']['address']) || !$data['location']['address'] || !is_string($data['location']['address'])) {
+                $errors['location'] = 'Address required';
+            } else {
+                if (!isset($data['location']['latitude']) || !preg_match("/^-?([1-8]?[1-9]|[1-9]0)\.{1}\d+$/", $data['location']['latitude'])) {
+                    $errors['location'] = 'Latitude not valid';
+                } elseif (!is_float($data['location']['latitude'])) {
+                    $errors['location'] = 'Latitude must be float';
+                }
+                if (!isset($data['location']['longitude']) || !preg_match("/^-?([1]?[1-7][1-9]|[1]?[1-8][0]|[1-9]?[0-9])\.{1}\d+$/", $data['location']['longitude'])) {
+                    $errors['location'] = 'Longitude not valid';
+                } elseif (!is_float($data['location']['longitude'])) {
+                    $errors['location'] = 'Longitude must be float';
+                }
+                if (!isset($data['location']['locality']) || !$data['location']['locality'] || !is_string($data['location']['locality'])) {
+                    $errors['location'] = 'Locality required';
+                }
+                if (!isset($data['location']['country']) || !$data['location']['country'] || !is_string($data['location']['country'])) {
+                    $errors['location'] = 'Country required';
+                }
+            }
+        }
+
         if (count($errors) > 0) {
             $e = new ValidationException('Validation error');
             $e->setErrors($errors);
@@ -106,9 +131,18 @@ class GroupModel
 
         $qb = $this->gm->createQueryBuilder();
         $qb->create('(g:Group {name:{ name }, html: { html }})')
-            ->setParameter('name', $data['name'])
-            ->setParameter('html', $data['html'])
-            ->returns('g');
+            ->with('g')
+            ->merge('(l:Location {address: { address }, latitude: { latitude }, longitude: { longitude }, locality: { locality }, country: { country }})<-[:LOCATION]-(g)')
+            ->setParameters(array(
+                'name' => $data['name'],
+                'html' => $data['html'],
+                'address' => $data['location']['address'],
+                'latitude' => $data['location']['latitude'],
+                'longitude' => $data['location']['longitude'],
+                'locality' => $data['location']['locality'],
+                'country' => $data['location']['country'],
+            ))
+            ->returns('g', 'l');
 
         $query = $qb->getQuery();
 
@@ -130,12 +164,22 @@ class GroupModel
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(g:Group)')
             ->where('id(g) = { id }')
-            ->setParameter('id', (integer)$id)
             ->set('g.name = { name }')
-            ->setParameter('name', $data['name'])
             ->set('g.html = { html }')
-            ->setParameter('html', $data['html'])
-            ->returns('g');
+            ->with('g')
+            ->match('(l:Location)<-[:LOCATION]-(g)')
+            ->set('l.address = { address }', 'l.latitude = { latitude }', 'l.longitude = { longitude }', 'l.locality = { locality }', 'l.country = { country }')
+            ->setParameters(array(
+                'id' => (integer)$id,
+                'name' => $data['name'],
+                'html' => $data['html'],
+                'address' => $data['location']['address'],
+                'latitude' => $data['location']['latitude'],
+                'longitude' => $data['location']['longitude'],
+                'locality' => $data['location']['locality'],
+                'country' => $data['location']['country'],
+            ))
+            ->returns('g', 'l');
 
         $query = $qb->getQuery();
 
@@ -254,11 +298,20 @@ class GroupModel
     {
         /* @var $group Node */
         $group = $row->offsetGet('g');
+        /* @var $location Node */
+        $location = $row->offsetGet('l');
 
         return array(
             'id' => $group->getId(),
             'name' => $group->getProperty('name'),
             'html' => $group->getProperty('html'),
+            'location' => array(
+                'address' => $location->getProperty('address'),
+                'latitude' => $location->getProperty('latitude'),
+                'longitude' => $location->getProperty('longitude'),
+                'locality' => $location->getProperty('locality'),
+                'country' => $location->getProperty('country'),
+            ),
         );
     }
 
