@@ -51,7 +51,7 @@ class ContentTagModel
             (u:User)
             WHERE u.qnoow_id = {UserId}
             MATCH
-            (u)-[:LIKES|DISLIKES]->(content:Link)
+            (u)-[:LIKES]->(content:Link)
             MATCH
             (content)-[r:TAGGED]->(tag:Tag)
         ";
