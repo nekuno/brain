@@ -95,28 +95,43 @@ class GroupModel
             $errors['html'] = array('"html" must be string');
         }
 
+        if (!array_key_exists('date', $data)) {
+            $errors['date'] = array('"date" is required');
+        } elseif (isset($data['date']) && (string)(int)$data['date'] !== (string)$data['date']) {
+            $errors['date'] = array('"date" must be a valid timestamp');
+        }
+
         if (!isset($data['location']) || !is_array($data['location'])) {
-            $errors['location'] = sprintf('The value "%s" is not valid, it should be an array with "latitude" and "longitude" keys', $data['location']);
+            $errors['location'] = sprintf('The value "%s" is not valid, it should be an array', $data['location']);
         } elseif(isset($data['location'])) {
-            if (!isset($data['location']['address']) || !$data['location']['address'] || !is_string($data['location']['address'])) {
-                $errors['location'] = 'Address required';
-            } else {
-                if (!isset($data['location']['latitude']) || !preg_match("/^-?([1-8]?[1-9]|[1-9]0)\.{1}\d+$/", $data['location']['latitude'])) {
-                    $errors['location'] = 'Latitude not valid';
-                } elseif (!is_float($data['location']['latitude'])) {
-                    $errors['location'] = 'Latitude must be float';
-                }
-                if (!isset($data['location']['longitude']) || !preg_match("/^-?([1]?[1-7][1-9]|[1]?[1-8][0]|[1-9]?[0-9])\.{1}\d+$/", $data['location']['longitude'])) {
-                    $errors['location'] = 'Longitude not valid';
-                } elseif (!is_float($data['location']['longitude'])) {
-                    $errors['location'] = 'Longitude must be float';
-                }
-                if (!isset($data['location']['locality']) || !$data['location']['locality'] || !is_string($data['location']['locality'])) {
-                    $errors['location'] = 'Locality required';
-                }
-                if (!isset($data['location']['country']) || !$data['location']['country'] || !is_string($data['location']['country'])) {
-                    $errors['location'] = 'Country required';
-                }
+            if (!array_key_exists('address', $data['location'])) {
+                $errors['address'] = 'Address required';
+            } elseif (isset($data['location']['address']) && !is_string($data['location']['address'])) {
+                $errors['address'] = 'Address must be a string';
+            }
+            if (!array_key_exists('latitude', $data['location'])) {
+                $errors['latitude'] = 'Latitude required';
+            } elseif (isset($data['location']['latitude']) && !preg_match("/^-?([1-8]?[1-9]|[1-9]0)\.{1}\d+$/", $data['location']['latitude'])) {
+                $errors['latitude'] = 'Latitude not valid';
+            } elseif (isset($data['location']['latitude']) && !is_float($data['location']['latitude'])) {
+                $errors['latitude'] = 'Latitude must be float';
+            }
+            if (!array_key_exists('longitude', $data['location'])) {
+                $errors['longitude'] = 'Longitude required';
+            } elseif (isset($data['location']['longitude']) && !preg_match("/^-?([1-8]?[1-9]|[1-9]0)\.{1}\d+$/", $data['location']['longitude'])) {
+                $errors['longitude'] = 'Longitude not valid';
+            } elseif (isset($data['location']['longitude']) && !is_float($data['location']['longitude'])) {
+                $errors['longitude'] = 'Longitude must be float';
+            }
+            if (!array_key_exists('locality', $data['location'])) {
+                $errors['locality'] = 'Locality required';
+            } elseif (isset($data['location']['locality']) && !is_string($data['location']['locality'])) {
+                $errors['locality'] = 'Locality must be a string';
+            }
+            if (!array_key_exists('country', $data['location'])) {
+                $errors['country'] = 'Country required';
+            } elseif (isset($data['location']['country']) && !is_string($data['location']['country'])) {
+                $errors['country'] = 'Country must be a string';
             }
         }
 
@@ -133,12 +148,13 @@ class GroupModel
         $this->validate($data);
 
         $qb = $this->gm->createQueryBuilder();
-        $qb->create('(g:Group {name:{ name }, html: { html }})')
+        $qb->create('(g:Group {name:{ name }, html: { html }, date: { date })')
             ->with('g')
             ->merge('(l:Location {address: { address }, latitude: { latitude }, longitude: { longitude }, locality: { locality }, country: { country }})<-[:LOCATION]-(g)')
             ->setParameters(array(
                 'name' => $data['name'],
                 'html' => $data['html'],
+                'date' => $data['date'] ? (int)$data['date'] : null,
                 'address' => $data['location']['address'],
                 'latitude' => $data['location']['latitude'],
                 'longitude' => $data['location']['longitude'],
@@ -169,6 +185,7 @@ class GroupModel
             ->where('id(g) = { id }')
             ->set('g.name = { name }')
             ->set('g.html = { html }')
+            ->set('g.date = { date }')
             ->with('g')
             ->match('(l:Location)<-[:LOCATION]-(g)')
             ->set('l.address = { address }', 'l.latitude = { latitude }', 'l.longitude = { longitude }', 'l.locality = { locality }', 'l.country = { country }')
@@ -176,6 +193,7 @@ class GroupModel
                 'id' => (integer)$id,
                 'name' => $data['name'],
                 'html' => $data['html'],
+                'date' => $data['date'] ? (int)$data['date'] : null,
                 'address' => $data['location']['address'],
                 'latitude' => $data['location']['latitude'],
                 'longitude' => $data['location']['longitude'],
@@ -317,6 +335,7 @@ class GroupModel
                 'locality' => $location ? $location->getProperty('locality') : null,
                 'country' => $location ? $location->getProperty('country') : null,
             ),
+            'date' => $group->getProperty('date'),
         );
     }
 
