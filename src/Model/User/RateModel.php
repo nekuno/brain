@@ -67,6 +67,9 @@ class RateModel
             case $this::LIKE :
                 $result = $this->userLikeLink($userId, $data);
                 break;
+            case $this::DISLIKE :
+                $result = $this->userDislikeLink($userId, $data);
+                break;
             default:
                 return array();
         }
@@ -90,7 +93,7 @@ class RateModel
     protected function userLikeLink($userId, array $data = array())
     {
 
-        if (empty($userId) || empty($data['id'])) return array('empty thing' => 'true');
+        if (empty($userId) || empty($data['id'])) return array('empty thing' => 'true'); //TODO: Fix this return
 
         $qb = $this->gm->createQueryBuilder();
 
@@ -128,8 +131,42 @@ class RateModel
 
     }
 
+    private function userDislikeLink($userId, $data)
+    {
+        if (empty($userId) || empty($data['id'])) return array('empty thing' => 'true');
+
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->setParameters(array(
+            'userId' => (integer)$userId,
+            'linkId' => (integer)$data['id'],
+            'timestamp' => isset($data['timestamp']) ? $data['timestamp'] : 1000*time(),
+        ));
+
+        $qb->match('(u:User)', '(l:Link)')
+            ->where('u.qnoow_id = { userId }', 'id(l) = { linkId }')
+            ->merge('(u)-[r:DISLIKES]->(l)')
+            ->set('r.disliked={timestamp}');
+
+        $qb->with('u, r, l')
+            ->optionalMatch('(u)-[a:AFFINITY|LIKES]-(l)')
+            ->delete('a');
+
+        $qb->returns('r');
+
+        $result = $qb->getQuery()->getResultSet();
+
+        $return = array();
+        foreach ($result as $row) {
+            $return[] = $this->buildDislike($row);
+        }
+
+        return $return;
+    }
+
     /**
-     * @param Row $row
+     * Intended to mimic a Like object
+     * @param Row $row with r as Like relationship
      * @return array
      */
     protected function buildLike($row)
@@ -140,6 +177,22 @@ class RateModel
         return array(
             'id' => $relationship->getId(),
             'resource' => $relationship->getProperty('resource'),
+            'timestamp' => $relationship->getProperty('timestamp'),
+        );
+    }
+
+    /**
+     * Intended to mimic a Dislike object
+     * @param Row $row with r as Dislike relationship
+     * @return array
+     */
+    protected function buildDislike($row)
+    {
+        /* @var $relationship Relationship */
+        $relationship = $row->offsetGet('r');
+
+        return array(
+            'id' => $relationship->getId(),
             'timestamp' => $relationship->getProperty('timestamp'),
         );
     }

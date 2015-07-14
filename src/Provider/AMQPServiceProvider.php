@@ -21,15 +21,17 @@ class AMQPServiceProvider implements ServiceProviderInterface
     public function register(Application $app)
     {
 
-        $app['amqp'] = function ($app) {
+        $app['amqp'] = $app->share(
+            function ($app) {
 
-            return new AMQPStreamConnection(
-                $app['amqp.options']['host'],
-                $app['amqp.options']['port'],
-                $app['amqp.options']['user'],
-                $app['amqp.options']['pass']
-            );
-        };
+                return new AMQPStreamConnection(
+                    $app['amqp.options']['host'],
+                    $app['amqp.options']['port'],
+                    $app['amqp.options']['user'],
+                    $app['amqp.options']['pass']
+                );
+            }
+        );
     }
 
     /**

@@ -69,7 +69,7 @@ class ContentPaginatedModel implements PaginatedInterface
 
         $qb->match("(u:User)")
             ->where("u.qnoow_id = { userId }")
-            ->match("(u)-[r:LIKES|DISLIKES]->(content:" . $linkType . ")")
+            ->match("(u)-[r:LIKES]->(content:" . $linkType . ")")
             ->optionalMatch("(content)-[:TAGGED]->(tag:Tag)");
 
         if (isset($filters['tag'])) {

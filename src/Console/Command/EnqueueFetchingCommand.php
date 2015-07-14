@@ -65,15 +65,13 @@ class EnqueueFetchingCommand extends ApplicationAwareCommand
             $resourceOwners[] = $resourceOwner;
         }
 
-        /** @var AMQPStreamConnection $connection */
-        $connection = $this->app['amqp'];
         foreach ($users as $user) {
             foreach ($resourceOwners as $name) {
                 $data = array(
                     'userId' => $user['qnoow_id'],
                     'resourceOwner' => $name,
                 );
-                $this->enqueueFetchingProcess($data, $connection);
+                $this->enqueueFetchingProcess($data);
             }
         }
     }
@@ -82,10 +80,11 @@ class EnqueueFetchingCommand extends ApplicationAwareCommand
      * @param array $data
      * @param AMQPStreamConnection $connection
      */
-    private function enqueueFetchingProcess(array $data, AMQPStreamConnection $connection)
+    private function enqueueFetchingProcess(array $data)
     {
         $message = new AMQPMessage(json_encode($data, JSON_UNESCAPED_UNICODE));
-
+        /** @var AMQPStreamConnection $connection */
+        $connection = $this->app['amqp'];
         $exchangeName = 'brain.direct';
         $exchangeType = 'direct';
         $routingKey = 'brain.fetching.links';
