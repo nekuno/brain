@@ -148,7 +148,7 @@ class GroupModel
         $this->validate($data);
 
         $qb = $this->gm->createQueryBuilder();
-        $qb->create('(g:Group {name:{ name }, html: { html }, date: { date })')
+        $qb->create('(g:Group {name:{ name }, html: { html }, date: { date }})')
             ->with('g')
             ->merge('(l:Location {address: { address }, latitude: { latitude }, longitude: { longitude }, locality: { locality }, country: { country }})<-[:LOCATION]-(g)')
             ->setParameters(array(
@@ -187,7 +187,7 @@ class GroupModel
             ->set('g.html = { html }')
             ->set('g.date = { date }')
             ->with('g')
-            ->match('(l:Location)<-[:LOCATION]-(g)')
+            ->merge('(l:Location)<-[:LOCATION]-(g)')
             ->set('l.address = { address }', 'l.latitude = { latitude }', 'l.longitude = { longitude }', 'l.locality = { locality }', 'l.country = { country }')
             ->setParameters(array(
                 'id' => (integer)$id,
