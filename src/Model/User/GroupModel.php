@@ -79,6 +79,55 @@ class GroupModel
         return $this->build($row);
     }
 
+    public function getAllByEnterpriseUserId($enterpriseUserId)
+    {
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(i:Invitation)-[:HAS_GROUP]->(g:Group)<-[:CREATED_GROUP]-(eu:EnterpriseUser)')
+            ->where('eu.admin_id = { admin_id }')
+            ->optionalMatch('(g)-[:LOCATION]->(l:Location)')
+            ->setParameter('admin_id', (integer)$enterpriseUserId)
+            ->returns('g', 'l', 'i');
+
+        $query = $qb->getQuery();
+
+        $result = $query->getResultSet();
+
+        $return = array();
+
+        foreach ($result as $row) {
+            $return[] = $this->buildWithInvitationToken($row);
+        }
+
+        return $return;
+    }
+
+    public function getByIdAndEnterpriseUserId($id, $enterpriseUserId)
+    {
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(i:Invitation)-[:HAS_GROUP]->(g:Group)<-[:CREATED_GROUP]-(eu:EnterpriseUser)')
+            ->where('id(g) = { id } AND eu.admin_id = { admin_id }')
+            ->optionalMatch('(g)-[:LOCATION]->(l:Location)')
+            ->setParameters(array(
+                'id' => (integer)$id,
+                'admin_id', (integer)$enterpriseUserId,
+            ))
+            ->returns('g', 'l', 'i');
+
+        $query = $qb->getQuery();
+
+        $result = $query->getResultSet();
+
+        $return = array();
+
+        foreach ($result as $row) {
+            $return[] = $this->buildWithInvitationToken($row);
+        }
+
+        return $return;
+    }
+
     public function validate(array $data)
     {
         $errors = array();
@@ -231,6 +280,30 @@ class GroupModel
 
     }
 
+    public function setCreatedByEnterpriseUser($id, $enterpriseUserId)
+    {
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(g:Group)')
+            ->where('id(g) = { id }')
+            ->merge('(g)<-[:CREATED_GROUP]-(eu:EnterpriseUser)')
+            ->where('eu.admin_id = { enterpriseUserId }')
+            ->setParameters(array(
+                'id' => (integer)$id,
+                'enterpriseUserId' => (integer)$enterpriseUserId,
+            ))
+            ->returns('g', 'r');
+
+        $query = $qb->getQuery();
+
+        $result = $query->getResultSet();
+
+        /* @var $row Row */
+        $row = $result->current();
+
+        return $this->build($row);
+
+    }
+
     public function getByUser($userId)
     {
 
@@ -337,6 +410,15 @@ class GroupModel
             ),
             'date' => $group->getProperty('date'),
         );
+    }
+
+    protected function buildWithInvitationToken(Row $row)
+    {
+        $return = $this->build($row);
+        /* @var $invitation Node */
+        $invitation = $row->offsetGet('i');
+
+        return $return + array('invitation_url' => $invitation->getProperties('token'));
     }
 
     /**

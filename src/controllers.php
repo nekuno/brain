@@ -55,13 +55,33 @@ $app['users.invitations.controller'] = $app->share(
     }
 );
 
+$app['enterpriseUsers.controller'] = $app->share(
+    function () use ($app) {
+
+        return new \Controller\EnterpriseUser\EnterpriseUserController($app['enterpriseUsers.model']);
+    }
+);
+
+$app['enterpriseUsers.groups.controller'] = $app->share(
+    function () use ($app) {
+
+        return new \Controller\EnterpriseUser\GroupController($app['users.groups.model'], $app['enterpriseUsers.model']);
+    }
+);
+
+$app['enterpriseUsers.invitations.controller'] = $app->share(
+    function () use ($app) {
+
+        return new \Controller\EnterpriseUser\InvitationController($app['users.invitations.model'], $app['enterpriseUsers.model']);
+    }
+);
+
 $app['fetch.controller'] = $app->share(
     function () {
 
         return new Controller\FetchController;
     }
 );
-
 
 /**
  * Middleware for filter some request
