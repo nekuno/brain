@@ -99,9 +99,7 @@ class OAuthTokenSubscriber implements EventSubscriberInterface
         $message = new AMQPMessage(json_encode($messageData), array('delivery_mode' => 2));
         $channel->basic_publish($message, $exchangeName, $routing_key);
 
-
         $channel->close();
-        $this->amqp->close();
     }
 
     /**
