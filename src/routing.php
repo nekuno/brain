@@ -120,6 +120,7 @@ $app->post('/enterpriseUsers/{enterpriseUserId}/groups/{id}', 'enterpriseUsers.g
 $app->post('/enterpriseUsers/{enterpriseUserId}/invitations', 'enterpriseUsers.invitations.controller:postAction');
 $app->delete('/enterpriseUsers/{enterpriseUserId}/invitations/{id}', 'enterpriseUsers.invitations.controller:deleteAction');
 $app->get('/enterpriseUsers/{enterpriseUserId}/invitations/{id}', 'enterpriseUsers.invitations.controller:getAction');
+$app->put('/enterpriseUsers/{enterpriseUserId}/invitations/{id}', 'enterpriseUsers.invitations.controller:putAction');
 $app->post('/enterpriseUsers/{enterpriseUserId}/invitations/{id}', 'enterpriseUsers.invitations:validateAction');
 
 

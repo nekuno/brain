@@ -56,6 +56,19 @@ class InvitationController
         return $app->json($invitation, 201);
     }
 
+    public function putAction(Request $request, Application $app, $enterpriseUserId)
+    {
+        $data = $request->request->all();
+
+        if(!$this->eum->exists($enterpriseUserId)) {
+            throw new NotFoundHttpException(sprintf('There is not enterprise user with id "%s"', $enterpriseUserId));
+        }
+
+        $invitation = $this->im->update($data);
+
+        return $app->json($invitation, 201);
+    }
+
     public function deleteAction(Application $app, $id, $enterpriseUserId)
     {
         if(!$this->eum->exists($enterpriseUserId)) {
