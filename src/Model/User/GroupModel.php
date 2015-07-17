@@ -96,7 +96,7 @@ class GroupModel
         $return = array();
 
         foreach ($result as $row) {
-            $return[] = $this->buildWithInvitationToken($row);
+            $return[] = $this->buildWithInvitationData($row);
         }
 
         return $return;
@@ -126,7 +126,7 @@ class GroupModel
         /* @var $row Row */
         $row = $result->current();
 
-        return $this->buildWithInvitationToken($row);
+        return $this->buildWithInvitationData($row);
     }
 
     public function validate(array $data)
@@ -413,15 +413,16 @@ class GroupModel
         );
     }
 
-    protected function buildWithInvitationToken(Row $row)
+    protected function buildWithInvitationData(Row $row)
     {
         $return = $this->build($row);
         /* @var $invitation Node */
         $invitation = $row->offsetGet('i');
 
         return $return + array(
+            'invitation_id' => $invitation->getId(),
             'invitation_token' => $invitation->getProperty('token'),
-            'invitation_image_url' => $invitation->getProperty('image_url')
+            'invitation_image_path' => $invitation->getProperty('image_path'),
         );
     }
 
