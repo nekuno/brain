@@ -54,7 +54,7 @@ class EnterpriseUserModel
         }
 
         $qb = $this->gm->createQueryBuilder();
-        $qb->create('(eu:EnterpriseUser {admin_id: { admin_id }, username: { username }, email: { email }})')
+        $qb->createUnique('(eu:EnterpriseUser {admin_id: { admin_id }, username: { username }, email: { email }})')
             ->setParameters(array(
                 'admin_id' => (integer)$data['admin_id'],
                 'username' => $data['username'],

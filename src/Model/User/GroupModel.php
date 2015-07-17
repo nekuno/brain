@@ -107,11 +107,11 @@ class GroupModel
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(i:Invitation)-[:HAS_GROUP]->(g:Group)<-[:CREATED_GROUP]-(eu:EnterpriseUser)')
-            ->where('id(g) = { id } AND eu.admin_id = { admin_id }')
+            ->where('id(g) = { id }', 'eu.admin_id = { admin_id }')
             ->optionalMatch('(g)-[:LOCATION]->(l:Location)')
             ->setParameters(array(
                 'id' => (integer)$id,
-                'admin_id', (integer)$enterpriseUserId,
+                'admin_id' => (integer)$enterpriseUserId,
             ))
             ->returns('g', 'l', 'i');
 
@@ -119,13 +119,14 @@ class GroupModel
 
         $result = $query->getResultSet();
 
-        $return = array();
-
-        foreach ($result as $row) {
-            $return[] = $this->buildWithInvitationToken($row);
+        if (count($result) < 1) {
+            throw new NotFoundHttpException('Group not found');
         }
 
-        return $return;
+        /* @var $row Row */
+        $row = $result->current();
+
+        return $this->buildWithInvitationToken($row);
     }
 
     public function validate(array $data)
@@ -270,7 +271,8 @@ class GroupModel
             ->where('id(g) = { id }')
             ->setParameter('id', (integer)$id)
             ->optionalMatch('(g)-[r]-()')
-            ->delete('g', 'r');
+            ->optionalMatch('()-[relationships]-(i:Invitation)-[:HAS_GROUP]->(g)')
+            ->delete('g', 'r', 'i', 'relationships');
 
         $query = $qb->getQuery();
 
@@ -283,15 +285,14 @@ class GroupModel
     public function setCreatedByEnterpriseUser($id, $enterpriseUserId)
     {
         $qb = $this->gm->createQueryBuilder();
-        $qb->match('(g:Group)')
-            ->where('id(g) = { id }')
-            ->merge('(g)<-[:CREATED_GROUP]-(eu:EnterpriseUser)')
-            ->where('eu.admin_id = { enterpriseUserId }')
+        $qb->match('(g:Group)', '(eu:EnterpriseUser)')
+            ->where('id(g) = { id } AND eu.admin_id = { enterpriseUserId }')
+            ->merge('(g)<-[:CREATED_GROUP]-(eu)')
             ->setParameters(array(
                 'id' => (integer)$id,
                 'enterpriseUserId' => (integer)$enterpriseUserId,
             ))
-            ->returns('g', 'r');
+            ->returns('g');
 
         $query = $qb->getQuery();
 
@@ -418,7 +419,10 @@ class GroupModel
         /* @var $invitation Node */
         $invitation = $row->offsetGet('i');
 
-        return $return + array('invitation_url' => $invitation->getProperties('token'));
+        return $return + array(
+            'invitation_token' => $invitation->getProperty('token'),
+            'invitation_image_url' => $invitation->getProperty('image_url')
+        );
     }
 
     /**
