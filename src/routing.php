@@ -118,8 +118,8 @@ $app->post('/enterpriseUsers/{enterpriseUserId}/groups/{id}', 'enterpriseUsers.g
  * EnterpriseUser Invitation routes
  */
 $app->post('/enterpriseUsers/{enterpriseUserId}/invitations', 'enterpriseUsers.invitations.controller:postAction');
-$app->delete('/enterpriseUsers/{enterpriseUserId}/groups/{id}', 'enterpriseUsers.groups.controller:deleteAction');
-$app->post('/enterpriseUsers/{enterpriseUserId}/invitations/{id}', 'enterpriseUsers.groups.invitations:validateAction');
+$app->delete('/enterpriseUsers/{enterpriseUserId}/invitations/{id}', 'enterpriseUsers.invitations.controller:deleteAction');
+$app->post('/enterpriseUsers/{enterpriseUserId}/invitations/{id}', 'enterpriseUsers.invitations:validateAction');
 
 
 $controllers
