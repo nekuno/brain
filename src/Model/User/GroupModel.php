@@ -225,9 +225,6 @@ class GroupModel
 
     public function update($id, array $data)
     {
-
-        $this->getById($id);
-
         $this->validate($data);
 
         $qb = $this->gm->createQueryBuilder();
@@ -237,7 +234,8 @@ class GroupModel
             ->set('g.html = { html }')
             ->set('g.date = { date }')
             ->with('g')
-            ->merge('(l:Location)<-[:LOCATION]-(g)')
+            ->match('(l:Location)<-[:LOCATION]-(g)')
+            ->merge('(l)<-[:LOCATION]-(g)')
             ->set('l.address = { address }', 'l.latitude = { latitude }', 'l.longitude = { longitude }', 'l.locality = { locality }', 'l.country = { country }')
             ->setParameters(array(
                 'id' => (integer)$id,
