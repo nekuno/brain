@@ -58,10 +58,11 @@ class FetchLinksSubscriber implements EventSubscriberInterface
     public function onProcessStart(ProcessLinksEvent $event)
     {
 
+        $this->output->writeln(sprintf('[%s] Processing "%d" links for user "%d" from resource owner "%s"', date('Y-m-d H:i:s'), count($event->getLinks()), $event->getUser(), $event->getResourceOwner()));
+
         $this->progress = new ProgressBar($this->output, count($event->getLinks()));
 
         if (OutputInterface::VERBOSITY_NORMAL < $this->output->getVerbosity()) {
-            $this->output->writeln(sprintf('[%s] Processing "%d" links for user "%d" from resource owner "%s"', date('Y-m-d H:i:s'), count($event->getLinks()), $event->getUser(), $event->getResourceOwner()));
             $this->progress->start();
         }
     }
@@ -82,6 +83,8 @@ class FetchLinksSubscriber implements EventSubscriberInterface
 
     public function onProcessFinish(ProcessLinksEvent $event)
     {
+
+        $this->output->writeln(sprintf('[%s] Processed "%d" links for user "%d" from resource owner "%s"', date('Y-m-d H:i:s'), count($event->getLinks()), $event->getUser(), $event->getResourceOwner()));
 
         if (OutputInterface::VERBOSITY_NORMAL < $this->output->getVerbosity()) {
             $this->progress->finish();
