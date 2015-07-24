@@ -103,3 +103,8 @@ $app['users.groups.model'] = function ($app) {
 $app['users.invitations.model'] = function ($app) {
     return new \Model\User\InvitationModel($app['neo4j.graph_manager'], $app['users.groups.model'], $app['users.model'], $app['admin_domain_plus_post']);
 };
+
+$app['enterpriseUsers.model'] = function ($app) {
+
+    return new \Model\EnterpriseUser\EnterpriseUserModel($app['neo4j.graph_manager']);
+};

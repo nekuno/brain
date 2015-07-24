@@ -95,6 +95,34 @@ $app->get('/invitations/count', 'users.invitations.controller:countTotalAction')
 $app->get('/invitations/users/{id}/count', 'users.invitations.controller:countByUserAction');
 $app->post('/invitations/{id}/users/{userId}/send', 'users.invitations.controller:sendAction');
 
+/**
+ * EnterpriseUser routes
+ */
+$app->get('/enterpriseUsers/{id}', 'enterpriseUsers.controller:getAction');
+$app->post('/enterpriseUsers', 'enterpriseUsers.controller:postAction');
+$app->put('/enterpriseUsers/{id}', 'enterpriseUsers.controller:putAction');
+$app->delete('/enterpriseUsers/{id}', 'enterpriseUsers.controller:deleteAction');
+$app->post('/enterpriseUsers/{id}', 'enterpriseUsers.controller:validateAction');
+
+/**
+ * EnterpriseUser Group routes
+ */
+$app->get('/enterpriseUsers/{enterpriseUserId}/groups', 'enterpriseUsers.groups.controller:getAllAction');
+$app->get('/enterpriseUsers/{enterpriseUserId}/groups/{id}', 'enterpriseUsers.groups.controller:getAction');
+$app->post('/enterpriseUsers/{enterpriseUserId}/groups', 'enterpriseUsers.groups.controller:postAction');
+$app->put('/enterpriseUsers/{enterpriseUserId}/groups/{id}', 'enterpriseUsers.groups.controller:putAction');
+$app->delete('/enterpriseUsers/{enterpriseUserId}/groups/{id}', 'enterpriseUsers.groups.controller:deleteAction');
+$app->post('/enterpriseUsers/{enterpriseUserId}/groups/{id}', 'enterpriseUsers.groups.controller:validateAction');
+
+/**
+ * EnterpriseUser Invitation routes
+ */
+$app->post('/enterpriseUsers/{enterpriseUserId}/invitations', 'enterpriseUsers.invitations.controller:postAction');
+$app->delete('/enterpriseUsers/{enterpriseUserId}/invitations/{id}', 'enterpriseUsers.invitations.controller:deleteAction');
+$app->get('/enterpriseUsers/{enterpriseUserId}/invitations/{id}', 'enterpriseUsers.invitations.controller:getAction');
+$app->put('/enterpriseUsers/{enterpriseUserId}/invitations/{id}', 'enterpriseUsers.invitations.controller:putAction');
+$app->post('/enterpriseUsers/{enterpriseUserId}/invitations/{id}', 'enterpriseUsers.invitations:validateAction');
+
 
 $controllers
     ->assert('id', '\d+')

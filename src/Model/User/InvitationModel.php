@@ -199,8 +199,8 @@ class InvitationModel
         $this->validate($data, false);
 
         $userAvailable = 0;
-        if(isset($data['userId']) && !$userAvailable = $this->getUserAvailable($data['userId'])) {
-            throw new \RuntimeException(sprintf('User %s has not available invitations', $data['userId']));
+        if(isset($data['userId'])) {
+            $userAvailable = $this->getUserAvailable($data['userId']);
         }
 
         $data += array('token' => null);
@@ -329,7 +329,7 @@ class InvitationModel
                     ));
             }
         }
-        if(isset($data['userId'])) {
+        if(array_key_exists('userId', $data)) {
             isset($data['groupId']) ? $qb->with('inv, g') : $qb->with('inv');
             $qb->optionalMatch('(old_user:User)-[our:CREATED_INVITATION]->(inv)')
                 ->delete('our');
@@ -342,7 +342,6 @@ class InvitationModel
                     'groupId' => isset($data['groupId']) ? (integer)$data['groupId'] : null,
                     'invitationId' => (integer)$data['invitationId'],
                 ));
-
         }
 
         if(isset($data['groupId'])) {
@@ -607,6 +606,8 @@ class InvitationModel
                         case 'available':
                             if ((string)(int)$fieldValue !== (string)$fieldValue) {
                                 $fieldErrors[] = 'available must be an integer';
+                            } elseif ((int)$fieldValue < 0) {
+                                $fieldErrors[] = 'available must be equal or greater than zero';
                             }
                             break;
                         case 'email':
