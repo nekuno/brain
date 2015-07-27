@@ -17,8 +17,7 @@ class GetUncorrelatedQuestionsCommand extends ApplicationAwareCommand
         $this->setName('questions:get-uncorrelated')
             ->setDescription("Get a selection of uncorrelated questions groups.")
             ->addArgument('preselect', InputArgument::OPTIONAL, 'How many top ranking questions are analyzed', 50)
-            ->addOption('save', null, InputOption::VALUE_NONE, 'Set output questions as divisive')
-        ;
+            ->addOption('save', null, InputOption::VALUE_NONE, 'Set output questions as divisive');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -35,8 +34,12 @@ class GetUncorrelatedQuestionsCommand extends ApplicationAwareCommand
             return;
         }
 
-        if ($input->getOption('save')){
+        if ($input->getOption('save')) {
+            $previous = $model->unsetDivisiveQuestions();
             $model->setDivisiveQuestions($result['questions']);
+            if (OutputInterface::VERBOSITY_NORMAL < $output->getVerbosity()) {
+                $output->writeln(sprintf('There were %d questions set as divisive', $previous));
+            }
         }
 
         //for debugging, modify return to appropriate array in QuestionModel.php;

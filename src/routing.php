@@ -57,6 +57,7 @@ $app->get('/questionnaire/questions/{id}', 'questionnaire.questions.controller:g
 $app->get('/questionnaire/questions/{id}/stats', 'questionnaire.questions.controller:statsAction');
 $app->post('/questionnaire/questions/{id}/skip', 'questionnaire.questions.controller:skipAction');
 $app->post('/questionnaire/questions/{id}/report', 'questionnaire.questions.controller:reportAction');
+$app->get('/divisivequestions', 'questionnaire.questions.controller:getDivisiveQuestionsAction');
 
 /**
  * Content routes

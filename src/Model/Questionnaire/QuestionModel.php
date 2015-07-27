@@ -566,9 +566,11 @@ class QuestionModel
 
     public function setDivisiveQuestions(array $ids)
     {
+        $questions = array();
         foreach ($ids as $id) {
-            $this->setDivisiveQuestion($id);
+            $questions[] = $this->setDivisiveQuestion($id);
         }
+        return $questions;
     }
 
     public function setDivisiveQuestion($id)
@@ -610,5 +612,30 @@ class QuestionModel
         /* @var $row Row */
         $row = $result->current();
         return $row->offsetGet('c');
+    }
+
+    public function getDivisiveQuestions($locale)
+    {
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(q:Question)')
+            ->where("HAS(q.text_$locale)",'HAS(q.divisive)')
+            ->match('(q)<-[:IS_ANSWER_OF]-(a:Answer)')
+            ->with('q', 'a')
+            ->orderBy('id(a)')
+            ->with('q, collect(a) AS answers')
+            ->returns('q AS question', 'answers')
+            ->orderBy('q.ranking DESC')
+        ;
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+        $return = array();
+
+        foreach ($result as $row) {
+            $return[] = $this->build($row, $locale);
+        }
+
+        return $return;
     }
 }
