@@ -582,7 +582,7 @@ class QuestionModel
 
         $qb->match('(q:Question)')
             ->where('id(q)={questionId}')
-            ->set('q.divisive=1')
+            ->set('q :RegisterQuestion')
             ->returns('q');
 
         $query = $qb->getQuery();
@@ -601,9 +601,8 @@ class QuestionModel
     {
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match('(q:Question)')
-            ->where('HAS(q.divisive)')
-            ->remove('q.divisive')
+        $qb->match('(q:RegisterQuestion)')
+            ->remove('q :RegisterQuestion')
             ->returns('count(q) AS c');
 
         $query = $qb->getQuery();
@@ -618,8 +617,8 @@ class QuestionModel
     {
 
         $qb = $this->gm->createQueryBuilder();
-        $qb->match('(q:Question)')
-            ->where("HAS(q.text_$locale)",'HAS(q.divisive)')
+        $qb->match('(q:RegisterQuestion)')
+            ->where("HAS(q.text_$locale)")
             ->match('(q)<-[:IS_ANSWER_OF]-(a:Answer)')
             ->with('q', 'a')
             ->orderBy('id(a)')
