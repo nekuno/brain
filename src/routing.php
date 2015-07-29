@@ -18,6 +18,13 @@ $app->get('/profile/filters', 'users.profile.controller:getFiltersAction');
 $app->get('/profile/tags/{type}', 'users.profile.controller:getProfileTagsAction');
 $app->post('/profile/validate', 'users.profile.controller:validateAction')->value('id', null);
 
+$app->get('/users/{id}/privacy', 'users.privacy.controller:getAction')->value('id', null);
+$app->post('/users/{id}/privacy', 'users.privacy.controller:postAction')->value('id', null);
+$app->put('/users/{id}/privacy', 'users.privacy.controller:putAction')->value('id', null);
+$app->delete('/users/{id}/privacy', 'users.privacy.controller:deleteAction')->value('id', null);
+$app->get('/privacy/metadata', 'users.privacy.controller:getMetadataAction');
+$app->post('/privacy/validate', 'users.privacy.controller:validateAction')->value('id', null);
+
 $app->get('/users/{id1}/matching/{id2}', 'users.controller:getMatchingAction');
 $app->get('/users/{id1}/similarity/{id2}', 'users.controller:getSimilarityAction');
 $app->get('/users/{id}/questions', 'users.controller:getUserQuestionsAction');

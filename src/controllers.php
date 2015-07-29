@@ -20,6 +20,13 @@ $app['users.profile.controller'] = $app->share(
     }
 );
 
+$app['users.privacy.controller'] = $app->share(
+    function () {
+
+        return new \Controller\User\PrivacyController();
+    }
+);
+
 $app['users.data.controller'] = $app->share(
     function () {
 

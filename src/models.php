@@ -10,6 +10,11 @@ $app['users.profile.model'] = function ($app) {
     return new \Model\User\ProfileModel($app['neo4j.client'], $app['fields']['profile'], $app['locale.options']['default']);
 };
 
+$app['users.privacy.model'] = function ($app) {
+
+    return new \Model\User\PrivacyModel($app['neo4j.client'], $app['fields']['privacy'], $app['locale.options']['default']);
+};
+
 $app['users.profile.tag.model'] = function ($app) {
 
     return new \Model\User\ProfileTagModel($app['neo4j.client']);

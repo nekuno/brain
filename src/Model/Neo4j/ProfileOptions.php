@@ -2,7 +2,6 @@
 
 namespace Model\Neo4j;
 
-use Everyman\Neo4j\Client;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 
@@ -19,7 +18,7 @@ class ProfileOptions implements LoggerAwareInterface
     protected $logger;
 
     /**
-     * @var ProfileOptionsResult
+     * @var OptionsResult
      */
     protected $result;
 
@@ -40,13 +39,12 @@ class ProfileOptions implements LoggerAwareInterface
     }
 
     /**
-     * @throws \Exception
-     * @return ProfileOptionsResult New ProfileOptions added
+     * @return OptionsResult
      */
     public function load()
     {
 
-        $this->result = new ProfileOptionsResult();
+        $this->result = new OptionsResult();
 
         $options = array(
             'Alcohol' => array(
