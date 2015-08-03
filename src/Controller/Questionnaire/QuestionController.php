@@ -170,6 +170,18 @@ class QuestionController
         return $app->json($stats);
     }
 
+    public function getDivisiveQuestionsAction(Request $request, Application $app)
+    {
+
+        $locale = $request->get('locale', $app['locale.options']['default']);
+        /* @var QuestionModel $model */
+        $model = $app['questionnaire.questions.model'];
+
+        $questions = $model->getDivisiveQuestions($locale);
+
+        return $app->json($questions);
+    }
+
     protected function getLocale(Request $request, $defaultLocale)
     {
         $locale = $request->get('locale', $defaultLocale);

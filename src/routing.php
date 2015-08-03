@@ -56,8 +56,9 @@ $app->get('/users/{userId}/data/status', 'users.data.controller:getStatusAction'
 /**
  * Questionnaire routes
  */
-$app->get('/questionnaire/questions', 'questionnaire.questions.controller:getQuestionsAction')->value('limit', 20);
+$app->get('/questionnaire/questions', 'questionnaire.questions.controller:getQuestionsAction')->value('limit', 20); //TODO: Remove
 $app->get('/questionnaire/questions/next', 'questionnaire.questions.controller:getNextQuestionAction');
+$app->get('/questionnaire/questions/register', 'questionnaire.questions.controller:getDivisiveQuestionsAction');
 $app->post('/questionnaire/questions', 'questionnaire.questions.controller:postQuestionAction');
 $app->post('/questionnaire/questions/validate', 'questionnaire.questions.controller:validateAction');
 $app->get('/questionnaire/questions/{id}', 'questionnaire.questions.controller:getQuestionAction');
