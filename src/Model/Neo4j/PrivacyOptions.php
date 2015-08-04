@@ -51,7 +51,7 @@ class PrivacyOptions implements LoggerAwareInterface
                 array(
                     'id' => 'all',
                     'name_en' => 'Everyone',
-                    'name_es' => 'Todos',
+                    'name_es' => 'Todo el mundo',
                 ),
                 array(
                     'id' => 'favorite',
@@ -68,7 +68,7 @@ class PrivacyOptions implements LoggerAwareInterface
                 array(
                     'id' => 'all',
                     'name_en' => 'Everyone',
-                    'name_es' => 'Todos',
+                    'name_es' => 'Todo el mundo',
                 ),
                 array(
                     'id' => 'favorite',
@@ -85,7 +85,7 @@ class PrivacyOptions implements LoggerAwareInterface
                 array(
                     'id' => 'all',
                     'name_en' => 'Everyone',
-                    'name_es' => 'Todos',
+                    'name_es' => 'Todo el mundo',
                 ),
                 array(
                     'id' => 'favorite',
@@ -102,7 +102,7 @@ class PrivacyOptions implements LoggerAwareInterface
                 array(
                     'id' => 'all',
                     'name_en' => 'Everyone',
-                    'name_es' => 'Todos',
+                    'name_es' => 'Todo el mundo',
                 ),
                 array(
                     'id' => 'favorite',
@@ -119,7 +119,7 @@ class PrivacyOptions implements LoggerAwareInterface
                 array(
                     'id' => 'all',
                     'name_en' => 'Everyone',
-                    'name_es' => 'Todos',
+                    'name_es' => 'Todo el mundo',
                 ),
                 array(
                     'id' => 'favorite',
