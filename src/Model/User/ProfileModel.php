@@ -143,8 +143,8 @@ class ProfileModel
                 /* @var $label Label */
                 $labelName = $label->getName();
                 if ($labelName != 'ProfileOption') {
-                    $labelName = lcfirst($labelName);
-                    $profile[$labelName] = $option->getProperty('id');
+                    $typeName = $this->labelToType($labelName);
+                    $profile[$typeName] = $option->getProperty('id');
                 }
 
             }
@@ -157,8 +157,8 @@ class ProfileModel
                 /* @var $label Label */
                 $labelName = $label->getName();
                 if ($labelName != 'ProfileTag') {
-                    $labelName = lcfirst($labelName);
-                    $profile[$labelName][] = $tag->getProperty('name');
+                    $typeName = $this->labelToType($labelName);
+                    $profile[$typeName][] = $tag->getProperty('name');
                 }
 
             }
@@ -237,7 +237,7 @@ class ProfileModel
         $template = "MATCH (user:User)<-[:PROFILE_OF]-(profile:Profile) "
             . " WHERE user.qnoow_id = {id} "
             . " OPTIONAL MATCH (profile)-[r]-() "
-            . " DELETE profile, r;";
+            . " DELETE profile, r";
 
         $query = new Query(
             $this->client,
@@ -384,8 +384,8 @@ class ProfileModel
     {
         $translationField = 'name_' . $locale;
         $template = "MATCH (option:ProfileOption) "
-            . "RETURN head(filter(x IN labels(option) WHERE x <> 'ProfileOption')) AS type, option.id AS id, option." . $translationField . " AS name "
-            . "ORDER BY type;";
+            . "RETURN head(filter(x IN labels(option) WHERE x <> 'ProfileOption')) AS labelName, option.id AS id, option." . $translationField . " AS name "
+            . "ORDER BY labelName;";
 
         $query = new Query(
             $this->client,
@@ -395,11 +395,11 @@ class ProfileModel
         $result = $query->getResultSet();
         $choiceOptions = array();
         foreach ($result as $row) {
-            $fieldName = lcfirst($row['type']);
+            $typeName = $this->labelToType($row['labelName']);
             $optionId = $row['id'];
             $optionName = $row['name'];
 
-            $choiceOptions[$fieldName][$optionId] = $optionName;
+            $choiceOptions[$typeName][$optionId] = $optionName;
         }
 
         return $choiceOptions;
@@ -541,7 +541,7 @@ class ProfileModel
             foreach ($optionLabels as $optionLabel) {
                 $labelName = $optionLabel->getName();
                 if ($labelName != 'ProfileOption') {
-                    $typeName = lcfirst($labelName);
+                    $typeName = $this->labelToType($labelName);
                     $options[$typeName] = $optionRelation;
                 }
             }
@@ -562,7 +562,7 @@ class ProfileModel
             foreach ($tagLabels as $tagLabel) {
                 $labelName = $tagLabel->getName();
                 if ($labelName != 'ProfileTag') {
-                    $typeName = lcfirst($labelName);
+                    $typeName = $this->labelToType($labelName);
                     if (!isset($tags[$typeName])) {
                         $tags[$typeName] = array();
                     }
@@ -581,7 +581,7 @@ class ProfileModel
      */
     protected function getProfileOptionNode($id, $profileType)
     {
-        $profileLabelName = ucfirst($profileType);
+        $profileLabelName = $this->typeToLabel($profileType);
 
         $params = array(
             'id' => $id,
@@ -611,7 +611,7 @@ class ProfileModel
      */
     protected function getProfileTagNode($tagName, $tagType)
     {
-        $tagLabelName = ucfirst($tagType);
+        $tagLabelName = $this->typeToLabel($tagType);
 
         $params = array(
             'name' => $tagName,
@@ -648,7 +648,7 @@ class ProfileModel
     protected function getTopProfileTags($tagType)
     {
 
-        $tagLabelName = ucfirst($tagType);
+        $tagLabelName = $this->typeToLabel($tagType);
 
         $params = array();
 
@@ -725,4 +725,17 @@ class ProfileModel
 
         return $locale;
     }
-} 
+
+    protected function labelToType($labelName)
+    {
+
+        return lcfirst($labelName);
+    }
+
+    protected function typeToLabel($typeName)
+    {
+
+        return ucfirst($typeName);
+    }
+
+}

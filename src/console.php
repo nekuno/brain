@@ -5,7 +5,7 @@ use Symfony\Component\Console\Input\InputOption;
 
 $console = new Application('Nekuno Brain', '0.*');
 $console->getDefinition()->addOption(new InputOption('--env', '-e', InputOption::VALUE_REQUIRED, 'The Environment name.', 'dev'));
-/* @var $app Silex\Application*/
+/* @var $app Silex\Application */
 $console->setDispatcher($app['dispatcher']);
 
 $console->addCommands(
@@ -29,6 +29,7 @@ $console->addCommands(
         new \Console\Command\SendChatMessagesNotificationsCommand($app),
         new \Console\Command\SwiftMailerSpoolSendCommand($app),
         new \Console\Command\MigrateSocialInvitationsCommand($app),
+        new \Console\Command\MigrateSocialProfilesCommand($app),
     )
 );
 
