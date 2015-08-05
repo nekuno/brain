@@ -63,7 +63,9 @@ class GroupModel
             ->with('g')
             ->optionalMatch('(g)-[:LOCATION]->(l:Location)')
             ->setParameter('id', (integer)$id)
-            ->returns('g', 'l');
+            ->with('g', 'l')
+            ->optionalMatch('(u:User)-[:BELONGS_TO]->(g)')
+            ->returns('g', 'l', 'COUNT(u) AS usersCount');
 
         $query = $qb->getQuery();
 
@@ -395,6 +397,8 @@ class GroupModel
         $group = $row->offsetGet('g');
         /* @var $location Node */
         $location = $row->offsetGet('l');
+        /* @var $userId Node */
+        $usersCount = $row->offsetGet('usersCount');
 
         return array(
             'id' => $group->getId(),
@@ -408,6 +412,7 @@ class GroupModel
                 'country' => $location ? $location->getProperty('country') : null,
             ),
             'date' => $group->getProperty('date'),
+            'usersCount' => $usersCount,
         );
     }
 
