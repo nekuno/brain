@@ -100,5 +100,14 @@ $app['tokenGenerator.service'] = function () {
     return new \Service\TokenGenerator();
 };
 
+$app['fullContact.client'] = $app->share(function (Silex\Application $app) {
+    return new GuzzleHttp\Client(array('base_url' => $app['fullContact.url']));
+});
+$app['peopleGraph.client'] = $app->share(function (Silex\Application $app) {
+    return new GuzzleHttp\Client(array('base_url' => $app['peopleGraph.url']));
+});
+$app['lookUpByEmail.service'] = $app->share(function (Silex\Application $app) {
+    return new \Service\LookUpByEmail($app['fullContact.client'], $app['fullContact.consumer_key'], $app['peopleGraph.client'], $app['peopleGraph.consumer_key']);
+});
 
 return $app;
