@@ -84,3 +84,8 @@ api_consumer.config:
 
 admin_domain_plus_post: %admin.domain_plus_port%
 social_host: %social.host%
+
+fullContact.url: %fullContact.url%
+fullContact.consumer_key: %fullContact.consumer_key%
+peopleGraph.url: %peopleGraph.url%
+peopleGraph.consumer_key: %peopleGraph.consumer_key%
