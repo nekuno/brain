@@ -21,20 +21,30 @@ class LookUpByEmail
         $this->peopleGraphApiKey = $peopleGraphApiKey;
     }
 
-    function get($email)
+    public function getFromFullContact($email)
     {
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             throw new RuntimeException("email not valid");
         }
 
         $fullContactResponse = $this->getFromClient($this->fullContactClient, $email, $this->fullContactApiKey);
-        $peopleGraphResponse = $this->getFromClient($this->peopleGraphClient, $email, $this->peopleGraphApiKey);
-
         $fullContactProcessedData = $this->processFullContactData($fullContactResponse);
+
+        return $fullContactProcessedData;
+    }
+
+    public function getFromPeopleGraph($email)
+    {
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new RuntimeException("email not valid");
+        }
+
+        $peopleGraphResponse = $this->getFromClient($this->peopleGraphClient, $email, $this->peopleGraphApiKey);
         $peopleGraphProcessedData = $this->processPeopleGraphData($peopleGraphResponse);
 
-        return array('FullContact' => $fullContactProcessedData, 'PeopleGraph' => $peopleGraphProcessedData);
+        return $peopleGraphProcessedData;
     }
+
 
     private function getFromClient(Client $client, $email, $apiKey)
     {

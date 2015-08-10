@@ -52,20 +52,28 @@ class LookUpByEmailCommand extends ApplicationAwareCommand
         $lookUpByEmail = $this->app['lookUpByEmail.service'];
 
         try {
-
-            $data = $lookUpByEmail->get($email);
-
-            foreach($data as $resource => $singleData) {
-                $this->displayMessage('Getting from ' . $resource);
-                foreach($singleData as $socialNetwork => $url) {
+            $this->displayMessage('Getting from FullContact');
+            $fullContactData = $lookUpByEmail->getFromFullContact($email);
+                foreach($fullContactData as $socialNetwork => $url) {
                     $this->displayMessage('Social Network: ' . $socialNetwork);
                     $this->displayMessage('Url: ' . $url);
                 }
                 $this->displaySuccess();
-            }
 
         } catch (\Exception $e) {
+            $this->displayError('<error>Error trying to look up: ' . $e->getMessage() . '</error>');
+        }
 
+        try {
+            $this->displayMessage('Getting from PeopleGraph');
+            $peopleGraphData = $lookUpByEmail->getFromPeopleGraph($email);
+            foreach($peopleGraphData as $socialNetwork => $url) {
+                $this->displayMessage('Social Network: ' . $socialNetwork);
+                $this->displayMessage('Url: ' . $url);
+            }
+            $this->displaySuccess();
+
+        } catch (\Exception $e) {
             $this->displayError('<error>Error trying to look up: ' . $e->getMessage() . '</error>');
         }
 
