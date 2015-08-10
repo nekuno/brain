@@ -53,6 +53,9 @@ class LookUpByEmail
                 'email' => $email,
                 'apiKey' => $apiKey,
             )));
+            if($response->getStatusCode() == 202) {
+                throw new RuntimeException('Resource not available yet. Wait 2 minutes and execute the command again.');
+            }
         } catch(Exception $e) {
             throw new RuntimeException($e->getMessage());
         }
