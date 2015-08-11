@@ -520,6 +520,10 @@ class ProfileModel
                             ->with('profile');
                         break;
                     case 'boolean':
+                        $booleanFieldValue = $fieldValue ? 'true' : 'false';
+                        $qb->set('profile.' . $fieldName . ' = ' . $booleanFieldValue)
+                            ->with('profile');
+                        break;
                     case 'integer':
                         $qb->set('profile.' . $fieldName . ' = ' . $fieldValue)
                             ->with('profile');
@@ -544,9 +548,9 @@ class ProfileModel
                         $qb->merge('(profile)<-[:LOCATION]-(location:Location)')
                             ->set('location.latitude = ' . $fieldValue['latitude'])
                             ->set('location.longitude = ' . $fieldValue['longitude'])
-                            ->set('location.address = ' . $fieldValue['address'])
-                            ->set('location.locality = ' . $fieldValue['locality'])
-                            ->set('location.country = ' . $fieldValue['country'])
+                            ->set('location.address = "' . $fieldValue['address'] . '"')
+                            ->set('location.locality = "' . $fieldValue['locality'] . '"')
+                            ->set('location.country = "' . $fieldValue['country'] . '"')
                             ->with('profile');
                         break;
                     case 'choice':
