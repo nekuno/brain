@@ -108,6 +108,7 @@ class ProfileModel
             ->limit(1);
 
         $query = $qb->getQuery();
+
         $result = $query->getResultSet();
 
         if (count($result) < 1) {
@@ -503,7 +504,7 @@ class ProfileModel
                         break;
                     case 'choice':
                         if (isset($options[$fieldName])) {
-                            $qb->match('(profile)<-[optionRel:OPTION_OF]-(option:' . $this->typeToLabel($fieldName))
+                            $qb->match('(profile)<-[optionRel:OPTION_OF]-(option:' . $this->typeToLabel($fieldName) . ')')
                                 ->delete('optionRel')
                                 ->with('profile');
                         }
@@ -544,9 +545,9 @@ class ProfileModel
             }
         }
 
-        $qb->optionalMatch('(profile)-[:OPTION_OF]-(option:ProfileOption)')
+        $qb->optionalMatch('(profile)<-[:OPTION_OF]-(option:ProfileOption)')
             ->optionalMatch('(profile)-[:TAGGED]-(tag:ProfileTag)')
-            ->returns('profile', 'collect(option) AS options', ' collect(tag) AS tags')
+            ->returns('profile', 'collect(distinct option) AS options', ' collect(distinct tag) AS tags')
             ->limit(1);
 
         $query = $qb->getQuery();
@@ -558,10 +559,10 @@ class ProfileModel
     protected function getProfileNodeOptions($id)
     {
         $qb = $this->gm->createQueryBuilder();
-        $qb->match('(option)-[:OPTIONS_OF]-(profile:Profile)-[:PROFILE_OF]->(user:User)')
+        $qb->match('(option:ProfileOption)-[:OPTION_OF]->(profile:Profile)-[:PROFILE_OF]->(user:User)')
             ->where('user.qnoow_id = { id }')
             ->setParameter('id', $id)
-            ->returns('option');
+            ->returns('collect(distinct option) AS options');
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();
