@@ -5,6 +5,7 @@ namespace Model\User;
 use Model\Neo4j\GraphManager;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
+use Everyman\Neo4j\Label;
 use Model\Exception\ValidationException;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -103,7 +104,7 @@ class ProfileModel
             ->optionalMatch('(profile)<-[:OPTION_OF]-(option:ProfileOption)')
             ->optionalMatch('(profile)-[:TAGGED]-(tag:ProfileTag)')
             ->optionalMatch('(profile)-[:LOCATION]->(location:Location)')
-            ->returns('profile, location, collect(option) AS options, collect(tag) as tags')
+            ->returns('profile, location, collect(distinct option) AS options, collect(distinct tag) as tags')
             ->limit(1);
 
         $query = $qb->getQuery();
@@ -325,7 +326,7 @@ class ProfileModel
         }
     }
 
-    protected function build(Row $row, $id)
+    protected function build(Row $row)
     {
         /* @var $node Node */
         $node = $row->offsetGet('profile');
@@ -337,72 +338,46 @@ class ProfileModel
             $profile['location'] = $location->getProperties();
         }
 
-        $profile += $this->buildOptions($row, $id);
-        $profile += $this->buildTags($row, $id);
+        $profile += $this->buildOptions($row);
+        $profile += $this->buildTags($row);
 
         return $profile;
     }
 
-    protected function buildOptions(Row $row, $id)
+    protected function buildOptions(Row $row)
     {
         $options = $row->offsetGet('options');
         $optionsResult = array();
 
         /** @var Node $option */
         foreach ($options as $option) {
-            $qb = $this->gm->createQueryBuilder();
-            $qb->match('(option:ProfileOption)-[:OPTION_OF]-(profile:Profile)-[:PROFILE_OF]->(user:User)')
-                ->where('user.qnoow_id = { id } AND option.id = { optionId }')
-                ->setParameters(array(
-                    'id' => (int)$id,
-                    'optionId' => $option->getProperty('id'),
-                ))
-                ->returns('labels(option) AS labels');
-
-            $query = $qb->getQuery();
-            $result = $query->getResultSet();
-
-            foreach($result as $labelRow) {
-            /** @var Row $labelRow */
-                foreach($labelRow->current() as $label) {
-                /** @var Row $label */
-                    if ($label && $label != 'ProfileOption') {
-                        $typeName = $this->labelToType($label);
-                        $optionsResult[$typeName] = $option->getProperty('id');
-                    }
+            $labels = $option->getLabels();
+            /** @var Label $label */
+            foreach($labels as $label) {
+                if ($label->getName() && $label->getName() != 'ProfileOption') {
+                    $typeName = $this->labelToType($label->getName());
+                    $optionsResult[$typeName] = $option->getProperty('id');
                 }
             }
         }
+
         return $optionsResult;
 
     }
 
-    protected function buildTags(Row $row, $id)
+    protected function buildTags(Row $row)
     {
         $tags = $row->offsetGet('tags');
         $tagsResult = array();
 
         /** @var Node $tag */
         foreach ($tags as $tag) {
-            $qb = $this->gm->createQueryBuilder();
-            $qb->match('(tag:Tag)-[:TAGGED]-(profile:Profile)-[:PROFILE_OF]->(user:User)')
-                ->where('user.qnoow_id = { id } AND tag.name = { tagName }')
-                ->setParameters(array(
-                    'id' => $id,
-                    'tagName' => $tag->getProperty('name'),
-                ))
-                ->returns('labels(tag) AS label');
-
-            $query = $qb->getQuery();
-            $result = $query->getResultSet();
-            foreach($result as $labelRow) {
-                /** @var Row $labelRow */
-                foreach($labelRow->current() as $label) {
-                    /** @var Row $label */
-                    if ($label && $label != 'ProfileTag') {
-                        $typeName = $this->labelToType($label);
-                        $optionsResult[$typeName] = $tag->getProperty('name');
-                    }
+            $labels = $tag->getLabels();
+            /** @var Label $label */
+            foreach($labels as $label) {
+                if ($label->getName() && $label->getName() != 'ProfileTag') {
+                    $typeName = $this->labelToType($label->getName());
+                    $tagsResult[$typeName][] = $tag->getProperty('name');
                 }
             }
         }
@@ -471,6 +446,7 @@ class ProfileModel
             ->with('profile');
 
         $dataCounter = 0;
+        $tagsCounter = 0;
         foreach ($data as $fieldName => $fieldValue) {
             $dataCounter++;
             if (isset($metadata[$fieldName])) {
@@ -541,18 +517,24 @@ class ProfileModel
                         break;
                     case 'tags':
                         if (isset($tags[$fieldName])) {
-                            $qb->match('(profile)<-[tagRel:TAGGED]-(tag:' . $this->typeToLabel($fieldName))
-                                ->delete('tagRel')
-                                ->with('profile');
+                            foreach ($tags[$fieldName] as $tag) {
+                                $tagsCounter++;
+                                $totalCounter = $dataCounter + $tagsCounter;
+                                $tagField = 'tagValue_' . $totalCounter;
+                                $qb->match('(profile)<-[tagRel_' . $totalCounter . ':TAGGED]-(tag' . $tagsCounter . ':' . $this->typeToLabel($fieldName) . ' {name: { ' . $tagField . ' } })')
+                                    ->setParameter($tagField, $tag)
+                                    ->delete('tagRel_' . $totalCounter)
+                                    ->with('profile');
+                            }
+
                         }
-                        if(! is_null($fieldValue)) {
-                            $tagsCounter = 0;
+                        if(is_array($fieldValue) && ! empty($fieldValue)) {
                             foreach ($fieldValue as $tag) {
                                 $tagsCounter++;
                                 $totalCounter = $dataCounter + $tagsCounter;
                                 $tagField = 'tagValue_' . $totalCounter;
-                                $qb->match('(tag' . $tagsCounter . ':' . $this->typeToLabel($fieldName) . ' {name: { ' . $tagField . ' } })')
-                                    ->merge('(profile)<-[:TAGGED]-(tag' . $tagsCounter . ')')
+                                $qb->merge('(profile)<-[:TAGGED]-(tag' . $tagsCounter . ':' . $this->typeToLabel($fieldName) . ' {name: { ' . $tagField . ' } })')
+                                    ->set('tag' . $tagsCounter . ':ProfileTag')
                                     ->setParameter($tagField, $tag)
                                     ->with('profile');
                             }
@@ -568,7 +550,6 @@ class ProfileModel
             ->limit(1);
 
         $query = $qb->getQuery();
-
         $result = $query->getResultSet();
 
         return $this->build($result->current(), $id);
@@ -599,7 +580,7 @@ class ProfileModel
         $qb->match('(tag:ProfileTag)-[:TAGGED]-(profile:Profile)-[:PROFILE_OF]->(user:User)')
             ->where('user.qnoow_id = { id }')
             ->setParameter('id', $id)
-            ->returns('tag');
+            ->returns('collect(distinct tag) as tags');
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();
