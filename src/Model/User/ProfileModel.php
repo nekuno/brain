@@ -185,10 +185,11 @@ class ProfileModel
     public function remove($id)
     {
         $qb = $this->gm->createQueryBuilder();
-        $qb->match('(user:User)<-[po:PROFILE_OF]-(profile:Profile)')
+        $qb->match('(user:User)<-[:PROFILE_OF]-(profile:Profile)')
             ->where('user.qnoow_id = { id }')
             ->setParameter('id', $id)
-            ->delete('po, profile');
+            ->optionalMatch('(profile)-[r]-()')
+            ->delete('r, profile');
 
         $query = $qb->getQuery();
 
