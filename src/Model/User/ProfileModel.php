@@ -118,7 +118,7 @@ class ProfileModel
         /* @var $row Row */
         $row = $result->current();
 
-        return $this->build($row, $id);
+        return $this->build($row);
     }
 
     /**
@@ -554,7 +554,7 @@ class ProfileModel
         $query = $qb->getQuery();
         $result = $query->getResultSet();
 
-        return $this->build($result->current(), $id);
+        return $this->build($result->current());
     }
 
     protected function getProfileNodeOptions($id)
