@@ -570,7 +570,7 @@ class ProfileModel
 
         $options = array();
         foreach($result as $row) {
-            $options += $this->buildOptions($row, $id);
+            $options += $this->buildOptions($row);
         }
 
         return $options;
@@ -589,7 +589,7 @@ class ProfileModel
 
         $tags = array();
         foreach($result as $row) {
-            $tags += $this->buildTags($row, $id);
+            $tags += $this->buildTags($row);
         }
 
         return $tags;
