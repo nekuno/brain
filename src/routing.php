@@ -129,7 +129,7 @@ $app->post('/enterpriseUsers/{enterpriseUserId}/invitations', 'enterpriseUsers.i
 $app->delete('/enterpriseUsers/{enterpriseUserId}/invitations/{id}', 'enterpriseUsers.invitations.controller:deleteAction');
 $app->get('/enterpriseUsers/{enterpriseUserId}/invitations/{id}', 'enterpriseUsers.invitations.controller:getAction');
 $app->put('/enterpriseUsers/{enterpriseUserId}/invitations/{id}', 'enterpriseUsers.invitations.controller:putAction');
-$app->post('/enterpriseUsers/{enterpriseUserId}/invitations/{id}', 'enterpriseUsers.invitations:validateAction');
+$app->post('/enterpriseUsers/{enterpriseUserId}/invitations/{id}', 'enterpriseUsers.invitations.controller:validateAction');
 
 
 $controllers
