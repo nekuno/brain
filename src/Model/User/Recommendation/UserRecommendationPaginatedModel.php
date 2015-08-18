@@ -85,6 +85,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                 (CASE WHEN HAS(s.similarity) THEN s.similarity ELSE 0 END) AS similarity'
             )
             ->match('(anyUser)<-[:PROFILE_OF]-(p:Profile)')
+            ->optionalMatch('(p)-[:LOCATION]->(l:Location)')
             ->where(
                 array_merge(
                     array('(matching_questions > 0 OR similarity > 0)'),
@@ -104,6 +105,8 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         $qb->returns(
             'DISTINCT anyUser.qnoow_id AS id,
                     anyUser.username AS username,
+                    p.birthday AS birthday,
+                    l.locality + ", " + l.country AS location,
                     matching_questions,
                     similarity'
         )
@@ -115,11 +118,23 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         $result = $query->getResultSet();
 
         foreach ($result as $row) {
-            $user = array();
-            $user['id'] = $row['id'];
-            $user['username'] = $row['username'];
-            $user['matching'] = $row['matching_questions'];
-            $user['similarity'] = $row['similarity'];
+
+            $age = null;
+            if ($row['birthday']) {
+                $date = new \DateTime($row['birthday']);
+                $now = new \DateTime();
+                $interval = $now->diff($date);
+                $age = $interval->y;
+            }
+
+            $user = array(
+                'id' => $row['id'],
+                'username' => $row['username'],
+                'matching' => $row['matching_questions'],
+                'similarity' => $row['similarity'],
+                'age' => $age,
+                'location' => $row['location'],
+            );
 
             $response[] = $user;
         }

@@ -96,8 +96,9 @@ class Fixtures
 
         $this->clean();
         $this->loadProfileOptions();
+        $this->loadPrivacyOptions();
         $this->loadUsers();
-        $createdLinks=$this->loadLinks();
+        $createdLinks = $this->loadLinks();
         $this->loadTags();
         $this->loadQuestions();
         $this->loadLinkTags();
@@ -160,7 +161,7 @@ class Fixtures
 
         $this->logger->notice(sprintf('Loading %d links', self::NUM_OF_LINKS));
 
-        $createdLinks=array();
+        $createdLinks = array();
 
         for ($i = 1; $i <= self::NUM_OF_LINKS; $i++) {
 
@@ -203,7 +204,7 @@ class Fixtures
                 );
             }
 
-            $createdLinks[$i]=$this->lm->addLink($link);
+            $createdLinks[$i] = $this->lm->addLink($link);
 
         }
 
@@ -298,13 +299,13 @@ class Fixtures
 
         $likes = $this->scenario['likes'];
 
-        foreach($createdLinks as $link){
-            $this->rm->userRateLink(1,$link,RateModel::LIKE);
+        foreach ($createdLinks as $link) {
+            $this->rm->userRateLink(1, $link, RateModel::LIKE);
         }
 
         foreach ($likes as $like) {
             foreach (range($like['linkFrom'], $like['linkTo']) as $i) {
-                $this->rm->userRateLink($like['user'],$createdLinks[$i],RateModel::LIKE);
+                $this->rm->userRateLink($like['user'], $createdLinks[$i], RateModel::LIKE);
             }
         }
     }
@@ -388,6 +389,28 @@ class Fixtures
         $logger->notice(sprintf('%d new profile options processed.', $result->getTotal()));
         $logger->notice(sprintf('%d new profile options updated.', $result->getUpdated()));
         $logger->notice(sprintf('%d new profile options created.', $result->getCreated()));
+    }
+
+    private function loadPrivacyOptions()
+    {
+        $privacyOptions = new PrivacyOptions($this->gm);
+
+        $logger = $this->logger;
+        $privacyOptions->setLogger($logger);
+
+        try {
+            $result = $privacyOptions->load();
+        } catch (\Exception $e) {
+            $logger->notice(
+                'Error loading neo4j privacy options with message: ' . $e->getMessage()
+            );
+
+            return;
+        }
+
+        $logger->notice(sprintf('%d new privacy options processed.', $result->getTotal()));
+        $logger->notice(sprintf('%d new privacy options updated.', $result->getUpdated()));
+        $logger->notice(sprintf('%d new privacy options created.', $result->getCreated()));
     }
 
 }

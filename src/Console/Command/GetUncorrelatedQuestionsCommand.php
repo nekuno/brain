@@ -5,6 +5,7 @@ namespace Console\Command;
 use Model\Questionnaire\QuestionModel;
 use Silex\Application;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputArgument;
 
@@ -15,7 +16,8 @@ class GetUncorrelatedQuestionsCommand extends ApplicationAwareCommand
     {
         $this->setName('questions:get-uncorrelated')
             ->setDescription("Get a selection of uncorrelated questions groups.")
-            ->addArgument('preselect', InputArgument::OPTIONAL, 'How many top ranking questions are analyzed', 50);
+            ->addArgument('preselect', InputArgument::OPTIONAL, 'How many top ranking questions are analyzed', 50)
+            ->addOption('save', null, InputOption::VALUE_NONE, 'Set output questions as divisive');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -30,6 +32,14 @@ class GetUncorrelatedQuestionsCommand extends ApplicationAwareCommand
         if (array() === $result['questions']) {
             $output->writeln('We couldn´t get the questions');
             return;
+        }
+
+        if ($input->getOption('save')) {
+            $previous = $model->unsetDivisiveQuestions();
+            $model->setDivisiveQuestions($result['questions']);
+            if (OutputInterface::VERBOSITY_NORMAL < $output->getVerbosity()) {
+                $output->writeln(sprintf('There were %d questions set as divisive', $previous));
+            }
         }
 
         //for debugging, modify return to appropriate array in QuestionModel.php;

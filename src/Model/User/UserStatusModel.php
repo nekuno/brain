@@ -11,6 +11,8 @@ class UserStatusModel
     const USER_STATUS_INCOMPLETE = 'incomplete';
     const USER_STATUS_COMPLETE = 'complete';
 
+    const QUESTIONS_TO_REGISTER = 4;
+
     /**
      * @var string
      */
@@ -44,7 +46,7 @@ class UserStatusModel
             return $this->status;
         }
 
-        return 20 <= $this->answerCount || 100 <= $this->linkCount ? self::USER_STATUS_COMPLETE : self::USER_STATUS_INCOMPLETE;
+        return $this::QUESTIONS_TO_REGISTER <= $this->answerCount || 100 <= $this->linkCount ? self::USER_STATUS_COMPLETE : self::USER_STATUS_INCOMPLETE;
     }
 
     public function getStatuses()

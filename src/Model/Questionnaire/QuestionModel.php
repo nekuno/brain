@@ -521,11 +521,11 @@ class QuestionModel
             $correlations[$row->offsetGet('q1')][$row->offsetGet('q2')] = $row->offsetGet('finalstd');
         }
 
-        $correctCorrelations=array();
-        foreach($correlations as $q1=>$array){
-            foreach($correlations as $q2=>$array2){
-                if (!($q1<$q2)) continue;
-                $correctCorrelations[$q1][$q2]=isset($correlations[$q1][$q2])? $correlations[$q1][$q2] : 1;
+        $correctCorrelations = array();
+        foreach ($correlations as $q1 => $array) {
+            foreach ($correlations as $q2 => $array2) {
+                if (!($q1 < $q2)) continue;
+                $correctCorrelations[$q1][$q2] = isset($correlations[$q1][$q2]) ? $correlations[$q1][$q2] : 1;
             }
         }
 
@@ -562,5 +562,79 @@ class QuestionModel
         return array('totalCorrelation' => $minimum,
             'questions' => $questions);
 
+    }
+
+    public function setDivisiveQuestions(array $ids)
+    {
+        $questions = array();
+        foreach ($ids as $id) {
+            $questions[] = $this->setDivisiveQuestion($id);
+        }
+        return $questions;
+    }
+
+    public function setDivisiveQuestion($id)
+    {
+
+        $qb = $this->gm->createQueryBuilder();
+        $parameters = array('questionId' => (integer)$id);
+        $qb->setParameters($parameters);
+
+        $qb->match('(q:Question)')
+            ->where('id(q)={questionId}')
+            ->set('q :RegisterQuestion')
+            ->returns('q');
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        /* @var $row Row */
+        $row = $result->current();
+        return $row->offsetGet('q');
+    }
+
+    /**
+     * @return integer
+     * @throws \Exception
+     */
+    public function unsetDivisiveQuestions()
+    {
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(q:RegisterQuestion)')
+            ->remove('q :RegisterQuestion')
+            ->returns('count(q) AS c');
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        /* @var $row Row */
+        $row = $result->current();
+        return $row->offsetGet('c');
+    }
+
+    public function getDivisiveQuestions($locale)
+    {
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(q:RegisterQuestion)')
+            ->where("HAS(q.text_$locale)")
+            ->match('(q)<-[:IS_ANSWER_OF]-(a:Answer)')
+            ->with('q', 'a')
+            ->orderBy('id(a)')
+            ->with('q, collect(a) AS answers')
+            ->returns('q AS question', 'answers')
+            ->orderBy('q.ranking DESC')
+        ;
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+        $return = array();
+
+        foreach ($result as $row) {
+            $return[] = $this->build($row, $locale);
+        }
+
+        return $return;
     }
 }

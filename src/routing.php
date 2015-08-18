@@ -18,6 +18,13 @@ $app->get('/profile/filters', 'users.profile.controller:getFiltersAction');
 $app->get('/profile/tags/{type}', 'users.profile.controller:getProfileTagsAction');
 $app->post('/profile/validate', 'users.profile.controller:validateAction')->value('id', null);
 
+$app->get('/users/{id}/privacy', 'users.privacy.controller:getAction')->value('id', null);
+$app->post('/users/{id}/privacy', 'users.privacy.controller:postAction')->value('id', null);
+$app->put('/users/{id}/privacy', 'users.privacy.controller:putAction')->value('id', null);
+$app->delete('/users/{id}/privacy', 'users.privacy.controller:deleteAction')->value('id', null);
+$app->get('/privacy/metadata', 'users.privacy.controller:getMetadataAction');
+$app->post('/privacy/validate', 'users.privacy.controller:validateAction')->value('id', null);
+
 $app->get('/users/{id1}/matching/{id2}', 'users.controller:getMatchingAction');
 $app->get('/users/{id1}/similarity/{id2}', 'users.controller:getSimilarityAction');
 $app->get('/users/{id}/questions', 'users.controller:getUserQuestionsAction');
@@ -49,8 +56,9 @@ $app->get('/users/{userId}/data/status', 'users.data.controller:getStatusAction'
 /**
  * Questionnaire routes
  */
-$app->get('/questionnaire/questions', 'questionnaire.questions.controller:getQuestionsAction')->value('limit', 20);
+$app->get('/questionnaire/questions', 'questionnaire.questions.controller:getQuestionsAction')->value('limit', 20); //TODO: Remove
 $app->get('/questionnaire/questions/next', 'questionnaire.questions.controller:getNextQuestionAction');
+$app->get('/questionnaire/questions/register', 'questionnaire.questions.controller:getDivisiveQuestionsAction');
 $app->post('/questionnaire/questions', 'questionnaire.questions.controller:postQuestionAction');
 $app->post('/questionnaire/questions/validate', 'questionnaire.questions.controller:validateAction');
 $app->get('/questionnaire/questions/{id}', 'questionnaire.questions.controller:getQuestionAction');
@@ -121,7 +129,7 @@ $app->post('/enterpriseUsers/{enterpriseUserId}/invitations', 'enterpriseUsers.i
 $app->delete('/enterpriseUsers/{enterpriseUserId}/invitations/{id}', 'enterpriseUsers.invitations.controller:deleteAction');
 $app->get('/enterpriseUsers/{enterpriseUserId}/invitations/{id}', 'enterpriseUsers.invitations.controller:getAction');
 $app->put('/enterpriseUsers/{enterpriseUserId}/invitations/{id}', 'enterpriseUsers.invitations.controller:putAction');
-$app->post('/enterpriseUsers/{enterpriseUserId}/invitations/{id}', 'enterpriseUsers.invitations:validateAction');
+$app->post('/enterpriseUsers/{enterpriseUserId}/invitations/{id}', 'enterpriseUsers.invitations.controller:validateAction');
 
 
 $controllers

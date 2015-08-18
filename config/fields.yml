@@ -1,3 +1,29 @@
+privacy:
+    profile:
+        type: choice
+        label:
+            en: 'Who can access my profile'
+            es: 'Quién puede acceder a mi perfil'
+    description:
+        type: choice
+        label:
+            en: 'Quién puede acceder a mi perfil'
+            es: 'Quién puede acceder a la descripción de mi perfil'
+    questions:
+        type: choice
+        label:
+            en: 'Who can access my content/questions'
+            es: 'Quién puede acceder a mis preguntas/contenidos'
+    gallery:
+        type: choice
+        label:
+            en: 'Who can access my gallery'
+            es: 'Quién puede acceder a mi galería'
+    messages:
+        type: choice
+        label:
+            en: 'Who can send me messages'
+            es: 'Quién puede enviarme mensajes'
 profile:
     description:
         type: textarea

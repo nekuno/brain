@@ -16,7 +16,6 @@ $app['migrateSocialInvitations.service'] = function (Silex\Application $app) {
     return new \Service\MigrateSocialInvitations($app['neo4j.graph_manager'], $app['dbs']['mysql_social']);
 };
 
-
 /**
  * Middleware for filter some request
  */
