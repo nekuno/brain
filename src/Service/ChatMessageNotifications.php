@@ -1,5 +1,7 @@
 <?php
-
+/**
+ * @author Manolo Salsas <manolez@gmail.com>
+ */
 namespace Service;
 
 use Model\Entity\EmailNotification;

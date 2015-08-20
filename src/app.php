@@ -106,8 +106,10 @@ $app['fullContact.client'] = $app->share(function (Silex\Application $app) {
 $app['peopleGraph.client'] = $app->share(function (Silex\Application $app) {
     return new GuzzleHttp\Client(array('base_url' => $app['peopleGraph.url']));
 });
-$app['lookUpByEmail.service'] = $app->share(function (Silex\Application $app) {
-    return new \Service\LookUpByEmail($app['fullContact.client'], $app['fullContact.consumer_key'], $app['peopleGraph.client'], $app['peopleGraph.consumer_key']);
+$app['lookUp.fullContact.service'] = $app->share(function (Silex\Application $app) {
+    return new \Service\LookUp\LookUpFullContact($app['fullContact.client'], $app['fullContact.consumer_key']);
 });
-
+$app['lookUp.peopleGraph.service'] = $app->share(function (Silex\Application $app) {
+    return new \Service\LookUp\LookUpPeopleGraph($app['peopleGraph.client'], $app['peopleGraph.consumer_key']);
+});
 return $app;
