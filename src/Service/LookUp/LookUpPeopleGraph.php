@@ -47,7 +47,7 @@ class LookUpPeopleGraph extends LookUp implements LookUpInterface
         $socialData = array();
         if(is_array($response) && isset($response['result']['profiles']) && ! empty($response['result']['profiles'])) {
             foreach($response['result']['profiles'] as $socialProfile) {
-                $socialData[$socialProfile['type']] = $socialProfile['url'];
+                $socialData[strtolower($socialProfile['type'])] = $socialProfile['url'];
             }
         }
 

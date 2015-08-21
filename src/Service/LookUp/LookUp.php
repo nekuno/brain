@@ -5,6 +5,7 @@
 namespace Service\LookUp;
 
 use GuzzleHttp\Client;
+use Model\Entity\LookUpData;
 use Model\Exception\ValidationException;
 
 /**
@@ -30,7 +31,8 @@ abstract class LookUp
         $this->validateValue($lookUpType, $value);
 
         $response = $this->getFromClient($this->client, $lookUpType, $value, $this->apiKey);
-        return $this->processData($response);
+
+        return $this->toObject($this->processData($response));
     }
 
     protected function validateType($lookUpType)
@@ -70,4 +72,46 @@ abstract class LookUp
     abstract protected function processSocialData($response);
 
     abstract protected function validateValue($lookUpType, $value);
+
+    protected function toObject($lookUpData)
+    {
+        $lookUpDataObj = new LookUpData();
+
+        if(isset($lookUpData['name'])) {
+            $lookUpDataObj->setName($lookUpData['name']);
+        }
+        if(isset($lookUpData['email'])) {
+            $lookUpDataObj->setEmail($lookUpData['email']);
+        }
+        if(isset($lookUpData['gender'])) {
+            $lookUpDataObj->setGender($lookUpData['gender']);
+        }
+        if(isset($lookUpData['location'])) {
+            $lookUpDataObj->setLocation($lookUpData['location']);
+        }
+        if(isset($lookUpData['socialProfiles'])) {
+            $lookUpDataObj->setSocialProfiles($lookUpData['socialProfiles']);
+        }
+
+        return $lookUpDataObj;
+    }
+
+    public function merge(LookUpData $lookUpData1, LookUpData $lookUpData2)
+    {
+        if(! $lookUpData1->getName() && $lookUpData2->getName()) {
+            $lookUpData1->setName($lookUpData2->getName());
+        }
+        if(! $lookUpData1->getEmail() && $lookUpData2->getEmail()) {
+            $lookUpData1->setEmail($lookUpData2->getEmail());
+        }
+        if(! $lookUpData1->getGender() && $lookUpData2->getGender()) {
+            $lookUpData1->setGender($lookUpData2->getGender());
+        }
+        if(! $lookUpData1->getLocation() && $lookUpData2->getLocation()) {
+            $lookUpData1->setLocation($lookUpData2->getLocation());
+        }
+        $lookUpData1->setSocialProfiles($lookUpData1->getSocialProfiles() + $lookUpData2->getSocialProfiles());
+
+        return $lookUpData1;
+    }
 }

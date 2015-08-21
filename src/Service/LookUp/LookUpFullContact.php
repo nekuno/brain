@@ -34,7 +34,7 @@ class LookUpFullContact extends LookUp implements LookUpInterface
                 }
                 if(isset($response['demographics']) && is_array($response['demographics']) && ! empty($response['demographics'])) {
                     if(isset($response['demographics']['gender'])) {
-                        $data['gender'] = $response['demographics']['gender'];
+                        $data['gender'] = strtolower($response['demographics']['gender']);
                     }
                     if(isset($response['demographics']['locationDeduced']) && isset($response['demographics']['locationDeduced']['deducedLocation'])) {
                         $data['location'] = $response['demographics']['locationDeduced']['deducedLocation'];
@@ -53,7 +53,7 @@ class LookUpFullContact extends LookUp implements LookUpInterface
         if(isset($response['status']) && $response['status'] === 200) {
             if(is_array($response) && isset($response['socialProfiles']) && ! empty($response['socialProfiles'])) {
                 foreach($response['socialProfiles'] as $socialProfile) {
-                    $socialData[$socialProfile['typeName']] = $socialProfile['url'];
+                    $socialData[strtolower($socialProfile['typeName'])] = $socialProfile['url'];
                 }
             }
         }

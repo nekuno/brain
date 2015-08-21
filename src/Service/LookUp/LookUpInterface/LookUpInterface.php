@@ -5,6 +5,7 @@
 namespace Service\LookUp\LookUpInterface;
 
 use GuzzleHttp\Client;
+use Model\Entity\LookUpData;
 
 interface LookUpInterface
 {
@@ -13,4 +14,6 @@ interface LookUpInterface
     public function getTypes();
 
     public function get($lookUpType, $value);
+
+    public function merge(LookUpData $lookUpData1, LookUpData $lookUpData2);
 }
