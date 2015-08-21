@@ -5,7 +5,7 @@
 namespace Service\LookUp;
 
 use Service\LookUp\LookUpInterface\LookUpInterface;
-use Symfony\Component\Security\Core\Exception\RuntimeException;
+use Model\Exception\ValidationException;
 
 class LookUpPeopleGraph extends LookUp implements LookUpInterface
 {
@@ -56,16 +56,23 @@ class LookUpPeopleGraph extends LookUp implements LookUpInterface
 
     protected function validateValue($lookUpType, $value)
     {
+        $error = '';
         if($lookUpType === self::EMAIL_TYPE) {
             if (! filter_var($value, FILTER_VALIDATE_EMAIL)) {
-                throw new RuntimeException($value . ' is not a valid email');
+                $error = $value . ' is not a valid email';
             }
         } elseif($lookUpType === self::URL_TYPE) {
             if (! filter_var($value, FILTER_VALIDATE_URL)) {
-                throw new RuntimeException($value . ' is not a valid url');
+                $error = $value . ' is not a valid url';
             }
         } else {
-            throw new RuntimeException($lookUpType . ' is not a valid type');
+            $error = $lookUpType . ' is not a valid type';
+        }
+
+        if($error !== '') {
+            $exception = new ValidationException('Validation errors');
+            $exception->setErrors(array($error));
+            throw $exception;
         }
 
         return true;

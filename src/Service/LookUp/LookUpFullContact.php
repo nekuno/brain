@@ -4,8 +4,8 @@
  */
 namespace Service\LookUp;
 
+use Model\Exception\ValidationException;
 use Service\LookUp\LookUpInterface\LookUpInterface;
-use Symfony\Component\Security\Core\Exception\RuntimeException;
 
 class LookUpFullContact extends LookUp implements LookUpInterface
 {
@@ -50,9 +50,11 @@ class LookUpFullContact extends LookUp implements LookUpInterface
     protected function processSocialData($response)
     {
         $socialData = array();
-        if(is_array($response) && isset($response['socialProfiles']) && ! empty($response['socialProfiles'])) {
-            foreach($response['socialProfiles'] as $socialProfile) {
-                $socialData[$socialProfile['typeName']] = $socialProfile['url'];
+        if(isset($response['status']) && $response['status'] === 200) {
+            if(is_array($response) && isset($response['socialProfiles']) && ! empty($response['socialProfiles'])) {
+                foreach($response['socialProfiles'] as $socialProfile) {
+                    $socialData[$socialProfile['typeName']] = $socialProfile['url'];
+                }
             }
         }
 
@@ -61,16 +63,23 @@ class LookUpFullContact extends LookUp implements LookUpInterface
 
     protected function validateValue($lookUpType, $value)
     {
+        $error = '';
         if($lookUpType === self::EMAIL_TYPE) {
             if (! filter_var($value, FILTER_VALIDATE_EMAIL)) {
-                throw new RuntimeException($value . ' is not a valid email');
+                $error = $value . ' is not a valid email';
             }
         } elseif($lookUpType === self::TWITTER_TYPE || $lookUpType === self::FACEBOOK_TYPE) {
-            if(! ctype_alnum($value)) {
-                throw new RuntimeException($value . ' is not a valid username');
+            if(! ctype_alnum(str_replace('.', '', $value))) {
+                $error = $value . ' is not a valid username';
             }
         } else {
-            throw new RuntimeException($lookUpType . ' is not a valid type');
+            $error = $lookUpType . ' is not a valid type';
+        }
+
+        if($error !== '') {
+            $exception = new ValidationException('Validation errors');
+            $exception->setErrors(array($error));
+            throw $exception;
         }
 
         return true;

@@ -5,8 +5,7 @@
 namespace Service\LookUp;
 
 use GuzzleHttp\Client;
-use Symfony\Component\PropertyAccess\Exception\RuntimeException;
-use Symfony\Component\Security\Acl\Exception\Exception;
+use Model\Exception\ValidationException;
 
 /**
  * Class LookUp
@@ -37,7 +36,9 @@ abstract class LookUp
     protected function validateType($lookUpType)
     {
         if(! in_array($lookUpType, $this->getTypes())) {
-            throw new RuntimeException($lookUpType . ' type is not valid');
+            $exception = new ValidationException('Validation errors');
+            $exception->setErrors(array($lookUpType . ' type is not valid'));
+            throw $exception;
         }
     }
 
@@ -49,13 +50,19 @@ abstract class LookUp
                 'apiKey' => $apiKey,
             )));
             if($response->getStatusCode() == 202) {
-                throw new RuntimeException('Resource not available yet. Wait 2 minutes and execute the command again.');
+                // TODO: Should get data from web hook
+                //throw new Exception('Resource not available yet. Wait 2 minutes and execute the command again.', 202);
             }
-        } catch(Exception $e) {
-            throw new RuntimeException($e->getMessage());
+            if($response->getStatusCode() == 200) {
+                return $response->json();
+            }
+        } catch(\Exception $e) {
+            // TODO: Refuse exceptions by now
+            return array();
+            //throw new Exception($e->getMessage(), 404);
         }
 
-        return $response->json();
+        return array();
     }
 
     abstract protected function processData($response);

@@ -131,6 +131,12 @@ $app->get('/enterpriseUsers/{enterpriseUserId}/invitations/{id}', 'enterpriseUse
 $app->put('/enterpriseUsers/{enterpriseUserId}/invitations/{id}', 'enterpriseUsers.invitations.controller:putAction');
 $app->post('/enterpriseUsers/{enterpriseUserId}/invitations/{id}', 'enterpriseUsers.invitations.controller:validateAction');
 
+/**
+ * LookUp routes
+ */
+$app->get('/lookUp/email/{email}', 'lookUp.controller:getByEmailAction');
+$app->get('/lookUp/twitter/{twitterUsername}', 'lookUp.controller:getByTwitterUsernameAction');
+$app->get('/lookUp/facebook/{facebookUsername}', 'lookUp.controller:getByFacebookUsernameAction');
 
 $controllers
     ->assert('id', '\d+')
