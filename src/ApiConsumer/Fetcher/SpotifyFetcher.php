@@ -44,8 +44,8 @@ class SpotifyFetcher extends AbstractFetcher
             }
 
             $this->url = 'users/' . $user['spotifyID'] . '/starred/tracks';
-            $starredTracks = $this->resourceOwner->authorizedHttpRequest($this->url, array(), $this->user);
-            $starredPlaylistTracks = $this->parseLinks($starredTracks['items']);
+            $starredTracks = $this->getAllItemsFromPaginatedURL($this->url, $this->user, $this::MAX_TRACKS_PER_PLAYLIST);
+            $starredPlaylistTracks = $this->parseLinks($starredTracks);
             $allTracks = array_merge($starredPlaylistTracks, $allTracks);
 
             $links = $allTracks;
