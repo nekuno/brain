@@ -4,6 +4,10 @@ namespace ApiConsumer\Fetcher;
 
 class SpotifyFetcher extends AbstractFetcher
 {
+    //max limits allowed by Spotify API to reduce calls
+    const MAX_PLAYLISTS_PER_USER = 50;
+    const MAX_TRACKS_PER_PLAYLIST = 100;
+
     /**
      * @var array
      */
@@ -20,17 +24,16 @@ class SpotifyFetcher extends AbstractFetcher
         $this->url .= 'users/' . $user['spotifyID'] . '/playlists/';
 
         try {
-            $playlists = $this->resourceOwner->authorizedHttpRequest($this->url, array(), $this->user);
-
+            $playlists = $this->getAllItemsFromPaginatedURL($this->url, $this->user, $this::MAX_PLAYLISTS_PER_USER);
             $allTracks = array();
-            if (isset($playlists['items'])) {
-                foreach ($playlists['items'] as $playlist) {
+            if (isset($playlists)) {
+                foreach ($playlists as $playlist) {
                     if ($playlist['owner']['id'] == $user['spotifyID']) {
 
                         $this->url = 'users/' . $user['spotifyID'] . '/playlists/' . $playlist['id'] . '/tracks';
 
                         try {
-                            $tracks = $this->resourceOwner->authorizedHttpRequest($this->url, array(), $this->user);
+                            $tracks = $this->getAllItemsFromPaginatedURL($this->url, $this->user, $this::MAX_TRACKS_PER_PLAYLIST);
                             $currentPlaylistTracks = $this->parseLinks($tracks);
                             $allTracks = array_merge($currentPlaylistTracks, $allTracks);
                         } catch (\Exception $e) {
@@ -42,7 +45,7 @@ class SpotifyFetcher extends AbstractFetcher
 
             $this->url = 'users/' . $user['spotifyID'] . '/starred/tracks';
             $starredTracks = $this->resourceOwner->authorizedHttpRequest($this->url, array(), $this->user);
-            $starredPlaylistTracks = $this->parseLinks($starredTracks);
+            $starredPlaylistTracks = $this->parseLinks($starredTracks['items']);
             $allTracks = array_merge($starredPlaylistTracks, $allTracks);
 
             $links = $allTracks;
@@ -61,7 +64,7 @@ class SpotifyFetcher extends AbstractFetcher
 
         $parsed = array();
 
-        foreach ($response['items'] as $item) {
+        foreach ($response as $item) {
             if (null !== $item['track']['id']) {
                 $link['url'] = $item['track']['external_urls']['spotify'];
                 $link['title'] = $item['track']['name'];
@@ -88,5 +91,29 @@ class SpotifyFetcher extends AbstractFetcher
         }
 
         return $parsed;
+    }
+
+    /**
+     * @param $url
+     * @param $user
+     * @param $limit
+     * @return array
+     */
+    protected function getAllItemsFromPaginatedURL($url, $user, $limit)
+    {
+        $items = array();
+        while ($url) {
+            $partialResponse = $this->resourceOwner->authorizedHttpRequest($url, array('limit' => $limit), $user);
+
+            $url=null;
+            if ($partialResponse['next']) {
+                $startPos=strpos($partialResponse['next'],'users');
+                $url=substr($partialResponse['next'],$startPos);
+            }
+
+            $items = array_merge($items, $partialResponse['items']);
+        };
+
+        return $items;
     }
 }
