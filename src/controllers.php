@@ -90,6 +90,14 @@ $app['fetch.controller'] = $app->share(
     }
 );
 
+$app['lookUp.controller'] = $app->share(
+    function () use ($app) {
+
+        return new \Controller\User\LookUpController($app['lookUp.fullContact.service'], $app['lookUp.peopleGraph.service'], $app['orm.ems']['mysql_brain']);
+    }
+);
+
+
 /**
  * Middleware for filter some request
  */
