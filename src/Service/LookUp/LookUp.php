@@ -7,6 +7,7 @@ namespace Service\LookUp;
 use GuzzleHttp\Client;
 use Model\Entity\LookUpData;
 use Model\Exception\ValidationException;
+use Symfony\Component\Routing\Generator\UrlGenerator;
 
 /**
  * Class LookUp
@@ -16,21 +17,23 @@ abstract class LookUp
 {
     protected $client;
     protected $apiKey;
+    protected $urlGenerator;
 
-    function __construct(Client $client, $apiKey)
+    function __construct(Client $client, $apiKey, UrlGenerator $urlGenerator)
     {
         $this->client = $client;
         $this->apiKey = $apiKey;
+        $this->urlGenerator = $urlGenerator;
     }
 
     abstract protected function getTypes();
 
-    public function get($lookUpType, $value)
+    public function get($lookUpType, $value, $id = null)
     {
         $this->validateType($lookUpType);
         $this->validateValue($lookUpType, $value);
 
-        $response = $this->getFromClient($this->client, $lookUpType, $value, $this->apiKey);
+        $response = $this->getFromClient($this->client, $lookUpType, $value, $this->apiKey, $id);
 
         return $this->toObject($this->processData($response));
     }
@@ -44,13 +47,24 @@ abstract class LookUp
         }
     }
 
-    protected function getFromClient(Client $client, $lookUpType, $value, $apiKey)
+    protected function getFromClient(Client $client, $lookUpType, $value, $apiKey, $webHookId)
     {
         try {
-            $response = $client->get('', array('query' => array(
-                $lookUpType => $value,
-                'apiKey' => $apiKey,
-            )));
+            if($webHookId) {
+                $route = $this->urlGenerator->generate('setLookUpFromWebHook', array(), UrlGenerator::ABSOLUTE_URL);
+                $query = array(
+                    $lookUpType => $value,
+                    'apiKey' => $apiKey,
+                    'webHookUrl' => urlencode($route),
+                    'webHookId' => $webHookId,
+                );
+            } else {
+                $query = array(
+                    $lookUpType => $value,
+                    'apiKey' => $apiKey,
+                );
+            }
+            $response = $client->get('', array('query' => $query));
             if($response->getStatusCode() == 202) {
                 // TODO: Should get data from web hook
                 //throw new Exception('Resource not available yet. Wait 2 minutes and execute the command again.', 202);
@@ -65,6 +79,13 @@ abstract class LookUp
         }
 
         return array();
+    }
+
+    public function mergeFromWebHook(LookUpData $lookUpData, $data)
+    {
+        $newLookUpData = $this->toObject($this->processData($data));
+        $lookUpData = $this->merge($lookUpData, $newLookUpData);
+        return $lookUpData;
     }
 
     abstract protected function processData($response);
@@ -110,7 +131,8 @@ abstract class LookUp
         if(! $lookUpData1->getLocation() && $lookUpData2->getLocation()) {
             $lookUpData1->setLocation($lookUpData2->getLocation());
         }
-        $lookUpData1->setSocialProfiles($lookUpData1->getSocialProfiles() + $lookUpData2->getSocialProfiles());
+
+        $lookUpData1->addSocialProfiles($lookUpData2->getSocialProfiles());
 
         return $lookUpData1;
     }

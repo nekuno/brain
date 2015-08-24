@@ -180,7 +180,8 @@ class LookUpData
     public function addSocialProfiles(array $socialProfiles)
     {
         foreach($socialProfiles as $index => $socialProfile) {
-            $this->socialProfiles[$index] = $socialProfile;
+            if(! isset($this->socialProfiles[$index]))
+                $this->socialProfiles[$index] = $socialProfile;
         }
     }
 

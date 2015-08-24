@@ -137,6 +137,7 @@ $app->post('/enterpriseUsers/{enterpriseUserId}/invitations/{id}', 'enterpriseUs
 $app->get('/lookUp/email/{email}', 'lookUp.controller:getByEmailAction');
 $app->get('/lookUp/twitter/{twitterUsername}', 'lookUp.controller:getByTwitterUsernameAction');
 $app->get('/lookUp/facebook/{facebookUsername}', 'lookUp.controller:getByFacebookUsernameAction');
+$app->post('/lookUp/webHook', 'lookUp.controller:setFromWebHookAction')->bind('setLookUpFromWebHook');
 
 $controllers
     ->assert('id', '\d+')

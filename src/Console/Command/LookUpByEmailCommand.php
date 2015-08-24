@@ -4,6 +4,7 @@
  */
 namespace Console\Command;
 
+use Model\Entity\LookUpData;
 use Silex\Application;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -11,6 +12,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Formatter\OutputFormatterStyle;
 use Service\LookUp\LookUpFullContact;
 use Service\LookUp\LookUpPeopleGraph;
+use Doctrine\ORM\EntityManager;
 
 class LookUpByEmailCommand extends ApplicationAwareCommand
 {
@@ -39,7 +41,8 @@ class LookUpByEmailCommand extends ApplicationAwareCommand
     {
         $this->setName('look-up-by-email')
             ->setDescription('Look up user information using fullContact and peopleGraph')
-            ->addOption('email', 'email', InputOption::VALUE_REQUIRED, 'Email to lookup', 'enredos@nekuno.com');
+            ->addOption('email', 'email', InputOption::VALUE_REQUIRED, 'Email to lookup', 'enredos@nekuno.com')
+            ->addOption('force', 'force', InputOption::VALUE_NONE, 'Force lookup');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -49,6 +52,7 @@ class LookUpByEmailCommand extends ApplicationAwareCommand
         $this->messageStyle = new OutputFormatterStyle('yellow', 'black', array('bold', 'blink'));
         $this->errorStyle = new OutputFormatterStyle('red', 'black', array('bold', 'blink'));
         $email = $input->getOption('email');
+        $force = $input->getOption('force');
         $fullContactData = array();
         $peopleGraphData = array();
 
@@ -57,30 +61,54 @@ class LookUpByEmailCommand extends ApplicationAwareCommand
             exit;
         }
 
-        /** @var $lookUpFullContact LookUpFullContact */
-        $lookUpFullContact = $this->app['lookUp.fullContact.service'];
-        /** @var $lookUpPeopleGraph LookUpPeopleGraph */
-        $lookUpPeopleGraph = $this->app['lookUp.peopleGraph.service'];
+        /** @var EntityManager $em */
+        $em = $this->app['orm.ems']['mysql_brain'];
+        $lookUpData = $em->getRepository('\Model\Entity\LookUpData')->findOneBy(array(
+            'lookedUpType' => LookUpData::LOOKED_UP_BY_EMAIL,
+            'lookedUpValue' => $email,
+        ));
 
-        try {
-            $this->displayTitle('Getting from FullContact');
-            $fullContactData = $lookUpFullContact->get(LookUpFullContact::EMAIL_TYPE, $email);
-            $this->displayData($fullContactData);
-        } catch (\Exception $e) {
-            $this->displayError('<error>Error trying to look up: ' . $e->getMessage() . '</error>');
+        if($force || ! $lookUpData || count($lookUpData->getSocialProfiles()) == 0) {
+
+            /** @var $lookUpFullContact LookUpFullContact */
+            $lookUpFullContact = $this->app['lookUp.fullContact.service'];
+            /** @var $lookUpPeopleGraph LookUpPeopleGraph */
+            $lookUpPeopleGraph = $this->app['lookUp.peopleGraph.service'];
+
+            $lookUpData = $lookUpData ?: new LookUpData();
+            $lookUpData->setEmail($email);
+            $lookUpData->setLookedUpType(LookUpData::LOOKED_UP_BY_EMAIL);
+            $lookUpData->setLookedUpValue($email);
+            $em->persist($lookUpData);
+            $em->flush();
+
+            try {
+                $this->displayTitle('Getting from FullContact');
+                // TODO: Should pass $lookUpData->getId() as parameter, but doesn't work here
+                $fullContactData = $lookUpFullContact->get(LookUpFullContact::EMAIL_TYPE, $email);
+                $this->displayData($fullContactData->toArray());
+            } catch (\Exception $e) {
+                $this->displayError('<error>Error trying to look up: ' . $e->getMessage() . '</error>');
+            }
+
+            try {
+                $this->displayTitle('Getting from PeopleGraph');
+                // TODO: Should pass $lookUpData->getId() as parameter, but doesn't work here
+                $peopleGraphData = $lookUpPeopleGraph->get(LookUpPeopleGraph::EMAIL_TYPE, $email);
+                $this->displayData($peopleGraphData->toArray());
+            } catch (\Exception $e) {
+                $this->displayError('<error>Error trying to look up: ' . $e->getMessage() . '</error>');
+            }
+
+            $lookUpData = $lookUpFullContact->merge($lookUpData, $fullContactData);
+            $lookUpData = $lookUpPeopleGraph->merge($lookUpData, $peopleGraphData);
+
+            $em->persist($lookUpData);
+            $em->flush();
         }
 
-        try {
-            $this->displayTitle('Getting from PeopleGraph');
-            $peopleGraphData = $lookUpPeopleGraph->get(LookUpPeopleGraph::EMAIL_TYPE, $email);
-            $this->displayData($peopleGraphData);
-        } catch (\Exception $e) {
-            $this->displayError('<error>Error trying to look up: ' . $e->getMessage() . '</error>');
-        }
-
-        $mergedData = $fullContactData + $peopleGraphData;
         $this->displayTitle('Display merged data');
-        $this->displayData($mergedData);
+        $this->displayData($lookUpData->toArray());
 
         $output->writeln('Done.');
     }
