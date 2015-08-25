@@ -4,12 +4,8 @@
  */
 namespace Controller\User;
 
-use Doctrine\ORM\EntityManager;
-use Model\Entity\LookUpData;
-use Service\LookUp\LookUpFullContact;
-use Service\LookUp\LookUpPeopleGraph;
 use Silex\Application;
-use Symfony\Component\HttpFoundation\Request;
+use Model\User\LookUpModel;
 
 /**
  * Class LookUpController
@@ -18,25 +14,13 @@ use Symfony\Component\HttpFoundation\Request;
 class LookUpController
 {
     /**
-     * @var LookUpFullContact
+     * @var LookUpModel
      */
-    protected $lookUpFullContact;
+    protected $lookUpModel;
 
-    /**
-     * @var LookUpPeopleGraph
-     */
-    protected $lookUpPeopleGraph;
-
-    /**
-     * @var EntityManager
-     */
-    protected $em;
-
-    public function __construct(LookUpFullContact $lookUpFullContact, LookUpPeopleGraph $lookUpPeopleGraph, EntityManager $em)
+    public function __construct(LookUpModel $lookUpModel)
     {
-        $this->lookUpFullContact = $lookUpFullContact;
-        $this->lookUpPeopleGraph = $lookUpPeopleGraph;
-        $this->em = $em;
+        $this->lookUpModel = $lookUpModel;
     }
 
     /**
@@ -47,29 +31,8 @@ class LookUpController
      */
     public function getByEmailAction(Application $app, $email)
     {
-        if(! $lookUpData = $this->em->getRepository('\Model\Entity\LookUpData')->findOneBy(array(
-            'lookedUpType' => LookUpData::LOOKED_UP_BY_EMAIL,
-            'lookedUpValue' => $email,
-        ))) {
-            $lookUpData = new LookUpData();
-            $lookUpData->setEmail($email);
-            $lookUpData->setLookedUpType(LookUpData::LOOKED_UP_BY_EMAIL);
-            $lookUpData->setLookedUpValue($email);
-            $this->em->persist($lookUpData);
-            $this->em->flush();
-        }
-        $socialProfiles = $lookUpData->getSocialProfiles();
-        if(empty($socialProfiles)) {
-            $fullContactData = $this->lookUpFullContact->get(LookUpFullContact::EMAIL_TYPE, $email, $lookUpData->getId());
-            $peopleGraphData = $this->lookUpPeopleGraph->get(LookUpPeopleGraph::EMAIL_TYPE, $email, $lookUpData->getId());
-            $lookUpData = $this->lookUpFullContact->merge($lookUpData, $fullContactData);
-            $lookUpData = $this->lookUpPeopleGraph->merge($lookUpData, $peopleGraphData);
-
-            $this->em->persist($lookUpData);
-            $this->em->flush();
-        }
-
-        return $app->json($lookUpData->toArray());
+        $lookUpData = $this->lookUpModel->getByEmail($email);
+        return $app->json($lookUpData);
     }
 
     /**
@@ -80,32 +43,8 @@ class LookUpController
      */
     public function getByTwitterUsernameAction(Application $app, $twitterUsername)
     {
-        $twitterBaseUrl = 'https://twitter.com/';
-
-        if(! $lookUpData = $this->em->getRepository('\Model\Entity\LookUpData')->findOneBy(array(
-            'lookedUpType' => LookUpData::LOOKED_UP_BY_TWITTER_USERNAME,
-            'lookedUpValue' => $twitterUsername,
-        ))) {
-
-            $lookUpData = new LookUpData();
-            $lookUpData->setLookedUpType(LookUpData::LOOKED_UP_BY_TWITTER_USERNAME);
-            $lookUpData->setLookedUpValue($twitterUsername);
-            $this->em->persist($lookUpData);
-            $this->em->flush();
-        }
-        $socialProfiles = $lookUpData->getSocialProfiles();
-        if(empty($socialProfiles)) {
-            $fullContactData = $this->lookUpFullContact->get(LookUpFullContact::TWITTER_TYPE, $twitterUsername, $lookUpData->getId());
-            $peopleGraphData = $this->lookUpPeopleGraph->get(LookUpPeopleGraph::URL_TYPE, $twitterBaseUrl . $twitterUsername, $lookUpData->getId());
-
-            $lookUpData = $this->lookUpFullContact->merge($lookUpData, $fullContactData);
-            $lookUpData = $this->lookUpPeopleGraph->merge($lookUpData, $peopleGraphData);
-
-            $this->em->persist($lookUpData);
-            $this->em->flush();
-        }
-
-        return $app->json($lookUpData->toArray());
+        $lookUpData = $this->lookUpModel->getByTwitterUsername($twitterUsername);
+        return $app->json($lookUpData);
     }
 
     /**
@@ -116,39 +55,12 @@ class LookUpController
      */
     public function getByFacebookUsernameAction(Application $app, $facebookUsername)
     {
-        $facebookBaseUrl = 'https://facebook.com/';
-
-        if(! $lookUpData = $this->em->getRepository('\Model\Entity\LookUpData')->findOneBy(array(
-            'lookedUpType' => LookUpData::LOOKED_UP_BY_FACEBOOK_USERNAME,
-            'lookedUpValue' => $facebookUsername,
-        ))) {
-            $lookUpData = new LookUpData();
-            $lookUpData->setLookedUpType(LookUpData::LOOKED_UP_BY_FACEBOOK_USERNAME);
-            $lookUpData->setLookedUpValue($facebookUsername);
-            $this->em->persist($lookUpData);
-            $this->em->flush();
-        }
-        $socialProfiles = $lookUpData->getSocialProfiles();
-        if(empty($socialProfiles)) {
-            $fullContactData = $this->lookUpFullContact->get(LookUpFullContact::FACEBOOK_TYPE, $facebookUsername, 2);
-            $peopleGraphData = $this->lookUpPeopleGraph->get(LookUpPeopleGraph::URL_TYPE, $facebookBaseUrl . $facebookUsername, 2);
-
-            $lookUpData = $this->lookUpFullContact->merge($lookUpData, $fullContactData);
-            $lookUpData = $this->lookUpPeopleGraph->merge($lookUpData, $peopleGraphData);
-
-            $this->em->persist($lookUpData);
-            $this->em->flush();
-        }
-
-        return $app->json($lookUpData->toArray());
+        $lookUpData = $this->lookUpModel->getByFacebookUsername($facebookUsername);
+        return $app->json($lookUpData);
     }
 
-    /**
-     * @param Request $request
-     * @param Application $app
-     * @return \Symfony\Component\HttpFoundation\JsonResponse
-     * @throws \Exception
-     */
+
+    /* TODO: Disable web hook by now (refactor needed)
     public function setFromWebHookAction(Request $request, Application $app)
     {
         $id = $request->get('webHookId');
@@ -163,4 +75,5 @@ class LookUpController
 
         return true;
     }
+    */
 }

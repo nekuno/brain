@@ -4,6 +4,7 @@
  */
 namespace Service\LookUp;
 
+use Model\Entity\LookUpData;
 use Model\Exception\ValidationException;
 
 class LookUpPeopleGraph extends LookUp
@@ -19,24 +20,58 @@ class LookUpPeopleGraph extends LookUp
         );
     }
 
+    protected function getType($lookUpType)
+    {
+        switch($lookUpType) {
+            case LookUpData::LOOKED_UP_BY_EMAIL:
+                $fullContactType = LookUpPeopleGraph::EMAIL_TYPE;
+                break;
+            case LookUpData::LOOKED_UP_BY_TWITTER_USERNAME:
+                $fullContactType = LookUpPeopleGraph::URL_TYPE;
+                break;
+            case LookUpData::LOOKED_UP_BY_FACEBOOK_USERNAME:
+                $fullContactType = LookUpPeopleGraph::URL_TYPE;
+                break;
+            default:
+                $fullContactType = LookUpPeopleGraph::EMAIL_TYPE;
+        }
+
+        return $fullContactType;
+    }
+
+    protected function getValue($lookUpType, $value)
+    {
+        switch($lookUpType) {
+            case LookUpData::LOOKED_UP_BY_EMAIL:
+                break;
+            case LookUpData::LOOKED_UP_BY_TWITTER_USERNAME:
+                $value = LookUp::TWITTER_BASE_URL . $value;
+                break;
+            case LookUpData::LOOKED_UP_BY_FACEBOOK_USERNAME:
+                $value = LookUp::FACEBOOK_BASE_URL . $value;
+                break;
+        }
+
+        return $value;
+    }
+
     protected function processData($response)
     {
         $data = array();
-        if(isset($response['status']) && $response['status'] === 200) {
-            if(is_array($response) && isset($response['result'])) {
-                $result = $response['result'];
-                if(isset($result['name'])) {
-                    $data['name'] = str_replace(' ', '', $result['name']);
-                }
-                if(isset($result['email'])) {
-                    $data['email'] = $result['email'];
-                }
-                if(isset($result['locations']) && is_array($result['locations']) && ! empty($result['locations'])) {
-                    $data['location'] = $result['locations'][0];
-                }
+        if(is_array($response) && isset($response['result'])) {
+            $result = $response['result'];
+            if(isset($result['name'])) {
+                $data['name'] = str_replace(' ', '', $result['name']);
             }
-            $data['socialProfiles'] = $this->processSocialData($response);
+            if(isset($result['email'])) {
+                $data['email'] = $result['email'];
+            }
+            if(isset($result['locations']) && is_array($result['locations']) && ! empty($result['locations'])) {
+                $data['location'] = $result['locations'][0];
+            }
+            $data['response'] = $response;
         }
+        $data['socialProfiles'] = $this->processSocialData($response);
 
         return $data;
     }
