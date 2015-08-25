@@ -5,15 +5,14 @@
 namespace Service\LookUp;
 
 use Model\Exception\ValidationException;
-use Service\LookUp\LookUpInterface\LookUpInterface;
 
-class LookUpFullContact extends LookUp implements LookUpInterface
+class LookUpFullContact extends LookUp
 {
     const EMAIL_TYPE = 'email';
     const TWITTER_TYPE = 'twitter';
     const FACEBOOK_TYPE = 'facebookUsername';
 
-    public function getTypes()
+    protected function getTypes()
     {
         return array(
             self::EMAIL_TYPE,

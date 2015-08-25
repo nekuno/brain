@@ -7,13 +7,14 @@ namespace Service\LookUp;
 use GuzzleHttp\Client;
 use Model\Entity\LookUpData;
 use Model\Exception\ValidationException;
+use Service\LookUp\LookUpInterface\LookUpInterface;
 use Symfony\Component\Routing\Generator\UrlGenerator;
 
 /**
  * Class LookUp
  * @package Service
  */
-abstract class LookUp
+abstract class LookUp implements LookUpInterface
 {
     protected $client;
     protected $apiKey;

@@ -4,15 +4,14 @@
  */
 namespace Service\LookUp;
 
-use Service\LookUp\LookUpInterface\LookUpInterface;
 use Model\Exception\ValidationException;
 
-class LookUpPeopleGraph extends LookUp implements LookUpInterface
+class LookUpPeopleGraph extends LookUp
 {
     const EMAIL_TYPE = 'email';
     const URL_TYPE = 'url';
 
-    public function getTypes()
+    protected function getTypes()
     {
         return array(
             self::EMAIL_TYPE,
