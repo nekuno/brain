@@ -1,5 +1,7 @@
 <?php
 
+use Model\User\RelationsModel;
+
 /* @var $app Silex\Application */
 /* @var $controllers \Silex\Controller */
 $controllers = $app['controllers'];
@@ -24,6 +26,26 @@ $app->put('/users/{id}/privacy', 'users.privacy.controller:putAction')->value('i
 $app->delete('/users/{id}/privacy', 'users.privacy.controller:deleteAction')->value('id', null);
 $app->get('/privacy/metadata', 'users.privacy.controller:getMetadataAction');
 $app->post('/privacy/validate', 'users.privacy.controller:validateAction')->value('id', null);
+
+$app->get('/users/{from}/blocks', 'users.relations.controller:indexAction')->value('relation', RelationsModel::BLOCKS);
+$app->get('/users/{from}/blocks/{to}', 'users.relations.controller:getAction')->value('relation', RelationsModel::BLOCKS);
+$app->post('/users/{from}/blocks/{to}', 'users.relations.controller:postAction')->value('relation', RelationsModel::BLOCKS);
+$app->delete('/users/{from}/blocks/{to}', 'users.relations.controller:deleteAction')->value('relation', RelationsModel::BLOCKS);
+
+$app->get('/users/{from}/favorites', 'users.relations.controller:indexAction')->value('relation', RelationsModel::FAVORITES);
+$app->get('/users/{from}/favorites/{to}', 'users.relations.controller:getAction')->value('relation', RelationsModel::FAVORITES);
+$app->post('/users/{from}/favorites/{to}', 'users.relations.controller:postAction')->value('relation', RelationsModel::FAVORITES);
+$app->delete('/users/{from}/favorites/{to}', 'users.relations.controller:deleteAction')->value('relation', RelationsModel::FAVORITES);
+
+$app->get('/users/{from}/likes', 'users.relations.controller:indexAction')->value('relation', RelationsModel::LIKES);
+$app->get('/users/{from}/likes/{to}', 'users.relations.controller:getAction')->value('relation', RelationsModel::LIKES);
+$app->post('/users/{from}/likes/{to}', 'users.relations.controller:postAction')->value('relation', RelationsModel::LIKES);
+$app->delete('/users/{from}/likes/{to}', 'users.relations.controller:deleteAction')->value('relation', RelationsModel::LIKES);
+
+$app->get('/users/{from}/reports', 'users.relations.controller:indexAction')->value('relation', RelationsModel::REPORTS);
+$app->get('/users/{from}/reports/{to}', 'users.relations.controller:getAction')->value('relation', RelationsModel::REPORTS);
+$app->post('/users/{from}/reports/{to}', 'users.relations.controller:postAction')->value('relation', RelationsModel::REPORTS);
+$app->delete('/users/{from}/reports/{to}', 'users.relations.controller:deleteAction')->value('relation', RelationsModel::REPORTS);
 
 $app->get('/users/{id1}/matching/{id2}', 'users.controller:getMatchingAction');
 $app->get('/users/{id1}/similarity/{id2}', 'users.controller:getSimilarityAction');
@@ -152,5 +174,19 @@ $controllers
         'userId',
         function ($id) {
             return (integer)$id;
+        }
+    )
+    ->assert('from', '\d+')
+    ->convert(
+        'from',
+        function ($from) {
+            return (integer)$from;
+        }
+    )
+    ->assert('to', '\d+')
+    ->convert(
+        'to',
+        function ($to) {
+            return (integer)$to;
         }
     );

@@ -4,6 +4,8 @@ namespace Model\Neo4j;
 
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
+use Everyman\Neo4j\Exception;
+use Model\Neo4j\Neo4jException;
 
 /**
  * @author Juan Luis Martínez <juanlu@comakai.com>
@@ -30,6 +32,10 @@ class Query extends \Everyman\Neo4j\Cypher\Query implements LoggerAwareInterface
             } catch (\Exception $e) {
                 $message = sprintf('Error executing Neo4j query: "%s"', $this->getExecutableQuery());
                 $this->logger->error($message);
+                if ($e instanceof Exception) {
+                    $query = str_replace(array("\n", "\r", '"'), array(' ', ' ', "'"), $this->getExecutableQuery());
+                    $e = new Neo4jException($e->getMessage(), $e->getCode(), $e->getHeaders(), $e->getData(), $query);
+                }
                 throw $e;
             }
             $time = round(microtime(true) - $now, 3) * 1000;
