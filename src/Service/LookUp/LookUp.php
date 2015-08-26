@@ -7,14 +7,18 @@ namespace Service\LookUp;
 use GuzzleHttp\Client;
 use Model\Entity\LookUpData;
 use Model\Exception\ValidationException;
+use Service\LookUp\LookUpInterface\LookUpInterface;
 use Symfony\Component\Routing\Generator\UrlGenerator;
 
 /**
  * Class LookUp
  * @package Service
  */
-abstract class LookUp
+abstract class LookUp implements LookUpInterface
 {
+    const TWITTER_BASE_URL = 'https://twitter.com/';
+    const FACEBOOK_BASE_URL = 'https://facebook.com/';
+
     protected $client;
     protected $apiKey;
     protected $urlGenerator;
@@ -26,30 +30,44 @@ abstract class LookUp
         $this->urlGenerator = $urlGenerator;
     }
 
-    abstract protected function getTypes();
-
-    public function get($lookUpType, $value, $id = null)
+    public function get($value, $lookUpType, $id = null)
     {
         $this->validateType($lookUpType);
-        $this->validateValue($lookUpType, $value);
+        $customType = $this->getType($lookUpType);
 
-        $response = $this->getFromClient($this->client, $lookUpType, $value, $this->apiKey, $id);
+        $customValue = $this->getValue($lookUpType, $value);
+        $this->validateValue($customType, $customValue);
 
-        return $this->toObject($this->processData($response));
+        $response = $this->getFromClient($this->client, $customType, $customValue, $this->apiKey, $id);
+
+        return $this->processData($response);
+    }
+
+    public function getProcessedResponse($response)
+    {
+        return $this->processData($response);
     }
 
     protected function validateType($lookUpType)
     {
-        if(! in_array($lookUpType, $this->getTypes())) {
+        if(! in_array($lookUpType, $this->getBaseTypes())) {
             $exception = new ValidationException('Validation errors');
             $exception->setErrors(array($lookUpType . ' type is not valid'));
             throw $exception;
         }
     }
 
+    abstract protected function getType($lookUpType);
+
+    abstract protected function validateValue($lookUpType, $value);
+
+    abstract protected function getValue($lookUpType, $value);
+
     protected function getFromClient(Client $client, $lookUpType, $value, $apiKey, $webHookId)
     {
         try {
+            // TODO: Disable web hook setting $webHookId to null
+            $webHookId = null;
             if($webHookId) {
                 $route = $this->urlGenerator->generate('setLookUpFromWebHook', array(), UrlGenerator::ABSOLUTE_URL);
                 $query = array(
@@ -81,6 +99,23 @@ abstract class LookUp
         return array();
     }
 
+    abstract protected function processData($response);
+
+    protected function getBaseTypes()
+    {
+        return array(
+            LookUpData::LOOKED_UP_BY_EMAIL,
+            LookUpData::LOOKED_UP_BY_TWITTER_USERNAME,
+            LookUpData::LOOKED_UP_BY_FACEBOOK_USERNAME,
+        );
+    }
+
+    abstract protected function processSocialData($response);
+
+    abstract protected function getTypes();
+
+
+/* TODO: Disable web hook by now (refactoring needed)
     public function mergeFromWebHook(LookUpData $lookUpData, $data)
     {
         $newLookUpData = $this->toObject($this->processData($data));
@@ -88,52 +123,15 @@ abstract class LookUp
         return $lookUpData;
     }
 
-    abstract protected function processData($response);
-
-    abstract protected function processSocialData($response);
-
-    abstract protected function validateValue($lookUpType, $value);
-
     protected function toObject($lookUpData)
     {
         $lookUpDataObj = new LookUpData();
 
-        if(isset($lookUpData['name'])) {
-            $lookUpDataObj->setName($lookUpData['name']);
-        }
-        if(isset($lookUpData['email'])) {
-            $lookUpDataObj->setEmail($lookUpData['email']);
-        }
-        if(isset($lookUpData['gender'])) {
-            $lookUpDataObj->setGender($lookUpData['gender']);
-        }
-        if(isset($lookUpData['location'])) {
-            $lookUpDataObj->setLocation($lookUpData['location']);
-        }
-        if(isset($lookUpData['socialProfiles'])) {
-            $lookUpDataObj->setSocialProfiles($lookUpData['socialProfiles']);
+        if(isset($lookUpData['response'])) {
+            $lookUpDataObj->setResponse($lookUpData['response']);
         }
 
         return $lookUpDataObj;
     }
-
-    public function merge(LookUpData $lookUpData1, LookUpData $lookUpData2)
-    {
-        if(! $lookUpData1->getName() && $lookUpData2->getName()) {
-            $lookUpData1->setName($lookUpData2->getName());
-        }
-        if(! $lookUpData1->getEmail() && $lookUpData2->getEmail()) {
-            $lookUpData1->setEmail($lookUpData2->getEmail());
-        }
-        if(! $lookUpData1->getGender() && $lookUpData2->getGender()) {
-            $lookUpData1->setGender($lookUpData2->getGender());
-        }
-        if(! $lookUpData1->getLocation() && $lookUpData2->getLocation()) {
-            $lookUpData1->setLocation($lookUpData2->getLocation());
-        }
-
-        $lookUpData1->addSocialProfiles($lookUpData2->getSocialProfiles());
-
-        return $lookUpData1;
-    }
+*/
 }

@@ -93,7 +93,7 @@ $app['fetch.controller'] = $app->share(
 $app['lookUp.controller'] = $app->share(
     function () use ($app) {
 
-        return new \Controller\User\LookUpController($app['lookUp.fullContact.service'], $app['lookUp.peopleGraph.service'], $app['orm.ems']['mysql_brain']);
+        return new \Controller\User\LookUpController($app['users.lookup.model']);
     }
 );
 
