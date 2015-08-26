@@ -59,6 +59,46 @@ class LookUpController
         return $app->json($lookUpData);
     }
 
+    /**
+     * @param Application $app
+     * @param integer $id
+     * @param string $email
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @throws \Exception
+     */
+
+    public function setByEmailAction(Application $app, $id, $email)
+    {
+        $lookUpData = $this->lookUpModel->setByEmail($id, $email);
+        return $app->json($lookUpData);
+    }
+
+    /**
+     * @param Application $app
+     * @param integer $id
+     * @param string $twitterUsername
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @throws \Exception
+     */
+    public function setByTwitterUsernameAction(Application $app, $id, $twitterUsername)
+    {
+        $lookUpData = $this->lookUpModel->setByTwitterUsername($id, $twitterUsername);
+        return $app->json($lookUpData);
+    }
+
+    /**
+     * @param Application $app
+     * @param integer $id
+     * @param string $facebookUsername
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @throws \Exception
+     */
+    public function setByFacebookUsernameAction(Application $app, $id, $facebookUsername)
+    {
+        $lookUpData = $this->lookUpModel->setByFacebookUsername($id, $facebookUsername);
+        return $app->json($lookUpData);
+    }
+
 
     /* TODO: Disable web hook by now (refactor needed)
     public function setFromWebHookAction(Request $request, Application $app)

@@ -219,7 +219,7 @@ class LookUpModel
         $counter = 0;
         foreach($socialProfiles as $resource => $url) {
             $counter++;
-            $resourceNode = 'SocialNetwork' . ucfirst($resource);
+            $resourceNode = 'SocialNetwork' . ucfirst(str_replace('.', '', $resource));
             $qb->merge('(sn' . $counter . ':SocialNetwork:' . $resourceNode . ')')
                 ->merge('(u)-[hsn' . $counter . ':HAS_SOCIAL_NETWORK {url: { url' . $counter . ' }}]->(sn' . $counter . ')')
                 ->setParameter('url' . $counter, $url);
