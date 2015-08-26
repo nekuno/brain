@@ -6,6 +6,7 @@ namespace Controller\User;
 
 use Silex\Application;
 use Model\User\LookUpModel;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Class LookUpController
@@ -100,20 +101,10 @@ class LookUpController
     }
 
 
-    /* TODO: Disable web hook by now (refactor needed)
     public function setFromWebHookAction(Request $request, Application $app)
     {
-        $id = $request->get('webHookId');
-        if($lookUpData = $this->em->getRepository('\Model\Entity\LookUpData')->findOneBy(array(
-            'id' => (int)$id,
-        ))) {
-            $lookUpData = $this->lookUpFullContact->mergeFromWebHook($lookUpData, $request->getContent());
-            $lookUpData = $this->lookUpPeopleGraph->mergeFromWebHook($lookUpData, $request->getContent());
-            $this->em->persist($lookUpData);
-            $this->em->flush();
-        }
+        $this->lookUpModel->setFromWebHook($request);
 
         return true;
     }
-    */
 }

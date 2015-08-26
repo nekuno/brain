@@ -9,6 +9,7 @@ use Model\Neo4j\GraphManager;
 use Model\Entity\LookUpData;
 use Service\LookUp\LookUpFullContact;
 use Service\LookUp\LookUpPeopleGraph;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Class LookUpModel
@@ -94,6 +95,17 @@ class LookUpModel
         }
 
         return array();
+    }
+
+    public function setFromWebHook(Request $request)
+    {
+        $id = $request->get('webHookId');
+        if($lookUpData = $this->em->getRepository('\Model\Entity\LookUpData')->findOneBy(array('id' => (int)$id))) {
+            $service = $this->getServiceFromApiResource($lookUpData->getApiResource());
+            $lookUpData->setResponse($service->getProcessedResponse($request->request->all()));
+            $this->em->persist($lookUpData);
+            $this->em->flush();
+        }
     }
 
     protected function get($lookUpType, $lookUpValue)
@@ -227,5 +239,21 @@ class LookUpModel
 
         $query = $qb->getQuery();
         $query->getResultSet();
+    }
+
+    protected function getServiceFromApiResource($apiResource)
+    {
+        switch($apiResource) {
+            case LookUpData::FULLCONTACT_API_RESOURCE:
+                $service = $this->fullContact;
+                break;
+            case LookUpData::PEOPLEGRAPH_API_RESOURCE:
+                $service = $this->peopleGraph;
+                break;
+            default:
+                $service = null;
+        }
+
+        return $service;
     }
 }

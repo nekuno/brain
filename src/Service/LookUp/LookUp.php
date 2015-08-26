@@ -66,8 +66,6 @@ abstract class LookUp implements LookUpInterface
     protected function getFromClient(Client $client, $lookUpType, $value, $apiKey, $webHookId)
     {
         try {
-            // TODO: Disable web hook setting $webHookId to null
-            $webHookId = null;
             if($webHookId) {
                 $route = $this->urlGenerator->generate('setLookUpFromWebHook', array(), UrlGenerator::ABSOLUTE_URL);
                 $query = array(
@@ -113,25 +111,4 @@ abstract class LookUp implements LookUpInterface
     abstract protected function processSocialData($response);
 
     abstract protected function getTypes();
-
-
-/* TODO: Disable web hook by now (refactoring needed)
-    public function mergeFromWebHook(LookUpData $lookUpData, $data)
-    {
-        $newLookUpData = $this->toObject($this->processData($data));
-        $lookUpData = $this->merge($lookUpData, $newLookUpData);
-        return $lookUpData;
-    }
-
-    protected function toObject($lookUpData)
-    {
-        $lookUpDataObj = new LookUpData();
-
-        if(isset($lookUpData['response'])) {
-            $lookUpDataObj->setResponse($lookUpData['response']);
-        }
-
-        return $lookUpDataObj;
-    }
-*/
 }
