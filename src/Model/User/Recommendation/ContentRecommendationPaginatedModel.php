@@ -93,8 +93,7 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
         $qb = $this->gm->createQueryBuilder();
 
         $qb->match('(user:User {qnoow_id: { userId }})-[affinity:AFFINITY]->(content:' . $linkType . ')')
-            ->where('NOT (user)-[:LIKES|:DISLIKES]->(content) AND affinity.affinity > 0')
-            ->optionalMatch("(content)-[:SYNONYMOUS]->(synonymousLink:Link)");
+            ->where('NOT (user)-[:LIKES|:DISLIKES]->(content) AND affinity.affinity > 0');
 
         if (isset($filters['tag'])) {
             $qb->match('(content)-[:TAGGED]->(filterTag:Tag)')
@@ -103,7 +102,8 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
             $params['tag'] = $filters['tag'];
         }
 
-        $qb->optionalMatch('(content)-[:TAGGED]->(tag:Tag)')
+        $qb->optionalMatch("(content)-[:SYNONYMOUS]->(synonymousLink:Link)")
+            ->optionalMatch('(content)-[:TAGGED]->(tag:Tag)')
             ->returns(
                 'affinity',
                 'id(content) as id',
@@ -158,7 +158,7 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
         }
 
         // If there is not enough content, we pick recent suitable content and add it to response
-        if ((integer)$limit - count($response) > 0) {
+        if (false && (integer)$limit - count($response) > 0) {
 
             $qb = $this->gm->createQueryBuilder();
 
