@@ -7,6 +7,7 @@ namespace Model\User;
 use Doctrine\ORM\EntityManager;
 use Model\Neo4j\GraphManager;
 use Model\Entity\LookUpData;
+use Service\LookUp\LookUp;
 use Service\LookUp\LookUpFullContact;
 use Service\LookUp\LookUpPeopleGraph;
 use Symfony\Component\HttpFoundation\Request;
@@ -102,9 +103,13 @@ class LookUpModel
         $id = $request->get('webHookId');
         if($lookUpData = $this->em->getRepository('\Model\Entity\LookUpData')->findOneBy(array('id' => (int)$id))) {
             $service = $this->getServiceFromApiResource($lookUpData->getApiResource());
-            $lookUpData->setResponse($service->getProcessedResponse($request->request->all()));
-            $this->em->persist($lookUpData);
-            $this->em->flush();
+            if($service instanceof LookUp) {
+                $lookUpData->setResponse($service->getProcessedResponse($request->request->all()));
+                if($lookUpData->getResponse()) {
+                    $this->em->persist($lookUpData);
+                    $this->em->flush();
+                }
+            }
         }
     }
 
