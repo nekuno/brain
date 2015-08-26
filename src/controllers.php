@@ -106,7 +106,9 @@ $app->before(
 
         // Filter access by IP
         $validClientIP = array(
-            '127.0.0.1'
+            '127.0.0.1',
+            '54.246.93.152', // PeopleGraph
+            '52.3.163.97' // FullContact
         );
 
         if (!in_array($ip = $request->getClientIp(), $validClientIP)) {
