@@ -355,7 +355,7 @@ class ProfileModel
         foreach ($options as $option) {
             $labels = $option->getLabels();
             /** @var Label $label */
-            foreach($labels as $label) {
+            foreach ($labels as $label) {
                 if ($label->getName() && $label->getName() != 'ProfileOption') {
                     $typeName = $this->labelToType($label->getName());
                     $optionsResult[$typeName] = $option->getProperty('id');
@@ -376,7 +376,7 @@ class ProfileModel
         foreach ($tags as $tag) {
             $labels = $tag->getLabels();
             /** @var Label $label */
-            foreach($labels as $label) {
+            foreach ($labels as $label) {
                 if ($label->getName() && $label->getName() != 'ProfileTag') {
                     $typeName = $this->labelToType($label->getName());
                     $tagsResult[$typeName][] = $tag->getProperty('name');
@@ -509,7 +509,7 @@ class ProfileModel
                                 ->delete('optionRel')
                                 ->with('profile');
                         }
-                        if(! is_null($fieldValue)) {
+                        if (!is_null($fieldValue)) {
                             $choiceField = 'choiceValue_' . $dataCounter;
                             $qb->match('(option:' . $this->typeToLabel($fieldName) . ' {id: { ' . $choiceField . ' }})')
                                 ->merge('(profile)<-[:OPTION_OF]-(option)')
@@ -530,7 +530,7 @@ class ProfileModel
                             }
 
                         }
-                        if(is_array($fieldValue) && ! empty($fieldValue)) {
+                        if (is_array($fieldValue) && !empty($fieldValue)) {
                             foreach ($fieldValue as $tag) {
                                 $tagsCounter++;
                                 $totalCounter = $dataCounter + $tagsCounter;
@@ -569,7 +569,7 @@ class ProfileModel
         $result = $query->getResultSet();
 
         $options = array();
-        foreach($result as $row) {
+        foreach ($result as $row) {
             $options += $this->buildOptions($row);
         }
 
@@ -588,7 +588,7 @@ class ProfileModel
         $result = $query->getResultSet();
 
         $tags = array();
-        foreach($result as $row) {
+        foreach ($result as $row) {
             $tags += $this->buildTags($row);
         }
 
