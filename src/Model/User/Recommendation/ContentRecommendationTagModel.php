@@ -30,7 +30,7 @@ class ContentRecommendationTagModel
      */
     public function getRecommendedTags($id, $startingWith='', $limit=0)
     {
-        $response = array();
+        $response = array('items' => array());
 
         $params = array('UserId' => (integer)$id);
 

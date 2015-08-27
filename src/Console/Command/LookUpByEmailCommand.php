@@ -9,7 +9,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Formatter\OutputFormatterStyle;
-use Service\LookUpByEmail;
+use Model\User\LookUpModel;
 
 class LookUpByEmailCommand extends ApplicationAwareCommand
 {
@@ -27,6 +27,11 @@ class LookUpByEmailCommand extends ApplicationAwareCommand
     /**
      * @var OutputFormatterStyle
      */
+    protected $messageStyle;
+
+    /**
+     * @var OutputFormatterStyle
+     */
     protected $errorStyle;
 
     protected function configure()
@@ -40,6 +45,7 @@ class LookUpByEmailCommand extends ApplicationAwareCommand
     {
         $this->output = $output;
         $this->successStyle = new OutputFormatterStyle('green', 'black', array('bold', 'blink'));
+        $this->messageStyle = new OutputFormatterStyle('yellow', 'black', array('bold', 'blink'));
         $this->errorStyle = new OutputFormatterStyle('red', 'black', array('bold', 'blink'));
         $email = $input->getOption('email');
 
@@ -48,37 +54,44 @@ class LookUpByEmailCommand extends ApplicationAwareCommand
             exit;
         }
 
-        /** @var $lookUpByEmail LookUpByEmail */
-        $lookUpByEmail = $this->app['lookUpByEmail.service'];
+        /** @var $lookUpModel LookUpModel */
+        $lookUpModel = $this->app['users.lookup.model'];
 
-        try {
-            $this->displayMessage('Getting from FullContact');
-            $fullContactData = $lookUpByEmail->getFromFullContact($email);
-                foreach($fullContactData as $socialNetwork => $url) {
-                    $this->displayMessage('Social Network: ' . $socialNetwork);
-                    $this->displayMessage('Url: ' . $url);
-                }
-                $this->displaySuccess();
+        $this->displayTitle('Looking up...');
 
-        } catch (\Exception $e) {
-            $this->displayError('<error>Error trying to look up: ' . $e->getMessage() . '</error>');
-        }
+        $lookUpData = $lookUpModel->getByEmail($email);
 
-        try {
-            $this->displayMessage('Getting from PeopleGraph');
-            $peopleGraphData = $lookUpByEmail->getFromPeopleGraph($email);
-            foreach($peopleGraphData as $socialNetwork => $url) {
+        $this->displayData($lookUpData);
+
+        $output->writeln('Done.');
+    }
+
+    private function displayData($data)
+    {
+        if(isset($data['socialProfiles']) && is_array($data['socialProfiles'])) {
+            foreach($data['socialProfiles'] as $socialNetwork => $url) {
+
                 $this->displayMessage('Social Network: ' . $socialNetwork);
                 $this->displayMessage('Url: ' . $url);
             }
             $this->displaySuccess();
-
-        } catch (\Exception $e) {
-            $this->displayError('<error>Error trying to look up: ' . $e->getMessage() . '</error>');
         }
-
-        $output->writeln('Done.');
-
+        if(isset($data['name'])) {
+            $this->displayMessage('Name: ' . $data['name']);
+            $this->displaySuccess();
+        }
+        if(isset($data['email'])) {
+            $this->displayMessage('Email: ' . $data['email']);
+            $this->displaySuccess();
+        }
+        if(isset($data['gender'])) {
+            $this->displayMessage('Gender: ' . $data['gender']);
+            $this->displaySuccess();
+        }
+        if(isset($data['location'])) {
+            $this->displayMessage('Location: ' . $data['location']);
+            $this->displaySuccess();
+        }
     }
 
     private function displayError($message)
@@ -89,9 +102,16 @@ class LookUpByEmailCommand extends ApplicationAwareCommand
         $this->output->writeln('<error>FAIL</error>');
     }
 
-    private function displayMessage($message)
+    private function displayTitle($title)
     {
         $style = $this->successStyle;
+        $this->output->getFormatter()->setStyle('success', $style);
+        $this->output->writeln('<success>' . $title . '</success>');
+    }
+
+    private function displayMessage($message)
+    {
+        $style = $this->messageStyle;
         $this->output->getFormatter()->setStyle('success', $style);
         $this->output->writeln('<success>' . $message . '</success>');
     }

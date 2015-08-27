@@ -2,12 +2,23 @@
 
 namespace ApiConsumer\Fetcher;
 
-class SpotifyFetcher extends AbstractFetcher
+class SpotifyFetcher extends BasicPaginationFetcher
 {
+    //max limits allowed by Spotify API to reduce calls
+    const MAX_PLAYLISTS_PER_USER = 50;
+    const MAX_TRACKS_PER_PLAYLIST = 100;
+
     /**
      * @var array
      */
     protected $rawFeed = array();
+
+    /**
+     * @var array
+     */
+    protected $query = array();
+
+    protected $paginationField = 'offset';
 
     /**
      * { @inheritdoc }
@@ -20,19 +31,20 @@ class SpotifyFetcher extends AbstractFetcher
         $this->url .= 'users/' . $user['spotifyID'] . '/playlists/';
 
         try {
-            $playlists = $this->resourceOwner->authorizedHttpRequest($this->url, array(), $this->user);
+            $this->setQuery(array('limit' => $this::MAX_PLAYLISTS_PER_USER));
+            $playlists = $this->getLinksByPage();
+            $this->rawFeed = array();
 
-            $allTracks = array();
-            if (isset($playlists['items'])) {
-                foreach ($playlists['items'] as $playlist) {
+            if (isset($playlists)) {
+                foreach ($playlists as $playlist) {
                     if ($playlist['owner']['id'] == $user['spotifyID']) {
 
                         $this->url = 'users/' . $user['spotifyID'] . '/playlists/' . $playlist['id'] . '/tracks';
 
                         try {
-                            $tracks = $this->resourceOwner->authorizedHttpRequest($this->url, array(), $this->user);
-                            $currentPlaylistTracks = $this->parseLinks($tracks);
-                            $allTracks = array_merge($currentPlaylistTracks, $allTracks);
+                            $this->setQuery(array('limit' => $this::MAX_TRACKS_PER_PLAYLIST));
+                            $this->getLinksByPage();
+
                         } catch (\Exception $e) {
                             continue;
                         }
@@ -41,11 +53,10 @@ class SpotifyFetcher extends AbstractFetcher
             }
 
             $this->url = 'users/' . $user['spotifyID'] . '/starred/tracks';
-            $starredTracks = $this->resourceOwner->authorizedHttpRequest($this->url, array(), $this->user);
-            $starredPlaylistTracks = $this->parseLinks($starredTracks);
-            $allTracks = array_merge($starredPlaylistTracks, $allTracks);
+            $this->setQuery(array('limit' => $this::MAX_TRACKS_PER_PLAYLIST));
+            $this->getLinksByPage();
 
-            $links = $allTracks;
+            $links = $this->parseLinks($this->rawFeed);
         } catch (\Exception $e) {
             throw $e;
         }
@@ -60,9 +71,8 @@ class SpotifyFetcher extends AbstractFetcher
     {
 
         $parsed = array();
-
-        foreach ($response['items'] as $item) {
-            if (null !== $item['track']['id']) {
+        foreach ($response as $item) {
+            if (isset($item['track']) && null !== $item['track']['id']) {
                 $link['url'] = $item['track']['external_urls']['spotify'];
                 $link['title'] = $item['track']['name'];
 
@@ -88,5 +98,38 @@ class SpotifyFetcher extends AbstractFetcher
         }
 
         return $parsed;
+    }
+
+    /**
+     * @return array
+     */
+    public function getQuery()
+    {
+        return $this->query;
+    }
+
+    /**
+     * @param array $query
+     */
+    public function setQuery($query)
+    {
+        $this->query = $query;
+    }
+
+    protected function getItemsFromResponse($response)
+    {
+        return $response['items'] ?: array();
+    }
+
+    protected function getPaginationIdFromResponse($response)
+    {
+        if ($response['next']) {
+            $startPos = strpos($response['next'], 'offset=') + 7;
+            $endPos = strpos($response['next'], '&');
+            $length = $endPos - $startPos;
+            return substr($response['next'], $startPos, $length);
+        } else {
+            return null;
+        }
     }
 }

@@ -91,7 +91,8 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                     array('(matching_questions > 0 OR similarity > 0)'),
                     $profileFilters['conditions']
                 )
-            );
+            )
+            ->with('u', 'anyUser', 'matching_questions', 'similarity', 'p', 'l');
             foreach ($profileFilters['matches'] as $match){
                 $qb->match($match);
             }

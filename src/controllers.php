@@ -90,21 +90,19 @@ $app['fetch.controller'] = $app->share(
     }
 );
 
+$app['lookUp.controller'] = $app->share(
+    function () use ($app) {
+
+        return new \Controller\User\LookUpController($app['users.lookup.model']);
+    }
+);
+
+
 /**
  * Middleware for filter some request
  */
 $app->before(
     function (Request $request) use ($app) {
-
-        // Filter access by IP
-        $validClientIP = array(
-            '127.0.0.1'
-        );
-
-        if (!in_array($ip = $request->getClientIp(), $validClientIP)) {
-            return $app->json(array(), 403); // 403 Access forbidden
-        }
-
         // Parse request content and populate parameters
         if ($request->getContentType() === 'application/json' || $request->getContentType() === 'json') {
             $data = json_decode(utf8_encode($request->getContent()), true);

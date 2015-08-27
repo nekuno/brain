@@ -21,7 +21,7 @@ use Silex\Provider\ValidatorServiceProvider;
 use Silex\Provider\TwigServiceProvider;
 use Silex\Provider\TranslationServiceProvider;
 use Symfony\Component\Translation\Loader\YamlFileLoader;
-
+use EventListener\FilterClientIpSubscriber;
 $app = new Application();
 
 $app['env'] = getenv('APP_ENV') ?: 'prod';
@@ -62,6 +62,9 @@ $app->register(new Igorw\Silex\ConfigServiceProvider(__DIR__ . "/../config/field
 
 /** @var \Symfony\Component\EventDispatcher\EventDispatcher $dispatcher */
 $dispatcher = $app['dispatcher'];
+
+$filterClientIpSubscriber = new FilterClientIpSubscriber($app['valid_ips'], $app['lookup_valid_ips']);
+$dispatcher->addSubscriber($filterClientIpSubscriber);
 
 $tokenRefreshedSubscriber = new OAuthTokenSubscriber(
     $app['api_consumer.user_provider'],
@@ -106,8 +109,10 @@ $app['fullContact.client'] = $app->share(function (Silex\Application $app) {
 $app['peopleGraph.client'] = $app->share(function (Silex\Application $app) {
     return new GuzzleHttp\Client(array('base_url' => $app['peopleGraph.url']));
 });
-$app['lookUpByEmail.service'] = $app->share(function (Silex\Application $app) {
-    return new \Service\LookUpByEmail($app['fullContact.client'], $app['fullContact.consumer_key'], $app['peopleGraph.client'], $app['peopleGraph.consumer_key']);
+$app['lookUp.fullContact.service'] = $app->share(function (Silex\Application $app) {
+    return new \Service\LookUp\LookUpFullContact($app['fullContact.client'], $app['fullContact.consumer_key'], $app['url_generator']);
 });
-
+$app['lookUp.peopleGraph.service'] = $app->share(function (Silex\Application $app) {
+    return new \Service\LookUp\LookUpPeopleGraph($app['peopleGraph.client'], $app['peopleGraph.consumer_key'], $app['url_generator']);
+});
 return $app;
