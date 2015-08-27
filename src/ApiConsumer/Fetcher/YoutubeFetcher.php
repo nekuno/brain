@@ -10,18 +10,27 @@ class YoutubeFetcher extends BasicPaginationFetcher
 
     protected $paginationId = null;
 
+    protected $query = array();
+
     public function getUrl()
     {
-        return 'youtube/v3/activities';
+        return $this->url;
+
+    }
+
+    public function setUrl($url)
+    {
+        $this->url = $url;
     }
 
     protected function getQuery()
     {
-        return array(
-            'maxResults' => $this->pageLength,
-            'mine' => 'true',
-            'part' => 'snippet,contentDetails'
-        );
+        return $this->query;
+    }
+
+    protected function setQuery(array $query)
+    {
+        $this->query = $query;
     }
 
     protected function getItemsFromResponse($response)
@@ -111,7 +120,51 @@ class YoutubeFetcher extends BasicPaginationFetcher
         return $url;
     }
 
+    public function fetchLinksFromUserFeed($user)
+    {
+        $this->user = $user;
+        $this->rawFeed = array();
+
+        $this->setUrl('youtube/v3/channels');
+        $this->setQuery(array(
+            'maxResults' => $this->pageLength,
+            'mine' => 'true',
+            'part' => 'contentDetails'
+        ));
+        $channels = $this->getLinksByPage();
+        $this->rawFeed = array();
+
+        $this->setUrl('youtube/v3/playlistItems');
+        foreach ($channels as $channel) {
+
+            $this->setQuery(array(
+                'maxResults' => $this->pageLength,
+                'playlistId' => $channel['contentDetails']['relatedPlaylists']['likes'],
+                'part' => 'snippet,contentDetails'
+            ));
+            $this->getLinksByPage();
+        }
+
+        $this->setUrl('youtube/v3/activities');
+        $this->setQuery(array(
+            'maxResults' => $this->pageLength,
+            'mine' => 'true',
+            'part' => 'snippet,contentDetails'
+        ));
+        $this->getLinksByPage();
+
+        $links=$this->rawFeed;
+        foreach ($links as &$link){
+            if (!array_key_exists('type', $link['snippet'])){
+                $link['snippet']['type'] = 'upload';
+                $link['contentDetails']['upload'] = $link['contentDetails'];
+            }
+        }
+        return $this->parseLinks($links);
+    }
+
     /**
+     * @param array $rawFeed
      * @return array
      */
     protected function parseLinks(array $rawFeed)
