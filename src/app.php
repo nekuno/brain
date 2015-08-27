@@ -21,7 +21,7 @@ use Silex\Provider\ValidatorServiceProvider;
 use Silex\Provider\TwigServiceProvider;
 use Silex\Provider\TranslationServiceProvider;
 use Symfony\Component\Translation\Loader\YamlFileLoader;
-
+use EventListener\FilterClientIpSubscriber;
 $app = new Application();
 
 $app['env'] = getenv('APP_ENV') ?: 'prod';
@@ -62,6 +62,9 @@ $app->register(new Igorw\Silex\ConfigServiceProvider(__DIR__ . "/../config/field
 
 /** @var \Symfony\Component\EventDispatcher\EventDispatcher $dispatcher */
 $dispatcher = $app['dispatcher'];
+
+$filterClientIpSubscriber = new FilterClientIpSubscriber($app['valid_ips'], $app['lookup_valid_ips']);
+$dispatcher->addSubscriber($filterClientIpSubscriber);
 
 $tokenRefreshedSubscriber = new OAuthTokenSubscriber(
     $app['api_consumer.user_provider'],

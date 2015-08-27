@@ -1,9 +1,7 @@
 <?php
-
 /**
  * @author Manolo Salsas (manolez@gmail.com)
  */
-
 namespace EventListener;
 
 use Model\Neo4j\GraphManager;
