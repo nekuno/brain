@@ -90,6 +90,11 @@ $app['users.recommendation.content.tag.model'] = function ($app) {
     return new \Model\User\Recommendation\ContentRecommendationTagModel($app['neo4j.graph_manager']);
 };
 
+$app['users.lookup.model'] = function ($app) {
+
+    return new \Model\User\LookUpModel($app['neo4j.graph_manager'], $app['orm.ems']['mysql_brain'], $app['lookUp.fullContact.service'], $app['lookUp.peopleGraph.service']);
+};
+
 $app['questionnaire.questions.model'] = function ($app) {
 
     return new \Model\Questionnaire\QuestionModel($app['neo4j.graph_manager'], $app['users.model']);

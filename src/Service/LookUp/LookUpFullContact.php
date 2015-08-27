@@ -4,22 +4,55 @@
  */
 namespace Service\LookUp;
 
+use Model\Entity\LookUpData;
 use Model\Exception\ValidationException;
-use Service\LookUp\LookUpInterface\LookUpInterface;
 
-class LookUpFullContact extends LookUp implements LookUpInterface
+class LookUpFullContact extends LookUp
 {
     const EMAIL_TYPE = 'email';
     const TWITTER_TYPE = 'twitter';
     const FACEBOOK_TYPE = 'facebookUsername';
 
-    public function getTypes()
+    protected function getTypes()
     {
         return array(
             self::EMAIL_TYPE,
             self::TWITTER_TYPE,
             self::FACEBOOK_TYPE,
         );
+    }
+
+    protected function getType($lookUpType)
+    {
+        switch($lookUpType) {
+            case LookUpData::LOOKED_UP_BY_EMAIL:
+                $fullContactType = LookUpFullContact::EMAIL_TYPE;
+                break;
+            case LookUpData::LOOKED_UP_BY_TWITTER_USERNAME:
+                $fullContactType = LookUpFullContact::TWITTER_TYPE;
+                break;
+            case LookUpData::LOOKED_UP_BY_FACEBOOK_USERNAME:
+                $fullContactType = LookUpFullContact::FACEBOOK_TYPE;
+                break;
+            default:
+                $fullContactType = LookUpFullContact::EMAIL_TYPE;
+        }
+
+        return $fullContactType;
+    }
+
+    protected function getValue($lookUpType, $value)
+    {
+        switch($lookUpType) {
+            case LookUpData::LOOKED_UP_BY_EMAIL:
+                break;
+            case LookUpData::LOOKED_UP_BY_TWITTER_USERNAME:
+                break;
+            case LookUpData::LOOKED_UP_BY_FACEBOOK_USERNAME:
+                break;
+        }
+
+        return $value;
     }
 
     protected function processData($response)
@@ -41,6 +74,8 @@ class LookUpFullContact extends LookUp implements LookUpInterface
                     }
                 }
             }
+            $data['response'] = $response;
+
             $data['socialProfiles'] = $this->processSocialData($response);
         }
 
