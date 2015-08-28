@@ -137,7 +137,7 @@ $app->error(
         }
 
         if ($e instanceof Neo4jException) {
-            $response['error'] = $e->getData()['message'];
+            $response['error'] = isset($e->getData()['message']) ? $e->getData()['message'] : $e->getData();
             $response['query'] = $e->getQuery();
             $response['headers'] = $e->getHeaders();
             $response['data'] = $e->getData();

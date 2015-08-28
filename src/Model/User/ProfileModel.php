@@ -490,16 +490,16 @@ class ProfileModel
                             ->with('profile');
                         break;
                     case 'location':
-                        $qb->merge('(profile)<-[:LOCATION]-(location:Location)')
-                            ->set('location.latitude = { latitude }')
+                        $qb->match('(profile)-[rLocation:LOCATION]->(oldLocation:Location)')
+                            ->delete('oldLocation', 'rLocation')
+                            ->with('profile');
+
+                        $qb->create('(location:Location {latitude: { latitude }, longitude: { longitude }, address: { address }, locality: { locality }, country: { country }})')
+                            ->createUnique('(profile)-[:LOCATION]->(location)')
                             ->setParameter('latitude', $fieldValue['latitude'])
-                            ->set('location.longitude = { longitude }')
                             ->setParameter('longitude', $fieldValue['longitude'])
-                            ->set('location.address = { address }')
                             ->setParameter('address', $fieldValue['address'])
-                            ->set('location.locality = { locality }')
                             ->setParameter('locality', $fieldValue['locality'])
-                            ->set('location.country = { country }')
                             ->setParameter('country', $fieldValue['country'])
                             ->with('profile');
                         break;
