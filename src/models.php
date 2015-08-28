@@ -7,7 +7,7 @@ $app['users.model'] = function ($app) {
 
 $app['users.profile.model'] = function ($app) {
 
-    return new \Model\User\ProfileModel($app['neo4j.client'], $app['fields']['profile'], $app['locale.options']['default']);
+    return new \Model\User\ProfileModel($app['neo4j.graph_manager'], $app['fields']['profile'], $app['locale.options']['default']);
 };
 
 $app['users.privacy.model'] = function ($app) {
@@ -112,6 +112,11 @@ $app['users.groups.model'] = function ($app) {
 
 $app['users.invitations.model'] = function ($app) {
     return new \Model\User\InvitationModel($app['neo4j.graph_manager'], $app['users.groups.model'], $app['users.model'], $app['admin_domain_plus_post']);
+};
+
+$app['users.relations.model'] = function ($app) {
+
+    return new \Model\User\RelationsModel($app['neo4j.graph_manager']);
 };
 
 $app['enterpriseUsers.model'] = function ($app) {

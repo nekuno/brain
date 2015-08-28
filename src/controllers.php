@@ -3,6 +3,7 @@
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Model\Exception\ValidationException;
+use Model\Neo4j\Neo4jException;
 
 //Request::setTrustedProxies(array('127.0.0.1'));
 
@@ -59,6 +60,13 @@ $app['users.invitations.controller'] = $app->share(
     function () use ($app) {
 
         return new \Controller\User\InvitationController;
+    }
+);
+
+$app['users.relations.controller'] = $app->share(
+    function () {
+
+        return new \Controller\User\RelationsController;
     }
 );
 
@@ -126,6 +134,13 @@ $app->error(
 
         if ($e instanceof ValidationException) {
             $response['validationErrors'] = $e->getErrors();
+        }
+
+        if ($e instanceof Neo4jException) {
+            $response['error'] = $e->getData()['message'];
+            $response['query'] = $e->getQuery();
+            $response['headers'] = $e->getHeaders();
+            $response['data'] = $e->getData();
         }
 
         if ($app['debug']) {
