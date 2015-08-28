@@ -351,10 +351,10 @@ class ProfileModel
         $options = $row->offsetGet('options');
         $optionsResult = array();
 
-        /** @var Node $option */
+        /* @var Node $option */
         foreach ($options as $option) {
             $labels = $option->getLabels();
-            /** @var Label $label */
+            /* @var Label $label */
             foreach ($labels as $label) {
                 if ($label->getName() && $label->getName() != 'ProfileOption') {
                     $typeName = $this->labelToType($label->getName());
@@ -372,10 +372,10 @@ class ProfileModel
         $tags = $row->offsetGet('tags');
         $tagsResult = array();
 
-        /** @var Node $tag */
+        /* @var Node $tag */
         foreach ($tags as $tag) {
             $labels = $tag->getLabels();
-            /** @var Label $label */
+            /* @var Label $label */
             foreach ($labels as $label) {
                 if ($label->getName() && $label->getName() != 'ProfileTag') {
                     $typeName = $this->labelToType($label->getName());
