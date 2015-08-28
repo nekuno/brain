@@ -16,32 +16,43 @@ class LookUpByEmailCommand extends BaseCommand
     {
         $this->setName('look-up-by-email')
             ->setDescription('Look up user information using fullContact and peopleGraph')
-            ->addOption('email', 'email', InputOption::VALUE_REQUIRED, 'Email to lookup', 'enredos@nekuno.com');
+            ->addOption('email', 'email', InputOption::VALUE_REQUIRED, 'Email to lookup', 'enredos@nekuno.com')
+            ->addOption('id', 'id', InputOption::VALUE_OPTIONAL, 'User id for creating SocialNetwork relationships');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $this->setFormat($output);
         $email = $input->getOption('email');
+        $id = intval($input->getOption('id'));
 
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $this->displayError('Invalid email format');
             exit;
         }
 
+        if($id && ! is_int($id)) {
+            $this->displayError('Invalid user id');
+            exit;
+        }
+
         /** @var $lookUpModel LookUpModel */
         $lookUpModel = $this->app['users.lookup.model'];
 
-        $this->displayTitle('Looking up...');
-
-        $lookUpData = $lookUpModel->getByEmail($email);
-
-        $this->displayData($lookUpData);
+        if($id) {
+            $this->displayTitle('Looking up user ' . $id);
+            $lookUpData = $lookUpModel->setByEmail($id, $email);
+            $this->displaySocialData($lookUpData);
+        } else {
+            $this->displayTitle('Looking up for email ' . $email);
+            $lookUpData = $lookUpModel->getByEmail($email);
+            $this->displayFullData($lookUpData);
+        }
 
         $output->writeln('Done.');
     }
 
-    private function displayData($data)
+    private function displayFullData($data)
     {
         if(isset($data['socialProfiles']) && is_array($data['socialProfiles'])) {
             foreach($data['socialProfiles'] as $socialNetwork => $url) {
@@ -67,5 +78,14 @@ class LookUpByEmailCommand extends BaseCommand
             $this->displayMessage('Location: ' . $data['location']);
             $this->displaySuccess();
         }
+    }
+
+    private function displaySocialData($data)
+    {
+        foreach($data as $socialNetwork => $url) {
+            $this->displayMessage('Social Network: ' . $socialNetwork);
+            $this->displayMessage('Url: ' . $url);
+        }
+        $this->displaySuccess();
     }
 }

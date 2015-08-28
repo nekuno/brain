@@ -7,6 +7,7 @@ $console = new Application('Nekuno Brain', '0.*');
 $console->getDefinition()->addOption(new InputOption('--env', '-e', InputOption::VALUE_REQUIRED, 'The Environment name.', 'dev'));
 /* @var $app Silex\Application */
 $console->setDispatcher($app['dispatcher']);
+$app->post('/lookUp/webHook', 'lookUp.controller:setFromWebHookAction')->bind('setLookUpFromWebHook');
 
 $console->addCommands(
     array(
