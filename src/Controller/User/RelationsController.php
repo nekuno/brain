@@ -9,7 +9,7 @@ use Symfony\Component\HttpFoundation\Request;
 class RelationsController
 {
 
-    public function indexAction(Request $request, Application $app, $from, $relation)
+    public function indexAction(Application $app, $from, $relation)
     {
 
         /* @var $model RelationsModel */
@@ -49,8 +49,8 @@ class RelationsController
         /* @var $model RelationsModel */
         $model = $app['users.relations.model'];
 
-        $model->remove($from, $to, $relation);
+        $result = $model->remove($from, $to, $relation);
 
-        return $app->json();
+        return $app->json($result);
     }
 }

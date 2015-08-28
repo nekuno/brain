@@ -2,10 +2,12 @@
 
 namespace Model\User;
 
+use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Everyman\Neo4j\Relationship;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class RelationsModel
 {
@@ -29,11 +31,49 @@ class RelationsModel
     public function getAll($from, $relation)
     {
 
+        $this->validate($relation);
+
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(from:User)-[r:' . $relation . ']-(to:User)')
+            ->where('from.qnoow_id = { from }')
+            ->setParameter('from', (integer)$from)
+            ->returns('from', 'to', 'r');
+
+        $result = $qb->getQuery()->getResultSet();
+
+        $return = array();
+        /* @var $row Row */
+        foreach ($result as $row) {
+            $return[] = $this->build($row);
+        }
+
+        return $return;
     }
 
     public function get($from, $to, $relation)
     {
 
+        $this->validate($relation);
+
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(from:User)-[r:' . $relation . ']-(to:User)')
+            ->where('from.qnoow_id = { from }', 'to.qnoow_id = { to }')
+            ->setParameter('from', (integer)$from)
+            ->setParameter('to', (integer)$to)
+            ->returns('from', 'to', 'r');
+
+        $result = $qb->getQuery()->getResultSet();
+
+        if ($result->count() === 0) {
+            throw new NotFoundHttpException(sprintf('There is no relation "%s" from user "%s" to "%s"', $relation, $from, $to));
+        }
+
+        /* @var $row Row */
+        $row = $result->current();
+
+        return $this->build($row);
     }
 
     public function create($from, $to, $relation, $data = array())
@@ -55,28 +95,56 @@ class RelationsModel
                 ->setParameter($key, $value);
         }
 
-        $qb->returns('r');
+        $qb->returns('from', 'to', 'r');
 
         $result = $qb->getQuery()->getResultSet();
 
-        $return = array();
-        foreach ($result as $row) {
-
-            /* @var $row Row */
-
-            /* @var $relationship Relationship */
-            $relationship = $row->offsetGet('r');
-
-            $return[] = array_merge(array('id' => $relationship->getId()), $relationship->getProperties());
-
+        if ($result->count() === 0) {
+            throw new NotFoundHttpException(sprintf('Unable to create relation "%s" from user "%s" to "%s"', $relation, $from, $to));
         }
 
-        return $return;
+        /* @var $row Row */
+        $row = $result->current();
+
+        return $this->build($row);
+
     }
 
     public function remove($from, $to, $relation)
     {
+        $this->validate($relation);
 
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(from:User)-[r:' . $relation . ']-(to:User)')
+            ->where('from.qnoow_id = { from }', 'to.qnoow_id = { to }')
+            ->setParameter('from', (integer)$from)
+            ->setParameter('to', (integer)$to)
+            ->delete('r');
+
+        $qb->getQuery()->getResultSet();
+
+        return null;
+
+    }
+
+    protected function build(Row $row)
+    {
+        /* @var $from Node */
+        $from = $row->offsetGet('from');
+        /* @var $to Node */
+        $to = $row->offsetGet('to');
+        /* @var $relationship Relationship */
+        $relationship = $row->offsetGet('r');
+
+        return array_merge(
+            array(
+                'id' => $relationship->getId(),
+                'from' => $from->getProperties(),
+                'to' => $to->getProperties(),
+            ),
+            $relationship->getProperties()
+        );
     }
 
     protected function validate($relation)
