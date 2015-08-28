@@ -8,32 +8,10 @@ use Silex\Application;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Formatter\OutputFormatterStyle;
 use Model\User\LookUpModel;
 
-class LookUpByEmailCommand extends ApplicationAwareCommand
+class LookUpByEmailCommand extends BaseCommand
 {
-
-    /**
-     * @var OutputInterface
-     */
-    protected $output;
-
-    /**
-     * @var OutputFormatterStyle
-     */
-    protected $successStyle;
-
-    /**
-     * @var OutputFormatterStyle
-     */
-    protected $messageStyle;
-
-    /**
-     * @var OutputFormatterStyle
-     */
-    protected $errorStyle;
-
     protected function configure()
     {
         $this->setName('look-up-by-email')
@@ -43,10 +21,7 @@ class LookUpByEmailCommand extends ApplicationAwareCommand
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $this->output = $output;
-        $this->successStyle = new OutputFormatterStyle('green', 'black', array('bold', 'blink'));
-        $this->messageStyle = new OutputFormatterStyle('yellow', 'black', array('bold', 'blink'));
-        $this->errorStyle = new OutputFormatterStyle('red', 'black', array('bold', 'blink'));
+        $this->setFormat($output);
         $email = $input->getOption('email');
 
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -92,34 +67,5 @@ class LookUpByEmailCommand extends ApplicationAwareCommand
             $this->displayMessage('Location: ' . $data['location']);
             $this->displaySuccess();
         }
-    }
-
-    private function displayError($message)
-    {
-        $style = $this->errorStyle;
-        $this->output->getFormatter()->setStyle('error', $style);
-        $this->output->writeln('<error>' . $message . '</error>');
-        $this->output->writeln('<error>FAIL</error>');
-    }
-
-    private function displayTitle($title)
-    {
-        $style = $this->successStyle;
-        $this->output->getFormatter()->setStyle('success', $style);
-        $this->output->writeln('<success>' . $title . '</success>');
-    }
-
-    private function displayMessage($message)
-    {
-        $style = $this->messageStyle;
-        $this->output->getFormatter()->setStyle('success', $style);
-        $this->output->writeln('<success>' . $message . '</success>');
-    }
-
-    private function displaySuccess()
-    {
-        $style = $this->successStyle;
-        $this->output->getFormatter()->setStyle('success', $style);
-        $this->output->writeln('<success>SUCCESS</success>');
     }
 }
