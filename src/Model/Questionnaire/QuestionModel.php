@@ -442,7 +442,7 @@ class QuestionModel
         }
     }
 
-    public function build(Row $row, $locale)
+    public function build(Row $row, $locale, $isRegisterQuestion = false)
     {
 
         $keys = array('question', 'answers');
@@ -466,6 +466,7 @@ class QuestionModel
             'text' => $question->getProperty('text_' . $locale),
             'answersCount' => $stats['answersCount'],
             'answers' => array(),
+            'isRegisterQuestion' => $isRegisterQuestion,
         );
 
         foreach ($row->offsetGet('answers') as $answer) {
@@ -662,7 +663,7 @@ class QuestionModel
             /* @var $divisiveQuestions Row */
             $row = $result->current();
 
-            return $this->build($row, $locale);
+            return $this->build($row, $locale, true);
         }
 
         return false;
