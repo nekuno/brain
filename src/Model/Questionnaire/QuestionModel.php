@@ -245,7 +245,7 @@ class QuestionModel
         $qb = $this->gm->createQueryBuilder();
         $qb
             ->match('(q:Question)', '(u:User)')
-            ->where('u.qnoow_id = { userId } AND id(q) = { id }')
+            ->where('NOT q:RegisterQuestion', 'u.qnoow_id = { userId } AND id(q) = { id }')
             ->setParameter('userId', $user['qnoow_id'])
             ->setParameter('id', (integer)$id)
             ->createUnique('(u)-[r:SKIPS]->(q)')
