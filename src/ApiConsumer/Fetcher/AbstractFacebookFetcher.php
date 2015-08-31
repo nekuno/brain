@@ -64,11 +64,11 @@ abstract class AbstractFacebookFetcher extends BasicPaginationFetcher
         $parsed = array();
 
         foreach ($rawFeed as $item) {
-            $url = $item['link'];
+            $url = isset($item['link']) ? $item['link'] : null;
             $id = $item['id'];
             $parsed[] = $this->getLinkArrayFromUrl($url, $id, $item);
 
-            //if it's a like
+            //if it's a like with website outside facebook
             if (isset($item['website'])) {
                 $website = $item['website'];
 
