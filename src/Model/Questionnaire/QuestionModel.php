@@ -72,13 +72,16 @@ class QuestionModel
 
     public function getNextByUser($userId, $locale, $sortByRanking = true)
     {
+        $divisiveQuestion = $this->getNextDivisiveQuestionByUserId($userId, $locale);
 
-        $user = $this->um->getById($userId);
+        if ($divisiveQuestion) {
+            return $divisiveQuestion;
+        }
 
         $qb = $this->gm->createQueryBuilder();
-        $qb
-            ->match('(user:User {qnoow_id: { userId }})')
-            ->setParameter('userId', $user['qnoow_id'])
+
+        $qb->match('(user:User {qnoow_id: { userId }})')
+            ->setParameter('userId', (int)$userId)
             ->optionalMatch('(user)-[:ANSWERS]->(a:Answer)-[:IS_ANSWER_OF]->(answered:Question)')
             ->optionalMatch('(user)-[:SKIPS]->(skip:Question)')
             ->optionalMatch('(:User)-[:REPORTS]->(report:Question)')
@@ -242,7 +245,7 @@ class QuestionModel
         $qb = $this->gm->createQueryBuilder();
         $qb
             ->match('(q:Question)', '(u:User)')
-            ->where('u.qnoow_id = { userId } AND id(q) = { id }')
+            ->where('NOT q:RegisterQuestion', 'u.qnoow_id = { userId } AND id(q) = { id }')
             ->setParameter('userId', $user['qnoow_id'])
             ->setParameter('id', (integer)$id)
             ->createUnique('(u)-[r:SKIPS]->(q)')
@@ -439,7 +442,7 @@ class QuestionModel
         }
     }
 
-    public function build(Row $row, $locale)
+    public function build(Row $row, $locale, $isRegisterQuestion = false)
     {
 
         $keys = array('question', 'answers');
@@ -463,6 +466,7 @@ class QuestionModel
             'text' => $question->getProperty('text_' . $locale),
             'answersCount' => $stats['answersCount'],
             'answers' => array(),
+            'isRegisterQuestion' => $isRegisterQuestion,
         );
 
         foreach ($row->offsetGet('answers') as $answer) {
@@ -636,5 +640,32 @@ class QuestionModel
         }
 
         return $return;
+    }
+
+    protected function getNextDivisiveQuestionByUserId($id, $locale)
+    {
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(user:User {qnoow_id: { userId }})')
+            ->setParameter('userId', (int)$id)
+            ->optionalMatch('(user)-[:ANSWERS]->(a:Answer)-[:IS_ANSWER_OF]->(answered:RegisterQuestion)')
+            ->with('user', 'collect(answered) AS excluded')
+            ->match('(q3:RegisterQuestion)<-[:IS_ANSWER_OF]-(a2:Answer)')
+            ->where('NOT q3 IN excluded', "HAS(q3.text_$locale)")
+            ->with('q3 AS question', 'collect(DISTINCT a2) AS answers')
+            ->returns('question', 'answers')
+            ->limit(1);
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        if (count($result) === 1) {
+            /* @var $divisiveQuestions Row */
+            $row = $result->current();
+
+            return $this->build($row, $locale, true);
+        }
+
+        return false;
     }
 }
