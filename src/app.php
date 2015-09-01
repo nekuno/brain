@@ -115,4 +115,5 @@ $app['lookUp.fullContact.service'] = $app->share(function (Silex\Application $ap
 $app['lookUp.peopleGraph.service'] = $app->share(function (Silex\Application $app) {
     return new \Service\LookUp\LookUpPeopleGraph($app['peopleGraph.client'], $app['peopleGraph.consumer_key'], $app['url_generator']);
 });
+
 return $app;
