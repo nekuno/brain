@@ -42,6 +42,11 @@ final class AppEvents
     const PROCESS_FINISH = 'process.finish';
 
     /**
+     * Fired when user status changes
+     */
+    const USER_STATUS_CHANGED = 'userStatus.changed';
+
+    /**
      * Fired when matching is outdated
      */
     const MATCHING_EXPIRED = 'matching.expired';
