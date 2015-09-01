@@ -40,7 +40,7 @@ class RelationsController
 
         $result = $model->create($from, $to, $relation, $data);
 
-        return $app->json($result, 201);
+        return $app->json($result);
     }
 
     public function deleteAction(Application $app, $from, $to, $relation)

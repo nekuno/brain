@@ -114,6 +114,8 @@ class RelationsModel
     {
         $this->validate($relation);
 
+        $return = $this->get($from, $to, $relation);
+
         $qb = $this->gm->createQueryBuilder();
 
         $qb->match('(from:User)-[r:' . $relation . ']-(to:User)')
@@ -124,7 +126,7 @@ class RelationsModel
 
         $qb->getQuery()->getResultSet();
 
-        return null;
+        return $return;
 
     }
 
