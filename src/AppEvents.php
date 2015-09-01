@@ -44,7 +44,7 @@ final class AppEvents
     /**
      * Fired when user status changes
      */
-    const USER_STATUS_CHANGED = 'userStatus.changed';
+    const USER_STATUS_CHANGED = 'user.statusChanged';
 
     /**
      * Fired when matching is outdated
