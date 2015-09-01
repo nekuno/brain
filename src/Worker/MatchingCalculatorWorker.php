@@ -119,7 +119,7 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                 try {
                     $status = $this->userModel->calculateStatus($userA);
                     $this->logger->notice(sprintf('Calculating user "%s" new status: "%s"', $userA, $status->getStatus()));
-                    $userStatusChangedEvent = new UserStatusChangedEvent($userA, $status);
+                    $userStatusChangedEvent = new UserStatusChangedEvent($userA, $status->getStatus());
                     $this->dispatcher->dispatch(\AppEvents::USER_STATUS_CHANGED, $userStatusChangedEvent);
                     $usersWithSameContent = $this->userModel->getByCommonLinksWithUser($userA);
 
@@ -149,7 +149,7 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                 try {
                     $status = $this->userModel->calculateStatus($userA);
                     $this->logger->notice(sprintf('Calculating user "%s" new status: "%s"', $userA, $status->getStatus()));
-                    $userStatusChangedEvent = new UserStatusChangedEvent($userA, $status);
+                    $userStatusChangedEvent = new UserStatusChangedEvent($userA, $status->getStatus());
                     $this->dispatcher->dispatch(\AppEvents::USER_STATUS_CHANGED, $userStatusChangedEvent);
                     $usersAnsweredQuestion = $this->userModel->getByQuestionAnswered($questionId);
                     foreach ($usersAnsweredQuestion as $currentUser) {
