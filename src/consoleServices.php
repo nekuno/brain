@@ -16,6 +16,10 @@ $app['migrateSocialInvitations.service'] = function (Silex\Application $app) {
     return new \Service\MigrateSocialInvitations($app['neo4j.graph_manager'], $app['dbs']['mysql_social']);
 };
 
+$app['instant.client'] = $app->share(function (Silex\Application $app) {
+    return new GuzzleHttp\Client(array('base_url' => $app['instant.host']));
+});
+
 /**
  * Middleware for filter some request
  */

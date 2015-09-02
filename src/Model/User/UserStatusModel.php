@@ -19,6 +19,11 @@ class UserStatusModel
     protected $status;
 
     /**
+     * @var boolean
+     */
+    protected $statusChanged;
+
+    /**
      * @var int
      */
     protected $answerCount;
@@ -35,6 +40,7 @@ class UserStatusModel
         }
         $this->answerCount = $answerCount;
         $this->linkCount = $linkCount;
+        $this->statusChanged = false;
     }
 
     /**
@@ -56,5 +62,18 @@ class UserStatusModel
             self::USER_STATUS_INCOMPLETE,
             self::USER_STATUS_COMPLETE,
         );
+    }
+
+    public function setStatusChanged()
+    {
+        $this->statusChanged = true;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function getStatusChanged()
+    {
+        return $this->statusChanged;
     }
 } 

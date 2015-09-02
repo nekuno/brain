@@ -6,6 +6,7 @@ use ApiConsumer\Auth\UserProviderInterface;
 use ApiConsumer\EventListener\FetchLinksInstantSubscriber;
 use ApiConsumer\EventListener\FetchLinksSubscriber;
 use ApiConsumer\Fetcher\FetcherService;
+use EventListener\UserStatusSubscriber;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use Psr\Log\LoggerInterface;
@@ -90,7 +91,9 @@ class WorkerRabbitMQConsumeCommand extends ApplicationAwareCommand
             case 'matching':
                 /* @var $channel AMQPChannel */
                 $channel = $connection->channel();
-                $worker = new MatchingCalculatorWorker($channel, $this->app['users.model'], $this->app['users.matching.model'], $this->app['users.similarity.model'], $this->app['dbs']['mysql_social'], $this->app['dbs']['mysql_brain']);
+                $userStatusSubscriber = new UserStatusSubscriber($this->app['instant.client']);
+                $dispatcher->addSubscriber($userStatusSubscriber);
+                $worker = new MatchingCalculatorWorker($channel, $this->app['users.model'], $this->app['users.matching.model'], $this->app['users.similarity.model'], $this->app['dbs']['mysql_social'], $this->app['dbs']['mysql_brain'], $dispatcher);
                 $worker->setLogger($logger);
                 $logger->notice('Processing matching queue');
                 $worker->consume();

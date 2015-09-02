@@ -6,7 +6,6 @@ namespace ApiConsumer\EventListener;
 use Event\FetchEvent;
 use Event\ProcessLinkEvent;
 use Event\ProcessLinksEvent;
-use Event\UserStatusChangedEvent;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\RequestException;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -48,7 +47,6 @@ class FetchLinksInstantSubscriber implements EventSubscriberInterface
             \AppEvents::PROCESS_START => array('onProcessStart'),
             \AppEvents::PROCESS_LINK => array('onProcessLink'),
             \AppEvents::PROCESS_FINISH => array('onProcessFinish'),
-            \AppEvents::USER_STATUS_CHANGED => array('onUserStatusChanged'),
         );
     }
 
@@ -100,16 +98,6 @@ class FetchLinksInstantSubscriber implements EventSubscriberInterface
         $json = array('userId' => $event->getUser(), 'resource' => $event->getResourceOwner());
         try {
             $this->client->post($this->host . 'api/process/finish', array('json' => $json));
-        } catch (RequestException $e) {
-
-        }
-    }
-
-    public function onUserStatusChanged(UserStatusChangedEvent $event)
-    {
-        $json = array('userId' => $event->getUserId(), 'status' => $event->getStatus());
-        try {
-            $this->client->post($this->host . 'api/user/status', array('json' => $json));
         } catch (RequestException $e) {
 
         }

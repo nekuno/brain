@@ -3,7 +3,6 @@
 namespace Model;
 
 use Doctrine\DBAL\Connection;
-use Event\UserStatusChangedEvent;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Exception\ValidationException;
@@ -11,7 +10,6 @@ use Model\Neo4j\GraphManager;
 use Model\User\UserStatsModel;
 use Model\User\UserStatusModel;
 use Paginator\PaginatedInterface;
-use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Doctrine\ORM\EntityManager;
 
@@ -45,19 +43,13 @@ class UserModel implements PaginatedInterface
 
     protected $defaultLocale;
 
-    /**
-     * @var EventDispatcher
-     */
-    protected $dispatcher;
-
-    public function __construct(GraphManager $gm, Connection $connectionSocial, EntityManager $entityManagerBrain, array $metadata, $defaultLocale, EventDispatcher $dispatcher)
+    public function __construct(GraphManager $gm, Connection $connectionSocial, EntityManager $entityManagerBrain, array $metadata, $defaultLocale)
     {
         $this->gm = $gm;
         $this->connectionSocial = $connectionSocial;
         $this->entityManagerBrain = $entityManagerBrain;
         $this->metadata = $metadata;
         $this->defaultLocale = $defaultLocale;
-        $this->dispatcher = $dispatcher;
     }
 
     public function validate(array $data)
@@ -294,6 +286,7 @@ class UserModel implements PaginatedInterface
     /**
      * @param $id
      * @return UserStatusModel
+     * @throws NotFoundHttpException
      */
     public function getStatus($id)
     {
@@ -460,6 +453,7 @@ class UserModel implements PaginatedInterface
     /**
      * @param integer $id
      * @return UserStatusModel
+     * @throws NotFoundHttpException
      */
     public function calculateStatus($id)
     {
@@ -486,6 +480,7 @@ class UserModel implements PaginatedInterface
         $status = new UserStatusModel($row['status'], $row['answerCount'], $row['linkCount']);
 
         if ($status->getStatus() !== $row['status']) {
+            $status->setStatusChanged();
 
             $qb = $this->gm->createQueryBuilder();
             $qb
@@ -497,13 +492,9 @@ class UserModel implements PaginatedInterface
 
             $query = $qb->getQuery();
             $query->getResultSet();
-
         }
 
         $this->connectionSocial->update('users', array('status' => $status->getStatus()), array('id' => (integer)$id));
-
-        $userStatusChangedEvent = new UserStatusChangedEvent($id, $status->getStatus());
-        $this->dispatcher->dispatch(\AppEvents::USER_STATUS_CHANGED, $userStatusChangedEvent);
 
         return $status;
     }
