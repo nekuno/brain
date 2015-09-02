@@ -45,7 +45,7 @@ class FacebookLinksFetcher extends AbstractFacebookFetcher
     protected function getQuery()
     {
         $thisQuery = array('fields' => 'link,created_time');
-        if ($this->until) {
+        if (isset ($this->until)) {
             $thisQuery = array_merge(
                 $thisQuery,
                 array('until' => $this->until));
