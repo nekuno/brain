@@ -31,6 +31,7 @@ $console->addCommands(
         new \Console\Command\SwiftMailerSpoolSendCommand($app),
         new \Console\Command\MigrateSocialInvitationsCommand($app),
         new \Console\Command\MigrateSocialProfilesCommand($app),
+        new \Console\Command\MigrateSocialRelationsCommand($app),
         new \Console\Command\LookUpByEmailCommand($app),
         new \Console\Command\LookUpAllUsersCommand($app),
     )

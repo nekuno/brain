@@ -87,8 +87,17 @@ class RelationsModel
             ->where('from.qnoow_id = { from }', 'to.qnoow_id = { to }')
             ->setParameter('from', (integer)$from)
             ->setParameter('to', (integer)$to)
-            ->merge('(from)-[r:' . $relation . ']->(to)')
-            ->set('r.timestamp = timestamp()');
+            ->merge('(from)-[r:' . $relation . ']->(to)');
+
+        if (isset($data['timestamp'])) {
+            $date = new \DateTime($data['timestamp']);
+            $timestamp = ($date->getTimestamp()) * 1000;
+            unset($data['timestamp']);
+            $qb->set('r.timestamp = { timestamp }')
+                ->setParameter('timestamp', $timestamp);
+        } else {
+            $qb->set('r.timestamp = timestamp()');
+        }
 
         foreach ($data as $key => $value) {
             $qb->set("r.$key = { $key }")
