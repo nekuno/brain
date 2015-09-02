@@ -286,6 +286,7 @@ class UserModel implements PaginatedInterface
     /**
      * @param $id
      * @return UserStatusModel
+     * @throws NotFoundHttpException
      */
     public function getStatus($id)
     {
@@ -452,6 +453,7 @@ class UserModel implements PaginatedInterface
     /**
      * @param integer $id
      * @return UserStatusModel
+     * @throws NotFoundHttpException
      */
     public function calculateStatus($id)
     {
@@ -478,6 +480,7 @@ class UserModel implements PaginatedInterface
         $status = new UserStatusModel($row['status'], $row['answerCount'], $row['linkCount']);
 
         if ($status->getStatus() !== $row['status']) {
+            $status->setStatusChanged();
 
             $qb = $this->gm->createQueryBuilder();
             $qb
@@ -489,7 +492,6 @@ class UserModel implements PaginatedInterface
 
             $query = $qb->getQuery();
             $query->getResultSet();
-
         }
 
         $this->connectionSocial->update('users', array('status' => $status->getStatus()), array('id' => (integer)$id));
