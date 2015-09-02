@@ -44,7 +44,7 @@ class FacebookLinksFetcher extends AbstractFacebookFetcher
 
     protected function getQuery()
     {
-        $thisQuery = array('fields' => 'link,created_time');
+        $thisQuery = array('fields' => 'link,created_time,attachments{type}');
         if (isset ($this->until)) {
             $thisQuery = array_merge(
                 $thisQuery,

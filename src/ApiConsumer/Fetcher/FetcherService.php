@@ -114,6 +114,14 @@ class FetcherService implements LoggerAwareInterface
                 $user = $user[0];
             }
 
+            //for processing later
+
+            $_SESSION['resourceOwnerToken'] = array(
+                'oauthToken' => $user['oauthToken'],
+                'createdTime' => time(),
+                'expireTime' => $user['expireTime']
+            );
+
             $this->dispatcher->dispatch(\AppEvents::FETCH_START, new FetchEvent($userId, $resourceOwner));
 
             foreach ($this->options as $fetcher => $fetcherConfig) {
@@ -149,6 +157,8 @@ class FetcherService implements LoggerAwareInterface
                     $this->logger->error(sprintf('Fetcher: Error processing link "%s" from resource "%s". Reason: %s', $link['url'], $resourceOwner, $e->getMessage()));
                 }
             }
+
+            unset($_SESSION['resourceOwnerToken']);
 
             $this->dispatcher->dispatch(\AppEvents::PROCESS_FINISH, new ProcessLinksEvent($userId, $resourceOwner, $links));
 
