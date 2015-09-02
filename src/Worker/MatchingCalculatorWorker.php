@@ -5,8 +5,6 @@ namespace Worker;
 
 use Doctrine\DBAL\Connection;
 use Event\UserStatusChangedEvent;
-use EventListener\UserStatusSubscriber;
-use GuzzleHttp\Client;
 use Model\User\Matching\MatchingModel;
 use Model\User\Similarity\SimilarityModel;
 use Model\UserModel;
@@ -56,12 +54,7 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
      */
     protected $dispatcher;
 
-    /**
-     * @var Client
-     */
-    protected $instantClient;
-
-    public function __construct(AMQPChannel $channel, UserModel $userModel, MatchingModel $matchingModel, SimilarityModel $similarityModel, Connection $connectionSocial, Connection $connectionBrain, EventDispatcher $dispatcher, Client $instantClient)
+    public function __construct(AMQPChannel $channel, UserModel $userModel, MatchingModel $matchingModel, SimilarityModel $similarityModel, Connection $connectionSocial, Connection $connectionBrain, EventDispatcher $dispatcher)
     {
 
         $this->channel = $channel;
@@ -71,7 +64,6 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
         $this->connectionSocial = $connectionSocial;
         $this->connectionBrain = $connectionBrain;
         $this->dispatcher = $dispatcher;
-        $this->instantClient = $instantClient;
     }
 
     /**
@@ -127,8 +119,6 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                 try {
                     $status = $this->userModel->calculateStatus($userA);
                     $this->logger->notice(sprintf('Calculating user "%s" new status: "%s"', $userA, $status->getStatus()));
-                    $userStatusSubscriber = new UserStatusSubscriber($this->instantClient);
-                    $this->dispatcher->addSubscriber($userStatusSubscriber);
                     $userStatusChangedEvent = new UserStatusChangedEvent($userA, $status->getStatus());
                     $this->dispatcher->dispatch(\AppEvents::USER_STATUS_CHANGED, $userStatusChangedEvent);
                     $usersWithSameContent = $this->userModel->getByCommonLinksWithUser($userA);
@@ -159,8 +149,6 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                 try {
                     $status = $this->userModel->calculateStatus($userA);
                     $this->logger->notice(sprintf('Calculating user "%s" new status: "%s"', $userA, $status->getStatus()));
-                    $userStatusSubscriber = new UserStatusSubscriber($this->instantClient);
-                    $this->dispatcher->addSubscriber($userStatusSubscriber);
                     $userStatusChangedEvent = new UserStatusChangedEvent($userA, $status->getStatus());
                     $this->dispatcher->dispatch(\AppEvents::USER_STATUS_CHANGED, $userStatusChangedEvent);
                     $usersAnsweredQuestion = $this->userModel->getByQuestionAnswered($questionId);
