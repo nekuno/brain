@@ -156,12 +156,9 @@ $app->post('/enterpriseUsers/{enterpriseUserId}/invitations/{id}', 'enterpriseUs
 /**
  * LookUp routes
  */
-$app->get('/lookUp/email/{email}', 'lookUp.controller:getByEmailAction');
-$app->get('/lookUp/twitter/{twitterUsername}', 'lookUp.controller:getByTwitterUsernameAction');
-$app->get('/lookUp/facebook/{facebookUsername}', 'lookUp.controller:getByFacebookUsernameAction');
-$app->post('lookUp/users/{id}/email/{email}', 'lookUp.controller:setByEmailAction');
-$app->post('lookUp/users/{id}/twitter/{twitterUsername}', 'lookUp.controller:setByTwitterUsernameAction');
-$app->post('lookUp/users/{id}/facebook/{facebookUsername}', 'lookUp.controller:setByFacebookUsernameAction');
+$app->get('/lookUp', 'lookUp.controller:getAction');
+$app->post('lookUp/users/{id}', 'lookUp.controller:setAction');
+
 $app->post('/lookUp/webHook', 'lookUp.controller:setFromWebHookAction')->bind('setLookUpFromWebHook');
 
 $controllers
