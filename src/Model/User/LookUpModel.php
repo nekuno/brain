@@ -100,8 +100,8 @@ class LookUpModel
 
     public function setFromWebHook(Request $request)
     {
-        $id = $request->get('webHookId');
-        if($lookUpData = $this->em->getRepository('\Model\Entity\LookUpData')->findOneBy(array('id' => (int)$id))) {
+        $hash = $request->get('webHookId');
+        if($lookUpData = $this->em->getRepository('\Model\Entity\LookUpData')->findOneBy(array('hash' => $hash))) {
             $service = $this->getServiceFromApiResource($lookUpData->getApiResource());
             if($service instanceof LookUp) {
                 $lookUpData->setResponse($service->getProcessedResponse($request->request->all()));
@@ -212,13 +212,13 @@ class LookUpModel
     {
         switch($lookUpData->getApiResource()) {
             case LookUpData::FULLCONTACT_API_RESOURCE:
-                $lookUpDataArray = $this->fullContact->get($lookUpData->getLookedUpValue(), $lookUpData->getLookedUpType(), $lookUpData->getId());
+                $lookUpDataArray = $this->fullContact->get($lookUpData->getLookedUpValue(), $lookUpData->getLookedUpType(), $lookUpData->getHash());
                 break;
             case LookUpData::PEOPLEGRAPH_API_RESOURCE:
-                $lookUpDataArray = $this->peopleGraph->get($lookUpData->getLookedUpValue(), $lookUpData->getLookedUpType(), $lookUpData->getId());
+                $lookUpDataArray = $this->peopleGraph->get($lookUpData->getLookedUpValue(), $lookUpData->getLookedUpType(), $lookUpData->getHash());
                 break;
             default:
-                $lookUpDataArray = $this->fullContact->get($lookUpData->getLookedUpValue(), $lookUpData->getLookedUpType(), $lookUpData->getId());
+                $lookUpDataArray = $this->fullContact->get($lookUpData->getLookedUpValue(), $lookUpData->getLookedUpType(), $lookUpData->getHash());
         }
 
         return $lookUpDataArray;
