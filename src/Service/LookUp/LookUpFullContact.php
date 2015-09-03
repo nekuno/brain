@@ -104,9 +104,10 @@ class LookUpFullContact extends LookUp
                 $error = $value . ' is not a valid email';
             }
         } elseif($lookUpType === self::TWITTER_TYPE || $lookUpType === self::FACEBOOK_TYPE) {
+            /* TODO: Do not validate username
             if(! preg_match('/^[\w\.-]+$/', $value)) {
                 $error = $value . ' is not a valid username';
-            }
+            }*/
         } else {
             $error = $lookUpType . ' is not a valid type';
         }
