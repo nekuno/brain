@@ -41,12 +41,12 @@ class FilterClientIpSubscriber implements EventSubscriberInterface
         }
 
         if ($controller[0] instanceof LookUpController) {
-            if (!in_array($event->getRequest()->getClientIp(), $this->lookupValidIps)) {
+            if (! in_array($event->getRequest()->getClientIp(), $this->lookupValidIps)) {
                 throw new AccessDeniedHttpException('Access forbidden');
             }
         }
         else {
-            if (!in_array($event->getRequest()->getClientIp(), $this->validIps)) {
+            if (! in_array($event->getRequest()->getClientIp(), $this->validIps)) {
                 throw new AccessDeniedHttpException('Access forbidden');
             }
         }

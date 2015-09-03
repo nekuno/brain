@@ -61,6 +61,10 @@ class LookUpData
      */
     protected $updatedAt;
 
+    /**
+     * @Column(name="hash", type="string")
+     */
+    protected $hash;
 
     /**
      * Get id
@@ -137,6 +141,22 @@ class LookUpData
     }
 
     /**
+     * @prePersist
+     */
+    public function setHash()
+    {
+        $this->hash = md5($this->getLookedUpType() . $this->getLookedUpValue());
+    }
+
+    /**
+     * @return string
+     */
+    public function getHash()
+    {
+        return $this->hash;
+    }
+
+    /**
      * Get updateAt
      *
      * @return \DateTime
@@ -172,5 +192,4 @@ class LookUpData
             self::PEOPLEGRAPH_API_RESOURCE,
         );
     }
-
 }
