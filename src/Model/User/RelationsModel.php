@@ -163,7 +163,7 @@ class RelationsModel
             ->with('from', 'to')
             ->where('NOT (from)-[:' . RelationsModel::BLOCKS . ']-(to)')
             ->returns('to.qnoow_id AS to')
-            ->orderBy('to.qnoow_id');
+            ->orderBy('to');
 
         $result = $qb->getQuery()->getResultSet();
         $return = array();
@@ -193,7 +193,7 @@ class RelationsModel
             ->with('from', 'to')
             ->where('NOT (from)-[:' . RelationsModel::BLOCKS . ']-(to)')
             ->returns('to.qnoow_id AS to')
-            ->orderBy('to.qnoow_id');
+            ->orderBy('to');
 
         $result = $qb->getQuery()->getResultSet();
         $return = array();
