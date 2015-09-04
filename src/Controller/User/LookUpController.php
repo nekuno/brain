@@ -7,6 +7,7 @@ namespace Controller\User;
 use Silex\Application;
 use Model\User\LookUpModel;
 use Symfony\Component\HttpFoundation\Request;
+use Psr\Log\LoggerInterface;
 
 /**
  * Class LookUpController
@@ -68,6 +69,10 @@ class LookUpController
 
     public function setFromWebHookAction(Request $request, Application $app)
     {
+        /* @var $logger LoggerInterface */
+        $logger = $app['monolog'];
+        $logger->info(sprintf('Web hook called with content: %s', $request->getContent()));
+
         $this->lookUpModel->setFromWebHook($request);
 
         return true;
