@@ -117,12 +117,9 @@ class PrivacyModel
 
         $result = $query->getResultSet();
 
-        if (count($result) < 1) {
-            return array(null, null);
-        }
-
-        $row = $result[0];
-        $privacyNode = $row['privacy'];
+        /** @var Row $row */
+        $row = $result->current();
+        $privacyNode = $row->offsetGet('privacy');
 
         $this->savePrivacyData($privacyNode, $data);
 
@@ -258,10 +255,11 @@ class PrivacyModel
     protected function buildChoiceOptions($result)
     {
         $choiceOptions = array();
+        /** @var Row $row */
         foreach ($result as $row) {
-            $typeName = $this->labelToType($row['labelName']);
-            $optionId = $row['id'];
-            $optionName = $row['name'];
+            $typeName = $this->labelToType($row->offsetGet('labelName'));
+            $optionId = $row->offsetGet('id');
+            $optionName = $row->offsetGet('name');
 
             $choiceOptions[$typeName][$optionId] = $optionName;
         }
@@ -288,9 +286,10 @@ class PrivacyModel
             return array(null, null);
         }
 
-        $row = $result[0];
-        $userNode = $row['user'];
-        $privacyNode = $row['privacy'];
+        /** @var Row $row */
+        $row = $result->current();
+        $userNode = $row->offsetGet('user');
+        $privacyNode = $row->offsetGet('privacy');
 
         return array($userNode, $privacyNode);
     }
