@@ -116,7 +116,7 @@ $app['users.invitations.model'] = function ($app) {
 
 $app['users.relations.model'] = function ($app) {
 
-    return new \Model\User\RelationsModel($app['neo4j.graph_manager']);
+    return new \Model\User\RelationsModel($app['neo4j.graph_manager'], $app['dbs']['mysql_social']);
 };
 
 $app['enterpriseUsers.model'] = function ($app) {

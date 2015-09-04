@@ -2,6 +2,7 @@
 
 namespace Model\User;
 
+use Doctrine\DBAL\Connection;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Everyman\Neo4j\Relationship;
@@ -22,10 +23,16 @@ class RelationsModel
      */
     protected $gm;
 
-    public function __construct(GraphManager $gm)
+    /**
+     * @var Connection
+     */
+    protected $connectionSocial;
+
+    public function __construct(GraphManager $gm, Connection $connectionSocial)
     {
 
         $this->gm = $gm;
+        $this->connectionSocial = $connectionSocial;
     }
 
     public function getAll($from, $relation)
@@ -58,7 +65,7 @@ class RelationsModel
 
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match('(from:User)-[r:' . $relation . ']-(to:User)')
+        $qb->match('(from:User)-[r:' . $relation . ']->(to:User)')
             ->where('from.qnoow_id = { from }', 'to.qnoow_id = { to }')
             ->setParameter('from', (integer)$from)
             ->setParameter('to', (integer)$to)
@@ -137,6 +144,106 @@ class RelationsModel
 
         return $return;
 
+    }
+
+    public function contactFrom($id)
+    {
+
+        $messaged = $this->getMessaged($id);
+
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(from:User)', '(to:User)')
+            ->where('from.qnoow_id = { id }', 'to.qnoow_id <> { id }')
+            ->optionalMatch('(from)-[fav:FAVORITES]->(to)')
+            ->setParameter('id', (integer)$id)
+            ->with('from', 'to', 'fav')
+            ->where('to.qnoow_id IN { messaged } OR NOT fav IS NULL')
+            ->setParameter('messaged', $messaged)
+            ->with('from', 'to')
+            ->where('NOT (from)-[:' . RelationsModel::BLOCKS . ']-(to)')
+            ->returns('to.qnoow_id AS to')
+            ->orderBy('to.qnoow_id');
+
+        $result = $qb->getQuery()->getResultSet();
+        $return = array();
+
+        foreach ($result as $row) {
+            /* @var $row Row */
+            $return[] = $row->offsetGet('to');
+        }
+
+        return $return;
+    }
+
+    public function contactTo($id)
+    {
+
+        $messaged = $this->getMessaged($id);
+
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(from:User)', '(to:User)')
+            ->where('from.qnoow_id = { id }', 'to.qnoow_id <> { id }')
+            ->optionalMatch('(from)<-[fav:FAVORITES]-(to)')
+            ->setParameter('id', (integer)$id)
+            ->with('from', 'to', 'fav')
+            ->where('to.qnoow_id IN { messaged } OR NOT fav IS NULL')
+            ->setParameter('messaged', $messaged)
+            ->with('from', 'to')
+            ->where('NOT (from)-[:' . RelationsModel::BLOCKS . ']-(to)')
+            ->returns('to.qnoow_id AS to')
+            ->orderBy('to.qnoow_id');
+
+        $result = $qb->getQuery()->getResultSet();
+        $return = array();
+
+        foreach ($result as $row) {
+            /* @var $row Row */
+            $return[] = $row->offsetGet('to');
+        }
+
+        return $return;
+    }
+
+    public function contact($from, $to)
+    {
+
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(from:User)-[r:' . RelationsModel::BLOCKS . ']-(to:User)')
+            ->where('from.qnoow_id = { from }', 'to.qnoow_id = { to }')
+            ->setParameter('from', (integer)$from)
+            ->setParameter('to', (integer)$to)
+            ->returns('from', 'to', 'r');
+
+        $result = $qb->getQuery()->getResultSet();
+
+        return $result->count() === 0;
+    }
+
+    protected function getMessaged($id)
+    {
+
+        $messaged = $this->connectionSocial->executeQuery(
+            '
+            SELECT users.id FROM users
+            LEFT JOIN chat_message AS messages_sent ON (users.id = messages_sent.user_from)
+            LEFT JOIN chat_message AS messages_received ON (users.id = messages_received.user_to)
+            WHERE messages_sent.user_to = :id OR messages_received.user_from = :id
+            GROUP BY users.id
+            ORDER BY users.id',
+            array('id' => (integer)$id)
+        )->fetchAll(\PDO::FETCH_COLUMN);
+
+        $messaged = array_map(
+            function ($i) {
+                return (integer)$i;
+            },
+            $messaged
+        );
+
+        return $messaged;
     }
 
     protected function build(Row $row)
