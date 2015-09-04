@@ -1,8 +1,6 @@
 params:
 
     ## Valid IPs
-    full_contact_ip: '52.3.163.97'
-    people_graph_ip: '54.246.93.152'
     dev_custom_ip_1:
     dev_custom_ip_2:
     dev_custom_ip_3:
