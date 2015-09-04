@@ -12,7 +12,7 @@ $app['users.profile.model'] = function ($app) {
 
 $app['users.privacy.model'] = function ($app) {
 
-    return new \Model\User\PrivacyModel($app['neo4j.client'], $app['fields']['privacy'], $app['locale.options']['default']);
+    return new \Model\User\PrivacyModel($app['neo4j.graph_manager'], $app['fields']['privacy'], $app['locale.options']['default']);
 };
 
 $app['users.profile.tag.model'] = function ($app) {
