@@ -114,14 +114,6 @@ class FetcherService implements LoggerAwareInterface
                 $user = $user[0];
             }
 
-            //for processing later
-
-            $_SESSION['resourceOwnerToken'] = array(
-                'oauthToken' => $user['oauthToken'],
-                'createdTime' => time(),
-                'expireTime' => $user['expireTime']
-            );
-
             $this->dispatcher->dispatch(\AppEvents::FETCH_START, new FetchEvent($userId, $resourceOwner));
 
             foreach ($this->options as $fetcher => $fetcherConfig) {
@@ -143,6 +135,15 @@ class FetcherService implements LoggerAwareInterface
 
             foreach ($links as $key => $link) {
                 try {
+
+                    if ($resourceOwner == 'facebook') {
+                        $link['resourceOwnerToken'] = array(
+                            'oauthToken' => $user['oauthToken'],
+                            'createdTime' => time(),
+                            'expireTime' => $user['expireTime']
+                        );
+                    };
+
                     $this->dispatcher->dispatch(\AppEvents::PROCESS_LINK, new ProcessLinkEvent($userId, $resourceOwner, $link));
 
                     $linkProcessed = $this->linkProcessor->process($link);

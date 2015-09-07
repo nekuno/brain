@@ -65,18 +65,19 @@ class FacebookProcessor implements ProcessorInterface
 
         $link = $this->scraperProcessor->process($link);
 
-        try{
+        try {
             $url = (string)$id;
             $query = array(
                 'fields' => 'description,picture'
             );
-            $token=$_SESSION['resourceOwnerToken'];
+
+            $token = $link['resourceOwnerToken'] ?: array();
 
             $response = $this->resourceOwner->authorizedHTTPRequest($url, $query, $token);
-            $link['description'] = $response['description'];
-            $link['thumbnail'] = $response['picture'];
+            $link['description'] = $response['description'] ?: null;
+            $link['thumbnail'] = $response['picture'] ?: null;
 
-        } catch (RequestException $e){
+        } catch (RequestException $e) {
         }
 
         return $link;
@@ -89,7 +90,7 @@ class FacebookProcessor implements ProcessorInterface
             return null;
         }
         //TODO: Check if there can be more than one attachment in one post
-        if ( in_array($link['types'][0], $this->FACEBOOK_VIDEO_TYPES)) {
+        if (in_array($link['types'][0], $this->FACEBOOK_VIDEO_TYPES)) {
             return $this::FACEBOOK_VIDEO;
         }
 
