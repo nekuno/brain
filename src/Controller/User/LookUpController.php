@@ -7,6 +7,7 @@ namespace Controller\User;
 use Silex\Application;
 use Model\User\LookUpModel;
 use Symfony\Component\HttpFoundation\Request;
+use Psr\Log\LoggerInterface;
 
 /**
  * Class LookUpController
@@ -26,83 +27,52 @@ class LookUpController
 
     /**
      * @param Application $app
-     * @param string $email
+     * @param Request $request
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      * @throws \Exception
      */
-    public function getByEmailAction(Application $app, $email)
+    public function getAction(Application $app, Request $request)
     {
-        $lookUpData = $this->lookUpModel->getByEmail($email);
-        return $app->json($lookUpData);
-    }
+        $userData = array();
+        $userData['email'] = $request->query->get('email');
+        $userData['twitterUsername'] = $request->query->get('twitterUsername');
+        $userData['facebookUsername'] = $request->query->get('facebookUsername');
+        $userData['gender'] = $request->query->get('gender');
+        $userData['location'] = $request->query->get('location');
 
-    /**
-     * @param Application $app
-     * @param string $twitterUsername
-     * @return \Symfony\Component\HttpFoundation\JsonResponse
-     * @throws \Exception
-     */
-    public function getByTwitterUsernameAction(Application $app, $twitterUsername)
-    {
-        $lookUpData = $this->lookUpModel->getByTwitterUsername($twitterUsername);
-        return $app->json($lookUpData);
-    }
+        $lookUpData = $this->lookUpModel->completeUserData($userData);
 
-    /**
-     * @param Application $app
-     * @param string $facebookUsername
-     * @return \Symfony\Component\HttpFoundation\JsonResponse
-     * @throws \Exception
-     */
-    public function getByFacebookUsernameAction(Application $app, $facebookUsername)
-    {
-        $lookUpData = $this->lookUpModel->getByFacebookUsername($facebookUsername);
         return $app->json($lookUpData);
     }
 
     /**
      * @param Application $app
      * @param integer $id
-     * @param string $email
+     * @param Request $request
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      * @throws \Exception
      */
 
-    public function setByEmailAction(Application $app, $id, $email)
+    public function setAction(Application $app, Request $request, $id)
     {
-        $lookUpData = $this->lookUpModel->setByEmail($id, $email);
+        $userData = array();
+        $userData['email'] = $request->request->get('email');
+        $userData['twitterUsername'] = $request->request->get('twitterUsername');
+        $userData['facebookUsername'] = $request->request->get('facebookUsername');
+        $userData['gender'] = $request->request->get('gender');
+        $userData['location'] = $request->request->get('location');
+
+        $lookUpData = $this->lookUpModel->set($id, $userData);
+
         return $app->json($lookUpData);
     }
-
-    /**
-     * @param Application $app
-     * @param integer $id
-     * @param string $twitterUsername
-     * @return \Symfony\Component\HttpFoundation\JsonResponse
-     * @throws \Exception
-     */
-    public function setByTwitterUsernameAction(Application $app, $id, $twitterUsername)
-    {
-        $lookUpData = $this->lookUpModel->setByTwitterUsername($id, $twitterUsername);
-        return $app->json($lookUpData);
-    }
-
-    /**
-     * @param Application $app
-     * @param integer $id
-     * @param string $facebookUsername
-     * @return \Symfony\Component\HttpFoundation\JsonResponse
-     * @throws \Exception
-     */
-    public function setByFacebookUsernameAction(Application $app, $id, $facebookUsername)
-    {
-        $lookUpData = $this->lookUpModel->setByFacebookUsername($id, $facebookUsername);
-        return $app->json($lookUpData);
-    }
-
 
     public function setFromWebHookAction(Request $request, Application $app)
     {
+        /* @var $logger LoggerInterface */
+        $logger = $app['monolog'];
+        $logger->info(sprintf('Web hook called with content: %s', $request->getContent()));
+
         $this->lookUpModel->setFromWebHook($request);
 
         return true;

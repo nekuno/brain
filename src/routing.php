@@ -47,6 +47,10 @@ $app->get('/users/{from}/reports/{to}', 'users.relations.controller:getAction')-
 $app->post('/users/{from}/reports/{to}', 'users.relations.controller:postAction')->value('relation', RelationsModel::REPORTS);
 $app->delete('/users/{from}/reports/{to}', 'users.relations.controller:deleteAction')->value('relation', RelationsModel::REPORTS);
 
+$app->get('/users/{id}/contact/from', 'users.relations.controller:contactFromAction');
+$app->get('/users/{id}/contact/to', 'users.relations.controller:contactToAction');
+$app->get('/users/{from}/contact/{to}', 'users.relations.controller:contactAction');
+
 $app->get('/users/{id1}/matching/{id2}', 'users.controller:getMatchingAction');
 $app->get('/users/{id1}/similarity/{id2}', 'users.controller:getSimilarityAction');
 $app->get('/users/{id}/questions', 'users.controller:getUserQuestionsAction');
@@ -156,12 +160,9 @@ $app->post('/enterpriseUsers/{enterpriseUserId}/invitations/{id}', 'enterpriseUs
 /**
  * LookUp routes
  */
-$app->get('/lookUp/email/{email}', 'lookUp.controller:getByEmailAction');
-$app->get('/lookUp/twitter/{twitterUsername}', 'lookUp.controller:getByTwitterUsernameAction');
-$app->get('/lookUp/facebook/{facebookUsername}', 'lookUp.controller:getByFacebookUsernameAction');
-$app->post('lookUp/users/{id}/email/{email}', 'lookUp.controller:setByEmailAction');
-$app->post('lookUp/users/{id}/twitter/{twitterUsername}', 'lookUp.controller:setByTwitterUsernameAction');
-$app->post('lookUp/users/{id}/facebook/{facebookUsername}', 'lookUp.controller:setByFacebookUsernameAction');
+$app->get('/lookUp', 'lookUp.controller:getAction');
+$app->post('lookUp/users/{id}', 'lookUp.controller:setAction');
+
 $app->post('/lookUp/webHook', 'lookUp.controller:setFromWebHookAction')->bind('setLookUpFromWebHook');
 
 $controllers

@@ -41,11 +41,11 @@ class LookUpByEmailCommand extends BaseCommand
 
         if($id) {
             $this->displayTitle('Looking up user ' . $id);
-            $lookUpData = $lookUpModel->setByEmail($id, $email);
+            $lookUpData = $lookUpModel->set($id, array('email' => $email), $output);
             $this->displaySocialData($lookUpData);
         } else {
             $this->displayTitle('Looking up for email ' . $email);
-            $lookUpData = $lookUpModel->getByEmail($email);
+            $lookUpData = $lookUpModel->completeUserData(array('email' => $email), $output);
             $this->displayFullData($lookUpData);
         }
 

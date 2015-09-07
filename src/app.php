@@ -63,7 +63,7 @@ $app->register(new Igorw\Silex\ConfigServiceProvider(__DIR__ . "/../config/field
 /** @var \Symfony\Component\EventDispatcher\EventDispatcher $dispatcher */
 $dispatcher = $app['dispatcher'];
 
-$filterClientIpSubscriber = new FilterClientIpSubscriber($app['valid_ips'], $app['lookup_valid_ips']);
+$filterClientIpSubscriber = new FilterClientIpSubscriber($app['valid_ips']);
 $dispatcher->addSubscriber($filterClientIpSubscriber);
 
 $tokenRefreshedSubscriber = new OAuthTokenSubscriber(

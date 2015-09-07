@@ -2,25 +2,23 @@
 
 namespace Model\User;
 
-use Everyman\Neo4j\Client;
-use Everyman\Neo4j\Cypher\Query;
 use Everyman\Neo4j\Label;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Exception\ValidationException;
+use Model\Neo4j\GraphManager;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class PrivacyModel
 {
-    protected $client;
+    protected $gm;
     protected $metadata;
     protected $defaultLocale;
 
-    public function __construct(Client $client, array $metadata, $defaultLocale)
+    public function __construct(GraphManager $graphManager, array $metadata, $defaultLocale)
     {
-
-        $this->client = $client;
+        $this->gm = $graphManager;
         $this->metadata = $metadata;
         $this->defaultLocale = $defaultLocale;
     }
@@ -60,22 +58,16 @@ class PrivacyModel
      */
     public function getById($id)
     {
-        $params = array(
-            'id' => (integer)$id,
-        );
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(user:User)<-[:PRIVACY_OF]-(privacy:Privacy)')
+            ->where('user.qnoow_id = { id }')
+            ->setParameter('id', (integer)$id)
+            ->optionalMatch('(privacy)<-[:OPTION_OF]-(option:PrivacyOption)')
+            ->with('privacy, collect(option) AS options')
+            ->returns('privacy', 'options')
+            ->limit(1);
 
-        $template = "MATCH (user:User)<-[:PRIVACY_OF]-(privacy:Privacy)"
-            . " WHERE user.qnoow_id = {id} "
-            . " OPTIONAL MATCH (privacy)<-[:OPTION_OF]-(option:PrivacyOption)"
-            . " WITH privacy, collect(option) AS options"
-            . " RETURN privacy, options"
-            . " LIMIT 1;";
-
-        $query = new Query(
-            $this->client,
-            $template,
-            $params
-        );
+        $query = $qb->getQuery();
 
         $result = $query->getResultSet();
 
@@ -85,23 +77,8 @@ class PrivacyModel
 
         /* @var $row Row */
         $row = $result->current();
-        /* @var $node Node */
-        $node = $row->offsetGet('privacy');
-        $privacy = $node->getProperties();
 
-        foreach ($row->offsetGet('options') as $option) {
-            /* @var $option Node */
-            $labels = $option->getLabels();
-            foreach ($labels as $index => $label) {
-                /* @var $label Label */
-                $labelName = $label->getName();
-                if ($labelName != 'PrivacyOption') {
-                    $typeName = $this->labelToType($labelName);
-                    $privacy[$typeName] = $option->getProperty('id');
-                }
-
-            }
-        }
+        $privacy = $this->build($row);
 
         return $privacy;
     }
@@ -110,7 +87,7 @@ class PrivacyModel
      * @param $id
      * @param array $data
      * @return array
-     * @throws ValidationException
+     * @throws ValidationException|NotFoundHttpException|MethodNotAllowedHttpException
      */
     public function create($id, array $data)
     {
@@ -126,13 +103,23 @@ class PrivacyModel
             throw new MethodNotAllowedHttpException(array('PUT'), 'Privacy already exists');
         }
 
-        $privacyNode = $this->client->makeNode();
-        $privacyNode->save();
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(user:User)')
+            ->where('user.qnoow_id = { id }')
+            ->setParameter('id', (integer)$id)
+            ->with('user')
+            ->create('(privacy:Privacy)')
+            ->merge('(user)<-[:PRIVACY_OF]-(privacy)')
+            ->returns('privacy')
+            ->limit(1);
 
-        $privacyLabel = $this->client->makeLabel('Privacy');
-        $privacyNode->addLabels(array($privacyLabel));
+        $query = $qb->getQuery();
 
-        $privacyNode->relateTo($userNode, 'PRIVACY_OF')->save();
+        $result = $query->getResultSet();
+
+        /** @var Row $row */
+        $row = $result->current();
+        $privacyNode = $row->offsetGet('privacy');
 
         $this->savePrivacyData($privacyNode, $data);
 
@@ -140,9 +127,10 @@ class PrivacyModel
     }
 
     /**
+     * @param $id
      * @param array $data
      * @return array
-     * @throws ValidationException
+     * @throws ValidationException|NotFoundHttpException
      */
     public function update($id, array $data)
     {
@@ -169,21 +157,14 @@ class PrivacyModel
      */
     public function remove($id)
     {
-        $params = array(
-            'id' => (integer)$id,
-        );
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(user:User)<-[:PRIVACY_OF]-(privacy:Privacy)')
+            ->where('user.qnoow_id = { id }')
+            ->setParameter('id', (integer)$id)
+            ->optionalMatch('(privacy)-[r]-()')
+            ->delete('privacy', 'r');
 
-        $template = "MATCH (user:User)<-[:PRIVACY_OF]-(privacy:Privacy) "
-            . " WHERE user.qnoow_id = {id} "
-            . " OPTIONAL MATCH (privacy)-[r]-() "
-            . " DELETE privacy, r";
-
-        $query = new Query(
-            $this->client,
-            $template,
-            $params
-        );
-
+        $query = $qb->getQuery();
         $query->getResultSet();
     }
 
@@ -236,21 +217,49 @@ class PrivacyModel
     protected function getChoiceOptions($locale)
     {
         $translationField = 'name_' . $locale;
-        $template = "MATCH (option:PrivacyOption) "
-            . "RETURN head(filter(x IN labels(option) WHERE x <> 'PrivacyOption')) AS labelName, option.id AS id, option." . $translationField . " AS name "
-            . "ORDER BY labelName;";
 
-        $query = new Query(
-            $this->client,
-            $template
-        );
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(option:PrivacyOption)')
+            ->returns("head(filter(x IN labels(option) WHERE x <> 'PrivacyOption')) AS labelName, option.id AS id, option." . $translationField . " AS name")
+            ->orderBy('labelName');
 
+        $query = $qb->getQuery();
         $result = $query->getResultSet();
+
+        return $this->buildChoiceOptions($result);
+    }
+
+    protected function build(Row $row)
+    {
+        /* @var $node Node */
+        $node = $row->offsetGet('privacy');
+        $privacy = $node->getProperties();
+
+        foreach ($row->offsetGet('options') as $option) {
+            /* @var $option Node */
+            $labels = $option->getLabels();
+            foreach ($labels as $label) {
+                /* @var $label Label */
+                $labelName = $label->getName();
+                if ($labelName != 'PrivacyOption') {
+                    $typeName = $this->labelToType($labelName);
+                    $privacy[$typeName] = $option->getProperty('id');
+                }
+
+            }
+        }
+
+        return $privacy;
+    }
+
+    protected function buildChoiceOptions($result)
+    {
         $choiceOptions = array();
+        /** @var Row $row */
         foreach ($result as $row) {
-            $typeName = $this->labelToType($row['labelName']);
-            $optionId = $row['id'];
-            $optionName = $row['name'];
+            $typeName = $this->labelToType($row->offsetGet('labelName'));
+            $optionId = $row->offsetGet('id');
+            $optionName = $row->offsetGet('name');
 
             $choiceOptions[$typeName][$optionId] = $optionName;
         }
@@ -258,23 +267,18 @@ class PrivacyModel
         return $choiceOptions;
     }
 
+
     protected function getUserAndPrivacyNodesById($id)
     {
-        $data = array(
-            'id' => (integer)$id,
-        );
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(user:User)')
+            ->where('user.qnoow_id = { id }')
+            ->setParameter('id', (integer)$id)
+            ->optionalMatch('(user)<-[:PRIVACY_OF]-(privacy:Privacy)')
+            ->returns('user', 'privacy')
+            ->limit(1);
 
-        $template = "MATCH (user:User)"
-            . " WHERE user.qnoow_id = {id} "
-            . " OPTIONAL MATCH (user)<-[:PRIVACY_OF]-(privacy:Privacy)"
-            . " RETURN user, privacy"
-            . " LIMIT 1;";
-
-        $query = new Query(
-            $this->client,
-            $template,
-            $data
-        );
+        $query = $qb->getQuery();
 
         $result = $query->getResultSet();
 
@@ -282,9 +286,10 @@ class PrivacyModel
             return array(null, null);
         }
 
-        $row = $result[0];
-        $userNode = $row['user'];
-        $privacyNode = $row['privacy'];
+        /** @var Row $row */
+        $row = $result->current();
+        $userNode = $row->offsetGet('user');
+        $privacyNode = $row->offsetGet('privacy');
 
         return array($userNode, $privacyNode);
     }
@@ -353,24 +358,21 @@ class PrivacyModel
     {
         $privacyLabelName = $this->typeToLabel($privacyType);
 
-        $params = array(
-            'id' => $id,
-        );
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match("(privacyOption:" . $privacyLabelName . ")")
+            ->where('privacyOption.id = { id }')
+            ->setParameter('id', $id)
+            ->returns('privacyOption')
+            ->limit(1);
 
-        $template = "MATCH (privacyOption:" . $privacyLabelName . ")"
-            . " WHERE privacyOption.id = {id} "
-            . " RETURN privacyOption "
-            . " LIMIT 1;";
-
-        $query = new Query(
-            $this->client,
-            $template,
-            $params
-        );
+        $query = $qb->getQuery();
 
         $result = $query->getResultSet();
 
-        return $result[0]['privacyOption'];
+        /** @var Row $row */
+        $row = $result->current();
+
+        return $row->offsetGet('privacyOption');
     }
 
     protected function getLocale($locale)

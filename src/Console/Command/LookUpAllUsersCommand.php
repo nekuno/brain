@@ -34,7 +34,7 @@ class LookUpAllUsersCommand extends BaseCommand
         $lookUpModel = $this->app['users.lookup.model'];
 
         foreach($users as $user) {
-            if(isset($user['qnoow_id']) && isset($user['email']) && $user['qnoow_id'] > $input->getOption('start')) {
+            if(isset($user['qnoow_id']) && isset($user['email']) && $user['qnoow_id'] >= $input->getOption('start')) {
                 try {
                     $this->displayTitle('Looking up user ' . $user['qnoow_id']);
                     $lookUpData = $lookUpModel->setByEmail($user['qnoow_id'], $user['email']);

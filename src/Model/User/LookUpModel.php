@@ -10,6 +10,7 @@ use Model\Entity\LookUpData;
 use Service\LookUp\LookUp;
 use Service\LookUp\LookUpFullContact;
 use Service\LookUp\LookUpPeopleGraph;
+use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -47,50 +48,49 @@ class LookUpModel
         $this->peopleGraph = $peopleGraph;
     }
 
-    public function getByEmail($email)
+    public function completeUserData($userData, OutputInterface $outputInterface = null)
     {
-        return $this->get(LookUpData::LOOKED_UP_BY_EMAIL, $email);
-    }
 
-    public function getByTwitterUsername($twitterUsername)
-    {
-        return $this->get(LookUpData::LOOKED_UP_BY_TWITTER_USERNAME, $twitterUsername);
-    }
+        $searchedByEmail = false;
+        $searchedByTwitterUsername = false;
+        $searchedByFacebookUsername = false;
 
-    public function getByFacebookUsername($facebookUsername)
-    {
-        return $this->get(LookUpData::LOOKED_UP_BY_FACEBOOK_USERNAME, $facebookUsername);
-    }
+        $lookUpData = $this->initializeLookUpData($userData);
 
-    public function setByEmail($id, $email)
-    {
-        $lookUpData = $this->get(LookUpData::LOOKED_UP_BY_EMAIL, $email);
+        for($i = 0; $i < 2; $i++) {
+            if(! $searchedByEmail && ! $this->isCompleted($lookUpData) && $this->isEmailSet($userData)) {
+                $searchedByEmail = true;
+                $this->showOutputMessageIfDefined($outputInterface, 'Searching by email...');
 
-        if(isset($lookUpData['socialProfiles']) && ! empty($lookUpData['socialProfiles'])) {
-            $this->setSocialProfiles($lookUpData['socialProfiles'], $id);
-            return $lookUpData['socialProfiles'];
+                $lookUpData = $this->merge($lookUpData, $this->getByEmail($userData['email']));
+                $userData = $this->completeLookUpTypes($userData, $lookUpData);
+            }
+            if(! $searchedByTwitterUsername && ! $this->isCompleted($lookUpData) && $this->isTwitterUsernameSetInUserData($userData)) {
+                $searchedByTwitterUsername = true;
+                $this->showOutputMessageIfDefined($outputInterface, 'Searching by twitter username...');
+
+                $lookUpData = $this->merge($lookUpData, $this->getByTwitterUsername($userData['twitterUsername']));
+                $userData = $this->completeLookUpTypes($userData, $lookUpData);
+            }
+            if(! $searchedByFacebookUsername && ! $this->isCompleted($lookUpData) && $this->isFacebookUsernameSetInUserData($userData)) {
+                $searchedByFacebookUsername = true;
+                $this->showOutputMessageIfDefined($outputInterface, 'Searching by facebook username...');
+
+                $lookUpData = $this->merge($lookUpData, $this->getByFacebookUsername($userData['facebookUsername']));
+                $userData = $this->completeLookUpTypes($userData, $lookUpData);
+            }
         }
 
-        return array();
+        return $lookUpData;
     }
 
-    public function setByTwitterUsername($id, $twitterUsername)
+    public function set($id, $userData, OutputInterface $outputInterface = null)
     {
-        $lookUpData = $this->get(LookUpData::LOOKED_UP_BY_TWITTER_USERNAME, $twitterUsername);
+        $lookUpData = $this->completeUserData($userData, $outputInterface);
 
         if(isset($lookUpData['socialProfiles']) && ! empty($lookUpData['socialProfiles'])) {
-            $this->setSocialProfiles($lookUpData['socialProfiles'], $id);
-            return $lookUpData['socialProfiles'];
-        }
+            $this->showOutputMessageIfDefined($outputInterface, 'Adding social profiles to user ' . $id . '...');
 
-        return array();
-    }
-
-    public function setByFacebookUsername($id, $facebookUsername)
-    {
-        $lookUpData = $this->get(LookUpData::LOOKED_UP_BY_FACEBOOK_USERNAME, $facebookUsername);
-
-        if(isset($lookUpData['socialProfiles']) && ! empty($lookUpData['socialProfiles'])) {
             $this->setSocialProfiles($lookUpData['socialProfiles'], $id);
             return $lookUpData['socialProfiles'];
         }
@@ -100,8 +100,8 @@ class LookUpModel
 
     public function setFromWebHook(Request $request)
     {
-        $id = $request->get('webHookId');
-        if($lookUpData = $this->em->getRepository('\Model\Entity\LookUpData')->findOneBy(array('id' => (int)$id))) {
+        $hash = $request->get('webHookId');
+        if($lookUpData = $this->em->getRepository('\Model\Entity\LookUpData')->findOneBy(array('hash' => $hash))) {
             $service = $this->getServiceFromApiResource($lookUpData->getApiResource());
             if($service instanceof LookUp) {
                 $lookUpData->setResponse($service->getProcessedResponse($request->request->all()));
@@ -111,6 +111,32 @@ class LookUpModel
                 }
             }
         }
+    }
+
+    protected function initializeLookUpData($userData)
+    {
+        $lookUpData = $userData;
+        if(array_key_exists('twitterUsername', $lookUpData))
+            unset($lookUpData['twitterUsername']);
+        if(array_key_exists('facebookUsername', $lookUpData))
+            unset($lookUpData['facebookUsername']);
+
+        return $lookUpData;
+    }
+
+    protected function getByEmail($email)
+    {
+        return $this->get(LookUpData::LOOKED_UP_BY_EMAIL, $email);
+    }
+
+    protected function getByTwitterUsername($twitterUsername)
+    {
+        return $this->get(LookUpData::LOOKED_UP_BY_TWITTER_USERNAME, $twitterUsername);
+    }
+
+    protected function getByFacebookUsername($facebookUsername)
+    {
+        return $this->get(LookUpData::LOOKED_UP_BY_FACEBOOK_USERNAME, $facebookUsername);
     }
 
     protected function get($lookUpType, $lookUpValue)
@@ -186,13 +212,13 @@ class LookUpModel
     {
         switch($lookUpData->getApiResource()) {
             case LookUpData::FULLCONTACT_API_RESOURCE:
-                $lookUpDataArray = $this->fullContact->get($lookUpData->getLookedUpValue(), $lookUpData->getLookedUpType(), $lookUpData->getId());
+                $lookUpDataArray = $this->fullContact->get($lookUpData->getLookedUpValue(), $lookUpData->getLookedUpType(), $lookUpData->getHash());
                 break;
             case LookUpData::PEOPLEGRAPH_API_RESOURCE:
-                $lookUpDataArray = $this->peopleGraph->get($lookUpData->getLookedUpValue(), $lookUpData->getLookedUpType(), $lookUpData->getId());
+                $lookUpDataArray = $this->peopleGraph->get($lookUpData->getLookedUpValue(), $lookUpData->getLookedUpType(), $lookUpData->getHash());
                 break;
             default:
-                $lookUpDataArray = $this->fullContact->get($lookUpData->getLookedUpValue(), $lookUpData->getLookedUpType(), $lookUpData->getId());
+                $lookUpDataArray = $this->fullContact->get($lookUpData->getLookedUpValue(), $lookUpData->getLookedUpType(), $lookUpData->getHash());
         }
 
         return $lookUpDataArray;
@@ -262,4 +288,89 @@ class LookUpModel
 
         return $service;
     }
+
+    protected function isCompleted(array $lookUpData)
+    {
+        if(isset($lookUpData['email']) && isset($lookUpData['gender']) && isset($lookUpData['location']) && isset($lookUpData['socialProfiles'])) {
+            return true;
+        }
+
+        return false;
+    }
+
+    protected function completeLookUpTypes($userData, $lookUpData)
+    {
+        if(! $this->isEmailSet($userData) && $this->isEmailSet($lookUpData)) {
+            $userData['email'] = $lookUpData['email'];
+        }
+        if(! $this->isTwitterUsernameSetInUserData($userData) && $this->isTwitterUsernameSetInLookUpData($lookUpData)) {
+            $userData['twitterUsername'] = $this->getTwitterUsernameFromLookUpData($lookUpData);
+        }
+        if(! $this->isFacebookUsernameSetInUserData($userData) && $this->isFacebookUsernameSetInLookUpData($lookUpData)) {
+            $userData['facebookUsername'] = $this->getFacebookUsernameFromLookUpData($lookUpData);
+        }
+
+        return $userData;
+    }
+
+    protected function isEmailSet(array $data)
+    {
+        if(isset($data['email']) && $data['email'])
+            return true;
+
+        return false;
+    }
+
+    protected function isTwitterUsernameSetInLookUpData(array $lookUpData)
+    {
+        if(isset($lookUpData['socialProfiles']['twitter']) && $lookUpData['socialProfiles']['twitter'])
+            return true;
+
+        return false;
+    }
+
+    protected function isFacebookUsernameSetInLookUpData(array $lookUpData)
+    {
+        if(isset($lookUpData['socialProfiles']['facebook']) && $lookUpData['socialProfiles']['facebook'])
+            return true;
+
+        return false;
+    }
+
+    protected function isTwitterUsernameSetInUserData(array $userData)
+    {
+        if(isset($userData['twitterUsername']) && $userData['twitterUsername'])
+            return true;
+
+        return false;
+    }
+
+    protected function isFacebookUsernameSetInUserData(array $userData)
+    {
+        if(isset($userData['facebookUsername']) && $userData['facebookUsername'])
+            return true;
+
+        return false;
+    }
+
+    protected function getTwitterUsernameFromLookUpData(array $lookUpData)
+    {
+        $twitterUsernameUrl = $lookUpData['socialProfiles']['twitter'];
+
+        return substr($twitterUsernameUrl, strrpos($twitterUsernameUrl, '/') + 1);
+    }
+
+    protected function getFacebookUsernameFromLookUpData(array $lookUpData)
+    {
+        $facebookUsernameUrl = $lookUpData['socialProfiles']['facebook'];
+
+        return substr($facebookUsernameUrl, strrpos($facebookUsernameUrl, '/') + 1);
+    }
+
+    protected function showOutputMessageIfDefined(OutputInterface $outputInterface = null, $message)
+    {
+        if($outputInterface)
+            $outputInterface->writeln($message);
+    }
+
 }

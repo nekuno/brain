@@ -1,9 +1,6 @@
 params:
 
     ## Valid IPs
-    local_ip: '127.0.0.1'
-    full_contact_ip: '52.3.163.97'
-    people_graph_ip: '54.246.93.152'
     dev_custom_ip_1:
     dev_custom_ip_2:
     dev_custom_ip_3:
@@ -56,8 +53,8 @@ params:
     twitter.consumer_secret: yQ5XBabTj1vzCCBVeJoqX9Bli4zcjVWsF6FxHvPtZwkAJseu1l
 
     ## Spotify
-    spotify.consumer_key: 2cc22e2706704d39998c990457530a9a
-    spotify.consumer_secret: 47189c30d7f84d7ca4c4436309c0dc3c
+    spotify.consumer_key: e8c3557e29ad4974a1f41e93aeaf6e79
+    spotify.consumer_secret: 4f2d9cf19b8549adab69f68dfd0df29a
 
     ## Google
     google.consumer_key: 556826433000.apps.googleusercontent.com

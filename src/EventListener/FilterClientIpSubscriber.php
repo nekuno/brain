@@ -17,12 +17,10 @@ use Symfony\Component\HttpKernel\KernelEvents;
 class FilterClientIpSubscriber implements EventSubscriberInterface
 {
     private $validIps = array();
-    private $lookupValidIps = array();
 
-    public function __construct(array $validIps, array $lookupValidIps)
+    public function __construct(array $validIps)
     {
         $this->validIps = $validIps;
-        $this->lookupValidIps = $lookupValidIps;
     }
 
     public static function getSubscribedEvents()
@@ -35,18 +33,18 @@ class FilterClientIpSubscriber implements EventSubscriberInterface
     public function onControllerFound(FilterControllerEvent $event)
     {
         $controller = $event->getController();
+        $request = $event->getRequest();
 
         if (!is_array($controller)) {
             return;
         }
 
-        if ($controller[0] instanceof LookUpController) {
-            if (!in_array($event->getRequest()->getClientIp(), $this->lookupValidIps)) {
-                throw new AccessDeniedHttpException('Access forbidden');
-            }
+        if ($controller[0] instanceof LookUpController &&
+            $request->attributes->get('_controller') === 'lookUp.controller:setFromWebHookAction') {
+            // TODO: Make this controller public
         }
         else {
-            if (!in_array($event->getRequest()->getClientIp(), $this->validIps)) {
+            if (! in_array($event->getRequest()->getClientIp(), $this->validIps)) {
                 throw new AccessDeniedHttpException('Access forbidden');
             }
         }

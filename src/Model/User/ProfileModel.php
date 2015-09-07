@@ -364,7 +364,6 @@ class ProfileModel
         }
 
         return $optionsResult;
-
     }
 
     protected function buildTags(Row $row)
@@ -400,10 +399,11 @@ class ProfileModel
         $result = $query->getResultSet();
 
         $choiceOptions = array();
+        /** @var Row $row */
         foreach ($result as $row) {
-            $typeName = $this->labelToType($row['labelName']);
-            $optionId = $row['id'];
-            $optionName = $row['name'];
+            $typeName = $this->labelToType($row->offsetGet('labelName'));
+            $optionId = $row->offsetGet('id');
+            $optionName = $row->offsetGet('name');
 
             $choiceOptions[$typeName][$optionId] = $optionName;
         }
@@ -428,9 +428,10 @@ class ProfileModel
             return array(null, null);
         }
 
-        $row = $result[0];
-        $userNode = $row['user'];
-        $profileNode = $row['profile'];
+        /** @var Row $row */
+        $row = $result->current();
+        $userNode = $row->offsetGet('user');
+        $profileNode = $row->offsetGet('profile');
 
         return array($userNode, $profileNode);
     }
@@ -610,7 +611,7 @@ class ProfileModel
 
         $tags = array();
         foreach ($result as $row) {
-            /* @var $row \Everyman\Neo4j\Query\Row */
+            /* @var $row Row */
             $tags[] = $row->offsetGet('tag');
         }
 
