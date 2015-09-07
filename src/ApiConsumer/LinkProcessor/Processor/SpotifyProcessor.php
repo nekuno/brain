@@ -279,4 +279,12 @@ class SpotifyProcessor implements ProcessorInterface
 
         return $link;
     }
+
+    /**
+     * @return SpotifyUrlParser
+     */
+    public function getParser()
+    {
+        return $this->parser;
+    }
 }

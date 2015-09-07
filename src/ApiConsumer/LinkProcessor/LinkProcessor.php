@@ -7,6 +7,7 @@ use ApiConsumer\LinkProcessor\Processor\ScraperProcessor;
 use ApiConsumer\LinkProcessor\Processor\SpotifyProcessor;
 use ApiConsumer\LinkProcessor\Processor\YoutubeProcessor;
 use ApiConsumer\LinkProcessor\UrlParser\UrlParser;
+use ApiConsumer\LinkProcessor\UrlParser\YoutubeUrlParser;
 use Model\LinkModel;
 
 class LinkProcessor
@@ -86,11 +87,7 @@ class LinkProcessor
         }
 
         $link['url'] = $this->resolver->resolve($link['url']);
-        $link['url']= $this->urlParser->cleanURL($link['url']);
 
-        if ($this->isLinkProcessed($link)) {
-            return $link;
-        }
 
         $processor = $this->scrapperProcessor;
         $processorName = $this->analyzer->getProcessor($link);
@@ -98,16 +95,24 @@ class LinkProcessor
         switch ($processorName) {
             case LinkAnalyzer::YOUTUBE:
                 $processor = $this->youtubeProcessor;
+                $link['url'] = $this->youtubeProcessor->getParser()->cleanURL($link['url']);
                 break;
             case LinkAnalyzer::SPOTIFY:
                 $processor = $this->spotifyProcessor;
+                $link['url'] = $this->spotifyProcessor->getParser()->cleanURL($link['url']);
                 break;
             case LinkAnalyzer::FACEBOOK:
                 $processor = $this->facebookProcessor;
+                $link['url'] = $this->urlParser->cleanURL($link['url']);
                 break;
             case LinkAnalyzer::SCRAPPER:
                 $processor = $this->scrapperProcessor;
+                $link['url'] = $this->urlParser->cleanURL($link['url']);
                 break;
+        }
+
+        if ($this->isLinkProcessed($link)) {
+            return $link;
         }
 
         $processedLink = $processor->process($link);
@@ -119,7 +124,7 @@ class LinkProcessor
         return $processedLink;
     }
 
-    private function isLinkProcessed ($link)
+    private function isLinkProcessed($link)
     {
         try {
             $storedLink = $this->linkModel->findLinkByUrl($link['url']);

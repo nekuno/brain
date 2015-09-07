@@ -136,4 +136,25 @@ class YoutubeUrlParser extends UrlParser
 
         return false;
     }
+
+    public function cleanURL($url)
+    {
+        $url = parent::cleanURL($url);
+
+        $parts = parse_url($url);
+        if ($parts['path'] == '/watch') {
+            $url = $this->buildVideoURL($parts);
+        }
+        return $url;
+    }
+
+    private function buildVideoURL($parts)
+    {
+        $parameters = array();
+        parse_str($parts['query'], $parameters);
+        $parameters = array('v' => $parameters['v']);
+        $query = http_build_query($parameters);
+        $url = 'https://www.youtube.com/watch?' . $query;
+        return $url;
+    }
 } 
