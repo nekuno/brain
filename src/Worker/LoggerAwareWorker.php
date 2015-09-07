@@ -2,7 +2,7 @@
 
 namespace Worker;
 
-use Console\Command\ApplicationAwareCommand;
+use Console\ApplicationAwareCommand;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 

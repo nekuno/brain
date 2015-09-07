@@ -3,19 +3,20 @@
 namespace Console\Command;
 
 use ApiConsumer\LinkProcessor\LinkProcessor;
+use Console\ApplicationAwareCommand;
 use Model\LinkModel;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class ProcessLinksMetadataCommand extends ApplicationAwareCommand
+class LinksProcessCommand extends ApplicationAwareCommand
 {
 
     protected function configure()
     {
 
-        $this->setName('process:links')
-            ->setDescription("Process links")
+        $this->setName('links:process')
+            ->setDescription('Process links')
             ->setDefinition(
                 array(
                     new InputArgument('limit', InputArgument::OPTIONAL, 'Items limit', 100)
@@ -26,7 +27,7 @@ class ProcessLinksMetadataCommand extends ApplicationAwareCommand
     protected function execute(InputInterface $input, OutputInterface $output)
     {
 
-        /** @var LinkModel $linksModel */
+        /* @var $linksModel LinkModel */
         $linksModel = $this->app['links.model'];
 
         $limit = $input->getArgument('limit');
@@ -36,7 +37,7 @@ class ProcessLinksMetadataCommand extends ApplicationAwareCommand
         foreach ($unprocessedLinks as $link) {
 
             try {
-                /** @var LinkProcessor $processor */
+                /* @var LinkProcessor $processor */
                 $processor = $this->app['api_consumer.link_processor'];
                 $processedLink = $processor->process($link);
                 $output->writeln(sprintf('Success: Link %s processed', $link['url']));
@@ -48,6 +49,7 @@ class ProcessLinksMetadataCommand extends ApplicationAwareCommand
             }
 
             try {
+
                 $linksModel->updateLink($processedLink, true);
 
                 if (isset($processedLink['tags'])) {
@@ -58,6 +60,7 @@ class ProcessLinksMetadataCommand extends ApplicationAwareCommand
                 }
 
                 $output->writeln(sprintf('Success: Link %s saved', $processedLink['url']));
+
             } catch (\Exception $e) {
                 $output->writeln(sprintf('Error: Link %s not saved', $processedLink['url']));
                 $output->writeln($e->getMessage());

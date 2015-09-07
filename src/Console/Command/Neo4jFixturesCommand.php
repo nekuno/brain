@@ -2,6 +2,7 @@
 
 namespace Console\Command;
 
+use Console\ApplicationAwareCommand;
 use EventListener\UserAnswerSubscriber;
 use Model\Exception\ValidationException;
 use Model\Neo4j\Fixtures;

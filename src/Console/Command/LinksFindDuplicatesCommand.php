@@ -3,6 +3,7 @@
 
 namespace Console\Command;
 
+use Console\ApplicationAwareCommand;
 use Everyman\Neo4j\Query\ResultSet;
 use Model\LinkModel;
 use Model\Neo4j\GraphManager;
@@ -16,7 +17,7 @@ class LinksFindDuplicatesCommand extends ApplicationAwareCommand
     {
 
         $this->setName('links:find-duplicates')
-            ->setDescription("Return links with identical URLs")
+            ->setDescription('Return links with identical URLs')
             ->addOption('fuse', null, InputOption::VALUE_NONE, 'Automatically fuse found duplicates')
             ->addOption('step', null, InputOption::VALUE_NONE, 'Obtain, output and/or fuse duplicate by duplicate')
             ->addOption('offset', null, InputOption::VALUE_OPTIONAL, 'Links to skip if using step option', 0)
@@ -96,7 +97,7 @@ class LinksFindDuplicatesCommand extends ApplicationAwareCommand
                 $output->writeln('Fusing duplicate into main node');
 
                 $fusion = $gm->fuseNodes($duplicateId, $mainId);
-                /** @var ResultSet $deletionRS */
+                /* @var ResultSet $deletionRS */
                 $deletionRS = $fusion['deleted'];
                 if ($deletionRS->count() > 0) {
                     $output->writeln('Duplicate and main node successfully fused');

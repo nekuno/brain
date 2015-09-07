@@ -2,8 +2,9 @@
 /**
  * @author Manolo Salsas <manolez@gmail.com>
  */
-namespace Console\Command;
+namespace Console;
 
+use Console\ApplicationAwareCommand;
 use Silex\Application;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Formatter\OutputFormatterStyle;

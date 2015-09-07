@@ -1,6 +1,6 @@
 <?php
 
-namespace Console\Command;
+namespace Console;
 
 use Knp\Command\Command;
 use Silex\Application;

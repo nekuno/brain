@@ -2,6 +2,7 @@
 
 namespace Console\Command;
 
+use Console\ApplicationAwareCommand;
 use Model\Questionnaire\QuestionModel;
 use Silex\Application;
 use Symfony\Component\Console\Input\InputInterface;
@@ -9,13 +10,13 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputArgument;
 
-class GetUncorrelatedQuestionsCommand extends ApplicationAwareCommand
+class QuestionsGetUncorrelatedCommand extends ApplicationAwareCommand
 {
 
     protected function configure()
     {
         $this->setName('questions:get-uncorrelated')
-            ->setDescription("Get a selection of uncorrelated questions groups.")
+            ->setDescription('Get a selection of uncorrelated questions groups.')
             ->addArgument('preselect', InputArgument::OPTIONAL, 'How many top ranking questions are analyzed', 50)
             ->addOption('save', null, InputOption::VALUE_NONE, 'Set output questions as divisive');
     }

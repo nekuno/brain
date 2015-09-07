@@ -2,6 +2,7 @@
 
 namespace Console\Command;
 
+use Console\ApplicationAwareCommand;
 use Model\User\Matching\MatchingModel;
 use Model\UserModel;
 use Silex\Application;
@@ -9,13 +10,13 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputArgument;
 
-class RecalculateMatching extends ApplicationAwareCommand
+class UsersCalculateMatchingCommand extends ApplicationAwareCommand
 {
 
     protected function configure()
     {
-        $this->setName('matching:recalculate')
-            ->setDescription("Recalculate the matching between two users.")
+        $this->setName('users:calculate:matching')
+            ->setDescription('Recalculate the matching between two users.')
             ->addArgument('userA', InputArgument::OPTIONAL, 'id of the first user?')
             ->addArgument('userB', InputArgument::OPTIONAL, 'id of the second user?');
     }

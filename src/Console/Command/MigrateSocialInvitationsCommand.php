@@ -2,6 +2,7 @@
 
 namespace Console\Command;
 
+use Console\ApplicationAwareCommand;
 use Silex\Application;
 use Service\MigrateSocialInvitations;
 use Symfony\Component\Console\Input\InputInterface;
@@ -11,13 +12,13 @@ class MigrateSocialInvitationsCommand extends ApplicationAwareCommand
 {
     protected function configure()
     {
-        $this->setName('social-invitations:migrate')
+        $this->setName('migrate:social-invitations')
             ->setDescription('Migrate invitations from social to brain');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        /** @var  $migrateSocialInvitations MigrateSocialInvitations */
+        /* @var  $migrateSocialInvitations MigrateSocialInvitations */
         $migrateSocialInvitations = $this->app['migrateSocialInvitations.service'];
 
         $migrateSocialInvitations->migrateInvitations($output);

@@ -2,6 +2,7 @@
 
 namespace Console\Command;
 
+use Console\ApplicationAwareCommand;
 use Model\User\Affinity\AffinityModel;
 use Model\LinkModel;
 use Model\UserModel;
@@ -10,12 +11,12 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class AffinityCommand extends ApplicationAwareCommand
+class UsersCalculateAffinityCommand extends ApplicationAwareCommand
 {
 
     protected function configure()
     {
-        $this->setName('affinity:calculate')
+        $this->setName('users:calculate:affinity')
             ->setDescription('Calculate the affinity between a user an a link.')
             ->addOption('user', null, InputOption::VALUE_OPTIONAL, 'id of the user?')
             ->addOption('link', null, InputOption::VALUE_OPTIONAL, 'id of the link?');
