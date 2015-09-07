@@ -11,7 +11,7 @@ abstract class ApplicationAwareCommand extends Command
 {
 
     /**
-     * @var \Silex\Application
+     * @var Application
      */
     protected $app;
 
