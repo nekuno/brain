@@ -65,6 +65,9 @@ abstract class AbstractFacebookFetcher extends BasicPaginationFetcher
 
         foreach ($rawFeed as $item) {
             $url = isset($item['link']) ? $item['link'] : null;
+            if (null === $url) {
+                continue;
+            }
             $id = $item['id'];
             $parsed[] = $this->getLinkArrayFromUrl($url, $id, $item);
 
@@ -103,6 +106,9 @@ abstract class AbstractFacebookFetcher extends BasicPaginationFetcher
         $link = array();
 
         $parts = parse_url($url);
+        if (!isset($parts['host']) && isset($parts['path'])){
+            var_dump($item);
+        }
         $link['url'] = !isset($parts['host']) && isset($parts['path']) ? 'https://www.facebook.com' . $parts['path'] : $url;
         $link['title'] = null;
         $link['description'] = null;
