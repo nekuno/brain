@@ -2,6 +2,7 @@
 
 namespace ApiConsumer\LinkProcessor;
 
+use ApiConsumer\LinkProcessor\Processor\FacebookProcessor;
 use ApiConsumer\LinkProcessor\Processor\ScraperProcessor;
 use ApiConsumer\LinkProcessor\Processor\SpotifyProcessor;
 use ApiConsumer\LinkProcessor\Processor\YoutubeProcessor;
@@ -42,6 +43,11 @@ class LinkProcessor
     protected $spotifyProcessor;
 
     /**
+     * @var FacebookProcessor
+     */
+    protected $facebookProcessor;
+
+    /**
      * @var UrlParser
      */
     protected $urlParser;
@@ -54,6 +60,7 @@ class LinkProcessor
         ScraperProcessor $scrapperProcessor,
         YoutubeProcessor $youtubeProcessor,
         SpotifyProcessor $spotifyProcessor,
+        FacebookProcessor $facebookProcessor,
         UrlParser $urlParser
     )
     {
@@ -64,6 +71,7 @@ class LinkProcessor
         $this->scrapperProcessor = $scrapperProcessor;
         $this->youtubeProcessor = $youtubeProcessor;
         $this->spotifyProcessor = $spotifyProcessor;
+        $this->facebookProcessor = $facebookProcessor;
         $this->urlParser = $urlParser;
     }
 
@@ -93,6 +101,9 @@ class LinkProcessor
                 break;
             case LinkAnalyzer::SPOTIFY:
                 $processor = $this->spotifyProcessor;
+                break;
+            case LinkAnalyzer::FACEBOOK:
+                $processor = $this->facebookProcessor;
                 break;
             case LinkAnalyzer::SCRAPPER:
                 $processor = $this->scrapperProcessor;

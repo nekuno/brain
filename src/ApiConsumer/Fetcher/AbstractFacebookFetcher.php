@@ -6,7 +6,7 @@ abstract class AbstractFacebookFetcher extends BasicPaginationFetcher
 {
     protected $paginationField = 'after';
 
-    protected $pageLength = 20;
+    protected $pageLength = 200;
 
     protected $paginationId = null;
 
@@ -107,6 +107,13 @@ abstract class AbstractFacebookFetcher extends BasicPaginationFetcher
         $link['title'] = null;
         $link['description'] = null;
         $link['resourceItemId'] = $id;
+
+        $link['types'] = array();
+        if (array_key_exists('attachments', $item)) {
+            foreach ($item['attachments']['data'] as $attachment) {
+                    $link['types'][]=$attachment['type'];
+            }
+        }
 
         $timestamp = null;
         if (array_key_exists('created_time', $item)) {
