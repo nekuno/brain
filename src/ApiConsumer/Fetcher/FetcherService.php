@@ -159,8 +159,6 @@ class FetcherService implements LoggerAwareInterface
                 }
             }
 
-            unset($_SESSION['resourceOwnerToken']);
-
             $this->dispatcher->dispatch(\AppEvents::PROCESS_FINISH, new ProcessLinksEvent($userId, $resourceOwner, $links));
 
         } catch (\Exception $e) {
