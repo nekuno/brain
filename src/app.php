@@ -8,6 +8,7 @@ use Provider\GuzzleServiceProvider;
 use Provider\LinkProcessorServiceProvider;
 use Provider\LookUpServiceProvider;
 use Provider\Neo4jPHPServiceProvider;
+use Provider\ModelsServiceProvider;
 use Provider\PaginatorServiceProvider;
 use Provider\ServicesServiceProvider;
 use Provider\SubscribersServiceProvider;
@@ -48,5 +49,6 @@ $app->register(new ConfigServiceProvider(__DIR__ . "/../config/config_{$app['env
 $app->register(new ConfigServiceProvider(__DIR__ . "/../config/fields.yml", array(), null, 'fields'));
 $app->register(new SubscribersServiceProvider());
 $app->register(new ServicesServiceProvider());
+$app->register(new ModelsServiceProvider());
 
 return $app;
