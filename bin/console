@@ -14,6 +14,5 @@ $app = require __DIR__ . '/../src/app.php';
 
 require __DIR__ . '/../src/models.php';
 require __DIR__ . '/../src/routing.php';
-require __DIR__ . '/../src/consoleServices.php';
 $console = require __DIR__ . '/../src/console.php';
 $console->run();
