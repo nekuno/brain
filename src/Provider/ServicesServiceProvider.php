@@ -6,8 +6,11 @@ use GuzzleHttp\Client;
 use Service\AffinityRecalculations;
 use Service\ChatMessageNotifications;
 use Service\MigrateSocialInvitations;
+use Service\TokenGenerator;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
+use Silex\Translator;
+use Symfony\Component\Translation\Loader\YamlFileLoader;
 
 class ServicesServiceProvider implements ServiceProviderInterface
 {
@@ -38,6 +41,32 @@ class ServicesServiceProvider implements ServiceProviderInterface
         $app['instant.client'] = $app->share(
             function (Application $app) {
                 return new Client(array('base_url' => $app['instant.host']));
+            }
+        );
+
+        $app['emailNotification.service'] = $app->share(
+            function (Application $app) {
+                return new \Service\EmailNotifications($app['mailer'], $app['orm.ems']['mysql_brain'], $app['twig']);
+            }
+        );
+
+        $app['translator'] = $app->share(
+            $app->extend(
+                'translator',
+                function (Translator $translator) {
+
+                    $translator->addLoader('yaml', new YamlFileLoader());
+                    $translator->addResource('yaml', __DIR__ . '/locales/en.yml', 'en');
+                    $translator->addResource('yaml', __DIR__ . '/locales/es.yml', 'es');
+
+                    return $translator;
+                }
+            )
+        );
+
+        $app['tokenGenerator.service'] = $app->share(
+            function () {
+                return new TokenGenerator();
             }
         );
     }

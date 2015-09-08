@@ -9,6 +9,7 @@ use Provider\LinkProcessorServiceProvider;
 use Provider\LookUpServiceProvider;
 use Provider\Neo4jPHPServiceProvider;
 use Provider\PaginatorServiceProvider;
+use Provider\ServicesServiceProvider;
 use Provider\SubscribersServiceProvider;
 use Silex\Application;
 use Silex\Provider\DoctrineServiceProvider;
@@ -19,7 +20,6 @@ use Silex\Provider\UrlGeneratorServiceProvider;
 use Silex\Provider\ValidatorServiceProvider;
 use Silex\Provider\TwigServiceProvider;
 use Silex\Provider\TranslationServiceProvider;
-use Symfony\Component\Translation\Loader\YamlFileLoader;
 
 $app = new Application();
 
@@ -47,30 +47,6 @@ $app->register(new ConfigServiceProvider(__DIR__ . "/../config/config.yml", $rep
 $app->register(new ConfigServiceProvider(__DIR__ . "/../config/config_{$app['env']}.yml", $replacements));
 $app->register(new ConfigServiceProvider(__DIR__ . "/../config/fields.yml", array(), null, 'fields'));
 $app->register(new SubscribersServiceProvider());
-
-/**
- * Services configuration.
- */
-$app['emailNotification.service'] = function (Silex\Application $app) {
-    return new \Service\EmailNotifications($app['mailer'], $app['orm.ems']['mysql_brain'], $app['twig']);
-};
-
-$app['translator'] = $app->share(
-    $app->extend(
-        'translator',
-        function ($translator) {
-            $translator->addLoader('yaml', new YamlFileLoader());
-
-            $translator->addResource('yaml', __DIR__ . '/locales/en.yml', 'en');
-            $translator->addResource('yaml', __DIR__ . '/locales/es.yml', 'es');
-
-            return $translator;
-        }
-    )
-);
-
-$app['tokenGenerator.service'] = function () {
-    return new \Service\TokenGenerator();
-};
+$app->register(new ServicesServiceProvider());
 
 return $app;
