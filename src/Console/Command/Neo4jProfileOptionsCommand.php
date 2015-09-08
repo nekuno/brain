@@ -2,6 +2,7 @@
 
 namespace Console\Command;
 
+use Console\ApplicationAwareCommand;
 use Model\Neo4j\PrivacyOptions;
 use Model\Neo4j\ProfileOptions;
 use Psr\Log\LogLevel;
@@ -16,7 +17,7 @@ class Neo4jProfileOptionsCommand extends ApplicationAwareCommand
     protected function configure()
     {
         $this->setName('neo4j:profile-options')
-            ->setDescription("Load neo4j profile options");
+            ->setDescription('Load neo4j profile options');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)

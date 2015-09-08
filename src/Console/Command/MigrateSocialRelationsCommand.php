@@ -2,6 +2,7 @@
 
 namespace Console\Command;
 
+use Console\ApplicationAwareCommand;
 use Model\User\RelationsModel;
 use Silex\Application;
 use Doctrine\DBAL\Connection;
@@ -12,7 +13,8 @@ class MigrateSocialRelationsCommand extends ApplicationAwareCommand
 {
     protected function configure()
     {
-        $this->setName('social-relations:migrate')->setDescription('Migrate relations from social to brain');
+        $this->setName('migrate:social-relations')
+            ->setDescription('Migrate relations from social to brain');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)

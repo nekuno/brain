@@ -2,6 +2,7 @@
 
 namespace Console\Command;
 
+use Console\ApplicationAwareCommand;
 use Model\Neo4j\Constraints;
 
 use Silex\Application;
@@ -14,7 +15,7 @@ class Neo4jConstraintsCommand extends ApplicationAwareCommand
     protected function configure()
     {
         $this->setName('neo4j:constraints')
-             ->setDescription("Load neo4j database constraints");
+             ->setDescription('Load neo4j database constraints');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)

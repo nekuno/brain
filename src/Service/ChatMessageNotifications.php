@@ -12,7 +12,7 @@ use Doctrine\DBAL\Connection;
 use Silex\Translator;
 use Silex\Application;
 use Symfony\Component\Console\Output\OutputInterface;
-use Console\Command\SendChatMessagesNotificationsCommand;
+use Console\Command\SwiftMailerChatSendCommand;
 
 /**
  * ChatMessageNotifications
@@ -60,7 +60,7 @@ class ChatMessageNotifications
         $this->profileModel = $profileModel;
     }
 
-    function sendUnreadChatMessages($limit = 99999, OutputInterface $output, SendChatMessagesNotificationsCommand $chatMessagesNotificationsCommand)
+    function sendUnreadChatMessages($limit = 99999, OutputInterface $output, SwiftMailerChatSendCommand $chatMessagesNotificationsCommand)
     {
         $usersIds = $this->getUsersWithUnreadMessages($limit);
 

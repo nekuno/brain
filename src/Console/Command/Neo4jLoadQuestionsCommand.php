@@ -2,6 +2,7 @@
 
 namespace Console\Command;
 
+use Console\ApplicationAwareCommand;
 use Everyman\Neo4j\Cypher\Query;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
