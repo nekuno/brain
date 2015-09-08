@@ -39,7 +39,7 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
 
         $this->setName('rabbitmq:consume')
             ->setDescription(sprintf('Starts a RabbitMQ consumer by name ("%s")', implode('", "', $this->validConsumers)))
-            ->addArgument(new InputArgument('consumer', InputArgument::OPTIONAL, 'Consumer to start up', 'fetching'));
+            ->addArgument('consumer', InputArgument::OPTIONAL, 'Consumer to start up', 'fetching');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
