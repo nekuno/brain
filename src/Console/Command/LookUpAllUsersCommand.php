@@ -38,7 +38,7 @@ class LookUpAllUsersCommand extends BaseCommand
             if (isset($user['qnoow_id']) && isset($user['email']) && $user['qnoow_id'] >= $input->getOption('start')) {
                 try {
                     $this->displayTitle('Looking up user ' . $user['qnoow_id']);
-                    $lookUpData = $lookUpModel->setByEmail($user['qnoow_id'], $user['email']);
+                    $lookUpData = $lookUpModel->set($user['qnoow_id'], array('email', $user['email']), $output);
                     $this->displayData($lookUpData);
                     $this->displayMessage('waiting...');
                     sleep(1);
