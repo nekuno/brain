@@ -56,7 +56,13 @@ class SpotifyFetcher extends BasicPaginationFetcher
             $this->setQuery(array('limit' => $this::MAX_TRACKS_PER_PLAYLIST));
             $this->getLinksByPage();
 
-            $links = $this->parseLinks($this->rawFeed);
+            $parsed = $this->parseLinks($this->rawFeed);
+
+            $links = array();
+            foreach ($parsed as $parsedLink){
+                $links[$parsedLink['url']] = $parsedLink;
+            }
+
         } catch (\Exception $e) {
             throw $e;
         }
