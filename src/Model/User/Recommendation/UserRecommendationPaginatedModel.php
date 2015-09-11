@@ -180,6 +180,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
             (CASE WHEN HAS(s.similarity) THEN s.similarity ELSE 0 END) AS similarity'
             )
             ->match('(anyUser)<-[:PROFILE_OF]-(p:Profile)')
+            ->optionalMatch('(p)-[:LOCATION]->(l:Location)')
             ->where(
                 array_merge(
                     array('(matching_questions > 0 OR similarity > 0)'),
@@ -237,6 +238,13 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                         $max = $value['max'];
                         $conditions[] = "('$min' <= p.$name AND p.$name <= '$max')";
                         break;
+                    case 'location':
+                        $distance = $value['distance'];
+                        $latitude = $value['latitude'];
+                        $longitude = $value['longitude'];
+                        $conditions[] = "(has(l.latitude) AND l.latitude <> null AND has(l.longitude) AND l.longitude <> null AND
+                        " . $distance . " <= toInt(round(6371 * acos( cos(" . $latitude . "*pi()/180) * cos(l.latitude*pi()/180) * cos(l.longitude*pi()/180 - " . $longitude . "*pi()/180) + sin(" . $latitude . "*pi()/180) * sin(l.latitude*pi()/180) ))))";
+                        break;
                     case 'boolean':
                         $conditions[] = "p.$name = true";
                         break;
@@ -248,8 +256,6 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                     case 'tags':
                         $tagLabelName = ucfirst($name);
                         $matches[] = "(p)<-[:TAGGED]-(tag$name:$tagLabelName) WHERE tag$name.name = '$value'";
-                        break;
-                    case 'location':
                         break;
                 }
             }
