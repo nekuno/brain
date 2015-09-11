@@ -113,6 +113,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
             ->orderBy($orderQuery)
             ->skip('{ offset }')
             ->limit('{ limit }');
+
         $query = $qb->getQuery();
         $result = $query->getResultSet();
 
@@ -177,8 +178,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
             (CASE WHEN HAS(m.matching_questions) THEN m.matching_questions ELSE 0 END) AS matching_questions,
             (CASE WHEN HAS(s.similarity) THEN s.similarity ELSE 0 END) AS similarity'
             )
-            ->match('(anyUser)<-[:PROFILE_OF]-(p:Profile)')
-            ->optionalMatch('(p)-[:LOCATION]->(l:Location)')
+            ->match('(anyUser)<-[:PROFILE_OF]-(p:Profile)-[:LOCATION]->(l:Location)')
             ->where(
                 array_merge(
                     array('(matching_questions > 0 OR similarity > 0)'),
@@ -237,11 +237,11 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                         $conditions[] = "('$min' <= p.$name AND p.$name <= '$max')";
                         break;
                     case 'location':
-                        $distance = $value['distance'];
-                        $latitude = $value['latitude'];
-                        $longitude = $value['longitude'];
+                        $distance = (int)$value['distance'];
+                        $latitude = (float)$value['latitude'];
+                        $longitude = (float)$value['longitude'];
                         $conditions[] = "(has(l.latitude) AND has(l.longitude) AND
-                        " . $distance . " >= toInt(round(6371 * acos( cos(" . $latitude . "*pi()/180) * cos(l.latitude*pi()/180) * cos(l.longitude*pi()/180 - " . $longitude . "*pi()/180) + sin(" . $latitude . "*pi()/180) * sin(l.latitude*pi()/180) ))))";
+                        " . $distance . " >= toInt(6371 * acos( cos( radians(" . $latitude . ") ) * cos( radians(l.latitude) ) * cos( radians(l.longitude) - radians(" . $longitude . ") ) + sin( radians(" . $latitude . ") ) * sin( radians(l.latitude) ) )))";
                         break;
                     case 'boolean':
                         $conditions[] = "p.$name = true";
