@@ -9,7 +9,6 @@ use Everyman\Neo4j\Label;
 use Model\Exception\ValidationException;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\PropertyAccess\Exception\RuntimeException;
 
 class ProfileModel
 {
