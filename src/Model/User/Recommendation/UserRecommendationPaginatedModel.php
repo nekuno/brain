@@ -86,16 +86,15 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
             )
             ->match('(anyUser)<-[:PROFILE_OF]-(p:Profile)');
 
-        if(isset($filters['profileFilters']['location'])) {
-            $qb->match('(p)-[:LOCATION]->(l:Location)');
-        }
+        $qb->optionalMatch('(p)-[:LOCATION]->(l:Location)');
 
+        $qb->with('u, anyUser, matching_questions, similarity, p, l');
         $qb->where(
             array_merge(
                 array('(matching_questions > 0 OR similarity > 0)'),
                 $profileFilters['conditions']
             ))
-            ->with('u', 'anyUser', 'matching_questions', 'similarity', 'p');
+            ->with('u', 'anyUser', 'matching_questions', 'similarity', 'p', 'l');
 
         foreach ($profileFilters['matches'] as $match){
             $qb->match($match);
@@ -106,8 +105,6 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                 ->where('id(g) IN { groups }')
                 ->setParameter('groups', $groups);
         }
-
-        $qb->optionalMatch('(p)-[:LOCATION]->(l:Location)');
 
         $qb->returns(
             'DISTINCT anyUser.qnoow_id AS id,
@@ -187,17 +184,16 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
             )
             ->match('(anyUser)<-[:PROFILE_OF]-(p:Profile)');
 
-        if(isset($filters['profileFilters']['location'])) {
-            $qb->match('(p)-[:LOCATION]->(l:Location)');
-        }
+        $qb->optionalMatch('(p)-[:LOCATION]->(l:Location)');
 
+        $qb->with('u, anyUser, matching_questions, similarity, p, l');
         $qb->where(
             array_merge(
                 array('(matching_questions > 0 OR similarity > 0)'),
                 $profileFilters['conditions']
             )
         )
-            ->with('u', 'anyUser', 'matching_questions', 'similarity', 'p');
+            ->with('u', 'anyUser', 'matching_questions', 'similarity', 'p', 'l');
 
         foreach ($profileFilters['matches'] as $match){
             $qb->match($match);
@@ -208,8 +204,6 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                 ->where('id(g) IN { groups }')
                 ->setParameter('groups', $groups);
         }
-
-        $qb->optionalMatch('(p)-[:LOCATION]->(l:Location)');
 
         $qb->returns('COUNT(DISTINCT anyUser) as total');
         $query = $qb->getQuery();
@@ -256,7 +250,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                         $distance = (int)$value['distance'];
                         $latitude = (float)$value['location']['latitude'];
                         $longitude = (float)$value['location']['longitude'];
-                        $conditions[] = "(has(l.latitude) AND has(l.longitude) AND
+                        $conditions[] = "(NOT l IS NULL AND has(l.latitude) AND has(l.longitude) AND
                         " . $distance . " >= toInt(6371 * acos( cos( radians(" . $latitude . ") ) * cos( radians(l.latitude) ) * cos( radians(l.longitude) - radians(" . $longitude . ") ) + sin( radians(" . $latitude . ") ) * sin( radians(l.latitude) ) )))";
                         break;
                     case 'boolean':
