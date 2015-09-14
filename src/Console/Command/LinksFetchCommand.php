@@ -6,6 +6,7 @@ use ApiConsumer\Auth\DBUserProvider;
 use ApiConsumer\EventListener\FetchLinksInstantSubscriber;
 use ApiConsumer\EventListener\FetchLinksSubscriber;
 use ApiConsumer\Fetcher\FetcherService;
+use Console\ApplicationAwareCommand;
 use Psr\Log\LogLevel;
 use Silex\Application;
 use Symfony\Component\Console\Input\InputInterface;
@@ -15,14 +16,14 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Validator\Exception\MissingOptionsException;
 
-class FetchLinksCommand extends ApplicationAwareCommand
+class LinksFetchCommand extends ApplicationAwareCommand
 {
 
     protected function configure()
     {
 
-        $this->setName('fetch:links')
-            ->setDescription("Fetch links from given resource owner")
+        $this->setName('links:fetch')
+            ->setDescription('Fetch links from given resource owner')
             ->setDefinition(
                 array(
                     new InputOption(

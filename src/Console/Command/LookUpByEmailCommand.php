@@ -4,102 +4,89 @@
  */
 namespace Console\Command;
 
+use Console\BaseCommand;
 use Silex\Application;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Formatter\OutputFormatterStyle;
-use Service\LookUpByEmail;
+use Model\User\LookUpModel;
 
-class LookUpByEmailCommand extends ApplicationAwareCommand
+class LookUpByEmailCommand extends BaseCommand
 {
-
-    /**
-     * @var OutputInterface
-     */
-    protected $output;
-
-    /**
-     * @var OutputFormatterStyle
-     */
-    protected $successStyle;
-
-    /**
-     * @var OutputFormatterStyle
-     */
-    protected $errorStyle;
-
     protected function configure()
     {
-        $this->setName('look-up-by-email')
+        $this->setName('look-up:email')
             ->setDescription('Look up user information using fullContact and peopleGraph')
-            ->addOption('email', 'email', InputOption::VALUE_REQUIRED, 'Email to lookup', 'enredos@nekuno.com');
+            ->addOption('email', 'email', InputOption::VALUE_REQUIRED, 'Email to lookup', 'enredos@nekuno.com')
+            ->addOption('id', 'id', InputOption::VALUE_OPTIONAL, 'User id for creating SocialNetwork relationships');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $this->output = $output;
-        $this->successStyle = new OutputFormatterStyle('green', 'black', array('bold', 'blink'));
-        $this->errorStyle = new OutputFormatterStyle('red', 'black', array('bold', 'blink'));
+        $this->setFormat($output);
         $email = $input->getOption('email');
+        $id = intval($input->getOption('id'));
 
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $this->displayError('Invalid email format');
             exit;
         }
 
-        /** @var $lookUpByEmail LookUpByEmail */
-        $lookUpByEmail = $this->app['lookUpByEmail.service'];
-
-        try {
-            $this->displayMessage('Getting from FullContact');
-            $fullContactData = $lookUpByEmail->getFromFullContact($email);
-                foreach($fullContactData as $socialNetwork => $url) {
-                    $this->displayMessage('Social Network: ' . $socialNetwork);
-                    $this->displayMessage('Url: ' . $url);
-                }
-                $this->displaySuccess();
-
-        } catch (\Exception $e) {
-            $this->displayError('<error>Error trying to look up: ' . $e->getMessage() . '</error>');
+        if ($id && !is_int($id)) {
+            $this->displayError('Invalid user id');
+            exit;
         }
 
-        try {
-            $this->displayMessage('Getting from PeopleGraph');
-            $peopleGraphData = $lookUpByEmail->getFromPeopleGraph($email);
-            foreach($peopleGraphData as $socialNetwork => $url) {
+        /* @var $lookUpModel LookUpModel */
+        $lookUpModel = $this->app['users.lookup.model'];
+
+        if ($id) {
+            $this->displayTitle('Looking up user ' . $id);
+            $lookUpData = $lookUpModel->set($id, array('email' => $email), $output);
+            $this->displaySocialData($lookUpData);
+        } else {
+            $this->displayTitle('Looking up for email ' . $email);
+            $lookUpData = $lookUpModel->completeUserData(array('email' => $email), $output);
+            $this->displayFullData($lookUpData);
+        }
+
+        $output->writeln('Done.');
+    }
+
+    private function displayFullData($data)
+    {
+        if (isset($data['socialProfiles']) && is_array($data['socialProfiles'])) {
+            foreach ($data['socialProfiles'] as $socialNetwork => $url) {
+
                 $this->displayMessage('Social Network: ' . $socialNetwork);
                 $this->displayMessage('Url: ' . $url);
             }
             $this->displaySuccess();
-
-        } catch (\Exception $e) {
-            $this->displayError('<error>Error trying to look up: ' . $e->getMessage() . '</error>');
         }
-
-        $output->writeln('Done.');
-
+        if (isset($data['name'])) {
+            $this->displayMessage('Name: ' . $data['name']);
+            $this->displaySuccess();
+        }
+        if (isset($data['email'])) {
+            $this->displayMessage('Email: ' . $data['email']);
+            $this->displaySuccess();
+        }
+        if (isset($data['gender'])) {
+            $this->displayMessage('Gender: ' . $data['gender']);
+            $this->displaySuccess();
+        }
+        if (isset($data['location'])) {
+            $this->displayMessage('Location: ' . $data['location']);
+            $this->displaySuccess();
+        }
     }
 
-    private function displayError($message)
+    private function displaySocialData($data)
     {
-        $style = $this->errorStyle;
-        $this->output->getFormatter()->setStyle('error', $style);
-        $this->output->writeln('<error>' . $message . '</error>');
-        $this->output->writeln('<error>FAIL</error>');
-    }
-
-    private function displayMessage($message)
-    {
-        $style = $this->successStyle;
-        $this->output->getFormatter()->setStyle('success', $style);
-        $this->output->writeln('<success>' . $message . '</success>');
-    }
-
-    private function displaySuccess()
-    {
-        $style = $this->successStyle;
-        $this->output->getFormatter()->setStyle('success', $style);
-        $this->output->writeln('<success>SUCCESS</success>');
+        foreach ($data as $socialNetwork => $url) {
+            $this->displayMessage('Social Network: ' . $socialNetwork);
+            $this->displayMessage('Url: ' . $url);
+        }
+        $this->displaySuccess();
     }
 }

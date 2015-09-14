@@ -2,6 +2,7 @@
 
 namespace Console\Command;
 
+use Console\ApplicationAwareCommand;
 use Model\UserModel;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
@@ -9,14 +10,14 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class EnqueueFetchingCommand extends ApplicationAwareCommand
+class RabbitMQEnqueueFetchingCommand extends ApplicationAwareCommand
 {
 
     protected function configure()
     {
 
-        $this->setName('rabbitmq:enqueue:fetching')
-            ->setDescription('Enqueue an fetching task for all users')
+        $this->setName('rabbitmq:enqueue')
+            ->setDescription('Enqueues a fetching task for all users')
             ->addOption(
                 'user',
                 null,
@@ -42,7 +43,7 @@ class EnqueueFetchingCommand extends ApplicationAwareCommand
             exit;
         }
 
-        /** @var UserModel $usersModel */
+        /* @var $usersModel UserModel */
         $usersModel = $this->app['users.model'];
 
         if ($userId == null) {
@@ -83,7 +84,7 @@ class EnqueueFetchingCommand extends ApplicationAwareCommand
     private function enqueueFetchingProcess(array $data)
     {
         $message = new AMQPMessage(json_encode($data, JSON_UNESCAPED_UNICODE));
-        /** @var AMQPStreamConnection $connection */
+        /* @var $connection AMQPStreamConnection */
         $connection = $this->app['amqp'];
         $exchangeName = 'brain.direct';
         $exchangeType = 'direct';

@@ -64,6 +64,17 @@ class ApiConsumerServiceProvider implements ServiceProviderInterface
             }
         );
 
+        $app['api_consumer.resource_owner.facebook'] = $app->share(
+            function ($app) {
+
+                $resourceOwnerFactory = $app['api_consumer.resource_owner_factory'];
+
+                /* @var $resourceOwnerFactory ResourceOwnerFactory */
+
+                return $resourceOwnerFactory->build('facebook');
+            }
+        );
+
         //Registry
         $app['api_consumer.registry'] = $app->share(
             function ($app) {

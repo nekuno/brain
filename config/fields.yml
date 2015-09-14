@@ -251,7 +251,6 @@ profile:
     location:
         type: location
         required: true
-        filterable: false
         label:
             en: 'Location'
             es: 'Ubicación'

@@ -1,5 +1,11 @@
 params:
 
+    ## Valid IPs
+    dev_custom_ip_1:
+    dev_custom_ip_2:
+    dev_custom_ip_3:
+    dev_custom_ip_4:
+
     ## Locale
     locale.default: en
 
@@ -47,12 +53,12 @@ params:
     twitter.consumer_secret: yQ5XBabTj1vzCCBVeJoqX9Bli4zcjVWsF6FxHvPtZwkAJseu1l
 
     ## Spotify
-    spotify.consumer_key: 2cc22e2706704d39998c990457530a9a
-    spotify.consumer_secret: 47189c30d7f84d7ca4c4436309c0dc3c
+    spotify.consumer_key: e8c3557e29ad4974a1f41e93aeaf6e79
+    spotify.consumer_secret: 4f2d9cf19b8549adab69f68dfd0df29a
 
     ## Google
-    google.consumer_key: 556826433000.apps.googleusercontent.com
-    google.consumer_secret: oNAbbRwxxZD9Ntyj7D4yXq1f
+    google.consumer_key: 351352065100-hjnd2afbiirca4nihu9ck461nv14b5l1.apps.googleusercontent.com
+    google.consumer_secret: r8SI-iK6eAYO7trO3zAEpbO4
     google.service_account_email: 556826433000-0b3i84k7li492e1t9rvat650cb8v00dg@developer.gserviceaccount.com
     google.key_file: /root/.ssh/OauthTest-d90f7483fcf1.p12
     google.key_password: notasecret

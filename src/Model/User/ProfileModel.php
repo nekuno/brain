@@ -2,12 +2,10 @@
 
 namespace Model\User;
 
-use Everyman\Neo4j\Client;
-use Everyman\Neo4j\Cypher\Query;
-use Everyman\Neo4j\Label;
+use Model\Neo4j\GraphManager;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
-use Everyman\Neo4j\Relationship;
+use Everyman\Neo4j\Label;
 use Model\Exception\ValidationException;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -18,10 +16,10 @@ class ProfileModel
     protected $metadata;
     protected $defaultLocale;
 
-    public function __construct(Client $client, array $metadata, $defaultLocale)
+    public function __construct(GraphManager $gm, array $metadata, $defaultLocale)
     {
 
-        $this->client = $client;
+        $this->gm = $gm;
         $this->metadata = $metadata;
         $this->defaultLocale = $defaultLocale;
     }
@@ -99,24 +97,17 @@ class ProfileModel
      */
     public function getById($id)
     {
-        $params = array(
-            'id' => (integer)$id,
-        );
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(user:User)<-[:PROFILE_OF]-(profile:Profile)')
+            ->where('user.qnoow_id = { id }')
+            ->setParameter('id', $id)
+            ->optionalMatch('(profile)<-[:OPTION_OF]-(option:ProfileOption)')
+            ->optionalMatch('(profile)-[:TAGGED]-(tag:ProfileTag)')
+            ->optionalMatch('(profile)-[:LOCATION]->(location:Location)')
+            ->returns('profile, location, collect(distinct option) AS options, collect(distinct tag) as tags')
+            ->limit(1);
 
-        $template = "MATCH (user:User)<-[:PROFILE_OF]-(profile:Profile)"
-            . " WHERE user.qnoow_id = {id} "
-            . " OPTIONAL MATCH (profile)<-[:OPTION_OF]-(option:ProfileOption)"
-            . " WITH profile, collect(option) AS options"
-            . " OPTIONAL MATCH (profile)<-[:TAGGED]-(tag:ProfileTag)"
-            . " OPTIONAL MATCH (profile)-[:LOCATION]->(location:Location)"
-            . " RETURN profile, location, options, collect(tag) as tags"
-            . " LIMIT 1;";
-
-        $query = new Query(
-            $this->client,
-            $template,
-            $params
-        );
+        $query = $qb->getQuery();
 
         $result = $query->getResultSet();
 
@@ -126,52 +117,15 @@ class ProfileModel
 
         /* @var $row Row */
         $row = $result->current();
-        /* @var $node Node */
-        $node = $row->offsetGet('profile');
-        $profile = $node->getProperties();
 
-        /* @var $location Node */
-        $location = $row->offsetGet('location');
-        if ($location) {
-            $profile['location'] = $location->getProperties();
-        }
-
-        foreach ($row->offsetGet('options') as $option) {
-            /* @var $option Node */
-            $labels = $option->getLabels();
-            foreach ($labels as $index => $label) {
-                /* @var $label Label */
-                $labelName = $label->getName();
-                if ($labelName != 'ProfileOption') {
-                    $typeName = $this->labelToType($labelName);
-                    $profile[$typeName] = $option->getProperty('id');
-                }
-
-            }
-        }
-
-        foreach ($row->offsetGet('tags') as $tag) {
-            /* @var $tag Node */
-            $labels = $tag->getLabels();
-            foreach ($labels as $label) {
-                /* @var $label Label */
-                $labelName = $label->getName();
-                if ($labelName != 'ProfileTag') {
-                    $typeName = $this->labelToType($labelName);
-                    $profile[$typeName][] = $tag->getProperty('name');
-                }
-
-            }
-        }
-
-        return $profile;
+        return $this->build($row);
     }
 
     /**
      * @param $id
      * @param array $data
      * @return array
-     * @throws ValidationException
+     * @throws NotFoundHttpException|MethodNotAllowedHttpException
      */
     public function create($id, array $data)
     {
@@ -187,27 +141,27 @@ class ProfileModel
             throw new MethodNotAllowedHttpException(array('PUT'), 'Profile already exists');
         }
 
-        $profileNode = $this->client->makeNode();
-        $profileNode->save();
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(user:User)')
+            ->where('user.qnoow_id = { id }')
+            ->setParameter('id', (int)$id)
+            ->merge('(profile:Profile)-[po:PROFILE_OF]->(user)');
 
-        $profileLabel = $this->client->makeLabel('Profile');
-        $profileNode->addLabels(array($profileLabel));
+        $qb->getQuery()->getResultSet();
 
-        $profileNode->relateTo($userNode, 'PROFILE_OF')->save();
-
-        $this->saveProfileData($profileNode, $data);
+        $this->saveProfileData($id, $data);
 
         return $this->getById($id);
     }
 
     /**
+     * @param integer $id
      * @param array $data
      * @return array
-     * @throws ValidationException
+     * @throws ValidationException|NotFoundHttpException
      */
     public function update($id, array $data)
     {
-
         $this->validate($data);
 
         list($userNode, $profileNode) = $this->getUserAndProfileNodesById($id);
@@ -220,7 +174,7 @@ class ProfileModel
             throw new NotFoundHttpException('Profile not found');
         }
 
-        $this->saveProfileData($profileNode, $data);
+        $this->saveProfileData($id, $data);
 
         return $this->getById($id);
     }
@@ -230,20 +184,14 @@ class ProfileModel
      */
     public function remove($id)
     {
-        $params = array(
-            'id' => (integer)$id,
-        );
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(user:User)<-[:PROFILE_OF]-(profile:Profile)')
+            ->where('user.qnoow_id = { id }')
+            ->setParameter('id', $id)
+            ->optionalMatch('(profile)-[r]-()')
+            ->delete('r, profile');
 
-        $template = "MATCH (user:User)<-[:PROFILE_OF]-(profile:Profile) "
-            . " WHERE user.qnoow_id = {id} "
-            . " OPTIONAL MATCH (profile)-[r]-() "
-            . " DELETE profile, r";
-
-        $query = new Query(
-            $this->client,
-            $template,
-            $params
-        );
+        $query = $qb->getQuery();
 
         $query->getResultSet();
     }
@@ -336,12 +284,12 @@ class ProfileModel
                                 if (!isset($fieldValue['address']) || !$fieldValue['address'] || !is_string($fieldValue['address'])) {
                                     $fieldErrors[] = 'Address required';
                                 } else {
-                                    if (!isset($fieldValue['latitude']) || !preg_match("/^-?([1-8]?[1-9]|[1-9]0)\.{1}\d+$/", $fieldValue['latitude'])) {
+                                    if (!isset($fieldValue['latitude']) || !preg_match("/^-?([1-8]?[0-9]|[1-9]0)\.{1}\d+$/", $fieldValue['latitude'])) {
                                         $fieldErrors[] = 'Latitude not valid';
                                     } elseif (!is_float($fieldValue['latitude'])) {
                                         $fieldErrors[] = 'Latitude must be float';
                                     }
-                                    if (!isset($fieldValue['longitude']) || !preg_match("/^-?([1]?[1-7][1-9]|[1]?[1-8][0]|[1-9]?[0-9])\.{1}\d+$/", $fieldValue['longitude'])) {
+                                    if (!isset($fieldValue['longitude']) || !preg_match("/^-?([1]?[0-7][1-9]|[1]?[1-8][0]|[1-9]?[0-9])\.{1}\d+$/", $fieldValue['longitude'])) {
                                         $fieldErrors[] = 'Longitude not valid';
                                     } elseif (!is_float($fieldValue['longitude'])) {
                                         $fieldErrors[] = 'Longitude must be float';
@@ -380,24 +328,82 @@ class ProfileModel
         }
     }
 
+    protected function build(Row $row)
+    {
+        /* @var $node Node */
+        $node = $row->offsetGet('profile');
+        $profile = $node->getProperties();
+
+        /* @var $location Node */
+        $location = $row->offsetGet('location');
+        if ($location && count($location->getProperties()) > 0) {
+            $profile['location'] = $location->getProperties();
+        }
+
+        $profile += $this->buildOptions($row);
+        $profile += $this->buildTags($row);
+
+        return $profile;
+    }
+
+    protected function buildOptions(Row $row)
+    {
+        $options = $row->offsetGet('options');
+        $optionsResult = array();
+
+        /* @var Node $option */
+        foreach ($options as $option) {
+            $labels = $option->getLabels();
+            /* @var Label $label */
+            foreach ($labels as $label) {
+                if ($label->getName() && $label->getName() != 'ProfileOption') {
+                    $typeName = $this->labelToType($label->getName());
+                    $optionsResult[$typeName] = $option->getProperty('id');
+                }
+            }
+        }
+
+        return $optionsResult;
+    }
+
+    protected function buildTags(Row $row)
+    {
+        $tags = $row->offsetGet('tags');
+        $tagsResult = array();
+
+        /* @var Node $tag */
+        foreach ($tags as $tag) {
+            $labels = $tag->getLabels();
+            /* @var Label $label */
+            foreach ($labels as $label) {
+                if ($label->getName() && $label->getName() != 'ProfileTag') {
+                    $typeName = $this->labelToType($label->getName());
+                    $tagsResult[$typeName][] = $tag->getProperty('name');
+                }
+            }
+        }
+
+        return $tagsResult;
+    }
+
     protected function getChoiceOptions($locale)
     {
         $translationField = 'name_' . $locale;
-        $template = "MATCH (option:ProfileOption) "
-            . "RETURN head(filter(x IN labels(option) WHERE x <> 'ProfileOption')) AS labelName, option.id AS id, option." . $translationField . " AS name "
-            . "ORDER BY labelName;";
 
-        $query = new Query(
-            $this->client,
-            $template
-        );
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(option:ProfileOption)')
+            ->returns("head(filter(x IN labels(option) WHERE x <> 'ProfileOption')) AS labelName, option.id AS id, option." . $translationField . " AS name")
+            ->orderBy('labelName');
 
+        $query = $qb->getQuery();
         $result = $query->getResultSet();
+
         $choiceOptions = array();
+        /** @var Row $row */
         foreach ($result as $row) {
-            $typeName = $this->labelToType($row['labelName']);
-            $optionId = $row['id'];
-            $optionName = $row['name'];
+            $typeName = $this->labelToType($row->offsetGet('labelName'));
+            $optionId = $row->offsetGet('id');
+            $optionName = $row->offsetGet('name');
 
             $choiceOptions[$typeName][$optionId] = $optionName;
         }
@@ -407,43 +413,42 @@ class ProfileModel
 
     protected function getUserAndProfileNodesById($id)
     {
-        $data = array(
-            'id' => (integer)$id,
-        );
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(user:User)')
+            ->where('user.qnoow_id = { id }')
+            ->optionalMatch('(user)<-[:PROFILE_OF]-(profile:Profile)')
+            ->setParameter('id', $id)
+            ->returns('user', 'profile')
+            ->limit(1);
 
-        $template = "MATCH (user:User)"
-            . " WHERE user.qnoow_id = {id} "
-            . " OPTIONAL MATCH (user)<-[:PROFILE_OF]-(profile:Profile)"
-            . " RETURN user, profile"
-            . " LIMIT 1;";
-
-        $query = new Query(
-            $this->client,
-            $template,
-            $data
-        );
-
+        $query = $qb->getQuery();
         $result = $query->getResultSet();
 
         if (count($result) < 1) {
             return array(null, null);
         }
 
-        $row = $result[0];
-        $userNode = $row['user'];
-        $profileNode = $row['profile'];
+        /** @var Row $row */
+        $row = $result->current();
+        $userNode = $row->offsetGet('user');
+        $profileNode = $row->offsetGet('profile');
 
         return array($userNode, $profileNode);
     }
 
-    protected function saveProfileData(Node $profileNode, array $data)
+    protected function saveProfileData($id, array $data)
     {
         $metadata = $this->getMetadata();
-        $options = $this->getProfileNodeOptions($profileNode);
-        $tags = $this->getProfileNodeTags($profileNode);
+        $options = $this->getProfileNodeOptions($id);
+        $tags = $this->getProfileNodeTags($id);
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(profile:Profile)-[:PROFILE_OF]->(u:User)')
+            ->where('u.qnoow_id = { id }')
+            ->setParameter('id', (int)$id)
+            ->with('profile');
 
         foreach ($data as $fieldName => $fieldValue) {
-
             if (isset($metadata[$fieldName])) {
 
                 $fieldType = $metadata[$fieldName]['type'];
@@ -456,68 +461,71 @@ class ProfileModel
                 switch ($fieldType) {
                     case 'text':
                     case 'textarea':
+                    case 'date':
                     case 'boolean':
                     case 'integer':
-                    case 'date':
-                        $profileNode->setProperty($fieldName, $fieldValue);
+                        $qb->set('profile.' . $fieldName . ' = { ' . $fieldName . ' }')
+                            ->setParameter($fieldName, $fieldValue)
+                            ->with('profile');
                         break;
-
                     case 'birthday':
                         $zodiacSign = $this->getZodiacSignFromDate($fieldValue);
                         if (isset($options['zodiacSign'])) {
-                            $options['zodiacSign']->delete();
+                            $qb->match('(profile)<-[zodiacSignRel:OPTION_OF]-(zs:ZodiacSign)')
+                                ->delete('zodiacSignRel')
+                                ->with('profile');
                         }
                         if (!is_null($zodiacSign)) {
-                            $optionNode = $this->getProfileOptionNode($zodiacSign, 'zodiacSign');
-                            $optionNode->relateTo($profileNode, 'OPTION_OF')->save();
+                            $qb->match('(newZs:ZodiacSign {id: { zodiacSign }})')
+                                ->merge('(profile)<-[:OPTION_OF]-(newZs)')
+                                ->setParameter('zodiacSign', $zodiacSign)
+                                ->with('profile');
                         }
 
-                        $profileNode->setProperty($fieldName, $fieldValue);
+                        $qb->set('profile.' . $fieldName . ' = { birthday }')
+                            ->setParameter('birthday', $fieldValue)
+                            ->with('profile');
                         break;
                     case 'location':
-                        $relations = $profileNode->getRelationships('LOCATION');
-                        if (empty($relations)) {
-                            $location = $this->client->makeNode();
-                            $location->setProperty('latitude', $fieldValue['latitude']);
-                            $location->setProperty('longitude', $fieldValue['longitude']);
-                            $location->setProperty('address', $fieldValue['address']);
-                            $location->setProperty('locality', $fieldValue['locality']);
-                            $location->setProperty('country', $fieldValue['country']);
-                            $location->save();
-                            $locationLabel = $this->client->makeLabel('Location');
-                            $location->addLabels(array($locationLabel));
-                            $profileNode->relateTo($location, 'LOCATION')->save();
-                        } else {
-                            /* @var $relation Relationship */
-                            $relation = array_shift($relations);
-                            $location = $relation->getEndNode();
-                            $location->setProperty('latitude', $fieldValue['latitude']);
-                            $location->setProperty('longitude', $fieldValue['longitude']);
-                            $location->setProperty('address', $fieldValue['address']);
-                            $location->setProperty('locality', $fieldValue['locality']);
-                            $location->setProperty('country', $fieldValue['country']);
-                            $location->save();
-                        }
+                        $qb->optionalMatch('(profile)-[rLocation:LOCATION]->(oldLocation:Location)')
+                            ->delete('rLocation', 'oldLocation')
+                            ->with('profile');
+
+                        $qb->create('(location:Location {latitude: { latitude }, longitude: { longitude }, address: { address }, locality: { locality }, country: { country }})')
+                            ->createUnique('(profile)-[:LOCATION]->(location)')
+                            ->setParameter('latitude', $fieldValue['latitude'])
+                            ->setParameter('longitude', $fieldValue['longitude'])
+                            ->setParameter('address', $fieldValue['address'])
+                            ->setParameter('locality', $fieldValue['locality'])
+                            ->setParameter('country', $fieldValue['country'])
+                            ->with('profile');
                         break;
                     case 'choice':
                         if (isset($options[$fieldName])) {
-                            $options[$fieldName]->delete();
+                            $qb->optionalMatch('(profile)<-[optionRel:OPTION_OF]-(option:' . $this->typeToLabel($fieldName) . ')')
+                                ->delete('optionRel')
+                                ->with('profile');
                         }
                         if (!is_null($fieldValue)) {
-                            $optionNode = $this->getProfileOptionNode($fieldValue, $fieldName);
-                            $optionNode->relateTo($profileNode, 'OPTION_OF')->save();
+                            $qb->match('(option:' . $this->typeToLabel($fieldName) . ' {id: { ' . $fieldName . ' }})')
+                                ->merge('(profile)<-[:OPTION_OF]-(option)')
+                                ->setParameter($fieldName, $fieldValue)
+                                ->with('profile');
                         }
                         break;
                     case 'tags':
                         if (isset($tags[$fieldName])) {
-                            foreach ($tags[$fieldName] as $tagRelation) {
-                                $tagRelation->delete();
+                            foreach ($tags[$fieldName] as $tag) {
+                                $qb->optionalMatch('(profile)<-[tagRel:TAGGED]-(tag:' . $this->typeToLabel($fieldName) . ' {name: "' . $tag . '" })')
+                                    ->delete('tagRel')
+                                    ->with('profile');
                             }
                         }
-                        if (!is_null($fieldValue)) {
+                        if (is_array($fieldValue) && !empty($fieldValue)) {
                             foreach ($fieldValue as $tag) {
-                                $tagNode = $this->getProfileTagNode($tag, $fieldName);
-                                $tagNode->relateTo($profileNode, 'TAGGED')->save();
+                                $qb->merge('(profile)<-[:TAGGED]-(tag:' . $this->typeToLabel($fieldName) . ' {name: "' . $tag . '" })')
+                                    ->set('tag:ProfileTag')
+                                    ->with('profile');
                             }
                         }
                         break;
@@ -525,124 +533,54 @@ class ProfileModel
             }
         }
 
-        return $profileNode->save();
+        $qb->optionalMatch('(profile)<-[:OPTION_OF]-(option:ProfileOption)')
+            ->optionalMatch('(profile)-[:TAGGED]-(tag:ProfileTag)')
+            ->returns('profile', 'collect(distinct option) AS options', ' collect(distinct tag) AS tags')
+            ->limit(1);
+
+        $query = $qb->getQuery();
+
+        $result = $query->getResultSet();
+
+        return $this->build($result->current());
     }
 
-    protected function getProfileNodeOptions(Node $profileNode)
+    protected function getProfileNodeOptions($id)
     {
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(option:ProfileOption)-[:OPTION_OF]->(profile:Profile)-[:PROFILE_OF]->(user:User)')
+            ->where('user.qnoow_id = { id }')
+            ->setParameter('id', $id)
+            ->returns('collect(distinct option) AS options');
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
         $options = array();
-        $optionRelations = $profileNode->getRelationships('OPTION_OF');
-
-        foreach ($optionRelations as $optionRelation) {
-
-            $optionNode = $optionRelation->getStartNode();
-            $optionLabels = $optionNode->getLabels();
-
-            foreach ($optionLabels as $optionLabel) {
-                $labelName = $optionLabel->getName();
-                if ($labelName != 'ProfileOption') {
-                    $typeName = $this->labelToType($labelName);
-                    $options[$typeName] = $optionRelation;
-                }
-            }
+        foreach ($result as $row) {
+            $options += $this->buildOptions($row);
         }
 
         return $options;
     }
 
-    protected function getProfileNodeTags(Node $profileNode)
+    protected function getProfileNodeTags($id)
     {
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(tag:ProfileTag)-[:TAGGED]-(profile:Profile)-[:PROFILE_OF]->(user:User)')
+            ->where('user.qnoow_id = { id }')
+            ->setParameter('id', $id)
+            ->returns('collect(distinct tag) as tags');
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
         $tags = array();
-        $tagRelations = $profileNode->getRelationships('TAGGED');
-
-        foreach ($tagRelations as $tagRelation) {
-            $tagNode = $tagRelation->getStartNode();
-            $tagLabels = $tagNode->getLabels();
-
-            foreach ($tagLabels as $tagLabel) {
-                $labelName = $tagLabel->getName();
-                if ($labelName != 'ProfileTag') {
-                    $typeName = $this->labelToType($labelName);
-                    if (!isset($tags[$typeName])) {
-                        $tags[$typeName] = array();
-                    }
-                    $tags[$typeName][] = $tagRelation;
-                }
-            }
+        foreach ($result as $row) {
+            $tags += $this->buildTags($row);
         }
 
         return $tags;
-    }
-
-    /**
-     * @param $id
-     * @param $profileType
-     * @return Node
-     */
-    protected function getProfileOptionNode($id, $profileType)
-    {
-        $profileLabelName = $this->typeToLabel($profileType);
-
-        $params = array(
-            'id' => $id,
-        );
-
-        $template = "MATCH (profileOption:" . $profileLabelName . ")"
-            . " WHERE profileOption.id = {id} "
-            . " RETURN profileOption "
-            . " LIMIT 1;";
-
-        $query = new Query(
-            $this->client,
-            $template,
-            $params
-        );
-
-        $result = $query->getResultSet();
-
-        return $result[0]['profileOption'];
-    }
-
-    /**
-     * @param $tagName
-     * @param $tagType
-     * @return Node
-     * @throws \Everyman\Neo4j\Exception
-     */
-    protected function getProfileTagNode($tagName, $tagType)
-    {
-        $tagLabelName = $this->typeToLabel($tagType);
-
-        $params = array(
-            'name' => $tagName,
-        );
-
-        $template = "MATCH (tag:" . $tagLabelName . ")"
-            . " WHERE tag.name = {name} "
-            . " RETURN tag "
-            . " LIMIT 1;";
-
-        $query = new Query(
-            $this->client,
-            $template,
-            $params
-        );
-
-        $result = $query->getResultSet();
-
-        if (count($result) < 1) {
-            $tagNode = $this->client->makeNode();
-            $tagNode->setProperty('name', $tagName);
-            $tagNode->save();
-
-            $genericLabel = $this->client->makeLabel('ProfileTag');
-            $specificLabel = $this->client->makeLabel($tagLabelName);
-            $tagNode->addLabels(array($genericLabel, $specificLabel));
-        } else {
-            $tagNode = $result[0]['tag'];
-        }
-
-        return $tagNode;
     }
 
     protected function getTopProfileTags($tagType)
@@ -650,24 +588,17 @@ class ProfileModel
 
         $tagLabelName = $this->typeToLabel($tagType);
 
-        $params = array();
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(tag:' . $tagLabelName . ')-[tagged:TAGGED]-(profile:Profile)')
+            ->returns('tag.name AS tag, count(*) as count')
+            ->limit(5);
 
-        $template = "MATCH (tag:" . $tagLabelName . ")-[tagged:TAGGED]-(profile:Profile)"
-            . " RETURN tag.name AS tag, count(*) as count"
-            . " ORDER BY count DESC"
-            . " LIMIT 5;";
-
-        $query = new Query(
-            $this->client,
-            $template,
-            $params
-        );
-
-        $tags = array();
+        $query = $qb->getQuery();
         $result = $query->getResultSet();
 
+        $tags = array();
         foreach ($result as $row) {
-            /* @var $row \Everyman\Neo4j\Query\Row */
+            /* @var $row Row */
             $tags[] = $row->offsetGet('tag');
         }
 

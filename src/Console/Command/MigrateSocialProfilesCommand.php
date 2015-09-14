@@ -2,6 +2,7 @@
 
 namespace Console\Command;
 
+use Console\ApplicationAwareCommand;
 use Model\User\PrivacyModel;
 use Silex\Application;
 use Doctrine\DBAL\Connection;
@@ -13,7 +14,8 @@ class MigrateSocialProfilesCommand extends ApplicationAwareCommand
 {
     protected function configure()
     {
-        $this->setName('social-profiles:migrate')->setDescription('Migrate profiles from social to brain');
+        $this->setName('migrate:social-profiles')
+            ->setDescription('Migrate profiles from social to brain');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)

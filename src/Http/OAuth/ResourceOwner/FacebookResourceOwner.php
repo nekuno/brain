@@ -22,7 +22,7 @@ FacebookResourceOwner extends Oauth2GenericResourceOwner
         parent::configureOptions($resolver);
 
         $resolver->setDefaults(array(
-            'base_url' => 'https://graph.facebook.com/v2.0/',
+            'base_url' => 'https://graph.facebook.com/v2.4/',
         ));
     }
 }

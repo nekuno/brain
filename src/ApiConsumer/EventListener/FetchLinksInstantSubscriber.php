@@ -34,7 +34,6 @@ class FetchLinksInstantSubscriber implements EventSubscriberInterface
 
     public function __construct(ClientInterface $client, $host)
     {
-
         $this->client = $client;
         $this->host = $host;
     }
