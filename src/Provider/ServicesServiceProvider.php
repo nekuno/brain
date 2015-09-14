@@ -38,12 +38,6 @@ class ServicesServiceProvider implements ServiceProviderInterface
             }
         );
 
-        $app['instant.client'] = $app->share(
-            function (Application $app) {
-                return new Client(array('base_url' => $app['instant.host']));
-            }
-        );
-
         $app['emailNotification.service'] = $app->share(
             function (Application $app) {
                 return new \Service\EmailNotifications($app['mailer'], $app['orm.ems']['mysql_brain'], $app['twig']);

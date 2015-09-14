@@ -28,6 +28,18 @@ class GuzzleServiceProvider implements ServiceProviderInterface
                 return $c;
             }
         );
+
+        $app['instant.client'] = $app->share(
+            function (Application $app) {
+
+                $c = new Client(array('base_url' => $app['instant.host']));
+                if ($app['guzzle.verify']) {
+                    $c->setDefaultOption('verify', $app['guzzle.verify']);
+                }
+
+                return $c;
+            }
+        );
     }
 
     public function boot(Application $app)
