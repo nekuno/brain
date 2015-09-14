@@ -84,7 +84,8 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                 (CASE WHEN HAS(m.matching_questions) THEN m.matching_questions ELSE 0 END) AS matching_questions,
                 (CASE WHEN HAS(s.similarity) THEN s.similarity ELSE 0 END) AS similarity'
             )
-            ->match('(anyUser)<-[:PROFILE_OF]-(p:Profile)-[:LOCATION]-(l:Location)')
+            ->match('(anyUser)<-[:PROFILE_OF]-(p:Profile)')
+            ->optionalMatch('(p)-[:LOCATION]->(l:Location)')
             ->where(
                 array_merge(
                     array('(matching_questions > 0 OR similarity > 0)'),
@@ -178,7 +179,8 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
             (CASE WHEN HAS(m.matching_questions) THEN m.matching_questions ELSE 0 END) AS matching_questions,
             (CASE WHEN HAS(s.similarity) THEN s.similarity ELSE 0 END) AS similarity'
             )
-            ->match('(anyUser)<-[:PROFILE_OF]-(p:Profile)-[:LOCATION]->(l:Location)')
+            ->match('(anyUser)<-[:PROFILE_OF]-(p:Profile)')
+            ->optionalMatch('(p)-[:LOCATION]->(l:Location)')
             ->where(
                 array_merge(
                     array('(matching_questions > 0 OR similarity > 0)'),
