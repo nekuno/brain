@@ -84,8 +84,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                 (CASE WHEN HAS(m.matching_questions) THEN m.matching_questions ELSE 0 END) AS matching_questions,
                 (CASE WHEN HAS(s.similarity) THEN s.similarity ELSE 0 END) AS similarity'
             )
-            ->match('(anyUser)<-[:PROFILE_OF]-(p:Profile)')
-            ->optionalMatch('(p)-[:LOCATION]->(l:Location)')
+            ->match('(anyUser)<-[:PROFILE_OF]-(p:Profile)-[:LOCATION]-(l:Location)')
             ->where(
                 array_merge(
                     array('(matching_questions > 0 OR similarity > 0)'),
@@ -114,8 +113,8 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
             ->orderBy($orderQuery)
             ->skip('{ offset }')
             ->limit('{ limit }');
-        $query = $qb->getQuery();
 
+        $query = $qb->getQuery();
         $result = $query->getResultSet();
 
         foreach ($result as $row) {
@@ -179,7 +178,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
             (CASE WHEN HAS(m.matching_questions) THEN m.matching_questions ELSE 0 END) AS matching_questions,
             (CASE WHEN HAS(s.similarity) THEN s.similarity ELSE 0 END) AS similarity'
             )
-            ->match('(anyUser)<-[:PROFILE_OF]-(p:Profile)')
+            ->match('(anyUser)<-[:PROFILE_OF]-(p:Profile)-[:LOCATION]->(l:Location)')
             ->where(
                 array_merge(
                     array('(matching_questions > 0 OR similarity > 0)'),
@@ -237,6 +236,13 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                         $max = $value['max'];
                         $conditions[] = "('$min' <= p.$name AND p.$name <= '$max')";
                         break;
+                    case 'location':
+                        $distance = (int)$value['distance'];
+                        $latitude = (float)$value['location']['latitude'];
+                        $longitude = (float)$value['location']['longitude'];
+                        $conditions[] = "(has(l.latitude) AND has(l.longitude) AND
+                        " . $distance . " >= toInt(6371 * acos( cos( radians(" . $latitude . ") ) * cos( radians(l.latitude) ) * cos( radians(l.longitude) - radians(" . $longitude . ") ) + sin( radians(" . $latitude . ") ) * sin( radians(l.latitude) ) )))";
+                        break;
                     case 'boolean':
                         $conditions[] = "p.$name = true";
                         break;
@@ -248,8 +254,6 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                     case 'tags':
                         $tagLabelName = ucfirst($name);
                         $matches[] = "(p)<-[:TAGGED]-(tag$name:$tagLabelName) WHERE tag$name.name = '$value'";
-                        break;
-                    case 'location':
                         break;
                 }
             }
