@@ -2,6 +2,7 @@
 
 namespace Http\OAuth\ResourceOwner;
 
+use ApiConsumer\Event\OAuthTokenEvent;
 use GuzzleHttp\Exception\RequestException;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
@@ -67,11 +68,18 @@ FacebookResourceOwner extends Oauth2GenericResourceOwner
         }
 
         $request = $this->getAPIRequest($getAccessURL, $query);
-        var_dump($request->getUrl());
         $response = $this->httpClient->send($request);
         $data = $response->json();
         return array_merge($data, array('refreshToken' => $data['machine_id']));
 
+    }
+
+    public function forceRefreshAccessToken($token)
+    {
+        $data = $this->refreshAccessToken($token);
+        $token = $this->addOauthData($data, $token);
+        $event = new OAuthTokenEvent($token);
+        $this->dispatcher->dispatch(\AppEvents::TOKEN_REFRESHED, $event);
     }
 
 }

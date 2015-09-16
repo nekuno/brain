@@ -132,14 +132,7 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
                 throw $e;
             }
 
-            if (!$data['access_token']) {
-                $this->notifyUserByEmail($token);
-            }
-
-            $token['oauthToken'] = $data['access_token'];
-            $token['createdTime'] = time();
-            $token['expireTime'] = $token['createdTime'] + $data['expires_in'] - $this->expire_time_margin;
-            $token['refreshToken'] = isset($data['refreshToken']) ? $data['refreshToken'] : null;
+            $token = $this->addOauthData($data, $token);
             $event = new OAuthTokenEvent($token);
             $this->dispatcher->dispatch(\AppEvents::TOKEN_REFRESHED, $event);
         }
@@ -153,6 +146,20 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
         }
 
         return $this->getResponseContent($response);
+    }
+
+    protected function addOauthData($data, $token)
+    {
+        if (!$data['access_token']) {
+            $this->notifyUserByEmail($token);
+        }
+
+        $token['oauthToken'] = $data['access_token'];
+        $token['createdTime'] = time();
+        $token['expireTime'] = $token['createdTime'] + $data['expires_in'] - $this->expire_time_margin;
+        $token['refreshToken'] = isset($data['refreshToken']) ? $data['refreshToken'] : null;
+
+        return $token;
     }
 
     /**
@@ -197,6 +204,11 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
      *
      */
     public function refreshAccessToken($token, array $extraParameters = array())
+    {
+        throw new \Exception('OAuth error: "Method unsupported."');
+    }
+
+    public function forceRefreshAccessToken($token)
     {
         throw new \Exception('OAuth error: "Method unsupported."');
     }
