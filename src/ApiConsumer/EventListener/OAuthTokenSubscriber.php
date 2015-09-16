@@ -122,7 +122,6 @@ class OAuthTokenSubscriber implements EventSubscriberInterface
                 $user['user_id']
             );
         }
-        var_dump('refreshed');
     }
 
     /**
