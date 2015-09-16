@@ -92,11 +92,14 @@ class RelationsModel
         $qb->match('(from:User)-[r:' . $relation . ']->(to:User)')
             ->where('from.qnoow_id = { from }')
             ->setParameter('from', (integer)$from)
-            ->returns('from', 'to', 'r');
+            ->returns('COUNT(r) as count');
 
         $result = $qb->getQuery()->getResultSet();
 
-        return count($result);
+        /* @var $row Row */
+        $row = $result->current();
+
+        return  $row->offsetGet('count');
     }
 
     public function countTo($to, $relation)
@@ -108,11 +111,14 @@ class RelationsModel
         $qb->match('(from:User)-[r:' . $relation . ']->(to:User)')
             ->where('to.qnoow_id = { to }')
             ->setParameter('to', (integer)$to)
-            ->returns('from', 'to', 'r');
+            ->returns('COUNT(r) as count');
 
         $result = $qb->getQuery()->getResultSet();
 
-        return count($result);
+        /* @var $row Row */
+        $row = $result->current();
+
+        return  $row->offsetGet('count');
     }
 
     public function create($from, $to, $relation, $data = array())
