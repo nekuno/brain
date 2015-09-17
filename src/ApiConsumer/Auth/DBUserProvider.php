@@ -56,7 +56,7 @@ class DBUserProvider implements UserProviderInterface
     /**
      * { @inheritdoc }
      */
-    public function updateAccessToken($resource, $userId, $acessToken, $creationTime, $expirationTime)
+    public function updateAccessToken($resource, $userId, $accessToken, $creationTime, $expirationTime)
     {
 
         $sql = "UPDATE  user_access_tokens " .
@@ -67,7 +67,7 @@ class DBUserProvider implements UserProviderInterface
             "user_id = :userId;";
 
         $params = array(
-            ':accessToken' => $acessToken,
+            ':accessToken' => $accessToken,
             ':creationTime' => $creationTime,
             ':expirationTime' => $expirationTime,
             ':resource' => $resource,
@@ -82,4 +82,31 @@ class DBUserProvider implements UserProviderInterface
             throw $e;
         }
     }
+
+    /**
+     * { @inheritdoc }
+     */
+    public function updateRefreshToken($refreshToken, $resource, $userId)
+    {
+        $sql = "UPDATE  user_access_tokens " .
+            " SET refreshToken = :refreshToken " .
+            " WHERE resourceOwner = :resource AND " .
+            "user_id = :userId;";
+
+        $params = array(
+            ':refreshToken' => $refreshToken,
+            ':resource' => $resource,
+            ':userId' => $userId,
+        );
+
+        try {
+
+            return $this->connectionSocial->executeUpdate($sql, $params);
+
+        } catch (\Exception $e) {
+            throw $e;
+        }
+    }
+
+
 }

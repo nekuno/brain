@@ -25,8 +25,9 @@ class GoogleResourceOwner extends Oauth2GenericResourceOwner
         ));
     }
 
-    public function refreshAccessToken($refreshToken, array $extraParameters = array())
+    public function refreshAccessToken($token, array $extraParameters = array())
     {
+        $refreshToken = $token['refreshToken'];
         $url = 'https://accounts.google.com/o/oauth2/token';
         $parameters = array(
             'refresh_token' => $refreshToken,
