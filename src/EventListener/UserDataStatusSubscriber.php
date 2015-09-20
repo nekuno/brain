@@ -73,6 +73,11 @@ class UserDataStatusSubscriber implements EventSubscriberInterface
         $user = $event->getUser();
         $resourceOwner = $event->getResourceOwner();
 
+        if ($this->entityManager->getConnection()->ping() === false) {
+            $this->entityManager->getConnection()->close();
+            $this->entityManager->getConnection()->connect();
+        }
+
         $repository = $this->entityManager->getRepository('\Model\Entity\DataStatus');
         $dataStatus = $repository->findOneBy(array('userId' => $user, 'resourceOwner' => $resourceOwner));
 
