@@ -55,7 +55,8 @@ class LinksCalculatePredictionCommand extends ApplicationAwareCommand
             if (!$recalculate) {
                 foreach ($users as $user) {
 
-                    $linkIds = $linkModel->getPredictedContentForAUser($user['qnoow_id'], $limitContent, $limitUsers, false);
+                    $filters = array('affinity' => false);
+                    $linkIds = $linkModel->getPredictedContentForAUser($user['qnoow_id'], $limitContent, $limitUsers, $filters);
                     foreach ($linkIds as $link) {
 
                         $linkId = $link['id'];

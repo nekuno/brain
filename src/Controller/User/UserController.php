@@ -4,6 +4,7 @@ namespace Controller\User;
 
 use Model\User\ContentPaginatedModel;
 use Model\User\GroupModel;
+use Model\LinkModel;
 use Model\User\ProfileModel;
 use Model\User\RateModel;
 use Model\UserModel;
@@ -421,7 +422,7 @@ class UserController
         $userId = $request->get('id');
         $rate = $request->request->get('rate');
         $data = $request->request->all();
-        if (isset($data['linkId']) && !isset($data['id'])){
+        if (isset($data['linkId']) && !isset($data['id'])) {
             $data['id'] = $data['linkId'];
         }
 
@@ -432,7 +433,7 @@ class UserController
         try {
             /* @var RateModel $model */
             $model = $app['users.rate.model'];
-            $result = $model->userRateLink($userId,$data, $rate);
+            $result = $model->userRateLink($userId, $data, $rate);
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;
@@ -560,11 +561,20 @@ class UserController
             return $app->json(array(), 500);
         }
 
+        $needContent = $this->needMoreContent($request, $paginator, $result);
+        if ($needContent) {
+            /* @var $linkModel LinkModel */
+            $linkModel = $app['links.model'];
+            $newContent = $linkModel->getLivePredictedContent($id, $needContent);
+            $result['items'] = array_merge($result['items'], $newContent);
+        }
+
         $newForeign = 0;
-        foreach ($result['items'] as $item) {
-            if ($item['match'] == 0) {
-                $newForeign++;
-            }
+        $needContent = $this->needMoreContent($request, $paginator, $result);
+        if ($needContent) {
+            $foreignContent = $model->getForeignContent($filters, $needContent);
+            $result['items'] = array_merge($result['items'], $foreignContent);
+            $newForeign = count($foreignContent);
         }
 
         if ($result['pagination']['nextLink'] != null) {
@@ -580,6 +590,21 @@ class UserController
         }
 
         return $app->json($result, !empty($result) ? 201 : 200);
+    }
+
+    /**
+     * @param $request Request
+     * @param $paginator Paginator
+     * @param $result array
+     * @return int
+     */
+    protected function needMoreContent($request, $paginator, $result)
+    {
+        $moreContent = $request->get('limit', $paginator->getDefaultLimit()) - count($result['items']);
+        if ($moreContent <= 0) {
+            return 0;
+        }
+        return $moreContent;
     }
 
     /**

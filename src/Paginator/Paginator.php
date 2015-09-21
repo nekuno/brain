@@ -114,4 +114,12 @@ class Paginator
 
         return $nextLink;
     }
+
+    /**
+     * @return int
+     */
+    public function getDefaultLimit()
+    {
+        return $this->defaultLimit;
+    }
 }

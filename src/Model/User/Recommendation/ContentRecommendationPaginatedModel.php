@@ -2,6 +2,8 @@
 
 namespace Model\User\Recommendation;
 
+use Everyman\Neo4j\Node;
+use Everyman\Neo4j\Query\Row;
 use Model\User\Affinity\AffinityModel;
 use Paginator\PaginatedInterface;
 use Model\Neo4j\GraphManager;
@@ -25,6 +27,7 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
 
     /**
      * @param GraphManager $gm
+     * @param AffinityModel $am
      */
     public function __construct(GraphManager $gm, AffinityModel $am)
     {
@@ -85,11 +88,6 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
             $linkType = $filters['type'];
         }
 
-        $foreign=0;
-        if (isset($filters['foreign'])){
-            $foreign=$filters['foreign'];
-        }
-
         $qb = $this->gm->createQueryBuilder();
 
         $qb->match('(user:User {qnoow_id: { userId }})-[affinity:AFFINITY]->(content:' . $linkType . ')')
@@ -121,72 +119,78 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
         $query = $qb->getQuery();
         $result = $query->getResultSet();
 
-        foreach ($result as $row) {
-            $content = array();
-            $content['id'] = $row['id'];
-            $content['url'] = $row['content']->getProperty('url');
-            $content['title'] = $row['content']->getProperty('title');
-            $content['description'] = $row['content']->getProperty('description');
-            $content['thumbnail'] = $row['content']->getProperty('thumbnail');
-            $content['synonymous'] = array();
-            if (isset($row['synonymous'])) {
-                foreach ($row['synonymous'] as $synonymousLink) {
-                    /* @var $synonymousLink Node */
-                    $synonymous = array();
-                    $synonymous['id'] = $synonymousLink->getId();
-                    $synonymous['url'] = $synonymousLink->getProperty('url');
-                    $synonymous['title'] = $synonymousLink->getProperty('title');
-                    $synonymous['thumbnail'] = $synonymousLink->getProperty('thumbnail');
+        $response = array_merge($response, $this->buildResponseFromResult($result, $id));
 
-                    $content['synonymous'][] = $synonymous;
-                }
-            }
-            foreach ($row['tags'] as $tag) {
-                $content['tags'][] = $tag;
-            }
-            foreach ($row['types'] as $type) {
-                $content['types'][] = $type;
-            }
-            if ($row['content']->getProperty('embed_type')) {
-                $content['embed']['type'] = $row['content']->getProperty('embed_type');
-                $content['embed']['id'] = $row['content']->getProperty('embed_id');
-            }
+        return $response;
+    }
 
-            $content['match'] = $row['affinity']->getProperty('affinity');
+    /**
+     * @param $filters
+     * @param $limit
+     * @return array
+     * @throws \Exception
+     * @throws \Model\Neo4j\Neo4jException
+     */
+    public function getForeignContent($filters, $limit)
+    {
 
-            $response[] = $content;
+        $id = $filters['id'];
+
+        if ((integer)$limit == 0) {
+            return array();
         }
 
-        // If there is not enough content, we pick recent suitable content and add it to response
-        if (false && (integer)$limit - count($response) > 0) {
+        $linkType = 'Link';
+        if (isset($filters['type'])) {
+            $linkType = $filters['type'];
+        }
+
+        $foreign = 0;
+        if (isset($filters['foreign'])) {
+            $foreign = $filters['foreign'];
+        }
+
+        $internalLimit = $limit;
+        if (isset($filters['type']) || isset($filters['tag'])) {
+            $internalLimit = 10 * $limit;
+        }
+
+        $params = array(
+            'userId' => (integer)$id,
+            'limit' => (integer)$limit,
+            'offset' => (integer)$foreign,
+
+            'internalOffset' => 0,
+            'internalLimit' => $internalLimit,
+        );
+
+        $response = array();
+        while (count($response) < $limit) {
 
             $qb = $this->gm->createQueryBuilder();
-
-            $params = array(
-                'userId' => (integer)$id,
-                'limit' => (integer)$limit - count($response),
-                'offset' => (integer)$foreign
-            );
-
             $qb->match('(user:User {qnoow_id: { userId }})');
+            $qb->match('(content:' . $linkType . ')');
+            $qb->with('user', 'content')
+                ->orderBy('content.timestamp DESC')
+                ->skip('{internalOffset}')
+                ->limit('{internalLimit}');
 
             if (isset($filters['tag'])) {
-                $qb->match('(content:' . $linkType . ')-[:TAGGED]->(filterTag:Tag)')
+                $qb->match('(content)-[:TAGGED]->(filterTag:Tag)')
                     ->where('filterTag.name = { tag }', 'NOT (user)-[:AFFINITY|:LIKES|:DISLIKES]->(content)');
 
                 $params['tag'] = $filters['tag'];
             } else {
-                $qb->match('(content:' . $linkType . ')')
-                    ->where('NOT (user)-[:AFFINITY|:LIKES|:DISLIKES]->(content)');
+                $qb->match('content');
+                $qb->where('NOT (user)-[:AFFINITY|:LIKES|:DISLIKES]->(content)');
             }
 
             $qb->with('content')
-                ->orderBy('content.timestamp DESC')
                 ->skip('{offset}')
                 ->limit('{ limit }');
             $qb->setParameters($params);
             $qb->optionalMatch('(content)-[:TAGGED]->(tag:Tag)')
-                ->optionalMatch("(content)-[:SYNONYMOUS]->(synonymousLink:Link)")
+                ->optionalMatch('(content)-[:SYNONYMOUS]->(synonymousLink:Link)')
                 ->returns(
                     'id(content) as id',
                     'content',
@@ -198,43 +202,9 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
             $query = $qb->getQuery();
             $result = $query->getResultSet();
 
-            foreach ($result as $row) {
-                $content = array();
-                $content['id'] = $row['id'];
-                $content['url'] = $row['content']->getProperty('url');
-                $content['title'] = $row['content']->getProperty('title');
-                $content['description'] = $row['content']->getProperty('description');
-                $content['thumbnail'] = $row['content']->getProperty('thumbnail');
-                $content['synonymous'] = array();
-                if (isset($row['synonymous'])) {
-                    foreach ($row['synonymous'] as $synonymousLink) {
-                        /* @var $synonymousLink Node */
-                        $synonymous = array();
-                        $synonymous['id'] = $synonymousLink->getId();
-                        $synonymous['url'] = $synonymousLink->getProperty('url');
-                        $synonymous['title'] = $synonymousLink->getProperty('title');
-                        $synonymous['thumbnail'] = $synonymousLink->getProperty('thumbnail');
+            $response = array_merge($this->buildResponseFromResult($result, $id));
 
-                        $content['synonymous'][] = $synonymous;
-                    }
-                }
-                foreach ($row['tags'] as $tag) {
-                    $content['tags'][] = $tag;
-                }
-                foreach ($row['types'] as $type) {
-                    $content['types'][] = $type;
-                }
-                if ($row['content']->getProperty('embed_type')) {
-                    $content['embed']['type'] = $row['content']->getProperty('embed_type');
-                    $content['embed']['id'] = $row['content']->getProperty('embed_id');
-                }
-
-                $affinity = $this->am->getAffinity((integer)$id, $row['id']);
-                $content['match'] = $affinity['affinity'];
-
-                $response[] = $content;
-
-            }
+            $params['internalOffset'] += 100;
         }
 
         return $response;
@@ -285,5 +255,54 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
         }
 
         return $count;
+    }
+
+    public function buildResponseFromResult($result, $id)
+    {
+        $response = array();
+
+        /** @var Row $row */
+        foreach ($result as $row) {
+            $content = array();
+            $content['id'] = $row->offsetGet('id');
+
+            /** @var Node $contentNode */
+            $contentNode = $row->offsetGet('content');
+            $content['url'] = $contentNode->getProperty('url');
+            $content['title'] = $contentNode->getProperty('title');
+            $content['description'] = $contentNode->getProperty('description');
+            $content['thumbnail'] = $contentNode->getProperty('thumbnail');
+            $content['synonymous'] = array();
+            if ($row->offsetGet('synonymous')) {
+                foreach ($row->offsetGet('synonymous') as $synonymousLink) {
+                    /* @var $synonymousLink Node */
+                    $synonymous = array();
+                    $synonymous['id'] = $synonymousLink->getId();
+                    $synonymous['url'] = $synonymousLink->getProperty('url');
+                    $synonymous['title'] = $synonymousLink->getProperty('title');
+                    $synonymous['thumbnail'] = $synonymousLink->getProperty('thumbnail');
+
+                    $content['synonymous'][] = $synonymous;
+                }
+            }
+            foreach ($row['tags'] as $tag) {
+                $content['tags'][] = $tag;
+            }
+            foreach ($row['types'] as $type) {
+                $content['types'][] = $type;
+            }
+            if ($contentNode->getProperty('embed_type')) {
+                $content['embed']['type'] = $contentNode->getProperty('embed_type');
+                $content['embed']['id'] = $contentNode->getProperty('embed_id');
+            }
+
+            $affinity = $this->am->getAffinity((integer)$id, $row['id']);
+            $content['match'] = $affinity['affinity'];
+
+            $response[] = $content;
+
+        }
+
+        return $response;
     }
 } 

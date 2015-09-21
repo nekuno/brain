@@ -58,7 +58,8 @@ class AffinityRecalculations
     {
         $user = $this->userModel->getById((integer)$userId);
 
-        $links = $this->linkModel->getPredictedContentForAUser($userId, (integer)$limitContent, (integer)$limitUsers, true);
+        $filters = array('affinity' => true);
+        $links = $this->linkModel->getPredictedContentForAUser($userId, (integer)$limitContent, (integer)$limitUsers, $filters);
 
         $affinities = array();
         $linksToEmail = array();
