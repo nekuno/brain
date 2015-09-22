@@ -573,8 +573,8 @@ class UserController
         $needContent = $this->needMoreContent($request, $paginator, $result);
         if ($needContent) {
             $foreignContent = $model->getForeignContent($filters, $needContent);
-            $result['items'] = array_merge($result['items'], $foreignContent);
-            $newForeign = count($foreignContent);
+            $result['items'] = array_merge($result['items'], $foreignContent['items']);
+            $newForeign = $foreignContent['foreign'];
         }
 
         if ($result['pagination']['nextLink'] != null) {

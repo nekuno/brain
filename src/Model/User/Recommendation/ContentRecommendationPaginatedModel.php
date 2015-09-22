@@ -163,9 +163,11 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
             'internalOffset' => 0,
             'internalLimit' => $internalLimit,
         );
+        $internalPaginationLimit = $foreign + 1000 * $internalLimit;
 
-        $response = array();
-        while (count($response) < $limit) {
+        $items = array();
+
+        while (count($items) < $limit && $params['internalOffset'] < $internalPaginationLimit) {
 
             $qb = $this->gm->createQueryBuilder();
             $qb->match('(user:User {qnoow_id: { userId }})');
@@ -202,10 +204,13 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
             $query = $qb->getQuery();
             $result = $query->getResultSet();
 
-            $response = array_merge($this->buildResponseFromResult($result, $id));
+            $items = array_merge($items, $this->buildResponseFromResult($result, $id));
 
             $params['internalOffset'] += 100;
         }
+
+        $response['foreign'] = $params['internalOffset'];
+        $response['items'] = $items;
 
         return $response;
     }
