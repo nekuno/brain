@@ -50,8 +50,8 @@ class ServicesServiceProvider implements ServiceProviderInterface
                 function (Translator $translator) {
 
                     $translator->addLoader('yaml', new YamlFileLoader());
-                    $translator->addResource('yaml', __DIR__ . '/locales/en.yml', 'en');
-                    $translator->addResource('yaml', __DIR__ . '/locales/es.yml', 'es');
+                    $translator->addResource('yaml', '../locales/en.yml', 'en');
+                    $translator->addResource('yaml', '../locales/es.yml', 'es');
 
                     return $translator;
                 }
