@@ -212,6 +212,38 @@ class AnswerModel
     }
 
     /**
+     * @param $userId
+     * @param array $answer
+     * @return int
+     * @throws \Exception
+     * @throws \Model\Neo4j\Neo4jException
+     */
+    public function deleteUserAnswer($userId, array $answer)
+    {
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->setParameters(array(
+            'userId' => $userId,
+            'answerId' => $answer['answerId'],
+        ));
+
+        $qb->match('(a:Answer)','(u:User)')
+            ->where('(id(a) = {answerId})', '(u.qnoow_id = {userId})')
+            ->with('a','u')
+            ->match('(u)-[ua:ANSWERS]->(a)')
+            ->delete('ua')
+            ->returns('count(ua) as deleted');
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        /* @var $row Row */
+        $row = $result->current();
+
+        return ($row->offsetGet('deleted'));
+
+    }
+
+    /**
      * @param array $data
      * @param bool $userRequired
      */

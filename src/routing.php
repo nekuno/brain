@@ -74,6 +74,7 @@ $app->get('/users/{userId}/answers', 'users.answers.controller:indexAction');
 $app->post('/users/{userId}/answers', 'users.answers.controller:createAction'); // TODO: rename to answerAction
 $app->get('/users/{userId}/answers/count', 'users.answers.controller:countAction');
 $app->get('/users/{userId}/answers/{questionId}', 'users.answers.controller:getAnswerAction');
+$app->delete('/users/{userId}/answers/{questionId}', 'users.answers.controller:deleteAnswerAction');
 $app->post('/users/{userId}/answers/{questionId}', 'users.answers.controller:updateAction'); // TODO: Remove this
 $app->post('/answers/validate', 'users.answers.controller:validateAction');
 
