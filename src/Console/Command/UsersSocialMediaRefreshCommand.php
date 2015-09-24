@@ -7,14 +7,12 @@ namespace Console\Command;
 use ApiConsumer\Auth\DBUserProvider;
 use Console\BaseCommand;
 use Http\OAuth\ResourceOwner\AbstractResourceOwner;
-use Http\OAuth\ResourceOwner\ResourceOwnerInterface;
 use Model\Exception\ValidationException;
 use Silex\Application;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Model\User\LookUpModel;
 use Model\UserModel;
 
 class UsersSocialMediaRefreshCommand extends BaseCommand
