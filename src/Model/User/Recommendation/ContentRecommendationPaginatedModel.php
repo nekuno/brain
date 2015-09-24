@@ -129,6 +129,7 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
             $content['description'] = $row['content']->getProperty('description');
             $content['thumbnail'] = $row['content']->getProperty('thumbnail');
             $content['synonymous'] = array();
+            $content['tags'] = array();
             if (isset($row['synonymous'])) {
                 foreach ($row['synonymous'] as $synonymousLink) {
                     /* @var $synonymousLink Node */
@@ -206,6 +207,7 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
                 $content['description'] = $row['content']->getProperty('description');
                 $content['thumbnail'] = $row['content']->getProperty('thumbnail');
                 $content['synonymous'] = array();
+                $content['tags'] = array();
                 if (isset($row['synonymous'])) {
                     foreach ($row['synonymous'] as $synonymousLink) {
                         /* @var $synonymousLink Node */
