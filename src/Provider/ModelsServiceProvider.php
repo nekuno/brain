@@ -25,6 +25,7 @@ use Model\User\Recommendation\ContentRecommendationTagModel;
 use Model\User\Recommendation\UserRecommendationPaginatedModel;
 use Model\User\RelationsModel;
 use Model\User\Similarity\SimilarityModel;
+use Model\User\TokensModel;
 use Model\UserModel;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
@@ -41,6 +42,13 @@ class ModelsServiceProvider implements ServiceProviderInterface
             function ($app) {
 
                 return new UserModel($app['neo4j.graph_manager'], $app['dbs']['mysql_social'], $app['orm.ems']['mysql_brain'], $app['users.relations.model'], $app['fields']['user'], $app['locale.options']['default']);
+            }
+        );
+
+        $app['users.tokens.model'] = $app->share(
+            function ($app) {
+
+                return new TokensModel($app['neo4j.graph_manager']);
             }
         );
 
