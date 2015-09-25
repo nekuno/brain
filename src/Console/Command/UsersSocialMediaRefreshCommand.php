@@ -4,10 +4,10 @@
  */
 namespace Console\Command;
 
-use ApiConsumer\Auth\DBUserProvider;
 use Console\BaseCommand;
 use Http\OAuth\ResourceOwner\AbstractResourceOwner;
 use Model\Exception\ValidationException;
+use Model\User\TokensModel;
 use Silex\Application;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -41,21 +41,22 @@ class UsersSocialMediaRefreshCommand extends BaseCommand
         /* @var $resourceOwner AbstractResourceOwner */
         $resourceOwner = $this->app['api_consumer.resource_owner.' . $input->getArgument('service')];
 
-        /* @var $userProvider DBUserProvider */
-        $userProvider = $this->app['api_consumer.user_provider'];
+        /* @var $tm TokensModel */
+        $tm = $this->app['users.tokens.model'];
 
         foreach ($users as $user) {
+
             if (isset($user['qnoow_id'])) {
 
                 try {
-                    $token = $userProvider->getUsersByResource($input->getArgument('service'),$user['qnoow_id']);
-                    if (!$token) {
+                    $tokens = $tm->getByUserOrResource($user['qnoow_id'], $input->getArgument('service'));
+                    if (!$tokens) {
                         continue;
                     } else {
-                        $token = $token[0];
+                        $token = current($tokens);
                     }
                     $resourceOwner->forceRefreshAccessToken($token);
-                    $this->displayMessage('Refreshed '.$input->getArgument('service').' token for user '.$user['qnoow_id']);
+                    $this->displayMessage('Refreshed ' . $input->getArgument('service') . ' token for user ' . $user['qnoow_id']);
 
                 } catch (ValidationException $e) {
                     $this->displayError($e->getMessage());

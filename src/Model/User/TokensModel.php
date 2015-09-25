@@ -41,7 +41,7 @@ class TokensModel
         $qb->match('(user:User)<-[:TOKEN_OF]-(token:Token)')
             ->where('user.qnoow_id = { id }')
             ->setParameter('id', (integer)$id)
-            ->returns('token');
+            ->returns('user', 'token');
 
         $result = $qb->getQuery()->getResultSet();
 
@@ -68,7 +68,7 @@ class TokensModel
             ->where('user.qnoow_id = { id }', 'token.resourceOwner = { resourceOwner }')
             ->setParameter('id', (integer)$id)
             ->setParameter('resourceOwner', $resourceOwner)
-            ->returns('token')
+            ->returns('user', 'token')
             ->limit(1);
 
         $query = $qb->getQuery();
@@ -115,7 +115,7 @@ class TokensModel
             ->setParameter('id', (integer)$id)
             ->merge('(user)<-[:TOKEN_OF]-(token:Token {createdTime: { createdTime }})')
             ->setParameter('createdTime', time())
-            ->returns('token');
+            ->returns('user', 'token');
 
         $query = $qb->getQuery();
 
@@ -254,14 +254,56 @@ class TokensModel
 
     }
 
+    /**
+     * @param int $id User id
+     * @param string $resourceOwner Resource owner
+     * @return array
+     */
+    public function getByUserOrResource($id = null, $resourceOwner = null)
+    {
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(user:User)<-[:TOKEN_OF]-(token:Token)');
+
+        if ($id || $resourceOwner) {
+
+            $wheres = array();
+            if ($id) {
+                $qb->setParameter('id', (integer)$id);
+                $wheres[] = 'user.qnoow_id = { id }';
+            }
+            if ($resourceOwner) {
+                $qb->setParameter('resourceOwner', $resourceOwner);
+                $wheres[] = 'token.resourceOwner = { resourceOwner }';
+            }
+
+            $qb->where($wheres);
+
+        }
+        $qb->returns('user', 'token')
+            ->orderBy('user.qnoow_id', 'token.resourceOwner');
+
+        $result = $qb->getQuery()->getResultSet();
+
+        $return = array();
+        /* @var $row Row */
+        foreach ($result as $row) {
+            $return[] = $this->build($row);
+        }
+
+        return $return;
+    }
+
     protected function build(Row $row)
     {
+        /* @var $user Node */
+        $user = $row->offsetGet('user');
         /* @var $node Node */
         $node = $row->offsetGet('token');
         $token = $node->getProperties();
         ksort($token);
 
-        return $token;
+        return array_merge(array('id' => $user->getProperty('qnoow_id')), $token);
     }
 
     protected function getUserAndTokenNodesById($id, $resourceOwner)

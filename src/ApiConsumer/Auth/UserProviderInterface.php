@@ -6,15 +6,6 @@ interface UserProviderInterface
 {
 
     /**
-     * Get users by resource owner
-     *
-     * @param $resource
-     * @param $userId
-     * @return mixed
-     */
-    public function getUsersByResource($resource, $userId = null);
-
-    /**
      * Update Oauth access token
      *
      * @param $resource

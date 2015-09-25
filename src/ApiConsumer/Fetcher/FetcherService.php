@@ -2,7 +2,6 @@
 
 namespace ApiConsumer\Fetcher;
 
-use ApiConsumer\Auth\UserProviderInterface;
 use ApiConsumer\Factory\FetcherFactory;
 use ApiConsumer\LinkProcessor\LinkProcessor;
 use Event\FetchEvent;
@@ -10,6 +9,7 @@ use Event\ProcessLinkEvent;
 use Event\ProcessLinksEvent;
 use Model\LinkModel;
 use Model\User\RateModel;
+use Model\User\TokensModel;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
@@ -27,9 +27,9 @@ class FetcherService implements LoggerAwareInterface
     protected $logger;
 
     /**
-     * @var UserProviderInterface
+     * @var TokensModel
      */
-    protected $userProvider;
+    protected $tm;
 
     /**
      * @var LinkProcessor
@@ -57,7 +57,7 @@ class FetcherService implements LoggerAwareInterface
     protected $options;
 
     /**
-     * @param UserProviderInterface $userProvider
+     * @param TokensModel $tm
      * @param LinkProcessor $linkProcessor
      * @param LinkModel $linkModel
      * @param RateModel $rateModel
@@ -66,17 +66,16 @@ class FetcherService implements LoggerAwareInterface
      * @param array $options
      */
     public function __construct(
-        UserProviderInterface $userProvider,
+        TokensModel $tm,
         LinkProcessor $linkProcessor,
         LinkModel $linkModel,
         RateModel $rateModel,
         FetcherFactory $fetcherFactory,
         EventDispatcher $dispatcher,
         array $options
-    )
-    {
+    ) {
 
-        $this->userProvider = $userProvider;
+        $this->tm = $tm;
         $this->linkProcessor = $linkProcessor;
         $this->linkModel = $linkModel;
         $this->rateModel = $rateModel;
@@ -107,11 +106,11 @@ class FetcherService implements LoggerAwareInterface
         $links = array();
         try {
 
-            $user = $this->userProvider->getUsersByResource($resourceOwner, $userId);
-            if (!$user) {
+            $tokens = $this->tm->getByUserOrResource($userId, $resourceOwner);
+            if (!$tokens) {
                 throw new \Exception('User not found');
             } else {
-                $user = $user[0];
+                $token = current($tokens);
             }
 
             $this->dispatcher->dispatch(\AppEvents::FETCH_START, new FetchEvent($userId, $resourceOwner));
@@ -121,7 +120,7 @@ class FetcherService implements LoggerAwareInterface
                 if ($fetcherConfig['resourceOwner'] === $resourceOwner) {
 
                     try {
-                        $links = array_merge($links, $this->fetcherFactory->build($fetcher)->fetchLinksFromUserFeed($user));
+                        $links = array_merge($links, $this->fetcherFactory->build($fetcher)->fetchLinksFromUserFeed($token));
                     } catch (\Exception $e) {
                         $this->logger->error(sprintf('Fetcher: Error fetching feed for user "%s" with fetcher "%s" from resource "%s". Reason: %s', $userId, $fetcher, $resourceOwner, $e->getMessage()));
                         continue;
@@ -138,9 +137,9 @@ class FetcherService implements LoggerAwareInterface
 
                     if ($resourceOwner == 'facebook') {
                         $link['resourceOwnerToken'] = array(
-                            'oauthToken' => $user['oauthToken'],
+                            'oauthToken' => $token['oauthToken'],
                             'createdTime' => time(),
-                            'expireTime' => $user['expireTime']
+                            'expireTime' => $token['expireTime']
                         );
                     };
 
@@ -150,7 +149,7 @@ class FetcherService implements LoggerAwareInterface
 
                     $linkCreated = $this->linkModel->addLink($linkProcessed);
 
-                    $linkProcessed['id']=$linkCreated['id'];
+                    $linkProcessed['id'] = $linkCreated['id'];
                     $this->rateModel->userRateLink($userId, $linkProcessed, RateModel::LIKE, false);
 
                     $links[$key] = $linkProcessed;

@@ -99,7 +99,7 @@ class ApiConsumerServiceProvider implements ServiceProviderInterface
             function ($app) {
 
                 $fetcher = new FetcherService(
-                    $app['api_consumer.user_provider'],
+                    $app['users.tokens.model'],
                     $app['api_consumer.link_processor'],
                     $app['links.model'],
                     $app['users.rate.model'],

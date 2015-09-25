@@ -58,8 +58,8 @@ class OAuthTokenSubscriber implements EventSubscriberInterface
     public static function getSubscribedEvents()
     {
         return array(
-            'token.refreshed' => array('onTokenRefreshed', 0),
-            'token.expired' => array('onTokenExpired', 0),
+            \AppEvents::TOKEN_REFRESHED => array('onTokenRefreshed', 0),
+            \AppEvents::TOKEN_EXPIRED => array('onTokenExpired', 0),
         );
     }
 

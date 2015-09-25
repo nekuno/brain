@@ -6,6 +6,7 @@ namespace Worker;
 use ApiConsumer\Auth\UserProviderInterface;
 use ApiConsumer\Fetcher\FetcherService;
 use Doctrine\DBAL\Connection;
+use Model\User\TokensModel;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Message\AMQPMessage;
 
@@ -22,9 +23,9 @@ class LinkProcessorWorker extends LoggerAwareWorker implements RabbitMQConsumerI
     protected $channel;
 
     /**
-     * @var UserProviderInterface
+     * @var TokensModel
      */
-    protected $userProvider;
+    protected $tm;
 
     /**
      * @var FetcherService
@@ -41,12 +42,12 @@ class LinkProcessorWorker extends LoggerAwareWorker implements RabbitMQConsumerI
      */
     protected $connectionBrain;
 
-    public function __construct(AMQPChannel $channel, FetcherService $fetcherService, UserProviderInterface $userProvider, Connection $connectionSocial, Connection $connectionBrain)
+    public function __construct(AMQPChannel $channel, FetcherService $fetcherService, TokensModel $tm, Connection $connectionSocial, Connection $connectionBrain)
     {
 
         $this->channel = $channel;
         $this->fetcherService = $fetcherService;
-        $this->userProvider = $userProvider;
+        $this->tm = $tm;
         $this->connectionSocial = $connectionSocial;
         $this->connectionBrain = $connectionBrain;
     }
@@ -94,12 +95,12 @@ class LinkProcessorWorker extends LoggerAwareWorker implements RabbitMQConsumerI
         $resourceOwner = $data['resourceOwner'];
         $userId = $data['userId'];
 
-        $user = $this->userProvider->getUsersByResource($resourceOwner, $userId);
+        $tokens = $this->tm->getByUserOrResource($userId, $resourceOwner);
 
-        if ($user) {
-            $user = $user[0];
+        if ($tokens) {
+            $token = current($tokens);
             try {
-                $this->fetcherService->fetch($user['id'], $resourceOwner);
+                $this->fetcherService->fetch($token['id'], $token['resourceOwner']);
             } catch (\Exception $e) {
                 $this->logger->error(sprintf('Worker -> %s', $e->getMessage()));
             }
