@@ -2,6 +2,7 @@
 
 namespace Model\User;
 
+use Doctrine\DBAL\Connection;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Exception\ValidationException;
@@ -17,11 +18,20 @@ class TokensModel
     CONST GOOGLE = 'google';
     CONST SPOTIFY = 'spotify';
 
+    /**
+     * @var GraphManager
+     */
     protected $gm;
+    /**
+     * @var Connection
+     */
+    protected $connectionSocial;
 
-    public function __construct(GraphManager $graphManager)
+    public function __construct(GraphManager $graphManager, Connection $connectionSocial)
     {
         $this->gm = $graphManager;
+        // TODO: Refactor and remove this dependency
+        $this->connectionSocial = $connectionSocial;
     }
 
     public static function getResourceOwners()
@@ -288,7 +298,19 @@ class TokensModel
         $return = array();
         /* @var $row Row */
         foreach ($result as $row) {
-            $return[] = $this->build($row);
+            /* @var $user Node */
+            $user = $row->offsetGet('user');
+            $userId = $user->getProperty('qnoow_id');
+            $ids = $this->connectionSocial
+                ->createQueryBuilder()
+                ->select('facebookID', 'googleID', 'twitterID', 'spotifyID')
+                ->from('users')
+                ->where('id = :id')
+                ->setParameter(':id', $userId)
+                ->execute()
+                ->fetch();
+
+            $return[] = array_merge($this->build($row), $ids);
         }
 
         return $return;

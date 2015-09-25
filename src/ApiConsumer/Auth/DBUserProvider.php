@@ -3,7 +3,6 @@
 namespace ApiConsumer\Auth;
 
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\DBALException;
 
 class DBUserProvider implements UserProviderInterface
 {

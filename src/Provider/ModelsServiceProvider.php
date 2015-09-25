@@ -48,7 +48,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.tokens.model'] = $app->share(
             function ($app) {
 
-                return new TokensModel($app['neo4j.graph_manager']);
+                return new TokensModel($app['neo4j.graph_manager'], $app['dbs']['mysql_social']);
             }
         );
 
