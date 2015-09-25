@@ -316,6 +316,66 @@ class TokensModel
         return $return;
     }
 
+    public function updateOauthToken($id, $resourceOwner, $oauthToken, $createdTime, $expireTime)
+    {
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(user:User)<-[:TOKEN_OF]-(token:Token)')
+            ->where('user.qnoow_id = { id }', 'token.resourceOwner = { resourceOwner }')
+            ->setParameter('id', (integer)$id)
+            ->setParameter('resourceOwner', $resourceOwner)
+            ->set('token.oauthToken = { oauthToken }', 'token.createdTime = { createdTime }', 'token.expireTime = { expireTime }')
+            ->setParameter('oauthToken', $oauthToken)
+            ->setParameter('createdTime', $createdTime)
+            ->setParameter('expireTime', $expireTime)
+            ->returns('user', 'token')
+            ->limit(1);
+
+        $query = $qb->getQuery();
+
+        $result = $query->getResultSet();
+
+        if (count($result) < 1) {
+            throw new NotFoundHttpException('Token not found');
+        }
+
+        /* @var $row Row */
+        $row = $result->current();
+
+        $token = $this->build($row);
+
+        return $token;
+    }
+
+    public function updateRefreshToken($id, $resourceOwner, $refreshToken)
+    {
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(user:User)<-[:TOKEN_OF]-(token:Token)')
+            ->where('user.qnoow_id = { id }', 'token.resourceOwner = { resourceOwner }')
+            ->setParameter('id', (integer)$id)
+            ->setParameter('resourceOwner', $resourceOwner)
+            ->set('token.refreshToken = { refreshToken }')
+            ->setParameter('refreshToken', $refreshToken)
+            ->returns('user', 'token')
+            ->limit(1);
+
+        $query = $qb->getQuery();
+
+        $result = $query->getResultSet();
+
+        if (count($result) < 1) {
+            throw new NotFoundHttpException('Token not found');
+        }
+
+        /* @var $row Row */
+        $row = $result->current();
+
+        $token = $this->build($row);
+
+        return $token;
+    }
+
     protected function build(Row $row)
     {
         /* @var $user Node */

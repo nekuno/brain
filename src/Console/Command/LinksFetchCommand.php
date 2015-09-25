@@ -2,7 +2,6 @@
 
 namespace Console\Command;
 
-use ApiConsumer\Auth\DBUserProvider;
 use ApiConsumer\EventListener\FetchLinksInstantSubscriber;
 use ApiConsumer\EventListener\FetchLinksSubscriber;
 use ApiConsumer\Fetcher\FetcherService;
