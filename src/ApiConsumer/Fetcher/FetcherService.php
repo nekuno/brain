@@ -138,7 +138,6 @@ class FetcherService implements LoggerAwareInterface
                     if ($resourceOwner == 'facebook') {
                         $link['resourceOwnerToken'] = array(
                             'oauthToken' => $token['oauthToken'],
-                            'createdTime' => time(),
                             'expireTime' => $token['expireTime']
                         );
                     };

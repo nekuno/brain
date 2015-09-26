@@ -57,8 +57,8 @@ class OAuthTokenSubscriber implements EventSubscriberInterface
     public static function getSubscribedEvents()
     {
         return array(
-            \AppEvents::TOKEN_REFRESHED => array('onTokenRefreshed', 0),
             \AppEvents::TOKEN_EXPIRED => array('onTokenExpired', 0),
+            \AppEvents::TOKEN_REFRESHED => array('onTokenRefreshed', 0),
         );
     }
 
@@ -69,7 +69,7 @@ class OAuthTokenSubscriber implements EventSubscriberInterface
     public function onTokenExpired(OAuthTokenEvent $event)
     {
 
-        $user = $event->getUser();
+        $user = $event->getToken();
 
         $this->sendMail($user);
 
@@ -106,22 +106,17 @@ class OAuthTokenSubscriber implements EventSubscriberInterface
      */
     public function onTokenRefreshed(OAuthTokenEvent $event)
     {
-        $user = $event->getUser();
-        $this->tm->updateOauthToken(
-            $user['id'],
-            $user['resourceOwner'],
-            $user['oauthToken'],
-            $user['createdTime'],
-            $user['expireTime']
-        );
+        $token = $event->getToken();
 
-        if (isset($user['refreshToken']) && (null !== $user['refreshToken'])) {
-            $this->tm->updateRefreshToken(
-                $user['id'],
-                $user['resourceOwner'],
-                $user['refreshToken']
-            );
-        }
+        $this->tm->update(
+            $token['id'],
+            $token['resourceOwner'],
+            array(
+                'oauthToken' => $token['oauthToken'],
+                'expireTime' => $token['expireTime'],
+                'refreshToken' => $token['refreshToken'],
+            )
+        );
     }
 
     /**
