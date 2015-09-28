@@ -7,6 +7,7 @@ use ApiConsumer\LinkProcessor\Processor\ScraperProcessor;
 use ApiConsumer\LinkProcessor\Processor\SpotifyProcessor;
 use ApiConsumer\LinkProcessor\Processor\YoutubeProcessor;
 use ApiConsumer\LinkProcessor\UrlParser\UrlParser;
+use ApiConsumer\LinkProcessor\UrlParser\YoutubeUrlParser;
 use Model\LinkModel;
 
 class LinkProcessor
@@ -86,28 +87,15 @@ class LinkProcessor
         }
 
         $link['url'] = $this->resolver->resolve($link['url']);
-        $link['url']= $this->urlParser->cleanURL($link['url']);
+
+
+        $processor = $this->scrapperProcessor;
+
+
+        $link['url'] = $this->cleanURL($link, $processor);
 
         if ($this->isLinkProcessed($link)) {
             return $link;
-        }
-
-        $processor = $this->scrapperProcessor;
-        $processorName = $this->analyzer->getProcessor($link);
-
-        switch ($processorName) {
-            case LinkAnalyzer::YOUTUBE:
-                $processor = $this->youtubeProcessor;
-                break;
-            case LinkAnalyzer::SPOTIFY:
-                $processor = $this->spotifyProcessor;
-                break;
-            case LinkAnalyzer::FACEBOOK:
-                $processor = $this->facebookProcessor;
-                break;
-            case LinkAnalyzer::SCRAPPER:
-                $processor = $this->scrapperProcessor;
-                break;
         }
 
         $processedLink = $processor->process($link);
@@ -119,7 +107,7 @@ class LinkProcessor
         return $processedLink;
     }
 
-    private function isLinkProcessed ($link)
+    private function isLinkProcessed($link)
     {
         try {
             $storedLink = $this->linkModel->findLinkByUrl($link['url']);
@@ -132,6 +120,37 @@ class LinkProcessor
         }
 
         return false;
+    }
+
+    private function cleanURL($link, &$processor){
+
+        $url = '';
+        $processorName = $this->analyzer->getProcessor($link);
+
+        switch ($processorName) {
+            case LinkAnalyzer::YOUTUBE:
+                $processor = $this->youtubeProcessor;
+                $url = $this->youtubeProcessor->getParser()->cleanURL($link['url']);
+                break;
+            case LinkAnalyzer::SPOTIFY:
+                $processor = $this->spotifyProcessor;
+                $url = $this->spotifyProcessor->getParser()->cleanURL($link['url']);
+                break;
+            case LinkAnalyzer::FACEBOOK:
+                $processor = $this->facebookProcessor;
+                $url = $this->urlParser->cleanURL($link['url']);
+                break;
+            case LinkAnalyzer::SCRAPPER:
+                $processor = $this->scrapperProcessor;
+                $url = $this->urlParser->cleanURL($link['url']);
+                break;
+        }
+        return $url;
+    }
+
+    public function cleanExternalURLs($link)
+    {
+        return $this->cleanURL($link, $this->scrapperProcessor);
     }
 
 }
