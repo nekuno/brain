@@ -524,8 +524,10 @@ class LinkModel
         $users = 2;
         $content = array();
         while (($users < $maxUsers) && count($content) < $limitContent) {
-            $newContent = $this->getPredictedContentForAUser($userId, $limitContent, $users, $filters);
-            $content = array_merge($content, $newContent);
+            $predictedContents = $this->getPredictedContentForAUser($userId, $limitContent, $users, $filters);
+            foreach ($predictedContents as $predictedContent){
+                $content[] = array('content' => $predictedContent);
+            }
             $users++;
         }
         return $content;
@@ -788,10 +790,18 @@ class LinkModel
      * @param $node Node
      * @return array
      */
-    protected function buildLink(Node $node)
+    public function buildLink(Node $node)
     {
         $link = $node->getProperties();
         $link['id'] = $node->getId();
+
+        $mandatoryKeys = array('title', 'description', 'url');
+
+        foreach ($mandatoryKeys as $mandatoryKey){
+            if (!array_key_exists($mandatoryKey, $link)){
+                $link[$mandatoryKey] = null;
+            }
+        }
 
         return $link;
     }

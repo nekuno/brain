@@ -14,6 +14,14 @@ class Paginator
     private $maxLimit;
 
     /**
+     * @return int
+     */
+    public function getMaxLimit()
+    {
+        return $this->maxLimit;
+    }
+
+    /**
      * @var int default items per page
      */
     private $defaultLimit;

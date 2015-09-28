@@ -531,8 +531,8 @@ class UserController
             return $app->json(array(), 400);
         }
 
-        /* @var $paginator \Paginator\Paginator */
-        $paginator = $app['paginator'];
+        /* @var $paginator \Paginator\ContentPaginator */
+        $paginator = $app['paginator.content'];
 
         $filters = array('id' => $id);
 
@@ -561,50 +561,7 @@ class UserController
             return $app->json(array(), 500);
         }
 
-        $needContent = $this->needMoreContent($request, $paginator, $result);
-        if ($needContent) {
-            /* @var $linkModel LinkModel */
-            $linkModel = $app['links.model'];
-            $newContent = $linkModel->getLivePredictedContent($id, $needContent);
-            $result['items'] = array_merge($result['items'], $newContent);
-        }
-
-        $newForeign = 0;
-        $needContent = $this->needMoreContent($request, $paginator, $result);
-        if ($needContent) {
-            $foreignContent = $model->getForeignContent($filters, $needContent);
-            $result['items'] = array_merge($result['items'], $foreignContent['items']);
-            $newForeign = $foreignContent['foreign'];
-        }
-
-        if ($result['pagination']['nextLink'] != null) {
-            if ($foreign != null) {
-                $result['pagination']['nextLink'] = str_replace(
-                    'foreign=' . $foreign,
-                    'foreign=' . ($foreign + $newForeign),
-                    $result['pagination']['nextLink']
-                );
-            } else {
-                $result['pagination']['nextLink'] .= ('&foreign=' . $newForeign);
-            }
-        }
-
         return $app->json($result, !empty($result) ? 201 : 200);
-    }
-
-    /**
-     * @param $request Request
-     * @param $paginator Paginator
-     * @param $result array
-     * @return int
-     */
-    protected function needMoreContent($request, $paginator, $result)
-    {
-        $moreContent = $request->get('limit', $paginator->getDefaultLimit()) - count($result['items']);
-        if ($moreContent <= 0) {
-            return 0;
-        }
-        return $moreContent;
     }
 
     /**
