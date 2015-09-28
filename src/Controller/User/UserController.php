@@ -4,6 +4,7 @@ namespace Controller\User;
 
 use Model\User\ContentPaginatedModel;
 use Model\User\GroupModel;
+use Model\LinkModel;
 use Model\User\ProfileModel;
 use Model\User\RateModel;
 use Model\UserModel;
@@ -421,7 +422,7 @@ class UserController
         $userId = $request->get('id');
         $rate = $request->request->get('rate');
         $data = $request->request->all();
-        if (isset($data['linkId']) && !isset($data['id'])){
+        if (isset($data['linkId']) && !isset($data['id'])) {
             $data['id'] = $data['linkId'];
         }
 
@@ -432,7 +433,7 @@ class UserController
         try {
             /* @var RateModel $model */
             $model = $app['users.rate.model'];
-            $result = $model->userRateLink($userId,$data, $rate);
+            $result = $model->userRateLink($userId, $data, $rate);
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;
@@ -530,8 +531,8 @@ class UserController
             return $app->json(array(), 400);
         }
 
-        /* @var $paginator \Paginator\Paginator */
-        $paginator = $app['paginator'];
+        /* @var $paginator \Paginator\ContentPaginator */
+        $paginator = $app['paginator.content'];
 
         $filters = array('id' => $id);
 
@@ -558,25 +559,6 @@ class UserController
             }
 
             return $app->json(array(), 500);
-        }
-
-        $newForeign = 0;
-        foreach ($result['items'] as $item) {
-            if ($item['match'] == 0) {
-                $newForeign++;
-            }
-        }
-
-        if ($result['pagination']['nextLink'] != null) {
-            if ($foreign != null) {
-                $result['pagination']['nextLink'] = str_replace(
-                    'foreign=' . $foreign,
-                    'foreign=' . ($foreign + $newForeign),
-                    $result['pagination']['nextLink']
-                );
-            } else {
-                $result['pagination']['nextLink'] .= ('&foreign=' . $newForeign);
-            }
         }
 
         return $app->json($result, !empty($result) ? 201 : 200);

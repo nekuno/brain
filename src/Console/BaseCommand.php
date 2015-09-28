@@ -2,7 +2,7 @@
 /**
  * @author Manolo Salsas <manolez@gmail.com>
  */
-namespace Console\Command;
+namespace Console;
 
 use Silex\Application;
 use Symfony\Component\Console\Output\OutputInterface;

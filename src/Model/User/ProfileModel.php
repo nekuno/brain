@@ -142,10 +142,10 @@ class ProfileModel
         }
 
         $qb = $this->gm->createQueryBuilder();
-        $qb->match('(user:User)', '(profile:Profile)')
+        $qb->match('(user:User)')
             ->where('user.qnoow_id = { id }')
-            ->createUnique('(profile)-[po:PROFILE_OF]->(user)')
-            ->setParameter('id', $id);
+            ->setParameter('id', (int)$id)
+            ->merge('(profile:Profile)-[po:PROFILE_OF]->(user)');
 
         $qb->getQuery()->getResultSet();
 
@@ -284,12 +284,12 @@ class ProfileModel
                                 if (!isset($fieldValue['address']) || !$fieldValue['address'] || !is_string($fieldValue['address'])) {
                                     $fieldErrors[] = 'Address required';
                                 } else {
-                                    if (!isset($fieldValue['latitude']) || !preg_match("/^-?([1-8]?[1-9]|[1-9]0)\.{1}\d+$/", $fieldValue['latitude'])) {
+                                    if (!isset($fieldValue['latitude']) || !preg_match("/^-?([1-8]?[0-9]|[1-9]0)\.{1}\d+$/", $fieldValue['latitude'])) {
                                         $fieldErrors[] = 'Latitude not valid';
                                     } elseif (!is_float($fieldValue['latitude'])) {
                                         $fieldErrors[] = 'Latitude must be float';
                                     }
-                                    if (!isset($fieldValue['longitude']) || !preg_match("/^-?([1]?[1-7][1-9]|[1]?[1-8][0]|[1-9]?[0-9])\.{1}\d+$/", $fieldValue['longitude'])) {
+                                    if (!isset($fieldValue['longitude']) || !preg_match("/^-?([1]?[0-7][1-9]|[1]?[1-8][0]|[1-9]?[0-9])\.{1}\d+$/", $fieldValue['longitude'])) {
                                         $fieldErrors[] = 'Longitude not valid';
                                     } elseif (!is_float($fieldValue['longitude'])) {
                                         $fieldErrors[] = 'Longitude must be float';
@@ -336,7 +336,7 @@ class ProfileModel
 
         /* @var $location Node */
         $location = $row->offsetGet('location');
-        if ($location) {
+        if ($location && count($location->getProperties()) > 0) {
             $profile['location'] = $location->getProperties();
         }
 
@@ -445,13 +445,10 @@ class ProfileModel
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(profile:Profile)-[:PROFILE_OF]->(u:User)')
             ->where('u.qnoow_id = { id }')
-            ->setParameter('id', $id)
+            ->setParameter('id', (int)$id)
             ->with('profile');
 
-        $dataCounter = 0;
-        $tagsCounter = 0;
         foreach ($data as $fieldName => $fieldValue) {
-            $dataCounter++;
             if (isset($metadata[$fieldName])) {
 
                 $fieldType = $metadata[$fieldName]['type'];
@@ -467,9 +464,8 @@ class ProfileModel
                     case 'date':
                     case 'boolean':
                     case 'integer':
-                        $dataField = 'fieldValue_' . $dataCounter;
-                        $qb->set('profile.' . $fieldName . ' = { ' . $dataField . ' }')
-                            ->setParameter($dataField, $fieldValue)
+                        $qb->set('profile.' . $fieldName . ' = { ' . $fieldName . ' }')
+                            ->setParameter($fieldName, $fieldValue)
                             ->with('profile');
                         break;
                     case 'birthday':
@@ -491,8 +487,8 @@ class ProfileModel
                             ->with('profile');
                         break;
                     case 'location':
-                        $qb->match('(profile)-[rLocation:LOCATION]->(oldLocation:Location)')
-                            ->delete('oldLocation', 'rLocation')
+                        $qb->optionalMatch('(profile)-[rLocation:LOCATION]->(oldLocation:Location)')
+                            ->delete('rLocation', 'oldLocation')
                             ->with('profile');
 
                         $qb->create('(location:Location {latitude: { latitude }, longitude: { longitude }, address: { address }, locality: { locality }, country: { country }})')
@@ -506,39 +502,29 @@ class ProfileModel
                         break;
                     case 'choice':
                         if (isset($options[$fieldName])) {
-                            $qb->match('(profile)<-[optionRel:OPTION_OF]-(option:' . $this->typeToLabel($fieldName) . ')')
+                            $qb->optionalMatch('(profile)<-[optionRel:OPTION_OF]-(option:' . $this->typeToLabel($fieldName) . ')')
                                 ->delete('optionRel')
                                 ->with('profile');
                         }
                         if (!is_null($fieldValue)) {
-                            $choiceField = 'choiceValue_' . $dataCounter;
-                            $qb->match('(option:' . $this->typeToLabel($fieldName) . ' {id: { ' . $choiceField . ' }})')
+                            $qb->match('(option:' . $this->typeToLabel($fieldName) . ' {id: { ' . $fieldName . ' }})')
                                 ->merge('(profile)<-[:OPTION_OF]-(option)')
-                                ->setParameter($choiceField, $fieldValue)
+                                ->setParameter($fieldName, $fieldValue)
                                 ->with('profile');
                         }
                         break;
                     case 'tags':
                         if (isset($tags[$fieldName])) {
                             foreach ($tags[$fieldName] as $tag) {
-                                $tagsCounter++;
-                                $totalCounter = $dataCounter + $tagsCounter;
-                                $tagField = 'tagValue_' . $totalCounter;
-                                $qb->match('(profile)<-[tagRel_' . $totalCounter . ':TAGGED]-(tag' . $tagsCounter . ':' . $this->typeToLabel($fieldName) . ' {name: { ' . $tagField . ' } })')
-                                    ->setParameter($tagField, $tag)
-                                    ->delete('tagRel_' . $totalCounter)
+                                $qb->optionalMatch('(profile)<-[tagRel:TAGGED]-(tag:' . $this->typeToLabel($fieldName) . ' {name: "' . $tag . '" })')
+                                    ->delete('tagRel')
                                     ->with('profile');
                             }
-
                         }
                         if (is_array($fieldValue) && !empty($fieldValue)) {
                             foreach ($fieldValue as $tag) {
-                                $tagsCounter++;
-                                $totalCounter = $dataCounter + $tagsCounter;
-                                $tagField = 'tagValue_' . $totalCounter;
-                                $qb->merge('(profile)<-[:TAGGED]-(tag' . $tagsCounter . ':' . $this->typeToLabel($fieldName) . ' {name: { ' . $tagField . ' } })')
-                                    ->set('tag' . $tagsCounter . ':ProfileTag')
-                                    ->setParameter($tagField, $tag)
+                                $qb->merge('(profile)<-[:TAGGED]-(tag:' . $this->typeToLabel($fieldName) . ' {name: "' . $tag . '" })')
+                                    ->set('tag:ProfileTag')
                                     ->with('profile');
                             }
                         }
@@ -553,6 +539,7 @@ class ProfileModel
             ->limit(1);
 
         $query = $qb->getQuery();
+
         $result = $query->getResultSet();
 
         return $this->build($result->current());

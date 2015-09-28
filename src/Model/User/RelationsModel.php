@@ -83,6 +83,44 @@ class RelationsModel
         return $this->build($row);
     }
 
+    public function countFrom($from, $relation)
+    {
+        $this->validate($relation);
+
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(from:User)-[r:' . $relation . ']->(to:User)')
+            ->where('from.qnoow_id = { from }')
+            ->setParameter('from', (integer)$from)
+            ->returns('COUNT(r) as count');
+
+        $result = $qb->getQuery()->getResultSet();
+
+        /* @var $row Row */
+        $row = $result->current();
+
+        return  $row->offsetGet('count');
+    }
+
+    public function countTo($to, $relation)
+    {
+        $this->validate($relation);
+
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(from:User)-[r:' . $relation . ']->(to:User)')
+            ->where('to.qnoow_id = { to }')
+            ->setParameter('to', (integer)$to)
+            ->returns('COUNT(r) as count');
+
+        $result = $qb->getQuery()->getResultSet();
+
+        /* @var $row Row */
+        $row = $result->current();
+
+        return  $row->offsetGet('count');
+    }
+
     public function create($from, $to, $relation, $data = array())
     {
 

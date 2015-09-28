@@ -7,6 +7,7 @@ use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
+use Model\User\RelationsModel;
 use Model\User\UserStatsModel;
 use Model\User\UserStatusModel;
 use Paginator\PaginatedInterface;
@@ -37,17 +38,22 @@ class UserModel implements PaginatedInterface
     protected $entityManagerBrain;
 
     /**
+     * @var RelationsModel
+     */
+    protected $relationsModel;
+    /**
      * @var array
      */
     protected $metadata;
 
     protected $defaultLocale;
 
-    public function __construct(GraphManager $gm, Connection $connectionSocial, EntityManager $entityManagerBrain, array $metadata, $defaultLocale)
+    public function __construct(GraphManager $gm, Connection $connectionSocial, EntityManager $entityManagerBrain, RelationsModel $relationsModel, array $metadata, $defaultLocale)
     {
         $this->gm = $gm;
         $this->connectionSocial = $connectionSocial;
         $this->entityManagerBrain = $entityManagerBrain;
+        $this->relationsModel = $relationsModel;
         $this->metadata = $metadata;
         $this->defaultLocale = $defaultLocale;
     }
@@ -354,8 +360,8 @@ class UserModel implements PaginatedInterface
             );
         }
 
-        $numberOfReceivedLikes = $this->connectionSocial->executeQuery('SELECT COUNT(*) AS numberOfReceivedLikes FROM user_like WHERE user_to = :user_to', array('user_to' => (integer)$id))->fetchColumn();
-        $numberOfUserLikes = $this->connectionSocial->executeQuery('SELECT COUNT(*) AS numberOfUserLikes FROM user_like WHERE user_from = :user_from', array('user_from' => (integer)$id))->fetchColumn();
+        $numberOfReceivedLikes = $this->relationsModel->countTo($id, RelationsModel::LIKES);
+        $numberOfUserLikes = $this->relationsModel->countFrom($id, RelationsModel::LIKES);
 
         $dataStatusRepository = $this->entityManagerBrain->getRepository('\Model\Entity\DataStatus');
 

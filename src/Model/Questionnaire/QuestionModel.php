@@ -2,6 +2,7 @@
 
 namespace Model\Questionnaire;
 
+use Everyman\Neo4j\Label;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Exception\ValidationException;
@@ -442,7 +443,7 @@ class QuestionModel
         }
     }
 
-    public function build(Row $row, $locale, $isRegisterQuestion = false)
+    public function build(Row $row, $locale)
     {
 
         $keys = array('question', 'answers');
@@ -454,6 +455,14 @@ class QuestionModel
 
         /* @var $question Node */
         $question = $row->offsetGet('question');
+
+        $isRegisterQuestion = false;
+        /** @var Label $label */
+        foreach ($question->getLabels() as $label){
+            if ($label->getName() == 'RegisterQuestion'){
+                $isRegisterQuestion = true;
+            }
+        }
 
         $stats = $this->getQuestionStats($question->getId());
         $answersStats = array();
@@ -663,7 +672,7 @@ class QuestionModel
             /* @var $divisiveQuestions Row */
             $row = $result->current();
 
-            return $this->build($row, $locale, true);
+            return $this->build($row, $locale);
         }
 
         return false;

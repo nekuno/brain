@@ -2,6 +2,7 @@
 
 namespace Console\Command;
 
+use Console\ApplicationAwareCommand;
 use Everyman\Neo4j\Query\ResultSet;
 use Model\Entity\EmailNotification;
 use Model\LinkModel;
@@ -14,12 +15,12 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class PredictionCommand extends ApplicationAwareCommand
+class LinksCalculatePredictionCommand extends ApplicationAwareCommand
 {
 
     protected function configure()
     {
-        $this->setName('prediction:calculate')
+        $this->setName('links:calculate:prediction')
             ->setDescription('Calculate the predicted high affinity links for a user.')
             ->addOption('user', null, InputOption::VALUE_OPTIONAL, 'The id of the user')
             ->addOption('limitContent', null, InputOption::VALUE_OPTIONAL, 'Max links to calculate per user')
@@ -54,7 +55,8 @@ class PredictionCommand extends ApplicationAwareCommand
             if (!$recalculate) {
                 foreach ($users as $user) {
 
-                    $linkIds = $linkModel->getPredictedContentForAUser($user['qnoow_id'], $limitContent, $limitUsers, false);
+                    $filters = array('affinity' => false);
+                    $linkIds = $linkModel->getPredictedContentForAUser($user['qnoow_id'], $limitContent, $limitUsers, $filters);
                     foreach ($linkIds as $link) {
 
                         $linkId = $link['id'];

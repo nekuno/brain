@@ -71,11 +71,13 @@ class FacebookProcessor implements ProcessorInterface
                 'fields' => 'description,picture'
             );
 
-            $token = $link['resourceOwnerToken'] ?: array();
-
+            $token = array();
+            if (isset($link['resourceOwnerToken'])) {
+                $token = $link['resourceOwnerToken'];
+            }
             $response = $this->resourceOwner->authorizedHTTPRequest($url, $query, $token);
-            $link['description'] = $response['description'] ?: null;
-            $link['thumbnail'] = $response['picture'] ?: null;
+            $link['description'] = isset($response['description']) ? $response['description'] : null;
+            $link['thumbnail'] = isset($response['picture']) ? $response['picture'] : null;
 
         } catch (RequestException $e) {
         }

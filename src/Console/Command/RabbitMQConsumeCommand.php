@@ -6,6 +6,7 @@ use ApiConsumer\Auth\UserProviderInterface;
 use ApiConsumer\EventListener\FetchLinksInstantSubscriber;
 use ApiConsumer\EventListener\FetchLinksSubscriber;
 use ApiConsumer\Fetcher\FetcherService;
+use Console\ApplicationAwareCommand;
 use EventListener\UserStatusSubscriber;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
@@ -21,11 +22,11 @@ use Worker\LinkProcessorWorker;
 use Worker\MatchingCalculatorWorker;
 
 /**
- * Class WorkerRabbitMQConsumeCommand
+ * Class RabbitMQConsumeCommand
  *
  * @package Console\Command
  */
-class WorkerRabbitMQConsumeCommand extends ApplicationAwareCommand
+class RabbitMQConsumeCommand extends ApplicationAwareCommand
 {
 
     protected $validConsumers = array(
@@ -36,13 +37,9 @@ class WorkerRabbitMQConsumeCommand extends ApplicationAwareCommand
     protected function configure()
     {
 
-        $this->setName('worker:rabbitmq:consume')
-            ->setDescription("Start RabbitMQ consumer by name")
-            ->setDefinition(
-                array(
-                    new InputArgument('consumer', InputArgument::OPTIONAL, 'Consumer to start up', 'fetching'),
-                )
-            );
+        $this->setName('rabbitmq:consume')
+            ->setDescription(sprintf('Starts a RabbitMQ consumer by name ("%s")', implode('", "', $this->validConsumers)))
+            ->addArgument('consumer', InputArgument::OPTIONAL, 'Consumer to start up', 'fetching');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -72,7 +69,7 @@ class WorkerRabbitMQConsumeCommand extends ApplicationAwareCommand
 
         $fetcher->setLogger($logger);
 
-        /* @var  $connection AMQPStreamConnection */
+        /* @var $connection AMQPStreamConnection */
         $connection = $this->app['amqp'];
 
         $output->writeln(sprintf('Starting %s consumer', $consumer));

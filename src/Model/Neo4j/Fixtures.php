@@ -145,8 +145,8 @@ class Fixtures
                 'orientation' => 'heterosexual',
                 'interfaceLanguage' => 'es',
                 'location' => array(
-                    'latitude' => 40.4,
-                    'longitude' => 3.683,
+                    'latitude' => 40.4167754,
+                    'longitude' => -3.7037902,
                     'address' => 'Madrid',
                     'locality' => 'Madrid',
                     'country' => 'Spain'

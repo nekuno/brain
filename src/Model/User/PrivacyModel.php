@@ -107,17 +107,14 @@ class PrivacyModel
         $qb->match('(user:User)')
             ->where('user.qnoow_id = { id }')
             ->setParameter('id', (integer)$id)
-            ->with('user')
-            ->create('(privacy:Privacy)')
-            ->merge('(user)<-[:PRIVACY_OF]-(privacy)')
-            ->returns('privacy')
-            ->limit(1);
+            ->merge('(privacy:Privacy)-[:PRIVACY_OF]->(user)')
+            ->returns('privacy');
 
         $query = $qb->getQuery();
 
         $result = $query->getResultSet();
 
-        /** @var Row $row */
+        /* @var $row Row */
         $row = $result->current();
         $privacyNode = $row->offsetGet('privacy');
 

@@ -446,12 +446,17 @@ class LinkModel
      * @param integer $userId
      * @param int $limitContent
      * @param int $limitUsers
-     * @param bool $includeAffinity For recalculating affinities
+     * @param array $filters
      * @return array
      * @throws \Exception
      */
-    public function getPredictedContentForAUser($userId, $limitContent = 40, $limitUsers = 20, $includeAffinity = false)
+    public function getPredictedContentForAUser($userId, $limitContent = 40, $limitUsers = 20, array $filters = array())
     {
+        $linkType = 'Link';
+        if (isset($filters['type'])) {
+            $linkType = $filters['type'];
+        }
+
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(u:User {qnoow_id: { userId } })')
             ->match('(u)-[r:SIMILARITY]-(users:User)')
@@ -459,15 +464,30 @@ class LinkModel
             ->orderby('m DESC')
             ->limit('{limitUsers}');
 
-        $qb->match('(users)-[d:LIKES]->(l:Link)');
+        $qb->match('(users)-[d:LIKES]->(l:' . $linkType . ')');
         $conditions = array('(NOT (u)-[:LIKES|:DISLIKES]-(l))');
-        if (!$includeAffinity) {
+        if (!(isset($filters['affinity']) && $filters['affinity'] == true)) {
             $conditions[] = '(NOT (u)-[:AFFINITY]-(l))';
         };
+
+        if (isset($filters['tag'])) {
+            $qb->match('(l)-[:TAGGED]->(filterTag:Tag)')
+                ->where('filterTag.name = { tag }');
+
+            $params['tag'] = $filters['tag'];
+        }
+
         $qb->where($conditions)
             ->with('l, avg(m) AS average, count(d) AS amount')
-            ->where('amount>=2')
-            ->returns('l as link')
+            ->where('amount >= 2');
+        $qb->optionalMatch('(l)-[:TAGGED]->(tag:Tag)')
+            ->optionalMatch("(l)-[:SYNONYMOUS]->(synonymousLink:Link)")
+            ->returns('id(l) as id',
+                'l as link',
+                'average',
+                'collect(distinct tag.name) as tags',
+                'labels(l) as types',
+                'COLLECT (DISTINCT synonymousLink) AS synonymous')
             ->orderby('average DESC')
             ->limit('{limitContent}');
 
@@ -482,6 +502,7 @@ class LinkModel
         $query = $qb->getQuery();
         $result = $query->getResultSet();
 
+
         $links = array();
         foreach ($result as $row) {
             /* @var $row Row */
@@ -489,6 +510,27 @@ class LinkModel
         }
 
         return $links;
+    }
+
+    /**
+     * @param $userId
+     * @param int $limitContent
+     * @param int $maxUsers
+     * @param array $filters
+     * @return array
+     */
+    public function getLivePredictedContent($userId, $limitContent = 20, $maxUsers = 10, array $filters = array())
+    {
+        $users = 2;
+        $content = array();
+        while (($users < $maxUsers) && count($content) < $limitContent) {
+            $predictedContents = $this->getPredictedContentForAUser($userId, $limitContent, $users, $filters);
+            foreach ($predictedContents as $predictedContent){
+                $content[] = array('content' => $predictedContent);
+            }
+            $users++;
+        }
+        return $content;
     }
 
     /**
@@ -689,7 +731,7 @@ class LinkModel
         if ($rs->count() != 0) {
             /** @var $row Row */
             $row = $rs->current();
-            $result=array();
+            $result = array();
             $pseudoduplicatesIds = $row->offsetGet('id2');
             $pseudoduplicatesUrls = $row->offsetGet('url2');
             $pseudoduplicatedIds = $row->offsetGet('url3');
@@ -712,7 +754,7 @@ class LinkModel
                 $result[] = $duplicate;
             }
         } else {
-            $result=null;
+            $result = null;
         }
 
         return $result;
@@ -748,10 +790,18 @@ class LinkModel
      * @param $node Node
      * @return array
      */
-    protected function buildLink(Node $node)
+    public function buildLink(Node $node)
     {
         $link = $node->getProperties();
         $link['id'] = $node->getId();
+
+        $mandatoryKeys = array('title', 'description', 'url');
+
+        foreach ($mandatoryKeys as $mandatoryKey){
+            if (!array_key_exists($mandatoryKey, $link)){
+                $link[$mandatoryKey] = null;
+            }
+        }
 
         return $link;
     }

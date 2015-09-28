@@ -2,14 +2,27 @@
 
 namespace Controller\User;
 
+use Event\AnswerEvent;
 use Model\Questionnaire\QuestionModel;
 use Model\User\AnswerModel;
 use Model\User\QuestionPaginatedModel;
 use Silex\Application;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class AnswerController
 {
+
+    /**
+     * @var AnswerModel $answerModel
+     */
+    protected $answerModel;
+
+    public function __construct(AnswerModel $am)
+    {
+        $this->answerModel = $am;
+    }
 
     public function createAction(Request $request, Application $app)
     {
@@ -17,10 +30,7 @@ class AnswerController
         $data = $request->request->all();
         $data['locale'] = $this->getLocale($request, $app['locale.options']['default']);
 
-        /* @var $model AnswerModel */
-        $model = $app['users.answers.model'];
-
-        $userAnswer = $model->create($data);
+        $userAnswer = $this->answerModel->create($data);
 
         // TODO: Refactor this to listener
         /* @var $questionModel QuestionModel */
@@ -36,10 +46,7 @@ class AnswerController
         $data = $request->request->all();
         $data['locale'] = $this->getLocale($request, $app['locale.options']['default']);
 
-        /* @var $model AnswerModel */
-        $model = $app['users.answers.model'];
-
-        $userAnswer = $model->update($data);
+        $userAnswer = $this->answerModel->update($data);
 
         // TODO: Refactor this to listener
         /* @var $questionModel QuestionModel */
@@ -55,9 +62,7 @@ class AnswerController
         $data = $request->request->all();
         $data['locale'] = $this->getLocale($request, $app['locale.options']['default']);
 
-        /* @var $model AnswerModel */
-        $model = $app['users.answers.model'];
-        $model->validate($data, false);
+        $this->answerModel->validate($data, false);
 
         return $app->json(array(), 200);
     }
@@ -69,9 +74,7 @@ class AnswerController
         $data['userId'] = (integer)$request->attributes->get('userId');
         $data['locale'] = $this->getLocale($request, $app['locale.options']['default']);
 
-        /* @var $model AnswerModel */
-        $model = $app['users.answers.model'];
-        $userAnswer = $model->explain($data);
+        $userAnswer = $this->answerModel->explain($data);
 
         return $app->json($userAnswer);
     }
@@ -99,9 +102,7 @@ class AnswerController
         // TODO: Refactor this
         $userId = $request->get('userId');
 
-        /* @var AnswerModel $model */
-        $model = $app['users.answers.model'];
-        $userAnswerResult = $model->getNumberOfUserAnswers($userId);
+        $userAnswerResult = $this->answerModel->getNumberOfUserAnswers($userId);
 
         $data = array(
             'userId' => $userId,
@@ -126,12 +127,45 @@ class AnswerController
         $questionId = (integer)$request->attributes->get('questionId');
         $locale = $this->getLocale($request, $app['locale.options']['default']);
 
-        /* @var $model AnswerModel */
-        $model = $app['users.answers.model'];
-
-        $result = $model->getUserAnswer($userId, $questionId, $locale);
+        $result = $this->answerModel->getUserAnswer($userId, $questionId, $locale);
 
         return $app->json($result);
+
+    }
+
+    public function deleteAnswerAction(Request $request, Application $app)
+    {
+        $userId = (integer)$request->attributes->get('userId');
+        $questionId = (integer)$request->attributes->get('questionId');
+        $locale = $this->getLocale($request, $app['locale.options']['default']);
+
+        try {
+            $userAnswer = $this->answerModel->getUserAnswer($userId, $questionId, $locale);
+            $answer = $userAnswer['userAnswer'];
+        } catch (NotFoundHttpException $e) {
+            return $app->json($e->getMessage(), 404);
+        }
+
+        $deletion = $this->answerModel->deleteUserAnswer($userId, $answer);
+
+        if (!$deletion) {
+            return $app->json('Answer not deleted', 500);
+        }
+
+        /* @var $dispatcher EventDispatcher */
+        $dispatcher = $app['dispatcher'];
+        $dispatcher->dispatch(\AppEvents::ANSWER_ADDED, new AnswerEvent($userId,$questionId));
+
+        /* @var $questionModel QuestionModel */
+        $questionModel = $app['questionnaire.questions.model'];
+
+        try {
+            $questionModel->skip($answer['questionId'], $userId);
+        } catch (\Exception $e) {
+            return $app->json($e->getMessage(), 405);
+        }
+
+        return $app->json($answer, 200);
 
     }
 

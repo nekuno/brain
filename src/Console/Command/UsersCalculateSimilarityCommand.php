@@ -2,6 +2,7 @@
 
 namespace Console\Command;
 
+use Console\ApplicationAwareCommand;
 use Model\User\Similarity\SimilarityModel;
 use Model\UserModel;
 use Silex\Application;
@@ -10,12 +11,12 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class SimilarityCommand extends ApplicationAwareCommand
+class UsersCalculateSimilarityCommand extends ApplicationAwareCommand
 {
 
     protected function configure()
     {
-        $this->setName('similarity:calculate')
+        $this->setName('users:calculate:similarity')
             ->setDescription('Calculate the similarity of two users.')
             ->addArgument(
                 'userA',

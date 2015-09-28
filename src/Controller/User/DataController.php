@@ -4,6 +4,7 @@
 namespace Controller\User;
 
 use Doctrine\ORM\EntityManager;
+use Http\OAuth\ResourceOwner\FacebookResourceOwner;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -42,6 +43,14 @@ class DataController
         }
 
         return $app->json($responseData, 200);
+    }
+
+    public function refreshFacebookTokenAction(Request $request, Application $app)
+    {
+        /* @var $facebookResourceOwner FacebookResourceOwner */
+        $facebookResourceOwner = $app['api_consumer.resource_owner.facebook'];
+
+        return $app->json($facebookResourceOwner->refreshAccessToken($request->query->get('token')),200);
     }
 
 }

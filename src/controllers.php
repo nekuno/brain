@@ -43,9 +43,9 @@ $app['questionnaire.questions.controller'] = $app->share(
 );
 
 $app['users.answers.controller'] = $app->share(
-    function () {
+    function () use ($app) {
 
-        return new \Controller\User\AnswerController;
+        return new \Controller\User\AnswerController($app['users.answers.model']);
     }
 );
 

@@ -12,6 +12,8 @@ class YoutubeFetcher extends BasicPaginationFetcher
 
     protected $query = array();
 
+    static public $PLAYLISTS_TO_EXCLUDE = array('watchHistory', 'watchLater');
+
     public function getUrl()
     {
         return $this->url;
@@ -35,7 +37,19 @@ class YoutubeFetcher extends BasicPaginationFetcher
 
     protected function getItemsFromResponse($response)
     {
-        return $response['items'] ?: array();
+        $items = array();
+        if (isset($response['items'])) {
+            foreach ($response['items'] as $item) {
+                if ($item['kind'] == 'youtube#playlistItem'
+                    || $item['kind'] == 'youtube#activity'
+                ) {
+                    $items[$this->generateYoutubeUrl($item)] = $item;
+                } else {
+                    $items[] = $item;
+                }
+            }
+        }
+        return $items;
     }
 
     protected function getPaginationIdFromResponse($response)
@@ -87,34 +101,38 @@ class YoutubeFetcher extends BasicPaginationFetcher
     protected function generateYoutubeUrl($item)
     {
         $url = "";
-        switch ($item['snippet']['type']) {
-            case 'upload':
-                if (isset($item['contentDetails']['upload']['videoId'])) {
-                    $url = $this->getYoutubeUrlFromResourceId(
-                        array(
-                            'kind' => 'youtube#video',
-                            'videoId' => $item['contentDetails']['upload']['videoId']
-                        )
-                    );
-                }
-                break;
+        if (!isset($item['snippet']['type'])) {
+            $url = $this->getYoutubeUrlFromResourceId($item['snippet']['resourceId']);
+        } else {
+            switch ($item['snippet']['type']) {
+                case 'upload':
+                    if (isset($item['contentDetails']['upload']['videoId'])) {
+                        $url = $this->getYoutubeUrlFromResourceId(
+                            array(
+                                'kind' => 'youtube#video',
+                                'videoId' => $item['contentDetails']['upload']['videoId']
+                            )
+                        );
+                    }
+                    break;
 
-            case 'like':
-            case 'favorite':
-            case 'subscription':
-            case 'playlistItem':
-            case 'recommendation':
-            case 'social':
-                $activity = $item['snippet']['type'];
-                if (isset($item['contentDetails'][$activity]['resourceId'])) {
-                    $url = $this->getYoutubeUrlFromResourceId($item['contentDetails'][$activity]['resourceId']);
-                }
-                break;
+                case 'like':
+                case 'favorite':
+                case 'subscription':
+                case 'playlistItem':
+                case 'recommendation':
+                case 'social':
+                    $activity = $item['snippet']['type'];
+                    if (isset($item['contentDetails'][$activity]['resourceId'])) {
+                        $url = $this->getYoutubeUrlFromResourceId($item['contentDetails'][$activity]['resourceId']);
+                    }
+                    break;
 
-            case 'bulletin':
-            case 'channelItem':
-            default:
-                break;
+                case 'bulletin':
+                case 'channelItem':
+                default:
+                    break;
+            }
         }
 
         return $url;
@@ -132,35 +150,78 @@ class YoutubeFetcher extends BasicPaginationFetcher
             'part' => 'contentDetails'
         ));
         $channels = $this->getLinksByPage();
-        $this->rawFeed = array();
 
-        $this->setUrl('youtube/v3/playlistItems');
+        $links = $this->getVideosFromChannels($channels);
+
+        //v2.4 activities returns only playlist videos and uploaded videos
+//        $this->rawFeed = array();
+//        $this->setUrl('youtube/v3/activities');
+//        $this->setQuery(array(
+//            'maxResults' => $this->pageLength,
+//            'mine' => 'true',
+//            'part' => 'snippet,contentDetails'
+//        ));
+//        $this->getLinksByPage();
+
+        $links = array_merge($links, $this->rawFeed);
+        return $this->parseLinks($links);
+    }
+
+    /**
+     * @param array $channels
+     * @return array
+     */
+    private function getVideosFromChannels(array $channels)
+    {
+
+        $links = array();
         foreach ($channels as $channel) {
 
+            $this->rawFeed = array();
+
+            $this->setUrl('youtube/v3/playlists');
             $this->setQuery(array(
                 'maxResults' => $this->pageLength,
-                'playlistId' => $channel['contentDetails']['relatedPlaylists']['likes'],
+                'channelId' => $channel['id'],
                 'part' => 'snippet,contentDetails'
             ));
-            $this->getLinksByPage();
-        }
-
-        $this->setUrl('youtube/v3/activities');
-        $this->setQuery(array(
-            'maxResults' => $this->pageLength,
-            'mine' => 'true',
-            'part' => 'snippet,contentDetails'
-        ));
-        $this->getLinksByPage();
-
-        $links=$this->rawFeed;
-        foreach ($links as &$link){
-            if (!array_key_exists('type', $link['snippet'])){
-                $link['snippet']['type'] = 'upload';
-                $link['contentDetails']['upload'] = $link['contentDetails'];
+            try {
+                $this->getLinksByPage();
+                $playlists = array();
+                foreach ($this->rawFeed as $p) {
+                    $playlists[$p['snippet']['title']] = $p['id'];
+                }
+            } catch (\Exception $e) {
+                continue;
             }
+
+            $playlists = array_merge($playlists,
+                $channel['contentDetails']['relatedPlaylists']);
+
+            $this->rawFeed = array();
+            $this->setUrl('youtube/v3/playlistItems');
+            foreach ($playlists as $key => $playlist) {
+
+                if (in_array($key, $this::$PLAYLISTS_TO_EXCLUDE)) {
+                    continue;
+                }
+                $this->setQuery(array(
+                    'maxResults' => $this->pageLength,
+                    'playlistId' => $playlist,
+                    'part' => 'snippet,contentDetails'
+                ));
+                try {
+                    $this->getLinksByPage();
+                } catch (\Exception $exception) {
+                    //Some default lists return 404 if empty.
+                }
+
+            }
+            $links = array_merge($links, $this->rawFeed);
+
         }
-        return $this->parseLinks($links);
+
+        return $links;
     }
 
     /**

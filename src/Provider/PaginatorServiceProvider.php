@@ -2,6 +2,7 @@
 
 namespace Provider;
 
+use Paginator\ContentPaginator;
 use Paginator\Paginator;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
@@ -17,6 +18,14 @@ class PaginatorServiceProvider implements ServiceProviderInterface
         $app['paginator'] = $app->share(
             function ($app) {
                 $paginator = new Paginator();
+
+                return $paginator;
+            }
+        );
+
+        $app['paginator.content'] = $app->share(
+            function ($app) {
+                $paginator = new ContentPaginator();
 
                 return $paginator;
             }

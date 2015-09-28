@@ -2,6 +2,7 @@
 
 namespace Console\Command;
 
+use Console\ApplicationAwareCommand;
 use Silex\Application;
 use Service\ChatMessageNotifications;
 use Symfony\Component\Console\Input\InputInterface;
@@ -9,12 +10,12 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Formatter\OutputFormatterStyle;
 
-class SendChatMessagesNotificationsCommand extends ApplicationAwareCommand
+class SwiftMailerChatSendCommand extends ApplicationAwareCommand
 {
 
     protected function configure()
     {
-        $this->setName('chat-email-notifications:send')
+        $this->setName('swiftmailer:chat:send')
             ->setDescription('Send chat notifications (unread messages since last 24h)')
             ->addOption('limit', 'lim', InputOption::VALUE_OPTIONAL, 'Notifications limit', 99999);
     }
@@ -23,18 +24,17 @@ class SendChatMessagesNotificationsCommand extends ApplicationAwareCommand
     {
         $limit = $input->getOption('limit');
 
-        if($limit === 0)
-        {
+        if ($limit === 0) {
             $limit = 99999;
         }
 
-
-        if (! is_int($limit)) {
+        if (!is_int($limit)) {
             $output->writeln(sprintf('Limit must be an integer, %s given.', gettype($limit)));
+
             return;
         }
 
-        /** @var  $chatMessageNotifications ChatMessageNotifications */
+        /* @var $chatMessageNotifications ChatMessageNotifications */
         $chatMessageNotifications = $this->app['chatMessageNotifications.service'];
 
         try {

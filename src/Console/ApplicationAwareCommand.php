@@ -1,6 +1,6 @@
 <?php
 
-namespace Console\Command;
+namespace Console;
 
 use Knp\Command\Command;
 use Silex\Application;
@@ -11,7 +11,7 @@ abstract class ApplicationAwareCommand extends Command
 {
 
     /**
-     * @var \Silex\Application
+     * @var Application
      */
     protected $app;
 

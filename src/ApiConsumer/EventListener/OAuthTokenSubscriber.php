@@ -115,6 +115,13 @@ class OAuthTokenSubscriber implements EventSubscriberInterface
             $user['createdTime'],
             $user['expireTime']
         );
+        if (isset($user['refreshToken']) && (null !== $user['refreshToken'])){
+            $this->userProvider->updateRefreshToken(
+                $user['refreshToken'],
+                $user['resourceOwner'],
+                $user['user_id']
+            );
+        }
     }
 
     /**

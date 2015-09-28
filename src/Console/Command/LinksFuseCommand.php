@@ -3,6 +3,7 @@
 
 namespace Console\Command;
 
+use Console\ApplicationAwareCommand;
 use Everyman\Neo4j\Relationship;
 use Model\LinkModel;
 use Model\Neo4j\GraphManager;
@@ -16,7 +17,7 @@ class LinksFuseCommand extends ApplicationAwareCommand
     {
 
         $this->setName('links:fuse')
-            ->setDescription("Move relationships from first node to second one and delete the first one.")
+            ->setDescription('Move relationships from first node to second one and delete the first one.')
             ->addArgument('id 1', InputArgument::REQUIRED, 'The id of the link to be deleted')
             ->addArgument('id 2', InputArgument::REQUIRED, 'The id of the link to receive relationships');
     }
@@ -34,10 +35,12 @@ class LinksFuseCommand extends ApplicationAwareCommand
         $qb->match('(l1), (l2)')
             ->where('id(l1)={id1} and id(l2)={id2}')
             ->returns('labels(l1) AS labels1, labels(l2) AS labels2');
-        $qb->setParameters(array(
-            'id1' => $id1,
-            'id2' => $id2
-        ));
+        $qb->setParameters(
+            array(
+                'id1' => $id1,
+                'id2' => $id2
+            )
+        );
         $rs = $qb->getQuery()->getResultSet();
 
         if (count($rs) === 0) {
@@ -49,7 +52,7 @@ class LinksFuseCommand extends ApplicationAwareCommand
                 $output->writeln('Nodes have different labels. Check the ids and try again.');
             } else {
 
-                $output->writeln('Fusing nodes.');
+                $output->writeln('Fusing nodes...');
                 $result = $gm->fuseNodes($id1, $id2);
 
                 $output->writeln($result['deleted'][0]['amount'] . ' relationships were deleted from node 1');
@@ -58,7 +61,7 @@ class LinksFuseCommand extends ApplicationAwareCommand
                     $output->writeln('node with id ' . $id1 . ' had labels: ' . $labels1);
                     $output->writeln('node with id ' . $id2 . ' has labels: ' . $labels2);
                     if (isset($result['relationships']['incoming'])) {
-                        /** @var Relationship[] $relationship */
+                        /* @var $relationship Relationship[] */
                         foreach ($result['relationships']['incoming'] as $relationship) {
                             $output->writeln('Incoming relationship id ' . $relationship['id'] . ' deleted.');
                             foreach ($relationship['r']->getProperties() as $property => $value) {
