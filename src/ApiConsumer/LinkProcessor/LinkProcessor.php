@@ -90,26 +90,9 @@ class LinkProcessor
 
 
         $processor = $this->scrapperProcessor;
-        $processorName = $this->analyzer->getProcessor($link);
 
-        switch ($processorName) {
-            case LinkAnalyzer::YOUTUBE:
-                $processor = $this->youtubeProcessor;
-                $link['url'] = $this->youtubeProcessor->getParser()->cleanURL($link['url']);
-                break;
-            case LinkAnalyzer::SPOTIFY:
-                $processor = $this->spotifyProcessor;
-                $link['url'] = $this->spotifyProcessor->getParser()->cleanURL($link['url']);
-                break;
-            case LinkAnalyzer::FACEBOOK:
-                $processor = $this->facebookProcessor;
-                $link['url'] = $this->urlParser->cleanURL($link['url']);
-                break;
-            case LinkAnalyzer::SCRAPPER:
-                $processor = $this->scrapperProcessor;
-                $link['url'] = $this->urlParser->cleanURL($link['url']);
-                break;
-        }
+
+        $link['url'] = $this->cleanURL($link, $processor);
 
         if ($this->isLinkProcessed($link)) {
             return $link;
@@ -137,6 +120,37 @@ class LinkProcessor
         }
 
         return false;
+    }
+
+    private function cleanURL($link, &$processor){
+
+        $url = '';
+        $processorName = $this->analyzer->getProcessor($link);
+
+        switch ($processorName) {
+            case LinkAnalyzer::YOUTUBE:
+                $processor = $this->youtubeProcessor;
+                $url = $this->youtubeProcessor->getParser()->cleanURL($link['url']);
+                break;
+            case LinkAnalyzer::SPOTIFY:
+                $processor = $this->spotifyProcessor;
+                $url = $this->spotifyProcessor->getParser()->cleanURL($link['url']);
+                break;
+            case LinkAnalyzer::FACEBOOK:
+                $processor = $this->facebookProcessor;
+                $url = $this->urlParser->cleanURL($link['url']);
+                break;
+            case LinkAnalyzer::SCRAPPER:
+                $processor = $this->scrapperProcessor;
+                $url = $this->urlParser->cleanURL($link['url']);
+                break;
+        }
+        return $url;
+    }
+
+    public function cleanExternalURLs($link)
+    {
+        return $this->cleanURL($link, $this->scrapperProcessor);
     }
 
 }

@@ -129,6 +129,35 @@ class LinkModel
     }
 
     /**
+     * @param array $filters
+     * @return array
+     * @throws Neo4j\Neo4jException
+     * @throws \Exception
+     */
+    public function findAllLinks($filters = array())
+    {
+
+        $type = isset($filters['type']) ? $filters['type'] : 'Link';
+
+        //todo: add tag filters, probably with an inter-model buildParamsFromFilters
+
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match("(l:$type)")
+            ->returns('l AS link');
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        $links=array();
+        /** @var Row $row */
+        foreach ($result as $row){
+            $links[] = $this->buildLink($row->offsetGet('link'));
+        }
+
+        return $links;
+    }
+
+    /**
      * @param array $data
      * @return array
      * @throws \Exception

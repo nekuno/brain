@@ -142,7 +142,7 @@ class YoutubeUrlParser extends UrlParser
         $url = parent::cleanURL($url);
 
         $parts = parse_url($url);
-        if ($parts['path'] == '/watch') {
+        if (array_key_exists('path',$parts) && $parts['path'] == '/watch') {
             $url = $this->buildVideoURL($parts);
         }
         return $url;
