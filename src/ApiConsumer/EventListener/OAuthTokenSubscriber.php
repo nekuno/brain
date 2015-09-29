@@ -1,12 +1,13 @@
 <?php
 namespace ApiConsumer\EventListener;
 
-use ApiConsumer\Auth\UserProviderInterface;
 use ApiConsumer\Event\OAuthTokenEvent;
+use Model\User\TokensModel;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 use PhpAmqpLib\Exception\AMQPRuntimeException;
 use Psr\Log\LoggerInterface;
+use Swift_Mailer;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -17,38 +18,36 @@ class OAuthTokenSubscriber implements EventSubscriberInterface
 {
 
     /**
-     * @var \PhpAmqpLib\Connection\AMQPStreamConnection
+     * @var AMQPStreamConnection
      */
-    private $amqp;
+    protected $amqp;
+
     /**
      * @var LoggerInterface
      */
-    private $logger;
+    protected $logger;
 
     /**
-     * @var \Swift_Mailer
+     * @var Swift_Mailer
      */
-    private $mailer;
+    protected $mailer;
 
     /**
-     * @var UserProviderInterface
+     * @var TokensModel
      */
-    protected $userProvider;
+    protected $tm;
 
     /**
-     * @param UserProviderInterface $userProvider
-     * @param \Swift_Mailer $mailer
+     * @param TokensModel $tm
+     * @param Swift_Mailer $mailer
      * @param LoggerInterface $logger
-     * @param \PhpAmqpLib\Connection\AMQPStreamConnection $amqp
+     * @param AMQPStreamConnection $amqp
      */
-    public function __construct(UserProviderInterface $userProvider, \Swift_Mailer $mailer, LoggerInterface $logger, AMQPStreamConnection $amqp)
+    public function __construct(TokensModel $tm, Swift_Mailer $mailer, LoggerInterface $logger, AMQPStreamConnection $amqp)
     {
-        $this->userProvider = $userProvider;
-
+        $this->tm = $tm;
         $this->mailer = $mailer;
-
         $this->logger = $logger;
-
         $this->amqp = $amqp;
     }
 
@@ -58,8 +57,8 @@ class OAuthTokenSubscriber implements EventSubscriberInterface
     public static function getSubscribedEvents()
     {
         return array(
-            'token.refreshed' => array('onTokenRefreshed', 0),
-            'token.expired' => array('onTokenExpired', 0),
+            \AppEvents::TOKEN_EXPIRED => array('onTokenExpired', 0),
+            \AppEvents::TOKEN_REFRESHED => array('onTokenRefreshed', 0),
         );
     }
 
@@ -70,7 +69,7 @@ class OAuthTokenSubscriber implements EventSubscriberInterface
     public function onTokenExpired(OAuthTokenEvent $event)
     {
 
-        $user = $event->getUser();
+        $user = $event->getToken();
 
         $this->sendMail($user);
 
@@ -107,21 +106,17 @@ class OAuthTokenSubscriber implements EventSubscriberInterface
      */
     public function onTokenRefreshed(OAuthTokenEvent $event)
     {
-        $user = $event->getUser();
-        $this->userProvider->updateAccessToken(
-            $user['resourceOwner'],
-            $user['user_id'],
-            $user['oauthToken'],
-            $user['createdTime'],
-            $user['expireTime']
+        $token = $event->getToken();
+
+        $this->tm->update(
+            $token['id'],
+            $token['resourceOwner'],
+            array(
+                'oauthToken' => $token['oauthToken'],
+                'expireTime' => $token['expireTime'],
+                'refreshToken' => $token['refreshToken'],
+            )
         );
-        if (isset($user['refreshToken']) && (null !== $user['refreshToken'])){
-            $this->userProvider->updateRefreshToken(
-                $user['refreshToken'],
-                $user['resourceOwner'],
-                $user['user_id']
-            );
-        }
     }
 
     /**

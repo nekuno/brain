@@ -14,6 +14,13 @@ $app['users.controller'] = $app->share(
     }
 );
 
+$app['users.tokens.controller'] = $app->share(
+    function () {
+
+        return new \Controller\User\TokensController();
+    }
+);
+
 $app['users.profile.controller'] = $app->share(
     function () {
 

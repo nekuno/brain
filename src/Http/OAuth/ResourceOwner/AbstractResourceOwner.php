@@ -155,7 +155,6 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
         }
 
         $token['oauthToken'] = $data['access_token'];
-        $token['createdTime'] = time();
         $token['expireTime'] = $token['createdTime'] + $data['expires_in'] - $this->expire_time_margin;
         $token['refreshToken'] = isset($data['refreshToken']) ? $data['refreshToken'] : null;
 

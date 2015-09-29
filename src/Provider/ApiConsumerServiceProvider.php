@@ -2,7 +2,6 @@
 
 namespace Provider;
 
-use ApiConsumer\Auth\DBUserProvider;
 use ApiConsumer\Factory\FetcherFactory;
 use ApiConsumer\Fetcher\FetcherService;
 use ApiConsumer\Registry\Registry;
@@ -21,16 +20,6 @@ class ApiConsumerServiceProvider implements ServiceProviderInterface
     {
 
         $app->register(new \Igorw\Silex\ConfigServiceProvider(__DIR__ . "/../ApiConsumer/config/apiConsumer.yml"));
-
-        // User Provider
-        $app['api_consumer.user_provider'] = $app->share(
-            function ($app) {
-
-                $userProvider = new DBUserProvider($app['dbs']['mysql_social']);
-
-                return $userProvider;
-            }
-        );
 
         // Resource Owners
         $app['api_consumer.resource_owner_factory'] = $app->share(
@@ -99,7 +88,7 @@ class ApiConsumerServiceProvider implements ServiceProviderInterface
             function ($app) {
 
                 $fetcher = new FetcherService(
-                    $app['api_consumer.user_provider'],
+                    $app['users.tokens.model'],
                     $app['api_consumer.link_processor'],
                     $app['links.model'],
                     $app['users.rate.model'],

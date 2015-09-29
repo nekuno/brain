@@ -3,21 +3,20 @@
 
 namespace ApiConsumer\Event;
 
-
 use Symfony\Component\EventDispatcher\Event;
 
 class OAuthTokenEvent extends Event
 {
 
-    private $user;
+    private $token;
 
-    public function __construct($user)
+    public function __construct($token)
     {
-        $this->user = $user;
+        $this->token = $token;
     }
 
-    public function getUser()
+    public function getToken()
     {
-        return $this->user;
+        return $this->token;
     }
 }
