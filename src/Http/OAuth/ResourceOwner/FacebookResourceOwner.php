@@ -18,8 +18,6 @@ FacebookResourceOwner extends Oauth2GenericResourceOwner
 
     protected $expire_time_margin = 1728000;// 20 days because expired tokens can´t be refreshed
 
-    protected $redirect_uri = 'https://dev.nekuno.com/login/check-facebook'; //exactly as in facebook app
-
     /**
      * {@inheritDoc}
      */
@@ -30,6 +28,8 @@ FacebookResourceOwner extends Oauth2GenericResourceOwner
         $resolver->setDefaults(array(
             'base_url' => 'https://graph.facebook.com/v2.4/',
         ));
+
+        $resolver->setDefined('redirect_uri');
     }
 
     /**
@@ -47,7 +47,7 @@ FacebookResourceOwner extends Oauth2GenericResourceOwner
             'access_token' => $token['oauthToken'],
             'client_id' => $this->getOption('consumer_key'),
             'client_secret' => $this->getOption('consumer_secret'),
-            'redirect_uri' => $this->redirect_uri,
+            'redirect_uri' => $this->getOption('redirect_uri'),
         );
         try {
             $request = $this->getAPIRequest($getCodeURL, $query);
@@ -60,7 +60,7 @@ FacebookResourceOwner extends Oauth2GenericResourceOwner
         $query = array(
             'code' => $response->json()['code'],
             'client_id' => $this->getOption('consumer_key'),
-            'redirect_uri' => $this->redirect_uri,
+            'redirect_uri' => $this->getOption('redirect_uri'),
         );
 
         if (array_key_exists('refreshToken', $token) && null !== $token['refreshToken']) {

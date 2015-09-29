@@ -66,6 +66,7 @@ params:
     ## Facebook App
     facebook.consumer_key: 525923770862645
     facebook.consumer_secret: 1b5ed9309224e67f698848d85f7660a5
+    facebook.redirect_uri: 'https://dev.nekuno.com/login/check-facebook'
 
     ## Invitations migration
     admin.domain_plus_port: 'https://admin.local.nekuno.com:443/'
