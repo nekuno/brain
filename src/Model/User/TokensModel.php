@@ -209,13 +209,7 @@ class TokensModel
             $errors['resourceOwner'] = array(sprintf('resourceOwner not valid, valid values are "%s"', implode('", "', self::getResourceOwners())));
         }
 
-        $metadata = array(
-            'oauthToken' => array('type' => 'string', 'required' => true),
-            'oauthTokenSecret' => array('type' => 'string', 'required' => false),
-            'createdTime' => array('type' => 'integer', 'required' => false),
-            'expireTime' => array('type' => 'integer', 'required' => false),
-            'refreshToken' => array('type' => 'string', 'required' => false),
-        );
+        $metadata = $this->getMetadata();
 
         foreach ($metadata as $fieldName => $fieldData) {
 
@@ -323,9 +317,26 @@ class TokensModel
         /* @var $node Node */
         $node = $row->offsetGet('token');
         $token = $node->getProperties();
+        foreach ($this->getMetadata() as $key => $value) {
+            if (!isset($token[$key])) {
+                $token[$key] = null;
+            }
+        }
         ksort($token);
 
         return array_merge(array('id' => $user->getProperty('qnoow_id')), $token);
+    }
+
+    protected function getMetadata()
+    {
+
+        return array(
+            'oauthToken' => array('type' => 'string', 'required' => true),
+            'oauthTokenSecret' => array('type' => 'string', 'required' => false),
+            'createdTime' => array('type' => 'integer', 'required' => false),
+            'expireTime' => array('type' => 'integer', 'required' => false),
+            'refreshToken' => array('type' => 'string', 'required' => false),
+        );
     }
 
     protected function getUserAndTokenNodesById($id, $resourceOwner)
