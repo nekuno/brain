@@ -170,6 +170,7 @@ class TokensModel
     /**
      * @param int $id
      * @param string $resourceOwner
+     * @return array
      */
     public function remove($id, $resourceOwner)
     {
@@ -184,6 +185,8 @@ class TokensModel
             throw new NotFoundHttpException('Token not found');
         }
 
+        $token = $this->getById($id, $resourceOwner);
+
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(user:User)<-[token_of:TOKEN_OF]-(token:Token)')
             ->where('user.qnoow_id = { id }', 'token.resourceOwner = { resourceOwner }')
@@ -193,6 +196,8 @@ class TokensModel
 
         $query = $qb->getQuery();
         $query->getResultSet();
+
+        return $token;
     }
 
     /**

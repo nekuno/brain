@@ -96,8 +96,7 @@ class TokensController
         /* @var $model TokensModel */
         $model = $app['users.tokens.model'];
 
-        $token = $model->getById($id, $resourceOwner);
-        $model->remove($id, $resourceOwner);
+        $token = $model->remove($id, $resourceOwner);
 
         return $app->json($token);
     }
