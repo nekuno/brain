@@ -3,8 +3,10 @@
 namespace Model\User;
 
 use Doctrine\DBAL\Connection;
+use Doctrine\ORM\EntityManager;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
+use Model\Entity\DataStatus;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
@@ -27,11 +29,17 @@ class TokensModel
      */
     protected $connectionSocial;
 
-    public function __construct(GraphManager $graphManager, Connection $connectionSocial)
+    /**
+     * @var EntityManager
+     */
+    protected $entityManagerBrain;
+
+    public function __construct(GraphManager $graphManager, Connection $connectionSocial, EntityManager $entityManagerBrain)
     {
         $this->gm = $graphManager;
         // TODO: Refactor and remove this dependency
         $this->connectionSocial = $connectionSocial;
+        $this->entityManagerBrain = $entityManagerBrain;
     }
 
     public static function getResourceOwners()
@@ -192,10 +200,24 @@ class TokensModel
             ->where('user.qnoow_id = { id }', 'token.resourceOwner = { resourceOwner }')
             ->setParameter('id', (integer)$id)
             ->setParameter('resourceOwner', $resourceOwner)
-            ->delete('token', 'token_of');
+            ->delete('token', 'token_of')
+            ->returns('COUNT(token_of) AS count');
 
         $query = $qb->getQuery();
-        $query->getResultSet();
+        $result = $query->getResultSet();
+        /* @var $row Row */
+        $row = $result->current();
+        $count = $row->offsetGet('count');
+
+        if ($count === 1) {
+            $repository = $this->entityManagerBrain->getRepository('\Model\Entity\DataStatus');
+            $dataStatus = $repository->findOneBy(array('userId' => $id, 'resourceOwner' => $resourceOwner));
+
+            if ($dataStatus instanceof DataStatus) {
+                $this->entityManagerBrain->remove($dataStatus);
+                $this->entityManagerBrain->flush();
+            }
+        }
 
         return $token;
     }
