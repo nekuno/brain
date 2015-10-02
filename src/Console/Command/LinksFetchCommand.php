@@ -2,11 +2,11 @@
 
 namespace Console\Command;
 
-use ApiConsumer\Auth\DBUserProvider;
 use ApiConsumer\EventListener\FetchLinksInstantSubscriber;
 use ApiConsumer\EventListener\FetchLinksSubscriber;
 use ApiConsumer\Fetcher\FetcherService;
 use Console\ApplicationAwareCommand;
+use Model\User\TokensModel;
 use Psr\Log\LogLevel;
 use Silex\Application;
 use Symfony\Component\Console\Input\InputInterface;
@@ -63,10 +63,10 @@ class LinksFetchCommand extends ApplicationAwareCommand
             }
         }
 
-        $userProvider = $this->app['api_consumer.user_provider'];
+        /* @var $tm TokensModel */
+        $tm = $this->app['users.tokens.model'];
 
-        /* @var $userProvider DBUserProvider */
-        $users = $userProvider->getUsersByResource($resource, $userId);
+        $tokens = $tm->getByUserOrResource($userId, $resource);
 
         /* @var FetcherService $fetcher */
         $fetcher = $this->app['api_consumer.fetcher'];
@@ -81,16 +81,16 @@ class LinksFetchCommand extends ApplicationAwareCommand
         $dispatcher->addSubscriber($fetchLinksSubscriber);
         $dispatcher->addSubscriber($fetchLinksInstantSubscriber);
 
-        foreach ($users as $user) {
+        foreach ($tokens as $token) {
             try {
 
-                $fetcher->fetch($user['id'], $user['resourceOwner']);
+                $fetcher->fetch($token['id'], $token['resourceOwner']);
 
             } catch (\Exception $e) {
                 $output->writeln(
                     sprintf(
                         'Error fetching links for user %s with message: %s',
-                        $user['id'],
+                        $token['id'],
                         $e->getMessage()
                     )
                 );

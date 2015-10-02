@@ -9,6 +9,7 @@ use Model\User\AnswerModel;
 use Model\User\ProfileModel;
 use Model\User\RateModel;
 use Model\UserModel;
+use Model\User\PrivacyModel;
 use Psr\Log\LoggerInterface;
 use Silex\Application;
 
@@ -56,6 +57,10 @@ class Fixtures
     protected $pm;
 
     /**
+     * @var  PrivacyModel
+     * */
+    protected $prim;
+    /**
      * @var array
      */
     protected $scenario = array();
@@ -78,6 +83,7 @@ class Fixtures
         $this->qm = $app['questionnaire.questions.model'];
         $this->am = $app['users.answers.model'];
         $this->pm = $app['users.profile.model'];
+        $this->prim = $app['users.privacy.model'];
         $this->rm = $app['users.rate.model'];
         $this->scenario = $scenario;
     }
@@ -104,6 +110,7 @@ class Fixtures
         $this->loadLinkTags();
         $this->loadLikes($createdLinks);
         $this->loadAnswers();
+        $this->loadPrivacy();
         $this->calculateStatus();
     }
 
@@ -341,6 +348,20 @@ class Fixtures
             }
         }
 
+    }
+
+    protected function loadPrivacy()
+    {
+        $this->logger->notice('Loading privacy');
+
+        $privacy = $this->scenario['privacy'];
+
+        foreach ($privacy as $userPrivacy) {
+            $userId = $userPrivacy['user'];
+            unset($userPrivacy['user']);
+
+            $this->prim->create($userId, $userPrivacy);
+        }
     }
 
     protected function calculateStatus()

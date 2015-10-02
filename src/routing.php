@@ -20,6 +20,12 @@ $app->get('/profile/filters', 'users.profile.controller:getFiltersAction');
 $app->get('/profile/tags/{type}', 'users.profile.controller:getProfileTagsAction');
 $app->post('/profile/validate', 'users.profile.controller:validateAction')->value('id', null);
 
+$app->get('/users/{id}/tokens', 'users.tokens.controller:getAllAction')->value('id', null);
+$app->get('/users/{id}/tokens/{resourceOwner}', 'users.tokens.controller:getAction')->value('id', null);
+$app->post('/users/{id}/tokens/{resourceOwner}', 'users.tokens.controller:postAction')->value('id', null);
+$app->put('/users/{id}/tokens/{resourceOwner}', 'users.tokens.controller:putAction')->value('id', null);
+$app->delete('/users/{id}/tokens/{resourceOwner}', 'users.tokens.controller:deleteAction')->value('id', null);
+
 $app->get('/users/{id}/privacy', 'users.privacy.controller:getAction')->value('id', null);
 $app->post('/users/{id}/privacy', 'users.privacy.controller:postAction')->value('id', null);
 $app->put('/users/{id}/privacy', 'users.privacy.controller:putAction')->value('id', null);
@@ -74,6 +80,7 @@ $app->get('/users/{userId}/answers', 'users.answers.controller:indexAction');
 $app->post('/users/{userId}/answers', 'users.answers.controller:createAction'); // TODO: rename to answerAction
 $app->get('/users/{userId}/answers/count', 'users.answers.controller:countAction');
 $app->get('/users/{userId}/answers/{questionId}', 'users.answers.controller:getAnswerAction');
+$app->delete('/users/{userId}/answers/{questionId}', 'users.answers.controller:deleteAnswerAction');
 $app->post('/users/{userId}/answers/{questionId}', 'users.answers.controller:updateAction'); // TODO: Remove this
 $app->post('/answers/validate', 'users.answers.controller:validateAction');
 

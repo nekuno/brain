@@ -3,6 +3,7 @@
 
 namespace Console\Command;
 
+use ApiConsumer\LinkProcessor\LinkProcessor;
 use Console\ApplicationAwareCommand;
 use Everyman\Neo4j\Query\ResultSet;
 use Model\LinkModel;
@@ -31,6 +32,9 @@ class LinksFindDuplicatesCommand extends ApplicationAwareCommand
 
         /* @var $linkModel LinkModel */
         $linkModel = $this->app['links.model'];
+
+        $output->writeln('Updating link URLs');
+        $this->updateURLs($output, $linkModel);
 
         if ($input->getOption('pseudoduplicates') && $input->getOption('step')) {
             $moreLinksExist = true;
@@ -112,5 +116,31 @@ class LinksFindDuplicatesCommand extends ApplicationAwareCommand
                 }
             }
         }
+    }
+
+    /**
+     * @param OutputInterface $output
+     * @param LinkModel $linkModel
+     */
+    private function updateURLs($output,$linkModel)
+    {
+
+        $links = $linkModel->findAllLinks(array('type'=>'Video'));
+
+        /** @var $linkProcessor LinkProcessor */
+        $linkProcessor = $this->app['api_consumer.link_processor'];
+
+        foreach ($links as $link){
+            $cleanUrl = $linkProcessor->cleanExternalURLs($link);
+
+            if ($cleanUrl !== $link['url']){
+                $output->writeln('Changing '.$link['url'].' to '.$cleanUrl);
+                $link['tempId'] = $link['url'];
+                $link['url'] = $cleanUrl;
+                $processed = isset($link['processed'])? $link['processed'] : 0;
+                $linkModel->updateLink($link, $processed);
+            }
+        }
+
     }
 }

@@ -16,6 +16,11 @@ class YoutubeProcessor implements ProcessorInterface
      */
     protected $resourceOwner;
 
+    /**
+     * @var YoutubeUrlParser
+     */
+    protected $parser;
+
     public function __construct(GoogleResourceOwner $resourceOwner, YoutubeUrlParser $parser)
     {
         $this->resourceOwner = $resourceOwner;
@@ -158,6 +163,14 @@ class YoutubeProcessor implements ProcessorInterface
         }
 
         return $link;
+    }
+
+    /**
+     * @return YoutubeUrlParser
+     */
+    public function getParser()
+    {
+        return $this->parser;
     }
 
 }

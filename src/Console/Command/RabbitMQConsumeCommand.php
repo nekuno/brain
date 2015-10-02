@@ -53,8 +53,6 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
 
         /* @var $logger LoggerInterface */
         $logger = $this->app['monolog'];
-        /* @var $userProvider UserProviderInterface */
-        $userProvider = $this->app['api_consumer.user_provider'];
         /* @var $fetcher FetcherService */
         $fetcher = $this->app['api_consumer.fetcher'];
 
@@ -79,7 +77,7 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
                 $dispatcher->addSubscriber($fetchLinksInstantSubscriber);
                 /* @var $channel AMQPChannel */
                 $channel = $connection->channel();
-                $worker = new LinkProcessorWorker($channel, $fetcher, $userProvider, $this->app['dbs']['mysql_social'], $this->app['dbs']['mysql_brain']);
+                $worker = new LinkProcessorWorker($channel, $fetcher, $this->app['users.tokens.model'], $this->app['dbs']['mysql_social'], $this->app['dbs']['mysql_brain']);
                 $worker->setLogger($logger);
                 $logger->notice('Processing fetching queue');
                 $worker->consume();

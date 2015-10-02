@@ -77,10 +77,12 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
 
         $qb->match('(u:User {qnoow_id: {userId}})-[:MATCHES|SIMILARITY]-(anyUser:User)')
             ->where('u <> anyUser')
+            ->optionalMatch('(u)-[like:LIKES]-(anyUser)')
             ->optionalMatch('(u)-[m:MATCHES]-(anyUser)')
             ->optionalMatch('(u)-[s:SIMILARITY]-(anyUser)')
             ->with(
                 'u, anyUser,
+                (CASE WHEN like IS NOT NULL THEN 1 ELSE 0 END) AS like,
                 (CASE WHEN HAS(m.matching_questions) THEN m.matching_questions ELSE 0 END) AS matching_questions,
                 (CASE WHEN HAS(s.similarity) THEN s.similarity ELSE 0 END) AS similarity'
             )
@@ -88,13 +90,13 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
 
         $qb->optionalMatch('(p)-[:LOCATION]->(l:Location)');
 
-        $qb->with('u, anyUser, matching_questions, similarity, p, l');
+        $qb->with('u, anyUser, like, matching_questions, similarity, p, l');
         $qb->where(
             array_merge(
                 array('(matching_questions > 0 OR similarity > 0)'),
                 $profileFilters['conditions']
             ))
-            ->with('u', 'anyUser', 'matching_questions', 'similarity', 'p', 'l');
+            ->with('u', 'anyUser', 'like', 'matching_questions', 'similarity', 'p', 'l');
 
         foreach ($profileFilters['matches'] as $match){
             $qb->match($match);
@@ -112,7 +114,8 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                     p.birthday AS birthday,
                     l.locality + ", " + l.country AS location,
                     matching_questions,
-                    similarity'
+                    similarity,
+                    like'
         )
             ->orderBy($orderQuery)
             ->skip('{ offset }')
@@ -138,6 +141,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                 'similarity' => $row['similarity'],
                 'age' => $age,
                 'location' => $row['location'],
+                'like' => $row['like'],
             );
 
             $response[] = $user;

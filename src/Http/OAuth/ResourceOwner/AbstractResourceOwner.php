@@ -40,6 +40,8 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
      */
     private $clientCredential;
 
+    protected $expire_time_margin = 0;
+
     /**
      * @param ClientInterface $httpClient
      * @param \Symfony\Component\EventDispatcher\EventDispatcher $dispatcher
@@ -121,7 +123,7 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
             }
 
             try {
-                $data = $this->refreshAccessToken($token['refreshToken']);
+                $data = $this->refreshAccessToken($token);
             } catch (\Exception $e) {
                 $event = new OAuthTokenEvent($token);
                 $this->dispatcher->dispatch(\AppEvents::TOKEN_EXPIRED, $event);
@@ -130,13 +132,7 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
                 throw $e;
             }
 
-            if (!$data['access_token']) {
-                $this->notifyUserByEmail($token);
-            }
-
-            $token['oauthToken'] = $data['access_token'];
-            $token['createdTime'] = time();
-            $token['expireTime'] = $token['createdTime'] + $data['expires_in'];
+            $token = $this->addOauthData($data, $token);
             $event = new OAuthTokenEvent($token);
             $this->dispatcher->dispatch(\AppEvents::TOKEN_REFRESHED, $event);
         }
@@ -150,6 +146,19 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
         }
 
         return $this->getResponseContent($response);
+    }
+
+    protected function addOauthData($data, $token)
+    {
+        if (!$data['access_token']) {
+            $this->notifyUserByEmail($token);
+        }
+
+        $token['oauthToken'] = $data['access_token'];
+        $token['expireTime'] = $token['createdTime'] + $data['expires_in'] - $this->expire_time_margin;
+        $token['refreshToken'] = isset($data['refreshToken']) ? $data['refreshToken'] : null;
+
+        return $token;
     }
 
     /**
@@ -184,7 +193,7 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
     /**
      * Refresh an access token using a refresh token.
      *
-     * @param string $refreshToken Refresh token
+     * @param array $token Array of user data
      * @param array $extraParameters An array of parameters to add to the url
      *
      * @throws \Exception
@@ -193,7 +202,12 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
      *               provider.
      *
      */
-    public function refreshAccessToken($refreshToken, array $extraParameters = array())
+    public function refreshAccessToken($token, array $extraParameters = array())
+    {
+        throw new \Exception('OAuth error: "Method unsupported."');
+    }
+
+    public function forceRefreshAccessToken($token)
     {
         throw new \Exception('OAuth error: "Method unsupported."');
     }

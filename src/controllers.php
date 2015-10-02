@@ -14,6 +14,13 @@ $app['users.controller'] = $app->share(
     }
 );
 
+$app['users.tokens.controller'] = $app->share(
+    function () {
+
+        return new \Controller\User\TokensController();
+    }
+);
+
 $app['users.profile.controller'] = $app->share(
     function () {
 
@@ -43,9 +50,9 @@ $app['questionnaire.questions.controller'] = $app->share(
 );
 
 $app['users.answers.controller'] = $app->share(
-    function () {
+    function () use ($app) {
 
-        return new \Controller\User\AnswerController;
+        return new \Controller\User\AnswerController($app['users.answers.model']);
     }
 );
 
