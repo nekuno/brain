@@ -10,7 +10,7 @@ params:
     locale.default: en
 
     ## Instant
-    instant.host: http://localhost:8008/
+    instant.host: https://local.nekuno.com:8008/
     guzzle.verify: null
 
     ## Doctrine
@@ -66,13 +66,13 @@ params:
     ## Facebook App
     facebook.consumer_key: 525923770862645
     facebook.consumer_secret: 1b5ed9309224e67f698848d85f7660a5
-    facebook.redirect_uri: 'https://dev.nekuno.com/login/check-facebook'
+    facebook.redirect_uri: https://local.nekuno.com/login/check-facebook
 
     ## Invitations migration
-    admin.domain_plus_port: 'https://admin.local.nekuno.com:443/'
+    admin.domain_plus_port: https://admin.local.nekuno.com:443/
 
     ## Social host
-    social.host: 'https://local.nekuno.com/'
+    social.host: https://local.nekuno.com/
 
     ## FullContact API key
     fullContact.url: https://api.fullcontact.com/v2/person.json
