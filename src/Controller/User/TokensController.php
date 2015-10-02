@@ -2,6 +2,7 @@
 
 namespace Controller\User;
 
+use Http\OAuth\ResourceOwner\FacebookResourceOwner;
 use Model\User\TokensModel;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
@@ -61,6 +62,12 @@ class TokensController
         $model = $app['users.tokens.model'];
 
         $token = $model->create($id, $resourceOwner, $request->request->all());
+
+        if ($resourceOwner === TokensModel::FACEBOOK && array_key_exists('refreshToken', $token) && is_null($token['refreshToken'])) {
+            /* @var $facebookResourceOwner FacebookResourceOwner */
+            $facebookResourceOwner = $app['api_consumer.resource_owner.facebook'];
+            $facebookResourceOwner->forceRefreshAccessToken($token);
+        }
 
         return $app->json($token, 201);
     }
