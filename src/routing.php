@@ -172,8 +172,6 @@ $app->post('lookUp/users/{id}', 'lookUp.controller:setAction');
 
 $app->post('/lookUp/webHook', 'lookUp.controller:setFromWebHookAction')->bind('setLookUpFromWebHook');
 
-$app->get('/facebooktoken', 'users.data.controller:refreshFacebookTokenAction');
-
 $controllers
     ->assert('id', '\d+')
     ->convert(
