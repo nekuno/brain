@@ -59,11 +59,13 @@ class UsersSocialMediaRefreshCommand extends BaseCommand
                     $resourceOwner->forceRefreshAccessToken($token);
                     $this->displayMessage('Refreshed ' . $input->getArgument('resource') . ' token for user ' . $user['qnoow_id']);
 
-                } catch (ValidationException $e) {
+                } catch (\Exception $e) {
 
                     $style = $this->errorStyle;
                     $this->output->getFormatter()->setStyle('error', $style);
-                    $this->output->writeln('<error>' . print_r($e->getErrors(), true) . '</error>');
+                    if ($e instanceof ValidationException) {
+                        $this->output->writeln('<error>' . print_r($e->getErrors(), true) . '</error>');
+                    }
                     $this->displayError($e->getMessage());
                 }
             }
