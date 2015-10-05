@@ -118,6 +118,11 @@ $app->post('/groups/{id}/users/{userId}', 'users.groups.controller:addUserAction
 $app->delete('/groups/{id}/users/{userId}', 'users.groups.controller:removeUserAction');
 
 /**
+ * Communities routes
+ */
+$app->get('/groups/{id}/communities', 'users.communities.controller:getByGroupAction');
+
+/**
  * Invitation routes
  */
 $app->get('/invitations', 'users.invitations.controller:indexAction');

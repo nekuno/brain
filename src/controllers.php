@@ -63,6 +63,13 @@ $app['users.groups.controller'] = $app->share(
     }
 );
 
+$app['users.communities.controller'] = $app->share(
+    function () use ($app) {
+
+        return new \Controller\User\CommunityController($app['users.communities.model']);
+    }
+);
+
 $app['users.invitations.controller'] = $app->share(
     function () use ($app) {
 

@@ -7,6 +7,7 @@ use Model\LinkModel;
 use Model\Questionnaire\QuestionModel;
 use Model\User\Affinity\AffinityModel;
 use Model\User\AnswerModel;
+use Model\User\CommunityModel;
 use Model\User\ContentComparePaginatedModel;
 use Model\User\ContentPaginatedModel;
 use Model\User\ContentTagModel;
@@ -189,6 +190,13 @@ class ModelsServiceProvider implements ServiceProviderInterface
             function ($app) {
 
                 return new GroupModel($app['neo4j.graph_manager'], $app['users.model']);
+            }
+        );
+
+        $app['users.communities.model'] = $app->share(
+            function ($app) {
+
+                return new CommunityModel($app['neo4j.graph_manager'], $app['users.model']);
             }
         );
 
