@@ -29,7 +29,7 @@ class CommunityController
 
     public function getByGroupAction(Application $app, $enterpriseUserId, $id)
     {
-        $communities = $this->cm->getByGroup($id, $enterpriseUserId);
+        $communities = $this->cm->getByGroup($enterpriseUserId, $id);
 
         return $app->json($communities);
 
