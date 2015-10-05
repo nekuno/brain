@@ -69,9 +69,9 @@ class CommunityModel
 
         foreach($relations as $relation) {
             $relationsResult[] = array(
-                'id' => $relation->getProperty('id2'),
-                'matching' => $relation->getProperty('matching'),
-                'similarity' => $relation->getProperty('similarity'),
+                'id' => $relation['id2'],
+                'matching' => $relation['matching'],
+                'similarity' => $relation['similarity'],
             );
         }
         return array(
