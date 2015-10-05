@@ -70,8 +70,8 @@ class CommunityModel
         foreach($relations as $relation) {
             $relationsResult[] = array(
                 'id' => $relation[0],
-                'matching' => $relation[1],
-                'similarity' => $relation[2],
+                'matching' => round($relation[1] * 100),
+                'similarity' => round($relation[2] * 100),
             );
         }
         return array(
