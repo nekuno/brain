@@ -118,11 +118,6 @@ $app->post('/groups/{id}/users/{userId}', 'users.groups.controller:addUserAction
 $app->delete('/groups/{id}/users/{userId}', 'users.groups.controller:removeUserAction');
 
 /**
- * Communities routes
- */
-$app->get('/groups/{id}/communities', 'users.communities.controller:getByGroupAction');
-
-/**
  * Invitation routes
  */
 $app->get('/invitations', 'users.invitations.controller:indexAction');
@@ -159,6 +154,7 @@ $app->post('/enterpriseUsers/{enterpriseUserId}/groups', 'enterpriseUsers.groups
 $app->put('/enterpriseUsers/{enterpriseUserId}/groups/{id}', 'enterpriseUsers.groups.controller:putAction');
 $app->delete('/enterpriseUsers/{enterpriseUserId}/groups/{id}', 'enterpriseUsers.groups.controller:deleteAction');
 $app->post('/enterpriseUsers/{enterpriseUserId}/groups/{id}', 'enterpriseUsers.groups.controller:validateAction');
+$app->get('/enterpriseUsers/{enterpriseUserId}/groups/{id}/communities', 'enterpriseUsers.communities.controller:getByGroupAction');
 
 /**
  * EnterpriseUser Invitation routes

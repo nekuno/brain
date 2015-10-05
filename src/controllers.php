@@ -63,13 +63,6 @@ $app['users.groups.controller'] = $app->share(
     }
 );
 
-$app['users.communities.controller'] = $app->share(
-    function () use ($app) {
-
-        return new \Controller\User\CommunityController($app['users.communities.model']);
-    }
-);
-
 $app['users.invitations.controller'] = $app->share(
     function () use ($app) {
 
@@ -95,6 +88,13 @@ $app['enterpriseUsers.groups.controller'] = $app->share(
     function () use ($app) {
 
         return new \Controller\EnterpriseUser\GroupController($app['users.groups.model'], $app['enterpriseUsers.model']);
+    }
+);
+
+$app['enterpriseUsers.communities.controller'] = $app->share(
+    function () use ($app) {
+
+        return new \Controller\EnterpriseUser\CommunityController($app['enterpriseUsers.model'], $app['enterpriseUsers.communities.model']);
     }
 );
 

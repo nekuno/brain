@@ -2,7 +2,7 @@
 /**
  * @author Manolo Salsas <manolez@gmail.com>
  */
-namespace Model\User;
+namespace Model\EnterpriseUser;
 
 use Everyman\Neo4j\Query\Row;
 use Model\Neo4j\GraphManager;
@@ -32,14 +32,17 @@ class CommunityModel
         $this->um = $um;
     }
 
-    public function getByGroup($id)
+    public function getByGroup($groupId, $enterpriseUserId)
     {
 
         $qb = $this->gm->createQueryBuilder();
-        $qb->match('(g:Group)<-[:BELONGS_TO]-(u1:User)-[matches:MATCHES]->(u2:User)-[:BELONGS_TO]->(g)')
+        $qb->match('(eu:EnterpriseUser)-[:CREATED_GROUP]->(g:Group)<-[:BELONGS_TO]-(u1:User)-[matches:MATCHES]->(u2:User)-[:BELONGS_TO]->(g)')
             ->match('(u1)-[similarity:SIMILARITY]->(u2)')
-            ->where('id(g) = { id }')
-            ->setParameter('id', (int)$id)
+            ->where('id(g) = { id } AND eu.admin_id = { admin_id }')
+            ->setParameters(array(
+                'id' => (int)$groupId,
+                'admin_id' => (int)$enterpriseUserId
+            ))
             ->returns('u1.qnoow_id as id1, u1.username as username, {id2: collect(u2.qnoow_id), matching: collect(matches.matching_questions), similarity: collect(similarity.similarity)} AS relations');
 
         $query = $qb->getQuery();
