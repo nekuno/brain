@@ -32,7 +32,7 @@ class CommunityModel
         $this->um = $um;
     }
 
-    public function getByGroup($groupId, $enterpriseUserId)
+    public function getByGroup($enterpriseUserId, $id)
     {
 
         $qb = $this->gm->createQueryBuilder();
@@ -40,7 +40,7 @@ class CommunityModel
             ->match('(u1)-[similarity:SIMILARITY]->(u2)')
             ->where('id(g) = { id } AND eu.admin_id = { admin_id }')
             ->setParameters(array(
-                'id' => (int)$groupId,
+                'id' => (int)$id,
                 'admin_id' => (int)$enterpriseUserId
             ))
             ->returns('u1.qnoow_id as id1, u1.username as username, {id2: collect(u2.qnoow_id), matching: collect(matches.matching_questions), similarity: collect(similarity.similarity)} AS relations');
