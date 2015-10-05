@@ -36,10 +36,11 @@ class CommunityModel
     {
 
         $qb = $this->gm->createQueryBuilder();
-        $qb->match('(eu:EnterpriseUser)-[:CREATED_GROUP]->(g:Group)<-[:BELONGS_TO]-(u1:User)-[matches:MATCHES]->(u2:User)-[:BELONGS_TO]->(g)')
+        $qb->match('(eu:EnterpriseUser)-[:CREATED_GROUP]->(g:Group)')
+            ->match('(u2:User)-[:BELONGS_TO]->(g:Group)<-[:BELONGS_TO]-(u1:User)')
             ->where('id(g) = { id } AND eu.admin_id = { admin_id }')
-            ->with('g, u1, u2, matches')
-            ->match('(u1)-[similarity:SIMILARITY]->(u2)')
+            ->optionalMatch('(u1)-[matches:MATCHES]->(u2)')
+            ->optionalMatch('(u1)-[similarity:SIMILARITY]->(u2)')
             ->setParameters(array(
                 'id' => (int)$id,
                 'admin_id' => (int)$enterpriseUserId
@@ -70,8 +71,8 @@ class CommunityModel
         foreach($relations as $relation) {
             $relationsResult[] = array(
                 'id' => $relation[0],
-                'matching' => round($relation[1] * 100),
-                'similarity' => round($relation[2] * 100),
+                'matching' => $relation[1] ? round($relation[1] * 100) : 0,
+                'similarity' => $relation[2] ? round($relation[2] * 100) : 0,
             );
         }
         return array(
