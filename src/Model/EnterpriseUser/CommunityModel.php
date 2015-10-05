@@ -44,7 +44,7 @@ class CommunityModel
                 'id' => (int)$id,
                 'admin_id' => (int)$enterpriseUserId
             ))
-            ->returns('u1.qnoow_id as id1, u1.username as username, {id2: collect(u2.qnoow_id), matching: collect(matches.matching_questions), similarity: collect(similarity.similarity)} AS relations');
+            ->returns('u1.qnoow_id as id1, u1.username as username, COLLECT([u2.qnoow_id, matches.matching_questions, similarity.similarity]) AS relations');
 
         $query = $qb->getQuery();
 
@@ -69,9 +69,9 @@ class CommunityModel
 
         foreach($relations as $relation) {
             $relationsResult[] = array(
-                'id' => $relation['id2'],
-                'matching' => $relation['matching'],
-                'similarity' => $relation['similarity'],
+                'id' => $relation[0],
+                'matching' => $relation[1],
+                'similarity' => $relation[2],
             );
         }
         return array(
