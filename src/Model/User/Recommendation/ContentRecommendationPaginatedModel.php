@@ -154,7 +154,6 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
             $return['items'] = array_merge($return['items'], $foreignResult['items']);
             $return['newForeign'] = $foreignResult['foreign'];
         }
-
         //Works with ContentPaginator (accepts $result), not Paginator (accepts $result['items'])
         return $return;
     }
@@ -163,7 +162,7 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
      * @param $filters
      * @param $limit
      * @param $foreign
-     * @return array
+     * @return array (items, foreign = # of links database searched, -1 if total)
      * @throws \Exception
      * @throws \Model\Neo4j\Neo4jException
      */
@@ -181,18 +180,18 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
             $linkType = $filters['type'];
         }
 
-        $totalDatabaseContents = 50000;
-
         $pageSizeMultiplier = 1; //small may make queries slow, big may skip results
-        if (isset($filters['tag'])){
-            $pageSizeMultiplier *= 10;
+        if (isset($filters['tag'])) {
+            $pageSizeMultiplier *= 5;
         }
 
         $internalLimit = $limit * $pageSizeMultiplier;
 
         $maxPagesSearched = 10000; //bigger may get more contents but it's slower near the limit
 
-        $pagesSearched = min(array($totalDatabaseContents / $internalLimit, $maxPagesSearched));
+        $databaseSize = $this->lm->countAllLinks($filters);
+
+        $pagesSearched = min(array($databaseSize / $internalLimit, $maxPagesSearched));
 
         $internalPaginationLimit = $foreign + $pagesSearched * $internalLimit;
 
@@ -204,11 +203,10 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
             'internalLimit' => $internalLimit,
         );
 
-        $items = 0;
-
         $return = array('items' => array());
+        $items = array();
 
-        while ($items < $limit && $params['internalOffset'] < $internalPaginationLimit) {
+        while (count($items) < $limit && $params['internalOffset'] < $internalPaginationLimit) {
 
             $qb = $this->gm->createQueryBuilder();
             $qb->match('(user:User {qnoow_id: { userId }})');
@@ -248,12 +246,19 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
 
             $response = $this->buildResponseFromResult($result, $id);
 
-            $return['items'] = array_merge($return['items'], $response['items']);
+            $items = array_merge($items, $response['items']);
 
-            $items = count($return['items']);
             $params['internalOffset'] += $internalLimit;
         }
 
+        $return['items'][] = current($items);
+        for ($i = 1; $i < $limit; $i++) {
+            $return['items'][] = next($items);
+        }
+
+        if ($params['internalOffset'] >= $databaseSize) {
+            $params['internalOffset'] = -1;
+        }
         $return['foreign'] = $params['internalOffset'];
 
         return $return;
