@@ -5,6 +5,7 @@ namespace Provider;
 use GuzzleHttp\Client;
 use Service\AffinityRecalculations;
 use Service\ChatMessageNotifications;
+use Service\EnqueueMessage;
 use Service\MigrateSocialInvitations;
 use Service\TokenGenerator;
 use Silex\Application;
@@ -61,6 +62,12 @@ class ServicesServiceProvider implements ServiceProviderInterface
         $app['tokenGenerator.service'] = $app->share(
             function () {
                 return new TokenGenerator();
+            }
+        );
+
+        $app['enqueueMessage.service'] = $app->share(
+            function (Application $app){
+                return new EnqueueMessage($app['amqp']);
             }
         );
     }

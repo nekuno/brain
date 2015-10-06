@@ -4,8 +4,7 @@ namespace Console\Command;
 
 use Console\ApplicationAwareCommand;
 use Model\UserModel;
-use PhpAmqpLib\Connection\AMQPStreamConnection;
-use PhpAmqpLib\Message\AMQPMessage;
+use Service\EnqueueMessage;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -16,7 +15,7 @@ class RabbitMQEnqueueFetchingCommand extends ApplicationAwareCommand
     protected function configure()
     {
 
-        $this->setName('rabbitmq:enqueue')
+        $this->setName('rabbitmq:enqueue:fetching')
             ->setDescription('Enqueues a fetching task for all users')
             ->addOption(
                 'user',
@@ -66,35 +65,18 @@ class RabbitMQEnqueueFetchingCommand extends ApplicationAwareCommand
             $resourceOwners[] = $resourceOwner;
         }
 
+        /* @var $enqueueMessage EnqueueMessage */
+        $enqueueMessage = $this->app['enqueueMessage.service'];
+
         foreach ($users as $user) {
             foreach ($resourceOwners as $name) {
                 $data = array(
                     'userId' => $user['qnoow_id'],
                     'resourceOwner' => $name,
                 );
-                $this->enqueueFetchingProcess($data);
+                $enqueueMessage->enqueueMessage($data, 'brain.fetching.links');
             }
         }
     }
 
-    /**
-     * @param array $data
-     * @param AMQPStreamConnection $connection
-     */
-    private function enqueueFetchingProcess(array $data)
-    {
-        $message = new AMQPMessage(json_encode($data, JSON_UNESCAPED_UNICODE));
-        /* @var $connection AMQPStreamConnection */
-        $connection = $this->app['amqp'];
-        $exchangeName = 'brain.direct';
-        $exchangeType = 'direct';
-        $routingKey = 'brain.fetching.links';
-        $queueName = 'brain.fetching';
-
-        $channel = $connection->channel();
-        $channel->exchange_declare($exchangeName, $exchangeType, false, true, false);
-        $channel->queue_declare($queueName, false, true, false, false);
-        $channel->queue_bind($queueName, $exchangeName);
-        $channel->basic_publish($message, $exchangeName, $routingKey);
-    }
 }

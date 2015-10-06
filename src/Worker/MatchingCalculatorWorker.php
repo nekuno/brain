@@ -107,7 +107,7 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
 
         $data = json_decode($message->body, true);
 
-        $trigger = $data['trigger'];
+        $trigger = $this->getTrigger($message);
 
         switch ($trigger) {
             case 'content_rated':

@@ -33,8 +33,8 @@ class SubscribersServiceProvider implements ServiceProviderInterface
 
         $dispatcher->addSubscriber(new FilterClientIpSubscriber($app['valid_ips']));
         $dispatcher->addSubscriber(new OAuthTokenSubscriber($app['users.tokens.model'], $app['mailer'], $app['monolog'], $app['amqp']));
-        $dispatcher->addSubscriber(new UserDataStatusSubscriber($app['orm.ems']['mysql_brain'], $app['amqp']));
-        $dispatcher->addSubscriber(new UserAnswerSubscriber($app['amqp']));
+        $dispatcher->addSubscriber(new UserDataStatusSubscriber($app['orm.ems']['mysql_brain'], $app['enqueueMessage.service']));
+        $dispatcher->addSubscriber(new UserAnswerSubscriber($app['enqueueMessage.service']));
         $dispatcher->addSubscriber(new InvitationSubscriber($app['neo4j.graph_manager']));
     }
 

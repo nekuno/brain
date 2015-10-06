@@ -3,7 +3,6 @@
 
 namespace Worker;
 
-use ApiConsumer\Auth\UserProviderInterface;
 use ApiConsumer\Fetcher\FetcherService;
 use Doctrine\DBAL\Connection;
 use Model\User\TokensModel;
@@ -58,13 +57,14 @@ class LinkProcessorWorker extends LoggerAwareWorker implements RabbitMQConsumerI
     public function consume()
     {
 
-        $exchangeName = 'brain.direct';
-        $exchangeType = 'direct';
-        $routingKey = 'brain.fetching.links';
+        $exchangeName = 'brain.topic';
+        $exchangeType = 'topic';
+        $topic = 'brain.fetching.*';
         $queueName = 'brain.fetching';
+
         $this->channel->exchange_declare($exchangeName, $exchangeType, false, true, false);
         $this->channel->queue_declare($queueName, false, true, false, false);
-        $this->channel->queue_bind($queueName, $exchangeName, $routingKey);
+        $this->channel->queue_bind($queueName, $exchangeName, $topic);
 
         $this->channel->basic_consume($queueName, '', false, false, false, false, array($this, 'callback'));
 
