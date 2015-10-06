@@ -35,6 +35,8 @@ class AffinityRecalculations
 
     protected $linksToEmail = 3;
 
+    const MIN_AFFINITY = 0.7;
+
     function __construct($emailNotifications, $translator, $graphManager, $linkModel, $userModel, $affinityModel)
     {
         $this->graphManager = $graphManager;
@@ -46,6 +48,10 @@ class AffinityRecalculations
     }
 
     /**
+     * Predict best content for an user and calculate affinity between them
+     * If that content already has affinity to the user, recalculate it.
+     * Notifies the user by email if the affinity is very high.
+     *
      * @param null $userId
      * @param int $limitContent
      * @param int $limitUsers
@@ -67,6 +73,9 @@ class AffinityRecalculations
         $counterNotified = 0;
         foreach ($links as $link) {
             $affinity = $this->affinityModel->getAffinity($userId, $link['id'], $seconds);
+            if ($affinity['affinity'] < $this::MIN_AFFINITY){
+                continue;
+            }
             $affinities[$link['id']] = $affinity['affinity'];
             if ($affinity['affinity'] > $notifyLimit) {
                 $whenNotified = $this->linkModel->getWhenNotified($userId, $link['id']);
