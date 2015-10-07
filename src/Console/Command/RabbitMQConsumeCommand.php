@@ -2,7 +2,6 @@
 
 namespace Console\Command;
 
-use ApiConsumer\Auth\UserProviderInterface;
 use ApiConsumer\EventListener\FetchLinksInstantSubscriber;
 use ApiConsumer\EventListener\FetchLinksSubscriber;
 use ApiConsumer\Fetcher\FetcherService;
@@ -12,6 +11,7 @@ use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
+use Service\AMQPManager;
 use Silex\Application;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -20,6 +20,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Worker\LinkProcessorWorker;
 use Worker\MatchingCalculatorWorker;
+use Worker\PredictionWorker;
 
 /**
  * Class RabbitMQConsumeCommand
@@ -30,8 +31,9 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
 {
 
     protected $validConsumers = array(
-        'fetching',
-        'matching',
+        AMQPManager::FETCHING,
+        AMQPManager::MATCHING,
+        AMQPManager::PREDICTION,
     );
 
     protected function configure()
@@ -53,48 +55,71 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
 
         /* @var $logger LoggerInterface */
         $logger = $this->app['monolog'];
-        /* @var $fetcher FetcherService */
-        $fetcher = $this->app['api_consumer.fetcher'];
 
         if (OutputInterface::VERBOSITY_NORMAL < $output->getVerbosity()) {
             $logger = new ConsoleLogger($output, array(LogLevel::NOTICE => OutputInterface::VERBOSITY_NORMAL));
         }
 
-        $fetchLinksSubscriber = new FetchLinksSubscriber($output);
-        $dispatcher = $this->app['dispatcher'];
-        /* @var $dispatcher EventDispatcher */
-        $dispatcher->addSubscriber($fetchLinksSubscriber);
-
-        $fetcher->setLogger($logger);
+        $output->writeln(sprintf('Starting %s consumer', $consumer));
 
         /* @var $connection AMQPStreamConnection */
         $connection = $this->app['amqp'];
+        /* @var $channel AMQPChannel */
+        $channel = $connection->channel();
+        /* @var $dispatcher EventDispatcher */
+        $dispatcher = $this->app['dispatcher'];
 
-        $output->writeln(sprintf('Starting %s consumer', $consumer));
         switch ($consumer) {
-            case 'fetching':
+
+            case AMQPManager::FETCHING :
                 $fetchLinksInstantSubscriber = new FetchLinksInstantSubscriber($this->app['guzzle.client'], $this->app['instant.host']);
+                $fetchLinksSubscriber = new FetchLinksSubscriber($output);
+                $dispatcher->addSubscriber($fetchLinksSubscriber);
                 $dispatcher->addSubscriber($fetchLinksInstantSubscriber);
-                /* @var $channel AMQPChannel */
-                $channel = $connection->channel();
-                $worker = new LinkProcessorWorker($channel, $fetcher, $this->app['users.tokens.model'], $this->app['dbs']['mysql_social'], $this->app['dbs']['mysql_brain']);
+                /* @var $fetcher FetcherService */
+                $fetcher = $this->app['api_consumer.fetcher'];
+                $fetcher->setLogger($logger);
+
+                $worker = new LinkProcessorWorker($channel,
+                    $fetcher,
+                    $this->app['users.tokens.model'],
+                    $this->app['dbs']['mysql_social'],
+                    $this->app['dbs']['mysql_brain']);
                 $worker->setLogger($logger);
                 $logger->notice('Processing fetching queue');
-                $worker->consume();
-                $channel->close();
                 break;
-            case 'matching':
-                /* @var $channel AMQPChannel */
-                $channel = $connection->channel();
+
+            case AMQPManager::MATCHING:
                 $userStatusSubscriber = new UserStatusSubscriber($this->app['instant.client']);
                 $dispatcher->addSubscriber($userStatusSubscriber);
-                $worker = new MatchingCalculatorWorker($channel, $this->app['users.model'], $this->app['users.matching.model'], $this->app['users.similarity.model'], $this->app['dbs']['mysql_social'], $this->app['dbs']['mysql_brain'], $dispatcher);
+
+                $worker = new MatchingCalculatorWorker($channel,
+                    $this->app['users.model'],
+                    $this->app['users.matching.model'],
+                    $this->app['users.similarity.model'],
+                    $this->app['dbs']['mysql_social'],
+                    $this->app['dbs']['mysql_brain'],
+                    $dispatcher);
                 $worker->setLogger($logger);
                 $logger->notice('Processing matching queue');
-                $worker->consume();
-                $channel->close();
                 break;
+
+            case AMQPManager::PREDICTION:
+
+                $worker = new PredictionWorker($channel,
+                    $this->app['affinityRecalculations.service'],
+                    $this->app['users.affinity.model'],
+                    $this->app['links.model']);
+                $worker->setLogger($logger);
+                $logger->notice('Processing prediction queue');
+                break;
+
+            default:
+                throw new \Exception('Invalid consumer name');
         }
+
+        $worker->consume();
+        $channel->close();
 
         $connection->close();
     }

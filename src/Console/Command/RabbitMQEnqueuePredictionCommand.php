@@ -4,7 +4,7 @@ namespace Console\Command;
 
 use Console\ApplicationAwareCommand;
 use Model\UserModel;
-use Service\EnqueueMessage;
+use Service\AMQPManager;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -45,7 +45,6 @@ class RabbitMQEnqueuePredictionCommand extends ApplicationAwareCommand
         } else {
             $users = array($usersModel->getById($userId));
         }
-
         if (empty($users)) {
             $output->writeln(sprintf('Not user found with id %d ', $userId));
             exit;
@@ -62,13 +61,13 @@ class RabbitMQEnqueuePredictionCommand extends ApplicationAwareCommand
                 throw new \Exception('Mode not supported');
         }
 
-        /* @var $enqueueMessage EnqueueMessage */
-        $enqueueMessage = $this->app['enqueueMessage.service'];
+        /* @var $amqpManager AMQPManager */
+        $amqpManager = $this->app['amqpManager.service'];
 
         foreach ($users as $user) {
-
+            $output->writeln('Enqueuing prediction for user '.$user['qnoow_id']);
             $data = array('userId' => $user['qnoow_id']);
-            $enqueueMessage->enqueueMessage($data, $routingKey);
+            $amqpManager->enqueueMessage($data, $routingKey);
         }
     }
 }

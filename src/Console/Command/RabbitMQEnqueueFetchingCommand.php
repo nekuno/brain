@@ -4,7 +4,7 @@ namespace Console\Command;
 
 use Console\ApplicationAwareCommand;
 use Model\UserModel;
-use Service\EnqueueMessage;
+use Service\AMQPManager;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -65,8 +65,8 @@ class RabbitMQEnqueueFetchingCommand extends ApplicationAwareCommand
             $resourceOwners[] = $resourceOwner;
         }
 
-        /* @var $enqueueMessage EnqueueMessage */
-        $enqueueMessage = $this->app['enqueueMessage.service'];
+        /* @var $amqpManager AMQPManager */
+        $amqpManager = $this->app['amqpManager.service'];
 
         foreach ($users as $user) {
             foreach ($resourceOwners as $name) {
@@ -74,7 +74,7 @@ class RabbitMQEnqueueFetchingCommand extends ApplicationAwareCommand
                     'userId' => $user['qnoow_id'],
                     'resourceOwner' => $name,
                 );
-                $enqueueMessage->enqueueMessage($data, 'brain.fetching.links');
+                $amqpManager->enqueueMessage($data, 'brain.fetching.links');
             }
         }
     }

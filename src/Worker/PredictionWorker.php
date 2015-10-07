@@ -9,7 +9,6 @@ use Model\User\Similarity\SimilarityModel;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Message\AMQPMessage;
 use Service\AffinityRecalculations;
-use Symfony\Component\EventDispatcher\EventDispatcher;
 
 /**
  * Class AffinityCalculatorWorker
@@ -43,23 +42,15 @@ class PredictionWorker extends LoggerAwareWorker implements RabbitMQConsumerInte
      */
     protected $similarityModel;
 
-    /**
-     * @var EventDispatcher
-     */
-    protected $dispatcher;
-
     const TRIGGER_RECALCULATE = 'recalculate';
     const TRIGGER_LIVE = 'live';
 
     public function __construct(AMQPChannel $channel,
                                 AffinityRecalculations $affinityRecalculations,
                                 AffinityModel $affinityModel,
-                                LinkModel $linkModel,
-                                EventDispatcher $dispatcher)
+                                LinkModel $linkModel)
     {
-
         $this->channel = $channel;
-        $this->dispatcher = $dispatcher;
 
         $this->linkModel = $linkModel;
         $this->affinityModel = $affinityModel;

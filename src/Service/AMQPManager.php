@@ -12,7 +12,7 @@ namespace Service;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
-class EnqueueMessage
+class AMQPManager
 {
     const MATCHING = 'matching';
     const FETCHING = 'fetching';

@@ -3,9 +3,7 @@
 namespace EventListener;
 
 use Event\AnswerEvent;
-use PhpAmqpLib\Connection\AMQPStreamConnection;
-use PhpAmqpLib\Message\AMQPMessage;
-use Service\EnqueueMessage;
+use Service\AMQPManager;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -16,17 +14,17 @@ class UserAnswerSubscriber implements EventSubscriberInterface
 {
 
     /**
-     * @var EnqueueMessage
+     * @var AMQPManager
      */
-    protected $enqueueMessage;
+    protected $amqpManager;
 
     /**
-     * @param EnqueueMessage $enqueueMessage
+     * @param AMQPManager $amqpManager
      */
-    public function __construct(EnqueueMessage $enqueueMessage)
+    public function __construct(AMQPManager $amqpManager)
     {
 
-        $this->enqueueMessage = $enqueueMessage;
+        $this->amqpManager = $amqpManager;
     }
 
     /**
@@ -52,6 +50,6 @@ class UserAnswerSubscriber implements EventSubscriberInterface
             'trigger' => 'question_answered'
         );
 
-        $this->enqueueMessage->enqueueMessage($data, 'brain.matching.question_answered');
+        $this->amqpManager->enqueueMessage($data, 'brain.matching.question_answered');
     }
 }

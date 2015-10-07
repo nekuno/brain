@@ -9,9 +9,7 @@ use Event\MatchingExpiredEvent;
 use Event\ProcessLinksEvent;
 use Event\ContentRatedEvent;
 use Model\Entity\DataStatus;
-use PhpAmqpLib\Connection\AMQPStreamConnection;
-use PhpAmqpLib\Message\AMQPMessage;
-use Service\EnqueueMessage;
+use Service\AMQPManager;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -27,19 +25,19 @@ class UserDataStatusSubscriber implements EventSubscriberInterface
     protected $entityManager;
 
     /**
-     * @var EnqueueMessage
+     * @var AMQPManager
      */
-    protected $enqueueMessage;
+    protected $amqpManager;
 
     /**
      * @param EntityManager $entityManager
-     * @param EnqueueMessage $enqueueMessage
+     * @param AMQPManager $amqpManager
      */
-    public function __construct(EntityManager $entityManager, EnqueueMessage $enqueueMessage)
+    public function __construct(EntityManager $entityManager, AMQPManager $amqpManager)
     {
 
         $this->entityManager = $entityManager;
-        $this->enqueueMessage = $enqueueMessage;
+        $this->amqpManager = $amqpManager;
     }
 
     /**
@@ -139,7 +137,7 @@ class UserDataStatusSubscriber implements EventSubscriberInterface
             'resourceOwner' => $resourceOwner,
         );
 
-        $this->enqueueMessage->enqueueMessage($data, 'brain.matching.process_finished');
+        $this->amqpManager->enqueueMessage($data, 'brain.matching.process_finished');
     }
 
     public function onMatchingExpired(MatchingExpiredEvent $event)
@@ -151,7 +149,7 @@ class UserDataStatusSubscriber implements EventSubscriberInterface
             'matching_type' => $event->getType(),
         );
 
-        $this->enqueueMessage->enqueueMessage($data, 'brain.matching.matching_expired');
+        $this->amqpManager->enqueueMessage($data, 'brain.matching.matching_expired');
 
     }
 
@@ -162,7 +160,7 @@ class UserDataStatusSubscriber implements EventSubscriberInterface
             'userId' => $event->getUser(),
         );
 
-        $this->enqueueMessage->enqueueMessage($data, 'brain.matching.content_rated');
+        $this->amqpManager->enqueueMessage($data, 'brain.matching.content_rated');
     }
 
 }
