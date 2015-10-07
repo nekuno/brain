@@ -132,18 +132,27 @@ class QueryBuilder
      * @return QueryBuilder
      * @throws \Exception
      */
-    public function where($where = null, $separator = 'AND')
+    public function where($separator = 'AND', $where = null)
     {
 
-        if (!in_array($separator, array('AND', 'OR'))){
-            throw new \Exception ("Separator $separator not supported in WHERE clause");
+        $validSeparator = in_array($separator, array('AND', 'OR'));
+
+        if (!$validSeparator){
+            $separator = 'AND';
         }
 
         if (empty($where)) {
             return $this;
         }
 
-        $wheres = is_array($where) ? $where : array($where);
+        if (is_array($where)){
+            $wheres = $where;
+        } else {
+            $wheres = func_get_args();
+            if ($validSeparator){
+                array_shift($wheres);
+            }
+        }
 
         return $this->add('where', implode(" $separator ", $wheres));
     }
