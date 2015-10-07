@@ -5,7 +5,6 @@ namespace Model\Neo4j;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 use Everyman\Neo4j\Exception;
-use Model\Neo4j\Neo4jException;
 
 /**
  * @author Juan Luis Martínez <juanlu@comakai.com>
@@ -25,27 +24,25 @@ class Query extends \Everyman\Neo4j\Cypher\Query implements LoggerAwareInterface
     public function getResultSet()
     {
 
-        if ($this->logger instanceof LoggerInterface) {
-            $now = microtime(true);
-            try {
-                $result = parent::getResultSet();
-            } catch (\Exception $e) {
-                $message = sprintf('Error executing Neo4j query: "%s"', $this->getExecutableQuery());
+        $now = microtime(true);
+        try {
+            $result = parent::getResultSet();
+        } catch (Exception $e) {
+            $message = sprintf('Error executing Neo4j query: "%s"', $this->getExecutableQuery());
+            if ($this->logger instanceof LoggerInterface) {
                 $this->logger->error($message);
-                if ($e instanceof Exception) {
-                    $query = str_replace(array("\n", "\r", '"'), array(' ', ' ', "'"), $this->getExecutableQuery());
-                    $e = new Neo4jException($e->getMessage(), $e->getCode(), $e->getHeaders(), $e->getData(), $query);
-                }
-                throw $e;
             }
-            $time = round(microtime(true) - $now, 3) * 1000;
-            $message = sprintf('Executed Neo4j query (took %s ms): "%s"', $time, $this->getExecutableQuery());
+            $query = str_replace(array("\n", "\r", '"'), array(' ', ' ', "'"), $this->getExecutableQuery());
+            throw new Neo4jException($e->getMessage(), $e->getCode(), $e->getHeaders(), $e->getData(), $query);
+        }
+        $time = round(microtime(true) - $now, 3) * 1000;
+        $message = sprintf('Executed Neo4j query (took %s ms): "%s"', $time, $this->getExecutableQuery());
+        if ($this->logger instanceof LoggerInterface) {
             1000 <= $time ? $this->logger->warning($message) : $this->logger->debug($message);
-
-            return $result;
         }
 
-        return parent::getResultSet();
+        return $result;
+
     }
 
     public function getExecutableQuery()
