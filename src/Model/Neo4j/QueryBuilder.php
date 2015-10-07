@@ -128,29 +128,28 @@ class QueryBuilder
 
     /**
      * @param mixed $where
-     * @param string $separator
      * @return QueryBuilder
      * @throws \Exception
      */
-    public function where($separator = 'AND', $where = null)
+    public function where($where = null)
     {
-
-        $validSeparator = in_array($separator, array('AND', 'OR'));
-
-        if (!$validSeparator){
-            $separator = 'AND';
-        }
 
         if (empty($where)) {
             return $this;
         }
 
+        $separator = 'AND';
         if (is_array($where)){
             $wheres = $where;
         } else {
             $wheres = func_get_args();
-            if ($validSeparator){
+            if (in_array($wheres[0], array('OR','AND'))){
+                $separator = $wheres[0];
                 array_shift($wheres);
+
+                if (is_array($wheres[0])){
+                    $wheres = $wheres[0];
+                }
             }
         }
 
