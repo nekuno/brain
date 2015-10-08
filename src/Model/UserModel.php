@@ -3,16 +3,17 @@
 namespace Model;
 
 use Doctrine\DBAL\Connection;
+use Doctrine\ORM\EntityManager;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
+use Model\Neo4j\Neo4jException;
 use Model\User\RelationsModel;
 use Model\User\UserStatsModel;
 use Model\User\UserStatusModel;
 use Paginator\PaginatedInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Doctrine\ORM\EntityManager;
 
 /**
  * Class UserModel
@@ -41,11 +42,15 @@ class UserModel implements PaginatedInterface
      * @var RelationsModel
      */
     protected $relationsModel;
+
     /**
      * @var array
      */
     protected $metadata;
 
+    /**
+     * @var string
+     */
     protected $defaultLocale;
 
     public function __construct(GraphManager $gm, Connection $connectionSocial, EntityManager $entityManagerBrain, RelationsModel $relationsModel, array $metadata, $defaultLocale)
@@ -58,14 +63,74 @@ class UserModel implements PaginatedInterface
         $this->defaultLocale = $defaultLocale;
     }
 
+    /**
+     * @return array
+     * @throws Neo4jException
+     */
+    public function getAll()
+    {
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User)')
+            ->returns('u')
+            ->orderBy('u.qnoow_id');
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        $return = array();
+
+        foreach ($result as $row) {
+            $return[] = $this->build($row);
+        }
+
+        return $return;
+    }
+
+    /**
+     * @param $id
+     * @return array
+     * @throws Neo4jException
+     */
+    public function getById($id)
+    {
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User {qnoow_id: { id }})')
+            ->setParameter('id', (int)$id)
+            ->returns('u');
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        if ($result->count() < 1) {
+            throw new NotFoundHttpException(sprintf('User "%d" not found', $id));
+        }
+
+        /* @var $row Row */
+        $row = $result->current();
+
+        return $this->build($row);
+    }
+
     public function validate(array $data)
     {
+
         $errors = array();
 
         $metadata = array(
-            'id' => array('type' => 'integer', 'required' => true),
             'username' => array('type' => 'string', 'required' => true),
-            'email' => array('type' => 'string'),
+            'email' => array('type' => 'string', 'required' => true),
+            'enabled' => array('type' => 'boolean', 'required' => true),
+            'salt' => array('type' => 'string', 'required' => true),
+            'password' => array('type' => 'string', 'required' => true),
+            'locked' => array('type' => 'boolean', 'required' => true),
+            'expiresAt' => array('type' => 'datetime', 'required' => false),
+            'facebookID' => array('type' => 'string', 'required' => false),
+            'googleID' => array('type' => 'string', 'required' => false),
+            'twitterID' => array('type' => 'string', 'required' => false),
+            'spotifyID' => array('type' => 'string', 'required' => false),
+            'confirmed' => array('type' => 'boolean', 'required' => true),
         );
 
         foreach ($metadata as $fieldName => $fieldData) {
@@ -91,6 +156,17 @@ class UserModel implements PaginatedInterface
                             $fieldErrors[] = sprintf('"%s" must be an string', $fieldName);
                         }
                         break;
+                    case 'boolean':
+                        if ($fieldValue !== true && $fieldValue !== false) {
+                            $fieldErrors[] = 'Must be a boolean.';
+                        }
+                        break;
+                    case 'datetime':
+                        $date = \DateTime::createFromFormat('Y-m-d H:i:s', $fieldValue);
+                        if (!($date && $date->format('Y-m-d H:i:s') == $fieldValue)) {
+                            $fieldErrors[] = 'Invalid datetime format, valid format is "Y-m-d H:i:s".';
+                        }
+                        break;
                 }
             }
 
@@ -112,13 +188,11 @@ class UserModel implements PaginatedInterface
 
         $this->validate($data);
 
-        if (!isset($data['email'])) {
-            $data['email'] = '';
-        }
+        $id = $this->getNextId();
 
         $qb = $this->gm->createQueryBuilder();
         $qb->create('(u:User {qnoow_id: { qnoow_id }, status: { status }, username: { username }, email: { email }})')
-            ->setParameter('qnoow_id', $data['id'])
+            ->setParameter('qnoow_id', $id)
             ->setParameter('status', UserStatusModel::USER_STATUS_INCOMPLETE)
             ->setParameter('username', $data['username'])
             ->setParameter('email', $data['email'])
@@ -130,15 +204,15 @@ class UserModel implements PaginatedInterface
         /* @var $row Row */
         $row = $result->current();
 
-        return $this->parseRow($row);
+        return $this->build($row);
     }
 
     /**
      * @param array $user
      */
-    public function update(array $user = array())
+    public function update(array $user)
     {
-        // TODO: do your magic here
+
     }
 
     /**
@@ -158,48 +232,6 @@ class UserModel implements PaginatedInterface
         $result = $query->getResultSet();
 
         return $this->parseResultSet($result);
-    }
-
-    /**
-     * @return array
-     * @throws \Exception
-     */
-    public function getAll()
-    {
-
-        $qb = $this->gm->createQueryBuilder();
-        $qb->match('(u:User)')
-            ->returns('u')
-            ->orderBy('u.qnoow_id');
-
-        $query = $qb->getQuery();
-        $result = $query->getResultSet();
-
-        return $this->parseResultSet($result);
-
-    }
-
-    public function getById($id)
-    {
-
-        if (!$id) {
-            throw new NotFoundHttpException(sprintf('User "%d" not found', $id));
-        }
-
-        $qb = $this->gm->createQueryBuilder();
-        $qb->match('(u:User {qnoow_id: { id }})')
-            ->setParameter('id', (integer)$id)
-            ->returns('u');
-
-        $query = $qb->getQuery();
-        $result = $query->getResultSet();
-
-        if ($result->count() < 1) {
-            throw new NotFoundHttpException(sprintf('User "%d" not found', $id));
-        }
-
-        return $this->parseRow($result->current());
-
     }
 
     /**
@@ -740,31 +772,39 @@ class UserModel implements PaginatedInterface
      * @param $resultSet
      * @return array
      */
-    private function parseResultSet($resultSet)
+    protected function parseResultSet($resultSet)
     {
         $users = array();
 
         foreach ($resultSet as $row) {
-            $users[] = $this->parseRow($row);
+            $users[] = $this->build($row);
         }
 
         return $users;
 
     }
 
-    private function parseRow(Row $row)
+    protected function build(Row $row)
     {
-        return array(
-            'qnoow_id' => $row['u']->getProperty('qnoow_id'),
-            'username' => $row['u']->getProperty('username'),
-            'email' => $row['u']->getProperty('email'),
-        );
+
+        /* @var $node Node */
+        $node = $row->offsetGet('u');
+        $user = $node->getProperties();
+
+        return $user;
+
+//        return array(
+//            'qnoow_id' => $row['u']->getProperty('qnoow_id'),
+//            'username' => $row['u']->getProperty('username'),
+//            'email' => $row['u']->getProperty('email'),
+//            'status' => $row['u']->getProperty('status'),
+//        );
     }
 
     /** Returns statically defined options
      * @return array
      */
-    private function getChoiceOptions()
+    protected function getChoiceOptions()
     {
         return array();
     }
@@ -773,8 +813,30 @@ class UserModel implements PaginatedInterface
      * @param $name
      * @return array
      */
-    private function getTopUserTags($type)
+    protected function getTopUserTags($type)
     {
         return array();
+    }
+
+    protected function getNextId()
+    {
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User)')
+            ->returns('u.qnoow_id AS id')
+            ->orderBy('id DESC')
+            ->limit(1);
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        $id = 1;
+        if ($result->count() > 0) {
+            /* @var $row Row */
+            $row = $result->current();
+            $id = $row->offsetGet('qnoow_id') + 1;
+        }
+
+        return $id;
     }
 }

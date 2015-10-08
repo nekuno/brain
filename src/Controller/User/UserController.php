@@ -4,7 +4,6 @@ namespace Controller\User;
 
 use Model\User\ContentPaginatedModel;
 use Model\User\GroupModel;
-use Model\LinkModel;
 use Model\User\ProfileModel;
 use Model\User\RateModel;
 use Model\UserModel;
@@ -23,13 +22,13 @@ class UserController
 {
 
     /**
-     * @param Request $request
      * @param Application $app
-     * @return \Symfony\Component\HttpFoundation\JsonResponse
-     * @throws \Exception
+     * @param Request $request
+     * @return JsonResponse
      */
-    public function indexAction(Request $request, Application $app)
+    public function indexAction(Application $app, Request $request)
     {
+
         $filters = array();
 
         $referenceUserId = $request->get('referenceUserId');
@@ -47,26 +46,35 @@ class UserController
 
         $model = $app['users.model'];
 
-        try {
-            $result = $paginator->paginate($filters, $model, $request);
-        } catch (\Exception $e) {
-            if ($app['env'] == 'dev') {
-                throw $e;
-            }
+        $result = $paginator->paginate($filters, $model, $request);
 
-            return $app->json(array(), 500);
-        }
-
-        return $app->json($result, !empty($result) ? 201 : 200);
+        return $app->json($result);
     }
 
     /**
-     * @param Request $request
      * @param Application $app
-     * @return \Symfony\Component\HttpFoundation\JsonResponse
-     * @throws \Exception
+     * @param int $id
+     * @return JsonResponse
      */
-    public function addAction(Request $request, Application $app)
+    public function getAction(Application $app, $id)
+    {
+
+        /* @var $model UserModel */
+        $model = $app['users.model'];
+        $user = $model->getById($id);
+        /* @var $groupModel GroupModel */
+        $groupModel = $app['users.groups.model'];
+        $user['groups'] = $groupModel->getByUser($id);
+
+        return $app->json($user);
+    }
+
+    /**
+     * @param Application $app
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function postAction(Application $app, Request $request)
     {
 
         /* @var $model UserModel */
@@ -77,62 +85,19 @@ class UserController
     }
 
     /**
-     * @param Request $request
      * @param Application $app
-     * @return \Symfony\Component\HttpFoundation\JsonResponse
-     * @throws \Exception
+     * @param $id
+     * @return JsonResponse
      */
-    public function showAction(Request $request, Application $app)
+    public function deleteAction(Application $app, $id)
     {
 
-        $id = $request->get('id');
-        if (null === $id) {
-            return $app->json(array(), 404);
-        }
+        /* @var $model UserModel */
+        $model = $app['users.model'];
+        $user = $model->getById($id);
+        $model->remove($id);
 
-        try {
-            $model = $app['users.model'];
-            $result = $model->getById($request->get('id'));
-            $groupModel = $app['users.groups.model'];
-            $result['groups'] = $groupModel->getByUser((integer)($request->get('id')));
-        } catch (\Exception $e) {
-            if ($app['env'] == 'dev') {
-                throw $e;
-            }
-
-            return $app->json(array(), 500);
-        }
-
-        return $app->json($result, !empty($result) ? 200 : 404);
-    }
-
-    /**
-     * @param Request $request
-     * @param Application $app
-     * @return \Symfony\Component\HttpFoundation\JsonResponse
-     * @throws \Exception
-     */
-    public function deleteAction(Request $request, Application $app)
-    {
-
-        $id = $request->get('id');
-
-        if (null === $id) {
-            return $app->json(array(), 400);
-        }
-
-        try {
-            $model = $app['users.model'];
-            $model->remove($id);
-        } catch (\Exception $e) {
-            if ($app['env'] == 'dev') {
-                throw $e;
-            }
-
-            return $app->json(array(), 500);
-        }
-
-        return $app->json(array(), 200);
+        return $app->json($user);
     }
 
     /**
