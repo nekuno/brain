@@ -30,6 +30,7 @@ use Model\User\TokensModel;
 use Model\UserModel;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
+use Symfony\Component\Security\Core\Encoder\MessageDigestPasswordEncoder;
 
 class ModelsServiceProvider implements ServiceProviderInterface
 {
@@ -39,10 +40,18 @@ class ModelsServiceProvider implements ServiceProviderInterface
      */
     public function register(Application $app)
     {
+
+        $app['security.password_encoder'] = $app->share(
+            function () {
+
+                return new MessageDigestPasswordEncoder();
+            }
+        );
+
         $app['users.model'] = $app->share(
             function ($app) {
 
-                return new UserModel($app['neo4j.graph_manager'], $app['dbs']['mysql_social'], $app['orm.ems']['mysql_brain'], $app['users.relations.model'], $app['fields']['user'], $app['locale.options']['default']);
+                return new UserModel($app['neo4j.graph_manager'], $app['security.password_encoder'], $app['dbs']['mysql_social'], $app['orm.ems']['mysql_brain'], $app['users.relations.model'], $app['fields']['user'], $app['locale.options']['default']);
             }
         );
 

@@ -14,6 +14,7 @@ use Model\User\UserStatsModel;
 use Model\User\UserStatusModel;
 use Paginator\PaginatedInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\Security\Core\Encoder\PasswordEncoderInterface;
 
 /**
  * Class UserModel
@@ -27,6 +28,11 @@ class UserModel implements PaginatedInterface
      * @var GraphManager
      */
     protected $gm;
+
+    /**
+     * @var PasswordEncoderInterface
+     */
+    protected $encoder;
 
     /**
      * @var Connection
@@ -53,9 +59,10 @@ class UserModel implements PaginatedInterface
      */
     protected $defaultLocale;
 
-    public function __construct(GraphManager $gm, Connection $connectionSocial, EntityManager $entityManagerBrain, RelationsModel $relationsModel, array $metadata, $defaultLocale)
+    public function __construct(GraphManager $gm, PasswordEncoderInterface $encoder, Connection $connectionSocial, EntityManager $entityManagerBrain, RelationsModel $relationsModel, array $metadata, $defaultLocale)
     {
         $this->gm = $gm;
+        $this->encoder = $encoder;
         $this->connectionSocial = $connectionSocial;
         $this->entityManagerBrain = $entityManagerBrain;
         $this->relationsModel = $relationsModel;
@@ -128,7 +135,7 @@ class UserModel implements PaginatedInterface
                 continue;
             }
 
-            if (!isset($data[$fieldName]) || !$data[$fieldName]) {
+            if (!array_key_exists($fieldName, $data) || is_null($data[$fieldName])) {
                 if (isset($fieldData['required']) && $fieldData['required'] === true) {
                     $fieldErrors[] = sprintf('"%s" is required', $fieldName);
                 }
@@ -195,12 +202,21 @@ class UserModel implements PaginatedInterface
 
         $id = $this->getNextId();
 
+        $this->updateCanonicalFields($data);
+        $this->updatePassword($data);
+
         $qb = $this->gm->createQueryBuilder();
-        $qb->create('(u:User {qnoow_id: { qnoow_id }, status: { status }, username: { username }, email: { email }})')
-            ->setParameter('qnoow_id', $id)
+        $qb->create('(u:User)')
+            ->set('u.qnoow_id = { qnoow_id }')
+            ->setParameter('qnoow_id', $id);
+
+        foreach ($data as $key => $value) {
+            $qb->set("u.$key = { $key }")
+                ->setParameter($key, $value);
+        }
+
+        $qb->set('u.status = { status }')
             ->setParameter('status', UserStatusModel::USER_STATUS_INCOMPLETE)
-            ->setParameter('username', $data['username'])
-            ->setParameter('email', $data['email'])
             ->returns('u');
 
         $query = $qb->getQuery();
@@ -724,11 +740,11 @@ class UserModel implements PaginatedInterface
         return array(
             'qnoow_id' => array('type' => 'string', 'editable' => false),
             'username' => array('type' => 'string', 'required' => true, 'editable' => true),
-            'username_canonical' => array('type' => 'string', 'editable' => false),
+            'usernameCanonical' => array('type' => 'string', 'editable' => false),
             'email' => array('type' => 'string', 'required' => true),
-            'email_canonical' => array('type' => 'string', 'editable' => false),
+            'emailCanonical' => array('type' => 'string', 'editable' => false),
             'enabled' => array('type' => 'boolean', 'required' => true),
-            'salt' => array('type' => 'string', 'required' => true),
+            'salt' => array('type' => 'string', 'editable' => false),
             'password' => array('type' => 'string', 'required' => true),
             'lastLogin' => array('type' => 'datetime', 'editable' => false),
             'locked' => array('type' => 'boolean', 'required' => true),
@@ -874,5 +890,22 @@ class UserModel implements PaginatedInterface
         }
 
         return $id;
+    }
+
+    protected function updateCanonicalFields(array &$user)
+    {
+        $user['usernameCanonical'] = $this->canonicalize($user['username']);
+        $user['emailCanonical'] = $this->canonicalize($user['email']);
+    }
+
+    protected function updatePassword(array &$user)
+    {
+        $user['salt'] = base_convert(sha1(uniqid(mt_rand(), true)), 16, 36);
+        $user['password'] = $this->encoder->encodePassword($user['password'], $user['salt']);
+    }
+
+    protected function canonicalize($string)
+    {
+        return null === $string ? null : mb_convert_case($string, MB_CASE_LOWER, mb_detect_encoding($string));
     }
 }
