@@ -118,24 +118,15 @@ class UserModel implements PaginatedInterface
 
         $errors = array();
 
-        $metadata = array(
-            'username' => array('type' => 'string', 'required' => true),
-            'email' => array('type' => 'string', 'required' => true),
-            'enabled' => array('type' => 'boolean', 'required' => true),
-            'salt' => array('type' => 'string', 'required' => true),
-            'password' => array('type' => 'string', 'required' => true),
-            'locked' => array('type' => 'boolean', 'required' => true),
-            'expiresAt' => array('type' => 'datetime', 'required' => false),
-            'facebookID' => array('type' => 'string', 'required' => false),
-            'googleID' => array('type' => 'string', 'required' => false),
-            'twitterID' => array('type' => 'string', 'required' => false),
-            'spotifyID' => array('type' => 'string', 'required' => false),
-            'confirmed' => array('type' => 'boolean', 'required' => true),
-        );
+        $metadata = $this->getMetadata();
 
         foreach ($metadata as $fieldName => $fieldData) {
 
             $fieldErrors = array();
+
+            if (isset($fieldData['editable']) && $fieldData['editable'] === false) {
+                continue;
+            }
 
             if (!isset($data[$fieldName]) || !$data[$fieldName]) {
                 if (isset($fieldData['required']) && $fieldData['required'] === true) {
@@ -174,6 +165,20 @@ class UserModel implements PaginatedInterface
                 $errors[$fieldName] = $fieldErrors;
             }
 
+        }
+
+        $public = array();
+        foreach ($metadata as $name => $item) {
+            if (!(isset($item['editable']) && $item['editable'] === false)) {
+                $public[$name] = $item;
+            }
+        }
+
+        $diff = array_diff_key($data, $public);
+        if (count($diff) > 0) {
+            foreach ($diff as $invalidKey => $invalidValue) {
+                $errors[$invalidKey] = array(sprintf('Invalid key "%s"', $invalidKey));
+            }
         }
 
         if (count($errors) > 0) {
@@ -546,7 +551,7 @@ class UserModel implements PaginatedInterface
     public function getFilters($locale = null, $dynamicFilters = array(), $filter = true)
     {
         $locale = $this->getLocale($locale);
-        $metadata = $this->getMetadata($locale, $dynamicFilters, $filter);
+        $metadata = $this->getFiltersMetadata($locale, $dynamicFilters, $filter);
 
         foreach ($dynamicFilters['groups'] as $group) {
             $metadata['groups']['choices'][$group['id']] = $group['name'];
@@ -714,13 +719,41 @@ class UserModel implements PaginatedInterface
         return $count;
     }
 
+    public function getMetadata()
+    {
+        return array(
+            'qnoow_id' => array('type' => 'string', 'editable' => false),
+            'username' => array('type' => 'string', 'required' => true, 'editable' => true),
+            'username_canonical' => array('type' => 'string', 'editable' => false),
+            'email' => array('type' => 'string', 'required' => true),
+            'email_canonical' => array('type' => 'string', 'editable' => false),
+            'enabled' => array('type' => 'boolean', 'required' => true),
+            'salt' => array('type' => 'string', 'required' => true),
+            'password' => array('type' => 'string', 'required' => true),
+            'lastLogin' => array('type' => 'datetime', 'editable' => false),
+            'locked' => array('type' => 'boolean', 'required' => true),
+            'expired' => array('type' => 'boolean', 'editable' => false),
+            'expiresAt' => array('type' => 'datetime', 'required' => false),
+            'confirmationToken' => array('type' => 'string', 'editable' => false),
+            'passwordRequestedAt' => array('type' => 'datetime', 'editable' => false),
+            'facebookID' => array('type' => 'string', 'required' => false),
+            'googleID' => array('type' => 'string', 'required' => false),
+            'twitterID' => array('type' => 'string', 'required' => false),
+            'spotifyID' => array('type' => 'string', 'required' => false),
+            'createdAt' => array('type' => 'datetime', 'editable' => false),
+            'updatedAt' => array('type' => 'datetime', 'editable' => false),
+            'confirmed' => array('type' => 'boolean', 'required' => true),
+            'status' => array('type' => 'string', 'editable' => false),
+        );
+    }
+
     /**
      * @param null $locale
      * @param array $dynamicChoices user-dependent choices (cannot be set from this model)
      * @param bool $filter
      * @return array
      */
-    protected function getMetadata($locale = null, array $dynamicChoices = array(), $filter = true)
+    protected function getFiltersMetadata($locale = null, array $dynamicChoices = array(), $filter = true)
     {
 
         $locale = $this->getLocale($locale);
@@ -789,16 +822,19 @@ class UserModel implements PaginatedInterface
 
         /* @var $node Node */
         $node = $row->offsetGet('u');
-        $user = $node->getProperties();
+        $properties = $node->getProperties();
 
-        return $user;
+        $ordered = array();
+        foreach (array_keys($this->getMetadata()) as $key) {
+            if (array_key_exists($key, $properties)) {
+                $ordered[$key] = $properties[$key];
+                unset($properties[$key]);
+            } else {
+                $ordered[$key] = null;
+            }
+        }
 
-//        return array(
-//            'qnoow_id' => $row['u']->getProperty('qnoow_id'),
-//            'username' => $row['u']->getProperty('username'),
-//            'email' => $row['u']->getProperty('email'),
-//            'status' => $row['u']->getProperty('status'),
-//        );
+        return $ordered + $properties;
     }
 
     /** Returns statically defined options
