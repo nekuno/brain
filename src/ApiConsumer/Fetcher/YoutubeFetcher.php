@@ -138,7 +138,7 @@ class YoutubeFetcher extends BasicPaginationFetcher
         return $url;
     }
 
-    public function fetchLinksFromUserFeed($user)
+    public function fetchLinksFromUserFeed($user, $public)
     {
         $this->user = $user;
         $this->rawFeed = array();
@@ -149,7 +149,7 @@ class YoutubeFetcher extends BasicPaginationFetcher
             'mine' => 'true',
             'part' => 'contentDetails'
         ));
-        $channels = $this->getLinksByPage();
+        $channels = $this->getLinksByPage($public);
 
         $links = $this->getVideosFromChannels($channels);
 

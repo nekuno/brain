@@ -97,21 +97,26 @@ class FetcherService implements LoggerAwareInterface
     /**
      * @param $userId
      * @param $resourceOwner
+     * @param bool $public
      * @return array
      * @throws \Exception
      */
-    public function fetch($userId, $resourceOwner)
+    public function fetch($userId, $resourceOwner, $public = false)
     {
 
         $links = array();
         try {
-
-            $tokens = $this->tm->getByUserOrResource($userId, $resourceOwner);
-            if (!$tokens) {
-                throw new \Exception('User not found');
+            if (!$public){
+                $tokens = $this->tm->getByUserOrResource($userId, $resourceOwner);
+                if (!$tokens) {
+                    throw new \Exception('User not found');
+                } else {
+                    $token = current($tokens);
+                }
             } else {
-                $token = current($tokens);
+                $token = array();
             }
+
 
             $this->dispatcher->dispatch(\AppEvents::FETCH_START, new FetchEvent($userId, $resourceOwner));
 
@@ -120,7 +125,7 @@ class FetcherService implements LoggerAwareInterface
                 if ($fetcherConfig['resourceOwner'] === $resourceOwner) {
 
                     try {
-                        $links = array_merge($links, $this->fetcherFactory->build($fetcher)->fetchLinksFromUserFeed($token));
+                        $links = array_merge($links, $this->fetcherFactory->build($fetcher)->fetchLinksFromUserFeed($token, $public));
                     } catch (\Exception $e) {
                         $this->logger->error(sprintf('Fetcher: Error fetching feed for user "%s" with fetcher "%s" from resource "%s". Reason: %s', $userId, $fetcher, $resourceOwner, $e->getMessage()));
                         continue;
