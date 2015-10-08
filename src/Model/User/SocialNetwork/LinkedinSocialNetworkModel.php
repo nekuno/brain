@@ -19,20 +19,20 @@ class LinkedinSocialNetworkModel extends SocialNetworkModel
         $data = $this->get($profileUrl);
 
         $qb = $this->gm->createQueryBuilder();
-        $qb->match('(u:User)-[:HAS_SOCIAL_PROFILE]->(lsn:LinkedinSocialNetwork {url: { profileUrl }})')
+        $qb->match('(u:User)-[:HAS_SOCIAL_PROFILE]->(:LinkedinSocialNetwork {url: { profileUrl }})')
             ->setParameter('profileUrl', $profileUrl)
             ->where('u.qnoow_id = { id }')
             ->setParameter('id', (int)$id)
-            ->with('u, lns');
+            ->with('u');
         foreach($data['skills'] as $skill) {
             $qb->merge('(u)-[:HAS_SKILL]->(:Skill {name: { skill }})')
                 ->setParameter('skill', $skill)
-                ->with('u, lns');
+                ->with('u');
         }
         foreach($data['languages'] as $language) {
             $qb->merge('(u)-[:SPEAKS_LANGUAGE]->(:Language {name: { language }})')
                 ->setParameter('language', $language)
-                ->with('u, lns');
+                ->with('u');
         }
         $qb->returns('u');
 

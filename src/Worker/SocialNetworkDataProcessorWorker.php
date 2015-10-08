@@ -66,7 +66,7 @@ class SocialNetworkDataProcessorWorker extends LoggerAwareWorker implements Rabb
 
         $trigger = $this->getTrigger($message);
 
-        $userId = $data['userId'];
+        $userId = $data['id'];
         $profileUrl = $data['profileUrl'];
 
         switch($trigger) {
