@@ -19,19 +19,19 @@ class LinkedinSocialNetworkModel extends SocialNetworkModel
         $data = $this->get($profileUrl);
 
         $qb = $this->gm->createQueryBuilder();
-        $qb->match('(u:User)-[:HAS_SOCIAL_PROFILE]->(:LinkedinSocialNetwork {url: { profileUrl }})')
+        $qb->match('(u:User)-[:HAS_SOCIAL_NETWORK {url: { profileUrl }}]->(:LinkedinSocialNetwork)')
             ->setParameter('profileUrl', $profileUrl)
             ->where('u.qnoow_id = { id }')
             ->setParameter('id', (int)$id)
             ->with('u');
-        foreach($data['skills'] as $skill) {
-            $qb->merge('(u)-[:HAS_SKILL]->(:Skill {name: { skill }})')
-                ->setParameter('skill', $skill)
+        foreach($data['skills'] as $index => $skill) {
+            $qb->merge('(u)-[:HAS_SKILL]->(:Skill {name: { skill' . $index . ' }})')
+                ->setParameter('skill' . $index, $skill)
                 ->with('u');
         }
-        foreach($data['languages'] as $language) {
-            $qb->merge('(u)-[:SPEAKS_LANGUAGE]->(:Language {name: { language }})')
-                ->setParameter('language', $language)
+        foreach($data['languages'] as $index => $language) {
+            $qb->merge('(u)-[:SPEAKS_LANGUAGE]->(:Language {name: { language' . $index . ' }})')
+                ->setParameter('language' . $index, $language)
                 ->with('u');
         }
         $qb->returns('u');
