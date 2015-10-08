@@ -5,12 +5,14 @@
 namespace Model\User;
 
 use Doctrine\ORM\EntityManager;
+use Event\LookUpSocialNetworkEvent;
 use Model\Neo4j\GraphManager;
 use Model\Entity\LookUpData;
 use Service\LookUp\LookUp;
 use Service\LookUp\LookUpFullContact;
 use Service\LookUp\LookUpPeopleGraph;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -40,12 +42,18 @@ class LookUpModel
      */
     protected $peopleGraph;
 
-    public function __construct(GraphManager $gm, EntityManager $em, LookUpFullContact $fullContact, LookUpPeopleGraph $peopleGraph)
+    /**
+     * @var EventDispatcher
+     */
+    protected $dispatcher;
+
+    public function __construct(GraphManager $gm, EntityManager $em, LookUpFullContact $fullContact, LookUpPeopleGraph $peopleGraph, EventDispatcher $dispatcher)
     {
         $this->gm = $gm;
         $this->em = $em;
         $this->fullContact = $fullContact;
         $this->peopleGraph = $peopleGraph;
+        $this->dispatcher = $dispatcher;
     }
 
     public function completeUserData($userData, OutputInterface $outputInterface = null)
@@ -92,6 +100,12 @@ class LookUpModel
             $this->showOutputMessageIfDefined($outputInterface, 'Adding social profiles to user ' . $id . '...');
 
             $this->setSocialProfiles($lookUpData['socialProfiles'], $id);
+
+            if(isset($lookUpData['socialProfiles']['linkedin']) && $lookUpData['socialProfiles']['linkedin']) {
+                $event = new LookUpSocialNetworkEvent($id, $lookUpData['socialProfiles']['linkedin']);
+                $this->dispatcher->dispatch(\AppEvents::LINKEDIN_SOCIAL_NETWORK_ADDED, $event);
+            }
+
             return $lookUpData['socialProfiles'];
         }
 
@@ -223,7 +237,6 @@ class LookUpModel
 
         return $lookUpDataArray;
     }
-
 
     public function merge(array $lookUpData1, array $lookUpData2)
     {

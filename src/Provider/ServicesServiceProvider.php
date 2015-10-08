@@ -5,6 +5,7 @@ namespace Provider;
 use Service\AffinityRecalculations;
 use Service\AMQPManager;
 use Service\ChatMessageNotifications;
+use Service\EmailNotifications;
 use Service\MigrateSocialInvitations;
 use Service\TokenGenerator;
 use Silex\Application;
@@ -40,7 +41,7 @@ class ServicesServiceProvider implements ServiceProviderInterface
 
         $app['emailNotification.service'] = $app->share(
             function (Application $app) {
-                return new \Service\EmailNotifications($app['mailer'], $app['orm.ems']['mysql_brain'], $app['twig']);
+                return new EmailNotifications($app['mailer'], $app['orm.ems']['mysql_brain'], $app['twig']);
             }
         );
 
