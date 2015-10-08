@@ -232,15 +232,17 @@ class TokensModel
 
         $errors = array();
 
-        if (!$resourceOwner || !in_array($resourceOwner, self::getResourceOwners())) {
-            $errors['resourceOwner'] = array(sprintf('resourceOwner not valid, valid values are "%s"', implode('", "', self::getResourceOwners())));
-        }
+        $data['resourceOwner'] = $resourceOwner;
 
         $metadata = $this->getMetadata();
 
         foreach ($metadata as $fieldName => $fieldData) {
 
             $fieldErrors = array();
+
+            if (isset($fieldData['editable']) && $fieldData['editable'] === false) {
+                continue;
+            }
 
             if (!isset($data[$fieldName]) || !$data[$fieldName]) {
                 if (isset($fieldData['required']) && $fieldData['required'] === true) {
@@ -261,6 +263,12 @@ class TokensModel
                             $fieldErrors[] = sprintf('"%s" must be an string', $fieldName);
                         }
                         break;
+                    case 'choice':
+                        $choices = $fieldData['choices'];
+                        if (!in_array($fieldValue, $choices)) {
+                            $fieldErrors[] = sprintf('Option with value "%s" is not valid, possible values are "%s"', $fieldValue, implode("', '", $choices));
+                        }
+                        break;
                 }
             }
 
@@ -270,7 +278,14 @@ class TokensModel
 
         }
 
-        $diff = array_diff_key($data, $metadata);
+        $public = array();
+        foreach ($metadata as $name => $item) {
+            if (!(isset($item['editable']) && $item['editable'] === false)) {
+                $public[$name] = $item;
+            }
+        }
+
+        $diff = array_diff_key($data, $public);
         if (count($diff) > 0) {
             foreach ($diff as $invalidKey => $invalidValue) {
                 $errors[$invalidKey] = array(sprintf('Invalid key "%s"', $invalidKey));
@@ -343,24 +358,32 @@ class TokensModel
         $user = $row->offsetGet('user');
         /* @var $node Node */
         $node = $row->offsetGet('token');
-        $token = $node->getProperties();
-        foreach ($this->getMetadata() as $key => $value) {
-            if (!isset($token[$key])) {
-                $token[$key] = null;
+        $properties = $node->getProperties();
+
+        $ordered = array();
+        foreach (array_keys($this->getMetadata()) as $key) {
+            if (array_key_exists($key, $properties)) {
+                $ordered[$key] = $properties[$key];
+                unset($properties[$key]);
+            } else {
+                $ordered[$key] = null;
             }
         }
-        ksort($token);
 
-        return array_merge(array('id' => $user->getProperty('qnoow_id')), $token);
+        $properties = $ordered + $properties;
+
+        return array_merge(array('id' => $user->getProperty('qnoow_id')), $properties);
     }
 
     protected function getMetadata()
     {
 
         return array(
+            'resourceOwner' => array('type' => 'choice', 'choices' => self::getResourceOwners(), 'required' => true),
             'oauthToken' => array('type' => 'string', 'required' => true),
             'oauthTokenSecret' => array('type' => 'string', 'required' => false),
             'createdTime' => array('type' => 'integer', 'required' => false),
+            'updatedTime' => array('type' => 'integer', 'editable' => false),
             'expireTime' => array('type' => 'integer', 'required' => false),
             'refreshToken' => array('type' => 'string', 'required' => false),
         );
