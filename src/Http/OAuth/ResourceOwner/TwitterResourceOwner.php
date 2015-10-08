@@ -24,4 +24,17 @@ class TwitterResourceOwner extends Oauth1GenericResourceOwner
             'base_url' => 'https://api.twitter.com/1.1/',
         ));
     }
+
+    public function getAPIRequest($url, array $query = array(), array $token = array())
+    {
+        $request = parent::getAPIRequest($url, $query, $token);
+
+        $clientToken = $this->getClientToken();
+
+        if (!empty($clientToken)){
+            $request->addHeader('Authorization', 'Bearer '. $clientToken);
+        }
+
+        return $request;
+    }
 }

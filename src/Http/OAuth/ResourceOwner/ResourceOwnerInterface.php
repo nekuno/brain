@@ -30,4 +30,6 @@ interface ResourceOwnerInterface
      * @return array
      */
     public function authorizedHttpRequest($url, array $query = array(), array $token = array());
+
+    public function authorizedApiRequest($url, array $query = array(), array $token = array());
 }
