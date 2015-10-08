@@ -51,7 +51,7 @@ params:
     ## Twitter
     twitter.consumer_key: m9NY9ZghlVeYFVk8fbPp8pp1g
     twitter.consumer_secret: yQ5XBabTj1vzCCBVeJoqX9Bli4zcjVWsF6FxHvPtZwkAJseu1l
-    twitter.application_token: thisisaTEST
+    twitter.application_token: AAAAAAAAAAAAAAAAAAAAAFbcXgAAAAAAU6MCuXOOVmSchRXGdTt7O1V1a%2FI%3DT15dTKA8Bdejw65X3C3f73j8yBdrrNtEOYKRCPTpeWANjRZjPb
 
     ## Spotify
     spotify.consumer_key: e8c3557e29ad4974a1f41e93aeaf6e79
