@@ -138,22 +138,9 @@ class QueryBuilder
             return $this;
         }
 
-        $separator = 'AND';
-        if (is_array($where)){
-            $wheres = $where;
-        } else {
-            $wheres = func_get_args();
-            if (in_array($wheres[0], array('OR','AND'))){
-                $separator = $wheres[0];
-                array_shift($wheres);
+        $wheres = is_array($where) ? $where : func_get_args();
 
-                if (is_array($wheres[0])){
-                    $wheres = $wheres[0];
-                }
-            }
-        }
-
-        return $this->add('where', implode(" $separator ", $wheres));
+        return $this->add('where', implode(' AND ', $wheres));
     }
 
     /**

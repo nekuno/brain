@@ -88,7 +88,7 @@ class ContentPaginatedModel implements PaginatedInterface
         foreach ($socialNetworks as $socialNetwork) {
             $whereSocialNetwork [] = "(HAS (r.$socialNetwork))";
         }
-        $qb->where('OR', $whereSocialNetwork);
+        $qb->where(implode('OR', $whereSocialNetwork));
 
         if (isset($filters['tag'])) {
             $qb->match("(content)-[:TAGGED]->(filterTag:Tag)")
@@ -193,7 +193,7 @@ class ContentPaginatedModel implements PaginatedInterface
         foreach ($socialNetworks as $socialNetwork) {
             $whereSocialNetwork [] = "(HAS (r.$socialNetwork))";
         }
-        $qb->where('OR', $whereSocialNetwork);
+        $qb->where(implode('OR', $whereSocialNetwork));
 
         if (isset($filters['tag'])) {
             $qb->match("(content)-[:TAGGED]->(filterTag:Tag)")
