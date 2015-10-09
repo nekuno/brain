@@ -60,4 +60,9 @@ final class AppEvents
      * Fired when user answers a question
      */
     const ANSWER_ADDED = 'answer.added';
+
+    /**
+     * Fired when SocialNetworks are detected from LookUp
+     */
+    const SOCIAL_NETWORKS_ADDED = 'socialNetworks.added';
 }

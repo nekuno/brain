@@ -12,6 +12,8 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Model\User\LookUpModel;
 use Model\UserModel;
+use Symfony\Component\EventDispatcher\EventDispatcher;
+use EventListener\LookUpSocialNetworkSubscriber;
 
 class LookUpAllUsersCommand extends BaseCommand
 {
@@ -33,6 +35,10 @@ class LookUpAllUsersCommand extends BaseCommand
 
         /* @var $lookUpModel LookUpModel */
         $lookUpModel = $this->app['users.lookup.model'];
+
+        /* @var $dispatcher EventDispatcher*/
+        $dispatcher = $this->app['dispatcher'];
+        $dispatcher->addSubscriber(new LookUpSocialNetworkSubscriber($this->app['neo4j.graph_manager'], $this->app['amqpManager.service']));
 
         foreach ($users as $user) {
             if (isset($user['qnoow_id']) && isset($user['email']) && $user['qnoow_id'] >= $input->getOption('start')) {
