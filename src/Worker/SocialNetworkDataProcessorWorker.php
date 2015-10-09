@@ -70,7 +70,7 @@ class SocialNetworkDataProcessorWorker extends LoggerAwareWorker implements Rabb
 
         switch($trigger) {
             case 'added':
-                $this->sn->setSocialNetworksInfo($userId, $socialNetworks);
+                $this->sn->setSocialNetworksInfo($userId, $socialNetworks, $this->logger);
                 break;
             default;
                 throw new \Exception('Invalid social network trigger');

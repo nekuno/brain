@@ -4,8 +4,7 @@
  */
 namespace Model\User\SocialNetwork;
 
-use Model\Neo4j\GraphManager;
-use Model\Parser\BaseParser;
+use Psr\Log\LoggerInterface;
 
 /**
  * Class LinkedinSocialNetworkModel
@@ -14,9 +13,9 @@ use Model\Parser\BaseParser;
  */
 class LinkedinSocialNetworkModel extends SocialNetworkModel
 {
-    public function set($id, $profileUrl)
+    public function set($id, $profileUrl, LoggerInterface $logger = null)
     {
-        $data = $this->get($profileUrl);
+        $data = $this->get($profileUrl, $logger);
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(u:User)-[:HAS_SOCIAL_NETWORK {url: { profileUrl }}]->(:LinkedinSocialNetwork)')
@@ -41,8 +40,8 @@ class LinkedinSocialNetworkModel extends SocialNetworkModel
         return count($result) == 1 ? true : false;
     }
 
-    protected function get($profileUrl)
+    protected function get($profileUrl, LoggerInterface $logger = null)
     {
-        return $this->parser->parse($profileUrl);
+        return $this->parser->parse($profileUrl, $logger);
     }
 }

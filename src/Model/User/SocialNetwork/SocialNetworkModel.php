@@ -6,6 +6,7 @@ namespace Model\User\SocialNetwork;
 
 use Model\Neo4j\GraphManager;
 use Model\Parser\BaseParser;
+use Psr\Log\LoggerInterface;
 
 /**
  * Class SocialNetworkModel
@@ -30,7 +31,7 @@ abstract class SocialNetworkModel
         $this->parser = $parser;
     }
 
-    abstract public function set($id, $profileUrl);
+    abstract public function set($id, $profileUrl, LoggerInterface $logger = null);
 
-    abstract protected function get($profileUrl);
+    abstract protected function get($profileUrl, LoggerInterface $logger = null);
 }

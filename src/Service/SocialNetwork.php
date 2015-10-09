@@ -5,6 +5,7 @@
 namespace Service;
 
 use Model\User\SocialNetwork\LinkedinSocialNetworkModel;
+use Psr\Log\LoggerInterface;
 
 /**
  * SocialNetwork
@@ -21,19 +22,22 @@ class SocialNetwork
         $this->linkedinSocialNetworkModel = $linkedinSocialNetworkModel;
     }
 
-    public function setSocialNetworksInfo($userId, $socialNetworks)
+    public function setSocialNetworksInfo($userId, $socialNetworks, LoggerInterface $logger = null)
     {
         foreach($socialNetworks as $resource => $profileUrl) {
-            $this->setSocialNetworkInfo($userId, $resource, $profileUrl);
+            $this->setSocialNetworkInfo($userId, $resource, $profileUrl, $logger);
         }
     }
 
-    protected function setSocialNetworkInfo($userId, $resource, $profileUrl)
+    protected function setSocialNetworkInfo($userId, $resource, $profileUrl, LoggerInterface $logger = null)
     {
         switch($resource)
         {
             case 'linkedin':
-                $this->linkedinSocialNetworkModel->set($userId, $profileUrl);
+                $this->linkedinSocialNetworkModel->set($userId, $profileUrl, $logger);
+                if($logger) {
+                    $logger->info('linkedin social network info added for user ' . $userId . ' (' . $profileUrl . ')');
+                }
                 break;
         }
     }
