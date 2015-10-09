@@ -633,9 +633,7 @@ class UserModel implements PaginatedInterface
 
         $query = "
             MATCH
-            (user:User)
-            WHERE
-            user.status = 'complete'"
+            (user:User)"
             . $profileQuery
             . $referenceUserQuery
             . $resultQuery
@@ -650,11 +648,8 @@ class UserModel implements PaginatedInterface
         $result = $contentQuery->getResultSet();
 
         foreach ($result as $row) {
-            $user = array();
 
-            $user['id'] = $row['user']->getProperty('qnoow_id');
-            $user['username'] = $row['content']->getProperty('username');
-            $user['email'] = $row['content']->getProperty('email');
+            $user = $this->build($row);
 
             $user['matching'] = 0;
             if (isset($row['match'])) {
@@ -682,10 +677,10 @@ class UserModel implements PaginatedInterface
 
         $parameters = array();
 
-        $queryWhere = " WHERE user.status = 'complete' ";
+        $queryWhere = '';
         if (isset($filters['referenceUserId'])) {
             $parameters['referenceUserId'] = (integer)$filters['referenceUserId'];
-            $queryWhere .= " AND user.qnoow_id <> {referenceUserId} ";
+            $queryWhere .= " WHERE user.qnoow_id <> {referenceUserId} ";
         }
 
         if (isset($filters['profile'])) {
@@ -856,7 +851,7 @@ class UserModel implements PaginatedInterface
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(u:User)')
             ->where('u.qnoow_id = { id }')
-            ->setParameter('id', $id)
+            ->setParameter('id', (int)$id)
             ->with('u');
 
         foreach ($data as $key => $value) {
