@@ -2,7 +2,7 @@ api_consumer.config:
     resource_owner:
         twitter:
             class: Http\OAuth\ResourceOwner\TwitterResourceOwner
-            client_credential_class: Http\OAUth\ResourceOwner\ClientCredential\TwitterClientCredential
+            client_credential_class: Http\OAuth\ResourceOwner\ClientCredential\TwitterClientCredential
         facebook:
             class: Http\OAuth\ResourceOwner\FacebookResourceOwner
         google:

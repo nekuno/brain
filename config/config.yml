@@ -65,7 +65,8 @@ api_consumer.config:
         twitter:
             consumer_key: %twitter.consumer_key%
             consumer_secret: %twitter.consumer_secret%
-            application_token: %twitter.application_token%
+            client_credential:
+                application_token: %twitter.application_token%
 
         google:
             consumer_key: %google.consumer_key%

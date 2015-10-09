@@ -27,7 +27,7 @@ class TwitterClientCredential extends AbstractClientCredential {
 
         $resolver->setRequired(
             array(
-                'service_token',
+                'application_token',
             )
         );
 

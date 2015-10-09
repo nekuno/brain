@@ -30,7 +30,7 @@ class RabbitMQEnqueueFetchingCommand extends ApplicationAwareCommand
             )->addOption(
                 'public',
                 null,
-                InputOption::VALUE_OPTIONAL,
+                InputOption::VALUE_NONE,
                 'Fetch as Nekuno instead of as the user'
             );
     }
