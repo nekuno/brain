@@ -849,7 +849,7 @@ class UserModel implements PaginatedInterface
         return array();
     }
 
-    protected function save($id, array $data)
+    public function save($id, array $data)
     {
 
         $this->updateCanonicalFields($data);
