@@ -36,10 +36,6 @@ class LookUpAllUsersCommand extends BaseCommand
         /* @var $lookUpModel LookUpModel */
         $lookUpModel = $this->app['users.lookup.model'];
 
-        /* @var $dispatcher EventDispatcher*/
-        $dispatcher = $this->app['dispatcher'];
-        $dispatcher->addSubscriber(new LookUpSocialNetworkSubscriber($this->app['neo4j.graph_manager'], $this->app['amqpManager.service']));
-
         foreach ($users as $user) {
             if (isset($user['qnoow_id']) && isset($user['email']) && $user['qnoow_id'] >= $input->getOption('start')) {
                 try {
