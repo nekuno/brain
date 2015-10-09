@@ -202,37 +202,29 @@ class UserModel implements PaginatedInterface
 
         $id = $this->getNextId();
 
-        $this->updateCanonicalFields($data);
-        $this->updatePassword($data);
-
         $qb = $this->gm->createQueryBuilder();
         $qb->create('(u:User)')
             ->set('u.qnoow_id = { qnoow_id }')
-            ->setParameter('qnoow_id', $id);
+            ->setParameter('qnoow_id', $id)
+            ->set('u.status = { status }')
+            ->setParameter('status', UserStatusModel::USER_STATUS_INCOMPLETE);
 
-        foreach ($data as $key => $value) {
-            $qb->set("u.$key = { $key }")
-                ->setParameter($key, $value);
-        }
+        $qb->getQuery()->getResultSet();
 
-        $qb->set('u.status = { status }')
-            ->setParameter('status', UserStatusModel::USER_STATUS_INCOMPLETE)
-            ->returns('u');
-
-        $query = $qb->getQuery();
-        $result = $query->getResultSet();
-
-        /* @var $row Row */
-        $row = $result->current();
-
-        return $this->build($row);
+        return $this->save($id, $data);
     }
 
     /**
-     * @param array $user
+     * @param $id
+     * @param array $data
+     * @return array
      */
-    public function update(array $user)
+    public function update($id, array $data)
     {
+
+        $this->validate($data);
+
+        return $this->save($id, $data);
 
     }
 
@@ -851,6 +843,34 @@ class UserModel implements PaginatedInterface
         return array();
     }
 
+    protected function save($id, array $data)
+    {
+
+        $this->updateCanonicalFields($data);
+        $this->updatePassword($data);
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User)')
+            ->where('u.qnoow_id = { id }')
+            ->setParameter('id', $id)
+            ->with('u');
+
+        foreach ($data as $key => $value) {
+            $qb->set("u.$key = { $key }")
+                ->setParameter($key, $value);
+        }
+
+        $qb->returns('u');
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        /* @var $row Row */
+        $row = $result->current();
+
+        return $this->build($row);
+    }
+
     protected function getNextId()
     {
 
@@ -875,14 +895,20 @@ class UserModel implements PaginatedInterface
 
     protected function updateCanonicalFields(array &$user)
     {
-        $user['usernameCanonical'] = $this->canonicalize($user['username']);
-        $user['emailCanonical'] = $this->canonicalize($user['email']);
+        if (isset($user['username'])) {
+            $user['usernameCanonical'] = $this->canonicalize($user['username']);
+        }
+        if (isset($user['email'])) {
+            $user['emailCanonical'] = $this->canonicalize($user['email']);
+        }
     }
 
     protected function updatePassword(array &$user)
     {
-        $user['salt'] = base_convert(sha1(uniqid(mt_rand(), true)), 16, 36);
-        $user['password'] = $this->encoder->encodePassword($user['password'], $user['salt']);
+        if (isset($user['password'])) {
+            $user['salt'] = base_convert(sha1(uniqid(mt_rand(), true)), 16, 36);
+            $user['password'] = $this->encoder->encodePassword($user['password'], $user['salt']);
+        }
     }
 
     protected function canonicalize($string)

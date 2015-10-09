@@ -79,9 +79,25 @@ class UserController
 
         /* @var $model UserModel */
         $model = $app['users.model'];
-        $result = $model->create($request->request->all());
+        $user = $model->create($request->request->all());
 
-        return $app->json($result, 201);
+        return $app->json($user, 201);
+    }
+
+    /**
+     * @param Application $app
+     * @param Request $request
+     * @param int $id
+     * @return JsonResponse
+     */
+    public function putAction(Application $app, Request $request, $id)
+    {
+
+        /* @var $model UserModel */
+        $model = $app['users.model'];
+        $user = $model->update($id, $request->request->all());
+
+        return $app->json($user);
     }
 
     /**
