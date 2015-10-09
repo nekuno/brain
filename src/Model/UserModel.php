@@ -237,25 +237,6 @@ class UserModel implements PaginatedInterface
     }
 
     /**
-     * @param null $id
-     * @return array
-     * @throws \Exception
-     */
-    public function remove($id = null)
-    {
-
-        $qb = $this->gm->createQueryBuilder();
-        $qb->match('(u:User {qnoow_id: { id }})')
-            ->delete('u')
-            ->setParameter('id', $id);
-
-        $query = $qb->getQuery();
-        $result = $query->getResultSet();
-
-        return $this->parseResultSet($result);
-    }
-
-    /**
      * @return array
      * @throws \Exception
      */

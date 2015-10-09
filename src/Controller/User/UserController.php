@@ -85,22 +85,6 @@ class UserController
     }
 
     /**
-     * @param Application $app
-     * @param $id
-     * @return JsonResponse
-     */
-    public function deleteAction(Application $app, $id)
-    {
-
-        /* @var $model UserModel */
-        $model = $app['users.model'];
-        $user = $model->getById($id);
-        $model->remove($id);
-
-        return $app->json($user);
-    }
-
-    /**
      * @param Request $request
      * @param Application $app
      * @return \Symfony\Component\HttpFoundation\JsonResponse
