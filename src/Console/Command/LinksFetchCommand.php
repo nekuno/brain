@@ -38,6 +38,12 @@ class LinksFetchCommand extends ApplicationAwareCommand
                         InputOption::VALUE_OPTIONAL,
                         'ID of the user to fetch links from'
                     ),
+                    new InputOption(
+                        'public',
+                        null,
+                        InputOption::VALUE_OPTIONAL,
+                        'Fetch as Nekuno instead of as the user'
+                    ),
                 )
             );
     }
@@ -47,6 +53,7 @@ class LinksFetchCommand extends ApplicationAwareCommand
 
         $resource = $input->getOption('resource', null);
         $userId = $input->getOption('user', null);
+        $public = $input->getOption('public', false);
 
         if (null === $resource && null === $userId) {
             throw new MissingOptionsException ("You must provide the user or the resource to fetch links from", array("resource", "user"));
@@ -84,7 +91,7 @@ class LinksFetchCommand extends ApplicationAwareCommand
         foreach ($tokens as $token) {
             try {
 
-                $fetcher->fetch($token['id'], $token['resourceOwner']);
+                $fetcher->fetch($token['id'], $token['resourceOwner'], $public);
 
             } catch (\Exception $e) {
                 $output->writeln(

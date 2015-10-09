@@ -21,12 +21,17 @@ class RabbitMQEnqueueFetchingCommand extends ApplicationAwareCommand
                 'user',
                 null,
                 InputOption::VALUE_OPTIONAL,
-                'If set, only will enqueue process for given user'
+                'If set, only will enqueue fetching process for given user'
             )->addOption(
                 'resource',
                 null,
                 InputOption::VALUE_OPTIONAL,
-                'If set, only will enqueue process for given resource owner'
+                'If set, only will enqueue fetching process for given resource owner'
+            )->addOption(
+                'public',
+                null,
+                InputOption::VALUE_OPTIONAL,
+                'Fetch as Nekuno instead of as the user'
             );
     }
 
@@ -35,6 +40,7 @@ class RabbitMQEnqueueFetchingCommand extends ApplicationAwareCommand
 
         $userId = $input->getOption('user');
         $resourceOwner = $input->getOption('resource');
+        $public = $input->getOption('public', false);
 
         $availableResourceOwners = $this->app['api_consumer.config']['resource_owner'];
         if ($resourceOwner && !array_key_exists($resourceOwner, $availableResourceOwners)) {
@@ -73,6 +79,7 @@ class RabbitMQEnqueueFetchingCommand extends ApplicationAwareCommand
                 $data = array(
                     'userId' => $user['qnoow_id'],
                     'resourceOwner' => $name,
+                    'public' => $public,
                 );
                 $amqpManager->enqueueMessage($data, 'brain.fetching.links');
             }

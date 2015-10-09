@@ -94,13 +94,14 @@ class LinkProcessorWorker extends LoggerAwareWorker implements RabbitMQConsumerI
         $data = json_decode($message->body, true);
         $resourceOwner = $data['resourceOwner'];
         $userId = $data['userId'];
+        $public = array_key_exists('public', $data)? $data['public'] : false;
 
         $tokens = $this->tm->getByUserOrResource($userId, $resourceOwner);
 
         if ($tokens) {
             $token = current($tokens);
             try {
-                $this->fetcherService->fetch($token['id'], $token['resourceOwner']);
+                $this->fetcherService->fetch($token['id'], $token['resourceOwner'], $public);
             } catch (\Exception $e) {
                 $this->logger->error(sprintf('Worker -> %s', $e->getMessage()));
             }
