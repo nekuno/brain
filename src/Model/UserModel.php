@@ -175,9 +175,9 @@ class UserModel implements PaginatedInterface
         }
 
         $public = array();
-        foreach ($metadata as $name => $item) {
-            if (!(isset($item['editable']) && $item['editable'] === false)) {
-                $public[$name] = $item;
+        foreach ($metadata as $fieldName => $fieldData) {
+            if (!(isset($fieldData['editable']) && $fieldData['editable'] === false)) {
+                $public[$fieldName] = $fieldData;
             }
         }
 
@@ -212,6 +212,8 @@ class UserModel implements PaginatedInterface
             ->setParameter('createdAt', (new \DateTime())->format('Y-m-d H:i:s'));
 
         $qb->getQuery()->getResultSet();
+
+        $this->setDefaults($data);
 
         return $this->save($id, $data);
     }
@@ -713,11 +715,12 @@ class UserModel implements PaginatedInterface
             'usernameCanonical' => array('type' => 'string', 'editable' => false),
             'email' => array('type' => 'string', 'required' => true),
             'emailCanonical' => array('type' => 'string', 'editable' => false),
-            'enabled' => array('type' => 'boolean', 'required' => true),
+            'enabled' => array('type' => 'boolean', 'required' => false, 'default' => true),
             'salt' => array('type' => 'string', 'editable' => false),
-            'password' => array('type' => 'string', 'required' => true),
+            'password' => array('type' => 'string', 'editable' => false),
+            'plainPassword' => array('type' => 'string', 'required' => true, 'visible' => false),
             'lastLogin' => array('type' => 'datetime', 'editable' => false),
-            'locked' => array('type' => 'boolean', 'required' => true),
+            'locked' => array('type' => 'boolean', 'required' => false, 'default' => false),
             'expired' => array('type' => 'boolean', 'editable' => false),
             'expiresAt' => array('type' => 'datetime', 'required' => false),
             'confirmationToken' => array('type' => 'string', 'editable' => false),
@@ -728,7 +731,7 @@ class UserModel implements PaginatedInterface
             'spotifyID' => array('type' => 'string', 'required' => false),
             'createdAt' => array('type' => 'datetime', 'editable' => false),
             'updatedAt' => array('type' => 'datetime', 'editable' => false),
-            'confirmed' => array('type' => 'boolean', 'required' => true),
+            'confirmed' => array('type' => 'boolean', 'required' => false, 'default' => false),
             'status' => array('type' => 'string', 'editable' => false),
         );
     }
@@ -811,12 +814,18 @@ class UserModel implements PaginatedInterface
         $properties = $node->getProperties();
 
         $ordered = array();
-        foreach (array_keys($this->getMetadata()) as $key) {
-            if (array_key_exists($key, $properties)) {
-                $ordered[$key] = $properties[$key];
-                unset($properties[$key]);
+        foreach ($this->getMetadata() as $fieldName => $fieldData) {
+
+            if (isset($fieldData['visible']) && $fieldData['visible'] === false) {
+                unset($properties[$fieldName]);
+                continue;
+            }
+
+            if (array_key_exists($fieldName, $properties)) {
+                $ordered[$fieldName] = $properties[$fieldName];
+                unset($properties[$fieldName]);
             } else {
-                $ordered[$key] = null;
+                $ordered[$fieldName] = null;
             }
         }
 
@@ -892,21 +901,32 @@ class UserModel implements PaginatedInterface
         return $id;
     }
 
+    protected function setDefaults(array &$user)
+    {
+        foreach ($this->getMetadata() as $fieldName => $fieldData) {
+            if (!array_key_exists($fieldName, $user) && isset($fieldData['default'])) {
+                $user[$fieldName] = $fieldData['default'];
+            }
+        }
+    }
+
     protected function updateCanonicalFields(array &$user)
     {
-        if (isset($user['username'])) {
+        if (isset($user['username']) && !isset($user['usernameCanonical'])) {
             $user['usernameCanonical'] = $this->canonicalize($user['username']);
         }
-        if (isset($user['email'])) {
+        if (isset($user['email']) && !isset($user['emailCanonical'])) {
             $user['emailCanonical'] = $this->canonicalize($user['email']);
         }
     }
 
     protected function updatePassword(array &$user)
     {
-        if (isset($user['password'])) {
+
+        if (isset($user['plainPassword'])) {
             $user['salt'] = base_convert(sha1(uniqid(mt_rand(), true)), 16, 36);
-            $user['password'] = $this->encoder->encodePassword($user['password'], $user['salt']);
+            $user['password'] = $this->encoder->encodePassword($user['plainPassword'], $user['salt']);
+            unset($user['plainPassword']);
         }
     }
 
