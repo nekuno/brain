@@ -4,7 +4,7 @@
  */
 namespace EventListener;
 
-use Event\LookUpSocialNetworkEvent;
+use Event\LookUpSocialNetworksEvent;
 use Model\Neo4j\GraphManager;
 use Service\AMQPManager;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -44,14 +44,17 @@ class LookUpSocialNetworkSubscriber implements EventSubscriberInterface
     {
 
         return array(
-            \AppEvents::LINKEDIN_SOCIAL_NETWORK_ADDED => array('onLinkedinSocialNetworkAdded'),
+            \AppEvents::SOCIAL_NETWORKS_ADDED => array('onSocialNetworksAdded'),
         );
     }
 
-    public function onLinkedinSocialNetworkAdded(LookUpSocialNetworkEvent $event)
+    public function onSocialNetworksAdded(LookUpSocialNetworksEvent $event)
     {
-        $message = array('id' => $event->getUserId(), 'profileUrl' => $event->getProfileUrl());
+        $message = array(
+            'id' => $event->getUserId(),
+            'socialNetworks' => $event->getSocialNetworks(),
+        );
 
-        $this->amqpManager->enqueueMessage($message, 'brain.social_network.linkedin');
+        $this->amqpManager->enqueueMessage($message, 'brain.social_network.added');
     }
 }

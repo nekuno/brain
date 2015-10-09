@@ -6,16 +6,16 @@ namespace Event;
 
 use Symfony\Component\EventDispatcher\Event;
 
-class LookUpSocialNetworkEvent extends Event
+class LookUpSocialNetworksEvent extends Event
 {
     protected $userId;
-    protected $profileUrl;
+    protected $socialNetworks = array();
 
-    public function __construct($userId, $profileUrl)
+    public function __construct($userId, array $socialNetworks)
     {
 
         $this->userId = (integer)$userId;
-        $this->profileUrl = $profileUrl;
+        $this->socialNetworks = $socialNetworks;
     }
 
     public function getUserId()
@@ -24,9 +24,9 @@ class LookUpSocialNetworkEvent extends Event
         return $this->userId;
     }
 
-    public function getProfileUrl()
+    public function getSocialNetworks()
     {
 
-        return $this->profileUrl;
+        return $this->socialNetworks;
     }
 }

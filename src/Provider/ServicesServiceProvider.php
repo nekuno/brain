@@ -7,6 +7,7 @@ use Service\AMQPManager;
 use Service\ChatMessageNotifications;
 use Service\EmailNotifications;
 use Service\MigrateSocialInvitations;
+use Service\SocialNetwork;
 use Service\TokenGenerator;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
@@ -30,6 +31,12 @@ class ServicesServiceProvider implements ServiceProviderInterface
         $app['affinityRecalculations.service'] = $app->share(
             function (Application $app) {
                 return new AffinityRecalculations($app['emailNotification.service'], $app['translator'], $app['neo4j.graph_manager'], $app['links.model'], $app['users.model'], $app['users.affinity.model']);
+            }
+        );
+
+        $app['socialNetwork.service'] = $app->share(
+            function (Application $app) {
+                return new SocialNetwork($app['users.socialNetwork.linkedin.model']);
             }
         );
 

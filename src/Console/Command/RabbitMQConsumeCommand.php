@@ -118,7 +118,7 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
 
             case AMQPManager::SOCIAL_NETWORK:
 
-                $worker = new SocialNetworkDataProcessorWorker($channel, $this->app['users.socialNetwork.linkedin.model']);
+                $worker = new SocialNetworkDataProcessorWorker($channel, $this->app['socialNetwork.service']);
                 $worker->setLogger($logger);
                 $logger->notice('Processing social network queue');
                 break;

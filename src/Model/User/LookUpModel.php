@@ -5,7 +5,7 @@
 namespace Model\User;
 
 use Doctrine\ORM\EntityManager;
-use Event\LookUpSocialNetworkEvent;
+use Event\LookUpSocialNetworksEvent;
 use Model\Neo4j\GraphManager;
 use Model\Entity\LookUpData;
 use Service\LookUp\LookUp;
@@ -101,10 +101,7 @@ class LookUpModel
 
             $this->setSocialProfiles($lookUpData['socialProfiles'], $id);
 
-            if(isset($lookUpData['socialProfiles']['linkedin']) && $lookUpData['socialProfiles']['linkedin']) {
-                $event = new LookUpSocialNetworkEvent($id, $lookUpData['socialProfiles']['linkedin']);
-                $this->dispatcher->dispatch(\AppEvents::LINKEDIN_SOCIAL_NETWORK_ADDED, $event);
-            }
+            $this->dispatchSocialNetworksAddedEvent($id, $lookUpData['socialProfiles']);
 
             return $lookUpData['socialProfiles'];
         }
@@ -386,4 +383,9 @@ class LookUpModel
             $outputInterface->writeln($message);
     }
 
+    protected function dispatchSocialNetworksAddedEvent($id, $socialProfiles)
+    {
+        $event = new LookUpSocialNetworksEvent($id, $socialProfiles);
+        $this->dispatcher->dispatch(\AppEvents::SOCIAL_NETWORKS_ADDED, $event);
+    }
 }

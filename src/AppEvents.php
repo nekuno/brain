@@ -62,7 +62,7 @@ final class AppEvents
     const ANSWER_ADDED = 'answer.added';
 
     /**
-     * Fired when a LinkedinSocialNetwork is detected from LookUp
+     * Fired when SocialNetworks are detected from LookUp
      */
-    const LINKEDIN_SOCIAL_NETWORK_ADDED = 'socialNetwork.added';
+    const SOCIAL_NETWORKS_ADDED = 'socialNetworks.added';
 }

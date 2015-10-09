@@ -20,7 +20,7 @@ class LinkedinParser extends BaseParser
 
     private function getSkills(Crawler $crawler)
     {
-        return array_filter($crawler->filter('#background-skills > #skills-item > #skills-item-view > #profile-skills > .skills-section li a')->each(function (Crawler $node) {
+        return array_filter($crawler->filter('#background-skills > #skills-item > #skills-item-view > #profile-skills > .skills-section li .endorse-item-name a')->each(function (Crawler $node) {
             return $this->getSkill($node);
         }));
     }

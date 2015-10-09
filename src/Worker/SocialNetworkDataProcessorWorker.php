@@ -4,9 +4,9 @@
  */
 namespace Worker;
 
-use Model\User\SocialNetwork\LinkedinSocialNetworkModel;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Message\AMQPMessage;
+use Service\SocialNetwork;
 
 /**
  * Class SocialNetworkDataProcessorWorker
@@ -21,16 +21,15 @@ class SocialNetworkDataProcessorWorker extends LoggerAwareWorker implements Rabb
     protected $channel;
 
     /**
-     * @var LinkedinSocialNetworkModel
+     * @var SocialNetwork
      */
-    protected $lm;
+    protected $sn;
 
 
-    public function __construct(AMQPChannel $channel, LinkedinSocialNetworkModel $lm)
+    public function __construct(AMQPChannel $channel, SocialNetwork $sn)
     {
-
         $this->channel = $channel;
-        $this->lm = $lm;
+        $this->sn = $sn;
     }
 
     /**
@@ -67,11 +66,11 @@ class SocialNetworkDataProcessorWorker extends LoggerAwareWorker implements Rabb
         $trigger = $this->getTrigger($message);
 
         $userId = $data['id'];
-        $profileUrl = $data['profileUrl'];
+        $socialNetworks = $data['socialNetworks'];
 
         switch($trigger) {
-            case 'linkedin':
-                $this->lm->set($userId, $profileUrl);
+            case 'added':
+                $this->sn->setSocialNetworksInfo($userId, $socialNetworks);
                 break;
             default;
                 throw new \Exception('Invalid social network trigger');
@@ -81,5 +80,4 @@ class SocialNetworkDataProcessorWorker extends LoggerAwareWorker implements Rabb
 
         $this->memory();
     }
-
 }
