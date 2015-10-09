@@ -24,21 +24,15 @@ class TokensModel
      * @var GraphManager
      */
     protected $gm;
-    /**
-     * @var Connection
-     */
-    protected $connectionSocial;
 
     /**
      * @var EntityManager
      */
     protected $entityManagerBrain;
 
-    public function __construct(GraphManager $graphManager, Connection $connectionSocial, EntityManager $entityManagerBrain)
+    public function __construct(GraphManager $graphManager, EntityManager $entityManagerBrain)
     {
         $this->gm = $graphManager;
-        // TODO: Refactor and remove this dependency
-        $this->connectionSocial = $connectionSocial;
         $this->entityManagerBrain = $entityManagerBrain;
     }
 
@@ -336,15 +330,12 @@ class TokensModel
         foreach ($result as $row) {
             /* @var $user Node */
             $user = $row->offsetGet('user');
-            $userId = $user->getProperty('qnoow_id');
-            $ids = $this->connectionSocial
-                ->createQueryBuilder()
-                ->select('facebookID', 'googleID', 'twitterID', 'spotifyID')
-                ->from('users')
-                ->where('id = :id')
-                ->setParameter(':id', $userId)
-                ->execute()
-                ->fetch();
+            $ids = array(
+                'facebookID' => $user->getProperty('facebookID'),
+                'googleID' => $user->getProperty('googleID'),
+                'twitterID' => $user->getProperty('twitterID'),
+                'spotifyID' => $user->getProperty('spotifyID'),
+            );
 
             $return[] = array_merge($this->build($row), $ids);
         }
