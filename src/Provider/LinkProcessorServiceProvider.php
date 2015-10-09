@@ -47,59 +47,6 @@ class LinkProcessorServiceProvider implements ServiceProviderInterface
             }
         );
 
-        $app['api_consumer.link_processor.processor.youtube'] = $app->share(
-            function ($app) {
-                return new YoutubeProcessor($app['api_consumer.resource_owner.google'], new YoutubeUrlParser());
-            }
-        );
-
-        $app['api_consumer.link_processor.processor.spotify'] = $app->share(
-            function ($app) {
-                return new SpotifyProcessor($app['api_consumer.resource_owner.spotify'], new SpotifyUrlParser(), $app['api_consumer.resource_owner.google'], new YoutubeUrlParser());
-            }
-        );
-
-        $app['api_consumer.link_processor.processor.facebook'] = $app->share(
-            function ($app) {
-                return new FacebookProcessor($app['api_consumer.resource_owner.facebook'], $app['api_consumer.link_processor.processor.scrapper']);
-            }
-        );
-
-        $app['api_consumer.link_processor.link_analyzer'] = $app->share(
-            function () {
-                return new LinkAnalyzer();
-            }
-        );
-
-        $app['api_consumer.link_processor.link_resolver'] = $app->share(
-            function ($app) {
-
-                return new LinkResolver($app['api_consumer.link_processor.goutte']);
-            }
-        );
-
-        $app['api_consumer.link_processor.url_parser.parser'] = $app->share(
-            function ($app) {
-
-                return new UrlParser();
-            }
-        );
-
-        $app['api_consumer.link_processor'] = $app->share(
-            function ($app) {
-                return new LinkProcessor(
-                    $app['api_consumer.link_processor.link_resolver'],
-                    $app['api_consumer.link_processor.link_analyzer'],
-                    $app['links.model'],
-                    $app['api_consumer.link_processor.processor.scrapper'],
-                    $app['api_consumer.link_processor.processor.youtube'],
-                    $app['api_consumer.link_processor.processor.spotify'],
-                    $app['api_consumer.link_processor.processor.facebook'],
-                    $app['api_consumer.link_processor.url_parser.parser']
-                );
-            }
-        );
-
     }
 
     /**

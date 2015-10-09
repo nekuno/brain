@@ -21,6 +21,7 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
 use Worker\LinkProcessorWorker;
 use Worker\MatchingCalculatorWorker;
 use Worker\PredictionWorker;
+use Worker\SocialNetworkDataProcessorWorker;
 
 /**
  * Class RabbitMQConsumeCommand
@@ -34,6 +35,7 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
         AMQPManager::FETCHING,
         AMQPManager::MATCHING,
         AMQPManager::PREDICTION,
+        AMQPManager::SOCIAL_NETWORK,
     );
 
     protected function configure()
@@ -112,6 +114,13 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
                     $this->app['links.model']);
                 $worker->setLogger($logger);
                 $logger->notice('Processing prediction queue');
+                break;
+
+            case AMQPManager::SOCIAL_NETWORK:
+
+                $worker = new SocialNetworkDataProcessorWorker($channel, $this->app['socialNetwork.service']);
+                $worker->setLogger($logger);
+                $logger->notice('Processing social network queue');
                 break;
 
             default:

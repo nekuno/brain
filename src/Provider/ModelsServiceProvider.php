@@ -26,6 +26,8 @@ use Model\User\Recommendation\ContentRecommendationTagModel;
 use Model\User\Recommendation\UserRecommendationPaginatedModel;
 use Model\User\RelationsModel;
 use Model\User\Similarity\SimilarityModel;
+use Model\User\SocialNetwork\LinkedinSocialNetworkModel;
+use Model\User\SocialNetwork\SocialNetworkModel;
 use Model\User\TokensModel;
 use Model\UserModel;
 use Silex\Application;
@@ -177,7 +179,14 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.lookup.model'] = $app->share(
             function ($app) {
 
-                return new LookUpModel($app['neo4j.graph_manager'], $app['orm.ems']['mysql_brain'], $app['lookUp.fullContact.service'], $app['lookUp.peopleGraph.service']);
+                return new LookUpModel($app['neo4j.graph_manager'], $app['orm.ems']['mysql_brain'], $app['lookUp.fullContact.service'], $app['lookUp.peopleGraph.service'], $app['dispatcher']);
+            }
+        );
+
+        $app['users.socialNetwork.linkedin.model'] = $app->share(
+            function ($app) {
+
+                return new LinkedinSocialNetworkModel($app['neo4j.graph_manager'], $app['parser.linkedin']);
             }
         );
 
