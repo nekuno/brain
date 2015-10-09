@@ -4,34 +4,37 @@
  */
 namespace Model\Parser;
 
+use Psr\Log\LoggerInterface;
 use Symfony\Component\DomCrawler\Crawler;
 
 class LinkedinParser extends BaseParser
 {
-    public function parse($profileUrl)
+    public function parse($profileUrl, LoggerInterface $logger = null)
     {
         $crawler = $this->client->request('GET', $profileUrl);
 
-        $skills = $this->getSkills($crawler);
-        $languages = $this->getLanguages($crawler);
+        $skills = $this->getSkills($crawler, $logger);
+        $languages = $this->getLanguages($crawler, $logger);
 
         return array('skills' => $skills, 'languages' => $languages);
     }
 
-    private function getSkills(Crawler $crawler)
+    private function getSkills(Crawler $crawler, LoggerInterface $logger = null)
     {
-        return array_filter($crawler->filter('#background-skills > #skills-item > #skills-item-view > #profile-skills > .skills-section li .endorse-item-name a')->each(function (Crawler $node) {
-            return $this->getSkill($node);
+        return array_filter($crawler->filter('#background-skills > #skills-item > #skills-item-view > #profile-skills > .skills-section li .endorse-item-name a')->each(function (Crawler $node) use ($logger) {
+            return $this->getSkill($node, $logger);
         }));
     }
 
-    private function getSkill(Crawler $node)
+    private function getSkill(Crawler $node, LoggerInterface $logger = null)
     {
         $href = $node->attr('href');
         $text = $node->text();
         if(substr($text, -3) === '...') {
             $text = $this->getSkillFromLink($href);
         }
+
+        $logger->info($text . ' skill added');
 
         return $text ?: false;
     }
@@ -47,17 +50,19 @@ class LinkedinParser extends BaseParser
         return false;
     }
 
-    private function getLanguages(Crawler $crawler)
+    private function getLanguages(Crawler $crawler, LoggerInterface $logger = null)
     {
-        return array_filter($crawler->filter('#background-languages > #languages > #languages-view li')->each(function (Crawler $node) {
-            return $this->getLanguage($node);
+        return array_filter($crawler->filter('#background-languages > #languages > #languages-view li')->each(function (Crawler $node) use ($logger) {
+            return $this->getLanguage($node, $logger);
         }));
     }
 
-    private function getLanguage(Crawler $node)
+    private function getLanguage(Crawler $node, LoggerInterface $logger)
     {
         $language = $node->filter('h4 > span')->text();
         $translatedLanguage = $this->translateTypicalLanguage($language);
+
+        $logger->info($translatedLanguage . ' language added');
 
         return $translatedLanguage ?: false;
     }

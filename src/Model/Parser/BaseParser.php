@@ -5,6 +5,7 @@
 namespace Model\Parser;
 
 use Goutte\Client;
+use Psr\Log\LoggerInterface;
 
 abstract class BaseParser implements ParserInterface
 {
@@ -18,5 +19,5 @@ abstract class BaseParser implements ParserInterface
         $this->client = $client;
     }
 
-    abstract public function parse($url);
+    abstract public function parse($url, LoggerInterface $logger = null);
 }

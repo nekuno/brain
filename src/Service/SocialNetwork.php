@@ -34,7 +34,7 @@ class SocialNetwork
         switch($resource)
         {
             case 'linkedin':
-                $this->linkedinSocialNetworkModel->set($userId, $profileUrl);
+                $this->linkedinSocialNetworkModel->set($userId, $profileUrl, $logger);
                 if($logger) {
                     $logger->info('linkedin social network info added for user ' . $userId . ' (' . $profileUrl . ')');
                 }
