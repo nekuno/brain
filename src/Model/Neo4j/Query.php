@@ -55,6 +55,9 @@ class Query extends \Everyman\Neo4j\Cypher\Query implements LoggerAwareInterface
             $replace = null;
 
             switch (gettype($value)) {
+                case 'NULL':
+                    $replace = 'NULL';
+                    break;
                 case 'boolean':
                     $replace = $value ? 'true' : 'false';
                     break;
