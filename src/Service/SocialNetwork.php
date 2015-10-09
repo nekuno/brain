@@ -36,7 +36,7 @@ class SocialNetwork
             case 'linkedin':
                 $this->linkedinSocialNetworkModel->set($userId, $profileUrl);
                 if($logger) {
-                    $logger->info('linkedin social network info added');
+                    $logger->info('linkedin social network info added for user ' . $userId . ' (' . $profileUrl . ')');
                 }
                 break;
         }
