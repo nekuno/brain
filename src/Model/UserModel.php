@@ -207,7 +207,9 @@ class UserModel implements PaginatedInterface
             ->set('u.qnoow_id = { qnoow_id }')
             ->setParameter('qnoow_id', $id)
             ->set('u.status = { status }')
-            ->setParameter('status', UserStatusModel::USER_STATUS_INCOMPLETE);
+            ->setParameter('status', UserStatusModel::USER_STATUS_INCOMPLETE)
+            ->set('u.createdAt = { createdAt }')
+            ->setParameter('createdAt', (new \DateTime())->format('Y-m-d H:i:s'));
 
         $qb->getQuery()->getResultSet();
 
@@ -848,6 +850,8 @@ class UserModel implements PaginatedInterface
 
         $this->updateCanonicalFields($data);
         $this->updatePassword($data);
+
+        $data['updatedAt'] = (new \DateTime())->format('Y-m-d H:i:s');
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(u:User)')
