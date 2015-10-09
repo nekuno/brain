@@ -34,10 +34,6 @@ class LookUpByEmailCommand extends BaseCommand
         /* @var $lookUpModel LookUpModel */
         $lookUpModel = $this->app['users.lookup.model'];
 
-        /* @var $dispatcher EventDispatcher */
-        $dispatcher = $this->app['dispatcher'];
-        $dispatcher->addSubscriber(new LookUpSocialNetworkSubscriber($this->app['neo4j.graph_manager'], $this->app['amqpManager.service']));
-
         if ($id) {
 
             /* @var $userModel UserModel */
