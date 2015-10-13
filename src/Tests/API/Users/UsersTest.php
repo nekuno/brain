@@ -6,9 +6,6 @@ namespace Tests\API;
 
 class UsersTest extends APITest
 {
-    /**
-     * @dataProvider testUsers
-     */
     public function testUsers()
     {
         $this->assertGetUsersEmpty();

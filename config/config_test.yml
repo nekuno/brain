@@ -1,3 +1,6 @@
+imports:
+    - { resource: config_dev.yml }
+
 dbs.options:
     mysql_social:
         driver: pdo_sqlite

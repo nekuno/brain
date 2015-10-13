@@ -19,7 +19,7 @@ abstract class APITest extends WebTestCase
 
     public function createApplication()
     {
-        $app = require __DIR__.'../../app.php';
+        $app = require __DIR__.'/../../app.php';
         $app['debug'] = true;
         unset($app['exception_handler']);
         $app['session.test'] = true;
@@ -29,7 +29,8 @@ abstract class APITest extends WebTestCase
 
     public function setUp()
     {
-        $app = parent::setUp();
+        parent::setUp();
+        $app = $this->app;
         // Clean the database
         $query = new Query($app['neo4j.client'], 'MATCH n-[r]-m DELETE n, r, m');
         $query->getResultSet();
