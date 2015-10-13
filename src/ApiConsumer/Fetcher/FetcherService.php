@@ -106,42 +106,45 @@ class FetcherService implements LoggerAwareInterface
     }
 
     /**
-     * @param $userId
-     * @param $resourceOwner
+     * @param array $token
      * @param bool $public
      * @return array
      * @throws \Exception
      */
-    public function fetch($userId, $resourceOwner, $public = false)
+    public function fetch($token, $public = false)
     {
+
+        if (!$token) return array();
+
+        if (array_key_exists('id', $token)) {
+            $userId = $token['id'];
+        } else {
+            return array();
+        }
+
+        if (array_key_exists('resourceOwner', $token)) {
+            $resourceOwner = $token['resourceOwner'];
+        } else {
+            $resourceOwner = null;
+        }
 
         $links = array();
         try {
-            if (!$public) {
-                $tokens = $this->tm->getByUserOrResource($userId, $resourceOwner);
-                if (!$tokens) {
-                    throw new \Exception('User not found');
-                }
-            } else {
-                $tokens = $this->lookupModel->getSocialProfiles($userId, $resourceOwner);
-            }
 
             $this->dispatcher->dispatch(\AppEvents::FETCH_START, new FetchEvent($userId, $resourceOwner));
 
-            foreach ($tokens as $token) {
-                $token['network'] = $this->getNetwork($token);
+            $token['network'] = $this->getNetwork($token);
 
-                foreach ($this->options as $fetcher => $fetcherConfig) {
+            foreach ($this->options as $fetcher => $fetcherConfig) {
 
-                    if ($fetcherConfig['resourceOwner'] === $resourceOwner) {
-                        try {
-                            $links = array_merge($links, $this->fetcherFactory->build($fetcher)->fetchLinksFromUserFeed($token, $public));
-                        } catch (\Exception $e) {
-                            $this->logger->error(sprintf('Fetcher: Error fetching feed for user "%s" with fetcher "%s" from resource "%s". Reason: %s', $userId, $fetcher, $resourceOwner, $e->getMessage()));
-                            continue;
-                        }
-
+                if ($fetcherConfig['resourceOwner'] === $resourceOwner) {
+                    try {
+                        $links = array_merge($links, $this->fetcherFactory->build($fetcher)->fetchLinksFromUserFeed($token, $public));
+                    } catch (\Exception $e) {
+                        $this->logger->error(sprintf('Fetcher: Error fetching feed for user "%s" with fetcher "%s" from resource "%s". Reason: %s', $userId, $fetcher, $resourceOwner, $e->getMessage()));
+                        continue;
                     }
+
                 }
             }
 
@@ -186,10 +189,9 @@ class FetcherService implements LoggerAwareInterface
 
     private function getNetwork($token)
     {
-        if ($this->linkProcessor->getLinkAnalyzer()->getProcessor($token) == LinkAnalyzer::YOUTUBE){
+        if ($this->linkProcessor->getLinkAnalyzer()->getProcessor($token) == LinkAnalyzer::YOUTUBE) {
             return LinkAnalyzer::YOUTUBE;
-        }
-        else return $token['resourceOwner'];
+        } else return $token['resourceOwner'];
     }
 
 }

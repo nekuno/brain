@@ -107,8 +107,7 @@ class LinksFetchCommand extends ApplicationAwareCommand
 
         foreach ($tokens as $token) {
             try {
-
-                $fetcher->fetch($token['id'], $token['resourceOwner'], $public);
+                $fetcher->fetch( $token, $public);
 
             } catch (\Exception $e) {
                 $output->writeln(

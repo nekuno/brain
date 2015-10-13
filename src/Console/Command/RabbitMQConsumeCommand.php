@@ -83,6 +83,7 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
                 $worker = new LinkProcessorWorker($channel,
                     $fetcher,
                     $this->app['users.tokens.model'],
+                    $this->app['users.lookup.model'],
                     $this->app['dbs']['mysql_social'],
                     $this->app['dbs']['mysql_brain']);
                 $worker->setLogger($logger);
