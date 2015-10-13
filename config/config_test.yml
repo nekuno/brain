@@ -1,0 +1,16 @@
+dbs.options:
+    mysql_social:
+        driver: pdo_sqlite
+        path: %kernel.cache_dir%/social_data.db
+    mysql_brain:
+        driver: pdo_sqlite
+        path: %kernel.cache_dir%/brain_data.db
+
+neo4j.options:
+    port: %db.neo4j.testing.port%
+    auth: %db.neo4j.testing.auth%
+    user: %db.neo4j.testing.user%
+    pass: %db.neo4j.testing.pass%
+
+swiftmailer.options:
+    disable_delivery: true
