@@ -44,6 +44,11 @@ abstract class AbstractFetcher implements FetcherInterface
         return $this->url;
     }
 
+    public function getUser()
+    {
+        return $this->user;
+    }
+
     /**
      * {@inheritDoc}
      */

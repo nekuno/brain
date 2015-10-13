@@ -6,6 +6,7 @@ use ApiConsumer\EventListener\FetchLinksInstantSubscriber;
 use ApiConsumer\EventListener\FetchLinksSubscriber;
 use ApiConsumer\Fetcher\FetcherService;
 use Console\ApplicationAwareCommand;
+use Model\User\LookUpModel;
 use Model\User\TokensModel;
 use Psr\Log\LogLevel;
 use Silex\Application;
@@ -64,16 +65,32 @@ class LinksFetchCommand extends ApplicationAwareCommand
             $availableResourceOwners = implode(', ', array_keys($resourceOwners));
 
             if (!isset($resourceOwners[$resource])) {
-                $output->writeln(sprintf('Resource ownner %s not found, available resource owners: %s.', $resource, $availableResourceOwners));
+                $output->writeln(sprintf('Resource owner %s not found, available resource owners: %s.', $resource, $availableResourceOwners));
 
                 return;
             }
         }
 
-        /* @var $tm TokensModel */
-        $tm = $this->app['users.tokens.model'];
+        if (!$public) {
+            /* @var $tm TokensModel */
+            $tm = $this->app['users.tokens.model'];
 
-        $tokens = $tm->getByUserOrResource($userId, $resource);
+            $tokens = $tm->getByUserOrResource($userId, $resource);
+        } else {
+            /* @var $lookupmodel LookUpModel */
+            $lookupmodel = $this->app['users.lookup.model'];
+
+            $tokens = $lookupmodel->getSocialProfiles($userId, $resource);
+
+            if ($resource) {
+                foreach ($tokens as $token){
+                    if ($token['resourceOwner'] == 'resource'){
+                        $tokens = array($token);
+                    }
+                }
+//                $tokens = array($resource => $tokens[$resource]);
+            }
+        }
 
         /* @var FetcherService $fetcher */
         $fetcher = $this->app['api_consumer.fetcher'];

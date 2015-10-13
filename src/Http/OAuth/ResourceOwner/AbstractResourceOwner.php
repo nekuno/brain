@@ -180,7 +180,7 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
     {
 
         $request = $this->getAPIRequest($this->options['base_url'] . $url, $query, $token);
-
+        var_dump($request->getUrl());
         try {
             $response = $this->httpClient->send($request);
         } catch (RequestException $e) {
@@ -266,4 +266,18 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
             )
         );
     }
+
+    /**
+     * @param $user
+     * @return string
+     */
+    public function getUsername($user)
+    {
+        if (!$user) return null;
+        $url = array_key_exists('url', $user)? $user['url'] : null;
+        $parts = explode('/', $url);
+        return end($parts);
+    }
+
+
 }

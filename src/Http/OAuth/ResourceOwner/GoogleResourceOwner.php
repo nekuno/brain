@@ -2,6 +2,7 @@
 
 namespace Http\OAuth\ResourceOwner;
 
+use ApiConsumer\LinkProcessor\LinkAnalyzer;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**

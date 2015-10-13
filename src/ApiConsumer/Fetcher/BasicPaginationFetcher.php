@@ -75,7 +75,7 @@ abstract class BasicPaginationFetcher extends AbstractFetcher
      */
     public function fetchLinksFromUserFeed($user, $public)
     {
-        $this->user = $user;
+        $this->setUser($user);
         $this->rawFeed = array();
 
         $rawFeed = $this->getLinksByPage($public);
@@ -89,4 +89,9 @@ abstract class BasicPaginationFetcher extends AbstractFetcher
     abstract protected function getPaginationIdFromResponse($response);
 
     abstract protected function parseLinks(array $rawFeed);
+
+    public function setUser($user)
+    {
+        $this->user = $user;
+    }
 }

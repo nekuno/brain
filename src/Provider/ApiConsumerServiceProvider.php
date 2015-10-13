@@ -92,6 +92,7 @@ class ApiConsumerServiceProvider implements ServiceProviderInterface
                     $app['api_consumer.link_processor'],
                     $app['links.model'],
                     $app['users.rate.model'],
+                    $app['users.lookup.model'],
                     $app['api_consumer.fetcher_factory'],
                     $app['dispatcher'],
                     $app['api_consumer.config']['fetcher']
