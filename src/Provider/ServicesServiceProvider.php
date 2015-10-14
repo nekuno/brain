@@ -5,7 +5,9 @@ namespace Provider;
 use Service\AffinityRecalculations;
 use Service\AMQPManager;
 use Service\ChatMessageNotifications;
+use Service\EmailNotifications;
 use Service\MigrateSocialInvitations;
+use Service\SocialNetwork;
 use Service\TokenGenerator;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
@@ -32,6 +34,12 @@ class ServicesServiceProvider implements ServiceProviderInterface
             }
         );
 
+        $app['socialNetwork.service'] = $app->share(
+            function (Application $app) {
+                return new SocialNetwork($app['users.socialNetwork.linkedin.model']);
+            }
+        );
+
         $app['migrateSocialInvitations.service'] = $app->share(
             function (Application $app) {
                 return new MigrateSocialInvitations($app['neo4j.graph_manager'], $app['dbs']['mysql_social']);
@@ -40,7 +48,7 @@ class ServicesServiceProvider implements ServiceProviderInterface
 
         $app['emailNotification.service'] = $app->share(
             function (Application $app) {
-                return new \Service\EmailNotifications($app['mailer'], $app['orm.ems']['mysql_brain'], $app['twig']);
+                return new EmailNotifications($app['mailer'], $app['orm.ems']['mysql_brain'], $app['twig']);
             }
         );
 

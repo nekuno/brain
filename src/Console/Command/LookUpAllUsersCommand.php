@@ -12,6 +12,8 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Model\User\LookUpModel;
 use Model\UserModel;
+use Symfony\Component\EventDispatcher\EventDispatcher;
+use EventListener\LookUpSocialNetworkSubscriber;
 
 class LookUpAllUsersCommand extends BaseCommand
 {

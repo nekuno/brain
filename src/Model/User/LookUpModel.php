@@ -6,12 +6,14 @@ namespace Model\User;
 
 use Doctrine\ORM\EntityManager;
 use Everyman\Neo4j\Query\Row;
+use Event\LookUpSocialNetworksEvent;
 use Model\Neo4j\GraphManager;
 use Model\Entity\LookUpData;
 use Service\LookUp\LookUp;
 use Service\LookUp\LookUpFullContact;
 use Service\LookUp\LookUpPeopleGraph;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -41,6 +43,11 @@ class LookUpModel
      */
     protected $peopleGraph;
 
+    /**
+     * @var EventDispatcher
+     */
+    protected $dispatcher;
+
     //neo4j labels => resourceOwner names
     protected $resourceOwners = array(
         'TwitterSocialNetwork' => 'twitter',
@@ -49,12 +56,16 @@ class LookUpModel
     );
     const LABEL_SOCIAL_NETWORK = 'SocialNetwork';
 
-    public function __construct(GraphManager $gm, EntityManager $em, LookUpFullContact $fullContact, LookUpPeopleGraph $peopleGraph)
+
+
+    public function __construct(GraphManager $gm, EntityManager $em, LookUpFullContact $fullContact, LookUpPeopleGraph $peopleGraph, EventDispatcher $dispatcher)
+
     {
         $this->gm = $gm;
         $this->em = $em;
         $this->fullContact = $fullContact;
         $this->peopleGraph = $peopleGraph;
+        $this->dispatcher = $dispatcher;
     }
 
     public function completeUserData($userData, OutputInterface $outputInterface = null)
@@ -66,22 +77,22 @@ class LookUpModel
 
         $lookUpData = $this->initializeLookUpData($userData);
 
-        for ($i = 0; $i < 2; $i++) {
-            if (!$searchedByEmail && !$this->isCompleted($lookUpData) && $this->isEmailSet($userData)) {
+        for($i = 0; $i < 2; $i++) {
+            if(! $searchedByEmail && ! $this->isCompleted($lookUpData) && $this->isEmailSet($userData)) {
                 $searchedByEmail = true;
                 $this->showOutputMessageIfDefined($outputInterface, 'Searching by email...');
 
                 $lookUpData = $this->merge($lookUpData, $this->getByEmail($userData['email']));
                 $userData = $this->completeLookUpTypes($userData, $lookUpData);
             }
-            if (!$searchedByTwitterUsername && !$this->isCompleted($lookUpData) && $this->isTwitterUsernameSetInUserData($userData)) {
+            if(! $searchedByTwitterUsername && ! $this->isCompleted($lookUpData) && $this->isTwitterUsernameSetInUserData($userData)) {
                 $searchedByTwitterUsername = true;
                 $this->showOutputMessageIfDefined($outputInterface, 'Searching by twitter username...');
 
                 $lookUpData = $this->merge($lookUpData, $this->getByTwitterUsername($userData['twitterUsername']));
                 $userData = $this->completeLookUpTypes($userData, $lookUpData);
             }
-            if (!$searchedByFacebookUsername && !$this->isCompleted($lookUpData) && $this->isFacebookUsernameSetInUserData($userData)) {
+            if(! $searchedByFacebookUsername && ! $this->isCompleted($lookUpData) && $this->isFacebookUsernameSetInUserData($userData)) {
                 $searchedByFacebookUsername = true;
                 $this->showOutputMessageIfDefined($outputInterface, 'Searching by facebook username...');
 
@@ -97,10 +108,13 @@ class LookUpModel
     {
         $lookUpData = $this->completeUserData($userData, $outputInterface);
 
-        if (isset($lookUpData['socialProfiles']) && !empty($lookUpData['socialProfiles'])) {
+        if(isset($lookUpData['socialProfiles']) && ! empty($lookUpData['socialProfiles'])) {
             $this->showOutputMessageIfDefined($outputInterface, 'Adding social profiles to user ' . $id . '...');
 
             $this->setSocialProfiles($lookUpData['socialProfiles'], $id);
+
+            $this->dispatchSocialNetworksAddedEvent($id, $lookUpData['socialProfiles']);
+
             return $lookUpData['socialProfiles'];
         }
 
@@ -110,11 +124,11 @@ class LookUpModel
     public function setFromWebHook(Request $request)
     {
         $hash = $request->get('webHookId');
-        if ($lookUpData = $this->em->getRepository('\Model\Entity\LookUpData')->findOneBy(array('hash' => $hash))) {
+        if($lookUpData = $this->em->getRepository('\Model\Entity\LookUpData')->findOneBy(array('hash' => $hash))) {
             $service = $this->getServiceFromApiResource($lookUpData->getApiResource());
-            if ($service instanceof LookUp) {
+            if($service instanceof LookUp) {
                 $lookUpData->setResponse($service->getProcessedResponse($request->request->all()));
-                if ($lookUpData->getResponse()) {
+                if($lookUpData->getResponse()) {
                     $this->em->persist($lookUpData);
                     $this->em->flush();
                 }
@@ -173,9 +187,9 @@ class LookUpModel
     protected function initializeLookUpData($userData)
     {
         $lookUpData = $userData;
-        if (array_key_exists('twitterUsername', $lookUpData))
+        if(array_key_exists('twitterUsername', $lookUpData))
             unset($lookUpData['twitterUsername']);
-        if (array_key_exists('facebookUsername', $lookUpData))
+        if(array_key_exists('facebookUsername', $lookUpData))
             unset($lookUpData['facebookUsername']);
 
         return $lookUpData;
@@ -200,7 +214,7 @@ class LookUpModel
     {
         $mergedData = array();
         $previousLookUpDataArray = array();
-        foreach (LookUpData::getApiResourceTypes() as $apiResource) {
+        foreach(LookUpData::getApiResourceTypes() as $apiResource) {
             $lookUpQuery = array(
                 'lookedUpType' => $lookUpType,
                 'lookedUpValue' => $lookUpValue,
@@ -218,17 +232,18 @@ class LookUpModel
         $lookUpData = $this->em->getRepository('\Model\Entity\LookUpData')->findOneBy($lookUpQuery);
         $lookUpDataArray = array();
 
-        if (!$lookUpData instanceof LookUpData) {
+        if(! $lookUpData instanceof LookUpData) {
             $lookUpData = $this->createLookUpData($lookUpQuery['apiResource'], $lookUpQuery['lookedUpType'], $lookUpQuery['lookedUpValue']);
-        } elseif (is_array($lookUpData->getResponse()) && count($lookUpData->getResponse()) > 0) {
+        }
+        elseif(is_array($lookUpData->getResponse()) && count($lookUpData->getResponse()) > 0) {
             $lookUpDataArray = $this->getCachedResponse($lookUpData->getResponse(), $lookUpQuery['apiResource']);
         }
 
-        if (count($lookUpData->getResponse()) < 1) {
+        if(count($lookUpData->getResponse()) < 1) {
             $lookUpDataArray = $this->getFromApiResource($lookUpData);
             $lookUpData->setResponse(isset($lookUpDataArray['response']) ? $lookUpDataArray['response'] : array());
         }
-        $mergedData = !empty($previousLookUpDataArray) ? $this->merge($previousLookUpDataArray, $lookUpDataArray) : $lookUpDataArray;
+        $mergedData = ! empty($previousLookUpDataArray) ? $this->merge($previousLookUpDataArray, $lookUpDataArray) : $lookUpDataArray;
 
         $this->em->persist($lookUpData);
         $this->em->flush();
@@ -250,7 +265,7 @@ class LookUpModel
 
     protected function getCachedResponse($response, $apiResource)
     {
-        switch ($apiResource) {
+        switch($apiResource) {
             case LookUpData::FULLCONTACT_API_RESOURCE:
                 $lookUpDataArray = $this->fullContact->getProcessedResponse($response);
                 break;
@@ -266,7 +281,7 @@ class LookUpModel
 
     protected function getFromApiResource(LookUpData $lookUpData)
     {
-        switch ($lookUpData->getApiResource()) {
+        switch($lookUpData->getApiResource()) {
             case LookUpData::FULLCONTACT_API_RESOURCE:
                 $lookUpDataArray = $this->fullContact->get($lookUpData->getLookedUpValue(), $lookUpData->getLookedUpType(), $lookUpData->getHash());
                 break;
@@ -280,27 +295,26 @@ class LookUpModel
         return $lookUpDataArray;
     }
 
-
     public function merge(array $lookUpData1, array $lookUpData2)
     {
-        if (!isset($lookUpData1['name']) && isset($lookUpData2['name'])) {
+        if(! isset($lookUpData1['name']) && isset($lookUpData2['name'])) {
             $lookUpData1['name'] = $lookUpData2['name'];
         }
-        if (!isset($lookUpData1['email']) && isset($lookUpData2['email'])) {
+        if(! isset($lookUpData1['email']) && isset($lookUpData2['email'])) {
             $lookUpData1['email'] = $lookUpData2['email'];
         }
-        if (!isset($lookUpData1['gender']) && isset($lookUpData2['gender'])) {
+        if(! isset($lookUpData1['gender']) && isset($lookUpData2['gender'])) {
             $lookUpData1['gender'] = $lookUpData2['gender'];
         }
-        if (!isset($lookUpData1['location']) && isset($lookUpData2['location'])) {
+        if(! isset($lookUpData1['location']) && isset($lookUpData2['location'])) {
             $lookUpData1['location'] = $lookUpData2['location'];
         }
-        if (isset($lookUpData2['socialProfiles']) && !empty($lookUpData2['socialProfiles'])) {
-            if (!isset($lookUpData1['socialProfiles'])) {
+        if(isset($lookUpData2['socialProfiles']) && ! empty($lookUpData2['socialProfiles'])) {
+            if(! isset($lookUpData1['socialProfiles'])) {
                 $lookUpData1['socialProfiles'] = array();
             }
-            foreach ($lookUpData2['socialProfiles'] as $index => $socialProfile) {
-                if (!isset($lookUpData1['socialProfiles'][$index]))
+            foreach($lookUpData2['socialProfiles'] as $index => $socialProfile) {
+                if(! isset($lookUpData1['socialProfiles'][$index]))
                     $lookUpData1['socialProfiles'][$index] = $socialProfile;
             }
         }
@@ -316,7 +330,7 @@ class LookUpModel
             ->setParameter('id', (int)$id);
 
         $counter = 0;
-        foreach ($socialProfiles as $resource => $url) {
+        foreach($socialProfiles as $resource => $url) {
             $counter++;
             $label = ucfirst(str_replace('.', '', str_replace(' ', '', $resource)));
             $resourceNode = $label . $this::LABEL_SOCIAL_NETWORK;
@@ -331,7 +345,7 @@ class LookUpModel
 
     protected function getServiceFromApiResource($apiResource)
     {
-        switch ($apiResource) {
+        switch($apiResource) {
             case LookUpData::FULLCONTACT_API_RESOURCE:
                 $service = $this->fullContact;
                 break;
@@ -347,7 +361,7 @@ class LookUpModel
 
     protected function isCompleted(array $lookUpData)
     {
-        if (isset($lookUpData['email']) && isset($lookUpData['gender']) && isset($lookUpData['location']) && isset($lookUpData['socialProfiles'])) {
+        if(isset($lookUpData['email']) && isset($lookUpData['gender']) && isset($lookUpData['location']) && isset($lookUpData['socialProfiles'])) {
             return true;
         }
 
@@ -356,13 +370,13 @@ class LookUpModel
 
     protected function completeLookUpTypes($userData, $lookUpData)
     {
-        if (!$this->isEmailSet($userData) && $this->isEmailSet($lookUpData)) {
+        if(! $this->isEmailSet($userData) && $this->isEmailSet($lookUpData)) {
             $userData['email'] = $lookUpData['email'];
         }
-        if (!$this->isTwitterUsernameSetInUserData($userData) && $this->isTwitterUsernameSetInLookUpData($lookUpData)) {
+        if(! $this->isTwitterUsernameSetInUserData($userData) && $this->isTwitterUsernameSetInLookUpData($lookUpData)) {
             $userData['twitterUsername'] = $this->getTwitterUsernameFromLookUpData($lookUpData);
         }
-        if (!$this->isFacebookUsernameSetInUserData($userData) && $this->isFacebookUsernameSetInLookUpData($lookUpData)) {
+        if(! $this->isFacebookUsernameSetInUserData($userData) && $this->isFacebookUsernameSetInLookUpData($lookUpData)) {
             $userData['facebookUsername'] = $this->getFacebookUsernameFromLookUpData($lookUpData);
         }
 
@@ -371,7 +385,7 @@ class LookUpModel
 
     protected function isEmailSet(array $data)
     {
-        if (isset($data['email']) && $data['email'])
+        if(isset($data['email']) && $data['email'])
             return true;
 
         return false;
@@ -379,7 +393,7 @@ class LookUpModel
 
     protected function isTwitterUsernameSetInLookUpData(array $lookUpData)
     {
-        if (isset($lookUpData['socialProfiles']['twitter']) && $lookUpData['socialProfiles']['twitter'])
+        if(isset($lookUpData['socialProfiles']['twitter']) && $lookUpData['socialProfiles']['twitter'])
             return true;
 
         return false;
@@ -387,7 +401,7 @@ class LookUpModel
 
     protected function isFacebookUsernameSetInLookUpData(array $lookUpData)
     {
-        if (isset($lookUpData['socialProfiles']['facebook']) && $lookUpData['socialProfiles']['facebook'])
+        if(isset($lookUpData['socialProfiles']['facebook']) && $lookUpData['socialProfiles']['facebook'])
             return true;
 
         return false;
@@ -395,7 +409,7 @@ class LookUpModel
 
     protected function isTwitterUsernameSetInUserData(array $userData)
     {
-        if (isset($userData['twitterUsername']) && $userData['twitterUsername'])
+        if(isset($userData['twitterUsername']) && $userData['twitterUsername'])
             return true;
 
         return false;
@@ -403,7 +417,7 @@ class LookUpModel
 
     protected function isFacebookUsernameSetInUserData(array $userData)
     {
-        if (isset($userData['facebookUsername']) && $userData['facebookUsername'])
+        if(isset($userData['facebookUsername']) && $userData['facebookUsername'])
             return true;
 
         return false;
@@ -425,8 +439,13 @@ class LookUpModel
 
     protected function showOutputMessageIfDefined(OutputInterface $outputInterface = null, $message)
     {
-        if ($outputInterface)
+        if($outputInterface)
             $outputInterface->writeln($message);
     }
 
+    protected function dispatchSocialNetworksAddedEvent($id, $socialProfiles)
+    {
+        $event = new LookUpSocialNetworksEvent($id, $socialProfiles);
+        $this->dispatcher->dispatch(\AppEvents::SOCIAL_NETWORKS_ADDED, $event);
+    }
 }
