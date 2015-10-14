@@ -49,8 +49,8 @@ class LinksProcessCommand extends ApplicationAwareCommand
             }
 
             try {
-
-                $linksModel->updateLink($processedLink, true);
+                $processed = array_key_exists('processed', $link)? $link['processed'] : 1;
+                $linksModel->updateLink($processedLink, $processed);
 
                 if (isset($processedLink['tags'])) {
                     foreach ($processedLink['tags'] as $tag) {
