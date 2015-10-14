@@ -10,6 +10,7 @@ dbs.options:
         path: %kernel.cache_dir%/brain_data.db
 
 neo4j.options:
+    host: %db.neo4j.testing.host%
     port: %db.neo4j.testing.port%
     auth: %db.neo4j.testing.auth%
     user: %db.neo4j.testing.user%

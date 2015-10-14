@@ -13,13 +13,15 @@ abstract class APITest extends WebTestCase
     protected function getResponseByRoute($route, $method = 'GET', $data = array())
     {
         $client = static::createClient();
-        $client->request($method, $route, $data);
+        $client->request($method, $route, array(), array(), array('CONTENT_TYPE' => 'application/json'), json_encode($data));
         return $client->getResponse();
     }
 
     public function createApplication()
     {
         $app = require __DIR__.'/../../app.php';
+        require __DIR__.'/../../controllers.php';
+        require __DIR__.'/../../routing.php';
         $app['debug'] = true;
         unset($app['exception_handler']);
         $app['session.test'] = true;
@@ -40,7 +42,7 @@ abstract class APITest extends WebTestCase
     {
         $this->assertStatusCode($response, $statusCode, $context);
 
-        $this->assertJson($response, $context . " response - Not a valid JSON string");
+        $this->assertJson($response->getContent(), $context . " response - Not a valid JSON string");
 
         $formattedResponse = json_decode($response->getContent(), true);
 
@@ -51,7 +53,7 @@ abstract class APITest extends WebTestCase
 
     protected function assertStatusCode(Response $response, $statusCode = 200, $context = "Undefined")
     {
-        $this->assertEquals($response->getStatusCode(), $statusCode, $context . " response - Status Code is " . $response->getStatusCode() . ", expected " . $statusCode);
+        $this->assertEquals($statusCode, $response->getStatusCode(), $context . " response - Status Code is " . $response->getStatusCode() . ", expected " . $statusCode);
     }
 
     protected function createUserA()
@@ -68,8 +70,7 @@ abstract class APITest extends WebTestCase
     protected function getUserAFixtures()
     {
         return array(
-            'qnoow_id' => 1,
-            'status' => 'complete',
+            'id' => 1,
             'username' => 'JohnDoe',
             'email' => 'nekuno-johndoe@gmail.com',
         );
