@@ -2,6 +2,7 @@
 
 namespace ApiConsumer\LinkProcessor\Processor;
 
+use ApiConsumer\LinkProcessor\LinkAnalyzer;
 use Http\OAuth\ResourceOwner\SpotifyResourceOwner;
 use ApiConsumer\LinkProcessor\UrlParser\SpotifyUrlParser;
 use Http\OAuth\ResourceOwner\GoogleResourceOwner;
@@ -236,7 +237,8 @@ class SpotifyProcessor implements ProcessorInterface
             'part' => 'snippet',
             'type' => 'video'
         );
-        $response = $this->googleResourceOwner->authorizedAPIRequest($url, $query);
+        $token = array('network' => LinkAnalyzer::YOUTUBE);
+        $response = $this->googleResourceOwner->authorizedAPIRequest($url, $query, $token);
 
         if (isset($response['items']) && is_array($response['items']) && count($response['items']) > 0) {
 
