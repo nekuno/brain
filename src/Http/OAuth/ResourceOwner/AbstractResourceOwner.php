@@ -38,7 +38,7 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
     /**
      * @var \Http\OAuth\ResourceOwner\ClientCredential\ClientCredentialInterface
      */
-    private $clientCredential;
+    protected $clientCredential;
 
     protected $expire_time_margin = 0;
 
@@ -180,7 +180,7 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
     {
 
         $request = $this->getAPIRequest($this->options['base_url'] . $url, $query, $token);
-        var_dump($request->getUrl());
+
         try {
             $response = $this->httpClient->send($request);
         } catch (RequestException $e) {
@@ -216,6 +216,15 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
     {
         if ($this->clientCredential instanceof ClientCredentialInterface) {
             return $this->clientCredential->getClientToken();
+        }
+
+        return '';
+    }
+
+    protected function getApplicationToken()
+    {
+        if ($this->clientCredential instanceof ClientCredentialInterface) {
+            return $this->clientCredential->getApplicationToken();
         }
 
         return '';
@@ -274,7 +283,7 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
     public function getUsername($user)
     {
         if (!$user) return null;
-        $url = array_key_exists('url', $user)? $user['url'] : null;
+        $url = array_key_exists('url', $user) ? $user['url'] : null;
         $parts = explode('/', $url);
         return end($parts);
     }

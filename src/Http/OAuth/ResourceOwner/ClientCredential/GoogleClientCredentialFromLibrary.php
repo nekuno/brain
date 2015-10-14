@@ -59,6 +59,11 @@ class GoogleClientCredentialFromLibrary extends AbstractClientCredential
                 'scopes'
             )
         );
+        $resolver->setDefined(
+            array(
+                'application_token',
+            )
+        );
     }
 
     /**
