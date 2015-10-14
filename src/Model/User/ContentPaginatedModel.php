@@ -82,7 +82,8 @@ class ContentPaginatedModel implements PaginatedInterface
 
         $qb->match("(u:User)")
             ->where("u.qnoow_id = { userId }")
-            ->match("(u)-[r:LIKES]->(content:" . $linkType . ")");
+            ->match("(u)-[r:LIKES]->(content:" . $linkType . ")")
+            ->where("content.processed = 1");
 
         $whereSocialNetwork = array("(HAS (r.nekuno))");
         foreach ($socialNetworks as $socialNetwork) {
@@ -187,7 +188,8 @@ class ContentPaginatedModel implements PaginatedInterface
 
         $qb->match("(u:User)")
             ->where("u.qnoow_id = { userId }")
-            ->match("(u)-[r:LIKES]->(content:" . $linkType . ")");
+            ->match("(u)-[r:LIKES]->(content:" . $linkType . ")")
+            ->where('content.processed = 1');
 
         $whereSocialNetwork = array("(HAS (r.nekuno))");
         foreach ($socialNetworks as $socialNetwork) {

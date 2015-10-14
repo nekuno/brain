@@ -102,7 +102,7 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
         $qb = $this->gm->createQueryBuilder();
 
         $qb->match('(user:User {qnoow_id: { userId }})-[affinity:AFFINITY]->(content:' . $linkType . ')')
-            ->where('NOT (user)-[:LIKES|:DISLIKES]->(content) AND affinity.affinity > 0');
+            ->where('NOT (user)-[:LIKES|:DISLIKES]->(content) AND affinity.affinity > 0 AND content.processed = 1');
 
         if (isset($filters['tag'])) {
             $qb->match('(content)-[:TAGGED]->(filterTag:Tag)')
@@ -210,7 +210,7 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
 
             $qb = $this->gm->createQueryBuilder();
             $qb->match('(user:User {qnoow_id: { userId }})');
-            $qb->match('(content:' . $linkType . ')');
+            $qb->match('(content:' . $linkType . '{processed: 1})');
             $qb->with('user', 'content')
                 ->orderBy('content.created DESC')
                 ->skip('{internalOffset}')
@@ -287,12 +287,12 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
         $qb = $this->gm->createQueryBuilder();
 
         if (isset($filters['tag'])) {
-            $qb->match('(content:' . $linkType . ')-[:TAGGED]->(filterTag:Tag)')
+            $qb->match('(content:' . $linkType . '{processed: 1})-[:TAGGED]->(filterTag:Tag)')
                 ->where('filterTag.name = { tag }');
 
             $params['tag'] = $filters['tag'];
         } else {
-            $qb->match('(content:' . $linkType . ')');
+            $qb->match('(content:' . $linkType . '{processed: 1})');
         }
 
         $qb->with('count(content) AS max');
