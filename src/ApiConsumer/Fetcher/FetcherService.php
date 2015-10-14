@@ -3,11 +3,13 @@
 namespace ApiConsumer\Fetcher;
 
 use ApiConsumer\Factory\FetcherFactory;
+use ApiConsumer\LinkProcessor\LinkAnalyzer;
 use ApiConsumer\LinkProcessor\LinkProcessor;
 use Event\FetchEvent;
 use Event\ProcessLinkEvent;
 use Event\ProcessLinksEvent;
 use Model\LinkModel;
+use Model\User\LookUpModel;
 use Model\User\RateModel;
 use Model\User\TokensModel;
 use Psr\Log\LoggerAwareInterface;
@@ -57,10 +59,16 @@ class FetcherService implements LoggerAwareInterface
     protected $options;
 
     /**
+     * @var LookUpModel
+     */
+    protected $lookupModel;
+
+    /**
      * @param TokensModel $tm
      * @param LinkProcessor $linkProcessor
      * @param LinkModel $linkModel
      * @param RateModel $rateModel
+     * @param LookUpModel $lookUpModel
      * @param FetcherFactory $fetcherFactory
      * @param EventDispatcher $dispatcher
      * @param array $options
@@ -70,15 +78,18 @@ class FetcherService implements LoggerAwareInterface
         LinkProcessor $linkProcessor,
         LinkModel $linkModel,
         RateModel $rateModel,
+        LookUpModel $lookUpModel,
         FetcherFactory $fetcherFactory,
         EventDispatcher $dispatcher,
         array $options
-    ) {
+    )
+    {
 
         $this->tm = $tm;
         $this->linkProcessor = $linkProcessor;
         $this->linkModel = $linkModel;
         $this->rateModel = $rateModel;
+        $this->lookupModel = $lookUpModel;
         $this->fetcherFactory = $fetcherFactory;
         $this->dispatcher = $dispatcher;
         $this->options = $options;
@@ -95,32 +106,40 @@ class FetcherService implements LoggerAwareInterface
     }
 
     /**
-     * @param $userId
-     * @param $resourceOwner
+     * @param array $token
+     * @param bool $public
      * @return array
      * @throws \Exception
      */
-    public function fetch($userId, $resourceOwner)
+    public function fetch($token, $public = false)
     {
+
+        if (!$token) return array();
+
+        if (array_key_exists('id', $token)) {
+            $userId = $token['id'];
+        } else {
+            return array();
+        }
+
+        if (array_key_exists('resourceOwner', $token)) {
+            $resourceOwner = $token['resourceOwner'];
+        } else {
+            $resourceOwner = null;
+        }
 
         $links = array();
         try {
 
-            $tokens = $this->tm->getByUserOrResource($userId, $resourceOwner);
-            if (!$tokens) {
-                throw new \Exception('User not found');
-            } else {
-                $token = current($tokens);
-            }
-
             $this->dispatcher->dispatch(\AppEvents::FETCH_START, new FetchEvent($userId, $resourceOwner));
+
+            $token['network'] = $this->getNetwork($token);
 
             foreach ($this->options as $fetcher => $fetcherConfig) {
 
                 if ($fetcherConfig['resourceOwner'] === $resourceOwner) {
-
                     try {
-                        $links = array_merge($links, $this->fetcherFactory->build($fetcher)->fetchLinksFromUserFeed($token));
+                        $links = array_merge($links, $this->fetcherFactory->build($fetcher)->fetchLinksFromUserFeed($token, $public));
                     } catch (\Exception $e) {
                         $this->logger->error(sprintf('Fetcher: Error fetching feed for user "%s" with fetcher "%s" from resource "%s". Reason: %s', $userId, $fetcher, $resourceOwner, $e->getMessage()));
                         continue;
@@ -128,6 +147,8 @@ class FetcherService implements LoggerAwareInterface
 
                 }
             }
+
+
             $this->dispatcher->dispatch(\AppEvents::FETCH_FINISH, new FetchEvent($userId, $resourceOwner));
 
             $this->dispatcher->dispatch(\AppEvents::PROCESS_START, new ProcessLinksEvent($userId, $resourceOwner, $links));
@@ -164,6 +185,13 @@ class FetcherService implements LoggerAwareInterface
         }
 
         return $links;
+    }
+
+    private function getNetwork($token)
+    {
+        if ($this->linkProcessor->getLinkAnalyzer()->getProcessor($token) == LinkAnalyzer::YOUTUBE) {
+            return LinkAnalyzer::YOUTUBE;
+        } else return $token['resourceOwner'];
     }
 
 }

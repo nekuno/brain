@@ -2,6 +2,7 @@
 
 namespace ApiConsumer\LinkProcessor\Processor;
 
+use ApiConsumer\LinkProcessor\LinkAnalyzer;
 use Http\OAuth\ResourceOwner\GoogleResourceOwner;
 use ApiConsumer\LinkProcessor\UrlParser\YoutubeUrlParser;
 
@@ -64,7 +65,8 @@ class YoutubeProcessor implements ProcessorInterface
             'part' => 'snippet,statistics,topicDetails',
             'id' => $id,
         );
-        $response = $this->resourceOwner->authorizedAPIRequest($url, $query);
+        $token = array('network' => LinkAnalyzer::YOUTUBE);
+        $response = $this->resourceOwner->authorizedAPIRequest($url, $query, $token);
 
         $link['tags'] = array();
 

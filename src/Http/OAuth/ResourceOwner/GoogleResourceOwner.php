@@ -2,10 +2,11 @@
 
 namespace Http\OAuth\ResourceOwner;
 
+use ApiConsumer\LinkProcessor\LinkAnalyzer;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
- * Class FacebookResourceOwner
+ * Class GoogleResourceOwner
  *
  * @package ApiConsumer\ResourceOwner
  */
@@ -44,14 +45,24 @@ class GoogleResourceOwner extends Oauth2GenericResourceOwner
 
     public function getAPIRequest($url, array $query = array(), array $token = array())
     {
-        $token = $this->getClientToken();
 
-        $clientConfig = array(
-            'query' => $query,
-            'headers' => array(
-                'Authorization' => 'Bearer ' . $token
-            )
-        );
+        if ($token['network'] == LinkAnalyzer::YOUTUBE) {
+
+            $token = $this->getClientToken();
+
+            $clientConfig = array(
+                'query' => $query,
+                'headers' => array(
+                    'Authorization' => 'Bearer ' . $token
+                )
+            );
+
+        } else {
+            $query['key'] = $this->clientCredential->getApplicationToken();
+            $clientConfig = array(
+                'query' => $query,
+            );
+        }
 
         return $this->httpClient->createRequest('GET', $url, $clientConfig);
     }

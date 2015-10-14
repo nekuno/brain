@@ -5,6 +5,7 @@
 namespace Model\User;
 
 use Doctrine\ORM\EntityManager;
+use Everyman\Neo4j\Query\Row;
 use Event\LookUpSocialNetworksEvent;
 use Model\Neo4j\GraphManager;
 use Model\Entity\LookUpData;
@@ -47,7 +48,18 @@ class LookUpModel
      */
     protected $dispatcher;
 
+    //neo4j labels => resourceOwner names
+    protected $resourceOwners = array(
+        'TwitterSocialNetwork' => 'twitter',
+        'GoogleplusSocialNetwork' => 'google',
+        'YoutubeSocialNetwork' => 'google',
+    );
+    const LABEL_SOCIAL_NETWORK = 'SocialNetwork';
+
+
+
     public function __construct(GraphManager $gm, EntityManager $em, LookUpFullContact $fullContact, LookUpPeopleGraph $peopleGraph, EventDispatcher $dispatcher)
+
     {
         $this->gm = $gm;
         $this->em = $em;
@@ -122,6 +134,54 @@ class LookUpModel
                 }
             }
         }
+    }
+
+    public function getSocialProfiles($userId, $resource = null)
+    {
+        if (!$userId) return null;
+
+        if ($resource){
+            $networklabels = array_keys($this->resourceOwners, $resource);
+        } else {
+            $networklabels = array($this::LABEL_SOCIAL_NETWORK);
+        }
+        if (empty($networklabels)){
+            return null;
+        }
+
+        $socialProfiles = array();
+
+        foreach ($networklabels as $networklabel){
+            $qb = $this->gm->createQueryBuilder();
+            $qb->match('(u:User{qnoow_id:{userId}})')
+                ->match('(u)-[hsn:HAS_SOCIAL_NETWORK]->(sn:'.$networklabel.')')
+                ->returns('hsn.url as url, labels(sn) as network');
+            $qb->setParameters(array(
+                'userId' => (integer)$userId,
+            ));
+            $query = $qb->getQuery();
+            $result = $query->getResultSet();
+
+            /* @var $row Row */
+            foreach ($result as $row) {
+                $labels = $row->offsetGet('network');
+                foreach ($labels as $network) {
+                    if ($network !== $this::LABEL_SOCIAL_NETWORK) {
+
+                        $resourceOwner = array_key_exists($network, $this->resourceOwners) ?
+                            $this->resourceOwners[$network] : null;
+
+                        $socialProfiles[] = array(
+                            'id' => $userId,
+                            'url' => $row->offsetGet('url'),
+                            'resourceOwner' => $resourceOwner,
+                        );
+                    }
+                }
+            }
+        }
+
+        return $socialProfiles;
     }
 
     protected function initializeLookUpData($userData)
@@ -273,8 +333,8 @@ class LookUpModel
         foreach($socialProfiles as $resource => $url) {
             $counter++;
             $label = ucfirst(str_replace('.', '', str_replace(' ', '', $resource)));
-            $resourceNode = $label . 'SocialNetwork';
-            $qb->merge('(sn' . $counter . ':SocialNetwork:' . $resourceNode . ')')
+            $resourceNode = $label . $this::LABEL_SOCIAL_NETWORK;
+            $qb->merge('(sn' . $counter . ':'.$this::LABEL_SOCIAL_NETWORK.':' . $resourceNode . ')')
                 ->merge('(u)-[hsn' . $counter . ':HAS_SOCIAL_NETWORK {url: { url' . $counter . ' }}]->(sn' . $counter . ')')
                 ->setParameter('url' . $counter, $url);
         }

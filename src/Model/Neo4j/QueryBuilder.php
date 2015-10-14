@@ -129,6 +129,7 @@ class QueryBuilder
     /**
      * @param mixed $where
      * @return QueryBuilder
+     * @throws \Exception
      */
     public function where($where = null)
     {

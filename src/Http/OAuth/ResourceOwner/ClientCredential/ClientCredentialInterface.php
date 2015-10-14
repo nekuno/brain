@@ -11,4 +11,11 @@ interface ClientCredentialInterface
      * @return string
      */
     public function getClientToken();
+
+    /**
+     * Get an application key
+     *
+     * @return string
+     */
+    public function getApplicationToken();
 } 

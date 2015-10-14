@@ -23,7 +23,7 @@ class SpotifyFetcher extends BasicPaginationFetcher
     /**
      * { @inheritdoc }
      */
-    public function fetchLinksFromUserFeed($user)
+    public function fetchLinksFromUserFeed($user, $public)
     {
         $this->user = $user;
         $this->rawFeed = array();
@@ -32,7 +32,7 @@ class SpotifyFetcher extends BasicPaginationFetcher
 
         try {
             $this->setQuery(array('limit' => $this::MAX_PLAYLISTS_PER_USER));
-            $playlists = $this->getLinksByPage();
+            $playlists = $this->getLinksByPage($public);
             $this->rawFeed = array();
 
             if (isset($playlists)) {
@@ -43,7 +43,7 @@ class SpotifyFetcher extends BasicPaginationFetcher
 
                         try {
                             $this->setQuery(array('limit' => $this::MAX_TRACKS_PER_PLAYLIST));
-                            $this->getLinksByPage();
+                            $this->getLinksByPage($public);
 
                         } catch (\Exception $e) {
                             continue;
@@ -54,7 +54,7 @@ class SpotifyFetcher extends BasicPaginationFetcher
 
             $this->url = 'users/' . $user['spotifyID'] . '/starred/tracks';
             $this->setQuery(array('limit' => $this::MAX_TRACKS_PER_PLAYLIST));
-            $this->getLinksByPage();
+            $this->getLinksByPage($public);
 
             $parsed = $this->parseLinks($this->rawFeed);
 

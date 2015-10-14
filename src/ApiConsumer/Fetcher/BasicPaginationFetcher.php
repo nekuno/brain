@@ -40,9 +40,10 @@ abstract class BasicPaginationFetcher extends AbstractFetcher
     }
 
     /**
+     * @param bool $public
      * @return array
      */
-    protected function getLinksByPage()
+    protected function getLinksByPage($public = false)
     {
 
         $nextPaginationId = null;
@@ -54,7 +55,11 @@ abstract class BasicPaginationFetcher extends AbstractFetcher
                 $query = array_merge($query, array($this->getPaginationField() => $nextPaginationId));
             }
 
-            $response = $this->resourceOwner->authorizedHttpRequest($this->getUrl(), $query, $this->user);
+            if (!$public){
+                $response = $this->resourceOwner->authorizedHttpRequest($this->getUrl(), $query, $this->user);
+            } else {
+                $response = $this->resourceOwner->authorizedApiRequest($this->getUrl(), $query, $this->user);
+            }
 
             $this->rawFeed = array_merge($this->rawFeed, $this->getItemsFromResponse($response));
 
@@ -68,12 +73,12 @@ abstract class BasicPaginationFetcher extends AbstractFetcher
     /**
      * { @inheritdoc }
      */
-    public function fetchLinksFromUserFeed($user)
+    public function fetchLinksFromUserFeed($user, $public)
     {
-        $this->user = $user;
+        $this->setUser($user);
         $this->rawFeed = array();
 
-        $rawFeed = $this->getLinksByPage();
+        $rawFeed = $this->getLinksByPage($public);
         $links = $this->parseLinks($rawFeed);
 
         return $links;
@@ -84,4 +89,9 @@ abstract class BasicPaginationFetcher extends AbstractFetcher
     abstract protected function getPaginationIdFromResponse($response);
 
     abstract protected function parseLinks(array $rawFeed);
+
+    public function setUser($user)
+    {
+        $this->user = $user;
+    }
 }

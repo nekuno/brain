@@ -100,14 +100,14 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.content.model'] = $app->share(
             function ($app) {
 
-                return new ContentPaginatedModel($app['neo4j.graph_manager']);
+                return new ContentPaginatedModel($app['neo4j.graph_manager'], $app['users.tokens.model']);
             }
         );
 
         $app['users.content.compare.model'] = $app->share(
             function ($app) {
 
-                return new ContentComparePaginatedModel($app['neo4j.graph_manager']);
+                return new ContentComparePaginatedModel($app['neo4j.graph_manager'], $app['users.tokens.model']);
             }
         );
 

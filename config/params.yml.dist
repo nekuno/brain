@@ -51,6 +51,7 @@ params:
     ## Twitter
     twitter.consumer_key: m9NY9ZghlVeYFVk8fbPp8pp1g
     twitter.consumer_secret: yQ5XBabTj1vzCCBVeJoqX9Bli4zcjVWsF6FxHvPtZwkAJseu1l
+    twitter.application_token: AAAAAAAAAAAAAAAAAAAAAFbcXgAAAAAAU6MCuXOOVmSchRXGdTt7O1V1a%2FI%3DT15dTKA8Bdejw65X3C3f73j8yBdrrNtEOYKRCPTpeWANjRZjPb
 
     ## Spotify
     spotify.consumer_key: e8c3557e29ad4974a1f41e93aeaf6e79
@@ -62,6 +63,7 @@ params:
     google.service_account_email: 556826433000-0b3i84k7li492e1t9rvat650cb8v00dg@developer.gserviceaccount.com
     google.key_file: /root/.ssh/OauthTest-d90f7483fcf1.p12
     google.key_password: notasecret
+    google.application_token: AIzaSyDe0_GEgJX6yMmwkYobif6cX2zVYkp37dc
 
     ## Facebook App
     facebook.consumer_key: 525923770862645

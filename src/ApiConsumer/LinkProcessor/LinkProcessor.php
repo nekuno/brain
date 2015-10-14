@@ -153,4 +153,9 @@ class LinkProcessor
         return $this->cleanURL($link, $this->scrapperProcessor);
     }
 
+    public function getLinkAnalyzer()
+    {
+        return $this->analyzer;
+    }
+
 }
