@@ -80,7 +80,7 @@ class UserController
         /* @var $model UserModel */
         $model = $app['users.model'];
         $criteria = $request->query->all();
-        $user = $model->findBy($criteria);
+        $user = isset($criteria['id']) ? $model->getById($criteria['id']) : $model->findBy($criteria);
         /* @var $groupModel GroupModel */
         $groupModel = $app['users.groups.model'];
         $user['groups'] = $groupModel->getByUser($user['qnoow_id']);

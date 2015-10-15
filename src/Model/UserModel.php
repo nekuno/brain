@@ -132,11 +132,6 @@ class UserModel implements PaginatedInterface
             throw new NotFoundHttpException('Criteria can not be empty');
         }
 
-        if (isset($criteria['id']) && !isset($criteria['qnoow_id'])) {
-            $criteria['qnoow_id'] = (int)$criteria['id'];
-            unset($criteria['id']);
-        }
-
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(u:User)');
 
