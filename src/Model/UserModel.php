@@ -156,12 +156,12 @@ class UserModel implements PaginatedInterface
         return $this->build($row);
     }
 
-    public function validate(array $data)
+    public function validate(array $data, $isUpdate = false)
     {
 
         $errors = array();
 
-        $metadata = $this->getMetadata();
+        $metadata = $this->getMetadata($isUpdate);
 
         foreach ($metadata as $fieldName => $fieldData) {
 
@@ -262,7 +262,7 @@ class UserModel implements PaginatedInterface
     public function update($id, array $data)
     {
 
-        $this->validate($data);
+        $this->validate($data, true);
 
         return $this->save($id, $data);
 
@@ -743,9 +743,9 @@ class UserModel implements PaginatedInterface
         return $count;
     }
 
-    public function getMetadata()
+    public function getMetadata($isUpdate = false)
     {
-        return array(
+        $metadata = array(
             'qnoow_id' => array('type' => 'string', 'editable' => false),
             'username' => array('type' => 'string', 'required' => true, 'editable' => true),
             'usernameCanonical' => array('type' => 'string', 'editable' => false),
@@ -770,6 +770,12 @@ class UserModel implements PaginatedInterface
             'confirmed' => array('type' => 'boolean', 'required' => false, 'default' => false),
             'status' => array('type' => 'string', 'editable' => false),
         );
+
+        if($isUpdate) {
+            $metadata['plainPassword']['required'] = false;
+        }
+
+        return $metadata;
     }
 
     public function save($id, array $data)
