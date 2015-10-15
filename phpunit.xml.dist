@@ -9,6 +9,9 @@
         colors="true"
         >
     <testsuites>
+        <testsuite name="APIUsers">
+            <directory>src/Tests/API/Users</directory>
+        </testsuite>
         <testsuite name="ApiConsumer">
             <directory>src/Tests/ApiConsumer/</directory>
         </testsuite>
@@ -22,4 +25,7 @@
              highlight="false" lowUpperBound="35" highLowerBound="70"/>
         <log type="coverage-clover" target="/tmp/coverage.xml"/>
     </logging>
+    <php>
+        <env name="APP_ENV" value="test" />
+    </php>
 </phpunit>

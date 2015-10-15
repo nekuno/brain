@@ -3,3 +3,4 @@
 /config/params.yml
 /phpunit.xml
 /csv
+neo4j-community-*
