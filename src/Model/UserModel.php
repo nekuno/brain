@@ -132,6 +132,11 @@ class UserModel implements PaginatedInterface
             throw new NotFoundHttpException('Criteria can not be empty');
         }
 
+        if (isset($criteria['id']) && !isset($criteria['qnoow_id'])) {
+            $criteria['qnoow_id'] = (int)$criteria['id'];
+            unset($criteria['id']);
+        }
+
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(u:User)');
 
@@ -772,6 +777,36 @@ class UserModel implements PaginatedInterface
         );
     }
 
+    public function save($id, array $data)
+    {
+
+        $this->updateCanonicalFields($data);
+        $this->updatePassword($data);
+
+        $data['updatedAt'] = (new \DateTime())->format('Y-m-d H:i:s');
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User)')
+            ->where('u.qnoow_id = { id }')
+            ->setParameter('id', (int)$id)
+            ->with('u');
+
+        foreach ($data as $key => $value) {
+            $qb->set("u.$key = { $key }")
+                ->setParameter($key, $value);
+        }
+
+        $qb->returns('u');
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        /* @var $row Row */
+        $row = $result->current();
+
+        return $this->build($row);
+    }
+
     /**
      * @param null $locale
      * @param array $dynamicChoices user-dependent choices (cannot be set from this model)
@@ -883,36 +918,6 @@ class UserModel implements PaginatedInterface
     protected function getTopUserTags($type)
     {
         return array();
-    }
-
-    public function save($id, array $data)
-    {
-
-        $this->updateCanonicalFields($data);
-        $this->updatePassword($data);
-
-        $data['updatedAt'] = (new \DateTime())->format('Y-m-d H:i:s');
-
-        $qb = $this->gm->createQueryBuilder();
-        $qb->match('(u:User)')
-            ->where('u.qnoow_id = { id }')
-            ->setParameter('id', (int)$id)
-            ->with('u');
-
-        foreach ($data as $key => $value) {
-            $qb->set("u.$key = { $key }")
-                ->setParameter($key, $value);
-        }
-
-        $qb->returns('u');
-
-        $query = $qb->getQuery();
-        $result = $query->getResultSet();
-
-        /* @var $row Row */
-        $row = $result->current();
-
-        return $this->build($row);
     }
 
     protected function getNextId()
