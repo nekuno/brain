@@ -120,6 +120,42 @@ class UserModel implements PaginatedInterface
         return $this->build($row);
     }
 
+    /**
+     * @param array $criteria
+     * @return array
+     * @throws Neo4jException
+     */
+    public function findBy(array $criteria = array())
+    {
+
+        if (empty($criteria)) {
+            throw new NotFoundHttpException('Criteria can not be empty');
+        }
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User)');
+
+        $wheres = array();
+        foreach ($criteria as $field => $value) {
+            $wheres[] = 'u.' . $field . ' = { ' . $field . ' }';
+        }
+        $qb->where($wheres)
+            ->setParameters($criteria)
+            ->returns('u');
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        if ($result->count() < 1) {
+            throw new NotFoundHttpException('User not found');
+        }
+
+        /* @var $row Row */
+        $row = $result->current();
+
+        return $this->build($row);
+    }
+
     public function validate(array $data)
     {
 

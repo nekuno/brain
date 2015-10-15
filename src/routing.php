@@ -10,6 +10,7 @@ $app->get('/users', 'users.controller:indexAction');
 $app->post('/users', 'users.controller:postAction');
 $app->put('/users/{id}', 'users.controller:putAction');
 $app->get('/users/{id}', 'users.controller:getAction');
+$app->get('/users/find', 'users.controller:findAction');
 
 $app->get('/users/{id}/profile', 'users.profile.controller:getAction')->value('id', null);
 $app->post('/users/{id}/profile', 'users.profile.controller:postAction')->value('id', null);

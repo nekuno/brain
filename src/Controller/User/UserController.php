@@ -74,6 +74,25 @@ class UserController
      * @param Request $request
      * @return JsonResponse
      */
+    public function findAction(Application $app, Request $request)
+    {
+
+        /* @var $model UserModel */
+        $model = $app['users.model'];
+        $criteria = $request->query->all();
+        $user = $model->findBy($criteria);
+        /* @var $groupModel GroupModel */
+        $groupModel = $app['users.groups.model'];
+        $user['groups'] = $groupModel->getByUser($user['qnoow_id']);
+
+        return $app->json($user);
+    }
+
+    /**
+     * @param Application $app
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function postAction(Application $app, Request $request)
     {
 
