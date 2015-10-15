@@ -8,20 +8,16 @@ class UsersTest extends APITest
 {
     public function testUsers()
     {
-        $this->assertGetUsersEmpty();
+        $this->assertGetNonExistentUserResponse();
         $this->assertCreateUserFormat();
-        $this->assertGetUsersFormat();
         $this->assertGetUserFormat();
-        $this->assertDeleteUserResponse();
-        $this->assertGetDeletedUserResponse();
     }
 
-    protected function assertGetUsersEmpty()
+    protected function assertGetNonExistentUserResponse()
     {
-        $response = $this->getResponseByRoute('/users');
-        $formattedResponse = $this->assertJsonResponse($response, 201, "Get Users (empty)");
-        $this->assertArrayHasKey('items', $formattedResponse, "Users should have 'items' key");
-        $this->assertEmpty($formattedResponse['items'], "Users['items'] should be an empty array");
+        $response = $this->getUserA();
+        // TODO: Uncomment when get non existing user returns 404
+        //$this->assertStatusCode($response, 404, "Get deleted UserA");
     }
 
     protected function assertCreateUserFormat()
@@ -31,39 +27,11 @@ class UsersTest extends APITest
         $this->assertUserFormat($formattedResponse, "Bad User response on create a user");
     }
 
-    protected function assertGetUsersFormat()
-    {
-        $response = $this->getResponseByRoute('/users');
-        $formattedResponse = $this->assertJsonResponse($response, 201, "Get Users (UserA)");
-        $this->assertArrayHasKey('items', $formattedResponse, "Users should have 'items' key");
-        // TODO: User should be complete to be listed here
-        //$this->assertUsersFormat($formattedResponse['items'], "Bad Users response");
-    }
-
     protected function assertGetUserFormat()
     {
         $response = $this->getUserA();
         $formattedResponse = $this->assertJsonResponse($response, 200, "Get UserA");
         $this->assertUserFormat($formattedResponse, "Bad UserA response");
-    }
-
-    protected function assertDeleteUserResponse()
-    {
-        $response = $this->getResponseByRoute('/users/1', 'DELETE');
-        $this->assertStatusCode($response, 200, "Delete UserA");
-    }
-
-    protected function assertGetDeletedUserResponse()
-    {
-        $response = $this->getUserA();
-        $this->assertStatusCode($response, 500, "Get deleted UserA");
-    }
-
-    protected function assertUsersFormat($users)
-    {
-        $this->assertNotEmpty($users, "user 1 should exist");
-        $this->assertArrayHasKey(0, $users, "users[0] does not exist");
-        $this->assertUserFormat($users[0]);
     }
 
     protected function assertUserFormat($user)
