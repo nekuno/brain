@@ -50,19 +50,24 @@ class LookUpModel
 
     //neo4j labels => resourceOwner names
     protected $resourceOwners = array(
-        'TwitterSocialNetwork' => 'twitter',
-        'GoogleplusSocialNetwork' => 'google',
-        'YoutubeSocialNetwork' => 'google',
+        'TwitterSocialNetwork' => TokensModel::TWITTER,
+        'GoogleplusSocialNetwork' => TokensModel::GOOGLE,
+        'YoutubeSocialNetwork' => TokensModel::GOOGLE,
     );
     const LABEL_SOCIAL_NETWORK = 'SocialNetwork';
 
+    /**
+     * @var TokensModel
+     */
+    protected $tm;
 
 
-    public function __construct(GraphManager $gm, EntityManager $em, LookUpFullContact $fullContact, LookUpPeopleGraph $peopleGraph, EventDispatcher $dispatcher)
+    public function __construct(GraphManager $gm, EntityManager $em, TokensModel $tm, LookUpFullContact $fullContact, LookUpPeopleGraph $peopleGraph, EventDispatcher $dispatcher)
 
     {
         $this->gm = $gm;
         $this->em = $em;
+        $this->tm = $tm;
         $this->fullContact = $fullContact;
         $this->peopleGraph = $peopleGraph;
         $this->dispatcher = $dispatcher;
@@ -136,7 +141,7 @@ class LookUpModel
         }
     }
 
-    public function getSocialProfiles($userId, $resource = null)
+    public function getSocialProfiles($userId, $resource = null, $all = false)
     {
         if (!$userId) return null;
 
@@ -144,6 +149,15 @@ class LookUpModel
             $networklabels = array_keys($this->resourceOwners, $resource);
         } else {
             $networklabels = array($this::LABEL_SOCIAL_NETWORK);
+            if (!$all){
+                $networklabels = array();
+                $unconnected = $this->tm->getUnconnectedNetworks($userId);
+                foreach ($unconnected as $network)
+                {
+                    $networklabels = array_merge($networklabels, array_keys($this->resourceOwners, $network));
+                }
+            }
+
         }
         if (empty($networklabels)){
             return null;

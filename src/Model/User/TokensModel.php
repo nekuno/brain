@@ -337,6 +337,27 @@ class TokensModel
         return $return;
     }
 
+    public function getUnconnectedNetworks($userId)
+    {
+        $tokens = $this->getAll($userId);
+        $resourceOwners = $this->getResourceOwners();
+
+        $unconnected = array();
+        foreach ($resourceOwners as $resource){
+            $connected = false;
+            foreach($tokens as $token){
+                if ($token['resourceOwner'] == $resource){
+                    $connected = true;
+                }
+            }
+            if (!$connected){
+                $unconnected[] = $resource;
+            }
+        }
+        return $unconnected;
+
+    }
+
     protected function build(Row $row)
     {
         /* @var $user Node */

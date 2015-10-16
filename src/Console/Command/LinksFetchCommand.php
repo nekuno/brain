@@ -80,7 +80,7 @@ class LinksFetchCommand extends ApplicationAwareCommand
             /* @var $lookupmodel LookUpModel */
             $lookupmodel = $this->app['users.lookup.model'];
 
-            $tokens = $lookupmodel->getSocialProfiles($userId, $resource);
+            $tokens = $lookupmodel->getSocialProfiles($userId, $resource, false);
 
             if ($resource) {
                 foreach ($tokens as $token){

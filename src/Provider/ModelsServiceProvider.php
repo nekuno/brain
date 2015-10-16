@@ -170,7 +170,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.lookup.model'] = $app->share(
             function ($app) {
 
-                return new LookUpModel($app['neo4j.graph_manager'], $app['orm.ems']['mysql_brain'], $app['lookUp.fullContact.service'], $app['lookUp.peopleGraph.service'], $app['dispatcher']);
+                return new LookUpModel($app['neo4j.graph_manager'], $app['orm.ems']['mysql_brain'], $app['users.tokens.model'], $app['lookUp.fullContact.service'], $app['lookUp.peopleGraph.service'], $app['dispatcher']);
             }
         );
 

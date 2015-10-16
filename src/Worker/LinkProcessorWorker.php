@@ -106,7 +106,7 @@ class LinkProcessorWorker extends LoggerAwareWorker implements RabbitMQConsumerI
         if ((!array_key_exists('public', $data) && $data['public'] == true)){
             $tokens = $this->tm->getByUserOrResource($userId, $resourceOwner);
         } else {
-            $tokens = $this->lookupModel->getSocialProfiles($userId, $resourceOwner);
+            $tokens = $this->lookupModel->getSocialProfiles($userId, $resourceOwner, false);
         }
 
         foreach ($tokens as $token){
