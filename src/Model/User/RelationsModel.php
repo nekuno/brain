@@ -99,7 +99,7 @@ class RelationsModel
         /* @var $row Row */
         $row = $result->current();
 
-        return  $row->offsetGet('count');
+        return $row->offsetGet('count');
     }
 
     public function countTo($to, $relation)
@@ -118,7 +118,7 @@ class RelationsModel
         /* @var $row Row */
         $row = $result->current();
 
-        return  $row->offsetGet('count');
+        return $row->offsetGet('count');
     }
 
     public function create($from, $to, $relation, $data = array())
@@ -314,7 +314,7 @@ class RelationsModel
         );
 
         if (!in_array($relation, $relations)) {
-            throw new ValidationException(sprintf('Relation type "%s" not allowed, possible values "%s"', $relation, implode('", "', $relations)));
+            throw new ValidationException(array(), sprintf('Relation type "%s" not allowed, possible values "%s"', $relation, implode('", "', $relations)));
         }
     }
 

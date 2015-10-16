@@ -222,18 +222,20 @@ class AnswerModel
     {
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->setParameters(array(
-            'userId' => $userId,
-            'answerId' => $answer['answerId'],
-        ));
+        $qb->setParameters(
+            array(
+                'userId' => $userId,
+                'answerId' => $answer['answerId'],
+            )
+        );
 
-        $qb->match('(a:Answer)','(u:User)')
+        $qb->match('(a:Answer)', '(u:User)')
             ->where('(id(a) = {answerId})', '(u.qnoow_id = {userId})')
-            ->with('a','u')
+            ->with('a', 'u')
             ->match('(a)-[:IS_ANSWER_OF]->(q:Question)<-[:IS_ANSWER_OF]-(answers:Answer)')
             ->match('(u)-[ua:ANSWERS]->(a)')
             ->optionalMatch('(u)-[rates:RATES]->(q)', '(u)-[accepts:ACCEPTS]->(answers)')
-            ->delete('ua','rates','accepts')
+            ->delete('ua', 'rates', 'accepts')
             ->returns('count(ua) as deleted');
         $query = $qb->getQuery();
         $result = $query->getResultSet();
@@ -343,9 +345,7 @@ class AnswerModel
         }
 
         if (count($errors) > 0) {
-            $e = new ValidationException('Validation error');
-            $e->setErrors($errors);
-            throw $e;
+            throw new ValidationException($errors);
         }
     }
 

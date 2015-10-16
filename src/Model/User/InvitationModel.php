@@ -71,7 +71,7 @@ class InvitationModel
 
     public function getById($id)
     {
-        if((string)$id !== (string)(int)$id) {
+        if ((string)$id !== (string)(int)$id) {
             throw new \RuntimeException('invitationId ID must be an integer');
         }
 
@@ -90,6 +90,7 @@ class InvitationModel
         if ($result->count() > 0) {
             /* @var $row Row */
             $row = $result->current();
+
             return $this->build($row);
         }
 
@@ -121,10 +122,10 @@ class InvitationModel
 
     public function getPaginatedInvitations($offset, $limit)
     {
-        if((string)$offset !== (string)(int)$offset) {
+        if ((string)$offset !== (string)(int)$offset) {
             throw new \RuntimeException('offset must be an integer');
         }
-        if((string)$limit !== (string)(int)$limit) {
+        if ((string)$limit !== (string)(int)$limit) {
             throw new \RuntimeException('limit must be an integer');
         }
 
@@ -157,13 +158,13 @@ class InvitationModel
 
     public function getPaginatedInvitationsByUser($offset, $limit, $userId)
     {
-        if((string)$offset !== (string)(int)$offset) {
+        if ((string)$offset !== (string)(int)$offset) {
             throw new \RuntimeException('offset must be an integer');
         }
-        if((string)$limit !== (string)(int)$limit) {
+        if ((string)$limit !== (string)(int)$limit) {
             throw new \RuntimeException('limit must be an integer');
         }
-        if((string)$userId !== (string)(int)$userId) {
+        if ((string)$userId !== (string)(int)$userId) {
             throw new \RuntimeException('$userId ID must be an integer');
         }
 
@@ -199,7 +200,7 @@ class InvitationModel
         $this->validate($data, false);
 
         $userAvailable = 0;
-        if(isset($data['userId'])) {
+        if (isset($data['userId'])) {
             $userAvailable = $this->getUserAvailable($data['userId']);
         }
 
@@ -208,57 +209,62 @@ class InvitationModel
         $qb->create('(inv:Invitation)')
             ->set('inv.consumed = 0', 'inv.createdAt = timestamp()');
 
-        foreach($data as $index => $parameter) {
-            if($index === 'userId' || $index === 'createdAt' || $index === 'consumed' || $index === 'groupId')
+        foreach ($data as $index => $parameter) {
+            if ($index === 'userId' || $index === 'createdAt' || $index === 'consumed' || $index === 'groupId') {
                 continue;
-            if($index === 'token') {
+            }
+            if ($index === 'token') {
                 // set auto-created token if invitation has user or token is not set
-                if(isset($data['userId']) || !$data['token']) {
+                if (isset($data['userId']) || !$data['token']) {
                     $qb->set('inv.token = "' . $tokenGenerator->generateToken() . '"');
                     continue;
                 }
             }
-            if($index === 'orientationRequired') {
-                if(isset($data['orientationRequired'])) {
+            if ($index === 'orientationRequired') {
+                if (isset($data['orientationRequired'])) {
                     $data['orientationRequired'] = $data['orientationRequired'] ? 'true' : 'false';
                     $qb->set('inv.orientationRequired = ' . $data['orientationRequired']);
                     continue;
                 }
             }
-            if(array_key_exists($index, $data)) {
-                if(ctype_digit((string)$parameter)) {
+            if (array_key_exists($index, $data)) {
+                if (ctype_digit((string)$parameter)) {
                     $parameter = (integer)$parameter;
-                } elseif(is_null($parameter)) {
+                } elseif (is_null($parameter)) {
                     $parameter = 'null';
                 } else {
                     $parameter = "'" . $parameter . "'";
                 }
-                $qb->set('inv.' . $index . ' = ' . $parameter );
+                $qb->set('inv.' . $index . ' = ' . $parameter);
             }
         }
 
-        if(isset($data['groupId'])) {
+        if (isset($data['groupId'])) {
             $qb->with('inv')
                 ->match('(g:Group)')
                 ->where('id(g) = { groupId }')
                 ->createUnique('(inv)-[:HAS_GROUP]->(g)')
-                ->setParameters(array(
-                    'groupId' => (integer)$data['groupId'],
-                ));
+                ->setParameters(
+                    array(
+                        'groupId' => (integer)$data['groupId'],
+                    )
+                );
         }
-        if(isset($data['userId'])) {
+        if (isset($data['userId'])) {
             isset($data['groupId']) ? $qb->with('inv', 'g') : $qb->with('inv');
             $qb->match('(user:User)')
-                 ->where('user.qnoow_id = { userId }')
-                 ->createUnique('(user)-[r:CREATED_INVITATION]->(inv)')
-                 ->set('user.available_invitations = { userAvailable } - 1')
-                 ->setParameters(array(
-                     'userId' => (integer)$data['userId'],
-                     'userAvailable' => (integer)$userAvailable,
-                     'groupId' => (integer)$data['groupId'],
-                 ));
+                ->where('user.qnoow_id = { userId }')
+                ->createUnique('(user)-[r:CREATED_INVITATION]->(inv)')
+                ->set('user.available_invitations = { userAvailable } - 1')
+                ->setParameters(
+                    array(
+                        'userId' => (integer)$data['userId'],
+                        'userAvailable' => (integer)$userAvailable,
+                        'groupId' => (integer)$data['groupId'],
+                    )
+                );
         }
-        if(isset($data['groupId'])) {
+        if (isset($data['groupId'])) {
             $qb->returns('inv AS invitation', 'g AS group');
         } else {
             $qb->returns('inv AS invitation');
@@ -282,33 +288,36 @@ class InvitationModel
         $qb->match('(inv:Invitation)')
             ->where('id(inv) = { invitationId }');
 
-        foreach($data as $index => $parameter) {
-            if($index === 'userId' || $index === 'createdAt' || $index === 'consumed' || $index === 'groupId')
+        foreach ($data as $index => $parameter) {
+            if ($index === 'userId' || $index === 'createdAt' || $index === 'consumed' || $index === 'groupId') {
                 continue;
-            if($index === 'orientationRequired') {
-                if(isset($data['orientationRequired'])) {
+            }
+            if ($index === 'orientationRequired') {
+                if (isset($data['orientationRequired'])) {
                     $data['orientationRequired'] = $data['orientationRequired'] ? 'true' : 'false';
                     $qb->set('inv.orientationRequired = ' . $data['orientationRequired']);
                     continue;
                 }
             }
-            if(array_key_exists($index, $data)) {
-                if(ctype_digit((string)$parameter)) {
+            if (array_key_exists($index, $data)) {
+                if (ctype_digit((string)$parameter)) {
                     $parameter = (integer)$parameter;
-                } elseif(is_null($parameter)) {
+                } elseif (is_null($parameter)) {
                     $parameter = 'null';
                 } else {
                     $parameter = "'" . $parameter . "'";
                 }
-                $qb->set('inv.' . $index . ' = ' . $parameter );
+                $qb->set('inv.' . $index . ' = ' . $parameter);
             }
         }
-        $qb->setParameters(array(
-                'invitationId' => (integer)$data['invitationId'])
+        $qb->setParameters(
+            array(
+                'invitationId' => (integer)$data['invitationId']
+            )
         );
 
-        if(array_key_exists('groupId', $data)) {
-            if(isset($data['groupId'])) {
+        if (array_key_exists('groupId', $data)) {
+            if (isset($data['groupId'])) {
                 $qb->with('inv')
                     ->optionalMatch('(inv)-[ohg:HAS_GROUP]->(og:Group)')
                     ->delete('ohg')
@@ -316,20 +325,24 @@ class InvitationModel
                     ->match('(g:Group)')
                     ->where('id(g) = { groupId }')
                     ->createUnique('(inv)-[hg:HAS_GROUP]->(g)')
-                    ->setParameters(array(
-                        'groupId' => (integer)$data['groupId'],
-                        'invitationId' => (integer)$data['invitationId'],
-                    ));
+                    ->setParameters(
+                        array(
+                            'groupId' => (integer)$data['groupId'],
+                            'invitationId' => (integer)$data['invitationId'],
+                        )
+                    );
             } else {
                 $qb->with('inv')
                     ->optionalMatch('(inv)-[hg:HAS_GROUP]->(g:Group)')
                     ->delete('hg')
-                    ->setParameters(array(
-                        'invitationId' => (integer)$data['invitationId'],
-                    ));
+                    ->setParameters(
+                        array(
+                            'invitationId' => (integer)$data['invitationId'],
+                        )
+                    );
             }
         }
-        if(array_key_exists('userId', $data)) {
+        if (array_key_exists('userId', $data)) {
             isset($data['groupId']) ? $qb->with('inv, g') : $qb->with('inv');
             $qb->optionalMatch('(old_user:User)-[our:CREATED_INVITATION]->(inv)')
                 ->delete('our');
@@ -337,14 +350,16 @@ class InvitationModel
             $qb->match('(user:User)')
                 ->where('user.qnoow_id = { userId }')
                 ->createUnique('(user)-[r:CREATED_INVITATION]->(inv)')
-                ->setParameters(array(
-                    'userId' => (integer)$data['userId'],
-                    'groupId' => isset($data['groupId']) ? (integer)$data['groupId'] : null,
-                    'invitationId' => (integer)$data['invitationId'],
-                ));
+                ->setParameters(
+                    array(
+                        'userId' => (integer)$data['userId'],
+                        'groupId' => isset($data['groupId']) ? (integer)$data['groupId'] : null,
+                        'invitationId' => (integer)$data['invitationId'],
+                    )
+                );
         }
 
-        if(isset($data['groupId'])) {
+        if (isset($data['groupId'])) {
             $qb->returns('inv AS invitation', 'g AS group');
         } else {
             $qb->returns('inv AS invitation');
@@ -362,10 +377,10 @@ class InvitationModel
 
     public function remove($invitationId)
     {
-        if(!is_int($invitationId)) {
+        if (!is_int($invitationId)) {
             throw new \RuntimeException('invitation ID must be an integer');
         }
-        if(!$this->existsInvitation($invitationId)) {
+        if (!$this->existsInvitation($invitationId)) {
             throw new NotFoundHttpException(sprintf('There is not invitation with ID %s', $invitationId));
         }
         $qb = $this->gm->createQueryBuilder();
@@ -400,10 +415,10 @@ class InvitationModel
 
     public function consume($token, $userId)
     {
-        if(!is_numeric($token) && !is_string($token)) {
+        if (!is_numeric($token) && !is_string($token)) {
             throw new \RuntimeException('token must be numeric or string');
         }
-        if((string)$userId !== (string)(int)$userId) {
+        if ((string)$userId !== (string)(int)$userId) {
             throw new \RuntimeException('user ID must be an integer');
         }
 
@@ -413,10 +428,12 @@ class InvitationModel
             ->createUnique('(u)-[r:CONSUMED_INVITATION]->(inv)')
             ->set('inv.available = inv.available - 1', 'inv.consumed = inv.consumed + 1')
             ->returns('inv AS invitation')
-            ->setParameters(array(
-                'token' => (string)$token,
-                'userId' => (integer)$userId,
-            ));
+            ->setParameters(
+                array(
+                    'token' => (string)$token,
+                    'userId' => (integer)$userId,
+                )
+            );
 
         $query = $qb->getQuery();
 
@@ -425,6 +442,7 @@ class InvitationModel
         if ($result->count() > 0) {
             /* @var $row Row */
             $row = $result->current();
+
             return $this->build($row);
         }
 
@@ -433,10 +451,10 @@ class InvitationModel
 
     public function prepareSend($id, $userId, array $data, $socialHost)
     {
-        if((string)$id !== (string)(int)$id) {
+        if ((string)$id !== (string)(int)$id) {
             throw new \RuntimeException('invitation ID must be an integer');
         }
-        if((string)$userId !== (string)(int)$userId) {
+        if ((string)$userId !== (string)(int)$userId) {
             throw new \RuntimeException('user ID must be an integer');
         }
 
@@ -444,10 +462,10 @@ class InvitationModel
         $invitation = $this->getById($id);
 
         /* TODO should we get the stored email? */
-        if(!isset($data['email'])) {
+        if (!isset($data['email'])) {
             throw new \RuntimeException('email must be set');
         }
-        if(!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+        if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
             throw new \RuntimeException('email is not valid');
         }
 
@@ -462,10 +480,10 @@ class InvitationModel
     /* Not used but may needed to initialize available invitations */
     public function setUserAvailable($userId, $nOfAvailable)
     {
-        if((string)$nOfAvailable !== (string)(int)$nOfAvailable) {
+        if ((string)$nOfAvailable !== (string)(int)$nOfAvailable) {
             throw new \RuntimeException('nOfAvailable must be an integer');
         }
-        if((string)$userId !== (string)(int)$userId) {
+        if ((string)$userId !== (string)(int)$userId) {
             throw new \RuntimeException('userId ID must be an integer');
         }
 
@@ -473,10 +491,12 @@ class InvitationModel
         $qb->match('(u:User)')
             ->where('u.qnoow_id = { userId }')
             ->set('u.available_invitations = { nOfAvailable }')
-            ->setParameters(array(
-                'nOfAvailable' => (integer)$nOfAvailable,
-                'userId' => (integer)$userId,
-            ));
+            ->setParameters(
+                array(
+                    'nOfAvailable' => (integer)$nOfAvailable,
+                    'userId' => (integer)$userId,
+                )
+            );
 
         $query = $qb->getQuery();
 
@@ -509,7 +529,7 @@ class InvitationModel
 
     public function getUserAvailable($userId)
     {
-        if((string)$userId !== (string)(int)$userId) {
+        if ((string)$userId !== (string)(int)$userId) {
             throw new \RuntimeException('userId ID must be an integer');
         }
 
@@ -517,9 +537,11 @@ class InvitationModel
         $qb->match('(u:User)')
             ->where('u.qnoow_id = { userId }')
             ->returns('u.available_invitations AS available_invitations')
-            ->setParameters(array(
-                'userId' => (integer)$userId,
-            ));
+            ->setParameters(
+                array(
+                    'userId' => (integer)$userId,
+                )
+            );
 
         $query = $qb->getQuery();
 
@@ -538,9 +560,11 @@ class InvitationModel
             ->where('inv.token = { token } AND coalesce(inv.available, 0) > 0')
             ->optionalMatch('(inv)-[:HAS_GROUP]->(g:Group)')
             ->returns('inv AS invitation', 'g AS group')
-            ->setParameters(array(
-                'token' => (string)$token,
-            ));
+            ->setParameters(
+                array(
+                    'token' => (string)$token,
+                )
+            );
 
         $query = $qb->getQuery();
 
@@ -549,10 +573,11 @@ class InvitationModel
         if ($result->count() > 0) {
             /* @var $row Row */
             $row = $result->current();
+
             return $this->build($row);
         }
 
-        throw new ValidationException(sprintf('There is not invitation available with token %s', $token));
+        throw new ValidationException(array(), sprintf('There is no invitation available with token %s', $token));
     }
 
     /**
@@ -584,8 +609,7 @@ class InvitationModel
 
                 $fieldValue = isset($data[$fieldName]) ? $data[$fieldName] : null;
 
-                if(null !== $fieldValue)
-                {
+                if (null !== $fieldValue) {
                     switch ($fieldName) {
                         case 'invitationId':
                             if ((string)(int)$fieldValue !== (string)$fieldValue) {
@@ -679,9 +703,7 @@ class InvitationModel
         }
 
         if (count($errors) > 0) {
-            $e = new ValidationException('Validation error');
-            $e->setErrors($errors);
-            throw $e;
+            throw new ValidationException($errors);
         }
     }
 
@@ -718,19 +740,21 @@ class InvitationModel
 
         $invitationArray += array('invitationId' => $invitation->getId());
 
-        if($group) {
-            $invitationArray += array('group' => array(
-                'id' => $group->getId(),
-                'name' => $group->getProperty('name'),
-                'html' => $group->getProperty('html'),
-            ));
+        if ($group) {
+            $invitationArray += array(
+                'group' => array(
+                    'id' => $group->getId(),
+                    'name' => $group->getProperty('name'),
+                    'html' => $group->getProperty('html'),
+                )
+            );
         }
 
-        if($userId) {
+        if ($userId) {
             $invitationArray += array('userId' => $userId);
         }
 
-        if(isset($invitationArray['image_path'])) {
+        if (isset($invitationArray['image_path'])) {
             $invitationArray['image_url'] = $this->adminDomain . $invitationArray['image_path'];
         }
 

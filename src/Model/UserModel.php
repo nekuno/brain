@@ -225,9 +225,7 @@ class UserModel implements PaginatedInterface
         }
 
         if (count($errors) > 0) {
-            $e = new ValidationException('Validation error');
-            $e->setErrors($errors);
-            throw $e;
+            throw new ValidationException($errors);
         }
     }
 
@@ -771,7 +769,7 @@ class UserModel implements PaginatedInterface
             'status' => array('type' => 'string', 'editable' => false),
         );
 
-        if($isUpdate) {
+        if ($isUpdate) {
             $metadata['plainPassword']['required'] = false;
         }
 

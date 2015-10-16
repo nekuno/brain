@@ -55,11 +55,13 @@ class EnterpriseUserModel
 
         $qb = $this->gm->createQueryBuilder();
         $qb->merge('(eu:EnterpriseUser {admin_id: { admin_id }, username: { username }, email: { email }})')
-            ->setParameters(array(
-                'admin_id' => (integer)$data['admin_id'],
-                'username' => $data['username'],
-                'email' => $data['email'],
-            ))
+            ->setParameters(
+                array(
+                    'admin_id' => (integer)$data['admin_id'],
+                    'username' => $data['username'],
+                    'email' => $data['email'],
+                )
+            )
             ->returns('eu');
 
         $query = $qb->getQuery();
@@ -82,11 +84,13 @@ class EnterpriseUserModel
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(eu:EnterpriseUser {admin_id: { admin_id }})')
             ->set('username = { username }', 'email = { email }')
-            ->setParameters(array(
-                'admin_id' => (integer)$data['id'],
-                'username' => $data['username'],
-                'email' => $data['email'],
-            ))
+            ->setParameters(
+                array(
+                    'admin_id' => (integer)$data['id'],
+                    'username' => $data['username'],
+                    'email' => $data['email'],
+                )
+            )
             ->returns('eu');
 
         $query = $qb->getQuery();
@@ -134,9 +138,7 @@ class EnterpriseUserModel
         }
 
         if (count($errors) > 0) {
-            $e = new ValidationException('Validation error');
-            $e->setErrors($errors);
-            throw $e;
+            throw new ValidationException($errors);
         }
     }
 
@@ -156,7 +158,6 @@ class EnterpriseUserModel
 
         return true;
     }
-
 
     /**
      * @param $resultSet
