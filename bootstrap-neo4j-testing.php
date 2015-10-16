@@ -17,7 +17,7 @@ $output_ssh = shell_exec("ssh vagrant@local.nekuno.com -o LogLevel=verbose ./../
 
 if ($output_ssh === NULL) {
     exec("vendor/neo4j-community-{$neo4jVersion}/bin/neo4j restart", $output, $code);
-    if($code !== 0) {
+    if($code != 0) {
         trigger_error("Error starting Neo4j");
         die;
     }
