@@ -37,7 +37,7 @@ class ContentRecommendationTagModel
         $qb = $this->gm->createQueryBuilder();
 
         $qb->match('(user:User {qnoow_id: {UserId}})-[affinity:AFFINITY]->(content:Link)')
-            ->where('NOT (user)-[:LIKES|:DISLIKES]->(content) AND affinity.affinity > 0')
+            ->where('NOT (user)-[:LIKES|:DISLIKES]->(content) AND affinity.affinity > 0 AND content.processed = 1')
             ->match('(content)-[r:TAGGED]->(tag:Tag)')
         ;
 

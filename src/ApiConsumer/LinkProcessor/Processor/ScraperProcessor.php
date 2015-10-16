@@ -57,8 +57,6 @@ class ScraperProcessor implements ProcessorInterface
 
         try {
             $crawler = $this->client->request('GET', $url);
-        } catch (RequestException $e) {
-            return $link;
         } catch (\LogicException $e) {
             return $link;
         }

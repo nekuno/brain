@@ -3,6 +3,7 @@
 namespace ApiConsumer\LinkProcessor\Processor;
 
 use ApiConsumer\LinkProcessor\LinkAnalyzer;
+use GuzzleHttp\Exception\RequestException;
 use Http\OAuth\ResourceOwner\GoogleResourceOwner;
 use ApiConsumer\LinkProcessor\UrlParser\YoutubeUrlParser;
 
@@ -89,6 +90,9 @@ class YoutubeProcessor implements ProcessorInterface
                     );
                 }
             }
+        } else {
+            //YouTube API returns 200 on non-existent videos, against its documentation
+            throw new RequestException('Video does not exist', null, null, null);
         }
 
         return $link;

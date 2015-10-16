@@ -114,7 +114,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.content.tag.model'] = $app->share(
             function ($app) {
 
-                return new ContentTagModel($app['neo4j.client']);
+                return new ContentTagModel($app['neo4j.client'], $app['neo4j.graph_manager']);
             }
         );
 
