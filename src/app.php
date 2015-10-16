@@ -27,7 +27,7 @@ $app = new Application();
 
 $app['env'] = getenv('APP_ENV') ?: 'prod';
 
-$app->register(new MonologServiceProvider(), array('monolog.name' => 'brain'));
+$app->register(new MonologServiceProvider(), array('monolog.name' => 'brain', 'monolog.logfile' => __DIR__."./../var/logs/silex_{$app['env']}.log"));
 $app->register(new DoctrineServiceProvider());
 $app->register(new DoctrineOrmServiceProvider());
 $app->register(new Neo4jPHPServiceProvider());
