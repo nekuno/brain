@@ -29,13 +29,13 @@ params:
     ## Neo4j
     db.neo4j.host: 127.0.0.1
     db.neo4j.port: 7474
-    db.neo4j.auth: false
-    db.neo4j.user: nekuno
+    db.neo4j.auth: true
+    db.neo4j.user: admin
     db.neo4j.pass: nekuno
     db.neo4j.testing.host: 192.168.33.10
     db.neo4j.testing.port: 7475
-    db.neo4j.testing.auth: false
-    db.neo4j.testing.user: nekuno
+    db.neo4j.testing.auth: true
+    db.neo4j.testing.user: admin
     db.neo4j.testing.pass: nekuno
 
     ## Swiftmailer
