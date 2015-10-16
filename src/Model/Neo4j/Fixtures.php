@@ -15,6 +15,7 @@ use Model\User\InvitationModel;
 use Model\User\PrivacyModel;
 use Psr\Log\LoggerInterface;
 use Silex\Application;
+use Service\TokenGenerator;
 
 class Fixtures
 {
@@ -82,6 +83,11 @@ class Fixtures
     protected $im;
 
     /**
+     * @var TokenGenerator
+     */
+    protected $tg;
+
+    /**
      * @var array
      */
     protected $scenario = array();
@@ -109,6 +115,7 @@ class Fixtures
         $this->pm = $app['users.profile.model'];
         $this->prim = $app['users.privacy.model'];
         $this->rm = $app['users.rate.model'];
+        $this->tg = $app['tokenGenerator.service'];
         $this->scenario = $scenario;
     }
 
@@ -208,7 +215,7 @@ class Fixtures
 
     protected function loadGroups()
     {
-        $this->logger->notice(sprintf('Loading %d enterprise groups', self::NUM_OF_ENTERPRISE_USERS));
+        $this->logger->notice(sprintf('Loading %d enterprise groups and invitations', self::NUM_OF_ENTERPRISE_USERS));
 
         for ($i = 1; $i <= self::NUM_OF_ENTERPRISE_USERS; $i++) {
 
@@ -227,6 +234,20 @@ class Fixtures
                 )
             );
             $this->gpm->setCreatedByEnterpriseUser($group['id'], $i);
+
+            $invitation = array(
+                'userId' => $i,
+                'token' => 'grupo'.$i,
+                'groupId' => $group['id'],
+                'orientationRequired' => false,
+                'available' => 100,
+            );
+            $this->im->create($invitation, $this->tg);
+
+            foreach($this->um->getAll() as $user)
+            {
+                $this->im->consume('grupo'.$i, $user['qnoow_id']);
+            }
         }
 
         $this->logger->notice(sprintf('Loading %d groups', self::NUM_OF_GROUPS - self::NUM_OF_ENTERPRISE_USERS));
