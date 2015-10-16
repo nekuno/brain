@@ -5,7 +5,7 @@
         xsi:noNamespaceSchemaLocation="http://schema.phpunit.de/3.7/phpunit.xsd"
         backupGlobals="false"
         backupStaticAttributes="false"
-        bootstrap="web/indev_text.php"
+        bootstrap="web/index_text.php"
         colors="true"
         >
     <testsuites>
