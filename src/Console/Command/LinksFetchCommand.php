@@ -88,7 +88,6 @@ class LinksFetchCommand extends ApplicationAwareCommand
                         $tokens = array($token);
                     }
                 }
-//                $tokens = array($resource => $tokens[$resource]);
             }
         }
 

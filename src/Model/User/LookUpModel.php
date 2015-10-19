@@ -141,9 +141,16 @@ class LookUpModel
         }
     }
 
+    /**
+     * @param $userId
+     * @param string $resource
+     * @param bool $all
+     * @return array
+     * @throws \Model\Neo4j\Neo4jException
+     */
     public function getSocialProfiles($userId, $resource = null, $all = false)
     {
-        if (!$userId) return null;
+        if (!$userId || !is_int($userId)) return array();
 
         if ($resource){
             $networklabels = array_keys($this->resourceOwners, $resource);
@@ -160,7 +167,7 @@ class LookUpModel
 
         }
         if (empty($networklabels)){
-            return null;
+            return array();
         }
 
         $socialProfiles = array();

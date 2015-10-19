@@ -278,7 +278,7 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
 
     /**
      * @param $user
-     * @return string
+     * @return string | null
      */
     public function getUsername($user)
     {
