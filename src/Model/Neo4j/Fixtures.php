@@ -137,7 +137,6 @@ class Fixtures
         $this->loadUsers();
         $this->loadEnterpriseUsers();
         $this->loadGroups();
-        $this->loadInvitations();
         $createdLinks = $this->loadLinks();
         $this->loadTags();
         $this->loadQuestions();
@@ -235,18 +234,17 @@ class Fixtures
             );
             $this->gpm->setCreatedByEnterpriseUser($group['id'], $i);
 
-            $invitation = array(
-                'userId' => $i,
-                'token' => 'grupo'.$i,
+            $invitationData = array(
                 'groupId' => $group['id'],
                 'orientationRequired' => false,
                 'available' => 100,
             );
-            $this->im->create($invitation, $this->tg);
+            $invitation = $this->im->create($invitationData, $this->tg);
 
             foreach($this->um->getAll() as $user)
             {
-                $this->im->consume('grupo'.$i, $user['qnoow_id']);
+                $this->im->consume($invitation['invitation']['token'], $user['qnoow_id']);
+                $this->gpm->addUser($group['id'], $user['qnoow_id']);
             }
         }
 
@@ -268,11 +266,6 @@ class Fixtures
                 )
             );
         }
-    }
-
-    protected function loadInvitations()
-    {
-
     }
 
     protected function loadLinks()
