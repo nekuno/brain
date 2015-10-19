@@ -32,7 +32,15 @@ class SpotifyProcessorTest extends \PHPUnit_Framework_TestCase
         $this->parser = $this->getMockBuilder('ApiConsumer\LinkProcessor\UrlParser\SpotifyUrlParser')
             ->getMock();
 
-        $this->processor = new SpotifyProcessor($this->resourceOwner, $this->parser);
+        $googleResourceOwner = $this->getMockBuilder('Http\OAuth\ResourceOwner\GoogleResourceOwner')
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $youtubeUrlParser = $this->getMockBuilder('ApiConsumer\LinkProcessor\UrlParser\YoutubeUrlParser')
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $this->processor = new SpotifyProcessor($this->resourceOwner, $this->parser, $googleResourceOwner, $youtubeUrlParser);
     }
 
     public function testReturnsFalseWhenUrlTypeIsFalse()

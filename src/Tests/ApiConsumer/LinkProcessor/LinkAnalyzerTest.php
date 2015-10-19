@@ -77,7 +77,7 @@ class LinkAnalyzerTest extends \PHPUnit_Framework_TestCase
         return array(
             array('http://google.es/'),
             array('http://www.amazon.com/'),
-            array('http://www.facebook.com/'),
+            array('http://www.nekuno.com/'),
         );
     }
 }
