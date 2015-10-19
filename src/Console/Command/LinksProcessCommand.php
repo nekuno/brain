@@ -40,7 +40,14 @@ class LinksProcessCommand extends ApplicationAwareCommand
                 /* @var LinkProcessor $processor */
                 $processor = $this->app['api_consumer.link_processor'];
                 $processedLink = $processor->process($link);
-                $output->writeln(sprintf('Success: Link %s processed', $link['url']));
+
+                $processed = array_key_exists('processed', $link)? $link['processed'] : 1;
+                if ($processed){
+                    $output->writeln(sprintf('Success: Link %s processed', $link['url']));
+                } else {
+                    $output->writeln(sprintf('Failed request: Link %s not processed', $link['url']));
+                }
+
             } catch (\Exception $e) {
                 $output->writeln(sprintf('Error: %s', $e->getMessage()));
                 $output->writeln(sprintf('Error: Link %s not processed', $link['url']));
@@ -49,7 +56,6 @@ class LinksProcessCommand extends ApplicationAwareCommand
             }
 
             try {
-                $processed = array_key_exists('processed', $link)? $link['processed'] : 1;
                 $linksModel->updateLink($processedLink, $processed);
 
                 if (isset($processedLink['tags'])) {

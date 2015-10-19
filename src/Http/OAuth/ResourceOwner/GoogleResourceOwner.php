@@ -46,7 +46,7 @@ class GoogleResourceOwner extends Oauth2GenericResourceOwner
     public function getAPIRequest($url, array $query = array(), array $token = array())
     {
 
-        if ($token['network'] == LinkAnalyzer::YOUTUBE) {
+        if (array_key_exists('network', $token) && $token['network'] == LinkAnalyzer::YOUTUBE) {
 
             $token = $this->getClientToken();
 

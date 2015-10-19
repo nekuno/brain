@@ -92,7 +92,11 @@ class YoutubeProcessor implements ProcessorInterface
             }
         } else {
             //YouTube API returns 200 on non-existent videos, against its documentation
-            throw new RequestException('Video does not exist', null, null, null);
+            $request = $this->resourceOwner->getAPIRequest($this->resourceOwner->getOption('base_url').$url,
+                                                            $query,
+                                                            $token);
+            throw new RequestException('Video does not exist',
+                                        $request, null, null);
         }
 
         return $link;
