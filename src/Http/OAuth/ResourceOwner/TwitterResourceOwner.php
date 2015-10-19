@@ -35,8 +35,7 @@ class TwitterResourceOwner extends Oauth1GenericResourceOwner
             $request->addHeader('Authorization', 'Bearer ' . $clientToken);
         }
 
-        $userURL = array_key_exists('url', $token)? $token['url'] : null;
-        $username = $this->getUsernameFromURL($userURL);
+        $username = $this->getUsername($token);
         if ($username){
             $request->getQuery()->add('screen_name', $username);
         }
