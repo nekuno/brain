@@ -13,9 +13,10 @@ class ContentComparePaginatedModel implements PaginatedInterface
      */
     private static $validTypes = array('Audio', 'Video', 'Image');
 
-    public function __construct(GraphManager $gm)
+    public function __construct(GraphManager $gm, TokensModel $tokensModel)
     {
         $this->gm = $gm;
+        $this->tokensModel = $tokensModel;
     }
 
     public function getValidTypes()
@@ -63,14 +64,33 @@ class ContentComparePaginatedModel implements PaginatedInterface
             $showOnlyCommon = $filters['showOnlyCommon'];
         }
 
+        $tokens1 = $this->tokensModel->getByUserOrResource($id);
+        $socialNetworks1 = array();
+        foreach ($tokens1 as $token) {
+            $socialNetworks1[] = $token['resourceOwner'];
+        }
+
+        $tokens2 = $this->tokensModel->getByUserOrResource($id2);
+        $socialNetworks2 = array();
+        foreach ($tokens2 as $token) {
+            $socialNetworks2[] = $token['resourceOwner'];
+        }
+
         $linkType = 'Link';
         if (isset($filters['type'])) {
             $linkType = $filters['type'];
         }
 
         $qb->match("(u:User), (u2:User)")
-            ->where("u.qnoow_id = { userId } AND u2.qnoow_id = { userId2 }")
-            ->match("(u)-[r:LIKES]->(content:" . $linkType . ")");
+            ->where("u.qnoow_id = { userId }","u2.qnoow_id = { userId2 }")
+            ->match("(u)-[r:LIKES]->(content:" . $linkType . ")")
+            ->where('content.processed = 1');
+
+        $whereSocialNetwork = array("(HAS (r.nekuno))");
+        foreach ($socialNetworks1 as $socialNetwork) {
+            $whereSocialNetwork[] = "(HAS (r.$socialNetwork))";
+        }
+        $qb->where(implode('OR', $whereSocialNetwork));
 
         if (isset($filters['tag'])) {
             $qb->match("(content)-[:TAGGED]->(filterTag:Tag)")
@@ -81,6 +101,11 @@ class ContentComparePaginatedModel implements PaginatedInterface
         } else {
             $qb->optionalMatch("(u2)-[r2:LIKES]->(content)");
         }
+        $whereSocialNetwork2 = array("(HAS (r2.nekuno))");
+        foreach ($socialNetworks2 as $socialNetwork) {
+            $whereSocialNetwork2[] = "(HAS (r2.$socialNetwork))";
+        }
+        $qb->where(implode('OR', $whereSocialNetwork2));
 
         $qb->optionalMatch("(content)-[:TAGGED]->(tag:Tag)")
             ->optionalMatch("(u2)-[a:AFFINITY]->(content)")
@@ -167,8 +192,21 @@ class ContentComparePaginatedModel implements PaginatedInterface
     public function countTotal(array $filters)
     {
         $id = $filters['id'];
+        $id2 = isset($filters['id2']) ? (integer)$filters['id2'] : null;
         $count = 0;
         $qb = $this->gm->createQueryBuilder();
+
+        $tokens1 = $this->tokensModel->getByUserOrResource($id);
+        $socialNetworks1 = array();
+        foreach ($tokens1 as $token) {
+            $socialNetworks1[] = $token['resourceOwner'];
+        }
+
+        $tokens2 = $this->tokensModel->getByUserOrResource($id2);
+        $socialNetworks2 = array();
+        foreach ($tokens2 as $token) {
+            $socialNetworks2[] = $token['resourceOwner'];
+        }
 
         $showOnlyCommon = false;
         if (isset($filters['showOnlyCommon'])) {
@@ -180,14 +218,26 @@ class ContentComparePaginatedModel implements PaginatedInterface
             $linkType = $filters['type'];
         }
 
-        $qb->match("(u:User)")
-            ->where("u.qnoow_id = { userId }")
-            ->match("(u)-[r:LIKES|DISLIKES]->(content:" . $linkType . ")");
+        $qb->match("(u:User)","(u2:User)")
+            ->where("u.qnoow_id = { userId }", "u2.qnoow_id = { userId2 }")
+            ->match("(u)-[r:LIKES]->(content:" . $linkType . ")")
+            ->where('content.processed = 1');
+
+        $whereSocialNetwork = array("(HAS (r.nekuno))");
+        foreach ($socialNetworks1 as $socialNetwork) {
+            $whereSocialNetwork[] = "(HAS (r.$socialNetwork))";
+        }
+        $qb->where(implode('OR', $whereSocialNetwork));
 
         if ($showOnlyCommon) {
-            $qb->match("(u2:User)-[:LIKES|DISLIKES]->(content)")
-                ->where("u2.qnoow_id = { userId2 }");
+            $qb->match("(u2)-[:LIKES]->(content)");
+            $whereSocialNetwork2 = array("(HAS (r2.nekuno))");
+            foreach ($socialNetworks2 as $socialNetwork) {
+                $whereSocialNetwork2[] = "(HAS (r2.$socialNetwork))";
+            }
+            $qb->where(implode('OR', $whereSocialNetwork2));
         }
+
         if (isset($filters['tag'])) {
             $qb->match("(content)-[:TAGGED]->(filterTag:Tag)")
                 ->where("filterTag.name = { tag }");
@@ -199,7 +249,7 @@ class ContentComparePaginatedModel implements PaginatedInterface
             ->setParameters(
                 array(
                     'userId' => (integer)$id,
-                    'userId2' => isset($filters['id2']) ? (integer)$filters['id2'] : null,
+                    'userId2' => $id2,
                     'tag' => isset($filters['tag']) ? $filters['tag'] : null,
 
                 )

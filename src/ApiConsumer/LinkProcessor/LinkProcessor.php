@@ -8,6 +8,7 @@ use ApiConsumer\LinkProcessor\Processor\SpotifyProcessor;
 use ApiConsumer\LinkProcessor\Processor\YoutubeProcessor;
 use ApiConsumer\LinkProcessor\UrlParser\UrlParser;
 use ApiConsumer\LinkProcessor\UrlParser\YoutubeUrlParser;
+use GuzzleHttp\Exception\RequestException;
 use Model\LinkModel;
 
 class LinkProcessor
@@ -80,7 +81,7 @@ class LinkProcessor
      * @param array $link
      * @return array
      */
-    public function process(array $link)
+    public function process(array &$link)
     {
         if ($this->isLinkProcessed($link)) {
             return $link;
@@ -98,11 +99,13 @@ class LinkProcessor
             return $link;
         }
 
-        $processedLink = $processor->process($link);
-
-        if (!$processedLink) {
-            $processedLink = $this->scrapperProcessor->process($link);
+        try{
+            $processedLink = $processor->process($link);
+        } catch (RequestException $e){
+            $link['processed'] = 0;
+            return $link;
         }
+
 
         return $processedLink;
     }
@@ -151,6 +154,11 @@ class LinkProcessor
     public function cleanExternalURLs($link)
     {
         return $this->cleanURL($link, $this->scrapperProcessor);
+    }
+
+    public function getLinkAnalyzer()
+    {
+        return $this->analyzer;
     }
 
 }

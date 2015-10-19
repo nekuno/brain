@@ -38,7 +38,7 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
     /**
      * @var \Http\OAuth\ResourceOwner\ClientCredential\ClientCredentialInterface
      */
-    private $clientCredential;
+    protected $clientCredential;
 
     protected $expire_time_margin = 0;
 
@@ -221,6 +221,15 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
         return '';
     }
 
+    protected function getApplicationToken()
+    {
+        if ($this->clientCredential instanceof ClientCredentialInterface) {
+            return $this->clientCredential->getApplicationToken();
+        }
+
+        return '';
+    }
+
     /**
      * Get the 'parsed' content based on the response headers.
      *
@@ -266,4 +275,18 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
             )
         );
     }
+
+    /**
+     * @param $user
+     * @return string
+     */
+    public function getUsername($user)
+    {
+        if (!$user) return null;
+        $url = array_key_exists('url', $user) ? $user['url'] : null;
+        $parts = explode('/', $url);
+        return end($parts);
+    }
+
+
 }

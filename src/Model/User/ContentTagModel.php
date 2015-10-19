@@ -3,7 +3,7 @@
 namespace Model\User;
 
 use Everyman\Neo4j\Client;
-use Everyman\Neo4j\Cypher\Query;
+use Model\Neo4j\GraphManager;
 
 class ContentTagModel
 {
@@ -13,11 +13,18 @@ class ContentTagModel
     protected $client;
 
     /**
-     * @param \Everyman\Neo4j\Client $client
+     * @var GraphManager
      */
-    public function __construct(Client $client)
+    protected $gm;
+
+    /**
+     * @param \Everyman\Neo4j\Client $client
+     * @param GraphManager $gm
+     */
+    public function __construct(Client $client, GraphManager $gm)
     {
         $this->client = $client;
+        $this->gm = $gm;
     }
 
     /**
@@ -28,52 +35,38 @@ class ContentTagModel
      * @throws \Exception
      * @return array
      */
-    public function getContentTags($id, $startingWith='', $limit=0)
+    public function getContentTags($id, $startingWith = '', $limit = 0)
     {
         $response = array('items' => array());
 
-        $params = array('UserId' => (integer)$id);
+        $params = array('userId' => (integer)$id);
 
-        $startingWithQuery = '';
-        if ($startingWith != '') {
-            $params['tag'] = '(?i)'.$startingWith.'.*';
-            $startingWithQuery = 'WHERE tag.name =~ {tag}';
-        }
-
-        $limitQuery = '';
         if ($limit != 0) {
             $params['limit'] = (integer)$limit;
-            $limitQuery = ' LIMIT {limit}';
         }
 
-        $query = "
-            MATCH
-            (u:User)
-            WHERE u.qnoow_id = {UserId}
-            MATCH
-            (u)-[:LIKES]->(content:Link)
-            MATCH
-            (content)-[r:TAGGED]->(tag:Tag)
-        ";
-        $query .= $startingWithQuery;
-        $query .= "
-            RETURN
-            distinct tag.name as name, count(distinct r) as total
-            ORDER BY
-            tag.name
-        ";
-        $query .= $limitQuery;
+        $qb = $this->gm->createQueryBuilder();
 
-        //Create the Neo4j query object
-        $contentQuery = new Query(
-            $this->client,
-            $query,
-            $params
-        );
+        $qb->match('(u:User)')
+            ->where('u.qnoow_id = {userId}')
+            ->match('(u)-[:LIKES]->(content:Link)')
+            ->where('content.processed = 1')
+            ->match('(content)-[r:TAGGED]->(tag:Tag)');
+        if ($startingWith != '') {
+            $params['tag'] = '(?i)' . $startingWith . '.*';
+            $qb->where('tag.name =~ {tag}');
+        }
 
-        //Execute query
+        $qb->returns('tag.name as name', 'count(distinct r) as total');
+        if (array_key_exists('limit', $params)) {
+            $qb->limit('{limit}');
+        };
+        $qb->orderBy('tag.name');
+        $qb->setParameters($params);
+
         try {
-            $result = $contentQuery->getResultSet();
+            $query = $qb->getQuery();
+            $result = $query->getResultSet();
 
             foreach ($result as $row) {
                 $content = array();

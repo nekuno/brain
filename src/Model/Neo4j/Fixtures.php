@@ -9,14 +9,20 @@ use Model\User\AnswerModel;
 use Model\User\ProfileModel;
 use Model\User\RateModel;
 use Model\UserModel;
+use Model\EnterpriseUser\EnterpriseUserModel;
+use Model\User\GroupModel;
+use Model\User\InvitationModel;
 use Model\User\PrivacyModel;
 use Psr\Log\LoggerInterface;
 use Silex\Application;
+use Service\TokenGenerator;
 
 class Fixtures
 {
 
     const NUM_OF_USERS = 50;
+    const NUM_OF_ENTERPRISE_USERS = 10;
+    const NUM_OF_GROUPS = 15;
     const NUM_OF_LINKS = 2000;
     const NUM_OF_TAGS = 200;
     const NUM_OF_QUESTIONS = 200;
@@ -60,6 +66,27 @@ class Fixtures
      * @var  PrivacyModel
      * */
     protected $prim;
+
+    /**
+     * @var EnterpriseUserModel
+     */
+    protected $eu;
+
+    /**
+     * @var GroupModel
+     */
+    protected $gpm;
+
+    /**
+     * @var InvitationModel
+     */
+    protected $im;
+
+    /**
+     * @var TokenGenerator
+     */
+    protected $tg;
+
     /**
      * @var array
      */
@@ -79,12 +106,16 @@ class Fixtures
     {
         $this->gm = $app['neo4j.graph_manager'];
         $this->um = $app['users.model'];
+        $this->eu = $app['enterpriseUsers.model'];
+        $this->gpm = $app['users.groups.model'];
+        $this->im = $app['users.invitations.model'];
         $this->lm = $app['links.model'];
         $this->qm = $app['questionnaire.questions.model'];
         $this->am = $app['users.answers.model'];
         $this->pm = $app['users.profile.model'];
         $this->prim = $app['users.privacy.model'];
         $this->rm = $app['users.rate.model'];
+        $this->tg = $app['tokenGenerator.service'];
         $this->scenario = $scenario;
     }
 
@@ -104,6 +135,9 @@ class Fixtures
         $this->loadProfileOptions();
         $this->loadPrivacyOptions();
         $this->loadUsers();
+        $this->loadEnterpriseUsers();
+        $this->loadGroups();
+        $this->loadInvitations();
         $createdLinks = $this->loadLinks();
         $this->loadTags();
         $this->loadQuestions();
@@ -161,6 +195,84 @@ class Fixtures
             );
             $this->pm->create($i, $profileData);
         }
+    }
+
+    protected function loadEnterpriseUsers()
+    {
+        $this->logger->notice(sprintf('Loading %d enterprise users', self::NUM_OF_ENTERPRISE_USERS));
+
+        for ($i = 1; $i <= self::NUM_OF_ENTERPRISE_USERS; $i++) {
+
+            $this->eu->create(
+                array(
+                    'admin_id' => $i,
+                    'username' => 'user' . $i,
+                    'email' => 'user' . $i . '@nekuno.com',
+                )
+            );
+        }
+    }
+
+    protected function loadGroups()
+    {
+        $this->logger->notice(sprintf('Loading %d enterprise groups and invitations', self::NUM_OF_ENTERPRISE_USERS));
+
+        for ($i = 1; $i <= self::NUM_OF_ENTERPRISE_USERS; $i++) {
+
+            $group = $this->gpm->create(
+                array(
+                    'name' => 'group '.$i,
+                    'html' => $this->getHTMLFixture(),
+                    'date' => 1447012842,
+                    'location' => array(
+                        'address' => "Madrid",
+                        'latitude' => 40.416178,
+                        'longitude' => -3.703579,
+                        'locality' => "Madrid",
+                        'country' => "Spain",
+                    )
+                )
+            );
+            $this->gpm->setCreatedByEnterpriseUser($group['id'], $i);
+
+            $invitation = array(
+                'userId' => $i,
+                'token' => 'grupo'.$i,
+                'groupId' => $group['id'],
+                'orientationRequired' => false,
+                'available' => 100,
+            );
+            $this->im->create($invitation, $this->tg);
+
+            foreach($this->um->getAll() as $user)
+            {
+                $this->im->consume('grupo'.$i, $user['qnoow_id']);
+            }
+        }
+
+        $this->logger->notice(sprintf('Loading %d groups', self::NUM_OF_GROUPS - self::NUM_OF_ENTERPRISE_USERS));
+
+        for ($i = self::NUM_OF_ENTERPRISE_USERS + 1; $i <= self::NUM_OF_GROUPS - self::NUM_OF_ENTERPRISE_USERS; $i++) {
+            $this->gpm->create(
+                array(
+                    'name' => 'group '.$i,
+                    'html' => $this->getHTMLFixture(),
+                    'date' => 1447012842,
+                    'location' => array(
+                        'address' => "Madrid",
+                        'latitude' => 40.416178,
+                        'longitude' => -3.703579,
+                        'locality' => "Madrid",
+                        'country' => "Spain",
+                    )
+                )
+            );
+        }
+    }
+
+    protected function loadInvitations()
+    {
+
     }
 
     protected function loadLinks()
@@ -432,6 +544,19 @@ class Fixtures
         $logger->notice(sprintf('%d new privacy options processed.', $result->getTotal()));
         $logger->notice(sprintf('%d new privacy options updated.', $result->getUpdated()));
         $logger->notice(sprintf('%d new privacy options created.', $result->getCreated()));
+    }
+
+    private function getHTMLFixture()
+    {
+        return 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut malesuada risus elit, et vestibulum leo convallis ut. Aenean eu purus nulla. Nunc consectetur, lectus sed sagittis lacinia, lacus quam vestibulum sapien, sit amet condimentum enim odio quis mi. Morbi rutrum nulla sed ipsum convallis, eu ultricies sapien mollis. Aenean dui dui, bibendum id dui sit amet, interdum posuere massa. Sed sed lorem ac nunc aliquet posuere. Donec vitae nunc ut ante faucibus ornare eget at risus. Aenean sodales neque aliquam felis dapibus, ut ultrices tortor mattis. Fusce iaculis mi sem. Aliquam convallis dignissim augue, sit amet vehicula enim hendrerit eu. Cras pretium velit nisi, ac egestas nibh gravida vitae. Praesent consectetur posuere ex. Etiam eleifend orci ut porta imperdiet. Mauris finibus cursus ipsum, a facilisis orci sodales laoreet. Quisque pellentesque nulla vitae nulla tempus, vel porta tortor vehicula.
+
+In hac habitasse platea dictumst. Sed fringilla ipsum vel feugiat efficitur. Mauris ut dui metus. Nam pellentesque laoreet justo vitae scelerisque. Nunc at sodales justo. Etiam mattis imperdiet posuere. In lacinia, tellus vitae semper ornare, lorem tellus vulputate mauris, in blandit urna elit vel sem. Morbi rhoncus mi libero, non rhoncus augue dictum eget. Vestibulum volutpat tincidunt dolor sit amet finibus. Nulla velit risus, ultrices in ex nec, fringilla pharetra leo. Nullam tristique molestie fringilla. Aenean sem ex, vehicula vel orci vel, porttitor imperdiet eros. Suspendisse eget orci aliquam, vehicula nibh ut, pellentesque sem. Ut varius risus tincidunt eros dapibus pellentesque. Integer interdum sem lacus, eget pretium dui dictum eget.
+
+Donec eget elementum turpis. Sed auctor dui purus, vitae luctus leo posuere et. Cras varius sit amet turpis eu placerat. In pellentesque est a justo sagittis, ultrices accumsan purus bibendum. Aenean in quam vel libero ultrices fermentum at sit amet ante. Duis a dui at mauris porta placerat. Sed id augue nisl. Pellentesque aliquet ultrices dignissim. Nulla sed lacus libero.
+
+Maecenas ac sem a quam aliquam scelerisque eu ut ligula. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Morbi eu enim sed libero rhoncus vulputate. Etiam posuere, ex ut rutrum aliquet, leo augue semper sapien, ac porta nulla nisi vitae orci. Nulla in purus commodo, bibendum erat convallis, vulputate mi. Donec ante justo, ullamcorper id urna ultrices, tristique ullamcorper dolor. Vestibulum magna eros, volutpat vitae porta eget, condimentum in orci. Sed elementum molestie orci. Nulla at massa egestas, dapibus eros ut, elementum risus. Nam eleifend mollis odio, a luctus libero condimentum in. Pellentesque fringilla, metus eget porttitor rutrum, lectus ipsum suscipit orci, non eleifend dolor nulla ut augue. Integer id velit congue, lobortis libero nec, tempus tortor. Nullam vestibulum finibus ex quis fermentum.
+
+Duis venenatis porta arcu sed luctus. Quisque eu mi sit amet tellus porttitor vulputate eget eu lectus. Nam dolor leo, congue sed scelerisque in, gravida sed tellus. Pellentesque ultricies congue enim, sit amet suscipit elit sagittis nec. Quisque porttitor, ipsum sed molestie vulputate, lacus orci feugiat nunc, non dapibus mi velit non mauris. Maecenas dolor diam, commodo ut sollicitudin eget, vestibulum ac dui. Sed eget odio pulvinar, aliquet lectus luctus, pulvinar urna. Nullam sed rhoncus nunc. Duis convallis interdum odio, eu blandit ipsum. Duis sollicitudin et erat a posuere. Nullam varius aliquam sapien, et consequat erat sagittis quis. Vivamus varius, sem at finibus efficitur, nisl tortor lacinia massa, non molestie felis ante id nisl. Quisque feugiat suscipit metus congue accumsan.';
     }
 
 }

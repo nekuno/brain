@@ -519,7 +519,7 @@ class LinkModel
             ->limit('{limitUsers}');
 
         $qb->match('(users)-[d:LIKES]->(l:' . $linkType . ')');
-        $conditions = array('(NOT (u)-[:LIKES|:DISLIKES]-(l))');
+        $conditions = array('l.processed = 1 AND(NOT (u)-[:LIKES|:DISLIKES]-(l))');
         if (!(isset($filters['affinity']) && $filters['affinity'] == true)) {
             $conditions[] = '(NOT (u)-[:AFFINITY]-(l))';
         };

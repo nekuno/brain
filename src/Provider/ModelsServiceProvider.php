@@ -109,21 +109,21 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.content.model'] = $app->share(
             function ($app) {
 
-                return new ContentPaginatedModel($app['neo4j.graph_manager']);
+                return new ContentPaginatedModel($app['neo4j.graph_manager'], $app['users.tokens.model']);
             }
         );
 
         $app['users.content.compare.model'] = $app->share(
             function ($app) {
 
-                return new ContentComparePaginatedModel($app['neo4j.graph_manager']);
+                return new ContentComparePaginatedModel($app['neo4j.graph_manager'], $app['users.tokens.model']);
             }
         );
 
         $app['users.content.tag.model'] = $app->share(
             function ($app) {
 
-                return new ContentTagModel($app['neo4j.client']);
+                return new ContentTagModel($app['neo4j.client'], $app['neo4j.graph_manager']);
             }
         );
 
@@ -179,7 +179,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.lookup.model'] = $app->share(
             function ($app) {
 
-                return new LookUpModel($app['neo4j.graph_manager'], $app['orm.ems']['mysql_brain'], $app['lookUp.fullContact.service'], $app['lookUp.peopleGraph.service'], $app['dispatcher']);
+                return new LookUpModel($app['neo4j.graph_manager'], $app['orm.ems']['mysql_brain'], $app['users.tokens.model'], $app['lookUp.fullContact.service'], $app['lookUp.peopleGraph.service'], $app['dispatcher']);
             }
         );
 
