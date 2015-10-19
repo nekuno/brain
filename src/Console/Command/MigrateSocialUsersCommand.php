@@ -71,7 +71,6 @@ class MigrateSocialUsersCommand extends ApplicationAwareCommand
         unset($user['credentials_expire_at']);
         unset($user['rating']);
         $user['confirmed'] = (bool)$user['confirmed'];
-        unset($user['picture']);
 
         try {
 

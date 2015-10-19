@@ -767,6 +767,7 @@ class UserModel implements PaginatedInterface
             'updatedAt' => array('type' => 'datetime', 'editable' => false),
             'confirmed' => array('type' => 'boolean', 'default' => false),
             'status' => array('type' => 'string', 'editable' => false),
+            'picture' => array('type' => 'string'),
         );
 
         if ($isUpdate) {
