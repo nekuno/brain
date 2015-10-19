@@ -2,9 +2,6 @@
 
 namespace Model\Neo4j;
 
-use Everyman\Neo4j\Client;
-use Everyman\Neo4j\Cypher\Query;
-
 /**
  * Class Constraints
  *
@@ -14,44 +11,36 @@ class Constraints
 {
 
     /**
-     * @var \Everyman\Neo4j\Client
+     * @var GraphManager
      */
-    protected $client;
+    protected $gm;
 
     /**
-     * @param \Everyman\Neo4j\Client $client
+     * @param GraphManager $gm
      */
-    public function __construct(Client $client)
+    public function __construct(GraphManager $gm)
     {
 
-        $this->client = $client;
+        $this->gm = $gm;
     }
 
     /**
      * Load the constraints
      *
-     * This is mean to be executed with a clear db, ony once.
-     *
-     * @throws \Exception
+     * @throws Neo4jException
      */
     public function load()
     {
+
         $constraints = array();
-        $constraints[] = "CREATE CONSTRAINT ON (u:User) ASSERT u.qnoow_id IS UNIQUE;";
+        $fields = array('qnoow_id', 'usernameCanonical', 'facebookID', 'googleID', 'twitterID', 'spotifyID');
+
+        foreach ($fields as $field) {
+            $constraints[] = "CREATE CONSTRAINT ON (u:User) ASSERT u.$field IS UNIQUE";
+        }
 
         foreach ($constraints as $query) {
-            $neo4jQuery = new Query(
-                $this->client,
-                $query
-            );
-
-            try {
-                $result = $neo4jQuery->getResultSet();
-            } catch (\Exception $e) {
-                throw $e;
-
-                return;
-            }
+            $this->gm->createQuery($query)->getResultSet();
         }
     }
 }

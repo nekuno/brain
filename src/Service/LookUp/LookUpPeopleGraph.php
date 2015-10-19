@@ -22,7 +22,7 @@ class LookUpPeopleGraph extends LookUp
 
     protected function getType($lookUpType)
     {
-        switch($lookUpType) {
+        switch ($lookUpType) {
             case LookUpData::LOOKED_UP_BY_EMAIL:
                 $fullContactType = LookUpPeopleGraph::EMAIL_TYPE;
                 break;
@@ -41,7 +41,7 @@ class LookUpPeopleGraph extends LookUp
 
     protected function getValue($lookUpType, $value)
     {
-        switch($lookUpType) {
+        switch ($lookUpType) {
             case LookUpData::LOOKED_UP_BY_EMAIL:
                 break;
             case LookUpData::LOOKED_UP_BY_TWITTER_USERNAME:
@@ -58,15 +58,15 @@ class LookUpPeopleGraph extends LookUp
     protected function processData($response)
     {
         $data = array();
-        if(is_array($response) && isset($response['result'])) {
+        if (is_array($response) && isset($response['result'])) {
             $result = $response['result'];
-            if(isset($result['name'])) {
+            if (isset($result['name'])) {
                 $data['name'] = str_replace(' ', '', $result['name']);
             }
-            if(isset($result['email'])) {
+            if (isset($result['email'])) {
                 $data['email'] = $result['email'];
             }
-            if(isset($result['locations']) && is_array($result['locations']) && ! empty($result['locations'])) {
+            if (isset($result['locations']) && is_array($result['locations']) && !empty($result['locations'])) {
                 $data['location'] = $result['locations'][0];
             }
             $data['response'] = $response;
@@ -79,8 +79,8 @@ class LookUpPeopleGraph extends LookUp
     protected function processSocialData($response)
     {
         $socialData = array();
-        if(is_array($response) && isset($response['result']['profiles']) && ! empty($response['result']['profiles'])) {
-            foreach($response['result']['profiles'] as $socialProfile) {
+        if (is_array($response) && isset($response['result']['profiles']) && !empty($response['result']['profiles'])) {
+            foreach ($response['result']['profiles'] as $socialProfile) {
                 $socialData[strtolower($socialProfile['type'])] = $socialProfile['url'];
             }
         }
@@ -91,22 +91,20 @@ class LookUpPeopleGraph extends LookUp
     protected function validateValue($lookUpType, $value)
     {
         $error = '';
-        if($lookUpType === self::EMAIL_TYPE) {
-            if (! filter_var($value, FILTER_VALIDATE_EMAIL)) {
+        if ($lookUpType === self::EMAIL_TYPE) {
+            if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {
                 $error = $value . ' is not a valid email';
             }
-        } elseif($lookUpType === self::URL_TYPE) {
-            if (! filter_var($value, FILTER_VALIDATE_URL)) {
+        } elseif ($lookUpType === self::URL_TYPE) {
+            if (!filter_var($value, FILTER_VALIDATE_URL)) {
                 $error = $value . ' is not a valid url';
             }
         } else {
             $error = $lookUpType . ' is not a valid type';
         }
 
-        if($error !== '') {
-            $exception = new ValidationException('Validation errors');
-            $exception->setErrors(array($error));
-            throw $exception;
+        if ($error !== '') {
+            throw new ValidationException(array($error));
         }
 
         return true;

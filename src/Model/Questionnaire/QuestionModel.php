@@ -437,9 +437,7 @@ class QuestionModel
         }
 
         if (count($errors) > 0) {
-            $e = new ValidationException('Validation error');
-            $e->setErrors($errors);
-            throw $e;
+            throw new ValidationException($errors);
         }
     }
 
@@ -458,8 +456,8 @@ class QuestionModel
 
         $isRegisterQuestion = false;
         /** @var Label $label */
-        foreach ($question->getLabels() as $label){
-            if ($label->getName() == 'RegisterQuestion'){
+        foreach ($question->getLabels() as $label) {
+            if ($label->getName() == 'RegisterQuestion') {
                 $isRegisterQuestion = true;
             }
         }
@@ -511,8 +509,10 @@ class QuestionModel
             ->limit('{preselected}')
             ->with('collect(q) AS questions')
             ->match('(q1:Question),(q2:Question)')
-            ->where('(q1 in questions) AND (q2 in questions)',
-                'id(q1)<id(q2)')
+            ->where(
+                '(q1 in questions) AND (q2 in questions)',
+                'id(q1)<id(q2)'
+            )
             ->with('q1,q2');
 
         $qb->match('(q1)<-[:IS_ANSWER_OF]-(a1:Answer)')
@@ -537,7 +537,9 @@ class QuestionModel
         $correctCorrelations = array();
         foreach ($correlations as $q1 => $array) {
             foreach ($correlations as $q2 => $array2) {
-                if (!($q1 < $q2)) continue;
+                if (!($q1 < $q2)) {
+                    continue;
+                }
                 $correctCorrelations[$q1][$q2] = isset($correlations[$q1][$q2]) ? $correlations[$q1][$q2] : 1;
             }
         }
@@ -562,18 +564,22 @@ class QuestionModel
                             $correctCorrelations[$q3][$q4];
                         if ($foursome < $minimum) {
                             $minimum = $foursome;
-                            $questions = array('q1' => $q1,
+                            $questions = array(
+                                'q1' => $q1,
                                 'q2' => $q2,
                                 'q3' => $q3,
-                                'q4' => $q4);
+                                'q4' => $q4
+                            );
                         }
                     }
                 }
             }
         }
 
-        return array('totalCorrelation' => $minimum,
-            'questions' => $questions);
+        return array(
+            'totalCorrelation' => $minimum,
+            'questions' => $questions
+        );
 
     }
 
@@ -583,6 +589,7 @@ class QuestionModel
         foreach ($ids as $id) {
             $questions[] = $this->setDivisiveQuestion($id);
         }
+
         return $questions;
     }
 
@@ -603,6 +610,7 @@ class QuestionModel
 
         /* @var $row Row */
         $row = $result->current();
+
         return $row->offsetGet('q');
     }
 
@@ -623,6 +631,7 @@ class QuestionModel
 
         /* @var $row Row */
         $row = $result->current();
+
         return $row->offsetGet('c');
     }
 
@@ -637,8 +646,7 @@ class QuestionModel
             ->orderBy('id(a)')
             ->with('q, collect(a) AS answers')
             ->returns('q AS question', 'answers')
-            ->orderBy('q.ranking DESC')
-        ;
+            ->orderBy('q.ranking DESC');
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();

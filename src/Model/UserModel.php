@@ -3,16 +3,18 @@
 namespace Model;
 
 use Doctrine\DBAL\Connection;
+use Doctrine\ORM\EntityManager;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
+use Model\Neo4j\Neo4jException;
 use Model\User\RelationsModel;
 use Model\User\UserStatsModel;
 use Model\User\UserStatusModel;
 use Paginator\PaginatedInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Doctrine\ORM\EntityManager;
+use Symfony\Component\Security\Core\Encoder\PasswordEncoderInterface;
 
 /**
  * Class UserModel
@@ -28,6 +30,11 @@ class UserModel implements PaginatedInterface
     protected $gm;
 
     /**
+     * @var PasswordEncoderInterface
+     */
+    protected $encoder;
+
+    /**
      * @var Connection
      */
     protected $connectionSocial;
@@ -41,16 +48,21 @@ class UserModel implements PaginatedInterface
      * @var RelationsModel
      */
     protected $relationsModel;
+
     /**
      * @var array
      */
     protected $metadata;
 
+    /**
+     * @var string
+     */
     protected $defaultLocale;
 
-    public function __construct(GraphManager $gm, Connection $connectionSocial, EntityManager $entityManagerBrain, RelationsModel $relationsModel, array $metadata, $defaultLocale)
+    public function __construct(GraphManager $gm, PasswordEncoderInterface $encoder, Connection $connectionSocial, EntityManager $entityManagerBrain, RelationsModel $relationsModel, array $metadata, $defaultLocale)
     {
         $this->gm = $gm;
+        $this->encoder = $encoder;
         $this->connectionSocial = $connectionSocial;
         $this->entityManagerBrain = $entityManagerBrain;
         $this->relationsModel = $relationsModel;
@@ -58,19 +70,106 @@ class UserModel implements PaginatedInterface
         $this->defaultLocale = $defaultLocale;
     }
 
-    public function validate(array $data)
+    /**
+     * @return array
+     * @throws Neo4jException
+     */
+    public function getAll()
     {
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User)')
+            ->returns('u')
+            ->orderBy('u.qnoow_id');
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        $return = array();
+
+        foreach ($result as $row) {
+            $return[] = $this->build($row);
+        }
+
+        return $return;
+    }
+
+    /**
+     * @param $id
+     * @return array
+     * @throws Neo4jException
+     */
+    public function getById($id)
+    {
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User {qnoow_id: { id }})')
+            ->setParameter('id', (int)$id)
+            ->returns('u');
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        if ($result->count() < 1) {
+            throw new NotFoundHttpException(sprintf('User "%d" not found', $id));
+        }
+
+        /* @var $row Row */
+        $row = $result->current();
+
+        return $this->build($row);
+    }
+
+    /**
+     * @param array $criteria
+     * @return array
+     * @throws Neo4jException
+     */
+    public function findBy(array $criteria = array())
+    {
+
+        if (empty($criteria)) {
+            throw new NotFoundHttpException('Criteria can not be empty');
+        }
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User)');
+
+        $wheres = array();
+        foreach ($criteria as $field => $value) {
+            $wheres[] = 'u.' . $field . ' = { ' . $field . ' }';
+        }
+        $qb->where($wheres)
+            ->setParameters($criteria)
+            ->returns('u');
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        if ($result->count() < 1) {
+            throw new NotFoundHttpException('User not found');
+        }
+
+        /* @var $row Row */
+        $row = $result->current();
+
+        return $this->build($row);
+    }
+
+    public function validate(array $data, $isUpdate = false)
+    {
+
         $errors = array();
 
-        $metadata = array(
-            'id' => array('type' => 'integer', 'required' => true),
-            'username' => array('type' => 'string', 'required' => true),
-            'email' => array('type' => 'string'),
-        );
+        $metadata = $this->getMetadata($isUpdate);
 
         foreach ($metadata as $fieldName => $fieldData) {
 
             $fieldErrors = array();
+
+            if (isset($fieldData['editable']) && $fieldData['editable'] === false) {
+                continue;
+            }
 
             if (!isset($data[$fieldName]) || !$data[$fieldName]) {
                 if (isset($fieldData['required']) && $fieldData['required'] === true) {
@@ -91,6 +190,17 @@ class UserModel implements PaginatedInterface
                             $fieldErrors[] = sprintf('"%s" must be an string', $fieldName);
                         }
                         break;
+                    case 'boolean':
+                        if ($fieldValue !== true && $fieldValue !== false) {
+                            $fieldErrors[] = 'Must be a boolean.';
+                        }
+                        break;
+                    case 'datetime':
+                        $date = \DateTime::createFromFormat('Y-m-d H:i:s', $fieldValue);
+                        if (!($date && $date->format('Y-m-d H:i:s') == $fieldValue)) {
+                            $fieldErrors[] = 'Invalid datetime format, valid format is "Y-m-d H:i:s".';
+                        }
+                        break;
                 }
             }
 
@@ -100,10 +210,22 @@ class UserModel implements PaginatedInterface
 
         }
 
+        $public = array();
+        foreach ($metadata as $fieldName => $fieldData) {
+            if (!(isset($fieldData['editable']) && $fieldData['editable'] === false)) {
+                $public[$fieldName] = $fieldData;
+            }
+        }
+
+        $diff = array_diff_key($data, $public);
+        if (count($diff) > 0) {
+            foreach ($diff as $invalidKey => $invalidValue) {
+                $errors[$invalidKey] = array(sprintf('Invalid key "%s"', $invalidKey));
+            }
+        }
+
         if (count($errors) > 0) {
-            $e = new ValidationException('Validation error');
-            $e->setErrors($errors);
-            throw $e;
+            throw new ValidationException($errors);
         }
     }
 
@@ -112,93 +234,35 @@ class UserModel implements PaginatedInterface
 
         $this->validate($data);
 
-        if (!isset($data['email'])) {
-            $data['email'] = '';
-        }
+        $id = $this->getNextId();
 
         $qb = $this->gm->createQueryBuilder();
-        $qb->create('(u:User {qnoow_id: { qnoow_id }, status: { status }, username: { username }, email: { email }})')
-            ->setParameter('qnoow_id', $data['id'])
+        $qb->create('(u:User)')
+            ->set('u.qnoow_id = { qnoow_id }')
+            ->setParameter('qnoow_id', $id)
+            ->set('u.status = { status }')
             ->setParameter('status', UserStatusModel::USER_STATUS_INCOMPLETE)
-            ->setParameter('username', $data['username'])
-            ->setParameter('email', $data['email'])
-            ->returns('u');
+            ->set('u.createdAt = { createdAt }')
+            ->setParameter('createdAt', (new \DateTime())->format('Y-m-d H:i:s'));
 
-        $query = $qb->getQuery();
-        $result = $query->getResultSet();
+        $qb->getQuery()->getResultSet();
 
-        /* @var $row Row */
-        $row = $result->current();
+        $this->setDefaults($data);
 
-        return $this->parseRow($row);
+        return $this->save($id, $data);
     }
 
     /**
-     * @param array $user
-     */
-    public function update(array $user = array())
-    {
-        // TODO: do your magic here
-    }
-
-    /**
-     * @param null $id
+     * @param $id
+     * @param array $data
      * @return array
-     * @throws \Exception
      */
-    public function remove($id = null)
+    public function update($id, array $data)
     {
 
-        $qb = $this->gm->createQueryBuilder();
-        $qb->match('(u:User {qnoow_id: { id }})')
-            ->delete('u')
-            ->setParameter('id', $id);
+        $this->validate($data, true);
 
-        $query = $qb->getQuery();
-        $result = $query->getResultSet();
-
-        return $this->parseResultSet($result);
-    }
-
-    /**
-     * @return array
-     * @throws \Exception
-     */
-    public function getAll()
-    {
-
-        $qb = $this->gm->createQueryBuilder();
-        $qb->match('(u:User)')
-            ->returns('u')
-            ->orderBy('u.qnoow_id');
-
-        $query = $qb->getQuery();
-        $result = $query->getResultSet();
-
-        return $this->parseResultSet($result);
-
-    }
-
-    public function getById($id)
-    {
-
-        if (!$id) {
-            throw new NotFoundHttpException(sprintf('User "%d" not found', $id));
-        }
-
-        $qb = $this->gm->createQueryBuilder();
-        $qb->match('(u:User {qnoow_id: { id }})')
-            ->setParameter('id', (integer)$id)
-            ->returns('u');
-
-        $query = $qb->getQuery();
-        $result = $query->getResultSet();
-
-        if ($result->count() < 1) {
-            throw new NotFoundHttpException(sprintf('User "%d" not found', $id));
-        }
-
-        return $this->parseRow($result->current());
+        return $this->save($id, $data);
 
     }
 
@@ -514,7 +578,7 @@ class UserModel implements PaginatedInterface
     public function getFilters($locale = null, $dynamicFilters = array(), $filter = true)
     {
         $locale = $this->getLocale($locale);
-        $metadata = $this->getMetadata($locale, $dynamicFilters, $filter);
+        $metadata = $this->getFiltersMetadata($locale, $dynamicFilters, $filter);
 
         foreach ($dynamicFilters['groups'] as $group) {
             $metadata['groups']['choices'][$group['id']] = $group['name'];
@@ -605,9 +669,7 @@ class UserModel implements PaginatedInterface
 
         $query = "
             MATCH
-            (user:User)
-            WHERE
-            user.status = 'complete'"
+            (user:User)"
             . $profileQuery
             . $referenceUserQuery
             . $resultQuery
@@ -622,11 +684,8 @@ class UserModel implements PaginatedInterface
         $result = $contentQuery->getResultSet();
 
         foreach ($result as $row) {
-            $user = array();
 
-            $user['id'] = $row['user']->getProperty('qnoow_id');
-            $user['username'] = $row['content']->getProperty('username');
-            $user['email'] = $row['content']->getProperty('email');
+            $user = $this->build($row);
 
             $user['matching'] = 0;
             if (isset($row['match'])) {
@@ -654,10 +713,10 @@ class UserModel implements PaginatedInterface
 
         $parameters = array();
 
-        $queryWhere = " WHERE user.status = 'complete' ";
+        $queryWhere = '';
         if (isset($filters['referenceUserId'])) {
             $parameters['referenceUserId'] = (integer)$filters['referenceUserId'];
-            $queryWhere .= " AND user.qnoow_id <> {referenceUserId} ";
+            $queryWhere .= " WHERE user.qnoow_id <> {referenceUserId} ";
         }
 
         if (isset($filters['profile'])) {
@@ -682,13 +741,78 @@ class UserModel implements PaginatedInterface
         return $count;
     }
 
+    public function getMetadata($isUpdate = false)
+    {
+        $metadata = array(
+            'qnoow_id' => array('type' => 'string', 'editable' => false),
+            'username' => array('type' => 'string', 'required' => true, 'editable' => true),
+            'usernameCanonical' => array('type' => 'string', 'editable' => false),
+            'email' => array('type' => 'string', 'required' => true),
+            'emailCanonical' => array('type' => 'string', 'editable' => false),
+            'enabled' => array('type' => 'boolean', 'default' => true),
+            'salt' => array('type' => 'string', 'editable' => false),
+            'password' => array('type' => 'string', 'editable' => false),
+            'plainPassword' => array('type' => 'string', 'required' => true, 'visible' => false),
+            'lastLogin' => array('type' => 'datetime', 'editable' => false),
+            'locked' => array('type' => 'boolean', 'default' => false),
+            'expired' => array('type' => 'boolean', 'editable' => false),
+            'expiresAt' => array('type' => 'datetime'),
+            'confirmationToken' => array('type' => 'string', 'editable' => false),
+            'passwordRequestedAt' => array('type' => 'datetime', 'editable' => false),
+            'facebookID' => array('type' => 'string'),
+            'googleID' => array('type' => 'string'),
+            'twitterID' => array('type' => 'string'),
+            'spotifyID' => array('type' => 'string'),
+            'createdAt' => array('type' => 'datetime', 'editable' => false),
+            'updatedAt' => array('type' => 'datetime', 'editable' => false),
+            'confirmed' => array('type' => 'boolean', 'default' => false),
+            'status' => array('type' => 'string', 'editable' => false),
+        );
+
+        if ($isUpdate) {
+            $metadata['plainPassword']['required'] = false;
+        }
+
+        return $metadata;
+    }
+
+    public function save($id, array $data)
+    {
+
+        $this->updateCanonicalFields($data);
+        $this->updatePassword($data);
+
+        $data['updatedAt'] = (new \DateTime())->format('Y-m-d H:i:s');
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User)')
+            ->where('u.qnoow_id = { id }')
+            ->setParameter('id', (int)$id)
+            ->with('u');
+
+        foreach ($data as $key => $value) {
+            $qb->set("u.$key = { $key }")
+                ->setParameter($key, $value);
+        }
+
+        $qb->returns('u');
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        /* @var $row Row */
+        $row = $result->current();
+
+        return $this->build($row);
+    }
+
     /**
      * @param null $locale
      * @param array $dynamicChoices user-dependent choices (cannot be set from this model)
      * @param bool $filter
      * @return array
      */
-    protected function getMetadata($locale = null, array $dynamicChoices = array(), $filter = true)
+    protected function getFiltersMetadata($locale = null, array $dynamicChoices = array(), $filter = true)
     {
 
         $locale = $this->getLocale($locale);
@@ -740,31 +864,48 @@ class UserModel implements PaginatedInterface
      * @param $resultSet
      * @return array
      */
-    private function parseResultSet($resultSet)
+    protected function parseResultSet($resultSet)
     {
         $users = array();
 
         foreach ($resultSet as $row) {
-            $users[] = $this->parseRow($row);
+            $users[] = $this->build($row);
         }
 
         return $users;
 
     }
 
-    private function parseRow(Row $row)
+    protected function build(Row $row)
     {
-        return array(
-            'qnoow_id' => $row['u']->getProperty('qnoow_id'),
-            'username' => $row['u']->getProperty('username'),
-            'email' => $row['u']->getProperty('email'),
-        );
+
+        /* @var $node Node */
+        $node = $row->offsetGet('u');
+        $properties = $node->getProperties();
+
+        $ordered = array();
+        foreach ($this->getMetadata() as $fieldName => $fieldData) {
+
+            if (isset($fieldData['visible']) && $fieldData['visible'] === false) {
+                unset($properties[$fieldName]);
+                continue;
+            }
+
+            if (array_key_exists($fieldName, $properties)) {
+                $ordered[$fieldName] = $properties[$fieldName];
+                unset($properties[$fieldName]);
+            } else {
+                $ordered[$fieldName] = null;
+            }
+        }
+
+        return $ordered + $properties;
     }
 
     /** Returns statically defined options
      * @return array
      */
-    private function getChoiceOptions()
+    protected function getChoiceOptions()
     {
         return array();
     }
@@ -773,8 +914,64 @@ class UserModel implements PaginatedInterface
      * @param $name
      * @return array
      */
-    private function getTopUserTags($type)
+    protected function getTopUserTags($type)
     {
         return array();
+    }
+
+    protected function getNextId()
+    {
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User)')
+            ->returns('u.qnoow_id AS id')
+            ->orderBy('id DESC')
+            ->limit(1);
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        $id = 1;
+        if ($result->count() > 0) {
+            /* @var $row Row */
+            $row = $result->current();
+            $id = $row->offsetGet('qnoow_id') + 1;
+        }
+
+        return $id;
+    }
+
+    protected function setDefaults(array &$user)
+    {
+        foreach ($this->getMetadata() as $fieldName => $fieldData) {
+            if (!array_key_exists($fieldName, $user) && isset($fieldData['default'])) {
+                $user[$fieldName] = $fieldData['default'];
+            }
+        }
+    }
+
+    protected function updateCanonicalFields(array &$user)
+    {
+        if (isset($user['username']) && !isset($user['usernameCanonical'])) {
+            $user['usernameCanonical'] = $this->canonicalize($user['username']);
+        }
+        if (isset($user['email']) && !isset($user['emailCanonical'])) {
+            $user['emailCanonical'] = $this->canonicalize($user['email']);
+        }
+    }
+
+    protected function updatePassword(array &$user)
+    {
+
+        if (isset($user['plainPassword'])) {
+            $user['salt'] = base_convert(sha1(uniqid(mt_rand(), true)), 16, 36);
+            $user['password'] = $this->encoder->encodePassword($user['plainPassword'], $user['salt']);
+            unset($user['plainPassword']);
+        }
+    }
+
+    protected function canonicalize($string)
+    {
+        return null === $string ? null : mb_convert_case($string, MB_CASE_LOWER, mb_detect_encoding($string));
     }
 }

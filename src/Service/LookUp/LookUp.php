@@ -50,10 +50,8 @@ abstract class LookUp implements LookUpInterface
 
     protected function validateType($lookUpType)
     {
-        if(! in_array($lookUpType, $this->getBaseTypes())) {
-            $exception = new ValidationException('Validation errors');
-            $exception->setErrors(array($lookUpType . ' type is not valid'));
-            throw $exception;
+        if (!in_array($lookUpType, $this->getBaseTypes())) {
+            throw new ValidationException(array($lookUpType . ' type is not valid'));
         }
     }
 
@@ -66,7 +64,7 @@ abstract class LookUp implements LookUpInterface
     protected function getFromClient(Client $client, $lookUpType, $value, $apiKey, $webHookId)
     {
         try {
-            if($webHookId) {
+            if ($webHookId) {
                 $route = $this->urlGenerator->generate('setLookUpFromWebHook', array(), UrlGenerator::ABSOLUTE_URL);
                 $query = array(
                     $lookUpType => $value,
@@ -81,14 +79,14 @@ abstract class LookUp implements LookUpInterface
                 );
             }
             $response = $client->get('', array('query' => $query));
-            if($response->getStatusCode() == 202) {
+            if ($response->getStatusCode() == 202) {
                 // TODO: Should get data from web hook
                 //throw new Exception('Resource not available yet. Wait 2 minutes and execute the command again.', 202);
             }
-            if($response->getStatusCode() == 200) {
+            if ($response->getStatusCode() == 200) {
                 return $response->json();
             }
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             // TODO: Refuse exceptions by now
             return array();
             //throw new Exception($e->getMessage(), 404);

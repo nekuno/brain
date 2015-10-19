@@ -111,10 +111,12 @@ class GroupModel
         $qb->match('(i:Invitation)-[:HAS_GROUP]->(g:Group)<-[:CREATED_GROUP]-(eu:EnterpriseUser)')
             ->where('id(g) = { id }', 'eu.admin_id = { admin_id }')
             ->optionalMatch('(g)-[:LOCATION]->(l:Location)')
-            ->setParameters(array(
-                'id' => (integer)$id,
-                'admin_id' => (integer)$enterpriseUserId,
-            ))
+            ->setParameters(
+                array(
+                    'id' => (integer)$id,
+                    'admin_id' => (integer)$enterpriseUserId,
+                )
+            )
             ->returns('g', 'l', 'i');
 
         $query = $qb->getQuery();
@@ -155,7 +157,7 @@ class GroupModel
 
         if (!isset($data['location']) || !is_array($data['location'])) {
             $errors['location'] = sprintf('The value "%s" is not valid, it should be an array', $data['location']);
-        } elseif(isset($data['location'])) {
+        } elseif (isset($data['location'])) {
             if (!array_key_exists('address', $data['location'])) {
                 $errors['address'] = 'Address required';
             } elseif (isset($data['location']['address']) && !is_string($data['location']['address'])) {
@@ -188,9 +190,7 @@ class GroupModel
         }
 
         if (count($errors) > 0) {
-            $e = new ValidationException('Validation error');
-            $e->setErrors($errors);
-            throw $e;
+            throw new ValidationException($errors);
         }
     }
 
@@ -203,16 +203,18 @@ class GroupModel
         $qb->create('(g:Group {name:{ name }, html: { html }, date: { date }})')
             ->with('g')
             ->merge('(l:Location {address: { address }, latitude: { latitude }, longitude: { longitude }, locality: { locality }, country: { country }})<-[:LOCATION]-(g)')
-            ->setParameters(array(
-                'name' => $data['name'],
-                'html' => $data['html'],
-                'date' => $data['date'] ? (int)$data['date'] : null,
-                'address' => $data['location']['address'],
-                'latitude' => $data['location']['latitude'],
-                'longitude' => $data['location']['longitude'],
-                'locality' => $data['location']['locality'],
-                'country' => $data['location']['country'],
-            ))
+            ->setParameters(
+                array(
+                    'name' => $data['name'],
+                    'html' => $data['html'],
+                    'date' => $data['date'] ? (int)$data['date'] : null,
+                    'address' => $data['location']['address'],
+                    'latitude' => $data['location']['latitude'],
+                    'longitude' => $data['location']['longitude'],
+                    'locality' => $data['location']['locality'],
+                    'country' => $data['location']['country'],
+                )
+            )
             ->returns('g', 'l');
 
         $query = $qb->getQuery();
@@ -239,17 +241,19 @@ class GroupModel
             ->match('(l:Location)<-[:LOCATION]-(g)')
             ->merge('(l)<-[:LOCATION]-(g)')
             ->set('l.address = { address }', 'l.latitude = { latitude }', 'l.longitude = { longitude }', 'l.locality = { locality }', 'l.country = { country }')
-            ->setParameters(array(
-                'id' => (integer)$id,
-                'name' => $data['name'],
-                'html' => $data['html'],
-                'date' => $data['date'] ? (int)$data['date'] : null,
-                'address' => $data['location']['address'],
-                'latitude' => $data['location']['latitude'],
-                'longitude' => $data['location']['longitude'],
-                'locality' => $data['location']['locality'],
-                'country' => $data['location']['country'],
-            ))
+            ->setParameters(
+                array(
+                    'id' => (integer)$id,
+                    'name' => $data['name'],
+                    'html' => $data['html'],
+                    'date' => $data['date'] ? (int)$data['date'] : null,
+                    'address' => $data['location']['address'],
+                    'latitude' => $data['location']['latitude'],
+                    'longitude' => $data['location']['longitude'],
+                    'locality' => $data['location']['locality'],
+                    'country' => $data['location']['country'],
+                )
+            )
             ->returns('g', 'l');
 
         $query = $qb->getQuery();
@@ -288,10 +292,12 @@ class GroupModel
         $qb->match('(g:Group)', '(eu:EnterpriseUser)')
             ->where('id(g) = { id } AND eu.admin_id = { enterpriseUserId }')
             ->merge('(g)<-[:CREATED_GROUP]-(eu)')
-            ->setParameters(array(
-                'id' => (integer)$id,
-                'enterpriseUserId' => (integer)$enterpriseUserId,
-            ))
+            ->setParameters(
+                array(
+                    'id' => (integer)$id,
+                    'enterpriseUserId' => (integer)$enterpriseUserId,
+                )
+            )
             ->returns('g');
 
         $query = $qb->getQuery();
@@ -391,6 +397,26 @@ class GroupModel
         return false;
     }
 
+    /**
+     * @param $groupId
+     * @return bool
+     * @throws \Exception
+     */
+    public function existsGroup($groupId)
+    {
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(g:Group)')
+            ->where('id(g) = { groupId }')
+            ->setParameter('groupId', (integer)$groupId)
+            ->returns('g AS group');
+
+        $query = $qb->getQuery();
+
+        $result = $query->getResultSet();
+
+        return $result->count() > 0;
+    }
+
     protected function build(Row $row)
     {
         /* @var $group Node */
@@ -427,25 +453,5 @@ class GroupModel
             'invitation_token' => $invitation->getProperty('token'),
             'invitation_image_path' => $invitation->getProperty('image_path'),
         );
-    }
-
-    /**
-     * @param $groupId
-     * @return bool
-     * @throws \Exception
-     */
-    public function existsGroup($groupId)
-    {
-        $qb = $this->gm->createQueryBuilder();
-        $qb->match('(g:Group)')
-            ->where('id(g) = { groupId }')
-            ->setParameter('groupId', (integer)$groupId)
-            ->returns('g AS group');
-
-        $query = $qb->getQuery();
-
-        $result = $query->getResultSet();
-
-        return $result->count() > 0;
     }
 }

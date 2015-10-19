@@ -205,9 +205,7 @@ class PrivacyModel
         }
 
         if (count($errors) > 0) {
-            $e = new ValidationException('Validation error');
-            $e->setErrors($errors);
-            throw $e;
+            throw new ValidationException($errors);
         }
     }
 
@@ -263,7 +261,6 @@ class PrivacyModel
 
         return $choiceOptions;
     }
-
 
     protected function getUserAndPrivacyNodesById($id)
     {

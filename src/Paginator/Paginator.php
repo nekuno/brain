@@ -12,15 +12,6 @@ class Paginator
      * @var int maximum items per page
      */
     private $maxLimit;
-
-    /**
-     * @return int
-     */
-    public function getMaxLimit()
-    {
-        return $this->maxLimit;
-    }
-
     /**
      * @var int default items per page
      */
@@ -31,6 +22,14 @@ class Paginator
 
         $this->maxLimit = (integer)$maxLimit;
         $this->defaultLimit = (integer)$defaultLimit;
+    }
+
+    /**
+     * @return int
+     */
+    public function getMaxLimit()
+    {
+        return $this->maxLimit;
     }
 
     /**
@@ -48,8 +47,7 @@ class Paginator
         $offset = $request->get('offset', 0);
 
         if (!$paginated->validateFilters($filters)) {
-            $e = new ValidationException(sprintf('Invalid filters in "%s"', get_class($paginated)));
-            throw $e;
+            throw new ValidationException(array(), sprintf('Invalid filters in "%s"', get_class($paginated)));
         }
 
         $items = $paginated->slice($filters, $offset, $limit);
@@ -70,6 +68,14 @@ class Paginator
         $result['items'] = $items;
 
         return $result;
+    }
+
+    /**
+     * @return int
+     */
+    public function getDefaultLimit()
+    {
+        return $this->defaultLimit;
     }
 
     /**
@@ -121,13 +127,5 @@ class Paginator
         }
 
         return $nextLink;
-    }
-
-    /**
-     * @return int
-     */
-    public function getDefaultLimit()
-    {
-        return $this->defaultLimit;
     }
 }

@@ -6,7 +6,6 @@
 
 namespace Paginator;
 
-
 use Model\Exception\ValidationException;
 use Model\LinkModel;
 use Symfony\Component\HttpFoundation\Request;
@@ -20,7 +19,6 @@ class ContentPaginator extends Paginator
         parent::__construct($maxLimit, $defaultLimit);
         $this->linkModel = $linkModel;
     }
-
 
     /**
      * @param array $filters
@@ -36,8 +34,7 @@ class ContentPaginator extends Paginator
         $offset = $request->get('offset', 0);
 
         if (!$paginated->validateFilters($filters)) {
-            $e = new ValidationException(sprintf('Invalid filters in "%s"', get_class($paginated)));
-            throw $e;
+            throw new ValidationException(array(), sprintf('Invalid filters in "%s"', get_class($paginated)));
         }
 
         $slice = $paginated->slice($filters, $offset, $limit);
@@ -51,7 +48,9 @@ class ContentPaginator extends Paginator
         $newForeign = isset($slice['newForeign']) ? $slice['newForeign'] : $foreign;
         $foreignContent = 0;
         foreach ($slice['items'] as $item) {
-            if ($item['match'] == 0) $foreignContent++;
+            if ($item['match'] == 0) {
+                $foreignContent++;
+            }
         }
 
         $prevLink = $this->createContentPrevLink($request, $offset, $limit, $newForeign, $foreignContent);
@@ -82,6 +81,7 @@ class ContentPaginator extends Paginator
     protected function createContentPrevLink(Request $request, $offset, $limit, $foreign, $foreignContent)
     {
         $parentPrev = parent::createPrevLink($request, $offset, $limit);
+
         return $this->addForeign($parentPrev, $foreign, false, $foreignContent);
     }
 
@@ -97,6 +97,7 @@ class ContentPaginator extends Paginator
     protected function createContentNextLink(Request $request, $offset, $limit, $total, $foreign, $foreignContent)
     {
         $parentNext = parent::createNextLink($request, $offset, $limit, $total);
+
         return $this->addForeign($parentNext, $foreign, true, $foreignContent);
 
     }
@@ -110,7 +111,9 @@ class ContentPaginator extends Paginator
      */
     protected function addForeign($url, $foreign, $next = false, $foreignContent = 0)
     {
-        if (!$url || $foreignContent === 0) return $url;
+        if (!$url || $foreignContent === 0) {
+            return $url;
+        }
 
         if ($next && $foreign < 0) {
             return null; //database completely searched
@@ -134,6 +137,7 @@ class ContentPaginator extends Paginator
         }
 
         $url_parts['query'] = http_build_query($params);
+
         return http_build_url($url_parts);
     }
 
