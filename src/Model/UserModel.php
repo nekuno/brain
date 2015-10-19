@@ -171,7 +171,7 @@ class UserModel implements PaginatedInterface
                 continue;
             }
 
-            if (!array_key_exists($fieldName, $data) || is_null($data[$fieldName])) {
+            if (!isset($data[$fieldName]) || !$data[$fieldName]) {
                 if (isset($fieldData['required']) && $fieldData['required'] === true) {
                     $fieldErrors[] = sprintf('"%s" is required', $fieldName);
                 }
@@ -749,23 +749,23 @@ class UserModel implements PaginatedInterface
             'usernameCanonical' => array('type' => 'string', 'editable' => false),
             'email' => array('type' => 'string', 'required' => true),
             'emailCanonical' => array('type' => 'string', 'editable' => false),
-            'enabled' => array('type' => 'boolean', 'required' => false, 'default' => true),
+            'enabled' => array('type' => 'boolean', 'default' => true),
             'salt' => array('type' => 'string', 'editable' => false),
             'password' => array('type' => 'string', 'editable' => false),
             'plainPassword' => array('type' => 'string', 'required' => true, 'visible' => false),
             'lastLogin' => array('type' => 'datetime', 'editable' => false),
-            'locked' => array('type' => 'boolean', 'required' => false, 'default' => false),
+            'locked' => array('type' => 'boolean', 'default' => false),
             'expired' => array('type' => 'boolean', 'editable' => false),
-            'expiresAt' => array('type' => 'datetime', 'required' => false),
+            'expiresAt' => array('type' => 'datetime'),
             'confirmationToken' => array('type' => 'string', 'editable' => false),
             'passwordRequestedAt' => array('type' => 'datetime', 'editable' => false),
-            'facebookID' => array('type' => 'string', 'required' => false),
-            'googleID' => array('type' => 'string', 'required' => false),
-            'twitterID' => array('type' => 'string', 'required' => false),
-            'spotifyID' => array('type' => 'string', 'required' => false),
+            'facebookID' => array('type' => 'string'),
+            'googleID' => array('type' => 'string'),
+            'twitterID' => array('type' => 'string'),
+            'spotifyID' => array('type' => 'string'),
             'createdAt' => array('type' => 'datetime', 'editable' => false),
             'updatedAt' => array('type' => 'datetime', 'editable' => false),
-            'confirmed' => array('type' => 'boolean', 'required' => false, 'default' => false),
+            'confirmed' => array('type' => 'boolean', 'default' => false),
             'status' => array('type' => 'string', 'editable' => false),
         );
 

@@ -89,6 +89,22 @@ class UserController
     }
 
     /**
+     * @param Request $request
+     * @param Application $app
+     * @return JsonResponse
+     */
+    public function validateAction(Request $request, Application $app)
+    {
+
+        /* @var $model UserModel */
+        $model = $app['users.model'];
+
+        $model->validate($request->request->all());
+
+        return $app->json();
+    }
+
+    /**
      * @param Application $app
      * @param Request $request
      * @return JsonResponse
