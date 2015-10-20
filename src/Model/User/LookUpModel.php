@@ -153,29 +153,29 @@ class LookUpModel
         if (!$userId) return array();
 
         if ($resource){
-            $networklabels = array_keys($this->resourceOwners, $resource);
+            $networkLabels = array_keys($this->resourceOwners, $resource);
         } else {
-            $networklabels = array($this::LABEL_SOCIAL_NETWORK);
+            $networkLabels = array($this::LABEL_SOCIAL_NETWORK);
             if (!$all){
-                $networklabels = array();
+                $networkLabels = array();
                 $unconnected = $this->tm->getUnconnectedNetworks($userId);
                 foreach ($unconnected as $network)
                 {
-                    $networklabels = array_merge($networklabels, array_keys($this->resourceOwners, $network));
+                    $networkLabels = array_merge($networkLabels, array_keys($this->resourceOwners, $network));
                 }
             }
 
         }
-        if (empty($networklabels)){
+        if (empty($networkLabels)){
             return array();
         }
 
         $socialProfiles = array();
 
-        foreach ($networklabels as $networklabel){
+        foreach ($networkLabels as $networkLabel){
             $qb = $this->gm->createQueryBuilder();
             $qb->match('(u:User{qnoow_id:{userId}})')
-                ->match('(u)-[hsn:HAS_SOCIAL_NETWORK]->(sn:'.$networklabel.')')
+                ->match('(u)-[hsn:HAS_SOCIAL_NETWORK]->(sn:'.$networkLabel.')')
                 ->returns('hsn.url as url, labels(sn) as network');
             $qb->setParameters(array(
                 'userId' => (integer)$userId,
