@@ -174,8 +174,8 @@ class Fixtures
 
             $this->um->create(
                 array(
-                    'id' => $i,
                     'username' => 'user' . $i,
+                    'plainPassword' => 'userpass',
                     'email' => 'user' . $i . '@nekuno.com',
                 )
             );
@@ -241,8 +241,11 @@ class Fixtures
             );
             $invitation = $this->im->create($invitationData, $this->tg);
 
-            foreach($this->um->getAll() as $user)
+            foreach($this->um->getAll() as $index => $user)
             {
+                if($index > 25) {
+                    break;
+                }
                 $this->im->consume($invitation['invitation']['token'], $user['qnoow_id']);
                 $this->gpm->addUser($group['id'], $user['qnoow_id']);
             }
