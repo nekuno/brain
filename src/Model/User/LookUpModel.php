@@ -150,7 +150,7 @@ class LookUpModel
      */
     public function getSocialProfiles($userId, $resource = null, $all = false)
     {
-        if (!$userId || !is_int($userId)) return array();
+        if (!$userId) return array();
 
         if ($resource){
             $networklabels = array_keys($this->resourceOwners, $resource);
