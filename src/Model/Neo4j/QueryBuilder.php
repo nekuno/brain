@@ -140,6 +140,11 @@ class QueryBuilder
 
         $wheres = is_array($where) ? $where : func_get_args();
 
+        foreach ($wheres as $key => $value)
+        {
+            $wheres[$key] = '('.$value.')';
+        }
+
         return $this->add('where', implode(' AND ', $wheres));
     }
 
