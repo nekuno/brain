@@ -82,14 +82,11 @@ class ContentPaginatedModel implements PaginatedInterface
 
         $qb->match("(u:User)")
             ->where("u.qnoow_id = { userId }")
-            ->match("(u)-[r:LIKES]->(content:" . $linkType . ")")
-            ->where("content.processed = 1");
+            ->match("(u)-[r:LIKES]->(content:" . $linkType . ")");
 
-        $whereSocialNetwork = array("(HAS (r.nekuno))");
-        foreach ($socialNetworks as $socialNetwork) {
-            $whereSocialNetwork [] = "(HAS (r.$socialNetwork))";
-        }
-        $qb->where(implode('OR', $whereSocialNetwork));
+        $conditions = $this->buildConditions($socialNetworks);
+
+        $qb->where($conditions);
 
         if (isset($filters['tag'])) {
             $qb->match("(content)-[:TAGGED]->(filterTag:Tag)")
@@ -188,14 +185,11 @@ class ContentPaginatedModel implements PaginatedInterface
 
         $qb->match("(u:User)")
             ->where("u.qnoow_id = { userId }")
-            ->match("(u)-[r:LIKES]->(content:" . $linkType . ")")
-            ->where('content.processed = 1');
+            ->match("(u)-[r:LIKES]->(content:" . $linkType . ")");
 
-        $whereSocialNetwork = array("(HAS (r.nekuno))");
-        foreach ($socialNetworks as $socialNetwork) {
-            $whereSocialNetwork [] = "(HAS (r.$socialNetwork))";
-        }
-        $qb->where(implode('OR', $whereSocialNetwork));
+        $conditions = $this->buildConditions($socialNetworks);
+
+        $qb->where($conditions);
 
         if (isset($filters['tag'])) {
             $qb->match("(content)-[:TAGGED]->(filterTag:Tag)")
@@ -218,5 +212,19 @@ class ContentPaginatedModel implements PaginatedInterface
         }
 
         return $count;
+    }
+
+    private function buildConditions(array $socialNetworks)
+    {
+        $conditions = array("content.processed = 1");
+
+        $whereSocialNetwork[] = "HAS (r.nekuno)";
+        foreach ($socialNetworks as $socialNetwork) {
+            $whereSocialNetwork [] = "HAS (r.$socialNetwork)";
+        }
+        $socialNetworkQuery = implode(' OR ', $whereSocialNetwork);
+        $conditions[] = $socialNetworkQuery;
+
+        return $conditions;
     }
 }
