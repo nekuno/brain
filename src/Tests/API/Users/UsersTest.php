@@ -16,8 +16,7 @@ class UsersTest extends APITest
     protected function assertGetNonExistentUserResponse()
     {
         $response = $this->getUserA();
-        // TODO: Uncomment when get non existing user returns 404
-        //$this->assertStatusCode($response, 404, "Get deleted UserA");
+        $this->assertStatusCode($response, 404, "Get deleted UserA");
     }
 
     protected function assertCreateUserFormat()

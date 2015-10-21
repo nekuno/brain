@@ -9,14 +9,8 @@
         colors="true"
         >
     <testsuites>
-        <testsuite name="APIUsers">
-            <directory>src/Tests/API/Users</directory>
-        </testsuite>
-        <testsuite name="ApiConsumer">
-            <directory>src/Tests/ApiConsumer/</directory>
-        </testsuite>
-        <testsuite name="Paginator">
-            <directory>src/Tests/Paginator/</directory>
+        <testsuite name="Test">
+            <directory>src/Tests</directory>
         </testsuite>
     </testsuites>
 
