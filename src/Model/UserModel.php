@@ -717,6 +717,32 @@ class UserModel implements PaginatedInterface
         return $this->build($row);
     }
 
+    public function build(Row $row)
+    {
+
+        /* @var $node Node */
+        $node = $row->offsetGet('u');
+        $properties = $node->getProperties();
+
+        $ordered = array();
+        foreach ($this->getMetadata() as $fieldName => $fieldData) {
+
+            if (isset($fieldData['visible']) && $fieldData['visible'] === false) {
+                unset($properties[$fieldName]);
+                continue;
+            }
+
+            if (array_key_exists($fieldName, $properties)) {
+                $ordered[$fieldName] = $properties[$fieldName];
+                unset($properties[$fieldName]);
+            } else {
+                $ordered[$fieldName] = null;
+            }
+        }
+
+        return $ordered + $properties;
+    }
+
     /**
      * @param null $locale
      * @param array $dynamicChoices user-dependent choices (cannot be set from this model)
@@ -785,32 +811,6 @@ class UserModel implements PaginatedInterface
 
         return $users;
 
-    }
-
-    protected function build(Row $row)
-    {
-
-        /* @var $node Node */
-        $node = $row->offsetGet('u');
-        $properties = $node->getProperties();
-
-        $ordered = array();
-        foreach ($this->getMetadata() as $fieldName => $fieldData) {
-
-            if (isset($fieldData['visible']) && $fieldData['visible'] === false) {
-                unset($properties[$fieldName]);
-                continue;
-            }
-
-            if (array_key_exists($fieldName, $properties)) {
-                $ordered[$fieldName] = $properties[$fieldName];
-                unset($properties[$fieldName]);
-            } else {
-                $ordered[$fieldName] = null;
-            }
-        }
-
-        return $ordered + $properties;
     }
 
     /** Returns statically defined options

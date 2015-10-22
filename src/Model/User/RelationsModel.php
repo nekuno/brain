@@ -8,6 +8,7 @@ use Everyman\Neo4j\Query\Row;
 use Everyman\Neo4j\Relationship;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
+use Model\UserModel;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class RelationsModel
@@ -28,11 +29,17 @@ class RelationsModel
      */
     protected $connectionSocial;
 
-    public function __construct(GraphManager $gm, Connection $connectionSocial)
+    /**
+     * @var UserModel
+     */
+    protected $userModel;
+
+    public function __construct(GraphManager $gm, Connection $connectionSocial, UserModel $userModel)
     {
 
         $this->gm = $gm;
         $this->connectionSocial = $connectionSocial;
+        $this->userModel = $userModel;
     }
 
     public function getAll($from, $relation)
@@ -200,15 +207,15 @@ class RelationsModel
             ->setParameter('messaged', $messaged)
             ->with('from', 'to')
             ->where('NOT (from)-[:' . RelationsModel::BLOCKS . ']-(to)')
-            ->returns('to.qnoow_id AS to')
-            ->orderBy('to');
+            ->returns('to AS u')
+            ->orderBy('u.qnoow_id');
 
         $result = $qb->getQuery()->getResultSet();
         $return = array();
 
         foreach ($result as $row) {
             /* @var $row Row */
-            $return[] = $row->offsetGet('to');
+            $return[] = $this->userModel->build($row);
         }
 
         return $return;
@@ -230,15 +237,15 @@ class RelationsModel
             ->setParameter('messaged', $messaged)
             ->with('from', 'to')
             ->where('NOT (from)-[:' . RelationsModel::BLOCKS . ']-(to)')
-            ->returns('to.qnoow_id AS to')
-            ->orderBy('to');
+            ->returns('to AS u')
+            ->orderBy('u.qnoow_id');
 
         $result = $qb->getQuery()->getResultSet();
         $return = array();
 
         foreach ($result as $row) {
             /* @var $row Row */
-            $return[] = $row->offsetGet('to');
+            $return[] = $this->userModel->build($row);
         }
 
         return $return;
