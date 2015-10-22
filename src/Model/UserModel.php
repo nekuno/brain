@@ -33,11 +33,6 @@ class UserModel implements PaginatedInterface
     protected $encoder;
 
     /**
-     * @var Connection
-     */
-    protected $connectionSocial;
-
-    /**
      * @var array
      */
     protected $metadata;
@@ -47,11 +42,10 @@ class UserModel implements PaginatedInterface
      */
     protected $defaultLocale;
 
-    public function __construct(GraphManager $gm, PasswordEncoderInterface $encoder, Connection $connectionSocial, array $metadata, $defaultLocale)
+    public function __construct(GraphManager $gm, PasswordEncoderInterface $encoder, array $metadata, $defaultLocale)
     {
         $this->gm = $gm;
         $this->encoder = $encoder;
-        $this->connectionSocial = $connectionSocial;
         $this->metadata = $metadata;
         $this->defaultLocale = $defaultLocale;
     }
@@ -473,8 +467,6 @@ class UserModel implements PaginatedInterface
             $query = $qb->getQuery();
             $query->getResultSet();
         }
-
-        $this->connectionSocial->update('users', array('status' => $status->getStatus()), array('id' => (integer)$id));
 
         return $status;
     }
