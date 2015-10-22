@@ -659,7 +659,7 @@ class UserModel implements PaginatedInterface
             'locked' => array('type' => 'boolean', 'default' => false),
             'expired' => array('type' => 'boolean', 'editable' => false),
             'expiresAt' => array('type' => 'datetime'),
-            'confirmationToken' => array('type' => 'string', 'editable' => false),
+            'confirmationToken' => array('type' => 'string'),
             'passwordRequestedAt' => array('type' => 'datetime', 'editable' => false),
             'facebookID' => array('type' => 'string'),
             'googleID' => array('type' => 'string'),
