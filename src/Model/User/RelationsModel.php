@@ -272,12 +272,15 @@ class RelationsModel
 
         $messaged = $this->connectionSocial->executeQuery(
             '
-            SELECT users.id FROM users
-            LEFT JOIN chat_message AS messages_sent ON (users.id = messages_sent.user_from)
-            LEFT JOIN chat_message AS messages_received ON (users.id = messages_received.user_to)
-            WHERE messages_sent.user_to = :id OR messages_received.user_from = :id
-            GROUP BY users.id
-            ORDER BY users.id',
+            SELECT * FROM (
+              SELECT user_to AS user FROM chat_message
+              WHERE user_from = :id
+              GROUP BY user_to
+              UNION
+              SELECT user_from AS user FROM chat_message
+              WHERE user_to = :id
+              GROUP BY user_from
+            ) AS tmp ORDER BY tmp.user',
             array('id' => (integer)$id)
         )->fetchAll(\PDO::FETCH_COLUMN);
 
