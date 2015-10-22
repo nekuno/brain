@@ -27,8 +27,8 @@ use Model\User\Recommendation\UserRecommendationPaginatedModel;
 use Model\User\RelationsModel;
 use Model\User\Similarity\SimilarityModel;
 use Model\User\SocialNetwork\LinkedinSocialNetworkModel;
-use Model\User\SocialNetwork\SocialNetworkModel;
 use Model\User\TokensModel;
+use Model\User\UserStatsManager;
 use Model\UserModel;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
@@ -53,7 +53,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.model'] = $app->share(
             function ($app) {
 
-                return new UserModel($app['neo4j.graph_manager'], $app['security.password_encoder'], $app['dbs']['mysql_social'], $app['orm.ems']['mysql_brain'], $app['users.relations.model'], $app['fields']['user'], $app['locale.options']['default']);
+                return new UserModel($app['neo4j.graph_manager'], $app['security.password_encoder'], $app['dbs']['mysql_social'], $app['fields']['user'], $app['locale.options']['default']);
             }
         );
 
@@ -173,6 +173,13 @@ class ModelsServiceProvider implements ServiceProviderInterface
             function ($app) {
 
                 return new ContentRecommendationTagModel($app['neo4j.graph_manager']);
+            }
+        );
+
+        $app['users.stats.manager'] = $app->share(
+            function ($app) {
+
+                return new UserStatsManager($app['neo4j.graph_manager'], $app['orm.ems']['mysql_brain'], $app['users.tokens.model'], $app['users.relations.model']);
             }
         );
 

@@ -362,6 +362,17 @@ class TokensModel
 
     }
 
+    public function getConnectedNetworks($userId)
+    {
+        $tokens = $this->getAll($userId);
+
+        $resourceOwners = array();
+        foreach ($tokens as $token){
+            $resourceOwners[] = $token['resourceOwner'];
+        }
+        return $resourceOwners;
+    }
+
     protected function build(Row $row)
     {
         /* @var $user Node */

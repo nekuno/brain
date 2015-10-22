@@ -3,13 +3,11 @@
 namespace Model;
 
 use Doctrine\DBAL\Connection;
-use Doctrine\ORM\EntityManager;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
 use Model\Neo4j\Neo4jException;
-use Model\User\RelationsModel;
 use Model\User\UserStatsModel;
 use Model\User\UserStatusModel;
 use Paginator\PaginatedInterface;
@@ -40,16 +38,6 @@ class UserModel implements PaginatedInterface
     protected $connectionSocial;
 
     /**
-     * @var EntityManager
-     */
-    protected $entityManagerBrain;
-
-    /**
-     * @var RelationsModel
-     */
-    protected $relationsModel;
-
-    /**
      * @var array
      */
     protected $metadata;
@@ -59,13 +47,11 @@ class UserModel implements PaginatedInterface
      */
     protected $defaultLocale;
 
-    public function __construct(GraphManager $gm, PasswordEncoderInterface $encoder, Connection $connectionSocial, EntityManager $entityManagerBrain, RelationsModel $relationsModel, array $metadata, $defaultLocale)
+    public function __construct(GraphManager $gm, PasswordEncoderInterface $encoder, Connection $connectionSocial, array $metadata, $defaultLocale)
     {
         $this->gm = $gm;
         $this->encoder = $encoder;
         $this->connectionSocial = $connectionSocial;
-        $this->entityManagerBrain = $entityManagerBrain;
-        $this->relationsModel = $relationsModel;
         $this->metadata = $metadata;
         $this->defaultLocale = $defaultLocale;
     }
@@ -379,82 +365,6 @@ class UserModel implements PaginatedInterface
         $row = $result->current();
 
         return $row->offsetGet('status');
-
-    }
-
-    public function getStats($id)
-    {
-
-        $qb = $this->gm->createQueryBuilder();
-
-        $qb->match('(u:User {qnoow_id: { id }})')
-            ->setParameter('id', (integer)$id)
-            ->with('u')
-            ->optionalMatch('(u)-[r:LIKES]->(:Link)')
-            ->with('u,count(r) AS contentLikes')
-            ->optionalMatch('(u)-[r:LIKES]->(:Video)')
-            ->with('u,contentLikes,count(r) AS videoLikes')
-            ->optionalMatch('(u)-[r:LIKES]->(:Audio)')
-            ->with('u,contentLikes,videoLikes,count(r) AS audioLikes')
-            ->optionalMatch('(u)-[r:LIKES]->(:Image)')
-            ->with('u,contentLikes,videoLikes,audioLikes,count(r) AS imageLikes')
-            ->optionalMatch('(u)-[:BELONGS_TO]->(g:Group)')
-            ->with('u,contentLikes, videoLikes, audioLikes, imageLikes, collect(g) AS groupsBelonged')
-            ->optionalMatch('(u)-[r:ANSWERS]->(:Answer)')
-            ->returns('contentLikes', 'videoLikes', 'audioLikes', 'imageLikes', 'groupsBelonged', 'count(r) AS questionsAnswered', 'u.available_invitations AS available_invitations');
-
-        $query = $qb->getQuery();
-
-        $result = $query->getResultSet();
-
-        if ($result->count() < 1) {
-            throw new NotFoundHttpException('User not found');
-        }
-
-        /* @var $row Row */
-        $row = $result->current();
-
-        $groups = array();
-        foreach ($row->offsetGet('groupsBelonged') as $group) {
-            /* @var $group Node */
-            $groups[] = array(
-                'id' => $group->getId(),
-                'name' => $group->getProperty('name'),
-                'html' => $group->getProperty('html'),
-            );
-        }
-
-        $numberOfReceivedLikes = $this->relationsModel->countTo($id, RelationsModel::LIKES);
-        $numberOfUserLikes = $this->relationsModel->countFrom($id, RelationsModel::LIKES);
-
-        $dataStatusRepository = $this->entityManagerBrain->getRepository('\Model\Entity\DataStatus');
-
-        $twitterStatus = $dataStatusRepository->findOneBy(array('userId' => (int)$id, 'resourceOwner' => 'twitter'));
-        $facebookStatus = $dataStatusRepository->findOneBy(array('userId' => (int)$id, 'resourceOwner' => 'facebook'));
-        $googleStatus = $dataStatusRepository->findOneBy(array('userId' => (int)$id, 'resourceOwner' => 'google'));
-        $spotifyStatus = $dataStatusRepository->findOneBy(array('userId' => (int)$id, 'resourceOwner' => 'spotify'));
-
-        $userStats = new UserStatsModel(
-            $row->offsetGet('contentLikes'),
-            $row->offsetGet('videoLikes'),
-            $row->offsetGet('audioLikes'),
-            $row->offsetGet('imageLikes'),
-            (integer)$numberOfReceivedLikes,
-            (integer)$numberOfUserLikes,
-            $groups,
-            $row->offsetGet('questionsAnswered'),
-            !empty($twitterStatus) ? (boolean)$twitterStatus->getFetched() : false,
-            !empty($twitterStatus) ? (boolean)$twitterStatus->getProcessed() : false,
-            !empty($facebookStatus) ? (boolean)$facebookStatus->getFetched() : false,
-            !empty($facebookStatus) ? (boolean)$facebookStatus->getProcessed() : false,
-            !empty($googleStatus) ? (boolean)$googleStatus->getFetched() : false,
-            !empty($googleStatus) ? (boolean)$googleStatus->getProcessed() : false,
-            !empty($spotifyStatus) ? (boolean)$spotifyStatus->getFetched() : false,
-            !empty($spotifyStatus) ? (boolean)$spotifyStatus->getProcessed() : false,
-            $row->offsetGet('available_invitations')
-        );
-
-        return $userStats;
 
     }
 

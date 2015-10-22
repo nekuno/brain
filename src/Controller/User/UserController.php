@@ -6,6 +6,7 @@ use Model\User\ContentPaginatedModel;
 use Model\User\GroupModel;
 use Model\User\ProfileModel;
 use Model\User\RateModel;
+use Model\User\UserStatsManager;
 use Model\UserModel;
 use Paginator\Paginator;
 use Silex\Application;
@@ -657,10 +658,10 @@ class UserController
             throw new NotFoundHttpException('User not found');
         }
 
-        /* @var $model UserModel */
-        $model = $app['users.model'];
+        /* @var $manager UserStatsManager */
+        $manager = $app['users.stats.manager'];
 
-        $stats = $model->getStats($id);
+        $stats = $manager->getStats($id);
 
         return $app->json($stats->toArray());
     }
