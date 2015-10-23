@@ -129,6 +129,7 @@ class QueryBuilder
     /**
      * @param mixed $where
      * @return QueryBuilder
+     * @throws \Exception
      */
     public function where($where = null)
     {
@@ -138,6 +139,11 @@ class QueryBuilder
         }
 
         $wheres = is_array($where) ? $where : func_get_args();
+
+        foreach ($wheres as $key => $value)
+        {
+            $wheres[$key] = '('.$value.')';
+        }
 
         return $this->add('where', implode(' AND ', $wheres));
     }

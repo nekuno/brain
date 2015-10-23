@@ -7,9 +7,11 @@ use Model\User\RelationsModel;
 $controllers = $app['controllers'];
 
 $app->get('/users', 'users.controller:indexAction');
-$app->post('/users', 'users.controller:addAction');
-$app->get('/users/{id}', 'users.controller:showAction')->value('id', null);
-$app->delete('/users/{id}', 'users.controller:deleteAction')->value('id', null);
+$app->post('/users', 'users.controller:postAction');
+$app->put('/users/{id}', 'users.controller:putAction');
+$app->get('/users/{id}', 'users.controller:getAction');
+$app->get('/users/find', 'users.controller:findAction');
+$app->post('/users/validate', 'users.controller:validateAction');
 
 $app->get('/users/{id}/profile', 'users.profile.controller:getAction')->value('id', null);
 $app->post('/users/{id}/profile', 'users.profile.controller:postAction')->value('id', null);
@@ -154,6 +156,7 @@ $app->post('/enterpriseUsers/{enterpriseUserId}/groups', 'enterpriseUsers.groups
 $app->put('/enterpriseUsers/{enterpriseUserId}/groups/{id}', 'enterpriseUsers.groups.controller:putAction');
 $app->delete('/enterpriseUsers/{enterpriseUserId}/groups/{id}', 'enterpriseUsers.groups.controller:deleteAction');
 $app->post('/enterpriseUsers/{enterpriseUserId}/groups/{id}', 'enterpriseUsers.groups.controller:validateAction');
+$app->get('/enterpriseUsers/{enterpriseUserId}/groups/{id}/communities', 'enterpriseUsers.communities.controller:getByGroupAction');
 
 /**
  * EnterpriseUser Invitation routes
@@ -177,27 +180,27 @@ $controllers
     ->convert(
         'id',
         function ($id) {
-            return (integer)$id;
+            return (int)$id;
         }
     )
     ->assert('userId', '\d+')
     ->convert(
         'userId',
         function ($id) {
-            return (integer)$id;
+            return (int)$id;
         }
     )
     ->assert('from', '\d+')
     ->convert(
         'from',
         function ($from) {
-            return (integer)$from;
+            return (int)$from;
         }
     )
     ->assert('to', '\d+')
     ->convert(
         'to',
         function ($to) {
-            return (integer)$to;
+            return (int)$to;
         }
     );

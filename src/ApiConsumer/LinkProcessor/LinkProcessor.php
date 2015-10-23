@@ -8,6 +8,7 @@ use ApiConsumer\LinkProcessor\Processor\SpotifyProcessor;
 use ApiConsumer\LinkProcessor\Processor\YoutubeProcessor;
 use ApiConsumer\LinkProcessor\UrlParser\UrlParser;
 use ApiConsumer\LinkProcessor\UrlParser\YoutubeUrlParser;
+use GuzzleHttp\Exception\RequestException;
 use Model\LinkModel;
 
 class LinkProcessor
@@ -53,7 +54,6 @@ class LinkProcessor
      */
     protected $urlParser;
 
-
     public function __construct(
         LinkResolver $linkResolver,
         LinkAnalyzer $linkAnalyzer,
@@ -63,8 +63,7 @@ class LinkProcessor
         SpotifyProcessor $spotifyProcessor,
         FacebookProcessor $facebookProcessor,
         UrlParser $urlParser
-    )
-    {
+    ) {
 
         $this->resolver = $linkResolver;
         $this->analyzer = $linkAnalyzer;
@@ -88,9 +87,7 @@ class LinkProcessor
 
         $link['url'] = $this->resolver->resolve($link['url']);
 
-
         $processor = $this->scrapperProcessor;
-
 
         $link['url'] = $this->cleanURL($link, $processor);
 
@@ -98,13 +95,30 @@ class LinkProcessor
             return $link;
         }
 
-        $processedLink = $processor->process($link);
+        try {
+            $processedLink = $processor->process($link);
+        } catch (RequestException $e) {
+
+            $link['processed'] = 0;
+
+            return $link;
+        }
 
         if (!$processedLink) {
             $processedLink = $this->scrapperProcessor->process($link);
         }
 
         return $processedLink;
+    }
+
+    public function cleanExternalURLs($link)
+    {
+        return $this->cleanURL($link, $this->scrapperProcessor);
+    }
+
+    public function getLinkAnalyzer()
+    {
+        return $this->analyzer;
     }
 
     private function isLinkProcessed($link)
@@ -122,7 +136,8 @@ class LinkProcessor
         return false;
     }
 
-    private function cleanURL($link, &$processor){
+    private function cleanURL($link, &$processor)
+    {
 
         $url = '';
         $processorName = $this->analyzer->getProcessor($link);
@@ -145,12 +160,8 @@ class LinkProcessor
                 $url = $this->urlParser->cleanURL($link['url']);
                 break;
         }
-        return $url;
-    }
 
-    public function cleanExternalURLs($link)
-    {
-        return $this->cleanURL($link, $this->scrapperProcessor);
+        return $url;
     }
 
 }

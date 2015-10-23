@@ -18,9 +18,15 @@ class ContentPaginatedModel implements PaginatedInterface
      */
     protected $gm;
 
-    public function __construct(GraphManager $gm)
+    /**
+     * @var TokensModel
+     */
+    protected $tokensModel;
+
+    public function __construct(GraphManager $gm, TokensModel $tokensModel)
     {
         $this->gm = $gm;
+        $this->tokensModel = $tokensModel;
     }
 
     public function getValidTypes()
@@ -60,6 +66,13 @@ class ContentPaginatedModel implements PaginatedInterface
     {
         $qb = $this->gm->createQueryBuilder();
         $id = $filters['id'];
+
+        $tokens = $this->tokensModel->getByUserOrResource($id);
+        $socialNetworks = array();
+        foreach ($tokens as $token) {
+            $socialNetworks[] = $token['resourceOwner'];
+        }
+
         $response = array();
 
         $linkType = 'Link';
@@ -70,6 +83,10 @@ class ContentPaginatedModel implements PaginatedInterface
         $qb->match("(u:User)")
             ->where("u.qnoow_id = { userId }")
             ->match("(u)-[r:LIKES]->(content:" . $linkType . ")");
+
+        $conditions = $this->buildConditions($socialNetworks);
+
+        $qb->where($conditions);
 
         if (isset($filters['tag'])) {
             $qb->match("(content)-[:TAGGED]->(filterTag:Tag)")
@@ -155,6 +172,12 @@ class ContentPaginatedModel implements PaginatedInterface
         $qb = $this->gm->createQueryBuilder();
         $count = 0;
 
+        $tokens = $this->tokensModel->getByUserOrResource($id);
+        $socialNetworks = array();
+        foreach ($tokens as $token) {
+            $socialNetworks[] = $token['resourceOwner'];
+        }
+
         $linkType = 'Link';
         if (isset($filters['type'])) {
             $linkType = $filters['type'];
@@ -162,7 +185,11 @@ class ContentPaginatedModel implements PaginatedInterface
 
         $qb->match("(u:User)")
             ->where("u.qnoow_id = { userId }")
-            ->match("(u)-[r:LIKES|DISLIKES]->(content:" . $linkType . ")");
+            ->match("(u)-[r:LIKES]->(content:" . $linkType . ")");
+
+        $conditions = $this->buildConditions($socialNetworks);
+
+        $qb->where($conditions);
 
         if (isset($filters['tag'])) {
             $qb->match("(content)-[:TAGGED]->(filterTag:Tag)")
@@ -185,5 +212,19 @@ class ContentPaginatedModel implements PaginatedInterface
         }
 
         return $count;
+    }
+
+    private function buildConditions(array $socialNetworks)
+    {
+        $conditions = array("content.processed = 1");
+
+        $whereSocialNetwork[] = "HAS (r.nekuno)";
+        foreach ($socialNetworks as $socialNetwork) {
+            $whereSocialNetwork [] = "HAS (r.$socialNetwork)";
+        }
+        $socialNetworkQuery = implode(' OR ', $whereSocialNetwork);
+        $conditions[] = $socialNetworkQuery;
+
+        return $conditions;
     }
 }

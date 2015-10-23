@@ -20,6 +20,10 @@ class LinkAnalyzer
     public function getProcessor($link)
     {
 
+        if (!array_key_exists('url', $link)){
+            return self::SCRAPPER;
+        }
+
         if (strpos($link['url'], 'youtube.com') !== false || strpos($link['url'], 'youtu.be') !== false) {
             return self::YOUTUBE;
         }

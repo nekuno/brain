@@ -9,8 +9,7 @@ use Event\MatchingExpiredEvent;
 use Event\ProcessLinksEvent;
 use Event\ContentRatedEvent;
 use Model\Entity\DataStatus;
-use PhpAmqpLib\Connection\AMQPStreamConnection;
-use PhpAmqpLib\Message\AMQPMessage;
+use Service\AMQPManager;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -26,19 +25,19 @@ class UserDataStatusSubscriber implements EventSubscriberInterface
     protected $entityManager;
 
     /**
-     * @var AMQPStreamConnection
+     * @var AMQPManager
      */
-    protected $connection;
+    protected $amqpManager;
 
     /**
      * @param EntityManager $entityManager
-     * @param AMQPStreamConnection $connection
+     * @param AMQPManager $amqpManager
      */
-    public function __construct(EntityManager $entityManager, AMQPStreamConnection $connection)
+    public function __construct(EntityManager $entityManager, AMQPManager $amqpManager)
     {
 
         $this->entityManager = $entityManager;
-        $this->connection = $connection;
+        $this->amqpManager = $amqpManager;
     }
 
     /**
@@ -136,23 +135,21 @@ class UserDataStatusSubscriber implements EventSubscriberInterface
         $data = array(
             'userId' => $user,
             'resourceOwner' => $resourceOwner,
-            'trigger' => 'process_finished',
         );
 
-        $this->enqueueMatchingCalculation($data, 'brain.matching.process');
+        $this->amqpManager->enqueueMessage($data, 'brain.matching.process_finished');
     }
 
     public function onMatchingExpired(MatchingExpiredEvent $event)
     {
 
         $data = array(
-            'trigger' => 'matching_expired',
             'user_1_id' => $event->getUser1(),
             'user_2_id' => $event->getUser2(),
             'matching_type' => $event->getType(),
         );
 
-        $this->enqueueMatchingCalculation($data, 'brain.matching.matching_expired');
+        $this->amqpManager->enqueueMessage($data, 'brain.matching.matching_expired');
 
     }
 
@@ -160,32 +157,10 @@ class UserDataStatusSubscriber implements EventSubscriberInterface
     {
 
         $data = array(
-            'trigger' => 'content_rated',
             'userId' => $event->getUser(),
         );
 
-        $this->enqueueMatchingCalculation($data, 'brain.matching.content_rated');
-    }
-
-    /**
-     * @param $data
-     * @param $routingKey
-     */
-    private function enqueueMatchingCalculation($data, $routingKey)
-    {
-
-        $message = new AMQPMessage(json_encode($data, JSON_UNESCAPED_UNICODE));
-
-        $exchangeName = 'brain.topic';
-        $exchangeType = 'topic';
-        $topic = 'brain.matching.*';
-        $queueName = 'brain.matching';
-
-        $channel = $this->connection->channel();
-        $channel->exchange_declare($exchangeName, $exchangeType, false, true, false);
-        $channel->queue_declare($queueName, false, true, false, false);
-        $channel->queue_bind($queueName, $exchangeName, $topic);
-        $channel->basic_publish($message, $exchangeName, $routingKey);
+        $this->amqpManager->enqueueMessage($data, 'brain.matching.content_rated');
     }
 
 }

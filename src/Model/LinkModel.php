@@ -148,13 +148,38 @@ class LinkModel
         $query = $qb->getQuery();
         $result = $query->getResultSet();
 
-        $links=array();
+        $links = array();
         /** @var Row $row */
-        foreach ($result as $row){
+        foreach ($result as $row) {
             $links[] = $this->buildLink($row->offsetGet('link'));
         }
 
         return $links;
+    }
+
+    /**
+     * @param array $filters
+     * @return int
+     * @throws Neo4j\Neo4jException
+     * @throws \Exception
+     */
+    public function countAllLinks($filters = array())
+    {
+        $type = isset($filters['type']) ? $filters['type'] : 'Link';
+
+        //todo: add tag filters, probably with an inter-model buildParamsFromFilters
+
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match("(l:$type)")
+            ->returns('count(l) AS c');
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        /* @var $row Row */
+        $row = $result->current();
+        return $row->offsetGet('c');
+
     }
 
     /**
@@ -494,7 +519,7 @@ class LinkModel
             ->limit('{limitUsers}');
 
         $qb->match('(users)-[d:LIKES]->(l:' . $linkType . ')');
-        $conditions = array('(NOT (u)-[:LIKES|:DISLIKES]-(l))');
+        $conditions = array('l.processed = 1 AND(NOT (u)-[:LIKES|:DISLIKES]-(l))');
         if (!(isset($filters['affinity']) && $filters['affinity'] == true)) {
             $conditions[] = '(NOT (u)-[:AFFINITY]-(l))';
         };
@@ -553,6 +578,7 @@ class LinkModel
         $users = 2;
         $content = array();
         while (($users < $maxUsers) && count($content) < $limitContent) {
+            $content = array();
             $predictedContents = $this->getPredictedContentForAUser($userId, $limitContent, $users, $filters);
             foreach ($predictedContents as $predictedContent){
                 $content[] = array('content' => $predictedContent);
@@ -826,8 +852,8 @@ class LinkModel
 
         $mandatoryKeys = array('title', 'description', 'url');
 
-        foreach ($mandatoryKeys as $mandatoryKey){
-            if (!array_key_exists($mandatoryKey, $link)){
+        foreach ($mandatoryKeys as $mandatoryKey) {
+            if (!array_key_exists($mandatoryKey, $link)) {
                 $link[$mandatoryKey] = null;
             }
         }

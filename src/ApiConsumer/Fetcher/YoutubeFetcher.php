@@ -138,40 +138,49 @@ class YoutubeFetcher extends BasicPaginationFetcher
         return $url;
     }
 
-    public function fetchLinksFromUserFeed($user)
+    public function fetchLinksFromUserFeed($user, $public)
     {
         $this->user = $user;
         $this->rawFeed = array();
 
-        $this->setUrl('youtube/v3/channels');
-        $this->setQuery(array(
-            'maxResults' => $this->pageLength,
-            'mine' => 'true',
-            'part' => 'contentDetails'
-        ));
-        $channels = $this->getLinksByPage();
+        if ($this->user['network'] !== 'youtube')
+        {
+            return array();
+        }
 
-        $links = $this->getVideosFromChannels($channels);
-
-        //v2.4 activities returns only playlist videos and uploaded videos
-//        $this->rawFeed = array();
-//        $this->setUrl('youtube/v3/activities');
-//        $this->setQuery(array(
-//            'maxResults' => $this->pageLength,
-//            'mine' => 'true',
-//            'part' => 'snippet,contentDetails'
-//        ));
-//        $this->getLinksByPage();
+        $channels = $this->getChannelsFromUser($public);
+        $links = $this->getVideosFromChannels($channels, $public);
 
         $links = array_merge($links, $this->rawFeed);
         return $this->parseLinks($links);
     }
 
+    private function getChannelsFromUser($public){
+
+
+
+        $this->setUrl('youtube/v3/channels');
+        $query = array(
+            'maxResults' => $this->pageLength,
+            'part' => 'contentDetails'
+        );
+        if (!$public) {
+            $query['mine'] = 'true';
+        } else {
+            $query['id'] = $this->resourceOwner->getUsername($this->user);
+        }
+
+        $this->setQuery($query);
+        $channels = $this->getLinksByPage($public);
+        return $channels;
+    }
+
     /**
      * @param array $channels
+     * @param bool $public
      * @return array
      */
-    private function getVideosFromChannels(array $channels)
+    private function getVideosFromChannels(array $channels, $public = false)
     {
 
         $links = array();
@@ -186,7 +195,7 @@ class YoutubeFetcher extends BasicPaginationFetcher
                 'part' => 'snippet,contentDetails'
             ));
             try {
-                $this->getLinksByPage();
+                $this->getLinksByPage($public);
                 $playlists = array();
                 foreach ($this->rawFeed as $p) {
                     $playlists[$p['snippet']['title']] = $p['id'];
@@ -211,7 +220,7 @@ class YoutubeFetcher extends BasicPaginationFetcher
                     'part' => 'snippet,contentDetails'
                 ));
                 try {
-                    $this->getLinksByPage();
+                    $this->getLinksByPage($public);
                 } catch (\Exception $exception) {
                     //Some default lists return 404 if empty.
                 }

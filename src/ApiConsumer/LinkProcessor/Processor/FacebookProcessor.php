@@ -2,7 +2,6 @@
 
 namespace ApiConsumer\LinkProcessor\Processor;
 
-use GuzzleHttp\Exception\RequestException;
 use Http\OAuth\ResourceOwner\FacebookResourceOwner;
 
 class FacebookProcessor implements ProcessorInterface
@@ -65,22 +64,19 @@ class FacebookProcessor implements ProcessorInterface
 
         $link = $this->scraperProcessor->process($link);
 
-        try {
-            $url = (string)$id;
-            $query = array(
-                'fields' => 'description,picture'
-            );
+        $url = (string)$id;
+        $query = array(
+            'fields' => 'description,picture'
+        );
 
-            $token = array();
-            if (isset($link['resourceOwnerToken'])) {
-                $token = $link['resourceOwnerToken'];
-            }
-            $response = $this->resourceOwner->authorizedHTTPRequest($url, $query, $token);
-            $link['description'] = isset($response['description']) ? $response['description'] : null;
-            $link['thumbnail'] = isset($response['picture']) ? $response['picture'] : null;
-
-        } catch (RequestException $e) {
+        $token = array();
+        if (isset($link['resourceOwnerToken'])) {
+            $token = $link['resourceOwnerToken'];
         }
+        $response = $this->resourceOwner->authorizedHTTPRequest($url, $query, $token);
+        $link['description'] = isset($response['description']) ? $response['description'] : null;
+        $link['thumbnail'] = isset($response['picture']) ? $response['picture'] : null;
+
 
         return $link;
     }

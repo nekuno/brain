@@ -7,6 +7,7 @@ use Model\LinkModel;
 use Model\Questionnaire\QuestionModel;
 use Model\User\Affinity\AffinityModel;
 use Model\User\AnswerModel;
+use Model\EnterpriseUser\CommunityModel;
 use Model\User\ContentComparePaginatedModel;
 use Model\User\ContentPaginatedModel;
 use Model\User\ContentTagModel;
@@ -25,10 +26,13 @@ use Model\User\Recommendation\ContentRecommendationTagModel;
 use Model\User\Recommendation\UserRecommendationPaginatedModel;
 use Model\User\RelationsModel;
 use Model\User\Similarity\SimilarityModel;
+use Model\User\SocialNetwork\LinkedinSocialNetworkModel;
 use Model\User\TokensModel;
+use Model\User\UserStatsManager;
 use Model\UserModel;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
+use Symfony\Component\Security\Core\Encoder\MessageDigestPasswordEncoder;
 
 class ModelsServiceProvider implements ServiceProviderInterface
 {
@@ -38,17 +42,25 @@ class ModelsServiceProvider implements ServiceProviderInterface
      */
     public function register(Application $app)
     {
+
+        $app['security.password_encoder'] = $app->share(
+            function () {
+
+                return new MessageDigestPasswordEncoder();
+            }
+        );
+
         $app['users.model'] = $app->share(
             function ($app) {
 
-                return new UserModel($app['neo4j.graph_manager'], $app['dbs']['mysql_social'], $app['orm.ems']['mysql_brain'], $app['users.relations.model'], $app['fields']['user'], $app['locale.options']['default']);
+                return new UserModel($app['neo4j.graph_manager'], $app['security.password_encoder'], $app['fields']['user'], $app['locale.options']['default']);
             }
         );
 
         $app['users.tokens.model'] = $app->share(
             function ($app) {
 
-                return new TokensModel($app['neo4j.graph_manager'], $app['dbs']['mysql_social'], $app['orm.ems']['mysql_brain']);
+                return new TokensModel($app['neo4j.graph_manager'], $app['orm.ems']['mysql_brain']);
             }
         );
 
@@ -97,21 +109,21 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.content.model'] = $app->share(
             function ($app) {
 
-                return new ContentPaginatedModel($app['neo4j.graph_manager']);
+                return new ContentPaginatedModel($app['neo4j.graph_manager'], $app['users.tokens.model']);
             }
         );
 
         $app['users.content.compare.model'] = $app->share(
             function ($app) {
 
-                return new ContentComparePaginatedModel($app['neo4j.graph_manager']);
+                return new ContentComparePaginatedModel($app['neo4j.graph_manager'], $app['users.tokens.model']);
             }
         );
 
         $app['users.content.tag.model'] = $app->share(
             function ($app) {
 
-                return new ContentTagModel($app['neo4j.client']);
+                return new ContentTagModel($app['neo4j.client'], $app['neo4j.graph_manager']);
             }
         );
 
@@ -164,10 +176,24 @@ class ModelsServiceProvider implements ServiceProviderInterface
             }
         );
 
+        $app['users.stats.manager'] = $app->share(
+            function ($app) {
+
+                return new UserStatsManager($app['neo4j.graph_manager'], $app['orm.ems']['mysql_brain'], $app['users.tokens.model'], $app['users.relations.model']);
+            }
+        );
+
         $app['users.lookup.model'] = $app->share(
             function ($app) {
 
-                return new LookUpModel($app['neo4j.graph_manager'], $app['orm.ems']['mysql_brain'], $app['lookUp.fullContact.service'], $app['lookUp.peopleGraph.service']);
+                return new LookUpModel($app['neo4j.graph_manager'], $app['orm.ems']['mysql_brain'], $app['users.tokens.model'], $app['lookUp.fullContact.service'], $app['lookUp.peopleGraph.service'], $app['dispatcher']);
+            }
+        );
+
+        $app['users.socialNetwork.linkedin.model'] = $app->share(
+            function ($app) {
+
+                return new LinkedinSocialNetworkModel($app['neo4j.graph_manager'], $app['parser.linkedin']);
             }
         );
 
@@ -201,7 +227,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.relations.model'] = $app->share(
             function ($app) {
 
-                return new RelationsModel($app['neo4j.graph_manager'], $app['dbs']['mysql_social']);
+                return new RelationsModel($app['neo4j.graph_manager'], $app['dbs']['mysql_social'], $app['users.model']);
             }
         );
 
@@ -209,6 +235,13 @@ class ModelsServiceProvider implements ServiceProviderInterface
             function ($app) {
 
                 return new EnterpriseUserModel($app['neo4j.graph_manager']);
+            }
+        );
+
+        $app['enterpriseUsers.communities.model'] = $app->share(
+            function ($app) {
+
+                return new CommunityModel($app['neo4j.graph_manager'], $app['users.model']);
             }
         );
     }

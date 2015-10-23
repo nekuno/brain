@@ -2,6 +2,8 @@
 
 namespace ApiConsumer\LinkProcessor\Processor;
 
+use ApiConsumer\LinkProcessor\LinkAnalyzer;
+use GuzzleHttp\Exception\RequestException;
 use Http\OAuth\ResourceOwner\GoogleResourceOwner;
 use ApiConsumer\LinkProcessor\UrlParser\YoutubeUrlParser;
 
@@ -64,7 +66,8 @@ class YoutubeProcessor implements ProcessorInterface
             'part' => 'snippet,statistics,topicDetails',
             'id' => $id,
         );
-        $response = $this->resourceOwner->authorizedAPIRequest($url, $query);
+        $token = array('network' => LinkAnalyzer::YOUTUBE);
+        $response = $this->resourceOwner->authorizedAPIRequest($url, $query, $token);
 
         $link['tags'] = array();
 
@@ -87,6 +90,13 @@ class YoutubeProcessor implements ProcessorInterface
                     );
                 }
             }
+        } else {
+            //YouTube API returns 200 on non-existent videos, against its documentation
+            $request = $this->resourceOwner->getAPIRequest($this->resourceOwner->getOption('base_url').$url,
+                                                            $query,
+                                                            $token);
+            throw new RequestException('Video does not exist',
+                                        $request, null, null);
         }
 
         return $link;

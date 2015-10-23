@@ -3,8 +3,7 @@
 namespace EventListener;
 
 use Event\AnswerEvent;
-use PhpAmqpLib\Connection\AMQPStreamConnection;
-use PhpAmqpLib\Message\AMQPMessage;
+use Service\AMQPManager;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -15,17 +14,17 @@ class UserAnswerSubscriber implements EventSubscriberInterface
 {
 
     /**
-     * @var AMQPStreamConnection
+     * @var AMQPManager
      */
-    private $connection;
+    protected $amqpManager;
 
     /**
-     * @param AMQPStreamConnection $connection
+     * @param AMQPManager $amqpManager
      */
-    public function __construct(AMQPStreamConnection $connection)
+    public function __construct(AMQPManager $amqpManager)
     {
 
-        $this->connection = $connection;
+        $this->amqpManager = $amqpManager;
     }
 
     /**
@@ -51,27 +50,6 @@ class UserAnswerSubscriber implements EventSubscriberInterface
             'trigger' => 'question_answered'
         );
 
-        $this->enqueueMatchingCalculation($data, 'brain.matching.question_answered');
-    }
-
-    /**
-     * @param $data
-     * @param $routingKey
-     */
-    private function enqueueMatchingCalculation($data, $routingKey)
-    {
-
-        $message = new AMQPMessage(json_encode($data, JSON_UNESCAPED_UNICODE));
-
-        $exchangeName = 'brain.topic';
-        $exchangeType = 'topic';
-        $topic = 'brain.matching.*';
-        $queueName = 'brain.matching';
-
-        $channel = $this->connection->channel();
-        $channel->exchange_declare($exchangeName, $exchangeType, false, true, false);
-        $channel->queue_declare($queueName, false, true, false, false);
-        $channel->queue_bind($queueName, $exchangeName, $topic);
-        $channel->basic_publish($message, $exchangeName, $routingKey);
+        $this->amqpManager->enqueueMessage($data, 'brain.matching.question_answered');
     }
 }

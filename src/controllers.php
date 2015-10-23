@@ -91,6 +91,13 @@ $app['enterpriseUsers.groups.controller'] = $app->share(
     }
 );
 
+$app['enterpriseUsers.communities.controller'] = $app->share(
+    function () use ($app) {
+
+        return new \Controller\EnterpriseUser\CommunityController($app['enterpriseUsers.model'], $app['enterpriseUsers.communities.model']);
+    }
+);
+
 $app['enterpriseUsers.invitations.controller'] = $app->share(
     function () use ($app) {
 
@@ -144,7 +151,7 @@ $app->error(
         }
 
         if ($e instanceof Neo4jException) {
-            $response['error'] = isset($e->getData()['message']) ? $e->getData()['message'] : $e->getData();
+            $response['error'] = isset($e->getData()['message']) ? $e->getData()['message'] : $e->getData() ? $e->getData() : $e->getMessage();
             $response['query'] = $e->getQuery();
             $response['headers'] = $e->getHeaders();
             $response['data'] = $e->getData();

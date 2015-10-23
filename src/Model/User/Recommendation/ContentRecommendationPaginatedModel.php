@@ -80,7 +80,6 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
     public function slice(array $filters, $offset, $limit)
     {
 
-
         if ((integer)$limit == 0) {
             return array();
         }
@@ -102,7 +101,7 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
         $qb = $this->gm->createQueryBuilder();
 
         $qb->match('(user:User {qnoow_id: { userId }})-[affinity:AFFINITY]->(content:' . $linkType . ')')
-            ->where('NOT (user)-[:LIKES|:DISLIKES]->(content) AND affinity.affinity > 0');
+            ->where('NOT (user)-[:LIKES|:DISLIKES]->(content) AND affinity.affinity > 0 AND content.processed = 1');
 
         if (isset($filters['tag'])) {
             $qb->match('(content)-[:TAGGED]->(filterTag:Tag)')
@@ -163,7 +162,7 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
      * @param $filters
      * @param $limit
      * @param $foreign
-     * @return array
+     * @return array (items, foreign = # of links database searched, -1 if total)
      * @throws \Exception
      * @throws \Model\Neo4j\Neo4jException
      */
@@ -181,38 +180,35 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
             $linkType = $filters['type'];
         }
 
-        $totalDatabaseContents = 50000;
-
         $pageSizeMultiplier = 1; //small may make queries slow, big may skip results
-        if (isset($filters['tag'])){
-            $pageSizeMultiplier *= 10;
+        if (isset($filters['tag'])) {
+            $pageSizeMultiplier *= 5;
         }
 
         $internalLimit = $limit * $pageSizeMultiplier;
 
         $maxPagesSearched = 10000; //bigger may get more contents but it's slower near the limit
 
-        $pagesSearched = min(array($totalDatabaseContents / $internalLimit, $maxPagesSearched));
+        $databaseSize = $this->lm->countAllLinks($filters);
+
+        $pagesSearched = min(array($databaseSize / $internalLimit, $maxPagesSearched));
 
         $internalPaginationLimit = $foreign + $pagesSearched * $internalLimit;
 
         $params = array(
             'userId' => (integer)$id,
             'limit' => (integer)$limit,
-
             'internalOffset' => (integer)$foreign,
             'internalLimit' => $internalLimit,
         );
 
-        $items = 0;
+        $items = array();
 
-        $return = array('items' => array());
-
-        while ($items < $limit && $params['internalOffset'] < $internalPaginationLimit) {
+        while (count($items) < $limit && $params['internalOffset'] < $internalPaginationLimit) {
 
             $qb = $this->gm->createQueryBuilder();
             $qb->match('(user:User {qnoow_id: { userId }})');
-            $qb->match('(content:' . $linkType . ')');
+            $qb->match('(content:' . $linkType . '{processed: 1})');
             $qb->with('user', 'content')
                 ->orderBy('content.created DESC')
                 ->skip('{internalOffset}')
@@ -248,12 +244,16 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
 
             $response = $this->buildResponseFromResult($result, $id);
 
-            $return['items'] = array_merge($return['items'], $response['items']);
+            $items = array_merge($items, $response['items']);
 
-            $items = count($return['items']);
             $params['internalOffset'] += $internalLimit;
         }
 
+        $return = array('items' => array_slice($items, 0, $limit));
+
+        if ($params['internalOffset'] >= $databaseSize) {
+            $params['internalOffset'] = -1;
+        }
         $return['foreign'] = $params['internalOffset'];
 
         return $return;
@@ -282,12 +282,12 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
         $qb = $this->gm->createQueryBuilder();
 
         if (isset($filters['tag'])) {
-            $qb->match('(content:' . $linkType . ')-[:TAGGED]->(filterTag:Tag)')
+            $qb->match('(content:' . $linkType . '{processed: 1})-[:TAGGED]->(filterTag:Tag)')
                 ->where('filterTag.name = { tag }');
 
             $params['tag'] = $filters['tag'];
         } else {
-            $qb->match('(content:' . $linkType . ')');
+            $qb->match('(content:' . $linkType . '{processed: 1})');
         }
 
         $qb->with('count(content) AS max');
@@ -304,20 +304,6 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
         }
 
         return $count;
-    }
-
-    /**
-     * @param $limit int
-     * @param $response array
-     * @return int
-     */
-    protected function needMoreContent($limit, $response)
-    {
-        $moreContent = $limit - count($response['items']);
-        if ($moreContent <= 0) {
-            return 0;
-        }
-        return $moreContent;
     }
 
     /**
@@ -348,6 +334,21 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
     }
 
     /**
+     * @param $limit int
+     * @param $response array
+     * @return int
+     */
+    protected function needMoreContent($limit, $response)
+    {
+        $moreContent = $limit - count($response['items']);
+        if ($moreContent <= 0) {
+            return 0;
+        }
+
+        return $moreContent;
+    }
+
+    /**
      * @param $row Row
      * @param $contentNode Node
      * @param $id
@@ -372,7 +373,6 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
                 $content['synonymous'][] = $synonymous;
             }
         }
-
 
         $content['tags'] = array();
         if (isset($row['tags'])) {

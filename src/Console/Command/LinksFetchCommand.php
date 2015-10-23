@@ -6,6 +6,7 @@ use ApiConsumer\EventListener\FetchLinksInstantSubscriber;
 use ApiConsumer\EventListener\FetchLinksSubscriber;
 use ApiConsumer\Fetcher\FetcherService;
 use Console\ApplicationAwareCommand;
+use Model\User\LookUpModel;
 use Model\User\TokensModel;
 use Psr\Log\LogLevel;
 use Silex\Application;
@@ -38,6 +39,12 @@ class LinksFetchCommand extends ApplicationAwareCommand
                         InputOption::VALUE_OPTIONAL,
                         'ID of the user to fetch links from'
                     ),
+                    new InputOption(
+                        'public',
+                        null,
+                        InputOption::VALUE_NONE,
+                        'Fetch as Nekuno instead of as the user'
+                    ),
                 )
             );
     }
@@ -47,6 +54,7 @@ class LinksFetchCommand extends ApplicationAwareCommand
 
         $resource = $input->getOption('resource', null);
         $userId = $input->getOption('user', null);
+        $public = $input->getOption('public', false);
 
         if (null === $resource && null === $userId) {
             throw new MissingOptionsException ("You must provide the user or the resource to fetch links from", array("resource", "user"));
@@ -57,16 +65,31 @@ class LinksFetchCommand extends ApplicationAwareCommand
             $availableResourceOwners = implode(', ', array_keys($resourceOwners));
 
             if (!isset($resourceOwners[$resource])) {
-                $output->writeln(sprintf('Resource ownner %s not found, available resource owners: %s.', $resource, $availableResourceOwners));
+                $output->writeln(sprintf('Resource owner %s not found, available resource owners: %s.', $resource, $availableResourceOwners));
 
                 return;
             }
         }
 
-        /* @var $tm TokensModel */
-        $tm = $this->app['users.tokens.model'];
+        if (!$public) {
+            /* @var $tm TokensModel */
+            $tm = $this->app['users.tokens.model'];
 
-        $tokens = $tm->getByUserOrResource($userId, $resource);
+            $tokens = $tm->getByUserOrResource($userId, $resource);
+        } else {
+            /* @var $lookupmodel LookUpModel */
+            $lookupmodel = $this->app['users.lookup.model'];
+
+            $tokens = $lookupmodel->getSocialProfiles($userId, $resource, false);
+
+            if ($resource) {
+                foreach ($tokens as $token){
+                    if ($token['resourceOwner'] == 'resource'){
+                        $tokens = array($token);
+                    }
+                }
+            }
+        }
 
         /* @var FetcherService $fetcher */
         $fetcher = $this->app['api_consumer.fetcher'];
@@ -83,8 +106,7 @@ class LinksFetchCommand extends ApplicationAwareCommand
 
         foreach ($tokens as $token) {
             try {
-
-                $fetcher->fetch($token['id'], $token['resourceOwner']);
+                $fetcher->fetch( $token, $public);
 
             } catch (\Exception $e) {
                 $output->writeln(

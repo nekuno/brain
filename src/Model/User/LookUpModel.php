@@ -5,12 +5,15 @@
 namespace Model\User;
 
 use Doctrine\ORM\EntityManager;
+use Everyman\Neo4j\Query\Row;
+use Event\LookUpSocialNetworksEvent;
 use Model\Neo4j\GraphManager;
 use Model\Entity\LookUpData;
 use Service\LookUp\LookUp;
 use Service\LookUp\LookUpFullContact;
 use Service\LookUp\LookUpPeopleGraph;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -40,12 +43,34 @@ class LookUpModel
      */
     protected $peopleGraph;
 
-    public function __construct(GraphManager $gm, EntityManager $em, LookUpFullContact $fullContact, LookUpPeopleGraph $peopleGraph)
+    /**
+     * @var EventDispatcher
+     */
+    protected $dispatcher;
+
+    //neo4j labels => resourceOwner names
+    protected $resourceOwners = array(
+        'TwitterSocialNetwork' => TokensModel::TWITTER,
+        'GoogleplusSocialNetwork' => TokensModel::GOOGLE,
+        'YoutubeSocialNetwork' => TokensModel::GOOGLE,
+    );
+    const LABEL_SOCIAL_NETWORK = 'SocialNetwork';
+
+    /**
+     * @var TokensModel
+     */
+    protected $tm;
+
+
+    public function __construct(GraphManager $gm, EntityManager $em, TokensModel $tm, LookUpFullContact $fullContact, LookUpPeopleGraph $peopleGraph, EventDispatcher $dispatcher)
+
     {
         $this->gm = $gm;
         $this->em = $em;
+        $this->tm = $tm;
         $this->fullContact = $fullContact;
         $this->peopleGraph = $peopleGraph;
+        $this->dispatcher = $dispatcher;
     }
 
     public function completeUserData($userData, OutputInterface $outputInterface = null)
@@ -92,6 +117,9 @@ class LookUpModel
             $this->showOutputMessageIfDefined($outputInterface, 'Adding social profiles to user ' . $id . '...');
 
             $this->setSocialProfiles($lookUpData['socialProfiles'], $id);
+
+            $this->dispatchSocialNetworksAddedEvent($id, $lookUpData['socialProfiles']);
+
             return $lookUpData['socialProfiles'];
         }
 
@@ -111,6 +139,70 @@ class LookUpModel
                 }
             }
         }
+    }
+
+    /**
+     * @param $userId
+     * @param string $resource
+     * @param bool $all
+     * @return array
+     * @throws \Model\Neo4j\Neo4jException
+     */
+    public function getSocialProfiles($userId, $resource = null, $all = false)
+    {
+        if (!$userId) return array();
+
+        if ($resource){
+            $networkLabels = array_keys($this->resourceOwners, $resource);
+        } else {
+            $networkLabels = array($this::LABEL_SOCIAL_NETWORK);
+            if (!$all){
+                $networkLabels = array();
+                $unconnected = $this->tm->getUnconnectedNetworks($userId);
+                foreach ($unconnected as $network)
+                {
+                    $networkLabels = array_merge($networkLabels, array_keys($this->resourceOwners, $network));
+                }
+            }
+
+        }
+        if (empty($networkLabels)){
+            return array();
+        }
+
+        $socialProfiles = array();
+
+        foreach ($networkLabels as $networkLabel){
+            $qb = $this->gm->createQueryBuilder();
+            $qb->match('(u:User{qnoow_id:{userId}})')
+                ->match('(u)-[hsn:HAS_SOCIAL_NETWORK]->(sn:'.$networkLabel.')')
+                ->returns('hsn.url as url, labels(sn) as network');
+            $qb->setParameters(array(
+                'userId' => (integer)$userId,
+            ));
+            $query = $qb->getQuery();
+            $result = $query->getResultSet();
+
+            /* @var $row Row */
+            foreach ($result as $row) {
+                $labels = $row->offsetGet('network');
+                foreach ($labels as $network) {
+                    if ($network !== $this::LABEL_SOCIAL_NETWORK) {
+
+                        $resourceOwner = array_key_exists($network, $this->resourceOwners) ?
+                            $this->resourceOwners[$network] : null;
+
+                        $socialProfiles[] = array(
+                            'id' => $userId,
+                            'url' => $row->offsetGet('url'),
+                            'resourceOwner' => $resourceOwner,
+                        );
+                    }
+                }
+            }
+        }
+
+        return $socialProfiles;
     }
 
     protected function initializeLookUpData($userData)
@@ -224,7 +316,6 @@ class LookUpModel
         return $lookUpDataArray;
     }
 
-
     public function merge(array $lookUpData1, array $lookUpData2)
     {
         if(! isset($lookUpData1['name']) && isset($lookUpData2['name'])) {
@@ -263,8 +354,8 @@ class LookUpModel
         foreach($socialProfiles as $resource => $url) {
             $counter++;
             $label = ucfirst(str_replace('.', '', str_replace(' ', '', $resource)));
-            $resourceNode = $label . 'SocialNetwork';
-            $qb->merge('(sn' . $counter . ':SocialNetwork:' . $resourceNode . ')')
+            $resourceNode = $label . $this::LABEL_SOCIAL_NETWORK;
+            $qb->merge('(sn' . $counter . ':'.$this::LABEL_SOCIAL_NETWORK.':' . $resourceNode . ')')
                 ->merge('(u)-[hsn' . $counter . ':HAS_SOCIAL_NETWORK {url: { url' . $counter . ' }}]->(sn' . $counter . ')')
                 ->setParameter('url' . $counter, $url);
         }
@@ -373,4 +464,9 @@ class LookUpModel
             $outputInterface->writeln($message);
     }
 
+    protected function dispatchSocialNetworksAddedEvent($id, $socialProfiles)
+    {
+        $event = new LookUpSocialNetworksEvent($id, $socialProfiles);
+        $this->dispatcher->dispatch(\AppEvents::SOCIAL_NETWORKS_ADDED, $event);
+    }
 }

@@ -4,6 +4,8 @@
 namespace Controller\User;
 
 use Doctrine\ORM\EntityManager;
+use Model\Entity\DataStatus;
+use Model\User\TokensModel;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -33,11 +35,21 @@ class DataController
             return $app->json(null, 404);
         }
 
+        /* @var TokensModel $tokensModel */
+        $tokensModel = $app['users.tokens.model'];
+        $connectedNetworks = $tokensModel->getConnectedNetworks($userId);
+
         $responseData = array();
+        /* @var $row DataStatus */
         foreach ($dataStatus as $row) {
-            $responseData[$row->getResourceOwner()] = array(
+            $resource = $row->getResourceOwner();
+
+            if (!in_array($resource, $connectedNetworks)) {
+                continue;
+            }
+            $responseData[$resource] = array(
                 'fetched' => $row->getFetched(),
-                'processed' => $row->getProcessed()
+                'processed' => $row->getProcessed(),
             );
         }
 

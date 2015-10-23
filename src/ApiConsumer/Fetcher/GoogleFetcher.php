@@ -10,9 +10,16 @@ class GoogleFetcher extends BasicPaginationFetcher
 
     protected $paginationId = null;
 
+    public function setUser($user){
+        parent::setUser($user);
+        if (!array_key_exists('googleID', $this->user)){
+            $this->user['googleID'] = $this->resourceOwner->getUsername($this->user);
+        }
+    }
+
     public function getUrl()
     {
-        return '/plus/v1/people/' . $this->user['googleID'] . '/activities/public';
+        return 'plus/v1/people/' . $this->user['googleID'] . '/activities/public';
     }
 
     protected function getQuery()
@@ -21,6 +28,16 @@ class GoogleFetcher extends BasicPaginationFetcher
             'maxResults' => $this->pageLength,
             'fields' => 'items(object(attachments(content,displayName,id,objectType,url)),title,published,updated),nextPageToken'
         );
+    }
+
+    public function fetchLinksFromUserFeed($user, $public)
+    {
+        if ($user['network'] !== 'google')
+        {
+            return array();
+        }
+
+        return parent::fetchLinksFromUserFeed($user, $public);
     }
 
     protected function getItemsFromResponse($response)

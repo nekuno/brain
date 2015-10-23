@@ -12,6 +12,7 @@ use Provider\ModelsServiceProvider;
 use Provider\PaginatorServiceProvider;
 use Provider\ServicesServiceProvider;
 use Provider\SubscribersServiceProvider;
+use Provider\ParserProvider;
 use Silex\Application;
 use Silex\Provider\DoctrineServiceProvider;
 use Silex\Provider\MonologServiceProvider;
@@ -26,7 +27,7 @@ $app = new Application();
 
 $app['env'] = getenv('APP_ENV') ?: 'prod';
 
-$app->register(new MonologServiceProvider(), array('monolog.name' => 'brain'));
+$app->register(new MonologServiceProvider(), array('monolog.name' => 'brain', 'monolog.logfile' => __DIR__."./../var/logs/silex_{$app['env']}.log"));
 $app->register(new DoctrineServiceProvider());
 $app->register(new DoctrineOrmServiceProvider());
 $app->register(new Neo4jPHPServiceProvider());
@@ -36,6 +37,7 @@ $app->register(new ValidatorServiceProvider());
 $app->register(new ServiceControllerServiceProvider());
 $app->register(new ApiConsumerServiceProvider());
 $app->register(new LinkProcessorServiceProvider());
+$app->register(new ParserProvider());
 $app->register(new LookUpServiceProvider());
 $app->register(new PaginatorServiceProvider());
 $app->register(new SwiftmailerServiceProvider());

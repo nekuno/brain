@@ -45,4 +45,16 @@ abstract class AbstractClientCredential implements ClientCredentialInterface
      * {@inheritDoc}
      */
     abstract public function getClientToken();
+
+    /**
+     * Get an application key
+     *
+     * @return string
+     */
+    public function getApplicationToken()
+    {
+        return $this->getOption('application_token');
+    }
+
+
 } 

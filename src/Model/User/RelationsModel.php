@@ -8,6 +8,7 @@ use Everyman\Neo4j\Query\Row;
 use Everyman\Neo4j\Relationship;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
+use Model\UserModel;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class RelationsModel
@@ -28,11 +29,17 @@ class RelationsModel
      */
     protected $connectionSocial;
 
-    public function __construct(GraphManager $gm, Connection $connectionSocial)
+    /**
+     * @var UserModel
+     */
+    protected $userModel;
+
+    public function __construct(GraphManager $gm, Connection $connectionSocial, UserModel $userModel)
     {
 
         $this->gm = $gm;
         $this->connectionSocial = $connectionSocial;
+        $this->userModel = $userModel;
     }
 
     public function getAll($from, $relation)
@@ -99,7 +106,7 @@ class RelationsModel
         /* @var $row Row */
         $row = $result->current();
 
-        return  $row->offsetGet('count');
+        return $row->offsetGet('count');
     }
 
     public function countTo($to, $relation)
@@ -118,7 +125,7 @@ class RelationsModel
         /* @var $row Row */
         $row = $result->current();
 
-        return  $row->offsetGet('count');
+        return $row->offsetGet('count');
     }
 
     public function create($from, $to, $relation, $data = array())
@@ -200,15 +207,15 @@ class RelationsModel
             ->setParameter('messaged', $messaged)
             ->with('from', 'to')
             ->where('NOT (from)-[:' . RelationsModel::BLOCKS . ']-(to)')
-            ->returns('to.qnoow_id AS to')
-            ->orderBy('to');
+            ->returns('to AS u')
+            ->orderBy('u.qnoow_id');
 
         $result = $qb->getQuery()->getResultSet();
         $return = array();
 
         foreach ($result as $row) {
             /* @var $row Row */
-            $return[] = $row->offsetGet('to');
+            $return[] = $this->userModel->build($row);
         }
 
         return $return;
@@ -230,15 +237,15 @@ class RelationsModel
             ->setParameter('messaged', $messaged)
             ->with('from', 'to')
             ->where('NOT (from)-[:' . RelationsModel::BLOCKS . ']-(to)')
-            ->returns('to.qnoow_id AS to')
-            ->orderBy('to');
+            ->returns('to AS u')
+            ->orderBy('u.qnoow_id');
 
         $result = $qb->getQuery()->getResultSet();
         $return = array();
 
         foreach ($result as $row) {
             /* @var $row Row */
-            $return[] = $row->offsetGet('to');
+            $return[] = $this->userModel->build($row);
         }
 
         return $return;
@@ -265,12 +272,15 @@ class RelationsModel
 
         $messaged = $this->connectionSocial->executeQuery(
             '
-            SELECT users.id FROM users
-            LEFT JOIN chat_message AS messages_sent ON (users.id = messages_sent.user_from)
-            LEFT JOIN chat_message AS messages_received ON (users.id = messages_received.user_to)
-            WHERE messages_sent.user_to = :id OR messages_received.user_from = :id
-            GROUP BY users.id
-            ORDER BY users.id',
+            SELECT * FROM (
+              SELECT user_to AS user FROM chat_message
+              WHERE user_from = :id
+              GROUP BY user_to
+              UNION
+              SELECT user_from AS user FROM chat_message
+              WHERE user_to = :id
+              GROUP BY user_from
+            ) AS tmp ORDER BY tmp.user',
             array('id' => (integer)$id)
         )->fetchAll(\PDO::FETCH_COLUMN);
 
@@ -314,7 +324,7 @@ class RelationsModel
         );
 
         if (!in_array($relation, $relations)) {
-            throw new ValidationException(sprintf('Relation type "%s" not allowed, possible values "%s"', $relation, implode('", "', $relations)));
+            throw new ValidationException(array(), sprintf('Relation type "%s" not allowed, possible values "%s"', $relation, implode('", "', $relations)));
         }
     }
 

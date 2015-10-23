@@ -5,11 +5,14 @@
 namespace Console\Command;
 
 use Console\BaseCommand;
+use Model\UserModel;
 use Silex\Application;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Model\User\LookUpModel;
+use Symfony\Component\EventDispatcher\EventDispatcher;
+use EventListener\LookUpSocialNetworkSubscriber;
 
 class LookUpByEmailCommand extends BaseCommand
 {
@@ -17,34 +20,41 @@ class LookUpByEmailCommand extends BaseCommand
     {
         $this->setName('look-up:email')
             ->setDescription('Look up user information using fullContact and peopleGraph')
-            ->addOption('email', 'email', InputOption::VALUE_REQUIRED, 'Email to lookup', 'enredos@nekuno.com')
-            ->addOption('id', 'id', InputOption::VALUE_OPTIONAL, 'User id for creating SocialNetwork relationships');
+            ->addOption('id', 'id', InputOption::VALUE_OPTIONAL, 'User id for creating SocialNetwork relationships')
+            ->addOption('email', 'email', InputOption::VALUE_REQUIRED, 'Email to lookup');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+
         $this->setFormat($output);
+        $id = $input->getOption('id');
         $email = $input->getOption('email');
-        $id = intval($input->getOption('id'));
-
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $this->displayError('Invalid email format');
-            exit;
-        }
-
-        if ($id && !is_int($id)) {
-            $this->displayError('Invalid user id');
-            exit;
-        }
 
         /* @var $lookUpModel LookUpModel */
         $lookUpModel = $this->app['users.lookup.model'];
 
         if ($id) {
+
+            /* @var $userModel UserModel */
+            $userModel = $this->app['users.model'];
+
+            try {
+                $user = $userModel->getById($id);
+            } catch (\Exception $e) {
+                $this->displayError($e->getMessage());
+                exit;
+            }
             $this->displayTitle('Looking up user ' . $id);
-            $lookUpData = $lookUpModel->set($id, array('email' => $email), $output);
+            $lookUpData = $lookUpModel->set($id, array('email' => $user['email']), $output);
             $this->displaySocialData($lookUpData);
+
         } else {
+
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $this->displayError('Invalid email format');
+                exit;
+            }
             $this->displayTitle('Looking up for email ' . $email);
             $lookUpData = $lookUpModel->completeUserData(array('email' => $email), $output);
             $this->displayFullData($lookUpData);

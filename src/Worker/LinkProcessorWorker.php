@@ -3,9 +3,9 @@
 
 namespace Worker;
 
-use ApiConsumer\Auth\UserProviderInterface;
 use ApiConsumer\Fetcher\FetcherService;
 use Doctrine\DBAL\Connection;
+use Model\User\LookUpModel;
 use Model\User\TokensModel;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Message\AMQPMessage;
@@ -28,6 +28,11 @@ class LinkProcessorWorker extends LoggerAwareWorker implements RabbitMQConsumerI
     protected $tm;
 
     /**
+     * @var LookupModel
+     */
+    protected $lookupModel;
+
+    /**
      * @var FetcherService
      */
     protected $fetcherService;
@@ -42,12 +47,13 @@ class LinkProcessorWorker extends LoggerAwareWorker implements RabbitMQConsumerI
      */
     protected $connectionBrain;
 
-    public function __construct(AMQPChannel $channel, FetcherService $fetcherService, TokensModel $tm, Connection $connectionSocial, Connection $connectionBrain)
+    public function __construct(AMQPChannel $channel, FetcherService $fetcherService, TokensModel $tm, LookUpModel $lm, Connection $connectionSocial, Connection $connectionBrain)
     {
 
         $this->channel = $channel;
         $this->fetcherService = $fetcherService;
         $this->tm = $tm;
+        $this->lookupModel = $lm;
         $this->connectionSocial = $connectionSocial;
         $this->connectionBrain = $connectionBrain;
     }
@@ -58,13 +64,14 @@ class LinkProcessorWorker extends LoggerAwareWorker implements RabbitMQConsumerI
     public function consume()
     {
 
-        $exchangeName = 'brain.direct';
-        $exchangeType = 'direct';
-        $routingKey = 'brain.fetching.links';
+        $exchangeName = 'brain.topic';
+        $exchangeType = 'topic';
+        $topic = 'brain.fetching.*';
         $queueName = 'brain.fetching';
+
         $this->channel->exchange_declare($exchangeName, $exchangeType, false, true, false);
         $this->channel->queue_declare($queueName, false, true, false, false);
-        $this->channel->queue_bind($queueName, $exchangeName, $routingKey);
+        $this->channel->queue_bind($queueName, $exchangeName, $topic);
 
         $this->channel->basic_consume($queueName, '', false, false, false, false, array($this, 'callback'));
 
@@ -94,13 +101,18 @@ class LinkProcessorWorker extends LoggerAwareWorker implements RabbitMQConsumerI
         $data = json_decode($message->body, true);
         $resourceOwner = $data['resourceOwner'];
         $userId = $data['userId'];
+        $public = array_key_exists('public', $data) ? $data['public'] : false;
 
-        $tokens = $this->tm->getByUserOrResource($userId, $resourceOwner);
+        if (!(array_key_exists('public', $data) && $data['public'] == true)) {
+            $tokens = $this->tm->getByUserOrResource($userId, $resourceOwner);
+        } else {
+            $tokens = $this->lookupModel->getSocialProfiles($userId, $resourceOwner, false);
+        }
 
-        if ($tokens) {
-            $token = current($tokens);
+        foreach ($tokens as $token) {
+
             try {
-                $this->fetcherService->fetch($token['id'], $token['resourceOwner']);
+                $this->fetcherService->fetch($token, $public);
             } catch (\Exception $e) {
                 $this->logger->error(sprintf('Worker -> %s', $e->getMessage()));
             }
