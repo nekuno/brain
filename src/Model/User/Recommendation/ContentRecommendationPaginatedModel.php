@@ -249,7 +249,7 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
             $params['internalOffset'] += $internalLimit;
         }
 
-        $return = array('items' => $items);
+        $return = array('items' => array_slice($items, 0, $limit));
 
         if ($params['internalOffset'] >= $databaseSize) {
             $params['internalOffset'] = -1;
