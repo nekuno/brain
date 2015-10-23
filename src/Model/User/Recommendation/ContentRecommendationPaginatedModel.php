@@ -80,7 +80,6 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
     public function slice(array $filters, $offset, $limit)
     {
 
-
         if ((integer)$limit == 0) {
             return array();
         }
@@ -154,6 +153,7 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
             $return['items'] = array_merge($return['items'], $foreignResult['items']);
             $return['newForeign'] = $foreignResult['foreign'];
         }
+
         //Works with ContentPaginator (accepts $result), not Paginator (accepts $result['items'])
         return $return;
     }
@@ -198,12 +198,10 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
         $params = array(
             'userId' => (integer)$id,
             'limit' => (integer)$limit,
-
             'internalOffset' => (integer)$foreign,
             'internalLimit' => $internalLimit,
         );
 
-        $return = array('items' => array());
         $items = array();
 
         while (count($items) < $limit && $params['internalOffset'] < $internalPaginationLimit) {
@@ -251,10 +249,7 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
             $params['internalOffset'] += $internalLimit;
         }
 
-        $return['items'][] = current($items);
-        for ($i = 1; $i < $limit; $i++) {
-            $return['items'][] = next($items);
-        }
+        $return = array('items' => $items);
 
         if ($params['internalOffset'] >= $databaseSize) {
             $params['internalOffset'] = -1;
@@ -312,20 +307,6 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
     }
 
     /**
-     * @param $limit int
-     * @param $response array
-     * @return int
-     */
-    protected function needMoreContent($limit, $response)
-    {
-        $moreContent = $limit - count($response['items']);
-        if ($moreContent <= 0) {
-            return 0;
-        }
-        return $moreContent;
-    }
-
-    /**
      * @param $result ResultSet
      * @param $id
      * @return array
@@ -353,6 +334,21 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
     }
 
     /**
+     * @param $limit int
+     * @param $response array
+     * @return int
+     */
+    protected function needMoreContent($limit, $response)
+    {
+        $moreContent = $limit - count($response['items']);
+        if ($moreContent <= 0) {
+            return 0;
+        }
+
+        return $moreContent;
+    }
+
+    /**
      * @param $row Row
      * @param $contentNode Node
      * @param $id
@@ -377,7 +373,6 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
                 $content['synonymous'][] = $synonymous;
             }
         }
-
 
         $content['tags'] = array();
         if (isset($row['tags'])) {
