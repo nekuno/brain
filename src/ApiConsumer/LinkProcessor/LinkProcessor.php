@@ -85,11 +85,12 @@ class LinkProcessor
 
     /**
      * @param array $link
+     * @param bool $reprocess
      * @return array
      */
-    public function process(array $link)
+    public function process(array $link, $reprocess = false)
     {
-        if ($this->isLinkProcessed($link)) {
+        if (!$reprocess && $this->isLinkProcessed($link)) {
             return $link;
         }
 
@@ -99,7 +100,7 @@ class LinkProcessor
 
         $link['url'] = $this->cleanURL($link, $processor);
 
-        if ($this->isLinkProcessed($link)) {
+        if (!$reprocess && $this->isLinkProcessed($link)) {
             return $link;
         }
 
