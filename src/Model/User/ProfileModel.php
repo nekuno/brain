@@ -76,7 +76,7 @@ class ProfileModel
 
         $locale = $this->getLocale($locale);
         $metadata = $this->getMetadata($locale, false);
-
+        $labels = array();
         foreach ($metadata as $key => &$item) {
             if (isset($item['labelFilter'])) {
                 $item['label'] = $item['labelFilter'][$locale];
@@ -84,7 +84,13 @@ class ProfileModel
             }
             if (isset($item['filterable']) && $item['filterable'] === false) {
                 unset($metadata[$key]);
+            } else {
+                $labels[] = $item['label'];
             }
+        }
+
+        if (!empty($labels)) {
+            array_multisort($labels, SORT_ASC, $metadata);
         }
 
         return $metadata;
