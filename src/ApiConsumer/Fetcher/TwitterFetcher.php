@@ -2,6 +2,8 @@
 
 namespace ApiConsumer\Fetcher;
 
+use Http\OAuth\ResourceOwner\TwitterResourceOwner;
+
 class TwitterFetcher extends BasicPaginationFetcher
 {
     protected $url = 'statuses/user_timeline.json';
@@ -11,6 +13,11 @@ class TwitterFetcher extends BasicPaginationFetcher
     protected $pageLength = 200;
 
     protected $mode;
+
+    /**
+     * @var TwitterResourceOwner
+     */
+    protected $resourceOwner;
 
     const TWITTER_FETCHING_LINKS='links';
     const TWITTER_FETCHING_FOLLOWING='following';
@@ -122,15 +129,23 @@ class TwitterFetcher extends BasicPaginationFetcher
 
     private function parseFollowing($rawFollowing)
     {
-        $links = array();
-        foreach($rawFollowing as $id){
-            $links[] = array('url' => 'https://twitter.com/intent/user?user_id='.$id,
-                'resourceItemId' => $id,
-                'title' => null,
-                'description' => null,
-                'timestamp' => 1000*time(),
-                'resource' => 'twitter');
+        $links = $this->resourceOwner->lookupUsersBy('user_id', $rawFollowing);
+
+        if ($links == false || empty($links)){
+            foreach($rawFollowing as $id){
+                $links[] = array('url' => 'https://twitter.com/intent/user?user_id='.$id,
+                    'resourceItemId' => $id,
+                    'title' => null,
+                    'description' => null,
+                    'timestamp' => 1000*time(),
+                    'resource' => 'twitter');
+            }
+        } else {
+            foreach($links as &$link){
+                $link['processed'] = 1;
+            }
         }
+
         return $links;
     }
 

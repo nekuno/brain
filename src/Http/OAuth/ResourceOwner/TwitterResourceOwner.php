@@ -36,10 +36,32 @@ class TwitterResourceOwner extends Oauth1GenericResourceOwner
         }
 
         $username = $this->getUsername($token);
-        if ($username){
+        if ($username) {
             $request->getQuery()->add('screen_name', $username);
         }
 
         return $request;
     }
+
+    public function lookupUsersBy($parameter,array $userIds)
+    {
+        if ($parameter !== 'user_id' && $parameter !== 'screen_name'){
+            return false;
+        }
+
+        $chunks = array_chunk($userIds, 100);
+        $baseUrl = $this->getOption('base_url');
+        $url = $baseUrl . 'users/lookup';
+
+        $users = array();
+        foreach ($chunks as $chunk) {
+            $query = array($parameter => implode(', ', $chunk));
+            $request = $this->getAPIRequest($url, $query);
+            $response = $this->httpClient->send($request)->json();
+            $users = array_merge($users, $response);
+        }
+
+        return $users;
+    }
+
 }
