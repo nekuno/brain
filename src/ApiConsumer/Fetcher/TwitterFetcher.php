@@ -10,8 +10,39 @@ class TwitterFetcher extends BasicPaginationFetcher
 
     protected $pageLength = 200;
 
+    protected $mode;
+
+    const TWITTER_FETCHING_LINKS='links';
+    const TWITTER_FETCHING_FOLLOWING='following';
+
+    /**
+     * { @inheritdoc }
+     */
+    public function fetchLinksFromUserFeed($user, $public)
+    {
+        $this->setUser($user);
+        $this->rawFeed = array();
+
+        $this->mode = $this::TWITTER_FETCHING_LINKS;
+        $rawFeed = $this->getLinksByPage($public);
+        $links = $this->parseLinks($rawFeed);
+
+        $this->rawFeed=array();
+        $this->mode = $this::TWITTER_FETCHING_FOLLOWING;
+        $rawFeed = $this->getLinksByPage($public);
+        $following = $this->parseFollowing($rawFeed);
+        $links = array_merge($links, $following);
+        return $links;
+    }
+
     protected function getQuery()
     {
+        if ($this->mode == $this::TWITTER_FETCHING_FOLLOWING){
+            return array(
+                'count' => 5000,
+            );
+        }
+
         return array(
             'count' => $this->pageLength,
             'trim_user' => 'true',
@@ -23,11 +54,22 @@ class TwitterFetcher extends BasicPaginationFetcher
 
     protected function getItemsFromResponse($response)
     {
+        if ($this->mode == $this::TWITTER_FETCHING_FOLLOWING)
+        {
+            return $response['ids'];
+        }
         return $response;
     }
 
     protected function getPaginationIdFromResponse($response)
     {
+        if ($this->mode == $this::TWITTER_FETCHING_FOLLOWING){
+            $nextCursor = $response['next_cursor'];
+            if ($nextCursor==0){
+                return null;
+            }
+        }
+
         $paginationId = null;
 
         $itemsCount = count($response);
@@ -77,4 +119,37 @@ class TwitterFetcher extends BasicPaginationFetcher
 
         return $formatted;
     }
+
+    private function parseFollowing($rawFollowing)
+    {
+        $links = array();
+        foreach($rawFollowing as $id){
+            $links[] = array('url' => 'https://twitter.com/intent/user?user_id='.$id,
+                'resourceItemId' => $id,
+                'title' => null,
+                'description' => null,
+                'timestamp' => 1000*time(),
+                'resource' => 'twitter');
+        }
+        return $links;
+    }
+
+    protected function getPaginationField()
+    {
+        if ($this->mode==$this::TWITTER_FETCHING_FOLLOWING){
+            return 'cursor';
+        }
+
+        return parent::getPaginationField();
+    }
+
+    public function getUrl()
+    {
+        if ($this->mode== $this::TWITTER_FETCHING_FOLLOWING){
+            return 'friends/ids.json';
+        }
+        return parent::getUrl();
+    }
+
+
 }
