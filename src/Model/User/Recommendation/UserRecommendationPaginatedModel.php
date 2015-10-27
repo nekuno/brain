@@ -6,6 +6,7 @@ use Everyman\Neo4j\Cypher\Query;
 use Model\Neo4j\GraphManager;
 use Model\Neo4j\QueryBuilder;
 use Model\User\ProfileModel;
+use Model\UserModel;
 use Paginator\PaginatedInterface;
 
 class UserRecommendationPaginatedModel implements PaginatedInterface
@@ -14,13 +15,19 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
     protected $gm;
 
     /**
+     * @var UserModel
+     */
+    protected $userModel;
+
+    /**
      * @var ProfileModel
      */
     protected $profileModel;
 
-    public function __construct(GraphManager $gm, ProfileModel $profileModel)
+    public function __construct(GraphManager $gm, UserModel $userModel, ProfileModel $profileModel)
     {
         $this->gm = $gm;
+        $this->userModel = $userModel;
         $this->profileModel = $profileModel;
     }
 
@@ -95,10 +102,11 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
             array_merge(
                 array('(matching_questions > 0 OR similarity > 0)'),
                 $profileFilters['conditions']
-            ))
+            )
+        )
             ->with('u', 'anyUser', 'like', 'matching_questions', 'similarity', 'p', 'l');
 
-        foreach ($profileFilters['matches'] as $match){
+        foreach ($profileFilters['matches'] as $match) {
             $qb->match($match);
         }
 
@@ -111,6 +119,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         $qb->returns(
             'DISTINCT anyUser.qnoow_id AS id,
                     anyUser.username AS username,
+                    anyUser AS u,
                     p.birthday AS birthday,
                     l.locality + ", " + l.country AS location,
                     matching_questions,
@@ -137,6 +146,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
             $user = array(
                 'id' => $row['id'],
                 'username' => $row['username'],
+                'user' => $this->userModel->build($row),
                 'matching' => $row['matching_questions'],
                 'similarity' => $row['similarity'],
                 'age' => $age,
@@ -199,7 +209,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         )
             ->with('u', 'anyUser', 'matching_questions', 'similarity', 'p', 'l');
 
-        foreach ($profileFilters['matches'] as $match){
+        foreach ($profileFilters['matches'] as $match) {
             $qb->match($match);
         }
 
