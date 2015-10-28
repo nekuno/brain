@@ -138,11 +138,11 @@ class TwitterFetcher extends BasicPaginationFetcher
                     'title' => null,
                     'description' => null,
                     'timestamp' => 1000*time(),
-                    'resource' => 'twitter');
+                    'resource' => $this->resourceOwner->name);
             }
         } else {
             foreach($links as &$link){
-                $link['processed'] = 1;
+                $link = $this->resourceOwner->buildProfileFromLookup($link);
             }
         }
 

@@ -11,7 +11,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  */
 class TwitterResourceOwner extends Oauth1GenericResourceOwner
 {
-    protected $name = 'twitter';
+    public $name = 'twitter';
 
     /**
      * {@inheritDoc}
@@ -51,17 +51,38 @@ class TwitterResourceOwner extends Oauth1GenericResourceOwner
 
         $chunks = array_chunk($userIds, 100);
         $baseUrl = $this->getOption('base_url');
-        $url = $baseUrl . 'users/lookup';
+        $url = $baseUrl . 'users/lookup.json';
 
         $users = array();
         foreach ($chunks as $chunk) {
-            $query = array($parameter => implode(', ', $chunk));
+            $query = array($parameter => implode(',', $chunk));
             $request = $this->getAPIRequest($url, $query);
-            $response = $this->httpClient->send($request)->json();
+            try{
+                $response = $this->httpClient->send($request)->json();
+            } catch (\Exception $e){
+                $response = array();
+            }
+
             $users = array_merge($users, $response);
         }
 
         return $users;
+    }
+
+    public function buildProfileFromLookup($user)
+    {
+        if (!$user) return $user;
+
+        $profile = array(
+            'title' => isset($user['name']) ? $user['name'] : $user['url'],
+            'description' => isset($user['description']) ? $user['description'] : $user['name'],
+            'url' => isset($user['screen_name']) ? 'https://twitter.com/' . $user['screen_name'] : null,
+            'thumbnail' => isset($user['profile_image_url']) ? $user['profile_image_url'] : null,
+            'resource' => $this->name,
+            'timestamp' => 1000*time(),
+        );
+
+        return $profile;
     }
 
 }

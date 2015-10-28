@@ -64,7 +64,7 @@ class TwitterProcessor implements ProcessorInterface
 
         if (empty($users)) return false;
 
-        return $this->buildProfileFromLookup($users[0]);
+        return $this->resourceOwner->buildProfileFromLookup($users[0]);
     }
 
     private function processProfile($link)
@@ -77,20 +77,8 @@ class TwitterProcessor implements ProcessorInterface
 
         if (empty($users)) return false;
 
-        return $this->buildProfileFromLookup($users[0]);
+        return $this->resourceOwner->buildProfileFromLookup($users[0]);
     }
 
-    private function buildProfileFromLookup($user)
-    {
-        if (!$user) return $user;
 
-        $profile = array(
-            'title' => isset($user['name']) ? $user['name'] : $user['url'],
-            'description' => isset($user['description']) ? $user['description'] : $user['name'],
-            'url' => isset($user['screen_name']) ? 'https://twitter.com/' . $user['screenname'] : null,
-            'thumbnail' => isset($user['profile_image_url']) ? $user['profile_image_url'] : null,
-        );
-
-        return $profile;
-    }
 }
