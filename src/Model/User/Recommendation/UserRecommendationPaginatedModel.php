@@ -6,7 +6,6 @@ use Everyman\Neo4j\Cypher\Query;
 use Model\Neo4j\GraphManager;
 use Model\Neo4j\QueryBuilder;
 use Model\User\ProfileModel;
-use Model\UserModel;
 use Paginator\PaginatedInterface;
 
 class UserRecommendationPaginatedModel implements PaginatedInterface
@@ -15,19 +14,13 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
     protected $gm;
 
     /**
-     * @var UserModel
-     */
-    protected $userModel;
-
-    /**
      * @var ProfileModel
      */
     protected $profileModel;
 
-    public function __construct(GraphManager $gm, UserModel $userModel, ProfileModel $profileModel)
+    public function __construct(GraphManager $gm, ProfileModel $profileModel)
     {
         $this->gm = $gm;
-        $this->userModel = $userModel;
         $this->profileModel = $profileModel;
     }
 
@@ -119,7 +112,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         $qb->returns(
             'DISTINCT anyUser.qnoow_id AS id,
                     anyUser.username AS username,
-                    anyUser AS u,
+                    anyUser.picture AS picture,
                     p.birthday AS birthday,
                     l.locality + ", " + l.country AS location,
                     matching_questions,
@@ -146,7 +139,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
             $user = array(
                 'id' => $row['id'],
                 'username' => $row['username'],
-                'user' => $this->userModel->build($row),
+                'picture' => $row['picture'],
                 'matching' => $row['matching_questions'],
                 'similarity' => $row['similarity'],
                 'age' => $age,

@@ -151,7 +151,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.recommendation.users.model'] = $app->share(
             function ($app) {
 
-                return new UserRecommendationPaginatedModel($app['neo4j.graph_manager'], $app['users.model'], $app['users.profile.model']);
+                return new UserRecommendationPaginatedModel($app['neo4j.graph_manager'], $app['users.profile.model']);
             }
         );
 
