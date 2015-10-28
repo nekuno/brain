@@ -4,6 +4,7 @@ namespace Model\User;
 
 use Model\Neo4j\GraphManager;
 use Everyman\Neo4j\Node;
+use Everyman\Neo4j\Relationship;
 use Everyman\Neo4j\Query\Row;
 use Everyman\Neo4j\Label;
 use Model\Exception\ValidationException;
@@ -44,6 +45,18 @@ class ProfileModel
                 $publicField['choices'] = array();
                 if (isset($choiceOptions[$name])) {
                     $publicField['choices'] = $choiceOptions[$name];
+                }
+            } elseif ($values['type'] === 'double_choice') {
+                $publicField['choices'] = array();
+                if (isset($choiceOptions[$name])) {
+                    $publicField['choices'] = $choiceOptions[$name];
+                    if (isset($values['doubleChoices'])) {
+                        foreach ($values['doubleChoices'] as $choice => $doubleChoices) {
+                            foreach ($doubleChoices as $doubleChoice => $doubleChoiceValues) {
+                                $publicField['doubleChoices'][$choice][$doubleChoice] = $doubleChoiceValues[$locale];
+                            }
+                        }
+                    }
                 }
             } elseif ($values['type'] === 'tags') {
                 $publicField['top'] = $this->getTopProfileTags($name);
@@ -107,7 +120,7 @@ class ProfileModel
         $qb->match('(user:User)<-[:PROFILE_OF]-(profile:Profile)')
             ->where('user.qnoow_id = { id }')
             ->setParameter('id', $id)
-            ->optionalMatch('(profile)<-[:OPTION_OF]-(option:ProfileOption)')
+            ->optionalMatch('(profile)<-[oo:OPTION_OF]-(option:ProfileOption)')
             ->optionalMatch('(profile)-[:TAGGED]-(tag:ProfileTag)')
             ->optionalMatch('(profile)-[:LOCATION]->(location:Location)')
             ->returns('profile, location, collect(distinct option) AS options, collect(distinct tag) as tags')
@@ -283,6 +296,20 @@ class ProfileModel
                             }
                             break;
 
+                        case 'double_choice':
+                            $choices = $fieldData['choices'];
+                            if (!in_array($fieldValue['choice'], array_keys($choices))) {
+                                $fieldErrors[] = sprintf('Option with value "%s" is not valid, possible values are "%s"', $fieldValue['choice'], implode("', '", array_keys($choices)));
+                            }
+                            $doubleChoices = $fieldData['doubleChoices'];
+                            if (!isset($doubleChoices[$fieldValue['choice']]) || $fieldValue['detail'] && !isset($doubleChoices[$fieldValue['choice']][$fieldValue['detail']])) {
+                                $fieldErrors[] = sprintf('Option choice and detail must be set in "%s"', $fieldValue['choice']);
+                            }
+                            elseif ($fieldValue['detail'] && !in_array($fieldValue['detail'], array_keys($doubleChoices[$fieldValue['choice']]))) {
+                                $fieldErrors[] = sprintf('Detail with value "%s" is not valid, possible values are "%s"', $fieldValue['detail'], implode("', '", array_keys($doubleChoices)));
+                            }
+                            break;
+
                         case 'location':
                             if (!is_array($fieldValue)) {
                                 $fieldErrors[] = sprintf('The value "%s" is not valid, it should be an array with "latitude" and "longitude" keys', $fieldValue);
@@ -358,11 +385,24 @@ class ProfileModel
         /* @var Node $option */
         foreach ($options as $option) {
             $labels = $option->getLabels();
+            // TODO: Must be fixed. Maybe getting relationship from query directly
+            /* @var Relationship $relationship */
+            $relationships = $option->getRelationships('OPTION_OF', Relationship::DirectionOut);
+            foreach ($relationships as $relationship) {
+                if ($relationship->getStartNode()->getId() === $option->getId()) {
+                    break;
+                }
+            }
             /* @var Label $label */
             foreach ($labels as $label) {
                 if ($label->getName() && $label->getName() != 'ProfileOption') {
                     $typeName = $this->labelToType($label->getName());
                     $optionsResult[$typeName] = $option->getProperty('id');
+                    if ($detail = $relationship->getProperty('detail')) {
+                        $optionsResult[$typeName] = array();
+                        $optionsResult[$typeName]['choice'] = $option->getProperty('id');
+                        $optionsResult[$typeName]['detail'] = $detail;
+                    }
                 }
             }
         }
@@ -517,6 +557,21 @@ class ProfileModel
                                 ->with('profile');
                         }
                         break;
+                    case 'double_choice':
+                        if (isset($options[$fieldName])) {
+                            $qb->optionalMatch('(profile)<-[doubleChoiceOptionRel:OPTION_OF]-(option:' . $this->typeToLabel($fieldName) . ')')
+                                ->delete('doubleChoiceOptionRel')
+                                ->with('profile');
+                        }
+                        if (isset($fieldValue['detail'])) {
+                            $qb->match('(option:' . $this->typeToLabel($fieldName) . ' {id: { ' . $fieldName . ' }})')
+                                ->merge('(profile)<-[doubleChoiceNewOptionRel:OPTION_OF]-(option)')
+                                ->setParameter($fieldName, $fieldValue['choice'])
+                                ->set('doubleChoiceNewOptionRel.detail = {doubleChoiceValue}')
+                                ->setParameter('doubleChoiceValue', $fieldValue['detail'])
+                                ->with('profile');
+                        }
+                        break;
                     case 'tags':
                         if (isset($tags[$fieldName])) {
                             foreach ($tags[$fieldName] as $tag) {
@@ -537,9 +592,9 @@ class ProfileModel
             }
         }
 
-        $qb->optionalMatch('(profile)<-[:OPTION_OF]-(option:ProfileOption)')
+        $qb->optionalMatch('(profile)<-[oo:OPTION_OF]-(option:ProfileOption)')
             ->optionalMatch('(profile)-[:TAGGED]-(tag:ProfileTag)')
-            ->returns('profile', 'collect(distinct option) AS options', ' collect(distinct tag) AS tags')
+            ->returns('profile', 'collect(distinct option) AS options', 'collect(distinct tag) AS tags')
             ->limit(1);
 
         $query = $qb->getQuery();
