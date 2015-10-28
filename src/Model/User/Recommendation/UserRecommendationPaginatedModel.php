@@ -95,10 +95,11 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
             array_merge(
                 array('(matching_questions > 0 OR similarity > 0)'),
                 $profileFilters['conditions']
-            ))
+            )
+        )
             ->with('u', 'anyUser', 'like', 'matching_questions', 'similarity', 'p', 'l');
 
-        foreach ($profileFilters['matches'] as $match){
+        foreach ($profileFilters['matches'] as $match) {
             $qb->match($match);
         }
 
@@ -111,6 +112,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         $qb->returns(
             'DISTINCT anyUser.qnoow_id AS id,
                     anyUser.username AS username,
+                    anyUser.picture AS picture,
                     p.birthday AS birthday,
                     l.locality + ", " + l.country AS location,
                     matching_questions,
@@ -137,6 +139,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
             $user = array(
                 'id' => $row['id'],
                 'username' => $row['username'],
+                'picture' => $row['picture'],
                 'matching' => $row['matching_questions'],
                 'similarity' => $row['similarity'],
                 'age' => $age,
@@ -199,7 +202,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         )
             ->with('u', 'anyUser', 'matching_questions', 'similarity', 'p', 'l');
 
-        foreach ($profileFilters['matches'] as $match){
+        foreach ($profileFilters['matches'] as $match) {
             $qb->match($match);
         }
 
