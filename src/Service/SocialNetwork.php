@@ -6,11 +6,9 @@ namespace Service;
 
 use ApiConsumer\Factory\FetcherFactory;
 use ApiConsumer\Fetcher\GoogleProfileFetcher;
-use ApiConsumer\Fetcher\YoutubeFetcher;
 use ApiConsumer\LinkProcessor\LinkAnalyzer;
 use Model\User\LookUpModel;
 use Model\User\SocialNetwork\LinkedinSocialNetworkModel;
-use Model\User\TokensModel;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -63,6 +61,10 @@ class SocialNetwork
                     break;
                 }
 
+                if ($logger){
+                    $logger->info('analyzing google plus profile for getting youtube profile');
+                }
+
                 /** @var GoogleProfileFetcher $googleProfileFetcher */
                 $googleProfileFetcher = $this->fetcherFactory->build('google_profile');
                 $googleId = $googleProfileFetcher->getResourceOwner()->getUsername(array('url' => $profileUrl));
@@ -77,6 +79,9 @@ class SocialNetwork
                         $socialProfile = array(array(LinkAnalyzer::YOUTUBE => $url));
                         $this->lookupModel->setSocialProfiles($socialProfile, $userId);
                         $this->lookupModel->dispatchSocialNetworksAddedEvent($userId, $socialProfile);
+                        if ($logger){
+                            $logger->info('Youtube url '.$url. 'found.');
+                        }
                     }
                 }
         }
