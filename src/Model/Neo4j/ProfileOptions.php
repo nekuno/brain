@@ -201,25 +201,13 @@ class ProfileOptions implements LoggerAwareInterface
             'Sons' => array(
                 array(
                     'id' => 'yes',
-                    'name_en' => 'Yes',
-                    'name_es' => 'Sí',
+                    'name_en' => 'Have kids(s)',
+                    'name_es' => 'Tengo hijos',
                 ),
                 array(
                     'id' => 'no',
-                    'name_en' => 'No',
-                    'name_es' => 'No',
-                ),
-            ),
-            'WantSons' => array(
-                array(
-                    'id' => 'yes',
-                    'name_en' => 'Yes',
-                    'name_es' => 'Sí',
-                ),
-                array(
-                    'id' => 'no',
-                    'name_en' => 'No',
-                    'name_es' => 'No',
+                    'name_en' => "Doesn't have kids",
+                    'name_es' => 'No tengo hijos',
                 ),
             ),
             'HairColor' => array(

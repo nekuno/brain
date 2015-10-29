@@ -268,6 +268,11 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                         $value = implode("', '", $value);
                         $matches[] = "(p)<-[:OPTION_OF]-(option$name:$profileLabelName) WHERE option$name.id IN ['$value']";
                         break;
+                    case 'double_choice':
+                        $profileLabelName = ucfirst($name);
+                        $value = implode("', '", $value);
+                        $matches[] = "(p)<-[:OPTION_OF]-(option$name:$profileLabelName) WHERE option$name.id IN ['$value']";
+                        break;
                     case 'tags':
                         $tagLabelName = ucfirst($name);
                         $matches[] = "(p)<-[:TAGGED]-(tag$name:$tagLabelName) WHERE tag$name.name = '$value'";

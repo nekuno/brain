@@ -65,6 +65,32 @@ profile:
             en: 'Allergy'
             es: 'Alergia'
     sons:
+        type: double_choice
+        label:
+            en: 'Sons'
+            es: 'Hijos'
+        doubleChoices:
+            yes:
+                might_want_more:
+                    en: "and might want more"
+                    es: "y quizás quiera más"
+                want_more:
+                    en: "and want more"
+                    es: "y quiero más"
+                not_want_more:
+                    en: "but doesn’t want more"
+                    es: "y no quiero más"
+            no:
+                might_want:
+                    en: "but might want them"
+                    es: "pero quizás quiera"
+                want:
+                    en: "but want them"
+                    es: "pero quiero"
+                not_want:
+                    en: "and doesn’t want any"
+                    es: "y no quiero ninguno"
+
         type: choice
         label:
             en: 'Sons'
