@@ -241,8 +241,8 @@ profile:
     profession:
         type: tags
         label:
-            en: 'Profession'
-            es: 'Profesión'
+            en: 'Habilidades profesionales'
+            es: 'Skills'
     education:
         type: tags
         label:
