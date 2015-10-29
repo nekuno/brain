@@ -357,8 +357,8 @@ profile:
     profession:
         type: tags
         label:
-            en: 'Habilidades profesionales'
-            es: 'Skills'
+            en: 'Skills'
+            es: 'Habilidades profesionales'
     education:
         type: tags
         label:
