@@ -33,11 +33,6 @@ class UserModel implements PaginatedInterface
     protected $encoder;
 
     /**
-     * @var Connection
-     */
-    protected $connectionSocial;
-
-    /**
      * @var array
      */
     protected $metadata;
@@ -47,11 +42,10 @@ class UserModel implements PaginatedInterface
      */
     protected $defaultLocale;
 
-    public function __construct(GraphManager $gm, PasswordEncoderInterface $encoder, Connection $connectionSocial, array $metadata, $defaultLocale)
+    public function __construct(GraphManager $gm, PasswordEncoderInterface $encoder, array $metadata, $defaultLocale)
     {
         $this->gm = $gm;
         $this->encoder = $encoder;
-        $this->connectionSocial = $connectionSocial;
         $this->metadata = $metadata;
         $this->defaultLocale = $defaultLocale;
     }
@@ -474,8 +468,6 @@ class UserModel implements PaginatedInterface
             $query->getResultSet();
         }
 
-        $this->connectionSocial->update('users', array('status' => $status->getStatus()), array('id' => (integer)$id));
-
         return $status;
     }
 
@@ -667,7 +659,7 @@ class UserModel implements PaginatedInterface
             'locked' => array('type' => 'boolean', 'default' => false),
             'expired' => array('type' => 'boolean', 'editable' => false),
             'expiresAt' => array('type' => 'datetime'),
-            'confirmationToken' => array('type' => 'string', 'editable' => false),
+            'confirmationToken' => array('type' => 'string'),
             'passwordRequestedAt' => array('type' => 'datetime', 'editable' => false),
             'facebookID' => array('type' => 'string'),
             'googleID' => array('type' => 'string'),
@@ -715,6 +707,32 @@ class UserModel implements PaginatedInterface
         $row = $result->current();
 
         return $this->build($row);
+    }
+
+    public function build(Row $row)
+    {
+
+        /* @var $node Node */
+        $node = $row->offsetGet('u');
+        $properties = $node->getProperties();
+
+        $ordered = array();
+        foreach ($this->getMetadata() as $fieldName => $fieldData) {
+
+            if (isset($fieldData['visible']) && $fieldData['visible'] === false) {
+                unset($properties[$fieldName]);
+                continue;
+            }
+
+            if (array_key_exists($fieldName, $properties)) {
+                $ordered[$fieldName] = $properties[$fieldName];
+                unset($properties[$fieldName]);
+            } else {
+                $ordered[$fieldName] = null;
+            }
+        }
+
+        return $ordered + $properties;
     }
 
     /**
@@ -785,32 +803,6 @@ class UserModel implements PaginatedInterface
 
         return $users;
 
-    }
-
-    protected function build(Row $row)
-    {
-
-        /* @var $node Node */
-        $node = $row->offsetGet('u');
-        $properties = $node->getProperties();
-
-        $ordered = array();
-        foreach ($this->getMetadata() as $fieldName => $fieldData) {
-
-            if (isset($fieldData['visible']) && $fieldData['visible'] === false) {
-                unset($properties[$fieldName]);
-                continue;
-            }
-
-            if (array_key_exists($fieldName, $properties)) {
-                $ordered[$fieldName] = $properties[$fieldName];
-                unset($properties[$fieldName]);
-            } else {
-                $ordered[$fieldName] = null;
-            }
-        }
-
-        return $ordered + $properties;
     }
 
     /** Returns statically defined options

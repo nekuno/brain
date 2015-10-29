@@ -2,7 +2,9 @@
 
 namespace ApiConsumer\Fetcher;
 
-class TwitterFetcher extends BasicPaginationFetcher
+use Http\OAuth\ResourceOwner\TwitterResourceOwner;
+
+class TwitterLinksFetcher extends BasicPaginationFetcher
 {
     protected $url = 'statuses/user_timeline.json';
 
@@ -10,10 +12,16 @@ class TwitterFetcher extends BasicPaginationFetcher
 
     protected $pageLength = 200;
 
+    /**
+     * @var TwitterResourceOwner
+     */
+     protected $resourceOwner;
+
     protected $lastPaginationId = "";
 
     protected function getQuery()
     {
+
         return array(
             'count' => $this->pageLength,
             'trim_user' => 'true',
@@ -30,6 +38,7 @@ class TwitterFetcher extends BasicPaginationFetcher
 
     protected function getPaginationIdFromResponse($response)
     {
+
         $paginationId = null;
 
         $itemsCount = count($response);
