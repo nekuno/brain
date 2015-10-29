@@ -194,11 +194,6 @@ profile:
         labelFilter:
             en: 'Diet'
             es: 'Dieta'
-    wantSons:
-        type: choice
-        label:
-            en: 'Do you want to have children?'
-            es: '¿Quieres tener hijos?'
     orientation:
         type: choice
         required: true
