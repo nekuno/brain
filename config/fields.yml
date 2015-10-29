@@ -134,16 +134,6 @@ profile:
         label:
             en: 'Eyes color'
             es: 'Color ojos'
-    allergy:
-        type: choice
-        label:
-            en: 'Have you any allergy?'
-            es: '¿Tienes alguna alergia?'
-    handicap:
-        type: choice
-        label:
-            en: 'Have you any handicap?'
-            es: '¿Tienes alguna discapacidad?'
     civilStatus:
         type: choice
         label:
@@ -354,6 +344,16 @@ profile:
                 laughing_about_it:
                     en: "and laughing about it"
                     es: "y me río de ello"
+    allergy:
+        type: tags
+        label:
+            en: 'Have you any allergy?'
+            es: '¿Tienes alguna alergia?'
+    handicap:
+        type: tags
+        label:
+            en: 'Have you any handicap?'
+            es: '¿Tienes alguna discapacidad?'
     ideology:
         type: tags
         label:

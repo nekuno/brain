@@ -380,8 +380,10 @@ class ProfileModel
     protected function buildOptions(Row $row)
     {
         $options = $row->offsetGet('options');
-        $optionsResult = array();
+        /* @var Node $profile */
+        $profile = $row->offsetGet('profile');
 
+        $optionsResult = array();
         /* @var Node $option */
         foreach ($options as $option) {
             $labels = $option->getLabels();
@@ -389,7 +391,8 @@ class ProfileModel
             /* @var Relationship $relationship */
             $relationships = $option->getRelationships('OPTION_OF', Relationship::DirectionOut);
             foreach ($relationships as $relationship) {
-                if ($relationship->getStartNode()->getId() === $option->getId()) {
+                if ($relationship->getStartNode()->getId() === $option->getId() &&
+                    $relationship->getEndNode()->getId() === $profile->getId()) {
                     break;
                 }
             }
@@ -399,7 +402,7 @@ class ProfileModel
                     $typeName = $this->labelToType($label->getName());
                     $optionsResult[$typeName] = $option->getProperty('id');
                     $detail = $relationship->getProperty('detail');
-                    if (isset($detail)) {
+                    if (!is_null($detail)) {
                         $optionsResult[$typeName] = array();
                         $optionsResult[$typeName]['choice'] = $option->getProperty('id');
                         $optionsResult[$typeName]['detail'] = $detail;
@@ -565,12 +568,11 @@ class ProfileModel
                                 ->with('profile');
                         }
                         if (isset($fieldValue['choice'])) {
-                            $detail = isset($fieldValue['detail']) ? $fieldValue['detail'] : '';
+                            $detail = !is_null($fieldValue['detail']) ? $fieldValue['detail'] : '';
                             $qb->match('(option:' . $this->typeToLabel($fieldName) . ' {id: { ' . $fieldName . ' }})')
-                                ->merge('(profile)<-[doubleChoiceNewOptionRel:OPTION_OF]-(option)')
+                                ->merge('(profile)<-[:OPTION_OF {detail: {' . $fieldName . '_detail}}]-(option)')
                                 ->setParameter($fieldName, $fieldValue['choice'])
-                                ->set('doubleChoiceNewOptionRel.detail = {doubleChoiceValue}')
-                                ->setParameter('doubleChoiceValue', $detail)
+                                ->setParameter($fieldName.'_detail', $detail)
                                 ->with('profile');
                         }
 
@@ -613,7 +615,7 @@ class ProfileModel
         $qb->match('(option:ProfileOption)-[:OPTION_OF]->(profile:Profile)-[:PROFILE_OF]->(user:User)')
             ->where('user.qnoow_id = { id }')
             ->setParameter('id', $id)
-            ->returns('collect(distinct option) AS options');
+            ->returns('profile, collect(distinct option) AS options');
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();

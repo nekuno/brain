@@ -242,38 +242,6 @@ class ProfileOptions implements LoggerAwareInterface
                     'name_es' => 'Otro',
                 ),
             ),
-            'Handicap' => array(
-                array(
-                    'id' => 'physical',
-                    'name_en' => 'Physical',
-                    'name_es' => 'Física',
-                ),
-                array(
-                    'id' => 'cognitive',
-                    'name_en' => 'Cognitive',
-                    'name_es' => 'Cognitiva',
-                ),
-                array(
-                    'id' => 'mental',
-                    'name_en' => 'Mental',
-                    'name_es' => 'Mental',
-                ),
-                array(
-                    'id' => 'sensory',
-                    'name_en' => 'Sensory',
-                    'name_es' => 'Sensorial',
-                ),
-                array(
-                    'id' => 'emotional',
-                    'name_en' => 'Emotional',
-                    'name_es' => 'Emocional',
-                ),
-                array(
-                    'id' => 'developmental',
-                    'name_en' => 'Developmental',
-                    'name_es' => 'De Desarrollo',
-                ),
-            ),
             'Income' => array(
                 array(
                     'id' => 'less-than-us-12-000-year',
