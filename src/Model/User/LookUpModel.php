@@ -343,7 +343,7 @@ class LookUpModel
         return $lookUpData1;
     }
 
-    protected function setSocialProfiles(array $socialProfiles, $id)
+    public function setSocialProfiles(array $socialProfiles, $id)
     {
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(u:User)')
@@ -464,7 +464,7 @@ class LookUpModel
             $outputInterface->writeln($message);
     }
 
-    protected function dispatchSocialNetworksAddedEvent($id, $socialProfiles)
+    public function dispatchSocialNetworksAddedEvent($id, $socialProfiles)
     {
         $event = new LookUpSocialNetworksEvent($id, $socialProfiles);
         $this->dispatcher->dispatch(\AppEvents::SOCIAL_NETWORKS_ADDED, $event);
