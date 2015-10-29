@@ -120,7 +120,7 @@ class ProfileModel
         $qb->match('(user:User)<-[:PROFILE_OF]-(profile:Profile)')
             ->where('user.qnoow_id = { id }')
             ->setParameter('id', $id)
-            ->optionalMatch('(profile)<-[oo:OPTION_OF]-(option:ProfileOption)')
+            ->optionalMatch('(profile)<-[:OPTION_OF]-(option:ProfileOption)')
             ->optionalMatch('(profile)-[:TAGGED]-(tag:ProfileTag)')
             ->optionalMatch('(profile)-[:LOCATION]->(location:Location)')
             ->returns('profile, location, collect(distinct option) AS options, collect(distinct tag) as tags')
@@ -297,11 +297,11 @@ class ProfileModel
                             break;
 
                         case 'double_choice':
-                            $choices = $fieldData['choices'];
+                            $choices = $fieldData['choices'] + array('' => '');
                             if (!in_array($fieldValue['choice'], array_keys($choices))) {
                                 $fieldErrors[] = sprintf('Option with value "%s" is not valid, possible values are "%s"', $fieldValue['choice'], implode("', '", array_keys($choices)));
                             }
-                            $doubleChoices = $fieldData['doubleChoices'];
+                            $doubleChoices = $fieldData['doubleChoices'] + array('' => '');
                             if (!isset($doubleChoices[$fieldValue['choice']]) || $fieldValue['detail'] && !isset($doubleChoices[$fieldValue['choice']][$fieldValue['detail']])) {
                                 $fieldErrors[] = sprintf('Option choice and detail must be set in "%s"', $fieldValue['choice']);
                             }
@@ -398,7 +398,8 @@ class ProfileModel
                 if ($label->getName() && $label->getName() != 'ProfileOption') {
                     $typeName = $this->labelToType($label->getName());
                     $optionsResult[$typeName] = $option->getProperty('id');
-                    if ($detail = $relationship->getProperty('detail')) {
+                    $detail = $relationship->getProperty('detail');
+                    if (isset($detail)) {
                         $optionsResult[$typeName] = array();
                         $optionsResult[$typeName]['choice'] = $option->getProperty('id');
                         $optionsResult[$typeName]['detail'] = $detail;
@@ -563,14 +564,16 @@ class ProfileModel
                                 ->delete('doubleChoiceOptionRel')
                                 ->with('profile');
                         }
-                        if (isset($fieldValue['detail'])) {
+                        if (isset($fieldValue['choice'])) {
+                            $detail = isset($fieldValue['detail']) ? $fieldValue['detail'] : '';
                             $qb->match('(option:' . $this->typeToLabel($fieldName) . ' {id: { ' . $fieldName . ' }})')
                                 ->merge('(profile)<-[doubleChoiceNewOptionRel:OPTION_OF]-(option)')
                                 ->setParameter($fieldName, $fieldValue['choice'])
                                 ->set('doubleChoiceNewOptionRel.detail = {doubleChoiceValue}')
-                                ->setParameter('doubleChoiceValue', $fieldValue['detail'])
+                                ->setParameter('doubleChoiceValue', $detail)
                                 ->with('profile');
                         }
+
                         break;
                     case 'tags':
                         if (isset($tags[$fieldName])) {
