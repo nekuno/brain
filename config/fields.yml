@@ -58,7 +58,7 @@ profile:
             en: 'Height (cm)'
             es: 'Altura (cm)'
     allergy:
-        type: text
+        type: tags
         min: 0
         max: 255
         label:
@@ -91,15 +91,6 @@ profile:
                     en: "and doesn’t want any"
                     es: "y no quiero ninguno"
 
-        type: choice
-        label:
-            en: 'Sons'
-            es: 'Hijos'
-    wantSons:
-        type: choice
-        label:
-            en: 'Do you want to have sons?'
-            es: '¿Quieres tener hijos?'
     languages:
         type: text
         min: 0
@@ -149,11 +140,6 @@ profile:
         label:
             en: 'Income'
             es: 'Ingresos'
-    sons:
-        type: choice
-        label:
-            en: 'Do you have sons?'
-            es: '¿Tienes hijos?'
     pets:
         type: choice
         label:
