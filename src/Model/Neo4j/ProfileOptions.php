@@ -108,108 +108,6 @@ class ProfileOptions implements LoggerAwareInterface
                     'name_es' => 'Gordo',
                 ),
             ),
-            'DateAlcohol' => array(
-                array(
-                    'id' => 'yes',
-                    'name_en' => 'Yes',
-                    'name_es' => 'Sí',
-                ),
-                array(
-                    'id' => 'no',
-                    'name_en' => 'No',
-                    'name_es' => 'No',
-                ),
-                array(
-                    'id' => 'maybe',
-                    'name_en' => 'Maybe',
-                    'name_es' => 'Tal vez',
-                ),
-            ),
-            'DateChildren' => array(
-                array(
-                    'id' => 'yes',
-                    'name_en' => 'Yes',
-                    'name_es' => 'Sí',
-                ),
-                array(
-                    'id' => 'no',
-                    'name_en' => 'No',
-                    'name_es' => 'No',
-                ),
-                array(
-                    'id' => 'maybe',
-                    'name_en' => 'Maybe',
-                    'name_es' => 'Tal vez',
-                ),
-            ),
-            'DateComplexion' => array(
-                array(
-                    'id' => 'yes',
-                    'name_en' => 'Yes',
-                    'name_es' => 'Sí',
-                ),
-                array(
-                    'id' => 'no',
-                    'name_en' => 'No',
-                    'name_es' => 'No',
-                ),
-                array(
-                    'id' => 'maybe',
-                    'name_en' => 'Maybe',
-                    'name_es' => 'Tal vez',
-                ),
-            ),
-            'DateHandicap' => array(
-                array(
-                    'id' => 'yes',
-                    'name_en' => 'Yes',
-                    'name_es' => 'Sí',
-                ),
-                array(
-                    'id' => 'no',
-                    'name_en' => 'No',
-                    'name_es' => 'No',
-                ),
-                array(
-                    'id' => 'maybe',
-                    'name_en' => 'Maybe',
-                    'name_es' => 'Tal vez',
-                ),
-            ),
-            'DateReligion' => array(
-                array(
-                    'id' => 'yes',
-                    'name_en' => 'Yes',
-                    'name_es' => 'Sí',
-                ),
-                array(
-                    'id' => 'no',
-                    'name_en' => 'No',
-                    'name_es' => 'No',
-                ),
-                array(
-                    'id' => 'maybe',
-                    'name_en' => 'Maybe',
-                    'name_es' => 'Tal vez',
-                ),
-            ),
-            'DateSmoker' => array(
-                array(
-                    'id' => 'yes',
-                    'name_en' => 'Yes',
-                    'name_es' => 'Sí',
-                ),
-                array(
-                    'id' => 'no',
-                    'name_en' => 'No',
-                    'name_es' => 'No',
-                ),
-                array(
-                    'id' => 'maybe',
-                    'name_en' => 'Maybe',
-                    'name_es' => 'Tal vez',
-                ),
-            ),
             'Diet' => array(
                 array(
                     'id' => 'vegetarian',
@@ -300,40 +198,16 @@ class ProfileOptions implements LoggerAwareInterface
                     'name_es' => 'Femenino',
                 ),
             ),
-            'Car' => array(
-                array(
-                    'id' => 'yes',
-                    'name_en' => 'Yes',
-                    'name_es' => 'Sí',
-                ),
-                array(
-                    'id' => 'no',
-                    'name_en' => 'No',
-                    'name_es' => 'No',
-                ),
-            ),
             'Sons' => array(
                 array(
                     'id' => 'yes',
-                    'name_en' => 'Yes',
-                    'name_es' => 'Sí',
+                    'name_en' => 'Have kids(s)',
+                    'name_es' => 'Tengo hijos',
                 ),
                 array(
                     'id' => 'no',
-                    'name_en' => 'No',
-                    'name_es' => 'No',
-                ),
-            ),
-            'WantSons' => array(
-                array(
-                    'id' => 'yes',
-                    'name_en' => 'Yes',
-                    'name_es' => 'Sí',
-                ),
-                array(
-                    'id' => 'no',
-                    'name_en' => 'No',
-                    'name_es' => 'No',
+                    'name_en' => "Doesn't have kids",
+                    'name_es' => 'No tengo hijos',
                 ),
             ),
             'HairColor' => array(
@@ -366,38 +240,6 @@ class ProfileOptions implements LoggerAwareInterface
                     'id' => 'other',
                     'name_en' => 'Other',
                     'name_es' => 'Otro',
-                ),
-            ),
-            'Handicap' => array(
-                array(
-                    'id' => 'physical',
-                    'name_en' => 'Physical',
-                    'name_es' => 'Física',
-                ),
-                array(
-                    'id' => 'cognitive',
-                    'name_en' => 'Cognitive',
-                    'name_es' => 'Cognitiva',
-                ),
-                array(
-                    'id' => 'mental',
-                    'name_en' => 'Mental',
-                    'name_es' => 'Mental',
-                ),
-                array(
-                    'id' => 'sensory',
-                    'name_en' => 'Sensory',
-                    'name_es' => 'Sensorial',
-                ),
-                array(
-                    'id' => 'emotional',
-                    'name_en' => 'Emotional',
-                    'name_es' => 'Emocional',
-                ),
-                array(
-                    'id' => 'developmental',
-                    'name_en' => 'Developmental',
-                    'name_es' => 'De Desarrollo',
                 ),
             ),
             'Income' => array(
@@ -574,6 +416,63 @@ class ProfileOptions implements LoggerAwareInterface
                     'id' => 'aquarius',
                     'name_en' => 'Aquarius',
                     'name_es' => 'Acuario',
+                ),
+            ),
+            'Religion' => array(
+                array(
+                    'id' => 'agnosticism',
+                    'name_en' => 'Agnosticism',
+                    'name_es' => 'Agnóstico',
+                ),
+                array(
+                    'id' => 'atheism',
+                    'name_en' => 'Atheism',
+                    'name_es' => 'Ateo',
+                ),
+                array(
+                    'id' => 'christianity',
+                    'name_en' => 'Christianity',
+                    'name_es' => 'Cristiano',
+                ),
+                array(
+                    'id' => 'judaism',
+                    'name_en' => 'Judaism',
+                    'name_es' => 'Judio',
+                ),
+                array(
+                    'id' => 'catholicism',
+                    'name_en' => 'Catholicism',
+                    'name_es' => 'Católico',
+                ),
+                array(
+                    'id' => 'islam',
+                    'name_en' => 'Islam',
+                    'name_es' => 'Musulmán',
+                ),
+                array(
+                    'id' => 'hinduism',
+                    'name_en' => 'Hinduism',
+                    'name_es' => 'Hinduista',
+                ),
+                array(
+                    'id' => 'buddhism',
+                    'name_en' => 'Buddhism',
+                    'name_es' => 'Budista',
+                ),
+                array(
+                    'id' => 'sikh',
+                    'name_en' => 'Sikh',
+                    'name_es' => 'Sikh',
+                ),
+                array(
+                    'id' => 'kopimism',
+                    'name_en' => 'Kopimism',
+                    'name_es' => 'Kopimista',
+                ),
+                array(
+                    'id' => 'other',
+                    'name_en' => 'Other',
+                    'name_es' => 'Otra',
                 ),
             ),
         );
