@@ -587,8 +587,8 @@ class ProfileModel
                         }
                         if (is_array($fieldValue) && !empty($fieldValue)) {
                             foreach ($fieldValue as $tag) {
-                                $qb->merge('(profile)<-[:TAGGED]-(tag:' . $this->typeToLabel($fieldName) . ' {name: "' . $tag . '" })')
-                                    ->set('tag:ProfileTag')
+                                $qb->merge('(tag:ProfileTag:' . $this->typeToLabel($fieldName) . ' {name: "' . $tag . '" })')
+                                    ->merge('(profile)<-[:TAGGED]-(tag)')
                                     ->with('profile');
                             }
                         }
