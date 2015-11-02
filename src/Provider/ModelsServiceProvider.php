@@ -11,11 +11,11 @@ use Model\EnterpriseUser\CommunityModel;
 use Model\User\ContentComparePaginatedModel;
 use Model\User\ContentPaginatedModel;
 use Model\User\ContentTagModel;
+use Model\User\GhostUser\GhostUserManager;
 use Model\User\GroupModel;
 use Model\User\InvitationModel;
 use Model\User\LookUpModel;
 use Model\User\Matching\MatchingModel;
-use Model\User\Placeholder\PlaceholderUserManager;
 use Model\User\PrivacyModel;
 use Model\User\ProfileModel;
 use Model\User\ProfileTagModel;
@@ -178,10 +178,10 @@ class ModelsServiceProvider implements ServiceProviderInterface
             }
         );
 
-        $app['users.placeholder.manager'] = $app->share(
+        $app['users.ghostuser.manager'] = $app->share(
             function ($app) {
 
-                return new PlaceholderUserManager($app['neo4j.graph_manager'], $app['users.model']);
+                return new GhostUserManager($app['neo4j.graph_manager'], $app['users.model']);
             }
         );
 

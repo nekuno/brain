@@ -11,7 +11,7 @@ namespace Console\Command;
 
 use Console\ApplicationAwareCommand;
 use Model\User\LookUpModel;
-use Model\User\Placeholder\PlaceholderUserManager;
+use Model\User\GhostUser\GhostUserManager;
 use Model\User\SocialNetwork\SocialProfile;
 use Model\User\SocialNetwork\SocialProfileManager;
 use Model\UserModel;
@@ -55,9 +55,9 @@ class UsersSocialMediaAddCommand extends ApplicationAwareCommand
                 $id = $user['qnoow_id'];
                 $output->writeln('SUCCESS: Found user with that id.');
             } else {
-                /** @var PlaceholderUserManager $placeholderManager */
-                $placeholderManager = $this->app['users.placeholder.manager'];
-                $user = $placeholderManager->create();
+                /** @var GhostUserManager $ghostUserManager */
+                $ghostUserManager = $this->app['users.ghostuser.manager'];
+                $user = $ghostUserManager->create();
                 $id = $user->getId();
                 $output->writeln('SUCCESS: Created ghost user with id:'.$id);
             }

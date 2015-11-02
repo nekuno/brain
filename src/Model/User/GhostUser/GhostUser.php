@@ -6,11 +6,11 @@
  * Time: 12:32
  */
 
-namespace Model\User\Placeholder;
+namespace Model\User\GhostUser;
 
 
 
-class PlaceholderUser
+class GhostUser
 {
 
     protected $id;

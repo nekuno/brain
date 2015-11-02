@@ -6,8 +6,7 @@
  * Time: 12:36
  */
 
-namespace Model\User\Placeholder;
-
+namespace Model\User\GhostUser;
 
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\ResultSet;
@@ -15,7 +14,7 @@ use Everyman\Neo4j\Query\Row;
 use Model\Neo4j\GraphManager;
 use Model\UserModel;
 
-class PlaceholderUserManager
+class GhostUserManager
 {
     /** @var GraphManager */
     protected $graphManager;
@@ -52,35 +51,35 @@ class PlaceholderUserManager
         }
 
         $row = $result->current();
-        return $this->buildOnePlaceholderUser($row);
+        return $this->buildOneGhostUser($row);
 
     }
 
     /**
      * @param ResultSet $result
-     * @return array of PlaceholderUser
+     * @return array of GhostUser
      */
-    protected function buildPlaceholderUsers(ResultSet $result)
+    protected function buildGhostUsers(ResultSet $result)
     {
-        $placeholderUsers = array();
+        $ghostUsers = array();
         /** @var Row $row */
         foreach ($result as $row) {
-            $placeholderUsers[] = $this->buildOnePlaceholderUser($row);
+            $ghostUsers[] = $this->buildOneGhostUser($row);
         }
 
-        return $placeholderUsers;
+        return $ghostUsers;
     }
 
-    protected function buildOnePlaceholderUser(Row $row)
+    protected function buildOneGhostUser(Row $row)
     {
         $id = $row->offsetGet('id');
         /** @var Node $node */
         $node = $row->offsetGet('u');
 
-        $placeholderUser = new PlaceholderUser($id);
+        $ghostUser = new GhostUser($id);
 
-        $placeholderUser->setCreatedAt($node->getProperty('createdAt'));
+        $ghostUser->setCreatedAt($node->getProperty('createdAt'));
 
-        return $placeholderUser;
+        return $ghostUser;
     }
 }
