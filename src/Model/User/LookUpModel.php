@@ -49,7 +49,7 @@ class LookUpModel
     protected $dispatcher;
 
     //neo4j labels => resourceOwner names
-    protected $resourceOwners = array(
+    public static $resourceOwners = array(
         'TwitterSocialNetwork' => TokensModel::TWITTER,
         'GoogleplusSocialNetwork' => TokensModel::GOOGLE,
         'YoutubeSocialNetwork' => TokensModel::GOOGLE,
@@ -142,9 +142,23 @@ class LookUpModel
     }
 
     /**
+     *
+     */
+    public function getAllSocialProfiles()
+    {
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User)')
+            ->match('(u)-[hsn:HAS_SOCIAL_NETWORK]->(sn:'.$this::LABEL_SOCIAL_NETWORK.')')
+            ->returns('hsn.url as url, labels(sn) as network');
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+
+    }
+    /**
      * @param $userId
-     * @param string $resource
-     * @param bool $all
+     * @param string $resource specific social network
+     * @param bool $all if false, only connected using Nekuno and available in this->resourceOwners
      * @return array
      * @throws \Model\Neo4j\Neo4jException
      */
@@ -153,7 +167,7 @@ class LookUpModel
         if (!$userId) return array();
 
         if ($resource){
-            $networkLabels = array_keys($this->resourceOwners, $resource);
+            $networkLabels = array_keys($this->$resourceOwners, $resource);
         } else {
             $networkLabels = array($this::LABEL_SOCIAL_NETWORK);
             if (!$all){
@@ -161,7 +175,7 @@ class LookUpModel
                 $unconnected = $this->tm->getUnconnectedNetworks($userId);
                 foreach ($unconnected as $network)
                 {
-                    $networkLabels = array_merge($networkLabels, array_keys($this->resourceOwners, $network));
+                    $networkLabels = array_merge($networkLabels, array_keys($this->$resourceOwners, $network));
                 }
             }
 
@@ -189,8 +203,8 @@ class LookUpModel
                 foreach ($labels as $network) {
                     if ($network !== $this::LABEL_SOCIAL_NETWORK) {
 
-                        $resourceOwner = array_key_exists($network, $this->resourceOwners) ?
-                            $this->resourceOwners[$network] : null;
+                        $resourceOwner = array_key_exists($network, $this->$resourceOwners) ?
+                            $this->$resourceOwners[$network] : null;
 
                         $socialProfiles[] = array(
                             'id' => $userId,
@@ -343,7 +357,7 @@ class LookUpModel
         return $lookUpData1;
     }
 
-    protected function setSocialProfiles(array $socialProfiles, $id)
+    public function setSocialProfiles(array $socialProfiles, $id)
     {
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(u:User)')

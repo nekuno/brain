@@ -2,12 +2,12 @@
 
 namespace Model;
 
-use Doctrine\DBAL\Connection;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
 use Model\Neo4j\Neo4jException;
+use Model\User\LookUpModel;
 use Model\User\UserStatsModel;
 use Model\User\UserStatusModel;
 use Paginator\PaginatedInterface;
@@ -331,6 +331,43 @@ class UserModel implements PaginatedInterface
         $query = $qb->getQuery();
 
         return $this->parseResultSet($query->getResultSet());
+    }
+
+    /**
+     * @param array $profile
+     * @return array
+     * @throws Neo4jException
+     */
+    public function getBySocialProfile(array $profile)
+    {
+        $labels = array_keys(LookUpModel::$resourceOwners, $profile['resourceOwner']);
+
+        if (empty($labels)){
+            $labels = array(LookUpModel::LABEL_SOCIAL_NETWORK);
+        }
+
+        $users = array();
+        foreach ($labels as $label){
+            $qb = $this->gm->createQueryBuilder();
+
+            $qb->match("(sn:$label")
+                ->match('(u:User)-[hsn:HAS_SOCIAL_NETWORK]->(sn)')
+                ->where('hsn.url = {url}');
+            $qb->returns('u');
+
+            $qb->setParameters(
+                array(
+                    'url' => $profile['url'],
+                )
+            );
+
+            $query = $qb->getQuery();
+            $resultSet = $query->getResultSet();
+
+            $users = array_merge($users, $this->parseResultSet($resultSet));
+        }
+
+        return $users;
     }
 
     /**
@@ -822,7 +859,7 @@ class UserModel implements PaginatedInterface
         return array();
     }
 
-    protected function getNextId()
+    public function getNextId()
     {
 
         $qb = $this->gm->createQueryBuilder();

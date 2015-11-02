@@ -71,23 +71,21 @@ class LinksFetchCommand extends ApplicationAwareCommand
             }
         }
 
-        if (!$public) {
-            /* @var $tm TokensModel */
-            $tm = $this->app['users.tokens.model'];
+        /* @var $tokensModel TokensModel */
+        $tokensModel = $this->app['users.tokens.model'];
 
-            $tokens = $tm->getByUserOrResource($userId, $resource);
+        if (!$public) {
+
+            $tokens = $tokensModel->getByUserOrResource($userId, $resource);
         } else {
             /* @var $lookupmodel LookUpModel */
-            $lookupmodel = $this->app['users.lookup.model'];
+            $socialProfileManager = $this->app['users.lookup.model'];
 
-            $tokens = $lookupmodel->getSocialProfiles($userId, $resource, false);
-
-            if ($resource) {
-                foreach ($tokens as $token){
-                    if ($token['resourceOwner'] == 'resource'){
-                        $tokens = array($token);
-                    }
-                }
+            $profiles = $socialProfileManager->getSocialProfiles($userId, $resource, false);
+            $tokens = array();
+            foreach ($profiles as $profile)
+            {
+                $tokens[] = $tokensModel->buildFromSocialProfile($profile);
             }
         }
 
@@ -106,7 +104,8 @@ class LinksFetchCommand extends ApplicationAwareCommand
 
         foreach ($tokens as $token) {
             try {
-                $fetcher->fetch( $token, $public);
+                $token['public'] = $public;
+                $fetcher->fetch( $token);
 
             } catch (\Exception $e) {
                 $output->writeln(

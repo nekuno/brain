@@ -2,6 +2,7 @@
 
 namespace Http\OAuth\ResourceOwner;
 
+use Model\User\TokensModel;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
@@ -11,7 +12,6 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  */
 class TwitterResourceOwner extends Oauth1GenericResourceOwner
 {
-    public $name = 'twitter';
 
     /**
      * {@inheritDoc}
@@ -78,7 +78,7 @@ class TwitterResourceOwner extends Oauth1GenericResourceOwner
             'description' => isset($user['description']) ? $user['description'] : $user['name'],
             'url' => isset($user['screen_name']) ? 'https://twitter.com/' . $user['screen_name'] : null,
             'thumbnail' => isset($user['profile_image_url']) ? $user['profile_image_url'] : null,
-            'resource' => $this->name,
+            'resource' => TokensModel::TWITTER,
             'timestamp' => 1000*time(),
         );
 

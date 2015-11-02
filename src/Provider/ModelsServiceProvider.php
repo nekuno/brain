@@ -15,6 +15,7 @@ use Model\User\GroupModel;
 use Model\User\InvitationModel;
 use Model\User\LookUpModel;
 use Model\User\Matching\MatchingModel;
+use Model\User\Placeholder\PlaceholderUserManager;
 use Model\User\PrivacyModel;
 use Model\User\ProfileModel;
 use Model\User\ProfileTagModel;
@@ -27,6 +28,7 @@ use Model\User\Recommendation\UserRecommendationPaginatedModel;
 use Model\User\RelationsModel;
 use Model\User\Similarity\SimilarityModel;
 use Model\User\SocialNetwork\LinkedinSocialNetworkModel;
+use Model\User\SocialNetwork\SocialProfileManager;
 use Model\User\TokensModel;
 use Model\User\UserStatsManager;
 use Model\UserModel;
@@ -173,6 +175,20 @@ class ModelsServiceProvider implements ServiceProviderInterface
             function ($app) {
 
                 return new ContentRecommendationTagModel($app['neo4j.graph_manager']);
+            }
+        );
+
+        $app['users.placeholder.manager'] = $app->share(
+            function ($app) {
+
+                return new PlaceholderUserManager($app['neo4j.graph_manager'], $app['users.model']);
+            }
+        );
+
+        $app['users.socialprofile.manager'] = $app->share(
+            function ($app) {
+
+                return new SocialProfileManager($app['neo4j.graph_manager'], $app['users.tokens.model']);
             }
         );
 
