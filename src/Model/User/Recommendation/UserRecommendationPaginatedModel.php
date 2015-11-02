@@ -66,9 +66,9 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         );
 
         $profileFilters = $this->getProfileFilters($filters['profileFilters']);
-        $orderQuery = ' matching_questions DESC, similarity DESC ';
-        if (isset($filters['order']) && $filters['order'] == 'content') {
-            $orderQuery = ' similarity DESC, matching_questions DESC ';
+        $orderQuery = '  similarity DESC, matching_questions DESC ';
+        if (isset($filters['order']) && $filters['order'] == 'questions') {
+            $orderQuery = ' matching_questions DESC, similarity DESC ';
         }
 
         $qb = $this->gm->createQueryBuilder();
