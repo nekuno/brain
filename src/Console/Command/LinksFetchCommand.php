@@ -7,6 +7,7 @@ use ApiConsumer\EventListener\FetchLinksSubscriber;
 use ApiConsumer\Fetcher\FetcherService;
 use Console\ApplicationAwareCommand;
 use Model\User\LookUpModel;
+use Model\User\SocialNetwork\SocialProfileManager;
 use Model\User\TokensModel;
 use Psr\Log\LogLevel;
 use Silex\Application;
@@ -78,8 +79,8 @@ class LinksFetchCommand extends ApplicationAwareCommand
 
             $tokens = $tokensModel->getByUserOrResource($userId, $resource);
         } else {
-            /* @var $lookupmodel LookUpModel */
-            $socialProfileManager = $this->app['users.lookup.model'];
+            /* @var $socialProfileManager SocialProfileManager */
+            $socialProfileManager = $this->app['users.socialprofile.manager'];
 
             $profiles = $socialProfileManager->getSocialProfiles($userId, $resource, false);
             $tokens = array();

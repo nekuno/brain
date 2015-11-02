@@ -54,7 +54,7 @@ class SocialProfileManager
     /**
      * @param $userId
      * @param string $resource specific social network
-     * @param bool $all if false, only connected using Nekuno and available in this->resourceOwners
+     * @param bool $all if false, only connected using Nekuno and available in LookUpModel::resourceOwners
      * @return array
      * @throws \Model\Neo4j\Neo4jException
      */
@@ -63,14 +63,14 @@ class SocialProfileManager
         if (!$userId) return array();
 
         if ($resource) {
-            $networkLabels = array_keys($this->$resourceOwners, $resource);
+            $networkLabels = array_keys(LookUpModel::$resourceOwners, $resource);
         } else {
             $networkLabels = array(LookUpModel::LABEL_SOCIAL_NETWORK);
             if (!$all) {
                 $networkLabels = array();
                 $unconnected = $this->tokensModel->getUnconnectedNetworks($userId);
                 foreach ($unconnected as $network) {
-                    $networkLabels = array_merge($networkLabels, array_keys($this->$resourceOwners, $network));
+                    $networkLabels = array_merge($networkLabels, array_keys(LookUpModel::$resourceOwners, $network));
                 }
             }
 
