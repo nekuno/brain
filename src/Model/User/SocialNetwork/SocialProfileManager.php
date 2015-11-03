@@ -27,10 +27,16 @@ class SocialProfileManager
      */
     protected $graphManager;
 
-    function __construct($graphManager, $tokensModel)
+    /**
+     * @var LookUpModel
+     */
+    protected $lookupModel;
+
+    function __construct(GraphManager $graphManager, TokensModel $tokensModel, LookUpModel $lookupModel)
     {
         $this->tokensModel = $tokensModel;
         $this->graphManager = $graphManager;
+        $this->lookupModel = $lookupModel;
     }
 
 
@@ -152,5 +158,16 @@ class SocialProfileManager
         }
 
         return $socialProfiles;
+    }
+
+    public function addSocialProfile(SocialProfile $profile)
+    {
+        $this->lookupModel->setSocialProfiles(array(
+            $profile->getResource() => $profile->getUrl()
+        ), $profile->getUserId());
+
+        $this->lookupModel->dispatchSocialNetworksAddedEvent($profile->getUserId(), array(
+            $profile->getResource() => $profile->getUrl()
+        ));
     }
 }

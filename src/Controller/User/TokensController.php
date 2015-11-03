@@ -2,7 +2,10 @@
 
 namespace Controller\User;
 
+use Http\OAuth\Factory\ResourceOwnerFactory;
 use Http\OAuth\ResourceOwner\FacebookResourceOwner;
+use Model\User\SocialNetwork\SocialProfile;
+use Model\User\SocialNetwork\SocialProfileManager;
 use Model\User\TokensModel;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
@@ -63,10 +66,24 @@ class TokensController
 
         $token = $model->create($id, $resourceOwner, $request->request->all());
 
+        /* @var $resourceOwnerFactory ResourceOwnerFactory*/
+        $resourceOwnerFactory = $app['api_consumer.resource_owner_factory'];
+
         if ($resourceOwner === TokensModel::FACEBOOK && array_key_exists('refreshToken', $token) && is_null($token['refreshToken'])) {
             /* @var $facebookResourceOwner FacebookResourceOwner */
-            $facebookResourceOwner = $app['api_consumer.resource_owner.facebook'];
+            $facebookResourceOwner = $resourceOwnerFactory->build(TokensModel::FACEBOOK);
             $facebookResourceOwner->forceRefreshAccessToken($token);
+        }
+
+        if ($resourceOwner == TokensModel::TWITTER)
+        {
+            $resourceOwnerObject = $resourceOwnerFactory->build($resourceOwner);
+            $profileUrl = $resourceOwnerObject->getProfileUrl($token);
+
+            /** @var $socialProfilesManager SocialProfileManager*/
+            $socialProfilesManager = $app['users.socialprofile.manager'];
+            $socialProfilesManager->addSocialProfile(new SocialProfile($id, $profileUrl, $resourceOwner));
+
         }
 
         return $app->json($token, 201);
@@ -91,7 +108,6 @@ class TokensController
     }
 
     /**
-     * @param Request $request
      * @param Application $app
      * @param int $id
      * @param string $resourceOwner

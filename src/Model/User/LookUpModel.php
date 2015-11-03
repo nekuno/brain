@@ -398,7 +398,7 @@ class LookUpModel
             $outputInterface->writeln($message);
     }
 
-    protected function dispatchSocialNetworksAddedEvent($id, $socialProfiles)
+    public function dispatchSocialNetworksAddedEvent($id, $socialProfiles)
     {
         $event = new LookUpSocialNetworksEvent($id, $socialProfiles);
         $this->dispatcher->dispatch(\AppEvents::SOCIAL_NETWORKS_ADDED, $event);

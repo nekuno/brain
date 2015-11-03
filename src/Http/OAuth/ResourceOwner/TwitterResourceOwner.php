@@ -13,6 +13,8 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 class TwitterResourceOwner extends Oauth1GenericResourceOwner
 {
 
+    public $name = TokensModel::TWITTER;
+
     /**
      * {@inheritDoc}
      */
@@ -84,5 +86,18 @@ class TwitterResourceOwner extends Oauth1GenericResourceOwner
 
         return $profile;
     }
+
+    public function getProfileUrl(array $token)
+    {
+        if (isset($token['screenName'])){
+            $screenName = $token['screenName'];
+        } else {
+            $account = $this->authorizedHttpRequest('accounts/settings.json');
+            $screenName = $account['screen_name'];
+        }
+
+        return 'https://www.twitter.com/'.$screenName;
+    }
+
 
 }
