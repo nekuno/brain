@@ -55,6 +55,8 @@ $app->get('/users/{from}/reports/{to}', 'users.relations.controller:getAction')-
 $app->post('/users/{from}/reports/{to}', 'users.relations.controller:postAction')->value('relation', RelationsModel::REPORTS);
 $app->delete('/users/{from}/reports/{to}', 'users.relations.controller:deleteAction')->value('relation', RelationsModel::REPORTS);
 
+$app->get('/users/{from}/relations/{to}', 'users.relations.controller:getAction');
+
 $app->get('/users/{id}/contact/from', 'users.relations.controller:contactFromAction');
 $app->get('/users/{id}/contact/to', 'users.relations.controller:contactToAction');
 $app->get('/users/{from}/contact/{to}', 'users.relations.controller:contactAction');

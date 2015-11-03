@@ -5,6 +5,7 @@ namespace Controller\User;
 use Model\User\RelationsModel;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class RelationsController
 {
@@ -20,12 +21,27 @@ class RelationsController
         return $app->json($result);
     }
 
-    public function getAction(Application $app, $from, $to, $relation)
+    public function getAction(Application $app, $from, $to, $relation = null)
     {
         /* @var $model RelationsModel */
         $model = $app['users.relations.model'];
 
-        $result = $model->get($from, $to, $relation);
+        if (!is_null($relation)) {
+
+            $result = $model->get($from, $to, $relation);
+
+        } else {
+
+            $result = array();
+            foreach (RelationsModel::getRelations() as $relation) {
+                try {
+                    $model->get($from, $to, $relation);
+                    $result[$relation] = true;
+                } catch (NotFoundHttpException $e) {
+                    $result[$relation] = false;
+                }
+            }
+        }
 
         return $app->json($result);
     }
