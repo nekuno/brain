@@ -4,6 +4,8 @@ namespace Controller\User;
 
 use Http\OAuth\Factory\ResourceOwnerFactory;
 use Http\OAuth\ResourceOwner\FacebookResourceOwner;
+use Model\Neo4j\GraphManager;
+use Model\User\GhostUser\GhostUserManager;
 use Model\User\SocialNetwork\SocialProfile;
 use Model\User\SocialNetwork\SocialProfileManager;
 use Model\User\TokensModel;
@@ -79,10 +81,19 @@ class TokensController
         {
             $resourceOwnerObject = $resourceOwnerFactory->build($resourceOwner);
             $profileUrl = $resourceOwnerObject->getProfileUrl($token);
+            $profile = new SocialProfile($id, $profileUrl, $resourceOwner);
 
-            /** @var $socialProfilesManager SocialProfileManager*/
-            $socialProfilesManager = $app['users.socialprofile.manager'];
-            $socialProfilesManager->addSocialProfile(new SocialProfile($id, $profileUrl, $resourceOwner));
+            /* @var $ghostUserManager GhostUserManager*/
+            $ghostUserManager = $app['users.ghostuser.manager'];
+            if ($ghostUser = $ghostUserManager->getBySocialProfile($profile)){
+                /* @var $graphManager GraphManager */
+                $graphManager = $app['neo4j.graph_manager'];
+                $graphManager->fuseNodes($id, $ghostUser->getId());
+            } else {
+                /** @var $socialProfilesManager SocialProfileManager*/
+                $socialProfilesManager = $app['users.socialprofile.manager'];
+                $socialProfilesManager->addSocialProfile($profile);
+            }
 
         }
 

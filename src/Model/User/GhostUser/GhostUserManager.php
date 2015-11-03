@@ -12,7 +12,9 @@ use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\ResultSet;
 use Everyman\Neo4j\Query\Row;
 use Model\Neo4j\GraphManager;
+use Model\User\SocialNetwork\SocialProfile;
 use Model\UserModel;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class GhostUserManager
 {
@@ -55,6 +57,26 @@ class GhostUserManager
 
     }
 
+    public function getById($id)
+    {
+        $qb = $this->graphManager->createQueryBuilder();
+        $qb->match('(u:' . $this::LABEL_GHOST_USER . ' {qnoow_id: { id }})')
+            ->setParameter('id', (int)$id)
+            ->returns('u');
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        if ($result->count() < 1) {
+            throw new NotFoundHttpException(sprintf('User "%d" not found', $id));
+        }
+
+        /* @var $row Row */
+        $row = $result->current();
+
+        return $this->buildOneGhostUser($row);
+    }
+
     /**
      * @param ResultSet $result
      * @return array of GhostUser
@@ -79,6 +101,19 @@ class GhostUserManager
         $ghostUser = new GhostUser($id);
 
         $ghostUser->setCreatedAt($node->getProperty('createdAt'));
+
+        return $ghostUser;
+    }
+
+    public function getBySocialProfile(SocialProfile $profile)
+    {
+        $user = $this->userModel->getBySocialProfile($profile);
+
+        try {
+            $ghostUser = $this->getById($user);
+        } catch (NotFoundHttpException $e) {
+            return false;
+        }
 
         return $ghostUser;
     }

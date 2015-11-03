@@ -8,6 +8,7 @@ use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
 use Model\Neo4j\Neo4jException;
 use Model\User\LookUpModel;
+use Model\User\SocialNetwork\SocialProfile;
 use Model\User\UserStatsModel;
 use Model\User\UserStatusModel;
 use Paginator\PaginatedInterface;
@@ -334,20 +335,19 @@ class UserModel implements PaginatedInterface
     }
 
     /**
-     * @param array $profile
+     * @param SocialProfile $profile
      * @return array
      * @throws Neo4jException
      */
-    public function getBySocialProfile(array $profile)
+    public function getBySocialProfile(SocialProfile $profile)
     {
-        $labels = array_keys(LookUpModel::$resourceOwners, $profile['resourceOwner']);
+        $labels = array_keys(LookUpModel::$resourceOwners, $profile->getResource());
 
         if (empty($labels)){
             $labels = array(LookUpModel::LABEL_SOCIAL_NETWORK);
         }
 
-        $users = array();
-        foreach ($labels as $label){
+        foreach ($labels as $label) {
             $qb = $this->gm->createQueryBuilder();
 
             $qb->match("(sn:$label")
@@ -357,17 +357,20 @@ class UserModel implements PaginatedInterface
 
             $qb->setParameters(
                 array(
-                    'url' => $profile['url'],
+                    'url' => $profile->getUrl(),
                 )
             );
 
             $query = $qb->getQuery();
             $resultSet = $query->getResultSet();
 
-            $users = array_merge($users, $this->parseResultSet($resultSet));
+            if ($resultSet->count() == 1) {
+                $row = $resultSet->current();
+                return $this->build($row);
+            }
         }
 
-        return $users;
+        return false;
     }
 
     /**
