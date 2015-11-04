@@ -293,9 +293,9 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
             $qb->match('(content:' . $linkType . '{processed: 1})');
         }
 
-        $qb->with('count(content) AS max');
-        $qb->optionalMatch('(user:User {qnoow_id: { userId }})-[:LIKES|:DISLIKES]->(l:' . $linkType . ')');
-        $qb->returns('max-count(distinct(l)) AS total');
+        $qb->with('content');
+        $qb->optionalMatch('(user:User {qnoow_id: { userId }})-[l:LIKES|:DISLIKES]->(content)');
+        $qb->returns('count(content)-count(distinct(l)) AS total');
 
         $qb->setParameters($params);
 

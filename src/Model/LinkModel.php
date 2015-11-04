@@ -170,18 +170,18 @@ class LinkModel
 
         $qb->match('(user:User {qnoow_id: { userId }})');
         $qb->setParameter('userId', (integer)$filters['id']);
-        if (isset($filters['tag'])){
+        if (isset($filters['tag'])) {
             $qb->match("(:Tag{name: { tag } })-[:TAGGED]-(l:$type)");
-            $qb->setParameter('tag' , $filters['tag']);
+            $qb->setParameter('tag', $filters['tag']);
         } else {
             $qb->match("(l:$type)");
         }
 
         $qb->with('user', 'l')
-            ->where('NOT (user)-[:AFFINITY]-(l)',
-                'NOT (user)-[:LIKES]-(l)',
-                'NOT (user)-[:DISLIKES]-(l)');
-            $qb->returns('count(l) AS c');
+            ->optionalMatch('(user)-[ua:AFFINITY]-(l)')
+            ->optionalMatch('(user)-[ul:LIKES]-(l)')
+            ->optionalMatch('(user)-[ud:DISLIKES]-(l)');
+        $qb->returns('count(l)-(count(ua)+count(ul)+count(ud)) AS c');
         $query = $qb->getQuery();
         $result = $query->getResultSet();
 
@@ -552,7 +552,7 @@ class LinkModel
                 ->limit('{internalLimit}');
 
 
-            $conditions = array('l.processed = 1','NOT (u)-[:LIKES]-(l)', 'NOT (u)-[:DISLIKES]-(l)');
+            $conditions = array('l.processed = 1', 'NOT (u)-[:LIKES]-(l)', 'NOT (u)-[:DISLIKES]-(l)');
             if (!(isset($filters['affinity']) && $filters['affinity'] == true)) {
                 $conditions[] = '(NOT (u)-[:AFFINITY]-(l))';
             };
@@ -623,7 +623,7 @@ class LinkModel
             ->match('(u)-[r:SIMILARITY]-(users:User)')
             ->with('users,u,r.similarity AS m')
             ->limit('{limitUsers}');
-        $qb->match ('(users)-[:LIKES]->(l:Link)')
+        $qb->match('(users)-[:LIKES]->(l:Link)')
             ->where('NOT (u)-[:LIKES]-(l)', 'NOT (u)-[:DISLIKES]-(l)', 'NOT (u)-[:AFFINITY]-(l)');
         $qb->returns('count(l) AS c');
         $qb->setParameters(array(
