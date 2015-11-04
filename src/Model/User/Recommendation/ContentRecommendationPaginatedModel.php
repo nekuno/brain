@@ -214,14 +214,16 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
                 ->skip('{internalOffset}')
                 ->limit('{internalLimit}');
 
+            $qb->with('user', 'content')
+                ->where('NOT (user)-[:AFFINITY]-(content)',
+                    'NOT (user)-[:LIKES]-(content)',
+                    'NOT (user)-[:DISLIKES]-(content)');
+
             if (isset($filters['tag'])) {
                 $qb->match('(content)-[:TAGGED]->(filterTag:Tag)')
-                    ->where('filterTag.name = { tag }', 'NOT (user)-[:AFFINITY|:LIKES|:DISLIKES]->(content)');
+                    ->where('filterTag.name = { tag }');
 
                 $params['tag'] = $filters['tag'];
-            } else {
-                $qb->match('content');
-                $qb->where('NOT (user)-[:AFFINITY|:LIKES|:DISLIKES]->(content)');
             }
 
             $qb->with('content')
