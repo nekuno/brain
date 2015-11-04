@@ -134,7 +134,7 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
 
         $needContent = $this->needMoreContent($limit, $return);
         if ($needContent) {
-            $newItems = $this->lm->getLivePredictedContent($id, $needContent, 50);
+            $newItems = $this->lm->getLivePredictedContent($id, $needContent, 50, $filters);
             foreach ($newItems as &$newItem) {
                 $newItem = array_merge($newItem, $this->completeContent(null, null, $id, $newItem['content']['id']));
             }

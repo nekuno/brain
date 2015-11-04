@@ -3,10 +3,10 @@
 namespace Console\Command;
 
 use Console\ApplicationAwareCommand;
-use Everyman\Neo4j\Cypher\Query;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Exception\ValidationException;
+use Model\Neo4j\GraphManager;
 use Model\Questionnaire\QuestionModel;
 use Model\UserModel;
 use Silex\Application;
@@ -113,10 +113,12 @@ class Neo4jLoadQuestionsCommand extends ApplicationAwareCommand
                 $question['answers'] = $this->extractAnswers(
                     $data,
                     array(
-                        array('text' => 9, 'text_es' => 9, 'text_en' => 4),
-                        array('text' => 10, 'text_es' => 10, 'text_en' => 5),
-                        array('text' => 11, 'text_es' => 11, 'text_en' => 6),
-                        array('text' => 12, 'text_es' => 12, 'text_en' => 7),
+                        array('text' => 11, 'text_es' => 11, 'text_en' => 4),
+                        array('text' => 12, 'text_es' => 12, 'text_en' => 5),
+                        array('text' => 13, 'text_es' => 13, 'text_en' => 6),
+                        array('text' => 14, 'text_es' => 14, 'text_en' => 7),
+                        array('text' => 15, 'text_es' => 15, 'text_en' => 8),
+                        array('text' => 16, 'text_es' => 16, 'text_en' => 9),
                     )
                 );
 
@@ -141,13 +143,16 @@ class Neo4jLoadQuestionsCommand extends ApplicationAwareCommand
 
     protected function getAll()
     {
+        /** @var GraphManager $graphManager */
+        $graphManager = $this->app['neo4j.graph_manager'];
+        $qb = $graphManager->createQueryBuilder();
 
-        $template = "MATCH (q:Question)"
-            . " OPTIONAL MATCH (q)<-[:IS_ANSWER_OF]-(a:Answer)"
-            . " RETURN q AS question, collect(a) AS answers"
-            . " ORDER BY question.ranking DESC";
+        $qb->match('(q:Question)')
+            ->optionalMatch('(q)<-[:IS_ANSWER_OF]-(a:Answer)')
+        ->returns('q AS question', 'collect(a) AS answers')
+        ->orderBy('question.ranking DESC');
 
-        $query = new Query($this->app['neo4j.client'], $template);
+        $query = $qb->getQuery();
 
         $result = $query->getResultSet();
 
@@ -266,14 +271,14 @@ class Neo4jLoadQuestionsCommand extends ApplicationAwareCommand
                 try {
                     $question = $questionModel->create($question_es);
                     $question_en = array(
-                        'id' => $question['id'],
+                        'questionId' => $question['questionId'],
                         'text' => $csvQuestion['text_en'],
                         'locale' => 'en',
                     );
                     $answers_en = array();
                     foreach ($question['answers'] as $answer) {
 
-                        $keyAnswer = $this->find($answer['answerId'], $csvQuestion['answers']);
+                        $keyAnswer = $this->find($answer['text'], $csvQuestion['answers']);
 
                         if (!is_null($keyAnswer)) {
                             $answers_en[] = array('answerId' => $answer['answerId'], 'text' => $csvQuestion['answers'][$keyAnswer]['text_en']);

@@ -511,6 +511,12 @@ class LinkModel
             $linkType = $filters['type'];
         }
 
+        $params = array(
+            'userId' => (integer)$userId,
+            'limitContent' => (integer)$limitContent,
+            'limitUsers' => (integer)$limitUsers,
+        );
+
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(u:User {qnoow_id: { userId } })')
             ->match('(u)-[r:SIMILARITY]-(users:User)')
@@ -545,13 +551,7 @@ class LinkModel
             ->orderby('average DESC')
             ->limit('{limitContent}');
 
-        $qb->setParameters(
-            array(
-                'userId' => (integer)$userId,
-                'limitContent' => (integer)$limitContent,
-                'limitUsers' => (integer)$limitUsers,
-            )
-        );
+        $qb->setParameters($params);
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();

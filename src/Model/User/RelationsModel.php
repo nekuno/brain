@@ -42,6 +42,16 @@ class RelationsModel
         $this->userModel = $userModel;
     }
 
+    static public function getRelations()
+    {
+        return array(
+            self::BLOCKS,
+            self::FAVORITES,
+            self::LIKES,
+            self::REPORTS,
+        );
+    }
+
     public function getAll($from, $relation)
     {
 
@@ -49,7 +59,7 @@ class RelationsModel
 
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match('(from:User)-[r:' . $relation . ']-(to:User)')
+        $qb->match('(from:User)-[r:' . $relation . ']->(to:User)')
             ->where('from.qnoow_id = { from }')
             ->setParameter('from', (integer)$from)
             ->returns('from', 'to', 'r');
@@ -316,12 +326,7 @@ class RelationsModel
     protected function validate($relation)
     {
 
-        $relations = array(
-            self::BLOCKS,
-            self::FAVORITES,
-            self::LIKES,
-            self::REPORTS,
-        );
+        $relations = self::getRelations();
 
         if (!in_array($relation, $relations)) {
             throw new ValidationException(array(), sprintf('Relation type "%s" not allowed, possible values "%s"', $relation, implode('", "', $relations)));
