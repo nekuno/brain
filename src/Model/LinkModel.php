@@ -515,52 +515,69 @@ class LinkModel
             'userId' => (integer)$userId,
             'limitContent' => (integer)$limitContent,
             'limitUsers' => (integer)$limitUsers,
+
+            'internalOffset' => 0,
+            'internalLimit' => 100,
         );
 
-        $qb = $this->gm->createQueryBuilder();
-        $qb->match('(u:User {qnoow_id: { userId } })')
-            ->match('(u)-[r:SIMILARITY]-(users:User)')
-            ->with('users,u,r.similarity AS m')
-            ->orderby('m DESC')
-            ->limit('{limitUsers}');
-
-        $qb->match('(users)-[d:LIKES]->(l:' . $linkType . ')');
-        $conditions = array('l.processed = 1 AND(NOT (u)-[:LIKES|:DISLIKES]-(l))');
-        if (!(isset($filters['affinity']) && $filters['affinity'] == true)) {
-            $conditions[] = '(NOT (u)-[:AFFINITY]-(l))';
-        };
-
-        if (isset($filters['tag'])) {
-            $qb->match('(l)-[:TAGGED]->(filterTag:Tag)')
-                ->where('filterTag.name = { tag }');
-
-            $params['tag'] = $filters['tag'];
-        }
-
-        $qb->where($conditions)
-            ->with('l, avg(m) AS average, count(d) AS amount')
-            ->where('amount >= 2');
-        $qb->optionalMatch('(l)-[:TAGGED]->(tag:Tag)')
-            ->optionalMatch("(l)-[:SYNONYMOUS]->(synonymousLink:Link)")
-            ->returns('id(l) as id',
-                'l as link',
-                'average',
-                'collect(distinct tag.name) as tags',
-                'labels(l) as types',
-                'COLLECT (DISTINCT synonymousLink) AS synonymous')
-            ->orderby('average DESC')
-            ->limit('{limitContent}');
-
-        $qb->setParameters($params);
-
-        $query = $qb->getQuery();
-        $result = $query->getResultSet();
-
-
         $links = array();
-        foreach ($result as $row) {
-            /* @var $row Row */
-            $links[] = $this->buildLink($row->offsetGet('link'));
+
+        while (count($links) < $limitContent) {
+
+            $qb = $this->gm->createQueryBuilder();
+            $qb->match('(u:User {qnoow_id: { userId } })')
+                ->match('(u)-[r:SIMILARITY]-(users:User)')
+                ->with('users,u,r.similarity AS m')
+                ->orderby('m DESC')
+                ->limit('{limitUsers}');
+
+            $qb->match('(users)-[:LIKES]->(l:' . $linkType . ')');
+
+            $qb->with('u', 'avg(m) as average', 'count(m) as amount', 'l')
+                ->where('amount >= 2');
+            $qb->with('u', 'average', 'l')
+                ->orderBy('l.created DESC')
+                ->skip('{internalOffset}')
+                ->limit('{internalLimit}');
+
+
+            $conditions = array('l.processed = 1','NOT (u)-[:LIKES]-(l)', 'NOT (u)-[:DISLIKES]-(l)');
+            if (!(isset($filters['affinity']) && $filters['affinity'] == true)) {
+                $conditions[] = '(NOT (u)-[:AFFINITY]-(l))';
+            };
+            $qb->where($conditions);
+            if (isset($filters['tag'])) {
+                $qb->match('(l)-[:TAGGED]->(filterTag:Tag)')
+                    ->where('filterTag.name = { tag }');
+
+                $params['tag'] = $filters['tag'];
+            }
+
+
+            $qb->with('l', 'average');
+            $qb->optionalMatch('(l)-[:TAGGED]->(tag:Tag)')
+                ->optionalMatch("(l)-[:SYNONYMOUS]->(synonymousLink:Link)")
+                ->returns('id(l) as id',
+                    'l as link',
+                    'average',
+                    'collect(distinct tag.name) as tags',
+                    'labels(l) as types',
+                    'COLLECT (DISTINCT synonymousLink) AS synonymous')
+                ->orderby('average DESC')
+                ->limit('{limitContent}');
+
+            $qb->setParameters($params);
+
+            $query = $qb->getQuery();
+            $result = $query->getResultSet();
+
+            $links = array();
+            foreach ($result as $row) {
+                /* @var $row Row */
+                $links[] = $this->buildLink($row->offsetGet('link'));
+            }
+
+            $params['internalOffset'] += $params['internalLimit'];
         }
 
         return $links;
@@ -580,7 +597,7 @@ class LinkModel
         while (($users < $maxUsers) && count($content) < $limitContent) {
             $content = array();
             $predictedContents = $this->getPredictedContentForAUser($userId, $limitContent, $users, $filters);
-            foreach ($predictedContents as $predictedContent){
+            foreach ($predictedContents as $predictedContent) {
                 $content[] = array('content' => $predictedContent);
             }
             $users++;
