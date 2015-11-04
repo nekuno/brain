@@ -161,7 +161,6 @@ class LinkModel
      * @param array $filters
      * @return int
      * @throws Neo4j\Neo4jException
-     * @throws \Exception
      */
     public function countAllLinks($filters = array())
     {
@@ -169,6 +168,8 @@ class LinkModel
 
         $qb = $this->gm->createQueryBuilder();
 
+        $qb->match('(user:User {qnoow_id: { userId }})');
+        $qb->setParameter('userId', (integer)$filters['id']);
         if (isset($filters['tag'])){
             $qb->match("(:Tag{name: { tag } })-[:TAGGED]-(l:$type)");
             $qb->setParameter('tag' , $filters['tag']);
@@ -176,6 +177,10 @@ class LinkModel
             $qb->match("(l:$type)");
         }
 
+        $qb->with('user', 'l')
+            ->where('NOT (user)-[:AFFINITY]-(l)',
+                'NOT (user)-[:LIKES]-(l)',
+                'NOT (user)-[:DISLIKES]-(l)');
             $qb->returns('count(l) AS c');
         $query = $qb->getQuery();
         $result = $query->getResultSet();
