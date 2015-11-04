@@ -38,7 +38,7 @@ class ContentPaginator extends Paginator
         }
 
         $slice = $paginated->slice($filters, $offset, $limit);
-        $total = $this->linkModel->countAllLinks($filters);
+        $total = $paginated->countTotal($filters);
 
         $foreign = 0;
         if (isset($filters['foreign'])) {
