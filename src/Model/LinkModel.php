@@ -167,12 +167,16 @@ class LinkModel
     {
         $type = isset($filters['type']) ? $filters['type'] : 'Link';
 
-        //todo: add tag filters, probably with an inter-model buildParamsFromFilters
-
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match("(l:$type)")
-            ->returns('count(l) AS c');
+        if (isset($filters['tag'])){
+            $qb->match("(:Tag{name: { tag } })-[:TAGGED]-(l:$type)");
+            $qb->setParameter('tag' , $filters['tag']);
+        } else {
+            $qb->match("(l:$type)");
+        }
+
+            $qb->returns('count(l) AS c');
         $query = $qb->getQuery();
         $result = $query->getResultSet();
 
