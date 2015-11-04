@@ -522,7 +522,9 @@ class LinkModel
 
         $links = array();
 
-        while (count($links) < $limitContent) {
+        $maxOffset = $this->countPredictableContent($userId, $limitUsers);
+
+        while (count($links) < $limitContent && $params['internalOffset'] < $maxOffset) {
 
             $qb = $this->gm->createQueryBuilder();
             $qb->match('(u:User {qnoow_id: { userId } })')
@@ -603,6 +605,26 @@ class LinkModel
             $users++;
         }
         return $content;
+    }
+
+    protected function countPredictableContent($userId, $users = 10)
+    {
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User {qnoow_id: { userId } })')
+            ->match('(u)-[r:SIMILARITY]-(users:User)')
+            ->with('users,u,r.similarity AS m')
+            ->limit('{limitUsers}');
+        $qb->match ('(users)-[:LIKES]->(l:Link)')
+            ->where('NOT (u)-[:LIKES]-(l)', 'NOT (u)-[:DISLIKES]-(l)', 'NOT (u)-[:AFFINITY]-(l)');
+        $qb->returns('count(l) AS c');
+        $qb->setParameters(array(
+            'userId' => (integer)$userId,
+            'limitUsers' => $users,
+        ));
+
+        $resultSet = $qb->getQuery()->getResultSet();
+
+        return $resultSet->current()->offsetGet('c');
     }
 
     /**

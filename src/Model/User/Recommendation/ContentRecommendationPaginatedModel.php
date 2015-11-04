@@ -142,17 +142,17 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
         }
 
         $needContent = $this->needMoreContent($limit, $return);
-//        if ($needContent) {
-//
-//            $foreign = 0;
-//            if (isset($filters['foreign'])) {
-//                $foreign = $filters['foreign'];
-//            }
-//
-//            $foreignResult = $this->getForeignContent($filters, $needContent, $foreign);
-//            $return['items'] = array_merge($return['items'], $foreignResult['items']);
-//            $return['newForeign'] = $foreignResult['foreign'];
-//        }
+        if ($needContent) {
+
+            $foreign = 0;
+            if (isset($filters['foreign'])) {
+                $foreign = $filters['foreign'];
+            }
+
+            $foreignResult = $this->getForeignContent($filters, $needContent, $foreign);
+            $return['items'] = array_merge($return['items'], $foreignResult['items']);
+            $return['newForeign'] = $foreignResult['foreign'];
+        }
 
         //Works with ContentPaginator (accepts $result), not Paginator (accepts $result['items'])
         return $return;
