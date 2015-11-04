@@ -208,7 +208,15 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
 
             $qb = $this->gm->createQueryBuilder();
             $qb->match('(user:User {qnoow_id: { userId }})');
-            $qb->match('(content:' . $linkType . '{processed: 1})');
+            if (isset($filters['tag'])){
+                $qb->match('(content:' . $linkType . ')-[:TAGGED]->(filterTag:Tag)')
+                    ->where('filterTag.name = { tag }', 'content.processed = 1');
+
+                $params['tag'] = $filters['tag'];
+            } else {
+                $qb->match('(content:' . $linkType . '{processed: 1})');
+            }
+
             $qb->with('user', 'content')
                 ->orderBy('content.created DESC')
                 ->skip('{internalOffset}')
@@ -218,13 +226,6 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
                 ->where('NOT (user)-[:AFFINITY]-(content)',
                     'NOT (user)-[:LIKES]-(content)',
                     'NOT (user)-[:DISLIKES]-(content)');
-
-            if (isset($filters['tag'])) {
-                $qb->match('(content)-[:TAGGED]->(filterTag:Tag)')
-                    ->where('filterTag.name = { tag }');
-
-                $params['tag'] = $filters['tag'];
-            }
 
             $qb->with('content')
                 ->limit('{ limit }');
