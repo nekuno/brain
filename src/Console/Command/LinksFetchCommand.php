@@ -83,9 +83,9 @@ class LinksFetchCommand extends ApplicationAwareCommand
             $tokens = $lookupmodel->getSocialProfiles($userId, $resource, false);
 
             if ($resource) {
-                foreach ($tokens as $token){
-                    if ($token['resourceOwner'] == 'resource'){
-                        $tokens = array($token);
+                foreach ($tokens as $key=>$token){
+                    if ($token['resourceOwner'] !== $resource){
+                        unset($tokens[$key]);
                     }
                 }
             }

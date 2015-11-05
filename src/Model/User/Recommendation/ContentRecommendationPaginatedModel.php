@@ -134,7 +134,7 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
 
         $needContent = $this->needMoreContent($limit, $return);
         if ($needContent) {
-            $newItems = $this->lm->getLivePredictedContent($id, $needContent, 50, $filters);
+            $newItems = $this->lm->getLivePredictedContent($id, $needContent, 2, $filters);
             foreach ($newItems as &$newItem) {
                 $newItem = array_merge($newItem, $this->completeContent(null, null, $id, $newItem['content']['id']));
             }
@@ -208,21 +208,24 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
 
             $qb = $this->gm->createQueryBuilder();
             $qb->match('(user:User {qnoow_id: { userId }})');
-            $qb->match('(content:' . $linkType . '{processed: 1})');
+            if (isset($filters['tag'])){
+                $qb->match('(content:' . $linkType . ')-[:TAGGED]->(filterTag:Tag)')
+                    ->where('filterTag.name = { tag }', 'content.processed = 1');
+
+                $params['tag'] = $filters['tag'];
+            } else {
+                $qb->match('(content:' . $linkType . '{processed: 1})');
+            }
+
             $qb->with('user', 'content')
                 ->orderBy('content.created DESC')
                 ->skip('{internalOffset}')
                 ->limit('{internalLimit}');
 
-            if (isset($filters['tag'])) {
-                $qb->match('(content)-[:TAGGED]->(filterTag:Tag)')
-                    ->where('filterTag.name = { tag }', 'NOT (user)-[:AFFINITY|:LIKES|:DISLIKES]->(content)');
-
-                $params['tag'] = $filters['tag'];
-            } else {
-                $qb->match('content');
-                $qb->where('NOT (user)-[:AFFINITY|:LIKES|:DISLIKES]->(content)');
-            }
+            $qb->with('user', 'content')
+                ->where('NOT (user)-[:AFFINITY]-(content)',
+                    'NOT (user)-[:LIKES]-(content)',
+                    'NOT (user)-[:DISLIKES]-(content)');
 
             $qb->with('content')
                 ->limit('{ limit }');
@@ -290,9 +293,9 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
             $qb->match('(content:' . $linkType . '{processed: 1})');
         }
 
-        $qb->with('count(content) AS max');
-        $qb->optionalMatch('(user:User {qnoow_id: { userId }})-[:LIKES|:DISLIKES]->(l:' . $linkType . ')');
-        $qb->returns('max-count(distinct(l)) AS total');
+        $qb->with('content');
+        $qb->optionalMatch('(user:User {qnoow_id: { userId }})-[l:LIKES|:DISLIKES]->(content)');
+        $qb->returns('count(content)-count(distinct(l)) AS total');
 
         $qb->setParameters($params);
 

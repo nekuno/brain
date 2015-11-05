@@ -2,6 +2,8 @@
 
 namespace ApiConsumer\Fetcher;
 
+use ApiConsumer\LinkProcessor\LinkAnalyzer;
+
 class YoutubeFetcher extends BasicPaginationFetcher
 {
     protected $paginationField = 'pageToken';
@@ -142,9 +144,7 @@ class YoutubeFetcher extends BasicPaginationFetcher
     {
         $this->user = $user;
         $this->rawFeed = array();
-
-        if ($this->user['network'] !== 'youtube')
-        {
+        if ($this->user['network'] !== LinkAnalyzer::YOUTUBE) {
             return array();
         }
 
@@ -155,9 +155,8 @@ class YoutubeFetcher extends BasicPaginationFetcher
         return $this->parseLinks($links);
     }
 
-    private function getChannelsFromUser($public){
-
-
+    public function getChannelsFromUser($public = true)
+    {
 
         $this->setUrl('youtube/v3/channels');
         $query = array(
@@ -167,7 +166,7 @@ class YoutubeFetcher extends BasicPaginationFetcher
         if (!$public) {
             $query['mine'] = 'true';
         } else {
-            $query['id'] = $this->resourceOwner->getUsername($this->user);
+            $query['forUsername'] = $this->resourceOwner->getUsername($this->user);
         }
 
         $this->setQuery($query);

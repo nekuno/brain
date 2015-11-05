@@ -44,9 +44,24 @@ abstract class AbstractFetcher implements FetcherInterface
         return $this->url;
     }
 
+    /**
+     * Get query
+     *
+     * @return array
+     */
+    protected function getQuery()
+    {
+        return array();
+    }
+
     public function getUser()
     {
         return $this->user;
+    }
+
+    public function setUser($user)
+    {
+        $this->user = $user;
     }
 
     /**
