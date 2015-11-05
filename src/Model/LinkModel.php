@@ -177,10 +177,11 @@ class LinkModel
             $qb->match("(l:$type)");
         }
 
-        $qb->with('user', 'l')
-            ->optionalMatch('(user)-[ua:AFFINITY]-(l)')
-            ->optionalMatch('(user)-[ul:LIKES]-(l)')
-            ->optionalMatch('(user)-[ud:DISLIKES]-(l)');
+        //TODO: Cache this at periodic calculations
+//        $qb->with('user', 'l')
+//            ->optionalMatch('(user)-[ua:AFFINITY]-(l)')
+//            ->optionalMatch('(user)-[ul:LIKES]-(l)')
+//            ->optionalMatch('(user)-[ud:DISLIKES]-(l)');
         $qb->returns('count(l)-(count(ua)+count(ul)+count(ud)) AS c');
         $query = $qb->getQuery();
         $result = $query->getResultSet();
@@ -531,7 +532,9 @@ class LinkModel
 
         $links = array();
 
-        $maxOffset = $this->countPredictableContent($userId, $limitUsers);
+        //TODO: Cache this at periodic calculations
+        //$maxOffset = $this->countPredictableContent($userId, $limitUsers);
+        $maxOffset = 5000;
 
         while (count($links) < $limitContent && $params['internalOffset'] < $maxOffset) {
 
@@ -605,7 +608,7 @@ class LinkModel
     {
         $users = 2;
         $content = array();
-        while (($users < $maxUsers) && count($content) < $limitContent) {
+        while (($users <= $maxUsers) && count($content) < $limitContent) {
             $content = array();
             $predictedContents = $this->getPredictedContentForAUser($userId, $limitContent, $users, $filters);
             foreach ($predictedContents as $predictedContent) {
