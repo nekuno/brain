@@ -182,7 +182,7 @@ class LinkModel
 //            ->optionalMatch('(user)-[ua:AFFINITY]-(l)')
 //            ->optionalMatch('(user)-[ul:LIKES]-(l)')
 //            ->optionalMatch('(user)-[ud:DISLIKES]-(l)');
-        $qb->returns('count(l)-(count(ua)+count(ul)+count(ud)) AS c');
+        $qb->returns('count(l) AS c');
         $query = $qb->getQuery();
         $result = $query->getResultSet();
 
