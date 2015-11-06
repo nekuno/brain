@@ -92,13 +92,31 @@ profile:
                     es: "y no quiero ninguno"
 
     languages:
-        type: text
-        min: 0
-        max: 255
+        type: tags_and_choice
         filterable: false
         label:
             en: 'Languages'
             es: 'Idiomas'
+        choiceLabel:
+            en: 'Level'
+            es: 'Nivel'
+        choices:
+            elementary:
+                en: 'Elementary proficiency'
+                es: 'Competencia básica'
+            limited_working:
+                en: 'Limited working proficiency'
+                es: 'Competencia básica limitada'
+            professional_working:
+                en: 'Professional working proficiency'
+                es: 'Competencia básica profesional'
+            full_professional:
+                en: 'Full professional proficiency'
+                es: 'Competencia profesional completa'
+            native:
+                en: 'Native or bilingual proficiency'
+                es: 'Competencia bilingüe o nativa'
+
     gender:
         type: choice
         required: true
