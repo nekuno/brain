@@ -71,7 +71,7 @@ class PredictionWorker extends LoggerAwareWorker implements RabbitMQConsumerInte
         $this->channel->exchange_declare($exchangeName, $exchangeType, false, true, false);
         $this->channel->queue_declare($queueName, false, true, false, false);
         $this->channel->queue_bind($queueName, $exchangeName, $topic);
-
+        $this->channel->basic_qos(null, 1, null);
         $this->channel->basic_consume($queueName, '', false, false, false, false, array($this, 'callback'));
 
         while (count($this->channel->callbacks)) {
