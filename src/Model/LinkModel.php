@@ -755,14 +755,25 @@ class LinkModel
     }
 
     /**
-     * @return \Everyman\Neo4j\Query\ResultSet
-     * @throws \Exception
+     * @param int $offset
+     * @param int $limit
+     * @return array
+     * @throws Neo4j\Neo4jException
      */
-    public function findDuplicates()
+    public function findDuplicates($offset = 0, $limit = 99999999)
     {
         $qb = $this->gm->createQueryBuilder();
 
+        $qb->setParameters(array(
+            'offset' => $offset,
+            'limit' => (integer)$limit,
+        ));
+
         $qb->match('(l:Link)')
+            ->with('l')
+            ->orderBy('l.created DESC')
+            ->skip('{offset}')
+            ->limit('{limit}')
             ->with('l.url AS url, COLLECT(ID(l)) AS ids, COUNT(*) AS count')
             ->where('count > 1')
             ->returns('url, ids');
@@ -780,89 +791,6 @@ class LinkModel
                 $result[] = $duplicate;
             }
         }
-        return $result;
-    }
-
-    /**
-     * @return array
-     * @throws \Exception
-     */
-    public function findPseudoduplicates()
-    {
-        $qb = $this->gm->createQueryBuilder();
-
-        $qb->match('(l1:Link), (l2:Link)')
-            ->where('l2.url=l1.url+"/" OR l2.url=l1.url+"?" OR l2.url=l1.url+"&"')
-            ->returns('id(l1) AS id1, l1.url AS url1, id(l2) AS id2, l2.url AS url2');
-        $rs = $qb->getQuery()->getResultSet();
-        $result = array();
-        /** @var $row Row */
-        foreach ($rs as $row) {
-            $duplicate = array();
-            $duplicate['main'] = array('id' => $row->offsetGet('id1'),
-                'url' => $row->offsetGet('url1'));
-            $duplicate['duplicate'] = array('id' => $row->offsetGet('id2'),
-                'url' => $row->offsetGet('url2'));
-            $result[] = $duplicate;
-        }
-        return $result;
-    }
-
-    /**
-     * @param int $offset
-     * @return array with duplicates, or null if offset > links in database
-     * @throws \Exception
-     */
-    public function findPseudoduplicatesFromOffset($offset = 0)
-    {
-        $qb = $this->gm->createQueryBuilder();
-
-        $qb->setParameter('offset', (integer)$offset);
-        $qb->match('(l1:Link)')
-            ->with('l1')
-            ->orderBy('id(l1) ASC')//in case new links are added while iterating this function
-            ->skip('{offset}')
-            ->limit('1')
-            ->optionalMatch('(l2:Link)')
-            ->where('(id(l2)>id(l1))',
-                '(l2.url=l1.url+"/" OR l2.url=l1.url+"?" OR l2.url=l1.url+"&")')
-            ->optionalMatch('(l3:Link)')
-            ->where('(id(l3)>id(l1))',
-                '(l1.url=l3.url+"/" OR l1.url=l3.url+"?" OR l1.url=l3.url+"&")')
-            ->returns('id(l1) AS id1, l1.url AS url1,
-                        collect(id(l2)) AS id2, collect(l2.url) AS url2,
-                        collect(id(l3)) AS id3, collect(l3.url) AS url3');
-        $rs = $qb->getQuery()->getResultSet();
-
-        if ($rs->count() != 0) {
-            /** @var $row Row */
-            $row = $rs->current();
-            $result = array();
-            $pseudoduplicatesIds = $row->offsetGet('id2');
-            $pseudoduplicatesUrls = $row->offsetGet('url2');
-            $pseudoduplicatedIds = $row->offsetGet('url3');
-            $pseudoduplicatedUrls = $row->offsetGet('url3');
-            for ($i = 0; $i < count($pseudoduplicatesIds); $i++) {
-                $duplicate = array();
-                $duplicate['main'] = array('id' => $row->offsetGet('id1'),
-                    'url' => $row->offsetGet('url1'));
-                $duplicate['duplicate'] = array('id' => $pseudoduplicatesIds[$i],
-                    'url' => $pseudoduplicatesUrls[$i]);
-                $result[] = $duplicate;
-            }
-
-            for ($i = 0; $i < count($pseudoduplicatedIds); $i++) {
-                $duplicate = array();
-                $duplicate['main'] = array('id' => $pseudoduplicatedIds[$i],
-                    'url' => $pseudoduplicatedUrls[$i]);
-                $duplicate['duplicate'] = array('id' => $row->offsetGet('id1'),
-                    'url' => $row->offsetGet('url1'));
-                $result[] = $duplicate;
-            }
-        } else {
-            $result = null;
-        }
-
         return $result;
     }
 

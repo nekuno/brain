@@ -61,4 +61,36 @@ class SpotifyUrlParser extends UrlParser
 
         return false;
     }
+
+    public function cleanURL($url)
+    {
+        $url =  parent::cleanURL($url);
+
+        $type = $this->getUrlType($url);
+
+        switch($type){
+            case $this::TRACK_URL:
+            case $this::ALBUM_URL:
+                $url = $this->buildTrackURL($url);
+                break;
+        }
+
+        return $url;
+    }
+
+    private function buildTrackURL($url)
+    {
+        $parts = parse_url($url);
+        if (!isset($parts['path'])){
+            return false;
+        }
+
+        $route = explode('/', $parts['path']);
+        $id = end($route);
+
+        $url = 'https://open.spotify.com/track/' . $id;
+
+        return $url;
+    }
+
 } 
