@@ -624,19 +624,24 @@ class ProfileModel
                     case 'tags_and_choice':
                         if (is_array($fieldValue)) {
                             $qbTagsAndChoice->optionalMatch('(profile)<-[tagsAndChoiceOptionRel:TAGGED]-(:' . $this->typeToLabel($fieldName) . ')')
-                                ->delete('tagsAndChoiceOptionRel')
-                                ->with('profile');
+                                ->delete('tagsAndChoiceOptionRel');
 
+                            $tags = array();
                             foreach ($fieldValue as $index => $value) {
+                                if (in_array($value['tag'], $tags)) {
+                                    continue;
+                                }
                                 $choice = !is_null($value['choice']) ? $value['choice'] : '';
                                 $tagLabel = 'tag_' . $index;
                                 $tagParameter = $fieldName . '_' . $index;
                                 $choiceParameter = $fieldName . '_choice_' . $index;
 
-                                $qbTagsAndChoice->merge('(' . $tagLabel . ':ProfileTag:' . $this->typeToLabel($fieldName) . ' {name: { ' . $tagParameter . ' }})')
+                                $qbTagsAndChoice->with('profile')
+                                    ->merge('(' . $tagLabel . ':ProfileTag:' . $this->typeToLabel($fieldName) . ' {name: { ' . $tagParameter . ' }})')
                                     ->merge('(profile)<-[:TAGGED {detail: {' . $choiceParameter . '}}]-(' . $tagLabel . ')')
                                     ->setParameter($tagParameter, $value['tag'])
                                     ->setParameter($choiceParameter, $choice);
+                                $tags[] = $value['tag'];
                             }
                         }
                         $query = $qbTagsAndChoice->getQuery();
@@ -798,5 +803,4 @@ class ProfileModel
 
         return ucfirst($typeName);
     }
-
 }

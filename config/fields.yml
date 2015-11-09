@@ -91,7 +91,7 @@ profile:
                     en: "and doesn’t want any"
                     es: "y no quiero ninguno"
 
-    languages:
+    language:
         type: tags_and_choice
         filterable: false
         label:
