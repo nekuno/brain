@@ -628,6 +628,7 @@ class ProfileModel
 
                             $tags = array();
                             foreach ($fieldValue as $index => $value) {
+                                $value['tag'] = $this->typeToLabel($value['tag']);
                                 if (in_array($value['tag'], $tags)) {
                                     continue;
                                 }
@@ -800,7 +801,31 @@ class ProfileModel
 
     protected function typeToLabel($typeName)
     {
-
-        return ucfirst($typeName);
+        $oldFirstCharacter = mb_substr($typeName, 0, 1, 'UTF-8');
+        $croppedString = strtolower(mb_substr($typeName, 1, null, 'UTF-8'));
+        switch ($oldFirstCharacter) {
+            case 'á':
+                return 'Á' . $croppedString;
+            case 'é':
+                return 'É' . $croppedString;
+            case 'í':
+                return 'Í' . $croppedString;
+            case 'ó':
+                return 'Ó' . $croppedString;
+            case 'ú':
+                return 'Ú' . $croppedString;
+            case 'Á':
+                return 'Á' . $croppedString;
+            case 'É':
+                return 'É' . $croppedString;
+            case 'Í':
+                return 'Í' . $croppedString;
+            case 'Ó':
+                return 'Ó' . $croppedString;
+            case 'Ú':
+                return 'Ú' . $croppedString;
+            default:
+                return ucfirst($typeName);
+        }
     }
 }
