@@ -37,6 +37,7 @@ class Paginator
      * @param PaginatedInterface $paginated
      * @param \Symfony\Component\HttpFoundation\Request $request
      * @return array
+     * @throws ValidationException
      */
     public function paginate(array $filters, PaginatedInterface $paginated, Request $request)
     {

@@ -4,6 +4,7 @@ namespace Model\User;
 
 use Model\Neo4j\GraphManager;
 use Everyman\Neo4j\Node;
+use Everyman\Neo4j\Relationship;
 use Everyman\Neo4j\Query\Row;
 use Everyman\Neo4j\Label;
 use Model\Exception\ValidationException;
@@ -12,6 +13,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class ProfileModel
 {
+    const MAX_TAGS_AND_CHOICE_LENGTH = 15;
     protected $client;
     protected $metadata;
     protected $defaultLocale;
@@ -45,6 +47,26 @@ class ProfileModel
                 if (isset($choiceOptions[$name])) {
                     $publicField['choices'] = $choiceOptions[$name];
                 }
+            } elseif ($values['type'] === 'double_choice') {
+                $publicField['choices'] = array();
+                if (isset($choiceOptions[$name])) {
+                    $publicField['choices'] = $choiceOptions[$name];
+                    if (isset($values['doubleChoices'])) {
+                        foreach ($values['doubleChoices'] as $choice => $doubleChoices) {
+                            foreach ($doubleChoices as $doubleChoice => $doubleChoiceValues) {
+                                $publicField['doubleChoices'][$choice][$doubleChoice] = $doubleChoiceValues[$locale];
+                            }
+                        }
+                    }
+                }
+            } elseif ($values['type'] === 'tags_and_choice') {
+                $publicField['choices'] = array();
+                if (isset($values['choices'])) {
+                    foreach ($values['choices'] as $choice => $description) {
+                        $publicField['choices'][$choice] = $description[$locale];
+                    }
+                }
+                $publicField['top'] = $this->getTopProfileTags($name);
             } elseif ($values['type'] === 'tags') {
                 $publicField['top'] = $this->getTopProfileTags($name);
             }
@@ -76,7 +98,7 @@ class ProfileModel
 
         $locale = $this->getLocale($locale);
         $metadata = $this->getMetadata($locale, false);
-
+        $labels = array();
         foreach ($metadata as $key => &$item) {
             if (isset($item['labelFilter'])) {
                 $item['label'] = $item['labelFilter'][$locale];
@@ -84,7 +106,13 @@ class ProfileModel
             }
             if (isset($item['filterable']) && $item['filterable'] === false) {
                 unset($metadata[$key]);
+            } else {
+                $labels[] = $item['label'];
             }
+        }
+
+        if (!empty($labels)) {
+            array_multisort($labels, SORT_ASC, $metadata);
         }
 
         return $metadata;
@@ -277,6 +305,33 @@ class ProfileModel
                             }
                             break;
 
+                        case 'double_choice':
+                            $choices = $fieldData['choices'] + array('' => '');
+                            if (!in_array($fieldValue['choice'], array_keys($choices))) {
+                                $fieldErrors[] = sprintf('Option with value "%s" is not valid, possible values are "%s"', $fieldValue['choice'], implode("', '", array_keys($choices)));
+                            }
+                            $doubleChoices = $fieldData['doubleChoices'] + array('' => '');
+                            if (!isset($doubleChoices[$fieldValue['choice']]) || $fieldValue['detail'] && !isset($doubleChoices[$fieldValue['choice']][$fieldValue['detail']])) {
+                                $fieldErrors[] = sprintf('Option choice and detail must be set in "%s"', $fieldValue['choice']);
+                            }
+                            elseif ($fieldValue['detail'] && !in_array($fieldValue['detail'], array_keys($doubleChoices[$fieldValue['choice']]))) {
+                                $fieldErrors[] = sprintf('Detail with value "%s" is not valid, possible values are "%s"', $fieldValue['detail'], implode("', '", array_keys($doubleChoices)));
+                            }
+                            break;
+                        case 'tags_and_choice':
+                            $choices = $fieldData['choices'];
+                            if (count($fieldValue) > self::MAX_TAGS_AND_CHOICE_LENGTH) {
+                                $fieldErrors[] = sprintf('Tags and choice length "%s" is too long. "%s" is the maximum', count($fieldValue), self::MAX_TAGS_AND_CHOICE_LENGTH);
+                            }
+                            foreach ($fieldValue as $tagAndChoice) {
+                                if (!isset($tagAndChoice['tag']) || !array_key_exists('choice', $tagAndChoice)) {
+                                    $fieldErrors[] = sprintf('Tag and choice must be defined for tags and choice type');
+                                }
+                                if (isset($tagAndChoice['choice']) && !in_array($tagAndChoice['choice'], array_keys($choices))) {
+                                    $fieldErrors[] = sprintf('Option with value "%s" is not valid, possible values are "%s"', $tagAndChoice['choice'], implode("', '", array_keys($choices)));
+                                }
+                            }
+                            break;
                         case 'location':
                             if (!is_array($fieldValue)) {
                                 $fieldErrors[] = sprintf('The value "%s" is not valid, it should be an array with "latitude" and "longitude" keys', $fieldValue);
@@ -347,16 +402,32 @@ class ProfileModel
     protected function buildOptions(Row $row)
     {
         $options = $row->offsetGet('options');
-        $optionsResult = array();
+        /* @var Node $profile */
+        $profile = $row->offsetGet('profile');
 
+        $optionsResult = array();
         /* @var Node $option */
         foreach ($options as $option) {
             $labels = $option->getLabels();
+            /* @var Relationship $relationship */
+            $relationships = $option->getRelationships('OPTION_OF', Relationship::DirectionOut);
+            foreach ($relationships as $relationship) {
+                if ($relationship->getStartNode()->getId() === $option->getId() &&
+                    $relationship->getEndNode()->getId() === $profile->getId()) {
+                    break;
+                }
+            }
             /* @var Label $label */
             foreach ($labels as $label) {
                 if ($label->getName() && $label->getName() != 'ProfileOption') {
                     $typeName = $this->labelToType($label->getName());
                     $optionsResult[$typeName] = $option->getProperty('id');
+                    $detail = $relationship->getProperty('detail');
+                    if (!is_null($detail)) {
+                        $optionsResult[$typeName] = array();
+                        $optionsResult[$typeName]['choice'] = $option->getProperty('id');
+                        $optionsResult[$typeName]['detail'] = $detail;
+                    }
                 }
             }
         }
@@ -367,16 +438,34 @@ class ProfileModel
     protected function buildTags(Row $row)
     {
         $tags = $row->offsetGet('tags');
-        $tagsResult = array();
+        /* @var Node $profile */
+        $profile = $row->offsetGet('profile');
 
+        $tagsResult = array();
         /* @var Node $tag */
         foreach ($tags as $tag) {
             $labels = $tag->getLabels();
+            /* @var Relationship $relationship */
+            $relationships = $tag->getRelationships('TAGGED', Relationship::DirectionOut);
+            foreach ($relationships as $relationship) {
+                if ($relationship->getStartNode()->getId() === $tag->getId() &&
+                    $relationship->getEndNode()->getId() === $profile->getId()) {
+                    break;
+                }
+            }
             /* @var Label $label */
             foreach ($labels as $label) {
                 if ($label->getName() && $label->getName() != 'ProfileTag') {
                     $typeName = $this->labelToType($label->getName());
-                    $tagsResult[$typeName][] = $tag->getProperty('name');
+                    $tagResult = $tag->getProperty('name');
+                    $detail = $relationship->getProperty('detail');
+                    if (!is_null($detail)) {
+                        $tagResult = array();
+                        $tagResult['tag'] = $tag->getProperty('name');
+                        $tagResult['detail'] = $detail;
+                    }
+                    $tagsResult[$typeName][] = $tagResult;
+
                 }
             }
         }
@@ -442,6 +531,11 @@ class ProfileModel
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(profile:Profile)-[:PROFILE_OF]->(u:User)')
+            ->where('u.qnoow_id = { id }')
+            ->setParameter('id', (int)$id)
+            ->with('profile');
+        $qbTagsAndChoice = $this->gm->createQueryBuilder();
+        $qbTagsAndChoice->match('(profile:Profile)-[:PROFILE_OF]->(u:User)')
             ->where('u.qnoow_id = { id }')
             ->setParameter('id', (int)$id)
             ->with('profile');
@@ -511,6 +605,50 @@ class ProfileModel
                                 ->with('profile');
                         }
                         break;
+                    case 'double_choice':
+                        if (isset($options[$fieldName])) {
+                            $qb->optionalMatch('(profile)<-[doubleChoiceOptionRel:OPTION_OF]-(option:' . $this->typeToLabel($fieldName) . ')')
+                                ->delete('doubleChoiceOptionRel')
+                                ->with('profile');
+                        }
+                        if (isset($fieldValue['choice'])) {
+                            $detail = !is_null($fieldValue['detail']) ? $fieldValue['detail'] : '';
+                            $qb->match('(option:' . $this->typeToLabel($fieldName) . ' {id: { ' . $fieldName . ' }})')
+                                ->merge('(profile)<-[:OPTION_OF {detail: {' . $fieldName . '_detail}}]-(option)')
+                                ->setParameter($fieldName, $fieldValue['choice'])
+                                ->setParameter($fieldName.'_detail', $detail)
+                                ->with('profile');
+                        }
+
+                        break;
+                    case 'tags_and_choice':
+                        if (is_array($fieldValue)) {
+                            $qbTagsAndChoice->optionalMatch('(profile)<-[tagsAndChoiceOptionRel:TAGGED]-(:' . $this->typeToLabel($fieldName) . ')')
+                                ->delete('tagsAndChoiceOptionRel');
+
+                            $tags = array();
+                            foreach ($fieldValue as $index => $value) {
+                                $value['tag'] = $this->typeToLabel($value['tag']);
+                                if (in_array($value['tag'], $tags)) {
+                                    continue;
+                                }
+                                $choice = !is_null($value['choice']) ? $value['choice'] : '';
+                                $tagLabel = 'tag_' . $index;
+                                $tagParameter = $fieldName . '_' . $index;
+                                $choiceParameter = $fieldName . '_choice_' . $index;
+
+                                $qbTagsAndChoice->with('profile')
+                                    ->merge('(' . $tagLabel . ':ProfileTag:' . $this->typeToLabel($fieldName) . ' {name: { ' . $tagParameter . ' }})')
+                                    ->merge('(profile)<-[:TAGGED {detail: {' . $choiceParameter . '}}]-(' . $tagLabel . ')')
+                                    ->setParameter($tagParameter, $value['tag'])
+                                    ->setParameter($choiceParameter, $choice);
+                                $tags[] = $value['tag'];
+                            }
+                        }
+                        $query = $qbTagsAndChoice->getQuery();
+                        $query->getResultSet();
+
+                        break;
                     case 'tags':
                         if (isset($tags[$fieldName])) {
                             foreach ($tags[$fieldName] as $tag) {
@@ -521,8 +659,8 @@ class ProfileModel
                         }
                         if (is_array($fieldValue) && !empty($fieldValue)) {
                             foreach ($fieldValue as $tag) {
-                                $qb->merge('(profile)<-[:TAGGED]-(tag:' . $this->typeToLabel($fieldName) . ' {name: "' . $tag . '" })')
-                                    ->set('tag:ProfileTag')
+                                $qb->merge('(tag:ProfileTag:' . $this->typeToLabel($fieldName) . ' {name: "' . $tag . '" })')
+                                    ->merge('(profile)<-[:TAGGED]-(tag)')
                                     ->with('profile');
                             }
                         }
@@ -532,8 +670,8 @@ class ProfileModel
         }
 
         $qb->optionalMatch('(profile)<-[:OPTION_OF]-(option:ProfileOption)')
-            ->optionalMatch('(profile)-[:TAGGED]-(tag:ProfileTag)')
-            ->returns('profile', 'collect(distinct option) AS options', ' collect(distinct tag) AS tags')
+            ->optionalMatch('(profile)<-[:TAGGED]-(tag:ProfileTag)')
+            ->returns('profile', 'collect(distinct option) AS options', 'collect(distinct tag) AS tags')
             ->limit(1);
 
         $query = $qb->getQuery();
@@ -549,7 +687,7 @@ class ProfileModel
         $qb->match('(option:ProfileOption)-[:OPTION_OF]->(profile:Profile)-[:PROFILE_OF]->(user:User)')
             ->where('user.qnoow_id = { id }')
             ->setParameter('id', $id)
-            ->returns('collect(distinct option) AS options');
+            ->returns('profile, collect(distinct option) AS options');
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();
@@ -568,7 +706,7 @@ class ProfileModel
         $qb->match('(tag:ProfileTag)-[:TAGGED]-(profile:Profile)-[:PROFILE_OF]->(user:User)')
             ->where('user.qnoow_id = { id }')
             ->setParameter('id', $id)
-            ->returns('collect(distinct tag) as tags');
+            ->returns('profile', 'collect(distinct tag) as tags');
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();
@@ -663,8 +801,31 @@ class ProfileModel
 
     protected function typeToLabel($typeName)
     {
-
-        return ucfirst($typeName);
+        $oldFirstCharacter = mb_substr($typeName, 0, 1, 'UTF-8');
+        $croppedString = strtolower(mb_substr($typeName, 1, null, 'UTF-8'));
+        switch ($oldFirstCharacter) {
+            case 'á':
+                return 'Á' . $croppedString;
+            case 'é':
+                return 'É' . $croppedString;
+            case 'í':
+                return 'Í' . $croppedString;
+            case 'ó':
+                return 'Ó' . $croppedString;
+            case 'ú':
+                return 'Ú' . $croppedString;
+            case 'Á':
+                return 'Á' . $croppedString;
+            case 'É':
+                return 'É' . $croppedString;
+            case 'Í':
+                return 'Í' . $croppedString;
+            case 'Ó':
+                return 'Ó' . $croppedString;
+            case 'Ú':
+                return 'Ú' . $croppedString;
+            default:
+                return ucfirst($typeName);
+        }
     }
-
 }

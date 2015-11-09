@@ -161,18 +161,28 @@ class LinkModel
      * @param array $filters
      * @return int
      * @throws Neo4j\Neo4jException
-     * @throws \Exception
      */
     public function countAllLinks($filters = array())
     {
         $type = isset($filters['type']) ? $filters['type'] : 'Link';
 
-        //todo: add tag filters, probably with an inter-model buildParamsFromFilters
-
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match("(l:$type)")
-            ->returns('count(l) AS c');
+        $qb->match('(user:User {qnoow_id: { userId }})');
+        $qb->setParameter('userId', (integer)$filters['id']);
+        if (isset($filters['tag'])) {
+            $qb->match("(:Tag{name: { tag } })-[:TAGGED]-(l:$type)");
+            $qb->setParameter('tag', $filters['tag']);
+        } else {
+            $qb->match("(l:$type)");
+        }
+
+        //TODO: Cache this at periodic calculations
+//        $qb->with('user', 'l')
+//            ->optionalMatch('(user)-[ua:AFFINITY]-(l)')
+//            ->optionalMatch('(user)-[ul:LIKES]-(l)')
+//            ->optionalMatch('(user)-[ud:DISLIKES]-(l)');
+        $qb->returns('count(l) AS c');
         $query = $qb->getQuery();
         $result = $query->getResultSet();
 
@@ -511,56 +521,77 @@ class LinkModel
             $linkType = $filters['type'];
         }
 
-        $qb = $this->gm->createQueryBuilder();
-        $qb->match('(u:User {qnoow_id: { userId } })')
-            ->match('(u)-[r:SIMILARITY]-(users:User)')
-            ->with('users,u,r.similarity AS m')
-            ->orderby('m DESC')
-            ->limit('{limitUsers}');
+        $params = array(
+            'userId' => (integer)$userId,
+            'limitContent' => (integer)$limitContent,
+            'limitUsers' => (integer)$limitUsers,
 
-        $qb->match('(users)-[d:LIKES]->(l:' . $linkType . ')');
-        $conditions = array('l.processed = 1 AND(NOT (u)-[:LIKES|:DISLIKES]-(l))');
-        if (!(isset($filters['affinity']) && $filters['affinity'] == true)) {
-            $conditions[] = '(NOT (u)-[:AFFINITY]-(l))';
-        };
-
-        if (isset($filters['tag'])) {
-            $qb->match('(l)-[:TAGGED]->(filterTag:Tag)')
-                ->where('filterTag.name = { tag }');
-
-            $params['tag'] = $filters['tag'];
-        }
-
-        $qb->where($conditions)
-            ->with('l, avg(m) AS average, count(d) AS amount')
-            ->where('amount >= 2');
-        $qb->optionalMatch('(l)-[:TAGGED]->(tag:Tag)')
-            ->optionalMatch("(l)-[:SYNONYMOUS]->(synonymousLink:Link)")
-            ->returns('id(l) as id',
-                'l as link',
-                'average',
-                'collect(distinct tag.name) as tags',
-                'labels(l) as types',
-                'COLLECT (DISTINCT synonymousLink) AS synonymous')
-            ->orderby('average DESC')
-            ->limit('{limitContent}');
-
-        $qb->setParameters(
-            array(
-                'userId' => (integer)$userId,
-                'limitContent' => (integer)$limitContent,
-                'limitUsers' => (integer)$limitUsers,
-            )
+            'internalOffset' => 0,
+            'internalLimit' => 100,
         );
 
-        $query = $qb->getQuery();
-        $result = $query->getResultSet();
-
-
         $links = array();
-        foreach ($result as $row) {
-            /* @var $row Row */
-            $links[] = $this->buildLink($row->offsetGet('link'));
+
+        //TODO: Cache this at periodic calculations
+        //$maxOffset = $this->countPredictableContent($userId, $limitUsers);
+        $maxOffset = 5000;
+
+        while (count($links) < $limitContent && $params['internalOffset'] < $maxOffset) {
+
+            $qb = $this->gm->createQueryBuilder();
+            $qb->match('(u:User {qnoow_id: { userId } })')
+                ->match('(u)-[r:SIMILARITY]-(users:User)')
+                ->with('users,u,r.similarity AS m')
+                ->orderby('m DESC')
+                ->limit('{limitUsers}');
+
+            $qb->match('(users)-[:LIKES]->(l:' . $linkType . ')');
+
+            $qb->with('u', 'avg(m) as average', 'count(m) as amount', 'l')
+                ->where('amount >= 2');
+            $qb->with('u', 'average', 'l')
+                ->orderBy('l.created DESC')
+                ->skip('{internalOffset}')
+                ->limit('{internalLimit}');
+
+
+            $conditions = array('l.processed = 1', 'NOT (u)-[:LIKES]-(l)', 'NOT (u)-[:DISLIKES]-(l)');
+            if (!(isset($filters['affinity']) && $filters['affinity'] == true)) {
+                $conditions[] = '(NOT (u)-[:AFFINITY]-(l))';
+            };
+            $qb->where($conditions);
+            if (isset($filters['tag'])) {
+                $qb->match('(l)-[:TAGGED]->(filterTag:Tag)')
+                    ->where('filterTag.name = { tag }');
+
+                $params['tag'] = $filters['tag'];
+            }
+
+
+            $qb->with('l', 'average');
+            $qb->optionalMatch('(l)-[:TAGGED]->(tag:Tag)')
+                ->optionalMatch("(l)-[:SYNONYMOUS]->(synonymousLink:Link)")
+                ->returns('id(l) as id',
+                    'l as link',
+                    'average',
+                    'collect(distinct tag.name) as tags',
+                    'labels(l) as types',
+                    'COLLECT (DISTINCT synonymousLink) AS synonymous')
+                ->orderby('average DESC')
+                ->limit('{limitContent}');
+
+            $qb->setParameters($params);
+
+            $query = $qb->getQuery();
+            $result = $query->getResultSet();
+
+            $links = array();
+            foreach ($result as $row) {
+                /* @var $row Row */
+                $links[] = $this->buildLink($row->offsetGet('link'));
+            }
+
+            $params['internalOffset'] += $params['internalLimit'];
         }
 
         return $links;
@@ -577,15 +608,35 @@ class LinkModel
     {
         $users = 2;
         $content = array();
-        while (($users < $maxUsers) && count($content) < $limitContent) {
+        while (($users <= $maxUsers) && count($content) < $limitContent) {
             $content = array();
             $predictedContents = $this->getPredictedContentForAUser($userId, $limitContent, $users, $filters);
-            foreach ($predictedContents as $predictedContent){
+            foreach ($predictedContents as $predictedContent) {
                 $content[] = array('content' => $predictedContent);
             }
             $users++;
         }
         return $content;
+    }
+
+    protected function countPredictableContent($userId, $users = 10)
+    {
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User {qnoow_id: { userId } })')
+            ->match('(u)-[r:SIMILARITY]-(users:User)')
+            ->with('users,u,r.similarity AS m')
+            ->limit('{limitUsers}');
+        $qb->match('(users)-[:LIKES]->(l:Link)')
+            ->where('NOT (u)-[:LIKES]-(l)', 'NOT (u)-[:DISLIKES]-(l)', 'NOT (u)-[:AFFINITY]-(l)');
+        $qb->returns('count(l) AS c');
+        $qb->setParameters(array(
+            'userId' => (integer)$userId,
+            'limitUsers' => $users,
+        ));
+
+        $resultSet = $qb->getQuery()->getResultSet();
+
+        return $resultSet->current()->offsetGet('c');
     }
 
     /**
@@ -704,14 +755,25 @@ class LinkModel
     }
 
     /**
-     * @return \Everyman\Neo4j\Query\ResultSet
-     * @throws \Exception
+     * @param int $offset
+     * @param int $limit
+     * @return array
+     * @throws Neo4j\Neo4jException
      */
-    public function findDuplicates()
+    public function findDuplicates($offset = 0, $limit = 99999999)
     {
         $qb = $this->gm->createQueryBuilder();
 
+        $qb->setParameters(array(
+            'offset' => $offset,
+            'limit' => (integer)$limit,
+        ));
+
         $qb->match('(l:Link)')
+            ->with('l')
+            ->orderBy('l.created DESC')
+            ->skip('{offset}')
+            ->limit('{limit}')
             ->with('l.url AS url, COLLECT(ID(l)) AS ids, COUNT(*) AS count')
             ->where('count > 1')
             ->returns('url, ids');
@@ -729,89 +791,6 @@ class LinkModel
                 $result[] = $duplicate;
             }
         }
-        return $result;
-    }
-
-    /**
-     * @return array
-     * @throws \Exception
-     */
-    public function findPseudoduplicates()
-    {
-        $qb = $this->gm->createQueryBuilder();
-
-        $qb->match('(l1:Link), (l2:Link)')
-            ->where('l2.url=l1.url+"/" OR l2.url=l1.url+"?" OR l2.url=l1.url+"&"')
-            ->returns('id(l1) AS id1, l1.url AS url1, id(l2) AS id2, l2.url AS url2');
-        $rs = $qb->getQuery()->getResultSet();
-        $result = array();
-        /** @var $row Row */
-        foreach ($rs as $row) {
-            $duplicate = array();
-            $duplicate['main'] = array('id' => $row->offsetGet('id1'),
-                'url' => $row->offsetGet('url1'));
-            $duplicate['duplicate'] = array('id' => $row->offsetGet('id2'),
-                'url' => $row->offsetGet('url2'));
-            $result[] = $duplicate;
-        }
-        return $result;
-    }
-
-    /**
-     * @param int $offset
-     * @return array with duplicates, or null if offset > links in database
-     * @throws \Exception
-     */
-    public function findPseudoduplicatesFromOffset($offset = 0)
-    {
-        $qb = $this->gm->createQueryBuilder();
-
-        $qb->setParameter('offset', (integer)$offset);
-        $qb->match('(l1:Link)')
-            ->with('l1')
-            ->orderBy('id(l1) ASC')//in case new links are added while iterating this function
-            ->skip('{offset}')
-            ->limit('1')
-            ->optionalMatch('(l2:Link)')
-            ->where('(id(l2)>id(l1))',
-                '(l2.url=l1.url+"/" OR l2.url=l1.url+"?" OR l2.url=l1.url+"&")')
-            ->optionalMatch('(l3:Link)')
-            ->where('(id(l3)>id(l1))',
-                '(l1.url=l3.url+"/" OR l1.url=l3.url+"?" OR l1.url=l3.url+"&")')
-            ->returns('id(l1) AS id1, l1.url AS url1,
-                        collect(id(l2)) AS id2, collect(l2.url) AS url2,
-                        collect(id(l3)) AS id3, collect(l3.url) AS url3');
-        $rs = $qb->getQuery()->getResultSet();
-
-        if ($rs->count() != 0) {
-            /** @var $row Row */
-            $row = $rs->current();
-            $result = array();
-            $pseudoduplicatesIds = $row->offsetGet('id2');
-            $pseudoduplicatesUrls = $row->offsetGet('url2');
-            $pseudoduplicatedIds = $row->offsetGet('url3');
-            $pseudoduplicatedUrls = $row->offsetGet('url3');
-            for ($i = 0; $i < count($pseudoduplicatesIds); $i++) {
-                $duplicate = array();
-                $duplicate['main'] = array('id' => $row->offsetGet('id1'),
-                    'url' => $row->offsetGet('url1'));
-                $duplicate['duplicate'] = array('id' => $pseudoduplicatesIds[$i],
-                    'url' => $pseudoduplicatesUrls[$i]);
-                $result[] = $duplicate;
-            }
-
-            for ($i = 0; $i < count($pseudoduplicatedIds); $i++) {
-                $duplicate = array();
-                $duplicate['main'] = array('id' => $pseudoduplicatedIds[$i],
-                    'url' => $pseudoduplicatedUrls[$i]);
-                $duplicate['duplicate'] = array('id' => $row->offsetGet('id1'),
-                    'url' => $row->offsetGet('url1'));
-                $result[] = $duplicate;
-            }
-        } else {
-            $result = null;
-        }
-
         return $result;
     }
 

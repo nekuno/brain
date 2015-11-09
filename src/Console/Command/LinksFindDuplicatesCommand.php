@@ -20,10 +20,9 @@ class LinksFindDuplicatesCommand extends ApplicationAwareCommand
         $this->setName('links:find-duplicates')
             ->setDescription('Return links with identical URLs')
             ->addOption('fuse', null, InputOption::VALUE_NONE, 'Automatically fuse found duplicates')
-            ->addOption('step', null, InputOption::VALUE_NONE, 'Obtain, output and/or fuse duplicate by duplicate')
-            ->addOption('offset', null, InputOption::VALUE_OPTIONAL, 'Links to skip if using step option', 0)
-            ->addOption('pseudoduplicates', null, InputOption::VALUE_NONE, 'Find nearly identical URLs instead of totally identical URLs');
-    }
+            ->addOption('limit', null, InputOption::VALUE_OPTIONAL, 'Amount of links analyzed', 99999999)
+            ->addOption('offset', null, InputOption::VALUE_OPTIONAL, 'Links to skip from oldest', 0);
+            }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
@@ -33,34 +32,14 @@ class LinksFindDuplicatesCommand extends ApplicationAwareCommand
         /* @var $linkModel LinkModel */
         $linkModel = $this->app['links.model'];
 
+        $limit = $input->getOption('limit');
+        $offset = $input->getOption('offset');
+
         $output->writeln('Updating link URLs');
         $this->updateURLs($output, $linkModel);
 
-        if ($input->getOption('pseudoduplicates') && $input->getOption('step')) {
-            $moreLinksExist = true;
-            $offset = $input->getOption('offset');
-            while ($moreLinksExist) {
-                $nextDuplicates = $linkModel->findPseudoduplicatesFromOffset((integer)$offset);
-                if ($nextDuplicates === null) {
-                    $output->writeln('No more links to analyze.');
-                    return;
-                }
-                if (empty($nextDuplicates)) {
-                    $output->writeln(sprintf('No pseudoduplicates found for link with offset %d', $offset));
-                } else {
-                    $output->writeln(sprintf('%d duplicated links found for links with id offset.', count($nextDuplicates), $offset));
-                    $this->analyzeDuplicates($nextDuplicates, $input, $output);
-                }
-                $offset++;
-            }
-            return;
-        }
-
-        if ($input->getOption('pseudoduplicates')) {
-            $duplicates = $linkModel->findPseudoduplicates();
-        } else {
-            $duplicates = $linkModel->findDuplicates();
-        }
+        $output->writeln('Finding duplicates');
+        $duplicates = $linkModel->findDuplicates($offset, $limit);
 
         $numDuplicates = count($duplicates);
 
@@ -125,7 +104,7 @@ class LinksFindDuplicatesCommand extends ApplicationAwareCommand
     private function updateURLs($output,$linkModel)
     {
 
-        $links = $linkModel->findAllLinks(array('type'=>'Video'));
+        $links = $linkModel->findAllLinks();
 
         /** @var $linkProcessor LinkProcessor */
         $linkProcessor = $this->app['api_consumer.link_processor'];

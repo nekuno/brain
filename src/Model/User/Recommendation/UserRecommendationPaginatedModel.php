@@ -66,9 +66,9 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         );
 
         $profileFilters = $this->getProfileFilters($filters['profileFilters']);
-        $orderQuery = ' matching_questions DESC, similarity DESC ';
-        if (isset($filters['order']) && $filters['order'] == 'content') {
-            $orderQuery = ' similarity DESC, matching_questions DESC ';
+        $orderQuery = '  similarity DESC, matching_questions DESC ';
+        if (isset($filters['order']) && $filters['order'] == 'questions') {
+            $orderQuery = ' matching_questions DESC, similarity DESC ';
         }
 
         $qb = $this->gm->createQueryBuilder();
@@ -264,6 +264,11 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                         $conditions[] = "p.$name = true";
                         break;
                     case 'choice':
+                        $profileLabelName = ucfirst($name);
+                        $value = implode("', '", $value);
+                        $matches[] = "(p)<-[:OPTION_OF]-(option$name:$profileLabelName) WHERE option$name.id IN ['$value']";
+                        break;
+                    case 'double_choice':
                         $profileLabelName = ucfirst($name);
                         $value = implode("', '", $value);
                         $matches[] = "(p)<-[:OPTION_OF]-(option$name:$profileLabelName) WHERE option$name.id IN ['$value']";

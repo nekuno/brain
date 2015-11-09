@@ -8,6 +8,9 @@ api_consumer.config:
         google:
             class: Http\OAuth\ResourceOwner\GoogleResourceOwner
             client_credential_class: Http\OAuth\ResourceOwner\ClientCredential\GoogleClientCredentialFromLibrary
+        google_profile:
+            class: Http\OAuth\ResourceOwner\GoogleResourceOwner
+            client_credential_class: Http\OAuth\ResourceOwner\ClientCredential\GoogleClientCredentialFromLibrary
         spotify:
             class: Http\OAuth\ResourceOwner\SpotifyResourceOwner
     fetcher:
@@ -26,6 +29,9 @@ api_consumer.config:
         google:
             class: ApiConsumer\Fetcher\GoogleFetcher
             resourceOwner: google
+        google_profile:
+            class: ApiConsumer\Fetcher\GoogleProfileFetcher
+            resourceOwner: google_profile
         youtube:
             class: ApiConsumer\Fetcher\YoutubeFetcher
             resourceOwner: google

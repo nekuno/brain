@@ -19,15 +19,6 @@ abstract class BasicPaginationFetcher extends AbstractFetcher
      */
     protected $rawFeed = array();
 
-    /**
-     * Get query
-     *
-     * @return array
-     */
-    protected function getQuery()
-    {
-        return array();
-    }
 
     /**
      * Get pagination field
@@ -90,8 +81,4 @@ abstract class BasicPaginationFetcher extends AbstractFetcher
 
     abstract protected function parseLinks(array $rawFeed);
 
-    public function setUser($user)
-    {
-        $this->user = $user;
-    }
 }
