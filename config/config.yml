@@ -79,6 +79,17 @@ api_consumer.config:
                 scopes:
                     - 'https://www.googleapis.com/auth/youtube'
 
+        google_profile:
+            consumer_key: %google.consumer_key%
+            consumer_secret: %google.consumer_secret%
+            client_credential:
+                application_token: %google.application_token%
+                service_account_email: %google.service_account_email%
+                key_file: %google.key_file%
+                key_password: %google.key_password%
+                scopes:
+                    - 'https://www.googleapis.com/auth/youtube'
+
         spotify:
             consumer_key: %spotify.consumer_key%
             consumer_secret: %spotify.consumer_secret%
