@@ -628,8 +628,8 @@ class ProfileModel
 
                             $tags = array();
                             foreach ($fieldValue as $index => $value) {
-                                $value['tag'] = $this->typeToLabel($value['tag']);
-                                if (in_array($value['tag'], $tags)) {
+                                $tagValue = $this->translateTypicalLanguage($this->typeToLabel($value['tag']));
+                                if (in_array($tagValue, $tags)) {
                                     continue;
                                 }
                                 $choice = !is_null($value['choice']) ? $value['choice'] : '';
@@ -640,9 +640,9 @@ class ProfileModel
                                 $qbTagsAndChoice->with('profile')
                                     ->merge('(' . $tagLabel . ':ProfileTag:' . $this->typeToLabel($fieldName) . ' {name: { ' . $tagParameter . ' }})')
                                     ->merge('(profile)<-[:TAGGED {detail: {' . $choiceParameter . '}}]-(' . $tagLabel . ')')
-                                    ->setParameter($tagParameter, $value['tag'])
+                                    ->setParameter($tagParameter, $tagValue)
                                     ->setParameter($choiceParameter, $choice);
-                                $tags[] = $value['tag'];
+                                $tags[] = $tagValue;
                             }
                         }
                         $query = $qbTagsAndChoice->getQuery();
@@ -826,6 +826,35 @@ class ProfileModel
                 return 'Ú' . $croppedString;
             default:
                 return ucfirst($typeName);
+        }
+    }
+
+    protected function translateTypicalLanguage($language)
+    {
+        switch($language)
+        {
+            case 'Español':
+                return 'Spanish';
+            case 'Inglés':
+                return 'English';
+            case 'Francés':
+                return 'French';
+            case 'Alemán':
+                return 'German';
+            case 'Portugués':
+                return 'Portuguese';
+            case 'Italiano':
+                return 'Italian';
+            case 'Chino':
+                return 'Chinese';
+            case 'Japonés':
+                return 'Japanese';
+            case 'Ruso':
+                return 'Russian';
+            case 'Árabe':
+                return 'Arabic';
+            default:
+                return $language;
         }
     }
 }
