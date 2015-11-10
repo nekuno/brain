@@ -645,9 +645,9 @@ class ProfileModel
                                     ->setParameter($choiceParameter, $choice);
                                 $tags[] = $tagValue;
                             }
+                            $query = $qbTagsAndChoice->getQuery();
+                            $query->getResultSet();
                         }
-                        $query = $qbTagsAndChoice->getQuery();
-                        $query->getResultSet();
 
                         break;
                     case 'tags':
