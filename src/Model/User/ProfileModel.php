@@ -534,11 +534,6 @@ class ProfileModel
             ->where('u.qnoow_id = { id }')
             ->setParameter('id', (int)$id)
             ->with('profile');
-        $qbTagsAndChoice = $this->gm->createQueryBuilder();
-        $qbTagsAndChoice->match('(profile:Profile)-[:PROFILE_OF]->(u:User)')
-            ->where('u.qnoow_id = { id }')
-            ->setParameter('id', (int)$id)
-            ->with('profile');
 
         foreach ($data as $fieldName => $fieldValue) {
             if (isset($metadata[$fieldName])) {
@@ -623,6 +618,12 @@ class ProfileModel
                         break;
                     case 'tags_and_choice':
                         if (is_array($fieldValue)) {
+                            $qbTagsAndChoice = $this->gm->createQueryBuilder();
+                            $qbTagsAndChoice->match('(profile:Profile)-[:PROFILE_OF]->(u:User)')
+                                ->where('u.qnoow_id = { id }')
+                                ->setParameter('id', (int)$id)
+                                ->with('profile');
+
                             $qbTagsAndChoice->optionalMatch('(profile)<-[tagsAndChoiceOptionRel:TAGGED]-(:' . $this->typeToLabel($fieldName) . ')')
                                 ->delete('tagsAndChoiceOptionRel');
 
