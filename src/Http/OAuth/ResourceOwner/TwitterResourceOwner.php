@@ -2,6 +2,7 @@
 
 namespace Http\OAuth\ResourceOwner;
 
+use GuzzleHttp\Exception\RequestException;
 use Model\User\TokensModel;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
@@ -92,7 +93,12 @@ class TwitterResourceOwner extends Oauth1GenericResourceOwner
         if (isset($token['screenName'])){
             $screenName = $token['screenName'];
         } else {
-            $account = $this->authorizedHttpRequest('accounts/settings.json');
+            try{
+                $account = $this->authorizedHttpRequest('account/settings.json', array(), $token);
+            } catch (RequestException $e){
+                return null;
+            }
+
             $screenName = $account['screen_name'];
         }
 

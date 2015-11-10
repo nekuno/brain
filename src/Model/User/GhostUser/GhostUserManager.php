@@ -62,7 +62,7 @@ class GhostUserManager
         $qb = $this->graphManager->createQueryBuilder();
         $qb->match('(u:' . $this::LABEL_GHOST_USER . ' {qnoow_id: { id }})')
             ->setParameter('id', (int)$id)
-            ->returns('u');
+            ->returns('u, u.qnoow_id as id');
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();
@@ -110,7 +110,7 @@ class GhostUserManager
         $user = $this->userModel->getBySocialProfile($profile);
 
         try {
-            $ghostUser = $this->getById($user);
+            $ghostUser = $this->getById($user['qnoow_id']);
         } catch (NotFoundHttpException $e) {
             return false;
         }

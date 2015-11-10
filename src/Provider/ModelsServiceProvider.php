@@ -188,7 +188,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.socialprofile.manager'] = $app->share(
             function ($app) {
 
-                return new SocialProfileManager($app['neo4j.graph_manager'], $app['users.tokens.model']);
+                return new SocialProfileManager($app['neo4j.graph_manager'], $app['users.tokens.model'], $app['users.lookup.model']);
             }
         );
 

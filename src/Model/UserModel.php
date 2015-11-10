@@ -350,7 +350,7 @@ class UserModel implements PaginatedInterface
         foreach ($labels as $label) {
             $qb = $this->gm->createQueryBuilder();
 
-            $qb->match("(sn:$label")
+            $qb->match("(sn:$label)")
                 ->match('(u:User)-[hsn:HAS_SOCIAL_NETWORK]->(sn)')
                 ->where('hsn.url = {url}');
             $qb->returns('u');
@@ -749,6 +749,11 @@ class UserModel implements PaginatedInterface
         return $this->build($row);
     }
 
+    public function fuseUsers ($userId1, $userId2)
+    {
+        return $this->gm->fuseNodes($this->getNodeId($userId1), $this->getNodeId($userId2));
+    }
+
     public function build(Row $row)
     {
 
@@ -916,5 +921,25 @@ class UserModel implements PaginatedInterface
     protected function canonicalize($string)
     {
         return null === $string ? null : mb_convert_case($string, MB_CASE_LOWER, mb_detect_encoding($string));
+    }
+
+    private function getNodeId($userId)
+    {
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User{qnoow_id: {id}})')
+            ->setParameter('id', (integer)$userId)
+            ->returns('id(u) as id')
+            ->limit(1);
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        if ($result->count() < 1) {
+            throw new NotFoundHttpException('User with id '.$userId.' not found');
+        }
+
+        $id = $result->current()->offsetGet('id');
+
+        return $id;
     }
 }

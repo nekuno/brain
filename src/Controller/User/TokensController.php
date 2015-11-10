@@ -9,6 +9,7 @@ use Model\User\GhostUser\GhostUserManager;
 use Model\User\SocialNetwork\SocialProfile;
 use Model\User\SocialNetwork\SocialProfileManager;
 use Model\User\TokensModel;
+use Model\UserModel;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -81,14 +82,18 @@ class TokensController
         {
             $resourceOwnerObject = $resourceOwnerFactory->build($resourceOwner);
             $profileUrl = $resourceOwnerObject->getProfileUrl($token);
+            if (!$profileUrl){
+                //TODO: Add information about this if it happens
+                return $app->json($token, 201);
+            }
             $profile = new SocialProfile($id, $profileUrl, $resourceOwner);
 
             /* @var $ghostUserManager GhostUserManager*/
             $ghostUserManager = $app['users.ghostuser.manager'];
             if ($ghostUser = $ghostUserManager->getBySocialProfile($profile)){
-                /* @var $graphManager GraphManager */
-                $graphManager = $app['neo4j.graph_manager'];
-                $graphManager->fuseNodes($id, $ghostUser->getId());
+                /* @var $userModel UserModel */
+                $userModel = $app['users.model'];
+                $userModel->fuseUsers($id, $ghostUser->getId());
             } else {
                 /** @var $socialProfilesManager SocialProfileManager*/
                 $socialProfilesManager = $app['users.socialprofile.manager'];
