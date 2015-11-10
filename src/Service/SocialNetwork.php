@@ -68,13 +68,15 @@ class SocialNetwork
                 /** @var GoogleProfileFetcher $googleProfileFetcher */
                 $googleProfileFetcher = $this->fetcherFactory->build('google_profile');
                 $googleId = $googleProfileFetcher->getResourceOwner()->getUsername(array('url' => $profileUrl));
-                $profiles = $googleProfileFetcher->fetchLinksFromUserFeed(array('googleId' => $googleId), true);
+                $profiles = $googleProfileFetcher->fetchLinksFromUserFeed(array('googleID' => $googleId), true);
 
                 if (count($profiles) !== 1) {
                     break;
                 }
-                $urls = $profiles[0]->urls;
+
+                $urls = isset($profiles[0]['urls'])? $profiles[0]['urls'] : array();
                 foreach ($urls as $url) {
+                    $url = $url['value'];
                     if (strpos('youtube.com', $url)) {
                         $socialProfile = array(array(LinkAnalyzer::YOUTUBE => $url));
                         $this->lookupModel->setSocialProfiles($socialProfile, $userId);
