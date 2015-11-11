@@ -808,32 +808,10 @@ class ProfileModel
 
     protected function typeToLabel($typeName)
     {
-        $oldFirstCharacter = mb_substr($typeName, 0, 1, 'UTF-8');
-        $croppedString = strtolower(mb_substr($typeName, 1, null, 'UTF-8'));
-        switch ($oldFirstCharacter) {
-            case 'á':
-                return 'Á' . $croppedString;
-            case 'é':
-                return 'É' . $croppedString;
-            case 'í':
-                return 'Í' . $croppedString;
-            case 'ó':
-                return 'Ó' . $croppedString;
-            case 'ú':
-                return 'Ú' . $croppedString;
-            case 'Á':
-                return 'Á' . $croppedString;
-            case 'É':
-                return 'É' . $croppedString;
-            case 'Í':
-                return 'Í' . $croppedString;
-            case 'Ó':
-                return 'Ó' . $croppedString;
-            case 'Ú':
-                return 'Ú' . $croppedString;
-            default:
-                return ucfirst($typeName);
-        }
+        $firstCharacter = mb_strtoupper(mb_substr($typeName, 0, 1, 'UTF-8'), 'UTF-8');
+        $restString = mb_strtolower(mb_substr($typeName, 1, null, 'UTF-8'), 'UTF-8');
+
+        return $firstCharacter . $restString;
     }
 
     protected function translateTypicalLanguage($language)
