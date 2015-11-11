@@ -534,11 +534,6 @@ class ProfileModel
             ->where('u.qnoow_id = { id }')
             ->setParameter('id', (int)$id)
             ->with('profile');
-        $qbTagsAndChoice = $this->gm->createQueryBuilder();
-        $qbTagsAndChoice->match('(profile:Profile)-[:PROFILE_OF]->(u:User)')
-            ->where('u.qnoow_id = { id }')
-            ->setParameter('id', (int)$id)
-            ->with('profile');
 
         foreach ($data as $fieldName => $fieldValue) {
             if (isset($metadata[$fieldName])) {
@@ -623,13 +618,19 @@ class ProfileModel
                         break;
                     case 'tags_and_choice':
                         if (is_array($fieldValue)) {
+                            $qbTagsAndChoice = $this->gm->createQueryBuilder();
+                            $qbTagsAndChoice->match('(profile:Profile)-[:PROFILE_OF]->(u:User)')
+                                ->where('u.qnoow_id = { id }')
+                                ->setParameter('id', (int)$id)
+                                ->with('profile');
+
                             $qbTagsAndChoice->optionalMatch('(profile)<-[tagsAndChoiceOptionRel:TAGGED]-(:' . $this->typeToLabel($fieldName) . ')')
                                 ->delete('tagsAndChoiceOptionRel');
 
                             $tags = array();
                             foreach ($fieldValue as $index => $value) {
-                                $value['tag'] = $this->typeToLabel($value['tag']);
-                                if (in_array($value['tag'], $tags)) {
+                                $tagValue = $this->translateTypicalLanguage($this->typeToLabel($value['tag']));
+                                if (in_array($tagValue, $tags)) {
                                     continue;
                                 }
                                 $choice = !is_null($value['choice']) ? $value['choice'] : '';
@@ -640,13 +641,13 @@ class ProfileModel
                                 $qbTagsAndChoice->with('profile')
                                     ->merge('(' . $tagLabel . ':ProfileTag:' . $this->typeToLabel($fieldName) . ' {name: { ' . $tagParameter . ' }})')
                                     ->merge('(profile)<-[:TAGGED {detail: {' . $choiceParameter . '}}]-(' . $tagLabel . ')')
-                                    ->setParameter($tagParameter, $value['tag'])
+                                    ->setParameter($tagParameter, $tagValue)
                                     ->setParameter($choiceParameter, $choice);
-                                $tags[] = $value['tag'];
+                                $tags[] = $tagValue;
                             }
+                            $query = $qbTagsAndChoice->getQuery();
+                            $query->getResultSet();
                         }
-                        $query = $qbTagsAndChoice->getQuery();
-                        $query->getResultSet();
 
                         break;
                     case 'tags':
@@ -826,6 +827,35 @@ class ProfileModel
                 return 'Ú' . $croppedString;
             default:
                 return ucfirst($typeName);
+        }
+    }
+
+    protected function translateTypicalLanguage($language)
+    {
+        switch($language)
+        {
+            case 'Español':
+                return 'Spanish';
+            case 'Inglés':
+                return 'English';
+            case 'Francés':
+                return 'French';
+            case 'Alemán':
+                return 'German';
+            case 'Portugués':
+                return 'Portuguese';
+            case 'Italiano':
+                return 'Italian';
+            case 'Chino':
+                return 'Chinese';
+            case 'Japonés':
+                return 'Japanese';
+            case 'Ruso':
+                return 'Russian';
+            case 'Árabe':
+                return 'Arabic';
+            default:
+                return $language;
         }
     }
 }
