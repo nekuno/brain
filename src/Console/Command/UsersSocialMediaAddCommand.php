@@ -62,12 +62,12 @@ class UsersSocialMediaAddCommand extends ApplicationAwareCommand
                 $output->writeln('SUCCESS: Created ghost user with id:'.$id);
             }
 
+            $socialProfileArray = array($resource=>$url);
+
             /** @var LookUpModel $lookupModel */
             $lookupModel = $this->app['users.lookup.model'];
-
-            $lookupModel->setSocialProfiles(array(
-                $resource => $url,
-            ), $id);
+            $lookupModel->setSocialProfiles($socialProfileArray, $id);
+            $lookupModel->dispatchSocialNetworksAddedEvent($id, $socialProfileArray);
 
             /** @var SocialProfileManager $socialProfileManager $sps */
             $socialProfiles = $socialProfileManager->getByUrl($url);
