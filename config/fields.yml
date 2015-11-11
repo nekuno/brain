@@ -71,13 +71,13 @@ profile:
             es: 'Hijos'
         doubleChoices:
             yes:
-                might_want_more:
+                might_want:
                     en: "and might want more"
                     es: "y quizás quiera más"
-                want_more:
+                want:
                     en: "and want more"
                     es: "y quiero más"
-                not_want_more:
+                not_want:
                     en: "but doesn’t want more"
                     es: "y no quiero más"
             no:
