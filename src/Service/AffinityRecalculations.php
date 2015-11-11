@@ -62,7 +62,7 @@ class AffinityRecalculations
      */
     public function recalculateAffinities($userId, $limitContent = 40, $limitUsers = 20, $notifyLimit = 99999, $seconds = null)
     {
-        $user = $this->userModel->getById((integer)$userId);
+        $user = $this->userModel->getById((integer)$userId, true);
 
         $filters = array('affinity' => true);
         $links = $this->linkModel->getPredictedContentForAUser($userId, (integer)$limitContent, (integer)$limitUsers, $filters);

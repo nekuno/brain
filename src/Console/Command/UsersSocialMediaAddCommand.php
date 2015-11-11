@@ -51,7 +51,7 @@ class UsersSocialMediaAddCommand extends ApplicationAwareCommand
             if ($id) {
                 /** @var UserModel $userModel */
                 $userModel = $this->app['users.model'];
-                $user = $userModel->getById((integer)$id);
+                $user = $userModel->getById((integer)$id, true);
                 $id = $user['qnoow_id'];
                 $output->writeln('SUCCESS: Found user with that id.');
             } else {

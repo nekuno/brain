@@ -43,7 +43,7 @@ class RabbitMQEnqueuePredictionCommand extends ApplicationAwareCommand
         if ($userId == null) {
             $users = $usersModel->getAll();
         } else {
-            $users = array($usersModel->getById($userId));
+            $users = array($usersModel->getById($userId, true));
         }
         if (empty($users)) {
             $output->writeln(sprintf('Not user found with id %d ', $userId));

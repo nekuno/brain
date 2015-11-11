@@ -7,6 +7,7 @@ use Everyman\Neo4j\Query\Row;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
 use Model\Neo4j\Neo4jException;
+use Model\User\GhostUser\GhostUserManager;
 use Model\User\LookUpModel;
 use Model\User\SocialNetwork\SocialProfile;
 use Model\User\UserStatsModel;
@@ -77,16 +78,21 @@ class UserModel implements PaginatedInterface
 
     /**
      * @param $id
+     * @param bool $includeGhost
      * @return array
      * @throws Neo4jException
      */
-    public function getById($id)
+    public function getById($id, $includeGhost = false)
     {
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(u:User {qnoow_id: { id }})')
-            ->setParameter('id', (int)$id)
-            ->returns('u');
+            ->setParameter('id', (int)$id);
+        if ($includeGhost) {
+            $qb->where('NOT u:'.GhostUserManager::LABEL_GHOST_USER);
+        }
+
+        $qb->returns('u');
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();
@@ -343,7 +349,7 @@ class UserModel implements PaginatedInterface
     {
         $labels = array_keys(LookUpModel::$resourceOwners, $profile->getResource());
 
-        if (empty($labels)){
+        if (empty($labels)) {
             $labels = array(LookUpModel::LABEL_SOCIAL_NETWORK);
         }
 
@@ -749,7 +755,7 @@ class UserModel implements PaginatedInterface
         return $this->build($row);
     }
 
-    public function fuseUsers ($userId1, $userId2)
+    public function fuseUsers($userId1, $userId2)
     {
         return $this->gm->fuseNodes($this->getNodeId($userId1), $this->getNodeId($userId2));
     }
@@ -935,7 +941,7 @@ class UserModel implements PaginatedInterface
         $result = $query->getResultSet();
 
         if ($result->count() < 1) {
-            throw new NotFoundHttpException('User with id '.$userId.' not found');
+            throw new NotFoundHttpException('User with id ' . $userId . ' not found');
         }
 
         $id = $result->current()->offsetGet('id');
