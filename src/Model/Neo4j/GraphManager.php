@@ -106,6 +106,8 @@ class GraphManager implements LoggerAwareInterface
 
         $props = $this->copyProperties($id1, $id2);
 
+        $labels = $this->copyLabels($id1, $id2);
+
         //delete n1
         $qb = $this->createQueryBuilder();
         $qb->match(('(n1)'))
@@ -121,6 +123,7 @@ class GraphManager implements LoggerAwareInterface
 
         return array('relationships' => $rels,
             'properties' => array_merge($props, $lastProps),
+            'labels' => $labels,
             'deleted' => $deleted);
     }
 
@@ -153,6 +156,9 @@ class GraphManager implements LoggerAwareInterface
             }
 
             foreach ($row['rel']->getProperties() as $property => $value) {
+                if (empty($value)){
+                    $value = "";
+                };
                 if (is_string($value)) {
                     $qb->add(' ON CREATE ', ' SET r.' . $property . ' = "' . $value . '" ');
                 } else {
@@ -219,6 +225,9 @@ class GraphManager implements LoggerAwareInterface
             if (!is_int($value)) {
                 $value = '"' . $value . '"';
             }
+            if (empty($value)){
+                $value = "";
+            };
 
             $sets[] = 'n.' . $key . ' = ' . $value;
         }
@@ -236,6 +245,35 @@ class GraphManager implements LoggerAwareInterface
         /** @var Node $node */
         return $node->getProperties();
 
+    }
+
+    private function copyLabels($id1, $id2)
+    {
+        $qb = $this->createQueryBuilder();
+        $qb->match('(n)')
+            ->where('id(n)={id}');
+        $qb->setParameter('id', $id1);
+        $qb->returns('labels(n) as labels');
+
+        $rs = $qb->getQuery()->getResultSet();
+        if ($rs->count() == 0){
+            return array();
+        }
+        $labels = $rs->current()->offsetGet('labels');
+
+        $labelsquery = "n ";
+        foreach ($labels as $label){
+            $labelsquery .= ":$label";
+        }
+
+        $qb = $this->createQueryBuilder();
+        $qb->match('(n)')
+            ->where('id(n)={id}');
+        $qb->setParameter('id', $id2);
+        $qb->set($labelsquery);
+        $qb->returns('n');
+
+        return $labels;
     }
 
 }

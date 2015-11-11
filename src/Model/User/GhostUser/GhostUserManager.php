@@ -77,6 +77,20 @@ class GhostUserManager
         return $this->buildOneGhostUser($row);
     }
 
+    public function saveAsUser($id)
+    {
+        $ghostUser = $this->getById($id);
+        $qb = $this->graphManager->createQueryBuilder();
+        $qb->match('(u:'.$this::LABEL_GHOST_USER.')')
+            ->where('u.qnoow_id={id}')
+            ->setParameter('id', (integer)$id)
+            ->remove('u:'.$this::LABEL_GHOST_USER)
+            ->returns('u');
+
+        $rs = $qb->getQuery()->getResultSet();
+        return $ghostUser;
+    }
+
     /**
      * @param ResultSet $result
      * @return array of GhostUser

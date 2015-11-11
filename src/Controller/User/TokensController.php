@@ -4,7 +4,6 @@ namespace Controller\User;
 
 use Http\OAuth\Factory\ResourceOwnerFactory;
 use Http\OAuth\ResourceOwner\FacebookResourceOwner;
-use Model\Neo4j\GraphManager;
 use Model\User\GhostUser\GhostUserManager;
 use Model\User\SocialNetwork\SocialProfile;
 use Model\User\SocialNetwork\SocialProfileManager;
@@ -94,6 +93,7 @@ class TokensController
                 /* @var $userModel UserModel */
                 $userModel = $app['users.model'];
                 $userModel->fuseUsers($id, $ghostUser->getId());
+                $ghostUserManager->saveAsUser($id);
             } else {
                 /** @var $socialProfilesManager SocialProfileManager*/
                 $socialProfilesManager = $app['users.socialprofile.manager'];
