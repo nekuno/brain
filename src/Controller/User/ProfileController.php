@@ -22,12 +22,12 @@ class ProfileController
      */
     public function getAction(Request $request, Application $app)
     {
-
+        $locale = $request->query->get('locale');
         $id = $request->get('id');
         /* @var $model ProfileModel */
         $model = $app['users.profile.model'];
 
-        $profile = $model->getById($id);
+        $profile = $model->getById($id, $locale);
 
         return $app->json($profile);
     }

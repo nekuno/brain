@@ -123,7 +123,7 @@ class ProfileModel
      * @return array
      * @throws NotFoundHttpException
      */
-    public function getById($id)
+    public function getById($id, $locale = null)
     {
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(user:User)<-[:PROFILE_OF]-(profile:Profile)')
@@ -146,7 +146,7 @@ class ProfileModel
         /* @var $row Row */
         $row = $result->current();
 
-        return $this->build($row);
+        return $this->build($row, $this->getLocale($locale));
     }
 
     /**
@@ -381,7 +381,7 @@ class ProfileModel
         }
     }
 
-    protected function build(Row $row)
+    protected function build(Row $row, $locale = null)
     {
         /* @var $node Node */
         $node = $row->offsetGet('profile');
@@ -394,7 +394,7 @@ class ProfileModel
         }
 
         $profile += $this->buildOptions($row);
-        $profile += $this->buildTags($row);
+        $profile += $this->buildTags($row, $locale);
 
         return $profile;
     }
@@ -435,8 +435,9 @@ class ProfileModel
         return $optionsResult;
     }
 
-    protected function buildTags(Row $row)
+    protected function buildTags(Row $row, $locale = null)
     {
+        $locale = $locale ?: $this->defaultLocale;
         $tags = $row->offsetGet('tags');
         /* @var Node $profile */
         $profile = $row->offsetGet('profile');
@@ -463,6 +464,9 @@ class ProfileModel
                         $tagResult = array();
                         $tagResult['tag'] = $tag->getProperty('name');
                         $tagResult['detail'] = $detail;
+                    }
+                    if($typeName === 'language') {
+                        $tagResult['tag'] = $this->translateLanguageToLocale($tagResult['tag'], $locale);
                     }
                     $tagsResult[$typeName][] = $tagResult;
 
@@ -629,7 +633,9 @@ class ProfileModel
 
                             $tags = array();
                             foreach ($fieldValue as $index => $value) {
-                                $tagValue = $this->translateTypicalLanguage($this->typeToLabel($value['tag']));
+                                $tagValue = $fieldName === 'language' ?
+                                    $this->translateTypicalLanguage($this->typeToLabel($value['tag'])) :
+                                    $this->typeToLabel($value['tag']);
                                 if (in_array($tagValue, $tags)) {
                                     continue;
                                 }
@@ -836,13 +842,23 @@ class ProfileModel
         {
             case 'Español':
                 return 'Spanish';
+            case 'Castellano':
+                return 'Spanish';
             case 'Inglés':
+                return 'English';
+            case 'Ingles':
                 return 'English';
             case 'Francés':
                 return 'French';
+            case 'Frances':
+                return 'French';
             case 'Alemán':
                 return 'German';
+            case 'Aleman':
+                return 'German';
             case 'Portugués':
+                return 'Portuguese';
+            case 'Portugues':
                 return 'Portuguese';
             case 'Italiano':
                 return 'Italian';
@@ -850,10 +866,47 @@ class ProfileModel
                 return 'Chinese';
             case 'Japonés':
                 return 'Japanese';
+            case 'Japones':
+                return 'Japanese';
             case 'Ruso':
                 return 'Russian';
             case 'Árabe':
                 return 'Arabic';
+            case 'Arabe':
+                return 'Arabic';
+            default:
+                return $language;
+        }
+    }
+
+    protected function translateLanguageToLocale($language, $locale)
+    {
+        if ($locale === 'en') {
+            return $language;
+        }
+
+        switch($language)
+        {
+            case 'Spanish':
+                return 'Español';
+            case 'English':
+                return 'Inglés';
+            case 'French':
+                return 'Francés';
+            case 'German':
+                return 'Alemán';
+            case 'Portuguese':
+                return 'Portugués';
+            case 'Italian':
+                return 'Italiano';
+            case 'Chinese':
+                return 'Chino';
+            case 'Japanese':
+                return 'Japonés';
+            case 'Russian':
+                return 'Ruso';
+            case 'Arabic':
+                return 'Árabe';
             default:
                 return $language;
         }
