@@ -156,14 +156,10 @@ class GraphManager implements LoggerAwareInterface
             }
 
             foreach ($row['rel']->getProperties() as $property => $value) {
-                if (empty($value)){
-                    $value = "";
-                };
-                if (is_string($value)) {
-                    $qb->add(' ON CREATE ', ' SET r.' . $property . ' = "' . $value . '" ');
-                } else {
-                    $qb->add(' ON CREATE ', ' SET r.' . $property . ' = ' . $value . ' ');
-                }
+
+                $value = $this->manageAttribute($value);
+
+                $qb->add(' ON CREATE ', ' SET r.' . $property . ' = ' . $value . ' ');
 
             }
             $qb->returns('r, id(r) AS id');
@@ -222,12 +218,8 @@ class GraphManager implements LoggerAwareInterface
         $sets = array();
 
         foreach ($properties as $key => $value) {
-            if (!is_int($value)) {
-                $value = '"' . $value . '"';
-            }
-            if (empty($value)){
-                $value = "";
-            };
+
+            $value = $this->manageAttribute($value);
 
             $sets[] = 'n.' . $key . ' = ' . $value;
         }
@@ -256,13 +248,13 @@ class GraphManager implements LoggerAwareInterface
         $qb->returns('labels(n) as labels');
 
         $rs = $qb->getQuery()->getResultSet();
-        if ($rs->count() == 0){
+        if ($rs->count() == 0) {
             return array();
         }
         $labels = $rs->current()->offsetGet('labels');
 
         $labelsquery = "n ";
-        foreach ($labels as $label){
+        foreach ($labels as $label) {
             $labelsquery .= ":$label";
         }
 
@@ -274,6 +266,19 @@ class GraphManager implements LoggerAwareInterface
         $qb->returns('n');
 
         return $labels;
+    }
+
+    private function manageAttribute($value)
+    {
+        if (!is_int($value)) {
+            $value = '"' . $value . '"';
+        }
+
+        if (empty($value) && $value !== 0) {
+            $value = '""';
+        };
+
+        return $value;
     }
 
 }
