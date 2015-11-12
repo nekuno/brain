@@ -4,6 +4,7 @@ namespace Http\OAuth\ResourceOwner;
 
 use GuzzleHttp\Exception\RequestException;
 use Model\User\TokensModel;
+use Service\LookUp\LookUp;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
@@ -15,18 +16,6 @@ class TwitterResourceOwner extends Oauth1GenericResourceOwner
 {
 
     public $name = TokensModel::TWITTER;
-
-    /**
-     * {@inheritDoc}
-     */
-    protected function configureOptions(OptionsResolver $resolver)
-    {
-        parent::configureOptions($resolver);
-
-        $resolver->setDefaults(array(
-            'base_url' => 'https://api.twitter.com/1.1/',
-        ));
-    }
 
     public function getAPIRequest($url, array $query = array(), array $token = array())
     {
@@ -46,9 +35,9 @@ class TwitterResourceOwner extends Oauth1GenericResourceOwner
         return $request;
     }
 
-    public function lookupUsersBy($parameter,array $userIds)
+    public function lookupUsersBy($parameter, array $userIds)
     {
-        if ($parameter !== 'user_id' && $parameter !== 'screen_name'){
+        if ($parameter !== 'user_id' && $parameter !== 'screen_name') {
             return false;
         }
 
@@ -60,9 +49,9 @@ class TwitterResourceOwner extends Oauth1GenericResourceOwner
         foreach ($chunks as $chunk) {
             $query = array($parameter => implode(',', $chunk));
             $request = $this->getAPIRequest($url, $query);
-            try{
+            try {
                 $response = $this->httpClient->send($request)->json();
-            } catch (\Exception $e){
+            } catch (\Exception $e) {
                 $response = array();
             }
 
@@ -74,7 +63,9 @@ class TwitterResourceOwner extends Oauth1GenericResourceOwner
 
     public function buildProfileFromLookup($user)
     {
-        if (!$user) return $user;
+        if (!$user) {
+            return $user;
+        }
 
         $profile = array(
             'title' => isset($user['name']) ? $user['name'] : $user['url'],
@@ -82,7 +73,7 @@ class TwitterResourceOwner extends Oauth1GenericResourceOwner
             'url' => isset($user['screen_name']) ? 'https://twitter.com/' . $user['screen_name'] : null,
             'thumbnail' => isset($user['profile_image_url']) ? $user['profile_image_url'] : null,
             'resource' => TokensModel::TWITTER,
-            'timestamp' => 1000*time(),
+            'timestamp' => 1000 * time(),
         );
 
         return $profile;
@@ -90,20 +81,33 @@ class TwitterResourceOwner extends Oauth1GenericResourceOwner
 
     public function getProfileUrl(array $token)
     {
-        if (isset($token['screenName'])){
+        if (isset($token['screenName'])) {
             $screenName = $token['screenName'];
         } else {
-            try{
+            try {
                 $account = $this->authorizedHttpRequest('account/settings.json', array(), $token);
-            } catch (RequestException $e){
+            } catch (RequestException $e) {
                 return null;
             }
 
             $screenName = $account['screen_name'];
         }
 
-        return 'https://www.twitter.com/'.$screenName;
+        return LookUp::TWITTER_BASE_URL . $screenName;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    protected function configureOptions(OptionsResolver $resolver)
+    {
+        parent::configureOptions($resolver);
+
+        $resolver->setDefaults(
+            array(
+                'base_url' => 'https://api.twitter.com/1.1/',
+            )
+        );
+    }
 
 }
