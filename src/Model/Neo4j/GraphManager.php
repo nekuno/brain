@@ -268,13 +268,14 @@ class GraphManager implements LoggerAwareInterface
         return $labels;
     }
 
-    private function manageAttribute($value)
+    private function manageAttribute($value = null)
     {
-        if (!is_int($value)) {
-            $value = '"' . $value . '"';
-        }
 
-        if (empty($value) && $value !== 0) {
+        if (is_string($value)) {
+            $value = '"' . addslashes($value) . '"';
+        } else if (is_bool($value) || is_int($value)) {
+
+        } else if (empty($value) && $value !== 0) {
             $value = '""';
         };
 
