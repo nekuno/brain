@@ -46,7 +46,7 @@ class LinksCalculatePredictionCommand extends ApplicationAwareCommand
 
         try {
 
-            $users = null === $user ? $userModel->getAll() : array($userModel->getById($user));
+            $users = null === $user ? $userModel->getAll() : array($userModel->getById($user, true));
 
             $recalculate = $recalculate ? true : false;
 

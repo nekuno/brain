@@ -5,6 +5,7 @@ namespace ApiConsumer\LinkProcessor;
 use ApiConsumer\LinkProcessor\Processor\FacebookProcessor;
 use ApiConsumer\LinkProcessor\Processor\ScraperProcessor;
 use ApiConsumer\LinkProcessor\Processor\SpotifyProcessor;
+use ApiConsumer\LinkProcessor\Processor\TwitterProcessor;
 use ApiConsumer\LinkProcessor\Processor\YoutubeProcessor;
 use ApiConsumer\LinkProcessor\UrlParser\UrlParser;
 use ApiConsumer\LinkProcessor\UrlParser\YoutubeUrlParser;
@@ -50,6 +51,11 @@ class LinkProcessor
     protected $facebookProcessor;
 
     /**
+     * @var TwitterProcessor
+     */
+    protected $twitterProcessor;
+
+    /**
      * @var UrlParser
      */
     protected $urlParser;
@@ -62,6 +68,7 @@ class LinkProcessor
         YoutubeProcessor $youtubeProcessor,
         SpotifyProcessor $spotifyProcessor,
         FacebookProcessor $facebookProcessor,
+        TwitterProcessor $twitterProcessor,
         UrlParser $urlParser
     ) {
 
@@ -72,6 +79,7 @@ class LinkProcessor
         $this->youtubeProcessor = $youtubeProcessor;
         $this->spotifyProcessor = $spotifyProcessor;
         $this->facebookProcessor = $facebookProcessor;
+        $this->twitterProcessor = $twitterProcessor;
         $this->urlParser = $urlParser;
     }
 
@@ -123,6 +131,11 @@ class LinkProcessor
 
     private function isLinkProcessed($link)
     {
+
+        if (isset($link['processed']) && $link['processed'] == 1){
+            return true;
+        }
+
         try {
             $storedLink = $this->linkModel->findLinkByUrl($link['url']);
             if ($storedLink && isset($storedLink['processed']) && $storedLink['processed'] == '1') {
@@ -153,6 +166,10 @@ class LinkProcessor
                 break;
             case LinkAnalyzer::FACEBOOK:
                 $processor = $this->facebookProcessor;
+                $url = $this->urlParser->cleanURL($link['url']);
+                break;
+            case LinkAnalyzer::TWITTER:
+                $processor = $this->twitterProcessor;
                 $url = $this->urlParser->cleanURL($link['url']);
                 break;
             case LinkAnalyzer::SCRAPPER:

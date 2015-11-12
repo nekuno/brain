@@ -2,12 +2,14 @@
 
 namespace Model;
 
-use Doctrine\DBAL\Connection;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
 use Model\Neo4j\Neo4jException;
+use Model\User\GhostUser\GhostUserManager;
+use Model\User\LookUpModel;
+use Model\User\SocialNetwork\SocialProfile;
 use Model\User\UserStatsModel;
 use Model\User\UserStatusModel;
 use Paginator\PaginatedInterface;
@@ -76,16 +78,21 @@ class UserModel implements PaginatedInterface
 
     /**
      * @param $id
+     * @param bool $includeGhost
      * @return array
      * @throws Neo4jException
      */
-    public function getById($id)
+    public function getById($id, $includeGhost = false)
     {
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(u:User {qnoow_id: { id }})')
-            ->setParameter('id', (int)$id)
-            ->returns('u');
+            ->setParameter('id', (int)$id);
+        if (!$includeGhost) {
+            $qb->where('NOT u:'.GhostUserManager::LABEL_GHOST_USER);
+        }
+
+        $qb->returns('u');
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();
@@ -331,6 +338,45 @@ class UserModel implements PaginatedInterface
         $query = $qb->getQuery();
 
         return $this->parseResultSet($query->getResultSet());
+    }
+
+    /**
+     * @param SocialProfile $profile
+     * @return array
+     * @throws Neo4jException
+     */
+    public function getBySocialProfile(SocialProfile $profile)
+    {
+        $labels = array_keys(LookUpModel::$resourceOwners, $profile->getResource());
+
+        if (empty($labels)) {
+            $labels = array(LookUpModel::LABEL_SOCIAL_NETWORK);
+        }
+
+        foreach ($labels as $label) {
+            $qb = $this->gm->createQueryBuilder();
+
+            $qb->match("(sn:$label)")
+                ->match('(u:User)-[hsn:HAS_SOCIAL_NETWORK]->(sn)')
+                ->where('hsn.url = {url}');
+            $qb->returns('u');
+
+            $qb->setParameters(
+                array(
+                    'url' => $profile->getUrl(),
+                )
+            );
+
+            $query = $qb->getQuery();
+            $resultSet = $query->getResultSet();
+
+            if ($resultSet->count() == 1) {
+                $row = $resultSet->current();
+                return $this->build($row);
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -709,6 +755,11 @@ class UserModel implements PaginatedInterface
         return $this->build($row);
     }
 
+    public function fuseUsers($userId1, $userId2)
+    {
+        return $this->gm->fuseNodes($this->getNodeId($userId1), $this->getNodeId($userId2));
+    }
+
     public function build(Row $row)
     {
 
@@ -822,7 +873,7 @@ class UserModel implements PaginatedInterface
         return array();
     }
 
-    protected function getNextId()
+    public function getNextId()
     {
 
         $qb = $this->gm->createQueryBuilder();
@@ -876,5 +927,25 @@ class UserModel implements PaginatedInterface
     protected function canonicalize($string)
     {
         return null === $string ? null : mb_convert_case($string, MB_CASE_LOWER, mb_detect_encoding($string));
+    }
+
+    private function getNodeId($userId)
+    {
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User{qnoow_id: {id}})')
+            ->setParameter('id', (integer)$userId)
+            ->returns('id(u) as id')
+            ->limit(1);
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        if ($result->count() < 1) {
+            throw new NotFoundHttpException('User with id ' . $userId . ' not found');
+        }
+
+        $id = $result->current()->offsetGet('id');
+
+        return $id;
     }
 }

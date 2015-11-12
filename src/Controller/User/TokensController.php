@@ -2,8 +2,13 @@
 
 namespace Controller\User;
 
+use Http\OAuth\Factory\ResourceOwnerFactory;
 use Http\OAuth\ResourceOwner\FacebookResourceOwner;
+use Model\User\GhostUser\GhostUserManager;
+use Model\User\SocialNetwork\SocialProfile;
+use Model\User\SocialNetwork\SocialProfileManager;
 use Model\User\TokensModel;
+use Model\UserModel;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -63,10 +68,38 @@ class TokensController
 
         $token = $model->create($id, $resourceOwner, $request->request->all());
 
+        /* @var $resourceOwnerFactory ResourceOwnerFactory*/
+        $resourceOwnerFactory = $app['api_consumer.resource_owner_factory'];
+
         if ($resourceOwner === TokensModel::FACEBOOK && array_key_exists('refreshToken', $token) && is_null($token['refreshToken'])) {
             /* @var $facebookResourceOwner FacebookResourceOwner */
-            $facebookResourceOwner = $app['api_consumer.resource_owner.facebook'];
+            $facebookResourceOwner = $resourceOwnerFactory->build(TokensModel::FACEBOOK);
             $facebookResourceOwner->forceRefreshAccessToken($token);
+        }
+
+        if ($resourceOwner == TokensModel::TWITTER)
+        {
+            $resourceOwnerObject = $resourceOwnerFactory->build($resourceOwner);
+            $profileUrl = $resourceOwnerObject->getProfileUrl($token);
+            if (!$profileUrl){
+                //TODO: Add information about this if it happens
+                return $app->json($token, 201);
+            }
+            $profile = new SocialProfile($id, $profileUrl, $resourceOwner);
+
+            /* @var $ghostUserManager GhostUserManager*/
+            $ghostUserManager = $app['users.ghostuser.manager'];
+            if ($ghostUser = $ghostUserManager->getBySocialProfile($profile)){
+                /* @var $userModel UserModel */
+                $userModel = $app['users.model'];
+                $userModel->fuseUsers($id, $ghostUser->getId());
+                $ghostUserManager->saveAsUser($id);
+            } else {
+                /** @var $socialProfilesManager SocialProfileManager*/
+                $socialProfilesManager = $app['users.socialprofile.manager'];
+                $socialProfilesManager->addSocialProfile($profile);
+            }
+
         }
 
         return $app->json($token, 201);
@@ -91,7 +124,6 @@ class TokensController
     }
 
     /**
-     * @param Request $request
      * @param Application $app
      * @param int $id
      * @param string $resourceOwner

@@ -9,6 +9,8 @@ use ApiConsumer\LinkProcessor\LinkResolver;
 use ApiConsumer\LinkProcessor\MetadataParser\BasicMetadataParser;
 use ApiConsumer\LinkProcessor\MetadataParser\FacebookMetadataParser;
 use ApiConsumer\LinkProcessor\Processor\FacebookProcessor;
+use ApiConsumer\LinkProcessor\Processor\TwitterProcessor;
+use ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser;
 use ApiConsumer\LinkProcessor\UrlParser\UrlParser;
 use ApiConsumer\LinkProcessor\UrlParser\YoutubeUrlParser;
 use ApiConsumer\LinkProcessor\UrlParser\SpotifyUrlParser;
@@ -16,7 +18,6 @@ use ApiConsumer\LinkProcessor\Processor\ScraperProcessor;
 use ApiConsumer\LinkProcessor\Processor\SpotifyProcessor;
 use ApiConsumer\LinkProcessor\Processor\YoutubeProcessor;
 use Goutte\Client;
-use Http\OAuth\ResourceOwner\GoogleResourceOwner;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
 
@@ -65,6 +66,12 @@ class LinkProcessorServiceProvider implements ServiceProviderInterface
             }
         );
 
+        $app['api_consumer.link_processor.processor.twitter'] = $app->share(
+            function ($app) {
+                return new TwitterProcessor($app['api_consumer.resource_owner.twitter'], new TwitterUrlParser());
+            }
+        );
+
         $app['api_consumer.link_processor.link_analyzer'] = $app->share(
             function () {
                 return new LinkAnalyzer();
@@ -95,6 +102,7 @@ class LinkProcessorServiceProvider implements ServiceProviderInterface
                     $app['api_consumer.link_processor.processor.youtube'],
                     $app['api_consumer.link_processor.processor.spotify'],
                     $app['api_consumer.link_processor.processor.facebook'],
+                    $app['api_consumer.link_processor.processor.twitter'],
                     $app['api_consumer.link_processor.url_parser.parser']
                 );
             }

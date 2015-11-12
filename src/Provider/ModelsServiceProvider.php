@@ -11,6 +11,7 @@ use Model\EnterpriseUser\CommunityModel;
 use Model\User\ContentComparePaginatedModel;
 use Model\User\ContentPaginatedModel;
 use Model\User\ContentTagModel;
+use Model\User\GhostUser\GhostUserManager;
 use Model\User\GroupModel;
 use Model\User\InvitationModel;
 use Model\User\LookUpModel;
@@ -27,6 +28,7 @@ use Model\User\Recommendation\UserRecommendationPaginatedModel;
 use Model\User\RelationsModel;
 use Model\User\Similarity\SimilarityModel;
 use Model\User\SocialNetwork\LinkedinSocialNetworkModel;
+use Model\User\SocialNetwork\SocialProfileManager;
 use Model\User\TokensModel;
 use Model\User\UserStatsManager;
 use Model\UserModel;
@@ -173,6 +175,20 @@ class ModelsServiceProvider implements ServiceProviderInterface
             function ($app) {
 
                 return new ContentRecommendationTagModel($app['neo4j.graph_manager']);
+            }
+        );
+
+        $app['users.ghostuser.manager'] = $app->share(
+            function ($app) {
+
+                return new GhostUserManager($app['neo4j.graph_manager'], $app['users.model']);
+            }
+        );
+
+        $app['users.socialprofile.manager'] = $app->share(
+            function ($app) {
+
+                return new SocialProfileManager($app['neo4j.graph_manager'], $app['users.tokens.model'], $app['users.lookup.model']);
             }
         );
 
