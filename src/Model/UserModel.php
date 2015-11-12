@@ -88,7 +88,7 @@ class UserModel implements PaginatedInterface
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(u:User {qnoow_id: { id }})')
             ->setParameter('id', (int)$id);
-        if ($includeGhost) {
+        if (!$includeGhost) {
             $qb->where('NOT u:'.GhostUserManager::LABEL_GHOST_USER);
         }
 
