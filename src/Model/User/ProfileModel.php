@@ -120,10 +120,11 @@ class ProfileModel
 
     /**
      * @param int $id
+     * @param mixed $locale
      * @return array
      * @throws NotFoundHttpException
      */
-    public function getById($id)
+    public function getById($id, $locale = null)
     {
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(user:User)<-[:PROFILE_OF]-(profile:Profile)')
@@ -146,7 +147,7 @@ class ProfileModel
         /* @var $row Row */
         $row = $result->current();
 
-        return $this->build($row);
+        return $this->build($row, $locale);
     }
 
     /**
@@ -381,7 +382,7 @@ class ProfileModel
         }
     }
 
-    protected function build(Row $row)
+    protected function build(Row $row, $locale = null)
     {
         /* @var $node Node */
         $node = $row->offsetGet('profile');
@@ -394,7 +395,7 @@ class ProfileModel
         }
 
         $profile += $this->buildOptions($row);
-        $profile += $this->buildTags($row);
+        $profile += $this->buildTags($row, $locale);
 
         return $profile;
     }
@@ -435,8 +436,9 @@ class ProfileModel
         return $optionsResult;
     }
 
-    protected function buildTags(Row $row)
+    protected function buildTags(Row $row, $locale = null)
     {
+        $locale = $this->getLocale($locale);
         $tags = $row->offsetGet('tags');
         /* @var Node $profile */
         $profile = $row->offsetGet('profile');
@@ -464,8 +466,10 @@ class ProfileModel
                         $tagResult['tag'] = $tag->getProperty('name');
                         $tagResult['detail'] = $detail;
                     }
+                    if($typeName === 'language') {
+                        $tagResult['tag'] = $this->translateLanguageToLocale($tagResult['tag'], $locale);
+                    }
                     $tagsResult[$typeName][] = $tagResult;
-
                 }
             }
         }
@@ -589,7 +593,7 @@ class ProfileModel
                         break;
                     case 'choice':
                         if (isset($options[$fieldName])) {
-                            $qb->optionalMatch('(profile)<-[optionRel:OPTION_OF]-(option:' . $this->typeToLabel($fieldName) . ')')
+                            $qb->optionalMatch('(profile)<-[optionRel:OPTION_OF]-(:' . $this->typeToLabel($fieldName) . ')')
                                 ->delete('optionRel')
                                 ->with('profile');
                         }
@@ -602,7 +606,7 @@ class ProfileModel
                         break;
                     case 'double_choice':
                         if (isset($options[$fieldName])) {
-                            $qb->optionalMatch('(profile)<-[doubleChoiceOptionRel:OPTION_OF]-(option:' . $this->typeToLabel($fieldName) . ')')
+                            $qb->optionalMatch('(profile)<-[doubleChoiceOptionRel:OPTION_OF]-(:' . $this->typeToLabel($fieldName) . ')')
                                 ->delete('doubleChoiceOptionRel')
                                 ->with('profile');
                         }
@@ -627,10 +631,12 @@ class ProfileModel
                             $qbTagsAndChoice->optionalMatch('(profile)<-[tagsAndChoiceOptionRel:TAGGED]-(:' . $this->typeToLabel($fieldName) . ')')
                                 ->delete('tagsAndChoiceOptionRel');
 
-                            $tags = array();
+                            $savedTags = array();
                             foreach ($fieldValue as $index => $value) {
-                                $tagValue = $this->translateTypicalLanguage($this->typeToLabel($value['tag']));
-                                if (in_array($tagValue, $tags)) {
+                                $tagValue = $fieldName === 'language' ?
+                                    $this->translateTypicalLanguage($this->formatLanguage($value['tag'])) :
+                                    $value['tag'];
+                                if (in_array($tagValue, $savedTags)) {
                                     continue;
                                 }
                                 $choice = !is_null($value['choice']) ? $value['choice'] : '';
@@ -643,7 +649,7 @@ class ProfileModel
                                     ->merge('(profile)<-[:TAGGED {detail: {' . $choiceParameter . '}}]-(' . $tagLabel . ')')
                                     ->setParameter($tagParameter, $tagValue)
                                     ->setParameter($choiceParameter, $choice);
-                                $tags[] = $tagValue;
+                                $savedTags[] = $tagValue;
                             }
                             $query = $qbTagsAndChoice->getQuery();
                             $query->getResultSet();
@@ -665,6 +671,7 @@ class ProfileModel
                                     ->with('profile');
                             }
                         }
+
                         break;
                 }
             }
@@ -691,6 +698,7 @@ class ProfileModel
             ->returns('profile, collect(distinct option) AS options');
 
         $query = $qb->getQuery();
+
         $result = $query->getResultSet();
 
         $options = array();
@@ -802,32 +810,15 @@ class ProfileModel
 
     protected function typeToLabel($typeName)
     {
-        $oldFirstCharacter = mb_substr($typeName, 0, 1, 'UTF-8');
-        $croppedString = strtolower(mb_substr($typeName, 1, null, 'UTF-8'));
-        switch ($oldFirstCharacter) {
-            case 'á':
-                return 'Á' . $croppedString;
-            case 'é':
-                return 'É' . $croppedString;
-            case 'í':
-                return 'Í' . $croppedString;
-            case 'ó':
-                return 'Ó' . $croppedString;
-            case 'ú':
-                return 'Ú' . $croppedString;
-            case 'Á':
-                return 'Á' . $croppedString;
-            case 'É':
-                return 'É' . $croppedString;
-            case 'Í':
-                return 'Í' . $croppedString;
-            case 'Ó':
-                return 'Ó' . $croppedString;
-            case 'Ú':
-                return 'Ú' . $croppedString;
-            default:
-                return ucfirst($typeName);
-        }
+        return ucfirst($typeName);
+    }
+
+    protected function formatLanguage($typeName)
+    {
+        $firstCharacter = mb_strtoupper(mb_substr($typeName, 0, 1, 'UTF-8'), 'UTF-8');
+        $restString = mb_strtolower(mb_substr($typeName, 1, null, 'UTF-8'), 'UTF-8');
+
+        return $firstCharacter . $restString;
     }
 
     protected function translateTypicalLanguage($language)
@@ -836,13 +827,23 @@ class ProfileModel
         {
             case 'Español':
                 return 'Spanish';
+            case 'Castellano':
+                return 'Spanish';
             case 'Inglés':
+                return 'English';
+            case 'Ingles':
                 return 'English';
             case 'Francés':
                 return 'French';
+            case 'Frances':
+                return 'French';
             case 'Alemán':
                 return 'German';
+            case 'Aleman':
+                return 'German';
             case 'Portugués':
+                return 'Portuguese';
+            case 'Portugues':
                 return 'Portuguese';
             case 'Italiano':
                 return 'Italian';
@@ -850,12 +851,50 @@ class ProfileModel
                 return 'Chinese';
             case 'Japonés':
                 return 'Japanese';
+            case 'Japones':
+                return 'Japanese';
             case 'Ruso':
                 return 'Russian';
             case 'Árabe':
                 return 'Arabic';
+            case 'Arabe':
+                return 'Arabic';
             default:
                 return $language;
         }
+    }
+
+    protected function translateLanguageToLocale($language, $locale)
+    {
+        if ($locale === 'en') {
+            return $language;
+        }
+        if ($locale === 'es') {
+            switch($language)
+            {
+                case 'Spanish':
+                    return 'Español';
+                case 'English':
+                    return 'Inglés';
+                case 'French':
+                    return 'Francés';
+                case 'German':
+                    return 'Alemán';
+                case 'Portuguese':
+                    return 'Portugués';
+                case 'Italian':
+                    return 'Italiano';
+                case 'Chinese':
+                    return 'Chino';
+                case 'Japanese':
+                    return 'Japonés';
+                case 'Russian':
+                    return 'Ruso';
+                case 'Arabic':
+                    return 'Árabe';
+            }
+        }
+
+        return $language;
     }
 }
