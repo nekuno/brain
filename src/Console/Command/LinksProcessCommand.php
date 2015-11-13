@@ -57,7 +57,7 @@ class LinksProcessCommand extends ApplicationAwareCommand
                 $processor = $this->app['api_consumer.link_processor'];
                 $processedLink = $processor->process($link, $all);
 
-                $processed = array_key_exists('processed', $link)? $link['processed'] : 1;
+                $processed = array_key_exists('processed', $processedLink)? $processedLink['processed'] : 1;
                 if ($processed){
                     $output->writeln(sprintf('Success: Link %s processed', $link['url']));
                 } else {

@@ -8,7 +8,6 @@ use ApiConsumer\LinkProcessor\Processor\SpotifyProcessor;
 use ApiConsumer\LinkProcessor\Processor\TwitterProcessor;
 use ApiConsumer\LinkProcessor\Processor\YoutubeProcessor;
 use ApiConsumer\LinkProcessor\UrlParser\UrlParser;
-use ApiConsumer\LinkProcessor\UrlParser\YoutubeUrlParser;
 use GuzzleHttp\Exception\RequestException;
 use Model\LinkModel;
 
@@ -94,7 +93,13 @@ class LinkProcessor
             return $link;
         }
 
-        $link['url'] = $this->resolver->resolve($link['url']);
+        $url = $this->resolver->resolve($link['url']);
+
+        if ($url == null){
+            $link['processed'] = 0;
+            return $link;
+        }
+        $link['url'] = $url;
 
         $processor = $this->scrapperProcessor;
 
@@ -109,7 +114,6 @@ class LinkProcessor
         } catch (RequestException $e) {
 
             $link['processed'] = 0;
-
             return $link;
         }
 

@@ -25,6 +25,10 @@ class LinkResolver
         $this->client = $client;
     }
 
+    /**
+     * @param $url
+     * @return null|string
+     */
     public function resolve($url)
     {
 
@@ -54,6 +58,10 @@ class LinkResolver
                 return $canonical;
             }
 
+        }
+
+        if ($statusCode >= 400){
+            return null;
         }
 
         return $uri;
