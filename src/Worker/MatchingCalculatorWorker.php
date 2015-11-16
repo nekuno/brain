@@ -54,6 +54,8 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
      */
     protected $dispatcher;
 
+    const TRIGGER_PERIODIC = 'periodic';
+
     public function __construct(AMQPChannel $channel, UserModel $userModel, MatchingModel $matchingModel, SimilarityModel $similarityModel, Connection $connectionSocial, Connection $connectionBrain, EventDispatcher $dispatcher)
     {
 
@@ -119,7 +121,7 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                 try {
                     $status = $this->userModel->calculateStatus($userA);
                     $this->logger->notice(sprintf('Calculating user "%s" new status: "%s"', $userA, $status->getStatus()));
-                    if($status->getStatusChanged()) {
+                    if ($status->getStatusChanged()) {
                         $userStatusChangedEvent = new UserStatusChangedEvent($userA, $status->getStatus());
                         $this->dispatcher->dispatch(\AppEvents::USER_STATUS_CHANGED, $userStatusChangedEvent);
                     }
@@ -151,7 +153,7 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                 try {
                     $status = $this->userModel->calculateStatus($userA);
                     $this->logger->notice(sprintf('Calculating user "%s" new status: "%s"', $userA, $status->getStatus()));
-                    if($status->getStatusChanged()) {
+                    if ($status->getStatusChanged()) {
                         $userStatusChangedEvent = new UserStatusChangedEvent($userA, $status->getStatus());
                         $this->dispatcher->dispatch(\AppEvents::USER_STATUS_CHANGED, $userStatusChangedEvent);
                     }
@@ -198,6 +200,28 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                     $this->logger->error(
                         sprintf(
                             'Worker: Error calculating matching between user %d and user %d with message %s on file %s, line %d',
+                            $user1,
+                            $user2,
+                            $e->getMessage(),
+                            $e->getFile(),
+                            $e->getLine()
+                        )
+                    );
+                }
+                break;
+            case $this:: TRIGGER_PERIODIC:
+                $user1 = $data['user_1_id'];
+                $user2 = $data['user_2_id'];
+
+                try{
+                    $this->similarityModel->getSimilarity($user1, $user2);
+                    $this->matchingModel->calculateMatchingBetweenTwoUsersBasedOnAnswers($user1, $user2);
+
+                }
+                catch (\Exception $e) {
+                    $this->logger->error(
+                        sprintf(
+                            'Worker: Error calculating similarity and matching between user %d and user %d with message %s on file %s, line %d',
                             $user1,
                             $user2,
                             $e->getMessage(),
