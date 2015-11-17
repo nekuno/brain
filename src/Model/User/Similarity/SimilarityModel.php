@@ -7,6 +7,9 @@ use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Neo4j\GraphManager;
 use Model\LinkModel;
+use Model\User\ContentPaginatedModel;
+use Model\User\ProfileModel;
+use Model\User\QuestionPaginatedModel;
 
 
 /**
@@ -31,15 +34,41 @@ class SimilarityModel
      */
     protected $linkModel;
 
-    public function __construct(Client $client, GraphManager $gm, LinkModel $linkModel)
+    /**
+     * @var QuestionPaginatedModel
+     */
+    protected $questionPaginatedModel;
+
+    /**
+     * @var ContentPaginatedModel
+     */
+    protected $contentPaginatedModel;
+
+    /**
+     * @var ProfileModel
+     */
+    protected $profileModel;
+
+    public function __construct(Client $client,
+                                GraphManager $gm,
+                                LinkModel $linkModel,
+                                QuestionPaginatedModel $questionPaginatedModel,
+                                ContentPaginatedModel $contentPaginatedModel,
+                                ProfileModel $profileModel)
     {
         $this->client = $client;
-        $this->linkModel = $linkModel;
         $this->gm = $gm;
+        $this->linkModel = $linkModel;
+        $this->questionPaginatedModel = $questionPaginatedModel;
+        $this->contentPaginatedModel = $contentPaginatedModel;
+        $this->profileModel = $profileModel;
     }
 
     public function getSimilarity($idA, $idB)
     {
+        $idA = (integer)$idA;
+        $idB = (integer)$idB;
+
         $similarity = $this->getCurrentSimilarity($idA, $idB);
 
         $minTimestampForCache  = time() - self::numberOfSecondsToCache;
@@ -74,8 +103,7 @@ class SimilarityModel
                 'CASE WHEN HAS(s.interestsUpdated) THEN s.interestsUpdated ELSE 0 END AS interestsUpdated',
                 'CASE WHEN HAS(s.similarityUpdated) THEN s.similarityUpdated ELSE 0 END AS similarityUpdated'
             )
-            ->returns('questions, interests, similarity, questionsUpdated, interestsUpdated, similarityUpdated')
-        ;
+            ->returns('questions, interests, similarity, questionsUpdated, interestsUpdated, similarityUpdated');
 
         $qb->setParameters(
             array(
@@ -99,13 +127,15 @@ class SimilarityModel
             /* @var $row Row */
             $row = $result->current();
             /* @var $node Node */
-            $similarity['questions']  = $row->offsetGet('questions');
-            $similarity['interests']  = $row->offsetGet('interests');
+            $similarity['questions'] = $row->offsetGet('questions');
+            $similarity['interests'] = $row->offsetGet('interests');
             $similarity['similarity'] = $row->offsetGet('similarity');
-            $similarity['questionsUpdated']  = $row->offsetGet('questionsUpdated');
-            $similarity['interestsUpdated']  = $row->offsetGet('interestsUpdated');
-            $similarity['similarityUpdated']  = $row->offsetGet('similarityUpdated');
+            $similarity['questionsUpdated'] = $row->offsetGet('questionsUpdated');
+            $similarity['interestsUpdated'] = $row->offsetGet('interestsUpdated');
+            $similarity['similarityUpdated'] = $row->offsetGet('similarityUpdated');
         }
+
+        $similarity = $this->returnSimilarity($similarity, $idA, $idB);
 
         return $similarity;
     }
@@ -122,8 +152,7 @@ class SimilarityModel
             ->with('userA, userB, q, CASE WHEN answerA = answerB THEN 1 ELSE 0 END AS equal')
             ->with('userA, userB, toFloat(COUNT(q)) AS PC, toFloat(SUM(equal)) AS RI')
             ->with('userA, userB, CASE WHEN PC <= 0 THEN toFloat(0) ELSE RI/PC - 1/PC END AS similarity')
-            ->with('userA, userB, CASE WHEN similarity < 0 THEN toFloat(0) ELSE similarity END AS similarity')
-        ;
+            ->with('userA, userB, CASE WHEN similarity < 0 THEN toFloat(0) ELSE similarity END AS similarity');
 
         $qb
             ->merge('(userA)-[s:SIMILARITY]-(userB)')
@@ -133,8 +162,7 @@ class SimilarityModel
                 's.questionsUpdated = timestamp()',
                 's.similarityUpdated = timestamp()'
             )
-            ->returns('similarity')
-        ;
+            ->returns('similarity');
 
         $qb->setParameters(
             array(
@@ -170,24 +198,20 @@ class SimilarityModel
             ->where('HAS(l.unpopularity)')
             ->with('userA, userB, COUNT(DISTINCT l) AS numberCommonContent, SUM(l.unpopularity) AS common')
             ->where('numberCommonContent > 4')
-            ->with('userA, userB, common')
-        ;
+            ->with('userA, userB, common');
 
         $qb
             ->optionalMatch('(userA)-[:LIKES]-(l1:Link)')
             ->where('NOT (userB)-[:LIKES]->(l1) AND HAS(l1.popularity)')
-            ->with('userA, userB, common, SUM(l1.popularity) AS onlyUserA')
-        ;
+            ->with('userA, userB, common, SUM(l1.popularity) AS onlyUserA');
 
         $qb
-          ->optionalMatch('(userB)-[:LIKES]-(l2:Link)')
-          ->where('NOT (userA)-[:LIKES]->(l2) AND HAS(l2.popularity)')
-          ->with(' userA, userB, common, onlyUserA, SUM(l2.popularity) AS onlyUserB')
-        ;
+            ->optionalMatch('(userB)-[:LIKES]-(l2:Link)')
+            ->where('NOT (userA)-[:LIKES]->(l2) AND HAS(l2.popularity)')
+            ->with(' userA, userB, common, onlyUserA, SUM(l2.popularity) AS onlyUserB');
 
         $qb
-            ->with('userA, userB, sqrt( common / (onlyUserA + common)) * sqrt( common / (onlyUserB + common)) AS similarity')
-        ;
+            ->with('userA, userB, sqrt( common / (onlyUserA + common)) * sqrt( common / (onlyUserB + common)) AS similarity');
 
         $qb
             ->merge('(userA)-[s:SIMILARITY]-(userB)')
@@ -198,8 +222,7 @@ class SimilarityModel
                 's.interestsUpdated = timestamp()',
                 's.similarityUpdated = timestamp()'
             )
-            ->returns('similarity')
-        ;
+            ->returns('similarity');
 
         $qb->setParameters(
             array(
@@ -220,5 +243,48 @@ class SimilarityModel
         }
 
         return $similarity;
+    }
+
+    private function returnSimilarity($similarity, $idA, $idB)
+    {
+        $questionLimit = 0;
+        $contentLimit = 1000;
+
+        $interfaceLanguageA = $this->profileModel->getById($idA)['interfaceLanguage'];
+        $interfaceLanguageB = $this->profileModel->getById($idB)['interfaceLanguage'];
+        $totalLinksA = $this->contentPaginatedModel->countTotal(array('id' => $idA));
+        $totalLinksB = $this->contentPaginatedModel->countTotal(array('id' => $idB));
+
+        $totalQuestionsA = $this->questionPaginatedModel->countTotal(array(
+            'id' => $idA,
+            'locale' => $interfaceLanguageA));
+        $totalQuestionsB = $this->questionPaginatedModel->countTotal(array(
+            'id' => $idB,
+            'locale' => $interfaceLanguageB));
+
+        if (($totalLinksA >= $contentLimit && $totalQuestionsA <= $questionLimit)
+            || ($totalLinksB >= $contentLimit && $totalQuestionsB <= $questionLimit)
+        ) {
+            $similarity['similarity'] = $similarity['interests'];
+            $this->setSimilarity($idA, $idB, $similarity['interests']);
+        }
+
+        return $similarity;
+    }
+
+    private function setSimilarity($idA, $idB, $similarity)
+    {
+        $qb = $this->gm->createQueryBuilder();
+        $qb->setParameters(array(
+            'idA' => $idA,
+            'idB' => $idB,
+            'similarity' => $similarity,
+        ));
+
+        $qb->match('(ua:User{qnoow_id:{idA}})', '(ub:User{qnoow_id:{idB}})')
+            ->merge('(ua)-[s:SIMILARITY]-(ub)')
+            ->set('s.similarity = {similarity}');
+
+        $qb->getQuery()->getResultSet();
     }
 }

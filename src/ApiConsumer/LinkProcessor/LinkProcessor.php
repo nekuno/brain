@@ -5,9 +5,9 @@ namespace ApiConsumer\LinkProcessor;
 use ApiConsumer\LinkProcessor\Processor\FacebookProcessor;
 use ApiConsumer\LinkProcessor\Processor\ScraperProcessor;
 use ApiConsumer\LinkProcessor\Processor\SpotifyProcessor;
+use ApiConsumer\LinkProcessor\Processor\TwitterProcessor;
 use ApiConsumer\LinkProcessor\Processor\YoutubeProcessor;
 use ApiConsumer\LinkProcessor\UrlParser\UrlParser;
-use ApiConsumer\LinkProcessor\UrlParser\YoutubeUrlParser;
 use GuzzleHttp\Exception\RequestException;
 use Model\LinkModel;
 
@@ -50,6 +50,11 @@ class LinkProcessor
     protected $facebookProcessor;
 
     /**
+     * @var TwitterProcessor
+     */
+    protected $twitterProcessor;
+
+    /**
      * @var UrlParser
      */
     protected $urlParser;
@@ -62,6 +67,7 @@ class LinkProcessor
         YoutubeProcessor $youtubeProcessor,
         SpotifyProcessor $spotifyProcessor,
         FacebookProcessor $facebookProcessor,
+        TwitterProcessor $twitterProcessor,
         UrlParser $urlParser
     ) {
 
@@ -72,26 +78,34 @@ class LinkProcessor
         $this->youtubeProcessor = $youtubeProcessor;
         $this->spotifyProcessor = $spotifyProcessor;
         $this->facebookProcessor = $facebookProcessor;
+        $this->twitterProcessor = $twitterProcessor;
         $this->urlParser = $urlParser;
     }
 
     /**
      * @param array $link
+     * @param bool $reprocess
      * @return array
      */
-    public function process(array $link)
+    public function process(array $link, $reprocess = false)
     {
-        if ($this->isLinkProcessed($link)) {
+        if (!$reprocess && $this->isLinkProcessed($link)) {
             return $link;
         }
 
-        $link['url'] = $this->resolver->resolve($link['url']);
+        $url = $this->resolver->resolve($link['url']);
+
+        if ($url == null){
+            $link['processed'] = 0;
+            return $link;
+        }
+        $link['url'] = $url;
 
         $processor = $this->scrapperProcessor;
 
         $link['url'] = $this->cleanURL($link, $processor);
 
-        if ($this->isLinkProcessed($link)) {
+        if (!$reprocess && $this->isLinkProcessed($link)) {
             return $link;
         }
 
@@ -100,7 +114,6 @@ class LinkProcessor
         } catch (RequestException $e) {
 
             $link['processed'] = 0;
-
             return $link;
         }
 
@@ -123,6 +136,11 @@ class LinkProcessor
 
     private function isLinkProcessed($link)
     {
+
+        if (isset($link['processed']) && $link['processed'] == 1){
+            return true;
+        }
+
         try {
             $storedLink = $this->linkModel->findLinkByUrl($link['url']);
             if ($storedLink && isset($storedLink['processed']) && $storedLink['processed'] == '1') {
@@ -153,6 +171,10 @@ class LinkProcessor
                 break;
             case LinkAnalyzer::FACEBOOK:
                 $processor = $this->facebookProcessor;
+                $url = $this->urlParser->cleanURL($link['url']);
+                break;
+            case LinkAnalyzer::TWITTER:
+                $processor = $this->twitterProcessor;
                 $url = $this->urlParser->cleanURL($link['url']);
                 break;
             case LinkAnalyzer::SCRAPPER:

@@ -3,6 +3,7 @@
 namespace Provider;
 
 use Everyman\Neo4j\Client;
+use Model\Neo4j\Constraints;
 use Model\Neo4j\GraphManager;
 use Psr\Log\LoggerAwareInterface;
 use Silex\Application;
@@ -43,6 +44,13 @@ class Neo4jPHPServiceProvider implements ServiceProviderInterface
                 }
 
                 return $manager;
+            }
+        );
+
+        $app['neo4j.constraints'] = $app->share(
+            function ($app) {
+
+                return new Constraints($app['neo4j.graph_manager']);
             }
         );
     }

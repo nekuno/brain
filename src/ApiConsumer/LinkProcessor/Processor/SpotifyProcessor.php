@@ -48,6 +48,7 @@ class SpotifyProcessor implements ProcessorInterface
 
         switch ($type) {
             case SpotifyUrlParser::TRACK_URL:
+            case SpotifyUrlParser::ALBUM_TRACK_URL:
                 $link = $this->processTrack($link);
                 break;
             case SpotifyUrlParser::ALBUM_URL:
@@ -215,7 +216,7 @@ class SpotifyProcessor implements ProcessorInterface
     protected function isYoutubeLinkSynonymous($link, $youtubeLinkSnippetInfo)
     {
         if (isset($youtubeLinkSnippetInfo['title']) && isset($link['title'])) {
-            
+
             similar_text($youtubeLinkSnippetInfo['title'], $link['title'], $percent);
 
             if ($percent > 30) {

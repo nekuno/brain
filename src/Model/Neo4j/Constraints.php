@@ -32,9 +32,11 @@ class Constraints
     public function load()
     {
 
-        $constraints = array();
-        $fields = array('qnoow_id', 'usernameCanonical', 'facebookID', 'googleID', 'twitterID', 'spotifyID');
+        $constraints = array(
+            'CREATE INDEX ON :Link(url)',
+        );
 
+        $fields = array('qnoow_id', 'usernameCanonical', 'facebookID', 'googleID', 'twitterID', 'spotifyID');
         foreach ($fields as $field) {
             $constraints[] = "CREATE CONSTRAINT ON (u:User) ASSERT u.$field IS UNIQUE";
         }

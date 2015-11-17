@@ -40,7 +40,7 @@ class LookUpByEmailCommand extends BaseCommand
             $userModel = $this->app['users.model'];
 
             try {
-                $user = $userModel->getById($id);
+                $user = $userModel->getById($id, true);
             } catch (\Exception $e) {
                 $this->displayError($e->getMessage());
                 exit;

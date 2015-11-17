@@ -6,6 +6,7 @@ namespace Worker;
 use ApiConsumer\Fetcher\FetcherService;
 use Doctrine\DBAL\Connection;
 use Model\User\LookUpModel;
+use Model\User\SocialNetwork\SocialProfileManager;
 use Model\User\TokensModel;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Message\AMQPMessage;
@@ -47,13 +48,25 @@ class LinkProcessorWorker extends LoggerAwareWorker implements RabbitMQConsumerI
      */
     protected $connectionBrain;
 
-    public function __construct(AMQPChannel $channel, FetcherService $fetcherService, TokensModel $tm, LookUpModel $lm, Connection $connectionSocial, Connection $connectionBrain)
+    /**
+     * @var SocialProfileManager
+     */
+    protected $socialProfileManager;
+
+    public function __construct(AMQPChannel $channel,
+                                FetcherService $fetcherService,
+                                TokensModel $tm,
+                                LookUpModel $lm,
+                                SocialProfileManager $socialProfileManager,
+                                Connection $connectionSocial,
+                                Connection $connectionBrain)
     {
 
         $this->channel = $channel;
         $this->fetcherService = $fetcherService;
         $this->tm = $tm;
         $this->lookupModel = $lm;
+        $this->socialProfileManager = $socialProfileManager;
         $this->connectionSocial = $connectionSocial;
         $this->connectionBrain = $connectionBrain;
     }
@@ -106,11 +119,17 @@ class LinkProcessorWorker extends LoggerAwareWorker implements RabbitMQConsumerI
         if (!(array_key_exists('public', $data) && $data['public'] == true)) {
             $tokens = $this->tm->getByUserOrResource($userId, $resourceOwner);
         } else {
-            $tokens = $this->lookupModel->getSocialProfiles($userId, $resourceOwner, false);
+            $profiles = $this->socialProfileManager->getSocialProfiles($userId, $resourceOwner, false);
+            $tokens = array();
+            foreach ($profiles as $profile)
+            {
+                $tokens[] = $this->tm->buildFromSocialProfile($profile);
+            }
         }
 
         foreach ($tokens as $token) {
 
+            $token['public'] = $public;
             try {
                 $this->fetcherService->fetch($token, $public);
             } catch (\Exception $e) {

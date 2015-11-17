@@ -8,6 +8,7 @@ use Everyman\Neo4j\Query\Row;
 use Model\Entity\DataStatus;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
+use Model\User\SocialNetwork\SocialProfile;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -370,6 +371,20 @@ class TokensModel
             $resourceOwners[] = $token['resourceOwner'];
         }
         return $resourceOwners;
+    }
+
+    /**
+     * For now, build just array for public fetching
+     * @param SocialProfile $profile
+     * @return array
+     */
+    public function buildFromSocialProfile(SocialProfile $profile)
+    {
+        return array(
+            'id' => $profile->getUserId(),
+            'url' => $profile->getUrl(),
+            'resourceOwner' => $profile->getResource(),
+        );
     }
 
     protected function build(Row $row)

@@ -7,6 +7,7 @@ use Console\ApplicationAwareCommand;
 use Model\LinkModel;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class LinksProcessCommand extends ApplicationAwareCommand
@@ -20,8 +21,10 @@ class LinksProcessCommand extends ApplicationAwareCommand
             ->setDefinition(
                 array(
                     new InputArgument('limit', InputArgument::OPTIONAL, 'Items limit', 100)
+
                 )
-            );
+            )
+            ->addOption('all', null, InputOption::VALUE_NONE, 'Process again all links, not only unprocessed ones');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -31,17 +34,30 @@ class LinksProcessCommand extends ApplicationAwareCommand
         $linksModel = $this->app['links.model'];
 
         $limit = $input->getArgument('limit');
+        $all = $input->getOption('all');
 
-        $unprocessedLinks = $linksModel->getUnprocessedLinks($limit);
+        if ($all){
+            $links = $linksModel->findAllLinks();
+            foreach ($links as &$link){
+                if (!isset($link['url'])){
+                    continue;
+                }
+                $link['tempId'] = $link['url'];
+            }
+        } else {
+            $links = $linksModel->getUnprocessedLinks($limit);
+        }
 
-        foreach ($unprocessedLinks as $link) {
+        $output->writeln('Got '.count($links).' links to process');
+
+        foreach ($links as $link) {
 
             try {
                 /* @var LinkProcessor $processor */
                 $processor = $this->app['api_consumer.link_processor'];
-                $processedLink = $processor->process($link);
+                $processedLink = $processor->process($link, $all);
 
-                $processed = array_key_exists('processed', $link)? $link['processed'] : 1;
+                $processed = array_key_exists('processed', $processedLink)? $processedLink['processed'] : 1;
                 if ($processed){
                     $output->writeln(sprintf('Success: Link %s processed', $link['url']));
                 } else {

@@ -5,6 +5,7 @@ namespace Model\User\Recommendation;
 use Everyman\Neo4j\Cypher\Query;
 use Model\Neo4j\GraphManager;
 use Model\Neo4j\QueryBuilder;
+use Model\User\GhostUser\GhostUserManager;
 use Model\User\ProfileModel;
 use Paginator\PaginatedInterface;
 
@@ -76,7 +77,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         $qb->setParameters($parameters);
 
         $qb->match('(u:User {qnoow_id: {userId}})-[:MATCHES|SIMILARITY]-(anyUser:User)')
-            ->where('u <> anyUser')
+            ->where('u <> anyUser', 'NOT (anyUser:'.GhostUserManager::LABEL_GHOST_USER.')')
             ->optionalMatch('(u)-[like:LIKES]-(anyUser)')
             ->optionalMatch('(u)-[m:MATCHES]-(anyUser)')
             ->optionalMatch('(u)-[s:SIMILARITY]-(anyUser)')

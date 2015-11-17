@@ -219,6 +219,11 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
         throw new \Exception('OAuth error: "Method unsupported."');
     }
 
+    public function getProfileUrl(array $token)
+    {
+        throw new \Exception('Method unsupported for this resource');
+    }
+
     protected function getClientToken()
     {
         if ($this->clientCredential instanceof ClientCredentialInterface) {

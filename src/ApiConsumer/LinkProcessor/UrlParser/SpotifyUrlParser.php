@@ -6,6 +6,7 @@ class SpotifyUrlParser extends UrlParser
 {
     const TRACK_URL = 'track';
     const ALBUM_URL = 'album';
+    const ALBUM_TRACK_URL = 'album_track';
     const ARTIST_URL = 'artist';
 
     public function getUrlType($url)
@@ -23,7 +24,7 @@ class SpotifyUrlParser extends UrlParser
             if (count($path) > 1) {
                 if ($path[0] === self::TRACK_URL || $path[0] === self::ALBUM_URL || $path[0] === self::ARTIST_URL) {
                     if ($path[0] === self::ALBUM_URL && count($path) == 3) {
-                        return self::TRACK_URL;
+                        return self::ALBUM_TRACK_URL;
                     }
                     return $path[0];
                 }
@@ -70,7 +71,7 @@ class SpotifyUrlParser extends UrlParser
 
         switch($type){
             case $this::TRACK_URL:
-            case $this::ALBUM_URL:
+            case $this::ALBUM_TRACK_URL:
                 $url = $this->buildTrackURL($url);
                 break;
         }

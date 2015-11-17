@@ -11,6 +11,7 @@ class LinkAnalyzer
     const YOUTUBE = 'youtube';
     const SPOTIFY = 'spotify';
     const FACEBOOK = 'facebook';
+    const TWITTER = 'twitter';
     const SCRAPPER = 'scrapper';
 
     /**
@@ -34,6 +35,10 @@ class LinkAnalyzer
 
         if (strpos($link['url'], 'facebook.com') !== false) {
             return self::FACEBOOK;
+        }
+
+        if (strpos($link['url'], 'twitter.com') !== false) {
+            return self::TWITTER;
         }
 
         return self::SCRAPPER;

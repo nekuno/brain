@@ -62,7 +62,7 @@ class SocialNetwork
                 }
 
                 if ($logger){
-                    $logger->info('analyzing google plus profile for getting youtube profile');
+                    $logger->info('Analyzing google plus profile for getting youtube profile');
                 }
 
                 /** @var GoogleProfileFetcher $googleProfileFetcher */
@@ -71,18 +71,19 @@ class SocialNetwork
                 $profiles = $googleProfileFetcher->fetchLinksFromUserFeed(array('googleID' => $googleId), true);
 
                 if (count($profiles) !== 1) {
+                    $logger->info('Youtube profile not found.');
                     break;
                 }
 
                 $urls = isset($profiles[0]['urls'])? $profiles[0]['urls'] : array();
                 foreach ($urls as $url) {
                     $url = $url['value'];
-                    if (strpos('youtube.com', $url)) {
-                        $socialProfile = array(array(LinkAnalyzer::YOUTUBE => $url));
+                    if (strpos($url, 'youtube.com')) {
+                        $socialProfile = array(LinkAnalyzer::YOUTUBE => $url);
                         $this->lookupModel->setSocialProfiles($socialProfile, $userId);
                         $this->lookupModel->dispatchSocialNetworksAddedEvent($userId, $socialProfile);
                         if ($logger){
-                            $logger->info('Youtube url '.$url. 'found.');
+                            $logger->info('Youtube url '.$url. ' found and joined to user '.$userId.'.');
                         }
                     }
                 }

@@ -86,6 +86,7 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
                     $fetcher,
                     $this->app['users.tokens.model'],
                     $this->app['users.lookup.model'],
+                    $this->app['users.socialprofile.manager'],
                     $this->app['dbs']['mysql_social'],
                     $this->app['dbs']['mysql_brain']);
                 $worker->setLogger($logger);

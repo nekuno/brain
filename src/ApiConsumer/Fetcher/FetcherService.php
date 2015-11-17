@@ -107,11 +107,10 @@ class FetcherService implements LoggerAwareInterface
 
     /**
      * @param array $token
-     * @param bool $public
      * @return array
      * @throws \Exception
      */
-    public function fetch($token, $public = false)
+    public function fetch($token)
     {
 
         if (!$token) return array();
@@ -127,6 +126,8 @@ class FetcherService implements LoggerAwareInterface
         } else {
             $resourceOwner = null;
         }
+
+        $public = isset($token['public'])? $token['public'] : false;
 
         $links = array();
         try {

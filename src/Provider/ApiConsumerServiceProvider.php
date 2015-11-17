@@ -6,6 +6,7 @@ use ApiConsumer\Factory\FetcherFactory;
 use ApiConsumer\Fetcher\FetcherService;
 use ApiConsumer\Registry\Registry;
 use Http\OAuth\Factory\ResourceOwnerFactory;
+use Igorw\Silex\ConfigServiceProvider;
 use Psr\Log\LoggerAwareInterface;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
@@ -19,7 +20,7 @@ class ApiConsumerServiceProvider implements ServiceProviderInterface
     public function register(Application $app)
     {
 
-        $app->register(new \Igorw\Silex\ConfigServiceProvider(__DIR__ . "/../ApiConsumer/config/apiConsumer.yml"));
+        $app->register(new ConfigServiceProvider(__DIR__ . "/../ApiConsumer/config/apiConsumer.yml"));
 
         // Resource Owners
         $app['api_consumer.resource_owner_factory'] = $app->share(
@@ -39,6 +40,17 @@ class ApiConsumerServiceProvider implements ServiceProviderInterface
                 /* @var $resourceOwnerFactory ResourceOwnerFactory */
 
                 return $resourceOwnerFactory->build('google');
+            }
+        );
+
+        $app['api_consumer.resource_owner.twitter'] = $app->share(
+            function ($app) {
+
+                $resourceOwnerFactory = $app['api_consumer.resource_owner_factory'];
+
+                /* @var $resourceOwnerFactory ResourceOwnerFactory */
+
+                return $resourceOwnerFactory->build('twitter');
             }
         );
 

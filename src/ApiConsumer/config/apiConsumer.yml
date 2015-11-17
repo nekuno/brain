@@ -14,8 +14,11 @@ api_consumer.config:
         spotify:
             class: Http\OAuth\ResourceOwner\SpotifyResourceOwner
     fetcher:
-        twitter:
-            class: ApiConsumer\Fetcher\TwitterFetcher
+        twitter_links:
+            class: ApiConsumer\Fetcher\TwitterLinksFetcher
+            resourceOwner: twitter
+        twitter_following:
+            class: ApiConsumer\Fetcher\TwitterFollowingFetcher
             resourceOwner: twitter
         facebook_links:
             class: ApiConsumer\Fetcher\FacebookLinksFetcher

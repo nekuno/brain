@@ -54,7 +54,7 @@ class RabbitMQEnqueueFetchingCommand extends ApplicationAwareCommand
         if ($userId == null) {
             $users = $usersModel->getAll();
         } else {
-            $users = array($usersModel->getById($userId));
+            $users = array($usersModel->getById($userId, true));
         }
 
         if (empty($users)) {

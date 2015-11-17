@@ -7,6 +7,7 @@ use ApiConsumer\EventListener\FetchLinksSubscriber;
 use ApiConsumer\Fetcher\FetcherService;
 use Console\ApplicationAwareCommand;
 use Model\User\LookUpModel;
+use Model\User\SocialNetwork\SocialProfileManager;
 use Model\User\TokensModel;
 use Psr\Log\LogLevel;
 use Silex\Application;
@@ -71,23 +72,21 @@ class LinksFetchCommand extends ApplicationAwareCommand
             }
         }
 
+        /* @var $tokensModel TokensModel */
+        $tokensModel = $this->app['users.tokens.model'];
+
         if (!$public) {
-            /* @var $tm TokensModel */
-            $tm = $this->app['users.tokens.model'];
 
-            $tokens = $tm->getByUserOrResource($userId, $resource);
+            $tokens = $tokensModel->getByUserOrResource($userId, $resource);
         } else {
-            /* @var $lookupmodel LookUpModel */
-            $lookupmodel = $this->app['users.lookup.model'];
+            /* @var $socialProfileManager SocialProfileManager */
+            $socialProfileManager = $this->app['users.socialprofile.manager'];
 
-            $tokens = $lookupmodel->getSocialProfiles($userId, $resource, false);
-
-            if ($resource) {
-                foreach ($tokens as $key=>$token){
-                    if ($token['resourceOwner'] !== $resource){
-                        unset($tokens[$key]);
-                    }
-                }
+            $profiles = $socialProfileManager->getSocialProfiles($userId, $resource, false);
+            $tokens = array();
+            foreach ($profiles as $profile)
+            {
+                $tokens[] = $tokensModel->buildFromSocialProfile($profile);
             }
         }
 
@@ -106,7 +105,8 @@ class LinksFetchCommand extends ApplicationAwareCommand
 
         foreach ($tokens as $token) {
             try {
-                $fetcher->fetch( $token, $public);
+                $token['public'] = $public;
+                $fetcher->fetch( $token);
 
             } catch (\Exception $e) {
                 $output->writeln(

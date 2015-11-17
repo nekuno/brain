@@ -4,7 +4,6 @@ namespace Console\Command;
 
 use Console\ApplicationAwareCommand;
 use Model\Neo4j\Constraints;
-
 use Silex\Application;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -21,7 +20,8 @@ class Neo4jConstraintsCommand extends ApplicationAwareCommand
     protected function execute(InputInterface $input, OutputInterface $output)
     {
 
-        $constraints = new Constraints($this->app['neo4j.graph_manager']);
+        /* @var $constraints Constraints */
+        $constraints = $this->app['neo4j.constraints'];
 
         try {
             $constraints->load();
