@@ -3,6 +3,7 @@
 namespace Http\OAuth\ResourceOwner;
 
 use ApiConsumer\LinkProcessor\LinkAnalyzer;
+use Model\User\TokensModel;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
@@ -12,7 +13,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  */
 class GoogleResourceOwner extends Oauth2GenericResourceOwner
 {
-    protected $name = 'google';
+    protected $name = TokensModel::GOOGLE;
 
     /**
      * {@inheritDoc}

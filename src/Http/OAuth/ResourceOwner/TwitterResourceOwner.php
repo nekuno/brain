@@ -2,6 +2,7 @@
 
 namespace Http\OAuth\ResourceOwner;
 
+use Model\User\TokensModel;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
@@ -11,7 +12,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  */
 class TwitterResourceOwner extends Oauth1GenericResourceOwner
 {
-    protected $name = 'twitter';
+    protected $name = TokensModel::TWITTER;
 
     /**
      * {@inheritDoc}
