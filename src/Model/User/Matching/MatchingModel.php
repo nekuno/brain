@@ -201,6 +201,9 @@ class MatchingModel
         $matching = 0;
         if ($result->count() == 1){
             $matching = $result->current()->offsetGet('matching');
+            if ($matching == 0){
+                $matching = 0.01;
+            }
         }
 
         //Create the matching relationship with the appropriate value
