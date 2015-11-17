@@ -220,7 +220,7 @@ class Fixtures
 
             $group = $this->gpm->create(
                 array(
-                    'name' => 'group '.$i,
+                    'name' => 'group ' . $i,
                     'html' => $this->getHTMLFixture(),
                     'date' => 1447012842,
                     'location' => array(
@@ -241,9 +241,8 @@ class Fixtures
             );
             $invitation = $this->im->create($invitationData, $this->tg);
 
-            foreach($this->um->getAll() as $index => $user)
-            {
-                if($index > 25) {
+            foreach ($this->um->getAll() as $index => $user) {
+                if ($index > 25) {
                     break;
                 }
                 $this->im->consume($invitation['invitation']['token'], $user['qnoow_id']);
@@ -256,7 +255,7 @@ class Fixtures
         for ($i = self::NUM_OF_ENTERPRISE_USERS + 1; $i <= self::NUM_OF_GROUPS - self::NUM_OF_ENTERPRISE_USERS; $i++) {
             $this->gpm->create(
                 array(
-                    'name' => 'group '.$i,
+                    'name' => 'group ' . $i,
                     'html' => $this->getHTMLFixture(),
                     'date' => 1447012842,
                     'location' => array(
@@ -460,15 +459,20 @@ class Fixtures
 
     protected function loadPrivacy()
     {
-        $this->logger->notice('Loading privacy');
 
-        $privacy = $this->scenario['privacy'];
+        if (isset($this->scenario['privacy'])) {
 
-        foreach ($privacy as $userPrivacy) {
-            $userId = $userPrivacy['user'];
-            unset($userPrivacy['user']);
+            $this->logger->notice('Loading privacy');
 
-            $this->prim->create($userId, $userPrivacy);
+            $privacy = $this->scenario['privacy'];
+
+            foreach ($privacy as $userPrivacy) {
+                $userId = $userPrivacy['user'];
+                unset($userPrivacy['user']);
+
+                $this->prim->create($userId, $userPrivacy);
+            }
+
         }
     }
 
