@@ -2,6 +2,7 @@
 
 namespace Http\OAuth\ResourceOwner;
 
+use Model\User\TokensModel;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
@@ -11,7 +12,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  */
 class SpotifyResourceOwner extends Oauth2GenericResourceOwner
 {
-    protected $name = 'spotify';
+    protected $name = TokensModel::SPOTIFY;
 
     /**
      * {@inheritDoc}

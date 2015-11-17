@@ -4,6 +4,7 @@ namespace Http\OAuth\ResourceOwner;
 
 use ApiConsumer\Event\OAuthTokenEvent;
 use GuzzleHttp\Exception\RequestException;
+use Model\User\TokensModel;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
@@ -14,7 +15,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 class
 FacebookResourceOwner extends Oauth2GenericResourceOwner
 {
-    protected $name = 'facebook';
+    protected $name = TokensModel::FACEBOOK;
 
     protected $expire_time_margin = 1728000;// 20 days because expired tokens can´t be refreshed
 

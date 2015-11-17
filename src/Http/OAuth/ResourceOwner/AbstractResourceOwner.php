@@ -115,8 +115,7 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
         if (isset($token['expireTime']) && ($token['expireTime'] <= time() && $token['expireTime'] != 0)) {
 
             if (!$token['refreshToken']) {
-                $event = new OAuthTokenEvent($token);
-                $this->dispatcher->dispatch(\AppEvents::TOKEN_EXPIRED, $event);
+                $this->dispatchTokenExpired($token);
                 $e = new TokenException(sprintf('Refresh token not present for user "%s"', $token['username']));
                 $e->setToken($token);
                 throw $e;
@@ -125,8 +124,7 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
             try {
                 $data = $this->refreshAccessToken($token);
             } catch (\Exception $e) {
-                $event = new OAuthTokenEvent($token);
-                $this->dispatcher->dispatch(\AppEvents::TOKEN_EXPIRED, $event);
+                $this->dispatchTokenExpired($token);
                 $e = new TokenException($e->getMessage(), $e->getCode(), $e->getPrevious());
                 $e->setToken($token);
                 throw $e;
@@ -146,6 +144,15 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
         }
 
         return $this->getResponseContent($response);
+    }
+
+    private function dispatchTokenExpired($token)
+    {
+        if (isset($token['network']) && $token['network'] == $this->getName()){
+            $event = new OAuthTokenEvent($token);
+            $this->dispatcher->dispatch(\AppEvents::TOKEN_EXPIRED, $event);
+        }
+
     }
 
     protected function addOauthData($data, $token)
