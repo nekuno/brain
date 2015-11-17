@@ -2,7 +2,6 @@
 
 namespace Model\Neo4j;
 
-use Everyman\Neo4j\Client;
 use Model\LinkModel;
 use Model\Questionnaire\QuestionModel;
 use Model\User\AnswerModel;
@@ -36,6 +35,11 @@ class Fixtures
      * @var GraphManager
      */
     protected $gm;
+
+    /**
+     * @var Constraints
+     */
+    protected $constraints;
 
     /**
      * @var UserModel
@@ -105,6 +109,7 @@ class Fixtures
     public function __construct(Application $app, $scenario)
     {
         $this->gm = $app['neo4j.graph_manager'];
+        $this->constraints = $app['neo4j.constraints'];
         $this->um = $app['users.model'];
         $this->eu = $app['enterpriseUsers.model'];
         $this->gpm = $app['users.groups.model'];
@@ -161,8 +166,8 @@ class Fixtures
         $query = $qb->getQuery();
         $query->getResultSet();
 
-        $constraints = $this->gm->createQuery('CREATE CONSTRAINT ON (u:User) ASSERT u.qnoow_id IS UNIQUE');
-        $constraints->getResultSet();
+        $this->constraints->load();
+        $this->logger->notice('Constraints created');
     }
 
     protected function loadUsers()
