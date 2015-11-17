@@ -314,8 +314,7 @@ class ProfileModel
                             $doubleChoices = $fieldData['doubleChoices'] + array('' => '');
                             if (!isset($doubleChoices[$fieldValue['choice']]) || $fieldValue['detail'] && !isset($doubleChoices[$fieldValue['choice']][$fieldValue['detail']])) {
                                 $fieldErrors[] = sprintf('Option choice and detail must be set in "%s"', $fieldValue['choice']);
-                            }
-                            elseif ($fieldValue['detail'] && !in_array($fieldValue['detail'], array_keys($doubleChoices[$fieldValue['choice']]))) {
+                            } elseif ($fieldValue['detail'] && !in_array($fieldValue['detail'], array_keys($doubleChoices[$fieldValue['choice']]))) {
                                 $fieldErrors[] = sprintf('Detail with value "%s" is not valid, possible values are "%s"', $fieldValue['detail'], implode("', '", array_keys($doubleChoices)));
                             }
                             break;
@@ -414,7 +413,8 @@ class ProfileModel
             $relationships = $option->getRelationships('OPTION_OF', Relationship::DirectionOut);
             foreach ($relationships as $relationship) {
                 if ($relationship->getStartNode()->getId() === $option->getId() &&
-                    $relationship->getEndNode()->getId() === $profile->getId()) {
+                    $relationship->getEndNode()->getId() === $profile->getId()
+                ) {
                     break;
                 }
             }
@@ -451,7 +451,8 @@ class ProfileModel
             $relationships = $tag->getRelationships('TAGGED', Relationship::DirectionOut);
             foreach ($relationships as $relationship) {
                 if ($relationship->getStartNode()->getId() === $tag->getId() &&
-                    $relationship->getEndNode()->getId() === $profile->getId()) {
+                    $relationship->getEndNode()->getId() === $profile->getId()
+                ) {
                     break;
                 }
             }
@@ -466,7 +467,12 @@ class ProfileModel
                         $tagResult['tag'] = $tag->getProperty('name');
                         $tagResult['detail'] = $detail;
                     }
-                    if($typeName === 'language') {
+                    if ($typeName === 'language') {
+                        if (is_null($detail)) {
+                            $tagResult = array();
+                            $tagResult['tag'] = $tag->getProperty('name');
+                            $tagResult['detail'] = '';
+                        }
                         $tagResult['tag'] = $this->translateLanguageToLocale($tagResult['tag'], $locale);
                     }
                     $tagsResult[$typeName][] = $tagResult;
@@ -615,7 +621,7 @@ class ProfileModel
                             $qb->match('(option:' . $this->typeToLabel($fieldName) . ' {id: { ' . $fieldName . ' }})')
                                 ->merge('(profile)<-[:OPTION_OF {detail: {' . $fieldName . '_detail}}]-(option)')
                                 ->setParameter($fieldName, $fieldValue['choice'])
-                                ->setParameter($fieldName.'_detail', $detail)
+                                ->setParameter($fieldName . '_detail', $detail)
                                 ->with('profile');
                         }
 
@@ -823,8 +829,7 @@ class ProfileModel
 
     protected function translateTypicalLanguage($language)
     {
-        switch($language)
-        {
+        switch ($language) {
             case 'Español':
                 return 'Spanish';
             case 'Castellano':
@@ -870,8 +875,7 @@ class ProfileModel
             return $language;
         }
         if ($locale === 'es') {
-            switch($language)
-            {
+            switch ($language) {
                 case 'Spanish':
                     return 'Español';
                 case 'English':
