@@ -247,8 +247,8 @@ class SimilarityModel
 
     private function returnSimilarity($similarity, $idA, $idB)
     {
-        $questionLimit = 4;
-        $contentLimit = 100;
+        $questionLimit = 0;
+        $contentLimit = 1000;
 
         $interfaceLanguageA = $this->profileModel->getById($idA)['interfaceLanguage'];
         $interfaceLanguageB = $this->profileModel->getById($idB)['interfaceLanguage'];
@@ -262,19 +262,11 @@ class SimilarityModel
             'id' => $idB,
             'locale' => $interfaceLanguageB));
 
-        if (($totalLinksA < $contentLimit && $totalQuestionsB < $questionLimit)
-            || ($totalLinksB < $contentLimit && $totalQuestionsA < $questionLimit)
+        if (($totalLinksA >= $contentLimit && $totalQuestionsA <= $questionLimit)
+            || ($totalLinksB >= $contentLimit && $totalQuestionsB <= $questionLimit)
         ) {
-            $similarity['similarity'] = 0;
-            $this->setSimilarity($idA, $idB, 0);
-        } else if ($totalLinksA < $contentLimit || $totalLinksB < $contentLimit) {
-            //TODO: 'Questions as content' similarity here
-            $similarity['similarity'] = $similarity['questions'];
-            $this->setSimilarity($idA, $idB, $similarity['questions']);
-        } else if ($totalQuestionsA < $questionLimit || $totalQuestionsB < $questionLimit) {
             $similarity['similarity'] = $similarity['interests'];
             $this->setSimilarity($idA, $idB, $similarity['interests']);
-
         }
 
         return $similarity;
