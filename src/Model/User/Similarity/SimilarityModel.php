@@ -250,8 +250,10 @@ class SimilarityModel
         $questionLimit = 0;
         $contentLimit = 1000;
 
-        $interfaceLanguageA = $this->profileModel->getById($idA)['interfaceLanguage'];
-        $interfaceLanguageB = $this->profileModel->getById($idB)['interfaceLanguage'];
+        $profileA = $this->profileModel->getById($idA);
+        $profileB = $this->profileModel->getById($idB);
+        $interfaceLanguageA = isset($profileA['interfaceLanguage']) ? $profileA['interfaceLanguage'] : 'es';
+        $interfaceLanguageB = isset($profileB['interfaceLanguage']) ? $profileB['interfaceLanguage'] : 'es';
         $totalLinksA = $this->contentPaginatedModel->countTotal(array('id' => $idA));
         $totalLinksB = $this->contentPaginatedModel->countTotal(array('id' => $idB));
 
