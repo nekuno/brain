@@ -304,10 +304,12 @@ class QuestionModel
             ->where('id(q) = { id }')
             ->setParameter('id', (integer)$id)
             ->with('q, a')
-            ->optionalMatch('ua = (u:User)-[x:ANSWERS]->(a)')
-            ->with('id(a) AS answer', 'COUNT(x) AS answersCount')
+            ->optionalMatch('(:Gender {id: "male"})-[:OPTION_OF]->(:Profile)-[:PROFILE_OF]->(:User)-[maleAnswers:ANSWERS]->(a)')
+            ->with('q', 'a', 'COUNT(maleAnswers) AS maleAnswersCount')
+            ->optionalMatch('(:Gender {id: "female"})-[:OPTION_OF]->(:Profile)-[:PROFILE_OF]->(:User)-[femaleAnswers:ANSWERS]->(a)')
+            ->with('id(a) AS answer', 'maleAnswersCount', 'COUNT(femaleAnswers) AS femaleAnswersCount')
             ->orderBy('id(a)')
-            ->returns('answer, answersCount');
+            ->returns('answer', 'maleAnswersCount', 'femaleAnswersCount');
 
         $query = $qb->getQuery();
 
@@ -317,14 +319,12 @@ class QuestionModel
         foreach ($result as $row) {
             $stats['answers'][] = array(
                 'answerId' => $row['answer'],
-                'answersCount' => $row['answersCount'],
+                'maleAnswersCount' => $row['maleAnswersCount'],
+                'femaleAnswersCount' => $row['femaleAnswersCount'],
             );
-            if (isset($stats['answersCount'])) {
-                $stats['answersCount'] += $row['answersCount'];
-            } else {
-                $stats['answersCount'] = $row['answersCount'];
-            }
 
+            $stats['maleAnswersCount'] = isset($stats['maleAnswersCount']) ? $stats['maleAnswersCount'] + $row['maleAnswersCount'] : $row['maleAnswersCount'];
+            $stats['femaleAnswersCount'] = isset($stats['femaleAnswersCount']) ? $stats['femaleAnswersCount'] + $row['femaleAnswersCount'] : $row['femaleAnswersCount'];
         }
 
         return $stats;
@@ -463,15 +463,18 @@ class QuestionModel
         }
 
         $stats = $this->getQuestionStats($question->getId());
-        $answersStats = array();
+        $maleAnswersStats = array();
+        $femaleAnswersStats = array();
         foreach ($stats['answers'] as $answer) {
-            $answersStats[$answer['answerId']] = $answer['answersCount'];
+            $maleAnswersStats[$answer['answerId']] = $answer['maleAnswersCount'];
+            $femaleAnswersStats[$answer['answerId']] = $answer['femaleAnswersCount'];
         }
 
         $return = array(
             'questionId' => $question->getId(),
             'text' => $question->getProperty('text_' . $locale),
-            'answersCount' => $stats['answersCount'],
+            'maleAnswersCount' => $stats['maleAnswersCount'],
+            'femaleAnswersCount' => $stats['femaleAnswersCount'],
             'answers' => array(),
             'isRegisterQuestion' => $isRegisterQuestion,
         );
@@ -482,7 +485,8 @@ class QuestionModel
             $return['answers'][] = array(
                 'answerId' => $answer->getId(),
                 'text' => $answer->getProperty('text_' . $locale),
-                'answersCount' => $answersStats[$answer->getId()],
+                'maleAnswersCount' => $maleAnswersStats[$answer->getId()],
+                'femaleAnswersCount' => $femaleAnswersStats[$answer->getId()],
             );
         }
 
