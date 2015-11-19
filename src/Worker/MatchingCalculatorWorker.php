@@ -19,42 +19,35 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
 class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQConsumerInterface
 {
 
+    const TRIGGER_PERIODIC = 'periodic';
     /**
      * @var AMQPChannel
      */
     protected $channel;
-
     /**
      * @var UserModel
      */
     protected $userModel;
-
     /**
      * @var MatchingModel
      */
     protected $matchingModel;
-
     /**
      * @var SimilarityModel
      */
     protected $similarityModel;
-
     /**
      * @var Connection
      */
     protected $connectionSocial;
-
     /**
      * @var Connection
      */
     protected $connectionBrain;
-
     /**
      * @var EventDispatcher
      */
     protected $dispatcher;
-
-    const TRIGGER_PERIODIC = 'periodic';
 
     public function __construct(AMQPChannel $channel, UserModel $userModel, MatchingModel $matchingModel, SimilarityModel $similarityModel, Connection $connectionSocial, Connection $connectionBrain, EventDispatcher $dispatcher)
     {
@@ -190,10 +183,12 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                 try {
                     switch ($matchingType) {
                         case 'content':
-                            $this->similarityModel->getSimilarity($user1, $user2);
+                            $similarity = $this->similarityModel->getSimilarity($user1, $user2);
+                            $this->logger->info(sprintf('   Similarity between users %d - %d: %s', $user1, $user2, $similarity['similarity']));
                             break;
                         case 'answer':
-                            $this->matchingModel->calculateMatchingBetweenTwoUsersBasedOnAnswers($user1, $user2);
+                            $matching = $this->matchingModel->calculateMatchingBetweenTwoUsersBasedOnAnswers($user1, $user2);
+                            $this->logger->info(sprintf('   Matching by questions between users %d - %d: %s', $user1, $user2, $matching));
                             break;
                     }
                 } catch (\Exception $e) {
@@ -213,12 +208,12 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                 $user1 = $data['user_1_id'];
                 $user2 = $data['user_2_id'];
 
-                try{
-                    $this->similarityModel->getSimilarity($user1, $user2);
-                    $this->matchingModel->calculateMatchingBetweenTwoUsersBasedOnAnswers($user1, $user2);
-
-                }
-                catch (\Exception $e) {
+                try {
+                    $similarity = $this->similarityModel->getSimilarity($user1, $user2);
+                    $matching = $this->matchingModel->calculateMatchingBetweenTwoUsersBasedOnAnswers($user1, $user2);
+                    $this->logger->info(sprintf('   Similarity between users %d - %d: %s', $user1, $user2, $similarity['similarity']));
+                    $this->logger->info(sprintf('   Matching by questions between users %d - %d: %s', $user1, $user2, $matching));
+                } catch (\Exception $e) {
                     $this->logger->error(
                         sprintf(
                             'Worker: Error calculating similarity and matching between user %d and user %d with message %s on file %s, line %d',
