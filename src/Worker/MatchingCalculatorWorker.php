@@ -179,6 +179,7 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                 $matchingType = $data['matching_type'];
                 $user1 = $data['user_1_id'];
                 $user2 = $data['user_2_id'];
+                $this->logger->notice(sprintf('[%s] Calculating matching by trigger "%s" for users %d - %d', date('Y-m-d H:i:s'), $trigger, $user1, $user2));
 
                 try {
                     switch ($matchingType) {
@@ -207,6 +208,7 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
             case $this:: TRIGGER_PERIODIC:
                 $user1 = $data['user_1_id'];
                 $user2 = $data['user_2_id'];
+                $this->logger->notice(sprintf('[%s] Calculating matching by trigger "%s" for users %d - %d', date('Y-m-d H:i:s'), $trigger, $user1, $user2));
 
                 try {
                     $similarity = $this->similarityModel->getSimilarity($user1, $user2);
