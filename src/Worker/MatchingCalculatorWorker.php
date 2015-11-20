@@ -5,6 +5,7 @@ namespace Worker;
 
 use Doctrine\DBAL\Connection;
 use Event\UserStatusChangedEvent;
+use Model\Neo4j\Neo4jException;
 use Model\User\Matching\MatchingModel;
 use Model\User\Similarity\SimilarityModel;
 use Model\UserModel;
@@ -126,15 +127,10 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                         $this->logger->info(sprintf('   Similarity by interests between users %d - %d: %s', $userA, $userB, $similarity));
                     }
                 } catch (\Exception $e) {
-                    $this->logger->error(
-                        sprintf(
-                            'Worker: Error calculating similarity for user %d with message %s on file %s, line %d',
-                            $userA,
-                            $e->getMessage(),
-                            $e->getFile(),
-                            $e->getLine()
-                        )
-                    );
+                    $this->logger->error(sprintf('Worker: Error calculating similarity for user %d with message %s on file %s, line %d', $userA, $e->getMessage(), $e->getFile(), $e->getLine()));
+                    if ($e instanceof Neo4jException) {
+                        $this->logger->error(sprintf('Query: %s' . "\n" . 'Data: %s', $e->getQuery(), print_r($e->getData(), true)));
+                    }
                 }
                 break;
             case 'question_answered':
@@ -163,15 +159,10 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                     }
 
                 } catch (\Exception $e) {
-                    $this->logger->error(
-                        sprintf(
-                            'Worker: Error calculating matching and similarity for user %d with message %s on file %s, line %d',
-                            $userA,
-                            $e->getMessage(),
-                            $e->getFile(),
-                            $e->getLine()
-                        )
-                    );
+                    $this->logger->error(sprintf('Worker: Error calculating matching and similarity for user %d with message %s on file %s, line %d', $userA, $e->getMessage(), $e->getFile(), $e->getLine()));
+                    if ($e instanceof Neo4jException) {
+                        $this->logger->error(sprintf('Query: %s' . "\n" . 'Data: %s', $e->getQuery(), print_r($e->getData(), true)));
+                    }
                 }
                 break;
             case 'matching_expired':
@@ -193,16 +184,10 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                             break;
                     }
                 } catch (\Exception $e) {
-                    $this->logger->error(
-                        sprintf(
-                            'Worker: Error calculating matching between user %d and user %d with message %s on file %s, line %d',
-                            $user1,
-                            $user2,
-                            $e->getMessage(),
-                            $e->getFile(),
-                            $e->getLine()
-                        )
-                    );
+                    $this->logger->error(sprintf('Worker: Error calculating matching between user %d and user %d with message %s on file %s, line %d', $user1, $user2, $e->getMessage(), $e->getFile(), $e->getLine()));
+                    if ($e instanceof Neo4jException) {
+                        $this->logger->error(sprintf('Query: %s' . "\n" . 'Data: %s', $e->getQuery(), print_r($e->getData(), true)));
+                    }
                 }
                 break;
             case $this:: TRIGGER_PERIODIC:
@@ -216,16 +201,10 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                     $this->logger->info(sprintf('   Similarity between users %d - %d: %s', $user1, $user2, $similarity['similarity']));
                     $this->logger->info(sprintf('   Matching by questions between users %d - %d: %s', $user1, $user2, $matching));
                 } catch (\Exception $e) {
-                    $this->logger->error(
-                        sprintf(
-                            'Worker: Error calculating similarity and matching between user %d and user %d with message %s on file %s, line %d',
-                            $user1,
-                            $user2,
-                            $e->getMessage(),
-                            $e->getFile(),
-                            $e->getLine()
-                        )
-                    );
+                    $this->logger->error(sprintf('Worker: Error calculating similarity and matching between user %d and user %d with message %s on file %s, line %d', $user1, $user2, $e->getMessage(), $e->getFile(), $e->getLine()));
+                    if ($e instanceof Neo4jException) {
+                        $this->logger->error(sprintf('Query: %s' . "\n" . 'Data: %s', $e->getQuery(), print_r($e->getData(), true)));
+                    }
                 }
                 break;
             default;
