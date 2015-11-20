@@ -34,6 +34,7 @@ class RabbitMQEnqueueMatchingCommand extends ApplicationAwareCommand
                 1 => $userB
             )
         );
+
         if (null === $userA || null === $userB) {
             /* @var $userModel UserModel */
             $userModel = $this->app['users.model'];

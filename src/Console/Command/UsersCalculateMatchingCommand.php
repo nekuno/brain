@@ -3,6 +3,7 @@
 namespace Console\Command;
 
 use Console\ApplicationAwareCommand;
+use Model\Neo4j\Neo4jException;
 use Model\User\Matching\MatchingModel;
 use Model\UserModel;
 use Silex\Application;
@@ -42,26 +43,27 @@ class UsersCalculateMatchingCommand extends ApplicationAwareCommand
             $combinations = $userModel->getAllCombinations();
         }
 
-        try {
+        foreach ($combinations AS $users) {
 
-            foreach ($combinations AS $users) {
+            $userA = $users[0];
+            $userB = $users[1];
 
-                $userA = $users[0];
-                $userB = $users[1];
-
+            try {
                 $oldQuestionMatching = $modelObject->getMatchingBetweenTwoUsersBasedOnAnswers($userA, $userB);
                 $modelObject->calculateMatchingBetweenTwoUsersBasedOnAnswers($userA, $userB);
                 $newQuestionMatching = $modelObject->getMatchingBetweenTwoUsersBasedOnAnswers($userA, $userB);
+            } catch (\Exception $e) {
 
-                $output->writeln(sprintf('Matching between users %d - %d old: %s new: %s', $userA, $userB, $oldQuestionMatching['matching'], $newQuestionMatching['matching']));
+                $output->writeln(sprintf('[%s] Error trying to recalculate matching between user %d - %d with message %s', date('Y-m-d H:i:s'), $userA, $userB, $e->getMessage()));
+                if ($e instanceof Neo4jException) {
+                    $output->writeln(sprintf('Query: %s' . "\n" . 'Data: %s', $e->getQuery(), print_r($e->getData(), true)));
+                }
+                continue;
             }
-
-        } catch (\Exception $e) {
-
-            $output->writeln(sprintf('Error trying to recalculate matching with parameters: %s', $e->getMessage()));
-
-            return;
+            $output->writeln(sprintf('Matching between users %d - %d old: %s new: %s', $userA, $userB, $oldQuestionMatching['matching'], $newQuestionMatching['matching']));
         }
+
+        $output->writeln('Done.');
 
     }
 }
