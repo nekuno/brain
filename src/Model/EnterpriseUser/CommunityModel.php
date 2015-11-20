@@ -44,7 +44,7 @@ class CommunityModel
             ->setParameters(array(
                 'id' => (int)$id,
             ))
-            ->returns('u1.qnoow_id as id1, u1.username as username, COLLECT([u2.qnoow_id, matches.matching_questions, similarity.similarity]) AS relations');
+            ->returns('u1.qnoow_id as id1, u1.username as username, u1.picture as picture, COLLECT([u2.qnoow_id, matches.matching_questions, similarity.similarity]) AS relations');
 
         $query = $qb->getQuery();
 
@@ -63,6 +63,7 @@ class CommunityModel
     {
         $id1 = $row->offsetGet('id1');
         $username = $row->offsetGet('username');
+        $picture = $row->offsetGet('picture');
         $relations = $row->offsetGet('relations');
 
         $relationsResult = array();
@@ -77,6 +78,7 @@ class CommunityModel
         return array(
             'id' => $id1,
             'username' => $username,
+            'picture' => $picture,
             'relations' => $relationsResult
         );
     }
