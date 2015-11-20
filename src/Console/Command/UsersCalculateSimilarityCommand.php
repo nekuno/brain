@@ -18,16 +18,8 @@ class UsersCalculateSimilarityCommand extends ApplicationAwareCommand
     {
         $this->setName('users:calculate:similarity')
             ->setDescription('Calculate the similarity of two users.')
-            ->addArgument(
-                'userA',
-                InputArgument::OPTIONAL,
-                'id of the first user?'
-            )
-            ->addArgument(
-                'userB',
-                InputArgument::OPTIONAL,
-                'id of the second user?'
-            );
+            ->addArgument('userA', InputArgument::OPTIONAL, 'id of the first user?')
+            ->addArgument('userB', InputArgument::OPTIONAL, 'id of the second user?');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
