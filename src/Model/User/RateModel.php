@@ -6,6 +6,7 @@ use Event\ContentRatedEvent;
 use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Query\Row;
 use Everyman\Neo4j\Relationship;
+use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
@@ -59,9 +60,7 @@ class RateModel
      */
     public function userRateLink($userId, array $data, $rate, $fireEvent = true)
     {
-        if ($rate !== self::LIKE && $rate != self::DISLIKE && $rate != self::IGNORE) {
-            throw new \Exception(sprintf('%s is not a valid rate', $rate));
-        }
+        $this->validate($rate);
 
         switch ($rate) {
             case $this::LIKE :
@@ -82,7 +81,71 @@ class RateModel
     }
 
     //TODO: Add $this->unrate for delete-like actions
-    //TODO: Add $this->getrate for get-like actions
+
+    /**
+     * @param $userId
+     * @param $rate
+     * @param int $limit
+     * @return array
+     * @throws \Exception
+     */
+    public function getRatesByUser($userId, $rate, $limit = 999999)
+    {
+        $this->validate($rate);
+
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(u:User{qnoow_id: {userId} })')
+            ->match("(u)-[r:$rate]->(l:Link)")
+            ->returns('r', 'l.url as linkUrl')
+            ->limit('{limit}');
+
+        $qb->setParameters(array(
+            'userId' => (integer)$userId,
+            'limit' => (integer) $limit,
+        ));
+
+        $rs = $qb->getQuery()->getResultSet();
+
+        $rates = array();
+        foreach ($rs as $row)
+        {
+            if ($rate == $this::LIKE){
+                $rates[] = $this->buildLike($row);
+            } else if ($rate == $this::DISLIKE){
+                $rates[] = $this->buildDislike($row);
+            }
+        }
+
+        return $rates;
+    }
+
+    /**
+     * Meant to work only on empty likes as is.
+     * @param $likeId
+     * @return array|bool
+     * @throws \Model\Neo4j\Neo4jException
+     */
+    public function completeLikeById($likeId){
+
+        $rate = $this::LIKE;
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match("(u:User)-[r:$rate]->(l:Link)")
+            ->where('id(r)={likeId}')
+            ->set('r.nekuno = timestamp()', 'r.last_liked = timestamp()')
+            ->returns('r','l.url');
+        $qb->setParameters(array(
+            'likeId' => (integer)$likeId
+        ));
+
+        $rs = $qb->getQuery()->getResultSet();
+
+        if ($rs->count() == 0){
+            return false;
+        }
+
+        return $this->buildLike($rs->current());
+    }
 
     /**
      * @param $userId
@@ -118,7 +181,7 @@ class RateModel
             ->optionalMatch('(u)-[a:AFFINITY|DISLIKES]-(l)')
             ->delete('a');
 
-        $qb->returns('r');
+        $qb->returns('r', 'link.url as linkUrl');
 
         $result = $qb->getQuery()->getResultSet();
 
@@ -174,10 +237,21 @@ class RateModel
         /* @var $relationship Relationship */
         $relationship = $row->offsetGet('r');
 
+        $resources = array();
+        $resourceOwners = array_merge(array('nekuno'), TokensModel::getResourceOwners());
+        foreach ($resourceOwners as $resourceOwner){
+            if ($relationship->getProperty($resourceOwner))
+            {
+                $resources[$resourceOwner] = $relationship->getProperty($resourceOwner);
+            }
+        }
+
+
         return array(
             'id' => $relationship->getId(),
-            'resource' => $relationship->getProperty('resource'),
-            'timestamp' => $relationship->getProperty('timestamp'),
+            'resources' => $resources,
+            'timestamp' => $relationship->getProperty('last_liked'),
+            'linkUrl' => $row->offsetGet('linkUrl'),
         );
     }
 
@@ -195,6 +269,22 @@ class RateModel
             'id' => $relationship->getId(),
             'timestamp' => $relationship->getProperty('timestamp'),
         );
+    }
+
+    /**
+     * @param $rate
+     * @throws \Exception
+     */
+    private function validate($rate)
+    {
+        $errors = array();
+        if ($rate !== self::LIKE && $rate != self::DISLIKE && $rate != self::IGNORE) {
+            $errors['rate'] = array(sprintf('%s is not a valid rate', $rate));
+        }
+
+        if (count($errors) > 0) {
+            throw new ValidationException($errors);
+        }
     }
 
 }

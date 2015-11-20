@@ -472,10 +472,11 @@ class UserModel implements PaginatedInterface
 
     /**
      * @param integer $id
+     * @param bool $set
      * @return UserStatusModel
-     * @throws NotFoundHttpException
+     * @throws Neo4jException NotFoundHttpException
      */
-    public function calculateStatus($id)
+    public function calculateStatus($id, $set = true)
     {
 
         $qb = $this->gm->createQueryBuilder();
@@ -502,16 +503,19 @@ class UserModel implements PaginatedInterface
         if ($status->getStatus() !== $row['status']) {
             $status->setStatusChanged();
 
-            $qb = $this->gm->createQueryBuilder();
-            $qb
-                ->match('(u:User {qnoow_id: { id }})')
-                ->setParameter('id', (integer)$id)
-                ->set('u.status = { status }')
-                ->setParameter('status', $status->getStatus())
-                ->returns('u');
+            if ($set) {
+                $qb = $this->gm->createQueryBuilder();
+                $qb
+                    ->match('(u:User {qnoow_id: { id }})')
+                    ->setParameter('id', (integer)$id)
+                    ->set('u.status = { status }')
+                    ->setParameter('status', $status->getStatus())
+                    ->returns('u');
 
-            $query = $qb->getQuery();
-            $query->getResultSet();
+                $query = $qb->getQuery();
+                $query->getResultSet();
+            }
+
         }
 
         return $status;
