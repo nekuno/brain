@@ -5,6 +5,7 @@ namespace Console\Command;
 use Console\ApplicationAwareCommand;
 use Model\UserModel;
 use Service\AMQPManager;
+use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -19,30 +20,42 @@ class RabbitMQEnqueueMatchingCommand extends ApplicationAwareCommand
 
         $this->setName('rabbitmq:enqueue:matching')
             ->setDescription('Enqueues a matching taks for all users')
-            ;
+            ->addArgument('userA', InputArgument::OPTIONAL, 'id of the first user?')
+            ->addArgument('userB', InputArgument::OPTIONAL, 'id of the second user?');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
 
-        /* @var $usersModel UserModel */
-        $usersModel = $this->app['users.model'];
+        $userA = $input->getArgument('userA');
+        $userB = $input->getArgument('userB');
 
-        $combinations = $usersModel->getAllCombinations();
-        
+        $combinations = array(
+            array(
+                0 => $userA,
+                1 => $userB
+            )
+        );
+        if (null === $userA || null === $userB) {
+            /* @var $userModel UserModel */
+            $userModel = $this->app['users.model'];
+            $combinations = $userModel->getAllCombinations();
+        }
+
         /* @var $amqpManager AMQPManager */
         $amqpManager = $this->app['amqpManager.service'];
 
-        $routingKey = 'brain'.
-                    '.'.AMQPManager::MATCHING .
-                    '.'.MatchingCalculatorWorker::TRIGGER_PERIODIC;
+        $routingKey = 'brain' .
+            '.' . AMQPManager::MATCHING .
+            '.' . MatchingCalculatorWorker::TRIGGER_PERIODIC;
 
-        foreach ($combinations as $combination){
+        foreach ($combinations as $combination) {
             if (OutputInterface::VERBOSITY_NORMAL < $output->getVerbosity()) {
                 $output->writeln(sprintf('Enqueuing matching and similarity task for users %d an %d', $combination[0], $combination[1]));
                 $data = array(
                     'user_1_id' => $combination[0],
-                    'user_2_id' => $combination[1]);
+                    'user_2_id' => $combination[1]
+                );
                 $amqpManager->enqueueMessage($data, $routingKey);
             }
         }
