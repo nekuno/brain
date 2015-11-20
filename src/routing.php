@@ -158,7 +158,7 @@ $app->post('/enterpriseUsers/{enterpriseUserId}/groups', 'enterpriseUsers.groups
 $app->put('/enterpriseUsers/{enterpriseUserId}/groups/{id}', 'enterpriseUsers.groups.controller:putAction');
 $app->delete('/enterpriseUsers/{enterpriseUserId}/groups/{id}', 'enterpriseUsers.groups.controller:deleteAction');
 $app->post('/enterpriseUsers/{enterpriseUserId}/groups/{id}', 'enterpriseUsers.groups.controller:validateAction');
-$app->get('/enterpriseUsers/{enterpriseUserId}/groups/{id}/communities', 'enterpriseUsers.communities.controller:getByGroupAction');
+$app->get('/enterpriseUsers/groups/{id}/communities', 'enterpriseUsers.communities.controller:getByGroupAction');
 
 /**
  * EnterpriseUser Invitation routes

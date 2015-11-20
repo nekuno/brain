@@ -3,6 +3,7 @@
 namespace Console\Command;
 
 use Console\ApplicationAwareCommand;
+use Model\Neo4j\Neo4jException;
 use Model\User\Similarity\SimilarityModel;
 use Model\UserModel;
 use Silex\Application;
@@ -18,16 +19,8 @@ class UsersCalculateSimilarityCommand extends ApplicationAwareCommand
     {
         $this->setName('users:calculate:similarity')
             ->setDescription('Calculate the similarity of two users.')
-            ->addArgument(
-                'userA',
-                InputArgument::OPTIONAL,
-                'id of the first user?'
-            )
-            ->addArgument(
-                'userB',
-                InputArgument::OPTIONAL,
-                'id of the second user?'
-            );
+            ->addArgument('userA', InputArgument::OPTIONAL, 'id of the first user?')
+            ->addArgument('userB', InputArgument::OPTIONAL, 'id of the second user?');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -44,32 +37,33 @@ class UsersCalculateSimilarityCommand extends ApplicationAwareCommand
                 1 => $userB
             )
         );
+
         if (null === $userA || null === $userB) {
             /* @var $userModel UserModel */
             $userModel = $this->app['users.model'];
             $combinations = $userModel->getAllCombinations();
         }
 
-        try {
-            foreach ($combinations AS $users) {
+        foreach ($combinations AS $users) {
 
-                $userA = $users[0];
-                $userB = $users[1];
+            $userA = $users[0];
+            $userB = $users[1];
 
+            try {
                 $similarity = $model->getSimilarity($userA, $userB);
+            } catch (\Exception $e) {
 
-                if (OutputInterface::VERBOSITY_NORMAL < $output->getVerbosity()) {
-                    $output->writeln(sprintf('[%s] Similarity between user %d - %d', date('Y-m-d H:i:s'), $userA, $userB));
-                    $this->getTable($similarity)->render($output);
+                $output->writeln(sprintf('[%s] Error trying to recalculate similarity between user %d - %d with message %s', date('Y-m-d H:i:s'), $userA, $userB, $e->getMessage()));
+                if ($e instanceof Neo4jException) {
+                    $output->writeln(sprintf('Query: %s' . "\n" . 'Data: %s', $e->getQuery(), print_r($e->getData(), true)));
                 }
+                continue;
             }
 
-        } catch (\Exception $e) {
-            $output->writeln(
-                'Error trying to recalculate similarity with message: ' . $e->getMessage()
-            );
-
-            return;
+            if (OutputInterface::VERBOSITY_NORMAL < $output->getVerbosity()) {
+                $output->writeln(sprintf('[%s] Similarity between user %d - %d', date('Y-m-d H:i:s'), $userA, $userB));
+                $this->getTable($similarity)->render($output);
+            }
         }
 
         $output->writeln('Done.');

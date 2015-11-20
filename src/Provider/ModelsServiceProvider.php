@@ -139,14 +139,14 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.matching.model'] = $app->share(
             function ($app) {
 
-                return new MatchingModel($app['dispatcher'], $app['neo4j.client'], $app['users.content.model'], $app['users.answers.model']);
+                return new MatchingModel($app['dispatcher'], $app['neo4j.graph_manager'], $app['users.content.model'], $app['users.answers.model']);
 
             }
         );
         $app['users.similarity.model'] = $app->share(
             function ($app) {
 
-                return new SimilarityModel($app['neo4j.client'], $app['neo4j.graph_manager'], $app['links.model']);
+                return new SimilarityModel($app['neo4j.client'], $app['neo4j.graph_manager'], $app['links.model'], $app['users.questions.model'], $app['users.content.model'], $app['users.profile.model']);
             }
         );
 

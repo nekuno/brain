@@ -2,7 +2,6 @@
 
 namespace Model\Neo4j;
 
-use Everyman\Neo4j\Client;
 use Model\LinkModel;
 use Model\Questionnaire\QuestionModel;
 use Model\User\AnswerModel;
@@ -36,6 +35,11 @@ class Fixtures
      * @var GraphManager
      */
     protected $gm;
+
+    /**
+     * @var Constraints
+     */
+    protected $constraints;
 
     /**
      * @var UserModel
@@ -105,6 +109,7 @@ class Fixtures
     public function __construct(Application $app, $scenario)
     {
         $this->gm = $app['neo4j.graph_manager'];
+        $this->constraints = $app['neo4j.constraints'];
         $this->um = $app['users.model'];
         $this->eu = $app['enterpriseUsers.model'];
         $this->gpm = $app['users.groups.model'];
@@ -161,8 +166,8 @@ class Fixtures
         $query = $qb->getQuery();
         $query->getResultSet();
 
-        $constraints = $this->gm->createQuery('CREATE CONSTRAINT ON (u:User) ASSERT u.qnoow_id IS UNIQUE');
-        $constraints->getResultSet();
+        $this->constraints->load();
+        $this->logger->notice('Constraints created');
     }
 
     protected function loadUsers()
@@ -220,7 +225,7 @@ class Fixtures
 
             $group = $this->gpm->create(
                 array(
-                    'name' => 'group '.$i,
+                    'name' => 'group ' . $i,
                     'html' => $this->getHTMLFixture(),
                     'date' => 1447012842,
                     'location' => array(
@@ -241,9 +246,8 @@ class Fixtures
             );
             $invitation = $this->im->create($invitationData, $this->tg);
 
-            foreach($this->um->getAll() as $index => $user)
-            {
-                if($index > 25) {
+            foreach ($this->um->getAll() as $index => $user) {
+                if ($index > 25) {
                     break;
                 }
                 $this->im->consume($invitation['invitation']['token'], $user['qnoow_id']);
@@ -256,7 +260,7 @@ class Fixtures
         for ($i = self::NUM_OF_ENTERPRISE_USERS + 1; $i <= self::NUM_OF_GROUPS - self::NUM_OF_ENTERPRISE_USERS; $i++) {
             $this->gpm->create(
                 array(
-                    'name' => 'group '.$i,
+                    'name' => 'group ' . $i,
                     'html' => $this->getHTMLFixture(),
                     'date' => 1447012842,
                     'location' => array(
@@ -460,15 +464,20 @@ class Fixtures
 
     protected function loadPrivacy()
     {
-        $this->logger->notice('Loading privacy');
 
-        $privacy = $this->scenario['privacy'];
+        if (isset($this->scenario['privacy'])) {
 
-        foreach ($privacy as $userPrivacy) {
-            $userId = $userPrivacy['user'];
-            unset($userPrivacy['user']);
+            $this->logger->notice('Loading privacy');
 
-            $this->prim->create($userId, $userPrivacy);
+            $privacy = $this->scenario['privacy'];
+
+            foreach ($privacy as $userPrivacy) {
+                $userId = $userPrivacy['user'];
+                unset($userPrivacy['user']);
+
+                $this->prim->create($userId, $userPrivacy);
+            }
+
         }
     }
 

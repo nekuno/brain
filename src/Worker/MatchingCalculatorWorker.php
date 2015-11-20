@@ -5,6 +5,7 @@ namespace Worker;
 
 use Doctrine\DBAL\Connection;
 use Event\UserStatusChangedEvent;
+use Model\Neo4j\Neo4jException;
 use Model\User\Matching\MatchingModel;
 use Model\User\Similarity\SimilarityModel;
 use Model\UserModel;
@@ -19,36 +20,31 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
 class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQConsumerInterface
 {
 
+    const TRIGGER_PERIODIC = 'periodic';
     /**
      * @var AMQPChannel
      */
     protected $channel;
-
     /**
      * @var UserModel
      */
     protected $userModel;
-
     /**
      * @var MatchingModel
      */
     protected $matchingModel;
-
     /**
      * @var SimilarityModel
      */
     protected $similarityModel;
-
     /**
      * @var Connection
      */
     protected $connectionSocial;
-
     /**
      * @var Connection
      */
     protected $connectionBrain;
-
     /**
      * @var EventDispatcher
      */
@@ -119,7 +115,7 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                 try {
                     $status = $this->userModel->calculateStatus($userA);
                     $this->logger->notice(sprintf('Calculating user "%s" new status: "%s"', $userA, $status->getStatus()));
-                    if($status->getStatusChanged()) {
+                    if ($status->getStatusChanged()) {
                         $userStatusChangedEvent = new UserStatusChangedEvent($userA, $status->getStatus());
                         $this->dispatcher->dispatch(\AppEvents::USER_STATUS_CHANGED, $userStatusChangedEvent);
                     }
@@ -131,15 +127,10 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                         $this->logger->info(sprintf('   Similarity by interests between users %d - %d: %s', $userA, $userB, $similarity));
                     }
                 } catch (\Exception $e) {
-                    $this->logger->error(
-                        sprintf(
-                            'Worker: Error calculating similarity for user %d with message %s on file %s, line %d',
-                            $userA,
-                            $e->getMessage(),
-                            $e->getFile(),
-                            $e->getLine()
-                        )
-                    );
+                    $this->logger->error(sprintf('Worker: Error calculating similarity for user %d with message %s on file %s, line %d', $userA, $e->getMessage(), $e->getFile(), $e->getLine()));
+                    if ($e instanceof Neo4jException) {
+                        $this->logger->error(sprintf('Query: %s' . "\n" . 'Data: %s', $e->getQuery(), print_r($e->getData(), true)));
+                    }
                 }
                 break;
             case 'question_answered':
@@ -151,7 +142,7 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                 try {
                     $status = $this->userModel->calculateStatus($userA);
                     $this->logger->notice(sprintf('Calculating user "%s" new status: "%s"', $userA, $status->getStatus()));
-                    if($status->getStatusChanged()) {
+                    if ($status->getStatusChanged()) {
                         $userStatusChangedEvent = new UserStatusChangedEvent($userA, $status->getStatus());
                         $this->dispatcher->dispatch(\AppEvents::USER_STATUS_CHANGED, $userStatusChangedEvent);
                     }
@@ -168,15 +159,10 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                     }
 
                 } catch (\Exception $e) {
-                    $this->logger->error(
-                        sprintf(
-                            'Worker: Error calculating matching and similarity for user %d with message %s on file %s, line %d',
-                            $userA,
-                            $e->getMessage(),
-                            $e->getFile(),
-                            $e->getLine()
-                        )
-                    );
+                    $this->logger->error(sprintf('Worker: Error calculating matching and similarity for user %d with message %s on file %s, line %d', $userA, $e->getMessage(), $e->getFile(), $e->getLine()));
+                    if ($e instanceof Neo4jException) {
+                        $this->logger->error(sprintf('Query: %s' . "\n" . 'Data: %s', $e->getQuery(), print_r($e->getData(), true)));
+                    }
                 }
                 break;
             case 'matching_expired':
@@ -184,27 +170,41 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                 $matchingType = $data['matching_type'];
                 $user1 = $data['user_1_id'];
                 $user2 = $data['user_2_id'];
+                $this->logger->notice(sprintf('[%s] Calculating matching by trigger "%s" for users %d - %d', date('Y-m-d H:i:s'), $trigger, $user1, $user2));
 
                 try {
                     switch ($matchingType) {
                         case 'content':
-                            $this->similarityModel->getSimilarity($user1, $user2);
+                            $similarity = $this->similarityModel->getSimilarity($user1, $user2);
+                            $this->logger->info(sprintf('   Similarity between users %d - %d: %s', $user1, $user2, $similarity['similarity']));
                             break;
                         case 'answer':
-                            $this->matchingModel->calculateMatchingBetweenTwoUsersBasedOnAnswers($user1, $user2);
+                            $matching = $this->matchingModel->calculateMatchingBetweenTwoUsersBasedOnAnswers($user1, $user2);
+                            $this->logger->info(sprintf('   Matching by questions between users %d - %d: %s', $user1, $user2, $matching));
                             break;
                     }
                 } catch (\Exception $e) {
-                    $this->logger->error(
-                        sprintf(
-                            'Worker: Error calculating matching between user %d and user %d with message %s on file %s, line %d',
-                            $user1,
-                            $user2,
-                            $e->getMessage(),
-                            $e->getFile(),
-                            $e->getLine()
-                        )
-                    );
+                    $this->logger->error(sprintf('Worker: Error calculating matching between user %d and user %d with message %s on file %s, line %d', $user1, $user2, $e->getMessage(), $e->getFile(), $e->getLine()));
+                    if ($e instanceof Neo4jException) {
+                        $this->logger->error(sprintf('Query: %s' . "\n" . 'Data: %s', $e->getQuery(), print_r($e->getData(), true)));
+                    }
+                }
+                break;
+            case $this:: TRIGGER_PERIODIC:
+                $user1 = $data['user_1_id'];
+                $user2 = $data['user_2_id'];
+                $this->logger->notice(sprintf('[%s] Calculating matching by trigger "%s" for users %d - %d', date('Y-m-d H:i:s'), $trigger, $user1, $user2));
+
+                try {
+                    $similarity = $this->similarityModel->getSimilarity($user1, $user2);
+                    $matching = $this->matchingModel->calculateMatchingBetweenTwoUsersBasedOnAnswers($user1, $user2);
+                    $this->logger->info(sprintf('   Similarity between users %d - %d: %s', $user1, $user2, $similarity['similarity']));
+                    $this->logger->info(sprintf('   Matching by questions between users %d - %d: %s', $user1, $user2, $matching));
+                } catch (\Exception $e) {
+                    $this->logger->error(sprintf('Worker: Error calculating similarity and matching between user %d and user %d with message %s on file %s, line %d', $user1, $user2, $e->getMessage(), $e->getFile(), $e->getLine()));
+                    if ($e instanceof Neo4jException) {
+                        $this->logger->error(sprintf('Query: %s' . "\n" . 'Data: %s', $e->getQuery(), print_r($e->getData(), true)));
+                    }
                 }
                 break;
             default;

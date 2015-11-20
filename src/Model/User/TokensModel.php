@@ -2,7 +2,6 @@
 
 namespace Model\User;
 
-use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManager;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
@@ -408,7 +407,10 @@ class TokensModel
 
         $properties = $ordered + $properties;
 
-        return array_merge(array('id' => $user->getProperty('qnoow_id')), $properties);
+        return array_merge(array('id' => $user->getProperty('qnoow_id'),
+                                'username' => $user->getProperty('username'),
+                                'email' => $user->getProperty('email')),
+                                    $properties);
     }
 
     protected function getMetadata()
