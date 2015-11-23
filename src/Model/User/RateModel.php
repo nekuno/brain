@@ -181,7 +181,7 @@ class RateModel
             ->optionalMatch('(u)-[a:AFFINITY|DISLIKES]-(l)')
             ->delete('a');
 
-        $qb->returns('r', 'link.url as linkUrl');
+        $qb->returns('r', 'l.url as linkUrl');
 
         $result = $qb->getQuery()->getResultSet();
 
