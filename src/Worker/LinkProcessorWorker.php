@@ -5,6 +5,7 @@ namespace Worker;
 
 use ApiConsumer\Fetcher\FetcherService;
 use Doctrine\DBAL\Connection;
+use Model\Neo4j\Neo4jException;
 use Model\User\LookUpModel;
 use Model\User\SocialNetwork\SocialProfileManager;
 use Model\User\TokensModel;
@@ -116,24 +117,28 @@ class LinkProcessorWorker extends LoggerAwareWorker implements RabbitMQConsumerI
         $userId = $data['userId'];
         $public = array_key_exists('public', $data) ? $data['public'] : false;
 
-        if (!(array_key_exists('public', $data) && $data['public'] == true)) {
-            $tokens = $this->tm->getByUserOrResource($userId, $resourceOwner);
-        } else {
-            $profiles = $this->socialProfileManager->getSocialProfiles($userId, $resourceOwner, false);
-            $tokens = array();
-            foreach ($profiles as $profile)
-            {
-                $tokens[] = $this->tm->buildFromSocialProfile($profile);
+        try {
+
+            if (!(array_key_exists('public', $data) && $data['public'] == true)) {
+                $tokens = $this->tm->getByUserOrResource($userId, $resourceOwner);
+            } else {
+                $profiles = $this->socialProfileManager->getSocialProfiles($userId, $resourceOwner, false);
+                $tokens = array();
+                foreach ($profiles as $profile) {
+                    $tokens[] = $this->tm->buildFromSocialProfile($profile);
+                }
             }
-        }
 
-        foreach ($tokens as $token) {
+            foreach ($tokens as $token) {
 
-            $token['public'] = $public;
-            try {
+                $token['public'] = $public;
                 $this->fetcherService->fetch($token, $public);
-            } catch (\Exception $e) {
-                $this->logger->error(sprintf('Worker -> %s', $e->getMessage()));
+            }
+
+        } catch (\Exception $e) {
+            $this->logger->error(sprintf('Worker: Error fetching for user %d with message %s on file %s, line %d', $userId, $e->getMessage(), $e->getFile(), $e->getLine()));
+            if ($e instanceof Neo4jException) {
+                $this->logger->error(sprintf('Query: %s' . "\n" . 'Data: %s', $e->getQuery(), print_r($e->getData(), true)));
             }
         }
 
