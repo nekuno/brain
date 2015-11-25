@@ -36,8 +36,7 @@ class CommunityModel
     {
 
         $qb = $this->gm->createQueryBuilder();
-        $qb->match('(eu:EnterpriseUser)-[:CREATED_GROUP]->(g:Group)')
-            ->match('(u2:User)-[:BELONGS_TO]->(g:Group)<-[:BELONGS_TO]-(u1:User)')
+        $qb->match('(u2:User)-[:BELONGS_TO]->(g:Group)<-[:BELONGS_TO]-(u1:User)')
             ->where('id(g) = { id }')
             ->optionalMatch('(u1)-[matches:MATCHES]->(u2)')
             ->optionalMatch('(u1)-[similarity:SIMILARITY]->(u2)')
