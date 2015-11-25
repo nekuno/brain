@@ -57,6 +57,15 @@ class SpotifyResourceOwner extends Oauth2GenericResourceOwner
         return $data;
     }
 
+    protected function addOauthData($data, $token)
+    {
+        $newToken = parent::addOauthData($data, $token);
+        if (!isset($newToken['refreshToken']) && isset($token['refreshToken'])){
+            $newToken['refreshToken'] = $token['refreshToken'];
+        }
+        return $newToken;
+    }
+
     public function getAPIRequest($url, array $query = array(), array $token = array())
     {
         // Spotify seems to allow anonymous calls
