@@ -436,7 +436,7 @@ class UserModel implements PaginatedInterface
         $qb->match('(u:User {qnoow_id: { id1 }}), (u2:User {qnoow_id: { id2 }})')
             ->match('(u)-[:BELONGS_TO]->(g:Group)<-[:BELONGS_TO]-(u2)');
         //TODO: Add stats comparation to fill returned UserStatsModel
-        $qb->returns('collect(g) AS groupsBelonged');
+        $qb->returns('collect(distinct g) AS groupsBelonged');
 
         $query = $qb->getQuery();
 
