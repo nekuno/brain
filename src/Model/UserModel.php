@@ -318,22 +318,30 @@ class UserModel implements PaginatedInterface
 
     /**
      * @param $groupId
-     * @throws \Exception
+     * @param array $data
      * @return array
+     * @throws Neo4jException
      */
-    public function getByGroup($groupId)
+    public function getByGroup($groupId, array $data = array())
     {
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match('(g:Group{id:{groupId}})')
-            ->match('(u:User)-[:BELONGS_TO]->(g)');
-        $qb->returns('u');
+        $parameters = array('groupId' => $groupId);
 
-        $qb->setParameters(
-            array(
-                'groupId' => $groupId
-            )
-        );
+        $qb->match('(g:Group)')
+            ->where('id(g) = {groupId}')
+            ->match('(u:User)-[:BELONGS_TO]->(g)');
+        if (isset($data['userId'])){
+            $qb->where('NOT u.qnoow_id = {userId}');
+            $parameters['userId'] = (integer)$data['userId'];
+        }
+        $qb->returns('u');
+        if (isset($data['limit'])){
+            $parameters['limit'] = (integer)$data['limit'];
+            $qb->limit('{limit}');
+        }
+
+        $qb->setParameters($parameters);
 
         $query = $qb->getQuery();
 
@@ -851,7 +859,6 @@ class UserModel implements PaginatedInterface
     protected function parseResultSet($resultSet)
     {
         $users = array();
-
         foreach ($resultSet as $row) {
             $users[] = $this->build($row);
         }

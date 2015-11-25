@@ -118,6 +118,7 @@ $app->post('/groups', 'users.groups.controller:postAction');
 $app->put('/groups/{id}', 'users.groups.controller:putAction');
 $app->delete('/groups/{id}', 'users.groups.controller:deleteAction');
 $app->post('/groups/validate', 'users.groups.controller:validateAction');
+$app->get('/groups/{id}/members', 'users.groups.controller:getMembersAction');
 $app->post('/groups/{id}/users/{userId}', 'users.groups.controller:addUserAction');
 $app->delete('/groups/{id}/users/{userId}', 'users.groups.controller:removeUserAction');
 
