@@ -30,16 +30,6 @@ class GoogleFetcher extends BasicPaginationFetcher
         );
     }
 
-    public function fetchLinksFromUserFeed($user, $public)
-    {
-        if ($user['network'] !== 'google')
-        {
-            return array();
-        }
-
-        return parent::fetchLinksFromUserFeed($user, $public);
-    }
-
     protected function getItemsFromResponse($response)
     {
         return $response['items'] ?: array();
