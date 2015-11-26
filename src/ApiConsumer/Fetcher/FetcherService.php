@@ -3,7 +3,6 @@
 namespace ApiConsumer\Fetcher;
 
 use ApiConsumer\Factory\FetcherFactory;
-use ApiConsumer\LinkProcessor\LinkAnalyzer;
 use ApiConsumer\LinkProcessor\LinkProcessor;
 use Event\FetchEvent;
 use Event\ProcessLinkEvent;
@@ -134,8 +133,6 @@ class FetcherService implements LoggerAwareInterface
 
             $this->dispatcher->dispatch(\AppEvents::FETCH_START, new FetchEvent($userId, $resourceOwner));
 
-            $token['network'] = $this->getNetwork($token);
-
             foreach ($this->options as $fetcher => $fetcherConfig) {
 
                 if ($fetcherConfig['resourceOwner'] === $resourceOwner) {
@@ -186,13 +183,6 @@ class FetcherService implements LoggerAwareInterface
         }
 
         return $links;
-    }
-
-    private function getNetwork($token)
-    {
-        if ($this->linkProcessor->getLinkAnalyzer()->getProcessor($token) == LinkAnalyzer::YOUTUBE) {
-            return LinkAnalyzer::YOUTUBE;
-        } else return $token['resourceOwner'];
     }
 
 }
