@@ -43,8 +43,8 @@ class Neo4jConsistencyLinksCommand extends ApplicationAwareCommand
             $users = $userModel->getAll();
 
             $likes = array();
-            foreach ($users as $user){
-                $likes += $rateModel->getRatesByUser($user['qnoow_id'], RateModel::LIKE);
+            foreach ($users as $user) {
+                $likes = array_merge($likes, $rateModel->getRatesByUser($user['qnoow_id'], RateModel::LIKE));
             }
 
             $output->writeln(sprintf('Got %d likes', count($likes)));
@@ -67,23 +67,24 @@ class Neo4jConsistencyLinksCommand extends ApplicationAwareCommand
 
         $emptyLikes = array();
         foreach ($likes as $like) {
-            if (count($like['resources']) == 0){
-                $emptyLikes [] = $like;
-                if ($force){
-                    $rateModel->completeLikeById($like['id']);
-                }
-            }
-        }
-
-        if (OutputInterface::VERBOSITY_NORMAL < $output->getVerbosity()) {
-            foreach ($emptyLikes as $emptyLike) {
+            if (count($like['resources']) == 0) {
                 if ($force) {
-                    $output->writeln(sprintf('SUCCESS: Empty like with id %d has been updated', $emptyLike['id']));
+                    try {
+                        $rateModel->completeLikeById($like['id']);
+                        if (OutputInterface::VERBOSITY_NORMAL < $output->getVerbosity()) {
+                            $output->writeln(sprintf('SUCCESS: Empty like with id %d has been updated', $like['id']));
+                            $emptyLikes [] = $like;
+                        }
+                    } catch (\Exception $e) {
+                        $output->writeln(sprintf('ERROR: Cannot update like with id %d', $like['id']));
+                    }
                 } else {
-                    $output->writeln(sprintf('Empty like with id %d need to be updated', $emptyLike['id']));
+                    if (OutputInterface::VERBOSITY_NORMAL < $output->getVerbosity()) {
+                        $output->writeln(sprintf('Empty like with id %d need to be updated', $like['id']));
+                        $emptyLikes [] = $like;
+                    }
                 }
             }
-
         }
 
         if ($force) {
