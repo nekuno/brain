@@ -144,9 +144,6 @@ class YoutubeFetcher extends BasicPaginationFetcher
     {
         $this->user = $user;
         $this->rawFeed = array();
-        if ($this->user['network'] !== LinkAnalyzer::YOUTUBE) {
-            return array();
-        }
 
         $channels = $this->getChannelsFromUser($public);
         $links = $this->getVideosFromChannels($channels, $public);
