@@ -87,6 +87,9 @@ class GroupController
         $userModel = $app['users.model'];
         $users = $userModel->getByGroup($id, $data);
 
+        foreach ($users as &$user){
+            $user['id'] = $user['qnoow_id'];
+        }
         /** @var ProfileModel $profileModel */
         $profileModel = $app['users.profile.model'];
         foreach ($users as &$user){
