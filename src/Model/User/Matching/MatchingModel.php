@@ -174,36 +174,32 @@ class MatchingModel
                 'toFloat(totalRatingAcceptedAnswersU2) AS totalRatingAcceptedAnswersU2',
                 'toFloat(totalRatingCommonAnswersU1) AS totalRatingCommonAnswersU1',
                 'toFloat(totalRatingCommonAnswersU2) AS totalRatingCommonAnswersU2')
-            ->with('CASE
-                        WHEN numOfCommonQuestions > 0 THEN
-	                        1 - (1 / numOfCommonQuestions)
-		                ELSE tofloat(0)
-	                END AS error',
+            //'error' == max matching depending on common questions
+            ->with(
                 'CASE
-                    WHEN totalRatingCommonAnswersU1 > 0 AND totalRatingCommonAnswersU2 > 0 THEN
-		                tofloat(
-                            sqrt(
-                                (totalRatingAcceptedAnswersU1/totalRatingCommonAnswersU1) *
-                                (totalRatingAcceptedAnswersU2/totalRatingCommonAnswersU2)
-                            )
-                        )
+                    WHEN numOfCommonQuestions > 0 THEN
+                        1 - (1 / numOfCommonQuestions)
                     ELSE tofloat(0)
-                END AS rawMatching'
-            )
+                END AS error',
+                $this->rawMatching('totalRatingCommonAnswersU1',
+                    'totalRatingAcceptedAnswersU1',
+                    'rawMatchingU1'),
+                $this->rawMatching('totalRatingCommonAnswersU2',
+                    'totalRatingAcceptedAnswersU2',
+                    'rawMatchingU2'))
+            ->with('error',
+                'tofloat( sqrt(rawMatchingU1 * rawMatchingU2)) AS rawMatching')
             ->with('CASE
 		        WHEN error < rawMatching THEN error
 		        ELSE rawMatching
-            END AS matching')
+                END AS matching')
             ->returns('matching');
 
         $result = $qb->getQuery()->getResultSet();
 
         $matching = 0;
-        if ($result->count() == 1){
+        if ($result->count() == 1) {
             $matching = $result->current()->offsetGet('matching');
-            if ($matching == 0){
-                $matching = 0.01;
-            }
         }
 
         //Create the matching relationship with the appropriate value
@@ -213,7 +209,7 @@ class MatchingModel
         $qb->match('(u1:User)', '(u2:User)')
             ->where('u1.qnoow_id = {id1}', 'u2.qnoow_id = {id2}')
             ->createUnique('(u1)-[m:MATCHES]-(u2)')
-            ->set('m.matching_questions = {matching}','m.timestamp_questions = timestamp()')
+            ->set('m.matching_questions = {matching}', 'm.timestamp_questions = timestamp()')
             ->returns('m');
 
         //State the value of the variables in the query string
@@ -230,7 +226,21 @@ class MatchingModel
 
     private function weightedRatingSum($variable, $alias)
     {
-        return "SUM(CASE toint($variable.rating) WHEN 0 THEN 0 WHEN 1 THEN 1 WHEN 2 THEN 10 WHEN 3 THEN 50 ELSE 0 END) AS $alias";
+        return "SUM(CASE toint($variable.rating)
+                WHEN 0 THEN 0
+                WHEN 1 THEN 1
+                WHEN 2 THEN 10
+                WHEN 3 THEN 50
+                ELSE 0 END) AS $alias";
+    }
+
+    private function rawMatching($ratingCommon, $ratingAccepted, $alias)
+    {
+        return "CASE
+                    WHEN $ratingCommon > 0 AND $ratingAccepted > 0
+                        THEN tofloat($ratingAccepted/$ratingCommon)
+                    ELSE tofloat(0.01)
+                END AS $alias";
     }
 
 }

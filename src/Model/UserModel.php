@@ -10,6 +10,7 @@ use Model\Neo4j\Neo4jException;
 use Model\User\GhostUser\GhostUserManager;
 use Model\User\LookUpModel;
 use Model\User\SocialNetwork\SocialProfile;
+use Model\User\UserComparedStatsModel;
 use Model\User\UserStatsModel;
 use Model\User\UserStatusModel;
 use Paginator\PaginatedInterface;
@@ -318,22 +319,30 @@ class UserModel implements PaginatedInterface
 
     /**
      * @param $groupId
-     * @throws \Exception
+     * @param array $data
      * @return array
+     * @throws Neo4jException
      */
-    public function getByGroup($groupId)
+    public function getByGroup($groupId, array $data = array())
     {
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match('(g:Group{id:{groupId}})')
-            ->match('(u:User)-[:BELONGS_TO]->(g)');
-        $qb->returns('u');
+        $parameters = array('groupId' => $groupId);
 
-        $qb->setParameters(
-            array(
-                'groupId' => $groupId
-            )
-        );
+        $qb->match('(g:Group)')
+            ->where('id(g) = {groupId}')
+            ->match('(u:User)-[:BELONGS_TO]->(g)');
+        if (isset($data['userId'])){
+            $qb->where('NOT u.qnoow_id = {userId}');
+            $parameters['userId'] = (integer)$data['userId'];
+        }
+        $qb->returns('u');
+        if (isset($data['limit'])){
+            $parameters['limit'] = (integer)$data['limit'];
+            $qb->limit('{limit}');
+        }
+
+        $qb->setParameters($parameters);
 
         $query = $qb->getQuery();
 
@@ -426,9 +435,11 @@ class UserModel implements PaginatedInterface
         );
 
         $qb->match('(u:User {qnoow_id: { id1 }}), (u2:User {qnoow_id: { id2 }})')
-            ->match('(u)-[:BELONGS_TO]->(g:Group)<-[:BELONGS_TO]-(u2)');
-        //TODO: Add stats comparation to fill returned UserStatsModel
-        $qb->returns('collect(distinct g) AS groupsBelonged');
+            ->match('(u)-[:BELONGS_TO]->(g:Group)<-[:BELONGS_TO]-(u2)')
+            ->with('u', 'u2', 'g')
+            ->optionalmatch('(u)-[:TOKEN_OF]-(token:Token)')
+            ->optionalmatch('(u2)-[:TOKEN_OF]-(token2:Token)');
+        $qb->returns('collect(distinct g) AS groupsBelonged', 'collect(distinct token.resourceOwner) as resourceOwners', 'collect(distinct token2.resourceOwner) as resourceOwners2');
 
         $query = $qb->getQuery();
 
@@ -447,24 +458,19 @@ class UserModel implements PaginatedInterface
             );
         }
 
-        $userStats = new UserStatsModel(
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
+        $resourceOwners = array();
+        foreach ($row->offsetGet('resourceOwners') as $resourceOwner) {
+            $resourceOwners[] = $resourceOwner;
+        }
+        $resourceOwners2 = array();
+        foreach ($row->offsetGet('resourceOwners2') as $resourceOwner2) {
+            $resourceOwners2[] = $resourceOwner2;
+        }
+
+        $userStats = new UserComparedStatsModel(
             $groups,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null
+            $resourceOwners,
+            $resourceOwners2
         );
 
         return $userStats;
@@ -474,7 +480,7 @@ class UserModel implements PaginatedInterface
      * @param integer $id
      * @param bool $set
      * @return UserStatusModel
-     * @throws Neo4jException NotFoundHttpException
+     * @throws NotFoundHttpException
      */
     public function calculateStatus($id, $set = true)
     {
@@ -851,7 +857,6 @@ class UserModel implements PaginatedInterface
     protected function parseResultSet($resultSet)
     {
         $users = array();
-
         foreach ($resultSet as $row) {
             $users[] = $this->build($row);
         }
