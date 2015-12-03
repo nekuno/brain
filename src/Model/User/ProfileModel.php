@@ -59,6 +59,14 @@ class ProfileModel
                         }
                     }
                 }
+            } elseif ($values['type'] === 'multiple_choices') {
+                $publicField['choices'] = array();
+                if (isset($choiceOptions[$name])) {
+                    $publicField['choices'] = $choiceOptions[$name];
+                }
+                if (isset($values['max_choices'])) {
+                    $publicField['max_choices'] = $values['max_choices'];
+                }
             } elseif ($values['type'] === 'tags_and_choice') {
                 $publicField['choices'] = array();
                 if (isset($values['choices'])) {
@@ -332,6 +340,17 @@ class ProfileModel
                                 }
                             }
                             break;
+                        case 'multiple_choices':
+                            $choices = $fieldData['choices'];
+                            if (count($fieldValue) > $fieldData['max_choices']) {
+                                $fieldErrors[] = sprintf('Option length "%s" is too long. "%s" is the maximum', count($fieldValue), $fieldData['max_choices']);
+                            }
+                            foreach($fieldValue as $value) {
+                                if (!in_array($value, array_keys($choices))) {
+                                    $fieldErrors[] = sprintf('Option with value "%s" is not valid, possible values are "%s"', $value, implode("', '", array_keys($choices)));
+                                }
+                            }
+                            break;
                         case 'location':
                             if (!is_array($fieldValue)) {
                                 $fieldErrors[] = sprintf('The value "%s" is not valid, it should be an array with "latitude" and "longitude" keys', $fieldValue);
@@ -422,12 +441,20 @@ class ProfileModel
             foreach ($labels as $label) {
                 if ($label->getName() && $label->getName() != 'ProfileOption') {
                     $typeName = $this->labelToType($label->getName());
-                    $optionsResult[$typeName] = $option->getProperty('id');
-                    $detail = $relationship->getProperty('detail');
-                    if (!is_null($detail)) {
-                        $optionsResult[$typeName] = array();
-                        $optionsResult[$typeName]['choice'] = $option->getProperty('id');
-                        $optionsResult[$typeName]['detail'] = $detail;
+                    if (isset($optionsResult[$typeName]) && $optionsResult[$typeName]) {
+                        if (is_array($optionsResult[$typeName])) {
+                            $optionsResult[$typeName] += array($option->getProperty('id'));
+                        } else {
+                            $optionsResult[$typeName] = array($optionsResult[$typeName], $option->getProperty('id'));
+                        }
+                    } else {
+                        $optionsResult[$typeName] = $option->getProperty('id');
+                        $detail = $relationship->getProperty('detail');
+                        if (!is_null($detail)) {
+                            $optionsResult[$typeName] = array();
+                            $optionsResult[$typeName]['choice'] = $option->getProperty('id');
+                            $optionsResult[$typeName]['detail'] = $detail;
+                        }
                     }
                 }
             }
@@ -661,6 +688,21 @@ class ProfileModel
                             $query->getResultSet();
                         }
 
+                        break;
+                    case 'multiple_choices':
+                        if (isset($options[$fieldName])) {
+                            $qb->optionalMatch('(profile)<-[optionRel:OPTION_OF]-(:' . $this->typeToLabel($fieldName) . ')')
+                                ->delete('optionRel')
+                                ->with('profile');
+                        }
+                        if (is_array($fieldValue)) {
+                            foreach ($fieldValue as $value) {
+                                $qb->match('(option:' . $this->typeToLabel($fieldName) . ' {id: { ' . $value . ' }})')
+                                    ->merge('(profile)<-[:OPTION_OF]-(option)')
+                                    ->setParameter($value, $value)
+                                    ->with('profile');
+                            }
+                        }
                         break;
                     case 'tags':
                         if (isset($tags[$fieldName])) {

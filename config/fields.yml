@@ -121,8 +121,15 @@ profile:
         type: choice
         required: true
         label:
-            en: 'Gender'
-            es: 'Género'
+            en: 'Want to be found in searches by gender'
+            es: 'Quiero salir en búsquedas por género'
+    descriptiveGender:
+        type: multiple_choices
+        required: false
+        label:
+            en: 'Descriptive gender'
+            es: 'Género descriptivo'
+        max_choices: 5
     hairColor:
         type: choice
         label:
