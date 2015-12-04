@@ -405,12 +405,17 @@ class ProfileModel
         /* @var Node $profile */
         $profile = $row->offsetGet('profile');
 
+        return $this->buildProfileOptions($options, $profile);
+    }
+
+    public function buildProfileOptions($options, Node $profile, $relationshipType = 'OPTION_OF')
+    {
         $optionsResult = array();
         /* @var Node $option */
         foreach ($options as $option) {
             $labels = $option->getLabels();
             /* @var Relationship $relationship */
-            $relationships = $option->getRelationships('OPTION_OF', Relationship::DirectionOut);
+            $relationships = $option->getRelationships($relationshipType, Relationship::DirectionOut);
             foreach ($relationships as $relationship) {
                 if ($relationship->getStartNode()->getId() === $option->getId() &&
                     $relationship->getEndNode()->getId() === $profile->getId()
