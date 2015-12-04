@@ -59,6 +59,14 @@ class ProfileModel
                         }
                     }
                 }
+            } elseif ($values['type'] === 'multiple_choices') {
+                $publicField['choices'] = array();
+                if (isset($choiceOptions[$name])) {
+                    $publicField['choices'] = $choiceOptions[$name];
+                }
+                if (isset($values['max_choices'])) {
+                    $publicField['max_choices'] = $values['max_choices'];
+                }
             } elseif ($values['type'] === 'tags_and_choice') {
                 $publicField['choices'] = array();
                 if (isset($values['choices'])) {
@@ -332,6 +340,17 @@ class ProfileModel
                                 }
                             }
                             break;
+                        case 'multiple_choices':
+                            $choices = $fieldData['choices'];
+                            if (count($fieldValue) > $fieldData['max_choices']) {
+                                $fieldErrors[] = sprintf('Option length "%s" is too long. "%s" is the maximum', count($fieldValue), $fieldData['max_choices']);
+                            }
+                            foreach($fieldValue as $value) {
+                                if (!in_array($value, array_keys($choices))) {
+                                    $fieldErrors[] = sprintf('Option with value "%s" is not valid, possible values are "%s"', $value, implode("', '", array_keys($choices)));
+                                }
+                            }
+                            break;
                         case 'location':
                             if (!is_array($fieldValue)) {
                                 $fieldErrors[] = sprintf('The value "%s" is not valid, it should be an array with "latitude" and "longitude" keys', $fieldValue);
@@ -422,12 +441,20 @@ class ProfileModel
             foreach ($labels as $label) {
                 if ($label->getName() && $label->getName() != 'ProfileOption') {
                     $typeName = $this->labelToType($label->getName());
-                    $optionsResult[$typeName] = $option->getProperty('id');
-                    $detail = $relationship->getProperty('detail');
-                    if (!is_null($detail)) {
-                        $optionsResult[$typeName] = array();
-                        $optionsResult[$typeName]['choice'] = $option->getProperty('id');
-                        $optionsResult[$typeName]['detail'] = $detail;
+                    if (isset($optionsResult[$typeName]) && $optionsResult[$typeName]) {
+                        if (is_array($optionsResult[$typeName])) {
+                            $optionsResult[$typeName] = array_merge($optionsResult[$typeName], array($option->getProperty('id')));
+                        } else {
+                            $optionsResult[$typeName] = array($optionsResult[$typeName], $option->getProperty('id'));
+                        }
+                    } else {
+                        $optionsResult[$typeName] = $option->getProperty('id');
+                        $detail = $relationship->getProperty('detail');
+                        if (!is_null($detail)) {
+                            $optionsResult[$typeName] = array();
+                            $optionsResult[$typeName]['choice'] = $option->getProperty('id');
+                            $optionsResult[$typeName]['detail'] = $detail;
+                        }
                     }
                 }
             }
@@ -611,19 +638,28 @@ class ProfileModel
                         }
                         break;
                     case 'double_choice':
+                        $qbDoubleChoice = $this->gm->createQueryBuilder();
+                        $qbDoubleChoice->match('(profile:Profile)-[:PROFILE_OF]->(u:User)')
+                            ->where('u.qnoow_id = { id }')
+                            ->setParameter('id', (int)$id)
+                            ->with('profile');
+
                         if (isset($options[$fieldName])) {
-                            $qb->optionalMatch('(profile)<-[doubleChoiceOptionRel:OPTION_OF]-(:' . $this->typeToLabel($fieldName) . ')')
+                            $qbDoubleChoice->optionalMatch('(profile)<-[doubleChoiceOptionRel:OPTION_OF]-(:' . $this->typeToLabel($fieldName) . ')')
                                 ->delete('doubleChoiceOptionRel')
                                 ->with('profile');
                         }
                         if (isset($fieldValue['choice'])) {
                             $detail = !is_null($fieldValue['detail']) ? $fieldValue['detail'] : '';
-                            $qb->match('(option:' . $this->typeToLabel($fieldName) . ' {id: { ' . $fieldName . ' }})')
+                            $qbDoubleChoice->match('(option:' . $this->typeToLabel($fieldName) . ' {id: { ' . $fieldName . ' }})')
                                 ->merge('(profile)<-[:OPTION_OF {detail: {' . $fieldName . '_detail}}]-(option)')
                                 ->setParameter($fieldName, $fieldValue['choice'])
-                                ->setParameter($fieldName . '_detail', $detail)
-                                ->with('profile');
+                                ->setParameter($fieldName . '_detail', $detail);
                         }
+                        $qbDoubleChoice->returns('profile');
+
+                        $query = $qbDoubleChoice->getQuery();
+                        $query->getResultSet();
 
                         break;
                     case 'tags_and_choice':
@@ -661,6 +697,31 @@ class ProfileModel
                             $query->getResultSet();
                         }
 
+                        break;
+                    case 'multiple_choices':
+                        $qbMultipleChoices = $this->gm->createQueryBuilder();
+                        $qbMultipleChoices->match('(profile:Profile)-[:PROFILE_OF]->(u:User)')
+                            ->where('u.qnoow_id = { id }')
+                            ->setParameter('id', (int)$id)
+                            ->with('profile');
+
+                        if (isset($options[$fieldName])) {
+                            $qbMultipleChoices->optionalMatch('(profile)<-[optionRel:OPTION_OF]-(:' . $this->typeToLabel($fieldName) . ')')
+                                ->delete('optionRel')
+                                ->with('profile');
+                        }
+                        if (is_array($fieldValue)) {
+                            foreach ($fieldValue as $index => $value) {
+                                $qbMultipleChoices->match('(option:' . $this->typeToLabel($fieldName) . ' {id: { ' . $index . ' }})')
+                                    ->merge('(profile)<-[:OPTION_OF]-(option)')
+                                    ->setParameter($index, $value)
+                                    ->with('profile');
+                            }
+                        }
+                        $qbMultipleChoices->returns('profile');
+
+                        $query = $qbMultipleChoices->getQuery();
+                        $query->getResultSet();
                         break;
                     case 'tags':
                         if (isset($tags[$fieldName])) {
