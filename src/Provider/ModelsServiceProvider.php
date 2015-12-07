@@ -29,6 +29,7 @@ use Model\User\RelationsModel;
 use Model\User\Similarity\SimilarityModel;
 use Model\User\SocialNetwork\LinkedinSocialNetworkModel;
 use Model\User\SocialNetwork\SocialProfileManager;
+use Model\User\Thread\ThreadManager;
 use Model\User\TokensModel;
 use Model\User\UserStatsManager;
 use Model\UserModel;
@@ -231,6 +232,13 @@ class ModelsServiceProvider implements ServiceProviderInterface
             function ($app) {
 
                 return new GroupModel($app['neo4j.graph_manager'], $app['users.model']);
+            }
+        );
+
+        $app['users.threads.model'] = $app->share(
+            function ($app) {
+
+                return new ThreadManager($app['neo4j.graph_manager'], $app['users.profile.model'], $app['users.groups.model']);
             }
         );
 

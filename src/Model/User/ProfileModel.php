@@ -408,14 +408,14 @@ class ProfileModel
         return $this->buildProfileOptions($options, $profile);
     }
 
-    public function buildProfileOptions($options, Node $profile, $relationshipType = 'OPTION_OF')
+    public function buildProfileOptions($options, Node $profile, $relationshipType = 'OPTION_OF', $relationshipDirection = Relationship::DirectionOut)
     {
         $optionsResult = array();
         /* @var Node $option */
         foreach ($options as $option) {
             $labels = $option->getLabels();
             /* @var Relationship $relationship */
-            $relationships = $option->getRelationships($relationshipType, Relationship::DirectionOut);
+            $relationships = $option->getRelationships($relationshipType, $relationshipDirection);
             foreach ($relationships as $relationship) {
                 if ($relationship->getStartNode()->getId() === $option->getId() &&
                     $relationship->getEndNode()->getId() === $profile->getId()
@@ -759,6 +759,24 @@ class ProfileModel
         }
 
         return $tags;
+    }
+
+    public function getBirthdayRangeFromAgeRange($min = 14, $max = 150)
+    {
+        $min = $min?: 14;
+        $max = $max?: 100;
+
+        if ($min < 14){
+            throw new ValidationException(array('birthday' => array('Invalid age, minimum age must be older than 14 years')));
+        }
+
+        // Reversed: the older the date, the bigger the age
+        $now = new \DateTime();
+        $minBirthday = $now->modify('-'.$min.' years');
+        $now = new \DateTime();
+        $maxBirthday = $now->modify('+'.$max.' years');
+
+        return array('min' => $minBirthday, 'max' => $maxBirthday);
     }
 
     /*

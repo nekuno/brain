@@ -7,16 +7,35 @@ namespace Controller\User;
 
 
 use GuzzleHttp\Message\Request;
+use Model\User\Thread\ThreadManager;
 use Silex\Application;
 
 class ThreadController
 {
 
+    /**
+     * @var ThreadManager
+     */
+    protected $threadManager;
+
+    public function __construct(ThreadManager $threadManager)
+    {
+        $this->threadManager = $threadManager;
+    }
+
+    /**
+     * Get threads from a given user
+     * @param Application $app
+     * @param int $id user id
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @throws \Exception
+     */
     public function getAction(Application $app, $id)
     {
-        //threadmanager -> getbyuser(id)
 
-        //return array(Thread1, Thread2..)
+        $threads = $this->threadManager->getByUser($id);
+
+        return $app->json(array('threads' => $threads));
     }
 
     public function postAction(Application $app, Request $request)
@@ -47,7 +66,7 @@ class ThreadController
     public function getUsersAction (Application $app, $id)
     {
 
-        //threadManager -> getUsers(id) (calls userRecomendationPaginatedModel inside)
+        //threadManager -> getUsers(id) (calls userRecommendationPaginatedModel inside)
 
         //return result (already paginated)
     }

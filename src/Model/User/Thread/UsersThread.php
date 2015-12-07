@@ -45,4 +45,17 @@ class UsersThread extends Thread
     {
         $this->userFilters = $userFilters;
     }
+
+    function jsonSerialize()
+    {
+        $array = parent::jsonSerialize();
+
+        $array += array(
+            'category' => ThreadManager::LABEL_THREAD_USERS,
+            'profileFilters' => $this->getProfileFilters(),
+            'userFilters' => $this->getUserFilters(),
+        );
+
+        return $array;
+    }
 }
