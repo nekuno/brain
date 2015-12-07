@@ -225,11 +225,15 @@ class ThreadManager
     /**
      * @param $id
      * @param $name
+     * @param $type
      * @return Thread
      */
-    private function buildContentThread($id, $name)
+    private function buildContentThread($id, $name, $type)
     {
-        $thread = new Thread($id, $name);
+        $thread = new ContentThread($id, $name, $type);
+
+        $tags = $this->getTags($thread->getId());
+        $thread->setTags($tags);
 
         return $thread;
     }
@@ -248,11 +252,35 @@ class ThreadManager
                 return $this->buildUsersThread($id, $threadNode->getProperty('name'));
             }
             case $this::LABEL_THREAD_CONTENT: {
-                return $this->buildContentThread($id, $threadNode->getProperty('name'));
+                return $this->buildContentThread($id, $threadNode->getProperty('name'), $threadNode->getProperty('type'));
             }
             default :
                 throw new \Exception('Thread type ' . $type . ' not found or supported');
         }
+    }
+
+    private function getTags($id)
+    {
+        $qb = $this->graphManager->createQueryBuilder();
+        $qb->match('(thread:Thread)')
+            ->where('id(thread) = {id}')
+            ->optionalMatch('(thread)-[:FILTERS_BY]->(tag:Tag)')
+            ->returns('collect(tag) as tags');
+        $qb->setParameter('id', (integer)$id);
+        $result = $qb->getQuery()->getResultSet();
+
+        if ($result->count() < 1) {
+            throw new NotFoundHttpException('Thread with id ' . $id . ' not found');
+        }
+
+        $tags = array();
+        /** @var Node $tagNode */
+        foreach ($result->current()->offsetGet('tags') as $tagNode)
+        {
+            $tags[] = $tagNode->getProperty('name');
+        }
+
+        return $tags;
     }
 
 }
