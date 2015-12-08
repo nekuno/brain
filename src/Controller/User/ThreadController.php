@@ -6,9 +6,9 @@
 namespace Controller\User;
 
 
-use GuzzleHttp\Message\Request;
 use Model\User\Thread\ThreadManager;
 use Silex\Application;
+use Symfony\Component\HttpFoundation\Request;
 
 class ThreadController
 {
@@ -40,11 +40,15 @@ class ThreadController
 
     public function postAction(Application $app, Request $request)
     {
-        //separate filters by type
+        $category = $request->get('category');
+        if (!in_array($category, array(ThreadManager::LABEL_THREAD_USERS, ThreadManager::LABEL_THREAD_CONTENT)))
+        {
+            return $app->json('Category not valid', 400);
+        }
 
-        //create thread (profileFilters, userFilters)
+        $thread = $this->threadManager->saveThread($category, $request->get('filters'));
 
-        //return result
+        return $app->json($thread);
     }
 
     public function putAction(Application $app, Request $request)

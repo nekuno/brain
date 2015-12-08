@@ -29,7 +29,9 @@ use Model\User\RelationsModel;
 use Model\User\Similarity\SimilarityModel;
 use Model\User\SocialNetwork\LinkedinSocialNetworkModel;
 use Model\User\SocialNetwork\SocialProfileManager;
+use Model\User\Thread\ContentThreadManager;
 use Model\User\Thread\ThreadManager;
+use Model\User\Thread\UsersThreadManager;
 use Model\User\TokensModel;
 use Model\User\UserStatsManager;
 use Model\UserModel;
@@ -235,10 +237,24 @@ class ModelsServiceProvider implements ServiceProviderInterface
             }
         );
 
-        $app['users.threads.model'] = $app->share(
+        $app['users.threadusers.manager'] = $app->share(
             function ($app) {
 
-                return new ThreadManager($app['neo4j.graph_manager'], $app['users.profile.model'], $app['users.groups.model']);
+                return new UsersThreadManager($app['neo4j.graph_manager'], $app['users.profile.model'], $app['users.groups.model']);
+            }
+        );
+
+        $app['users.threadcontent.manager'] = $app->share(
+            function ($app) {
+
+                return new ContentThreadManager($app['neo4j.graph_manager']);
+            }
+        );
+
+        $app['users.threads.manager'] = $app->share(
+            function ($app) {
+
+                return new ThreadManager($app['neo4j.graph_manager'], $app['users.threadusers.manager'], $app['users.threadcontent.manager']);
             }
         );
 
