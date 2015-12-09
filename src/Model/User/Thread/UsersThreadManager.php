@@ -65,8 +65,8 @@ class UsersThreadManager
         $qb = $this->graphManager->createQueryBuilder();
         $qb->match('(thread:Thread)')
             ->where('id(thread) = {id}')
-            ->optionalMatch('(thread)-[:FILTERS_BY]-(po:ProfileOption)')
-            ->optionalMatch('(thread)-[loc_rel:FILTERS_BY]-(loc:Location)')
+            ->optionalMatch('(thread)-[:FILTERS_BY]->(po:ProfileOption)')
+            ->optionalMatch('(thread)-[loc_rel:FILTERS_BY]->(loc:Location)')
             ->returns('thread, collect(distinct po) as options, loc, loc_rel');
         $qb->setParameter('id', (integer)$id);
         $result = $qb->getQuery()->getResultSet();
@@ -159,6 +159,10 @@ class UsersThreadManager
 
     private function saveProfileFilters($id, $profileFilters)
     {
+        if (empty($profileFilters)) {
+            return $profileFilters;
+        }
+
         $metadata = $this->profileModel->getMetadata();
 
         //TODO: Validation
@@ -200,8 +204,11 @@ class UsersThreadManager
                     case 'choice':
                     case 'double_choice':
                         $profileLabelName = ucfirst($fieldName);
-                        $qb->merge(" (option$fieldName:$profileLabelName{id:'$value'})");
-                        $qb->merge(" (thread)-[:FILTERS_BY]->(option$fieldName)");
+                        foreach ($value as $singleValue) {
+                            $qb->merge(" (option$fieldName$singleValue:$profileLabelName{id:'$singleValue'})");
+                            $qb->merge(" (thread)-[:FILTERS_BY]->(option$fieldName$singleValue)");
+                        }
+
                         break;
                     case 'tags':
                         $tagLabelName = ucfirst($fieldName);
@@ -231,6 +238,14 @@ class UsersThreadManager
         $qb->match('(thread:' . ThreadManager::LABEL_THREAD_USERS . ')')
             ->where('id(thread) = {id}');
 
+        //Implement metadata format here if using more than "groups" userFilter
+        if (isset($userFilters['groups'])) {
+            foreach ($userFilters['groups'] as $group) {
+                $qb->match("(group$group:Group)")
+                    ->where("id(group$group) = $group")
+                    ->merge("(thread)-[:FILTERS_BY]->(group$group)");
+            }
+        }
 
         $qb->setParameter('id', (integer)$id);
         $result = $qb->getQuery()->getResultSet();
@@ -271,7 +286,7 @@ class UsersThreadManager
                 if ($label->getName() && $label->getName() != 'ProfileOption') {
                     $typeName = $this->profileModel->labelToType($label->getName());
                     $optionsResult[$typeName] = empty($optionsResult[$typeName]) ? array($option->getProperty('id')) :
-                                                                                    array_merge($optionsResult[$typeName], array($option->getProperty('id')));
+                        array_merge($optionsResult[$typeName], array($option->getProperty('id')));
                     $detail = $relationship->getProperty('detail');
                     if (!is_null($detail)) {
                         $optionsResult[$typeName] = array();

@@ -158,7 +158,7 @@ class ThreadManager
         $qb = $this->graphManager->createQueryBuilder();
 
         $qb->match('(u:User{qnoow_id:{userId}})')
-            ->create('(thread:' . ThreadManager::LABEL_THREAD . ':' . ThreadManager::LABEL_THREAD_USERS . ')')
+            ->create('(thread:' . ThreadManager::LABEL_THREAD . ':' . $category . ')')
             ->set('thread.name = {name}')
             ->create('(u)-[:HAS_THREAD]->(thread)');
         $qb->returns('id(thread) as id');
@@ -172,7 +172,7 @@ class ThreadManager
             return null;
         }
 
-        //TODO: Build Thread to pass to saveComplete
+        //TODO: Refactor to build Thread to pass to saveComplete
 
         $id = $result->current()->offsetGet('id');
         $filters = isset($data['filters'])? $data['filters'] : array();
