@@ -63,7 +63,7 @@ class ContentThreadManager
         return $tags;
     }
 
-    public function saveContentThread($filters)
+    public function saveComplete($id, $filters)
     {
         return null;
     }

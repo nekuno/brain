@@ -112,7 +112,7 @@ class UsersThreadManager
     }
 
     /**
-     * * Creates array ready to use as userFilter from neo4j
+     * Creates array ready to use as userFilter from neo4j
      * @param $id
      * @return array
      * @throws \Model\Neo4j\Neo4jException
@@ -145,9 +145,31 @@ class UsersThreadManager
         return $userFilters;
     }
 
-    public function saveUsersThread($filters)
+    public function saveComplete($id, $filters)
     {
-        return null;
+
+        $profileFilters = isset($filters['profileFilters'])? $filters['profileFilters'] : array();
+
+        $savedProfileFilters = $this->saveProfileFilters($id, $profileFilters);
+
+        $userFilters = isset($filters['userFilters'])? $filters['userFilters'] : array();
+
+        $savedUserFilters = $this->saveUserFilters($id, $userFilters);
+
+        return array(
+            'userFilters' => $savedUserFilters,
+            'profileFilters' => $savedProfileFilters,
+        );
+    }
+
+    private function saveProfileFilters($id, $profileFilters)
+    {
+        return $profileFilters;
+    }
+
+    private function saveUserFilters($id, $userFilters)
+    {
+        return $userFilters;
     }
 
 

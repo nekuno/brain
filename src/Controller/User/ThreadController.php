@@ -38,17 +38,19 @@ class ThreadController
         return $app->json(array('threads' => $threads));
     }
 
-    public function postAction(Application $app, Request $request)
+    /**
+     * Create new thread for a given user
+     * @param Application $app
+     * @param Request $request
+     * @param string $id Qnoow_id of the user creating the thread
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     */
+    public function postAction(Application $app, Request $request, $id)
     {
-        $category = $request->get('category');
-        if (!in_array($category, array(ThreadManager::LABEL_THREAD_USERS, ThreadManager::LABEL_THREAD_CONTENT)))
-        {
-            return $app->json('Category not valid', 400);
-        }
 
-        $thread = $this->threadManager->saveThread($category, $request->get('filters'));
+        $thread = $this->threadManager->create($id, $request->request->all());
 
-        return $app->json($thread);
+        return $app->json($thread, 201);
     }
 
     public function putAction(Application $app, Request $request)
@@ -60,14 +62,14 @@ class ThreadController
         //return result
     }
 
-    public function deleteAction (Application $app, $id)
+    public function deleteAction(Application $app, $id)
     {
         //delete thread (id)
 
         //return result
     }
 
-    public function getUsersAction (Application $app, $id)
+    public function getUsersAction(Application $app, $id)
     {
 
         //threadManager -> getUsers(id) (calls userRecommendationPaginatedModel inside)
@@ -75,10 +77,10 @@ class ThreadController
         //return result (already paginated)
     }
 
-    public function getContentAction (Application $app, $id)
+    public function getContentAction(Application $app, $id)
     {
 
-        //threadManager -> getContent(id) (calls contentRecomendationPaginatedModel inside)
+        //threadManager -> getContent(id) (calls contentRecommendationPaginatedModel inside)
 
         //return result
     }

@@ -6,10 +6,9 @@ namespace Model\User\Thread;
 use Everyman\Neo4j\Label;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
-use Everyman\Neo4j\Relationship;
+use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
-use Model\User\GroupModel;
-use Model\User\ProfileModel;
+use Model\UserModel;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class ThreadManager
@@ -20,6 +19,8 @@ class ThreadManager
 
     /** @var  GraphManager */
     protected $graphManager;
+    /** @var  UserModel */
+    protected $userModel;
     /** @var  UsersThreadManager */
     protected $usersThreadManager;
     /** @var  ContentThreadManager */
@@ -31,9 +32,10 @@ class ThreadManager
      * @param UsersThreadManager $um
      * @param ContentThreadManager $cm
      */
-    public function __construct(GraphManager $graphManager, UsersThreadManager $um, ContentThreadManager $cm)
+    public function __construct(GraphManager $graphManager, UserModel $userModel, UsersThreadManager $um, ContentThreadManager $cm)
     {
         $this->graphManager = $graphManager;
+        $this->userModel = $userModel;
         $this->usersThreadManager = $um;
         $this->contentThreadManager = $cm;
     }
@@ -136,21 +138,121 @@ class ThreadManager
     }
 
     /**
-     * Creates an appropiate neo4j node from a set of filters
-     * @param $category
-     * @param $filters
+     * Creates an appropriate neo4j node from a set of filters
+     * @param $userId
+     * @param $data
      * @return null
+     * @throws \Model\Neo4j\Neo4jException
      */
-    public function saveThread($category, $filters)
+    public function create($userId, $data)
     {
+
+        $name = isset($data['name']) ? $data['name'] : null;
+        $category = isset($data['category']) ? $data['category'] : null;
+        $this->validate(array_merge(
+            array('userId' => (integer)$userId),
+            $data
+        ));
+
+        $qb = $this->graphManager->createQueryBuilder();
+
+        $qb->match('(u:User{qnoow_id:{userId}})')
+            ->create('(thread:' . ThreadManager::LABEL_THREAD . ':' . ThreadManager::LABEL_THREAD_USERS . ')')
+            ->set('thread.name = {name}')
+            ->create('(u)-[:HAS_THREAD]->(thread)');
+        $qb->returns('id(thread) as id');
+        $qb->setParameters(array(
+            'name' => $name,
+            'userId' => (integer)$userId));
+
+        $result = $qb->getQuery()->getResultSet();
+
+        if ($result->count() < 1) {
+            return null;
+        }
+
+        $id = $result->current()->offsetGet('id');
+        $filters = isset($data['filters'])? $data['filters'] : array();
         switch ($category) {
             case $this::LABEL_THREAD_CONTENT:
-                return $this->contentThreadManager->saveContentThread($filters);
+                return $this->contentThreadManager->saveComplete($id, $filters);
             case $this::LABEL_THREAD_USERS:
-                return $this->usersThreadManager->saveUsersThread($filters);
+                return $this->usersThreadManager->saveComplete($id, $filters);
             default:
                 return null;
         }
     }
 
+    public function validate($data)
+    {
+        $errors = array();
+        $metadata = $this->getMetadata();
+        foreach ($metadata as $fieldName => $fieldData) {
+
+            $fieldErrors = array();
+            if (isset($data[$fieldName])) {
+
+                switch ($fieldData['type']) {
+                    case 'choice':
+                        if (!in_array($data[$fieldName], $this->getChoices($fieldName))) {
+                            $fieldErrors[] = 'Choice not supported.';
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            } else if ($fieldData['required'] === true) {
+                $fieldErrors[] = 'It\'s required.';
+            }
+
+            if (count($fieldErrors) > 0) {
+                $errors[$fieldName] = $fieldErrors;
+            }
+        }
+
+        if (isset($data['userId'])) {
+            try {
+                $this->userModel->getById((integer)$data['userId']);
+            } catch (NotFoundHttpException $e) {
+                $errors['userId'] = array($e->getMessage());
+            }
+        } else {
+            $errors['userId'] = array('User identification not supplied');
+        }
+
+
+        if (count($errors) > 0) {
+            throw new ValidationException($errors);
+        }
+
+    }
+
+    private function getMetadata()
+    {
+        $metadata = array(
+            'name' => array(
+                'type' => 'string',
+                'required' => true,
+            ),
+            'category' => array(
+                'type' => 'choice',
+                'required' => true
+            )
+        );
+        return $metadata;
+    }
+
+    private function getChoices($fieldName)
+    {
+        switch ($fieldName) {
+            case 'category':
+                return array(
+                    ThreadManager::LABEL_THREAD_USERS,
+                    ThreadManager::LABEL_THREAD_CONTENT,
+                );
+            default:
+                return array();
+        }
+    }
 }
+

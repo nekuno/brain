@@ -254,7 +254,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.threads.manager'] = $app->share(
             function ($app) {
 
-                return new ThreadManager($app['neo4j.graph_manager'], $app['users.threadusers.manager'], $app['users.threadcontent.manager']);
+                return new ThreadManager($app['neo4j.graph_manager'], $app['users.model'], $app['users.threadusers.manager'], $app['users.threadcontent.manager']);
             }
         );
 
