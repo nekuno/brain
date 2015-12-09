@@ -65,7 +65,6 @@ class ContentThreadManager
 
     public function saveComplete($id, $filters)
     {
-        return null;
     }
 
 

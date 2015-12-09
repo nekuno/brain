@@ -148,22 +148,77 @@ class UsersThreadManager
     public function saveComplete($id, $filters)
     {
 
-        $profileFilters = isset($filters['profileFilters'])? $filters['profileFilters'] : array();
+        $profileFilters = isset($filters['profileFilters']) ? $filters['profileFilters'] : array();
+        $this->saveProfileFilters($id, $profileFilters);
 
-        $savedProfileFilters = $this->saveProfileFilters($id, $profileFilters);
+        $userFilters = isset($filters['userFilters']) ? $filters['userFilters'] : array();
+        $this->saveUserFilters($id, $userFilters);
 
-        $userFilters = isset($filters['userFilters'])? $filters['userFilters'] : array();
-
-        $savedUserFilters = $this->saveUserFilters($id, $userFilters);
-
-        return array(
-            'userFilters' => $savedUserFilters,
-            'profileFilters' => $savedProfileFilters,
-        );
     }
 
     private function saveProfileFilters($id, $profileFilters)
     {
+        $metadata = $this->profileModel->getMetadata();
+
+        //TODO: Validation
+
+        $qb = $this->graphManager->createQueryBuilder();
+        $qb->match('(thread:' . ThreadManager::LABEL_THREAD_USERS . ')')
+            ->where('id(thread) = {id}');
+
+        foreach ($metadata as $fieldName => $fieldData) {
+            if (isset($profileFilters[$fieldName])) {
+                $value = $profileFilters[$fieldName];
+                switch ($fieldType = $metadata[$fieldName]['type']) {
+                    case 'text':
+                    case 'textarea':
+                        $qb->set("thread.$fieldName = '$value'");
+                        break;
+                    case 'integer':
+                    case 'birthday':
+                        $min = (integer)$value['min'];
+                        $max = (integer)$value['max'];
+                        $qb->set('thread.' . $fieldName . '_min = ' . $min);
+                        $qb->set('thread.' . $fieldName . '_max = ' . $max);
+                        break;
+                    case 'date':
+
+                        break;
+                    case 'location':
+                        $distance = (int)$value['distance'];
+                        $latitude = (float)$value['location']['latitude'];
+                        $longitude = (float)$value['location']['longitude'];
+                        $qb->merge("(thread)-[loc_rel:FILTERS_BY{distance:$distance }]->(location:Location)");
+                        $qb->set("loc_rel.distance = $distance");
+                        $qb->set("location.latitude = $latitude");
+                        $qb->set("location.longitude = $longitude");
+                        break;
+                    case 'boolean':
+                        $qb->set("thread.$fieldName = true");
+                        break;
+                    case 'choice':
+                    case 'double_choice':
+                        $profileLabelName = ucfirst($fieldName);
+                        $qb->merge(" (option$fieldName:$profileLabelName{id:'$value'})");
+                        $qb->merge(" (thread)-[:FILTERS_BY]->(option$fieldName)");
+                        break;
+                    case 'tags':
+                        $tagLabelName = ucfirst($fieldName);
+                        $qb->merge("(tag$fieldName:$tagLabelName{name:'$value'})");
+                        $qb->merge("(thread)-[:FILTERS_BY]->(tag$fieldName)");
+                        break;
+                }
+            }
+        }
+
+        $qb->setParameter('id', (integer)$id);
+        $result = $qb->getQuery()->getResultSet();
+
+        if ($result->count() == 0) {
+            return null;
+        }
+
+
         return $profileFilters;
     }
 

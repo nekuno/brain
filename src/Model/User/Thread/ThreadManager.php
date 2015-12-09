@@ -29,6 +29,7 @@ class ThreadManager
     /**
      * ThreadManager constructor.
      * @param GraphManager $graphManager
+     * @param UserModel $userModel
      * @param UsersThreadManager $um
      * @param ContentThreadManager $cm
      */
@@ -171,16 +172,22 @@ class ThreadManager
             return null;
         }
 
+        //TODO: Build Thread to pass to saveComplete
+
         $id = $result->current()->offsetGet('id');
         $filters = isset($data['filters'])? $data['filters'] : array();
         switch ($category) {
             case $this::LABEL_THREAD_CONTENT:
-                return $this->contentThreadManager->saveComplete($id, $filters);
+                 $this->contentThreadManager->saveComplete($id, $filters);
+                break;
             case $this::LABEL_THREAD_USERS:
-                return $this->usersThreadManager->saveComplete($id, $filters);
+                $this->usersThreadManager->saveComplete($id, $filters);
+                break;
             default:
                 return null;
         }
+
+        return $this->getById($id);
     }
 
     public function validate($data)
