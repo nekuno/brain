@@ -9,6 +9,7 @@
 namespace Model\User\Thread;
 
 
+use Everyman\Neo4j\Label;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Everyman\Neo4j\Relationship;
@@ -80,7 +81,7 @@ class UsersThreadManager
         $threadNode = $row->offsetGet('thread');
         $options = $row->offsetGet('options');
 
-        $profileFilters = $this->profileModel->buildProfileOptions($options, $threadNode, 'FILTERS_BY', Relationship::DirectionIn);
+        $profileFilters = $this->buildProfileOptions($options, $threadNode);
 
         $profileFilters += array(
             'birthday' => $this->profileModel->getBirthdayRangeFromAgeRange(
@@ -224,7 +225,64 @@ class UsersThreadManager
 
     private function saveUserFilters($id, $userFilters)
     {
+        //TODO: Validation
+
+        $qb = $this->graphManager->createQueryBuilder();
+        $qb->match('(thread:' . ThreadManager::LABEL_THREAD_USERS . ')')
+            ->where('id(thread) = {id}');
+
+
+        $qb->setParameter('id', (integer)$id);
+        $result = $qb->getQuery()->getResultSet();
+
+        if ($result->count() == 0) {
+            return null;
+        }
+
+
         return $userFilters;
+    }
+
+
+    /**
+     * Quite similar to ProfileModel->buildProfileOptions
+     * @param \ArrayAccess $options
+     * @param Node $threadNode
+     * @return array
+     */
+    private function buildProfileOptions(\ArrayAccess $options, Node $threadNode)
+    {
+        $optionsResult = array();
+        /* @var Node $option */
+        foreach ($options as $option) {
+            $labels = $option->getLabels();
+            /* @var Relationship $relationship */
+            //TODO: Can get slow (increments with thread amount), change to cypher specifying id from beginning
+            $relationships = $option->getRelationships('FILTERS_BY', Relationship::DirectionIn);
+            foreach ($relationships as $relationship) {
+                if ($relationship->getStartNode()->getId() === $option->getId() &&
+                    $relationship->getEndNode()->getId() === $threadNode->getId()
+                ) {
+                    break;
+                }
+            }
+            /* @var Label $label */
+            foreach ($labels as $label) {
+                if ($label->getName() && $label->getName() != 'ProfileOption') {
+                    $typeName = $this->profileModel->labelToType($label->getName());
+                    $optionsResult[$typeName] = empty($optionsResult[$typeName]) ? array($option->getProperty('id')) :
+                                                                                    array_merge($optionsResult[$typeName], array($option->getProperty('id')));
+                    $detail = $relationship->getProperty('detail');
+                    if (!is_null($detail)) {
+                        $optionsResult[$typeName] = array();
+                        $optionsResult[$typeName]['choice'] = $option->getProperty('id');
+                        $optionsResult[$typeName]['detail'] = $detail;
+                    }
+                }
+            }
+        }
+
+        return $optionsResult;
     }
 
 

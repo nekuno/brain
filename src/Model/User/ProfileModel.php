@@ -405,17 +405,13 @@ class ProfileModel
         /* @var Node $profile */
         $profile = $row->offsetGet('profile');
 
-        return $this->buildProfileOptions($options, $profile);
-    }
-
-    public function buildProfileOptions($options, Node $profile, $relationshipType = 'OPTION_OF', $relationshipDirection = Relationship::DirectionOut)
-    {
         $optionsResult = array();
         /* @var Node $option */
         foreach ($options as $option) {
             $labels = $option->getLabels();
             /* @var Relationship $relationship */
-            $relationships = $option->getRelationships($relationshipType, $relationshipDirection);
+            //TODO: Can get slow (increments with profile amount), change to cypher specifying id from beginning
+            $relationships = $option->getRelationships('OPTION_OF',  Relationship::DirectionOut);
             foreach ($relationships as $relationship) {
                 if ($relationship->getStartNode()->getId() === $option->getId() &&
                     $relationship->getEndNode()->getId() === $profile->getId()
@@ -831,7 +827,7 @@ class ProfileModel
         return $locale;
     }
 
-    protected function labelToType($labelName)
+    public function labelToType($labelName)
     {
 
         return lcfirst($labelName);
