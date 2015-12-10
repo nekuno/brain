@@ -6,11 +6,15 @@
 namespace Controller\User;
 
 
+use Model\User\GroupModel;
 use Model\User\Thread\ContentThread;
 use Model\User\Thread\ThreadManager;
+use Model\User\Thread\UsersThread;
 use Model\UserModel;
+use Paginator\Paginator;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class ThreadController
 {
@@ -26,8 +30,10 @@ class ThreadController
     }
 
     /**
-     * Parameters accepted:
-     * -offset, limit and foreign (see UserController::ContentRecommendationAction)
+     * Parameters accepted when ContentThread:
+     * -offset, limit and foreign
+     * Parameters accepted when UsersThread:
+     * -order
      *
      * @param Application $app
      * @param Request $request
@@ -83,7 +89,40 @@ class ThreadController
 
                 break;
             case 'Model\User\Thread\UsersThread':
-                $recommendation = 'items from users';
+                //TODO: Move logic to Recommendator
+
+                /* @var $thread UsersThread */
+                $order = $request->get('order', false);
+
+                /* @var $paginator Paginator */
+                $paginator = $app['paginator'];
+
+                $filters = array(
+                    'id' => $user['qnoow_id'],
+                    'profileFilters' => $thread->getProfileFilters(),
+                    'userFilters' => $thread->getUserFilters(),
+                );
+
+                if ($order) {
+                    $filters['order'] = $order;
+                }
+
+                // Check neccesary in case thread is created and then user leaves group
+                /* @var $groupModel GroupModel */
+                $groupModel = $app['users.groups.model'];
+                if (isset($filters['userFilters']['groups']) && null !== $filters['userFilters']['groups']) {
+                    foreach ($filters['userFilters']['groups'] as $group) {
+                        if (!$groupModel->isUserFromGroup($group, $id)) {
+                            throw new AccessDeniedHttpException(sprintf('Not allowed to filter on group "%s"', $group));
+                        }
+                    }
+                }
+
+                /* @var $model \Model\User\Recommendation\UserRecommendationPaginatedModel */
+                $model = $app['users.recommendation.users.model'];
+
+                $recommendation = $paginator->paginate($filters, $model, $request);
+
                 break;
             default:
                 $recommendation = array();
