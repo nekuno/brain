@@ -16,6 +16,7 @@ use Everyman\Neo4j\Relationship;
 use Model\Neo4j\GraphManager;
 use Model\User\GroupModel;
 use Model\User\ProfileModel;
+use Model\UserModel;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class UsersThreadManager
@@ -30,11 +31,15 @@ class UsersThreadManager
     /** @var  GroupModel */
     protected $groupModel;
 
-    public function __construct(GraphManager $gm, ProfileModel $pm, GroupModel $groupModel)
+    /** @var UserModel  */
+    protected $userModel;
+
+    public function __construct(GraphManager $gm, ProfileModel $pm, GroupModel $groupModel, UserModel $userModel)
     {
         $this->graphManager = $gm;
         $this->profileModel = $pm;
         $this->groupModel = $groupModel;
+        $this->userModel = $userModel;
     }
 
     /**
@@ -304,6 +309,28 @@ class UsersThreadManager
         }
 
         return $optionsResult;
+    }
+
+    public function getCached(Thread $thread)
+    {
+        $parameters = array(
+            'id' => $thread->getId(),
+        );
+
+        $qb = $this->graphManager->createQueryBuilder();
+        $qb->match('(thread:Thread)')
+            ->where('id(thread) = {id}')
+            ->match('(thread)-[:RECOMMENDS]->(u:User)')
+            ->returns('u');
+        $qb->setParameters($parameters);
+        $result = $qb->getQuery()->getResultSet();
+
+        $cached = array();
+        foreach ($result as $row){
+            $cached[] = $this->userModel->build($row);
+        }
+
+        return $cached;
     }
 
 

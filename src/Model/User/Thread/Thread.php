@@ -16,6 +16,9 @@ class Thread implements \JsonSerializable
 
     protected $name;
 
+    protected $cached;
+
+
     function __construct($id, $name)
     {
         $this->id = $id;
@@ -56,6 +59,22 @@ class Thread implements \JsonSerializable
     }
 
     /**
+     * @return mixed
+     */
+    public function getCached()
+    {
+        return $this->cached;
+    }
+
+    /**
+     * @param mixed $cached
+     */
+    public function setCached($cached)
+    {
+        $this->cached = $cached;
+    }
+
+    /**
      * Specify data which should be serialized to JSON
      * @link http://php.net/manual/en/jsonserializable.jsonserialize.php
      * @return mixed data which can be serialized by <b>json_encode</b>,
@@ -65,8 +84,9 @@ class Thread implements \JsonSerializable
     function jsonSerialize()
     {
         return array(
-          'id' => $this->getId(),
+            'id' => $this->getId(),
             'name' => $this->getName(),
+            'cached' => $this->getCached(),
         );
     }
 }

@@ -110,14 +110,22 @@ class ThreadManager
 
         switch ($category = $this->getCategory($threadNode)) {
             case $this::LABEL_THREAD_USERS: {
-                return $this->usersThreadManager->buildUsersThread($id, $threadNode->getProperty('name'));
+                $thread = $this->usersThreadManager->buildUsersThread($id, $threadNode->getProperty('name'));
+                $cached = $this->usersThreadManager->getCached($thread);
+                break;
             }
             case $this::LABEL_THREAD_CONTENT: {
-                return $this->contentThreadManager->buildContentThread($id, $threadNode->getProperty('name'), $threadNode->getProperty('type'));
+                $thread = $this->contentThreadManager->buildContentThread($id, $threadNode->getProperty('name'), $threadNode->getProperty('type'));
+                $cached = $this->contentThreadManager->getCached($thread);
+                break;
             }
             default :
                 throw new \Exception('Thread category ' . $category . ' not found or supported');
         }
+
+        $thread->setCached($cached);
+
+        return $thread;
     }
 
     /**
@@ -142,7 +150,7 @@ class ThreadManager
      * Creates an appropriate neo4j node from a set of filters
      * @param $userId
      * @param $data
-     * @return null
+     * @return Thread|null
      * @throws \Model\Neo4j\Neo4jException
      */
     public function create($userId, $data)
@@ -175,10 +183,10 @@ class ThreadManager
         //TODO: Refactor to build Thread to pass to saveComplete
 
         $id = $result->current()->offsetGet('id');
-        $filters = isset($data['filters'])? $data['filters'] : array();
+        $filters = isset($data['filters']) ? $data['filters'] : array();
         switch ($category) {
             case $this::LABEL_THREAD_CONTENT:
-                 $this->contentThreadManager->saveComplete($id, $filters);
+                $this->contentThreadManager->saveComplete($id, $filters);
                 break;
             case $this::LABEL_THREAD_USERS:
                 $this->usersThreadManager->saveComplete($id, $filters);
@@ -286,8 +294,8 @@ class ThreadManager
         $qb->match('(thread:Thread)')
             ->where('id(thread) = {id}');
 
-        foreach ($items as $item){
-            switch(get_class($thread)){
+        foreach ($items as $item) {
+            switch (get_class($thread)) {
                 case 'Model\User\Thread\ContentThread':
                     $id = $item['content']['id'];
                     $qb->match('(l:Link)')
@@ -305,7 +313,7 @@ class ThreadManager
                     $parameters += array($id => $id);
                     break;
                 default:
-                    throw new \Exception('Thread '.$thread->getId().' has a not valid category.');
+                    throw new \Exception('Thread ' . $thread->getId() . ' has a not valid category.');
                     break;
             }
         }

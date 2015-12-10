@@ -94,6 +94,7 @@ class ThreadController
         $result = $recommendator->getRecommendationFromThread($thread, $request);
         $this->threadManager->cacheResults($thread, array_slice($result['items'], 0, 5));
 
+        $thread = $this->threadManager->getById($thread->getId());
 
         return $app->json($thread, 201);
     }

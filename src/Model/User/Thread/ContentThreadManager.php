@@ -10,25 +10,29 @@ namespace Model\User\Thread;
 
 
 use Everyman\Neo4j\Node;
+use Model\LinkModel;
 use Model\Neo4j\GraphManager;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class ContentThreadManager
 {
 
-    /** @var  GraphManager */
+    /** @var $graphManager GraphManager */
     protected $graphManager;
+    /** @var $linkModel LinkModel */
+    protected $linkModel;
 
-    public function __construct(GraphManager $graphManager)
+    public function __construct(GraphManager $graphManager, LinkModel $linkModel)
     {
         $this->graphManager = $graphManager;
+        $this->linkModel = $linkModel;
     }
 
     /**
      * @param $id
      * @param $name
      * @param $type
-     * @return Thread
+     * @return ContentThread
      */
     public function buildContentThread($id, $name, $type)
     {
@@ -61,7 +65,7 @@ class ContentThreadManager
 
         /** @var Node $tagNode */
         $tagNode = $result->current()->offsetGet('tag');
-        if ($tagNode){
+        if ($tagNode) {
             return $tagNode->getProperty('name');
         }
 
@@ -102,7 +106,7 @@ class ContentThreadManager
     {
         //TODO: Validate
 
-        if (!$tag){
+        if (!$tag) {
             return;
         }
 
@@ -119,8 +123,30 @@ class ContentThreadManager
         $result = $qb->getQuery()->getResultSet();
 
         if ($result->count() < 1) {
-            throw new NotFoundHttpException('Thread with id ' . $id . ' or tag with name '.$tag.' not found');
+            throw new NotFoundHttpException('Thread with id ' . $id . ' or tag with name ' . $tag . ' not found');
         }
+    }
+
+    public function getCached(Thread $thread)
+    {
+        $parameters = array(
+            'id' => $thread->getId(),
+        );
+
+        $qb = $this->graphManager->createQueryBuilder();
+        $qb->match('(thread:Thread)')
+            ->where('id(thread) = {id}')
+            ->optionalMatch('(thread)-[:RECOMMENDS]->(r:Link)')
+            ->returns('collect(r) as cached');
+        $qb->setParameters($parameters);
+        $result = $qb->getQuery()->getResultSet();
+
+        $cached = array();
+        foreach ($result->current()->offsetGet('cached') as $link) {
+            $cached[] = $this->linkModel->buildLink($link);
+        }
+
+        return $cached;
     }
 
 
