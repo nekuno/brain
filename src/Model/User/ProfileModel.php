@@ -768,9 +768,9 @@ class ProfileModel
 
         // Reversed: the older the date, the bigger the age
         $now = new \DateTime();
-        $minBirthday = $now->modify('-'.$min.' years');
+        $minBirthday = $now->modify('-'.$min.' years')->format('Y-m-d');
         $now = new \DateTime();
-        $maxBirthday = $now->modify('+'.$max.' years');
+        $maxBirthday = $now->modify('+'.$max.' years')->format('Y-m-d');
 
         return array('min' => $minBirthday, 'max' => $maxBirthday);
     }
