@@ -169,7 +169,6 @@ class Recommendator
         }
 
         $result = $this->paginator->paginate($filters, $this->userRecommendationPaginatedModel, $request);
-var_dump($filters);
         return $result;
     }
 
