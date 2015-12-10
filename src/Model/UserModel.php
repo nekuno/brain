@@ -349,6 +349,24 @@ class UserModel implements PaginatedInterface
         return $this->parseResultSet($query->getResultSet());
     }
 
+    public function getOneByThread($id)
+    {
+        $qb=$this->gm->createQueryBuilder();
+
+        $qb->match('(thread:Thread)')
+            ->where('id(thread) = {id}')
+            ->match('(thread)<-[:HAS_THREAD]-(u:User)')
+            ->returns('u');
+        $qb->setParameter('id', (integer)$id);
+        $result = $qb->getQuery()->getResultSet();
+
+        if ($result->count() == 0){
+            throw new NotFoundHttpException('Thread '.$id.' does not exist or is not from an user.');
+        }
+
+        return $this->build($result->current());
+    }
+
     /**
      * @param SocialProfile $profile
      * @return array

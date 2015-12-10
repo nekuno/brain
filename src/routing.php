@@ -70,7 +70,7 @@ $app->get('/users/{id}/content/compare/{id2}', 'users.controller:getUserContentC
 $app->get('/users/{id}/content/tags', 'users.controller:getUserContentTagsAction');
 $app->post('/users/{id}/content/rate', 'users.controller:rateContentAction');
 $app->get('/users/{id}/filters', 'users.controller:getAllFiltersAction');
-$app->get('/users/{id}/threads', 'users.threads.controller:getAction');
+$app->get('/users/{id}/threads', 'users.threads.controller:getByUserAction');
 $app->post('/users/{id}/threads', 'users.threads.controller:postAction');
 $app->get('/users/{id}/recommendations/users', 'users.controller:getUserRecommendationAction');
 $app->get('/users/{id}/recommendations/content', 'users.controller:getContentRecommendationAction');
@@ -184,10 +184,9 @@ $app->post('/lookUp/webHook', 'lookUp.controller:setFromWebHookAction')->bind('s
  * Thread routes
  */
 
+$app->get('/threads/{id}/recommendation', 'users.threads.controller:getRecommendationAction');
 $app->put('/threads/{id}','users.threads.controller:putAction');
 $app->delete('/threads/{id}','users.controller:deleteAction');
-$app->get('/threads/{id}/users','users.threads.controller:getUsersAction');
-$app->get('/threads/{id}/content','users.threads.controller:getContentAction');
 
 $controllers
     ->assert('id', '\d+')

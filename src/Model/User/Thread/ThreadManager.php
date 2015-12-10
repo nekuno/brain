@@ -147,7 +147,7 @@ class ThreadManager
      */
     public function create($userId, $data)
     {
-
+        //TODO: Avoid duplicate if coincidence of userId and name ?
         $name = isset($data['name']) ? $data['name'] : null;
         $category = isset($data['category']) ? $data['category'] : null;
         $this->validate(array_merge(
@@ -260,6 +260,11 @@ class ThreadManager
             default:
                 return array();
         }
+    }
+
+    public function getResults(Thread $thread)
+    {
+
     }
 }
 
