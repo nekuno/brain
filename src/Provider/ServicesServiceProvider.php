@@ -7,6 +7,7 @@ use Service\AMQPManager;
 use Service\ChatMessageNotifications;
 use Service\EmailNotifications;
 use Service\MigrateSocialInvitations;
+use Service\Recommendator;
 use Service\SocialNetwork;
 use Service\TokenGenerator;
 use Silex\Application;
@@ -49,6 +50,13 @@ class ServicesServiceProvider implements ServiceProviderInterface
         $app['emailNotification.service'] = $app->share(
             function (Application $app) {
                 return new EmailNotifications($app['mailer'], $app['orm.ems']['mysql_brain'], $app['twig']);
+            }
+        );
+
+        $app['recommendator.service'] = $app->share(
+            function (Application $app) {
+                return new Recommendator($app['paginator'], $app['paginator.content'], $app['users.groups.model'],
+                    $app['users.model'], $app['users.recommendation.users.model'], $app['users.recommendation.content.model']);
             }
         );
 

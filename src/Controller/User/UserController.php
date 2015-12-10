@@ -8,11 +8,10 @@ use Model\User\ProfileModel;
 use Model\User\RateModel;
 use Model\User\UserStatsManager;
 use Model\UserModel;
-use Paginator\Paginator;
+use Service\Recommendator;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
@@ -448,36 +447,18 @@ class UserController
 
     public function getUserRecommendationAction(Request $request, Application $app, $id)
     {
+        /** @var Recommendator $recommendator */
+        $recommendator = $app['recommendator.service'];
 
-        $order = $request->get('order', false);
-
-        /* @var $paginator Paginator */
-        $paginator = $app['paginator'];
-
-        $filters = array(
-            'id' => $id,
-            'profileFilters' => $request->get('profileFilters', array()),
-            'userFilters' => $request->get('userFilters', array()),
-        );
-
-        if ($order) {
-            $filters['order'] = $order;
-        }
-
-        /* @var $groupModel GroupModel */
-        $groupModel = $app['users.groups.model'];
-        if (isset($filters['userFilters']['groups']) && null !== $filters['userFilters']['groups']) {
-            foreach ($filters['userFilters']['groups'] as $group) {
-                if (!$groupModel->isUserFromGroup($group, $id)) {
-                    throw new AccessDeniedHttpException(sprintf('Not allowed to filter on group "%s"', $group));
-                }
+        try {
+            $result = $recommendator->getUserRecommendationFromRequest($request, $id);
+        } catch (\Exception $e) {
+            if ($app['env'] == 'dev') {
+                throw $e;
             }
+
+            return $app->json(array(), 500);
         }
-
-        /* @var $model \Model\User\Recommendation\UserRecommendationPaginatedModel */
-        $model = $app['users.recommendation.users.model'];
-
-        $result = $paginator->paginate($filters, $model, $request);
 
         return $app->json($result);
     }
@@ -517,43 +498,18 @@ class UserController
     /**
      * @param Request $request
      * @param Application $app
-     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @param $id
+     * @return JsonResponse
      * @throws \Exception
      */
-    public function getContentRecommendationAction(Request $request, Application $app)
+    public function getContentRecommendationAction(Request $request, Application $app, $id)
     {
 
-        $id = $request->get('id');
-        $tag = $request->get('tag', null);
-        $type = $request->get('type', null);
-        $foreign = $request->get('foreign', null);
-
-        if (null === $id) {
-            return $app->json(array(), 400);
-        }
-
-        /* @var $paginator \Paginator\ContentPaginator */
-        $paginator = $app['paginator.content'];
-
-        $filters = array('id' => $id);
-
-        if ($tag) {
-            $filters['tag'] = urldecode($tag);
-        }
-
-        if ($type) {
-            $filters['type'] = urldecode($type);
-        }
-
-        if ($foreign) {
-            $filters['foreign'] = urldecode($foreign);
-        }
-
-        /* @var $model \Model\User\Recommendation\ContentRecommendationPaginatedModel */
-        $model = $app['users.recommendation.content.model'];
+        /* @var $recommendator Recommendator */
+        $recommendator = $app['recommendator.service'];
 
         try {
-            $result = $paginator->paginate($filters, $model, $request);
+            $result = $recommendator->getContentRecommendationFromRequest($request, $id);
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;
