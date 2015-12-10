@@ -87,12 +87,15 @@ class UsersThreadManager
             'birthday' => $this->profileModel->getBirthdayRangeFromAgeRange(
                 $threadNode->getProperty('age_min'),
                 $threadNode->getProperty('age_max')),
-            'height' => array(
-                'min' => $threadNode->getProperty('height_min'),
-                'max' => $threadNode->getProperty('height_max')
-            ),
             'description' => $threadNode->getProperty('description'));
-
+        $height = array(
+            'min' => $threadNode->getProperty('height_min'),
+            'max' => $threadNode->getProperty('height_max')
+        );
+        $height = array_filter($height);
+        if (!empty($height)){
+            $profileFilters['height'] = $height;
+        }
         /** @var Node $location */
         $location = $row->offsetGet('loc');
         if ($location instanceof Node) {
@@ -233,7 +236,7 @@ class UsersThreadManager
     private function saveUserFilters($id, $userFilters)
     {
         //TODO: Validation
-        if (empty($userFilters)){
+        if (empty($userFilters)) {
             return;
         }
 

@@ -757,22 +757,21 @@ class ProfileModel
         return $tags;
     }
 
-    public function getBirthdayRangeFromAgeRange($min = 14, $max = 150)
+    public function getBirthdayRangeFromAgeRange($min = null, $max = null)
     {
-        $min = $min?: 14;
-        $max = $max?: 100;
-
-        if ($min < 14){
-            throw new ValidationException(array('birthday' => array('Invalid age, minimum age must be older than 14 years')));
+        $return = array();
+        if ($min){
+            $now = new \DateTime();
+            $minBirthday = $now->modify('-'.$min.' years')->format('Y-m-d');
+            $return ['min'] = $minBirthday;
+        }
+        if ($max){
+            $now = new \DateTime();
+            $maxBirthday = $now->modify('+'.$max.' years')->format('Y-m-d');
+            $return['max'] = $maxBirthday;
         }
 
-        // Reversed: the older the date, the bigger the age
-        $now = new \DateTime();
-        $minBirthday = $now->modify('-'.$min.' years')->format('Y-m-d');
-        $now = new \DateTime();
-        $maxBirthday = $now->modify('+'.$max.' years')->format('Y-m-d');
-
-        return array('min' => $minBirthday, 'max' => $maxBirthday);
+        return $return;
     }
 
     /*
