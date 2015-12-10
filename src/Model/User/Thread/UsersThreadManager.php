@@ -233,6 +233,9 @@ class UsersThreadManager
     private function saveUserFilters($id, $userFilters)
     {
         //TODO: Validation
+        if (empty($userFilters)){
+            return;
+        }
 
         $qb = $this->graphManager->createQueryBuilder();
         $qb->match('(thread:' . ThreadManager::LABEL_THREAD_USERS . ')')
@@ -251,11 +254,11 @@ class UsersThreadManager
         $result = $qb->getQuery()->getResultSet();
 
         if ($result->count() == 0) {
-            return null;
+            return;
         }
 
 
-        return $userFilters;
+        return;
     }
 
 
