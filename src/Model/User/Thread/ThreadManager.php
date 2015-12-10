@@ -276,6 +276,9 @@ class ThreadManager
      */
     public function cacheResults(Thread $thread, array $items)
     {
+
+        $this->deleteCachedResults($thread);
+
         $parameters = array(
             'id' => $thread->getId()
         );
@@ -319,6 +322,21 @@ class ThreadManager
         $threadNode = $result->current()->offsetGet('thread');
 
         return $this->buildThread($threadNode);
+
+    }
+
+    private function deleteCachedResults(Thread $thread)
+    {
+        $parameters = array(
+            'id' => $thread->getId()
+        );
+        $qb = $this->graphManager->createQueryBuilder();
+        $qb->match('(thread:Thread)')
+            ->where('id(thread) = {id}')
+            ->optionalMatch('(thread)-[r:RECOMMENDS]->()')
+            ->delete('r');
+        $qb->setParameters($parameters);
+        $qb->getQuery()->getResultSet();
 
     }
 }
