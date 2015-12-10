@@ -266,5 +266,60 @@ class ThreadManager
     {
 
     }
+
+    /**
+     * @param Thread $thread Which thread returned the results
+     * @param array $items
+     * @return Thread
+     * @throws \Exception
+     * @throws \Model\Neo4j\Neo4jException
+     */
+    public function cacheResults(Thread $thread, array $items)
+    {
+        $parameters = array(
+            'id' => $thread->getId()
+        );
+        $qb = $this->graphManager->createQueryBuilder();
+        $qb->match('(thread:Thread)')
+            ->where('id(thread) = {id}');
+
+        foreach ($items as $item){
+            switch(get_class($thread)){
+                case 'Model\User\Thread\ContentThread':
+                    $id = $item['content']['id'];
+                    $qb->match('(l:Link)')
+                        ->where("id(l) = {$id}")
+                        ->merge('(thread)-[:RECOMMENDS]->(l)')
+                        ->with('thread');
+                    $parameters += array($id => $id);
+                    break;
+                case 'Model\User\Thread\UsersThread':
+                    $id = $item['id'];
+                    $qb->match('(u:User)')
+                        ->where("u.qnoow_id = {$id}")
+                        ->merge('(thread)-[:RECOMMENDS]->(u)')
+                        ->with('thread');
+                    $parameters += array($id => $id);
+                    break;
+                default:
+                    throw new \Exception('Thread '.$thread->getId().' has a not valid category.');
+                    break;
+            }
+        }
+
+        $qb->returns('thread');
+        $qb->setParameters($parameters);
+        $result = $qb->getQuery()->getResultSet();
+
+        if ($result->count() < 1) {
+            throw new NotFoundHttpException('Thread with id ' . $thread->getId() . ' not found');
+        }
+
+        /** @var Node $threadNode */
+        $threadNode = $result->current()->offsetGet('thread');
+
+        return $this->buildThread($threadNode);
+
+    }
 }
 

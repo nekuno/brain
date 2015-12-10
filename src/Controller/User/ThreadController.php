@@ -52,6 +52,9 @@ class ThreadController
 
         try {
             $result = $recommendator->getRecommendationFromThread($thread, $request);
+
+            $this->threadManager->cacheResults($thread, array_slice($result['items'], 0, 5));
+
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;

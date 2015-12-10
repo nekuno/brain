@@ -39,6 +39,7 @@ class Recommendator
      * @param Paginator $paginator
      * @param ContentPaginator $contentPaginator
      * @param GroupModel $groupModel
+     * @param UserModel $userModel
      * @param UserRecommendationPaginatedModel $userRecommendationPaginatedModel
      * @param ContentRecommendationPaginatedModel $contentRecommendationPaginatedModel
      */
@@ -77,7 +78,6 @@ class Recommendator
 
                 break;
             case 'Model\User\Thread\UsersThread':
-
                 /* @var $thread UsersThread */
                 $order = $request->get('order', false);
 
@@ -169,7 +169,7 @@ class Recommendator
         }
 
         $result = $this->paginator->paginate($filters, $this->userRecommendationPaginatedModel, $request);
-
+var_dump($filters);
         return $result;
     }
 
