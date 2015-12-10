@@ -5,17 +5,10 @@
 
 namespace Controller\User;
 
-
-use Model\User\GroupModel;
-use Model\User\Thread\ContentThread;
 use Model\User\Thread\ThreadManager;
-use Model\User\Thread\UsersThread;
-use Model\UserModel;
-use Paginator\Paginator;
 use Service\Recommendator;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class ThreadController
 {
@@ -95,6 +88,13 @@ class ThreadController
 
         $thread = $this->threadManager->create($id, $request->request->all());
 
+        /** @var Recommendator $recommendator */
+        $recommendator = $app['recommendator.service'];
+
+        $result = $recommendator->getRecommendationFromThread($thread, $request);
+        $this->threadManager->cacheResults($thread, array_slice($result['items'], 0, 5));
+
+
         return $app->json($thread, 201);
     }
 
@@ -114,19 +114,4 @@ class ThreadController
         //return result
     }
 
-    public function getUsersAction(Application $app, $id)
-    {
-
-        //threadManager -> getUsers(id) (calls userRecommendationPaginatedModel inside)
-
-        //return result (already paginated)
-    }
-
-    public function getContentAction(Application $app, $id)
-    {
-
-        //threadManager -> getContent(id) (calls contentRecommendationPaginatedModel inside)
-
-        //return result
-    }
 }
