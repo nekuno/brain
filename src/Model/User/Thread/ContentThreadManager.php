@@ -34,19 +34,24 @@ class ContentThreadManager
     {
         $thread = new ContentThread($id, $name, $type);
 
-        $tags = $this->getTags($thread->getId());
-        $thread->setTags($tags);
+        $tag = $this->getTag($thread->getId());
+        $thread->setTag($tag);
 
         return $thread;
     }
 
-    private function getTags($id)
+    /**
+     * @param $id
+     * @return mixed
+     * @throws \Model\Neo4j\Neo4jException
+     */
+    private function getTag($id)
     {
         $qb = $this->graphManager->createQueryBuilder();
         $qb->match('(thread:Thread)')
             ->where('id(thread) = {id}')
             ->optionalMatch('(thread)-[:FILTERS_BY]->(tag:Tag)')
-            ->returns('collect(tag) as tags');
+            ->returns('tag');
         $qb->setParameter('id', (integer)$id);
         $result = $qb->getQuery()->getResultSet();
 
@@ -54,17 +59,68 @@ class ContentThreadManager
             throw new NotFoundHttpException('Thread with id ' . $id . ' not found');
         }
 
-        $tags = array();
         /** @var Node $tagNode */
-        foreach ($result->current()->offsetGet('tags') as $tagNode) {
-            $tags[] = $tagNode->getProperty('name');
+        $tagNode = $result->current()->offsetGet('tag');
+        if ($tagNode){
+            return $tagNode->getProperty('name');
         }
 
-        return $tags;
+        return null;
     }
 
     public function saveComplete($id, $filters)
     {
+        $type = isset($filters['type']) ? $filters['type'] : 'Link';
+        $this->saveType($id, $type);
+
+        $tag = isset($filters['tag']) ? $filters['tag'] : null;
+        $this->saveTag($id, $tag);
+    }
+
+    private function saveType($id, $type)
+    {
+        //TODO: Validate
+
+        $qb = $this->graphManager->createQueryBuilder();
+        $qb->match('(thread:Thread)')
+            ->where('id(thread) = {id}')
+            ->set('thread.type = {type}')
+            ->returns('thread');
+        $qb->setParameters(array(
+            'id' => (integer)$id,
+            'type' => $type,
+        ));
+        $result = $qb->getQuery()->getResultSet();
+
+        if ($result->count() < 1) {
+            throw new NotFoundHttpException('Thread with id ' . $id . ' not found');
+        }
+
+    }
+
+    private function saveTag($id, $tag)
+    {
+        //TODO: Validate
+
+        if (!$tag){
+            return;
+        }
+
+        $qb = $this->graphManager->createQueryBuilder();
+        $qb->match('(thread:Thread)')
+            ->where('id(thread) = {id}')
+            ->match('(tag:Tag{name: {tagname} })')
+            ->merge('(thread)-[:FILTERS_BY]->(tag)')
+            ->returns('thread');
+        $qb->setParameters(array(
+            'id' => (integer)$id,
+            'tagname' => $tag,
+        ));
+        $result = $qb->getQuery()->getResultSet();
+
+        if ($result->count() < 1) {
+            throw new NotFoundHttpException('Thread with id ' . $id . ' or tag with name '.$tag.' not found');
+        }
     }
 
 

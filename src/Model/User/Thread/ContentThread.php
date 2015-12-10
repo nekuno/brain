@@ -13,7 +13,7 @@ class ContentThread extends Thread
 {
     protected $type;
 
-    protected $tags;
+    protected $tag;
 
     public function __construct($id, $name, $type)
     {
@@ -41,17 +41,17 @@ class ContentThread extends Thread
     /**
      * @return mixed
      */
-    public function getTags()
+    public function getTag()
     {
-        return $this->tags;
+        return $this->tag;
     }
 
     /**
      * @param mixed $tags
      */
-    public function setTags($tags)
+    public function setTag($tag)
     {
-        $this->tags = $tags;
+        $this->tag = $tag;
     }
 
     function jsonSerialize()
@@ -61,7 +61,7 @@ class ContentThread extends Thread
         $array += array(
             'category' => ThreadManager::LABEL_THREAD_CONTENT,
             'type' => $this->getType(),
-            'tags' => $this->getTags(),
+            'tag' => $this->getTag(),
         );
 
         return $array;
