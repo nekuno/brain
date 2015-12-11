@@ -71,7 +71,16 @@ class ThreadController
     public function getByUserAction(Application $app, $id)
     {
 
-        $threads = $this->threadManager->getByUser($id);
+        try {
+            $threads = $this->threadManager->getByUser($id);
+        } catch (\Exception $e) {
+            if ($app['env'] == 'dev') {
+                throw $e;
+            }
+
+            return $app->json($e->getMessage(), 500);
+        }
+
 
         return $app->json(array('threads' => $threads));
     }
@@ -82,6 +91,7 @@ class ThreadController
      * @param Request $request
      * @param string $id Qnoow_id of the user creating the thread
      * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @throws \Exception
      */
     public function postAction(Application $app, Request $request, $id)
     {
@@ -90,15 +100,28 @@ class ThreadController
 
         /** @var Recommendator $recommendator */
         $recommendator = $app['recommendator.service'];
+        try {
+            $result = $recommendator->getRecommendationFromThread($thread, $request);
+            $this->threadManager->cacheResults($thread, array_slice($result['items'], 0, 5));
 
-        $result = $recommendator->getRecommendationFromThread($thread, $request);
-        $this->threadManager->cacheResults($thread, array_slice($result['items'], 0, 5));
+            $thread = $this->threadManager->getById($thread->getId());
+        } catch (\Exception $e) {
+            if ($app['env'] == 'dev') {
+                throw $e;
+            }
 
-        $thread = $this->threadManager->getById($thread->getId());
-
+            return $app->json($e->getMessage(), 500);
+        }
         return $app->json($thread, 201);
     }
 
+    /**
+     * @param Application $app
+     * @param Request $request
+     * @param $id
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @throws \Exception
+     */
     public function putAction(Application $app, Request $request, $id)
     {
 
@@ -126,7 +149,18 @@ class ThreadController
 
     public function deleteAction(Application $app, $id)
     {
-        return $app->json($this->threadManager->deleteById($id));
+        try {
+            $relationships = $this->threadManager->deleteById($id);
+        } catch (\Exception $e) {
+            if ($app['env'] == 'dev') {
+                throw $e;
+            }
+
+            return $app->json($e->getMessage(), 500);
+        }
+
+
+        return $app->json($relationships);
     }
 
 }
