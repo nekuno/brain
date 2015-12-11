@@ -186,10 +186,10 @@ class ThreadManager
         $filters = isset($data['filters']) ? $data['filters'] : array();
         switch ($category) {
             case $this::LABEL_THREAD_CONTENT:
-                $this->contentThreadManager->saveComplete($id, $filters);
+                $this->contentThreadManager->update($id, $filters);
                 break;
             case $this::LABEL_THREAD_USERS:
-                $this->usersThreadManager->saveComplete($id, $filters);
+                $this->usersThreadManager->update($id, $filters);
                 break;
             default:
                 return null;
@@ -268,11 +268,6 @@ class ThreadManager
             default:
                 return array();
         }
-    }
-
-    public function getResults(Thread $thread)
-    {
-
     }
 
     /**

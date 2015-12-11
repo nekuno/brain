@@ -31,7 +31,7 @@ class UsersThreadManager
     /** @var  GroupModel */
     protected $groupModel;
 
-    /** @var UserModel  */
+    /** @var UserModel */
     protected $userModel;
 
     public function __construct(GraphManager $gm, ProfileModel $pm, GroupModel $groupModel, UserModel $userModel)
@@ -98,7 +98,7 @@ class UsersThreadManager
             'max' => $threadNode->getProperty('height_max')
         );
         $height = array_filter($height);
-        if (!empty($height)){
+        if (!empty($height)) {
             $profileFilters['height'] = $height;
         }
         /** @var Node $location */
@@ -154,7 +154,7 @@ class UsersThreadManager
         return $userFilters;
     }
 
-    public function saveComplete($id, $filters)
+    public function update($id, $filters)
     {
 
         $profileFilters = isset($filters['profileFilters']) ? $filters['profileFilters'] : array();
@@ -167,9 +167,6 @@ class UsersThreadManager
 
     private function saveProfileFilters($id, $profileFilters)
     {
-        if (empty($profileFilters)) {
-            return $profileFilters;
-        }
 
         $metadata = $this->profileModel->getMetadata();
 
@@ -179,25 +176,66 @@ class UsersThreadManager
         $qb->match('(thread:' . ThreadManager::LABEL_THREAD_USERS . ')')
             ->where('id(thread) = {id}');
 
+        //TODO: More parameters
         foreach ($metadata as $fieldName => $fieldData) {
-            if (isset($profileFilters[$fieldName])) {
-                $value = $profileFilters[$fieldName];
-                switch ($fieldType = $metadata[$fieldName]['type']) {
-                    case 'text':
-                    case 'textarea':
-                        $qb->set("thread.$fieldName = '$value'");
-                        break;
-                    case 'integer':
-                    case 'birthday':
-                        $min = (integer)$value['min'];
-                        $max = (integer)$value['max'];
-                        $qb->set('thread.' . $fieldName . '_min = ' . $min);
-                        $qb->set('thread.' . $fieldName . '_max = ' . $max);
-                        break;
-                    case 'date':
+            switch ($fieldType = $metadata[$fieldName]['type']) {
+                case 'text':
+                case 'textarea':
+                    $qb->remove("thread.$fieldName");
 
-                        break;
-                    case 'location':
+                    if (isset($profileFilters[$fieldName])) {
+                        $value = $profileFilters[$fieldName];
+                        $qb->set("thread.$fieldName = '$value'");
+                    }
+                    $qb->with('thread');
+                    break;
+                case 'birthday':
+
+                    $qb->remove("thread.age_min", "thread.age_max");
+
+                    if (isset($profileFilters[$fieldName])) {
+                        $value = $profileFilters[$fieldName];
+                        //We do not support only one of these
+
+                        $age = $this->profileModel->getAgeRangeFromBirthdayRange($value);
+
+                        $qb->set('thread.age_min = ' . $age['min']);
+                        $qb->set('thread.age_max = ' . $age['max']);
+
+                    }
+                    $qb->with('thread');
+                    break;
+                case 'integer':
+
+                    $fieldNameMin = $fieldName . '_min';
+                    $fieldNameMax = $fieldName . '_max';
+                    $qb->remove("thread.$fieldNameMin", "thread.$fieldNameMax");
+
+                    if (isset($profileFilters[$fieldName])) {
+                        $value = $profileFilters[$fieldName];
+                        //We do not support only one of these
+                        $min = isset($value['min']) ? (integer)$value['min'] : $metadata[$fieldName]['min'];
+                        $max = isset($value['max']) ? (integer)$value['max'] : $metadata[$fieldName]['max'];
+                        if ($min) {
+                            $qb->set('thread.' . $fieldNameMin . ' = ' . $min);
+                        }
+                        if ($max) {
+                            $qb->set('thread.' . $fieldNameMax . ' = ' . $max);
+                        }
+
+                    }
+                    $qb->with('thread');
+                    break;
+                case 'date':
+
+                    break;
+                case 'location':
+                    //If Location node is shared, this fails (can't delete node with relationships)
+                    $qb->optionalMatch('(thread)-[old_loc_rel:FILTERS_BY]->(old_loc_node:Location)')
+                        ->delete('old_loc_rel', 'old_loc_node');
+
+                    if (isset($profileFilters[$fieldName])) {
+                        $value = $profileFilters[$fieldName];
                         $distance = (int)$value['distance'];
                         $latitude = (float)$value['location']['latitude'];
                         $longitude = (float)$value['location']['longitude'];
@@ -205,28 +243,47 @@ class UsersThreadManager
                         $qb->set("loc_rel.distance = $distance");
                         $qb->set("location.latitude = $latitude");
                         $qb->set("location.longitude = $longitude");
-                        break;
-                    case 'boolean':
+                    }
+                    $qb->with('thread');
+                    break;
+                case 'boolean':
+                    $qb->remove("thread.$fieldName");
+
+                    if (isset($profileFilters[$fieldName])) {
                         $qb->set("thread.$fieldName = true");
-                        break;
-                    case 'choice':
-                    case 'double_choice':
-                        $profileLabelName = ucfirst($fieldName);
+                    }
+                    $qb->with('thread');
+                    break;
+                case 'choice':
+                case 'double_choice':
+                    $profileLabelName = ucfirst($fieldName);
+                    $qb->optionalMatch("(thread)-[old_po_rel:FILTERS_BY]->(:$profileLabelName)")
+                        ->delete("old_po_rel");
+
+                    if (isset($profileFilters[$fieldName])) {
+                        $value = $profileFilters[$fieldName];
                         foreach ($value as $singleValue) {
                             $qb->merge(" (option$fieldName$singleValue:$profileLabelName{id:'$singleValue'})");
                             $qb->merge(" (thread)-[:FILTERS_BY]->(option$fieldName$singleValue)");
                         }
-
-                        break;
-                    case 'tags':
-                        $tagLabelName = ucfirst($fieldName);
+                    }
+                    $qb->with('thread');
+                    break;
+                case 'tags':
+                    $tagLabelName = ucfirst($fieldName);
+                    $qb->optionalMatch("(thread)-[old_tag_rel:FILTERS_BY]->(:$tagLabelName)")
+                        ->delete("old_tag_rel");
+                    if (isset($profileFilters[$fieldName])) {
+                        $value = $profileFilters[$fieldName];
                         $qb->merge("(tag$fieldName:$tagLabelName{name:'$value'})");
                         $qb->merge("(thread)-[:FILTERS_BY]->(tag$fieldName)");
-                        break;
-                }
+                    }
+                    $qb->with('thread');
+                    break;
             }
         }
 
+        $qb->returns('thread');
         $qb->setParameter('id', (integer)$id);
         $result = $qb->getQuery()->getResultSet();
 
@@ -326,7 +383,7 @@ class UsersThreadManager
         $result = $qb->getQuery()->getResultSet();
 
         $cached = array();
-        foreach ($result as $row){
+        foreach ($result as $row) {
             $cached[] = $this->userModel->build($row);
         }
 

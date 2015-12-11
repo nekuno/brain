@@ -762,16 +762,31 @@ class ProfileModel
         $return = array();
         if ($min){
             $now = new \DateTime();
-            $minBirthday = $now->modify('-'.$min.' years')->format('Y-m-d');
-            $return ['min'] = $minBirthday;
+            $maxBirthday = $now->modify('-'.$min.' years')->format('Y-m-d');
+            $return ['max'] = $maxBirthday;
         }
         if ($max){
             $now = new \DateTime();
-            $maxBirthday = $now->modify('+'.$max.' years')->format('Y-m-d');
-            $return['max'] = $maxBirthday;
+            $minBirthday = $now->modify('-'.$max.' years')->format('Y-m-d');
+            $return['min'] = $minBirthday;
         }
 
         return $return;
+    }
+
+    public function getAgeRangeFromBirthdayRange(array $birthday)
+    {
+        $min = $this->getYearsFromDate($birthday['min']);
+        $max = $this->getYearsFromDate($birthday['max']);
+
+        return array('min' => $max, 'max' => $min);
+    }
+
+    private function getYearsFromDate($birthday)
+    {
+        $minDate = new \DateTime($birthday);
+        $minInterval = $minDate->diff(new \DateTime());
+        return $minInterval->y;
     }
 
     /*
