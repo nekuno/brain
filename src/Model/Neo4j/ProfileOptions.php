@@ -198,6 +198,118 @@ class ProfileOptions implements LoggerAwareInterface
                     'name_es' => 'Femenino',
                 ),
             ),
+            'DescriptiveGender' => array(
+                array(
+                    'id' => 'man',
+                    'name_en' => 'Man',
+                    'name_es' => 'Hombre',
+                ),
+                array(
+                    'id' => 'woman',
+                    'name_en' => 'Woman',
+                    'name_es' => 'Mujer',
+                ),
+                array(
+                    'id' => 'agender',
+                    'name_en' => 'Agender',
+                    'name_es' => 'Agénero',
+                ),
+                array(
+                    'id' => 'androgynous',
+                    'name_en' => 'Androgynous',
+                    'name_es' => 'Andrógino',
+                ),
+                array(
+                    'id' => 'bigender',
+                    'name_en' => 'Bigender',
+                    'name_es' => 'Bigénero',
+                ),
+                array(
+                    'id' => 'cis-man',
+                    'name_en' => 'Cis Man',
+                    'name_es' => 'Cis Hombre',
+                ),
+                array(
+                    'id' => 'cis-woman',
+                    'name_en' => 'Cis Woman',
+                    'name_es' => 'Cis Mujer',
+                ),
+                array(
+                    'id' => 'genderfluid',
+                    'name_en' => 'Genderfluid',
+                    'name_es' => 'Género fluido',
+                ),
+                array(
+                    'id' => 'genderqueer',
+                    'name_en' => 'Genderqueer',
+                    'name_es' => 'Genderqueer',
+                ),
+                array(
+                    'id' => 'gender-nonconforming',
+                    'name_en' => 'Gender nonconforming',
+                    'name_es' => 'Género no conforme',
+                ),
+                array(
+                    'id' => 'hijra',
+                    'name_en' => 'Hijra',
+                    'name_es' => 'Hijra',
+                ),
+                array(
+                    'id' => 'intersex',
+                    'name_en' => 'Intersex',
+                    'name_es' => 'Intersex',
+                ),
+                array(
+                    'id' => 'non-binary',
+                    'name_en' => 'Non-binary',
+                    'name_es' => 'No binario',
+                ),
+                array(
+                    'id' => 'pangender',
+                    'name_en' => 'Pangender',
+                    'name_es' => 'Pangénero',
+                ),
+                array(
+                    'id' => 'transfeminine',
+                    'name_en' => 'Transfeminine',
+                    'name_es' => 'Transfeminino',
+                ),
+                array(
+                    'id' => 'transgender',
+                    'name_en' => 'Transgender',
+                    'name_es' => 'Transgénero',
+                ),
+                array(
+                    'id' => 'transmasculine',
+                    'name_en' => 'Transmasculine',
+                    'name_es' => 'Transmasculino',
+                ),
+                array(
+                    'id' => 'transsexual',
+                    'name_en' => 'Transsexual',
+                    'name_es' => 'Transexual',
+                ),
+                array(
+                    'id' => 'trans-man',
+                    'name_en' => 'Trans Man',
+                    'name_es' => 'Trans Hombre',
+                ),
+                array(
+                    'id' => 'trans-woman',
+                    'name_en' => 'Trans Woman',
+                    'name_es' => 'Trans Mujer',
+                ),
+                array(
+                    'id' => 'two-spirit',
+                    'name_en' => 'Two Spirit',
+                    'name_es' => 'Dos Espíritus',
+                ),
+                array(
+                    'id' => 'other',
+                    'name_en' => 'Other',
+                    'name_es' => 'Otros',
+                ),
+            ),
             'Sons' => array(
                 array(
                     'id' => 'yes',

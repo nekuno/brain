@@ -85,7 +85,7 @@ class ContentComparePaginatedModel implements PaginatedInterface
             ->where("u.qnoow_id = { userId }","u2.qnoow_id = { userId2 }")
             ->match("(u)-[r:LIKES]->(content:" . $linkType . ")");
 
-        $conditions = $this->buildConditions($socialNetworks1);
+        $conditions = $this->buildConditions('r', $socialNetworks1);
 
         $qb->where($conditions);
 
@@ -99,7 +99,7 @@ class ContentComparePaginatedModel implements PaginatedInterface
             $qb->optionalMatch("(u2)-[r2:LIKES]->(content)");
         }
 
-        $conditions = $this->buildConditions($socialNetworks2);
+        $conditions = $this->buildConditions('r2', $socialNetworks2);
 
         $qb->where($conditions);
 
@@ -218,14 +218,14 @@ class ContentComparePaginatedModel implements PaginatedInterface
             ->where("u.qnoow_id = { userId }", "u2.qnoow_id = { userId2 }")
             ->match("(u)-[r:LIKES]->(content:" . $linkType . ")");
 
-        $conditions = $this->buildConditions($socialNetworks1);
+        $conditions = $this->buildConditions('r', $socialNetworks1);
 
         $qb->where($conditions);
 
         if ($showOnlyCommon) {
-            $qb->match("(u2)-[:LIKES]->(content)");
+            $qb->match("(u2)-[r2:LIKES]->(content)");
 
-            $conditions = $this->buildConditions($socialNetworks2);
+            $conditions = $this->buildConditions('r2', $socialNetworks2);
 
             $qb->where($conditions);
         }
@@ -258,13 +258,13 @@ class ContentComparePaginatedModel implements PaginatedInterface
         return $count;
     }
 
-    private function buildConditions(array $socialNetworks)
+    private function buildConditions($relationship, array $socialNetworks = array())
     {
         $conditions = array("content.processed = 1");
 
-        $whereSocialNetwork[] = "HAS (r.nekuno)";
+        $whereSocialNetwork[] = "HAS ($relationship.nekuno)";
         foreach ($socialNetworks as $socialNetwork) {
-            $whereSocialNetwork [] = "HAS (r.$socialNetwork)";
+            $whereSocialNetwork [] = "HAS ($relationship.$socialNetwork)";
         }
         $socialNetworkQuery = implode(' OR ', $whereSocialNetwork);
         $conditions[] = $socialNetworkQuery;
