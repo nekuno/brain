@@ -180,22 +180,61 @@ class ThreadManager
             return null;
         }
 
-        //TODO: Refactor to build Thread to pass to saveComplete
-
         $id = $result->current()->offsetGet('id');
+        $thread = $this->getById($id);
+
+        return $this->updateFromFilters($thread, $data);
+    }
+
+    public function update($threadId, $data)
+    {
+
+        $name = isset($data['name']) ? $data['name'] : null;
+        $category = isset($data['category']) ? $data['category'] : null;
+
+        $qb = $this->graphManager->createQueryBuilder();
+
+        $qb->match('(thread:Thread)')
+            ->where('id(thread) = {id}')
+            ->remove('thread:' . $this::LABEL_THREAD_USERS .':'. $this::LABEL_THREAD_CONTENT)
+            ->set('thread:' . $category)
+            ->set('thread.name = {name}');
+        $qb->returns('thread');
+        $qb->setParameters(array(
+            'name' => $name,
+            'id' => (integer)$threadId));
+
+        $result = $qb->getQuery()->getResultSet();
+
+        if ($result->count() < 1) {
+            return null;
+        }
+
+        $threadNode = $result->current()->offsetGet('thread');
+        $thread = $this->buildThread($threadNode);
+
+        return $this->updateFromFilters($thread, $data);
+
+    }
+
+    private function updateFromFilters(Thread $thread, $data)
+    {
+
         $filters = isset($data['filters']) ? $data['filters'] : array();
-        switch ($category) {
-            case $this::LABEL_THREAD_CONTENT:
-                $this->contentThreadManager->update($id, $filters);
+        switch (get_class($thread)) {
+            case 'Model\User\Thread\ContentThread':
+
+                $this->contentThreadManager->update($thread->getId(), $filters);
                 break;
-            case $this::LABEL_THREAD_USERS:
-                $this->usersThreadManager->update($id, $filters);
+            case 'Model\User\Thread\UsersThread':
+
+                $this->usersThreadManager->update($thread->getId(), $filters);
                 break;
             default:
                 return null;
         }
 
-        return $this->getById($id);
+        return $this->getById($thread->getId());
     }
 
     public function validate($data)

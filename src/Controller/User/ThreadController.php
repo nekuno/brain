@@ -46,7 +46,7 @@ class ThreadController
         try {
             $result = $recommendator->getRecommendationFromThread($thread, $request);
 
-            if ($request->get('offset') == 0){
+            if ($request->get('offset') == 0) {
                 $this->threadManager->cacheResults($thread, array_slice($result['items'], 0, 5));
             }
 
@@ -99,13 +99,29 @@ class ThreadController
         return $app->json($thread, 201);
     }
 
-    public function putAction(Application $app, Request $request)
+    public function putAction(Application $app, Request $request, $id)
     {
-        //separate filters by type
+        
+        $thread = $this->threadManager->update($id, $request->request->all());
 
-        //update thread (profileFilters, userFilters)
+        /** @var Recommendator $recommendator */
+        $recommendator = $app['recommendator.service'];
 
-        //return result
+        try {
+            $result = $recommendator->getRecommendationFromThread($thread, $request);
+
+            $this->threadManager->cacheResults($thread, array_slice($result['items'], 0, 5));
+
+        } catch (\Exception $e) {
+            if ($app['env'] == 'dev') {
+                throw $e;
+            }
+
+        }
+
+        $thread = $this->threadManager->getById($thread->getId());
+
+        return $app->json($thread, 201);
     }
 
     public function deleteAction(Application $app, $id)
