@@ -55,7 +55,7 @@ class ThreadController
                 throw $e;
             }
 
-            return $app->json(array(), 500);
+            return $app->json($e->getMessage(), 500);
         }
 
         return $app->json($result);
@@ -101,7 +101,7 @@ class ThreadController
 
     public function putAction(Application $app, Request $request, $id)
     {
-        
+
         $thread = $this->threadManager->update($id, $request->request->all());
 
         /** @var Recommendator $recommendator */
@@ -126,9 +126,7 @@ class ThreadController
 
     public function deleteAction(Application $app, $id)
     {
-        //delete thread (id)
-
-        //return result
+        return $app->json($this->threadManager->deleteById($id));
     }
 
 }

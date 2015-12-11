@@ -381,5 +381,26 @@ class ThreadManager
         $qb->getQuery()->getResultSet();
 
     }
+
+    public function deleteById($id)
+    {
+
+        $thread = $this->getById($id);
+
+        $qb = $this->graphManager->createQueryBuilder();
+        $qb->match('(thread:Thread)')
+            ->where('id(thread) = {id}')
+            ->optionalMatch('(thread)-[r]-()')
+            ->delete('r, thread')
+            ->returns('count(r) as amount');
+        $qb->setParameter('id', $thread->getId());
+        $result = $qb->getQuery()->getResultSet();
+
+        if ($result->count() < 1) {
+            throw new NotFoundHttpException('Thread with id ' . $id . ' not found');
+        }
+
+        return $result->current()->offsetGet('amount');
+    }
 }
 

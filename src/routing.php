@@ -186,7 +186,7 @@ $app->post('/lookUp/webHook', 'lookUp.controller:setFromWebHookAction')->bind('s
 
 $app->get('/threads/{id}/recommendation', 'users.threads.controller:getRecommendationAction');
 $app->put('/threads/{id}','users.threads.controller:putAction');
-$app->delete('/threads/{id}','users.controller:deleteAction');
+$app->delete('/threads/{id}','users.threads.controller:deleteAction');
 
 $controllers
     ->assert('id', '\d+')
