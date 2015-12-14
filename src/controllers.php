@@ -1,6 +1,7 @@
 <?php
 
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Model\Exception\ValidationException;
 use Model\Neo4j\Neo4jException;
@@ -119,7 +120,6 @@ $app['lookUp.controller'] = $app->share(
     }
 );
 
-
 /**
  * Middleware for filter some request
  */
@@ -133,6 +133,12 @@ $app->before(
             }
             $request->request->replace(is_array($data) ? $data : array());
         }
+    }
+);
+
+$app->after(
+    function (Request $request, Response $response) {
+        $response->headers->set('Access-Control-Allow-Origin', '*');
     }
 );
 
