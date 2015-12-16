@@ -64,6 +64,13 @@ $app['users.groups.controller'] = $app->share(
     }
 );
 
+$app['users.threads.controller'] = $app->share(
+    function () use ($app) {
+
+        return new \Controller\User\ThreadController($app['users.threads.manager']);
+    }
+);
+
 $app['users.invitations.controller'] = $app->share(
     function () use ($app) {
 
