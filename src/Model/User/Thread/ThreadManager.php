@@ -124,6 +124,7 @@ class ThreadManager
         }
 
         $thread->setCached($cached);
+        $thread->setTotalResults($threadNode->getProperty('totalResults'));
 
         return $thread;
     }
@@ -316,17 +317,20 @@ class ThreadManager
      * @throws \Exception
      * @throws \Model\Neo4j\Neo4jException
      */
-    public function cacheResults(Thread $thread, array $items)
+    public function cacheResults(Thread $thread, array $items, $total)
     {
 
         $this->deleteCachedResults($thread);
 
         $parameters = array(
-            'id' => $thread->getId()
+            'id' => $thread->getId(),
+            'total' => (integer)$total,
         );
         $qb = $this->graphManager->createQueryBuilder();
         $qb->match('(thread:Thread)')
-            ->where('id(thread) = {id}');
+            ->where('id(thread) = {id}')
+            ->set('thread.totalResults = {total}')
+            ->with('thread');
 
         foreach ($items as $item) {
             switch (get_class($thread)) {
