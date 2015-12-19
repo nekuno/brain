@@ -18,6 +18,8 @@ class Thread implements \JsonSerializable
 
     protected $cached;
 
+    protected $totalResults;
+
 
     function __construct($id, $name)
     {
@@ -75,6 +77,22 @@ class Thread implements \JsonSerializable
     }
 
     /**
+     * @return mixed
+     */
+    public function getTotalResults()
+    {
+        return $this->totalResults;
+    }
+
+    /**
+     * @param mixed $totalResults
+     */
+    public function setTotalResults($totalResults)
+    {
+        $this->totalResults = $totalResults;
+    }
+
+    /**
      * Specify data which should be serialized to JSON
      * @link http://php.net/manual/en/jsonserializable.jsonserialize.php
      * @return mixed data which can be serialized by <b>json_encode</b>,
@@ -87,6 +105,9 @@ class Thread implements \JsonSerializable
             'id' => $this->getId(),
             'name' => $this->getName(),
             'cached' => $this->getCached(),
+            'totalResults' => $this->getTotalResults(),
         );
     }
+
+
 }
