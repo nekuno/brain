@@ -5,6 +5,7 @@ namespace Controller\Security;
 use Service\AuthService;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 /**
@@ -15,6 +16,14 @@ class AuthController
 
     public function loginAction(Request $request, Application $app)
     {
+
+        if ($request->getMethod() === 'OPTIONS') {
+            $response = new Response();
+            $response->headers->set('Access-Control-Allow-Methods', $request->headers->get('Access-Control-Request-Method'));
+            $response->headers->set('Access-Control-Allow-Headers', $request->headers->get('Access-Control-Request-Headers'));
+
+            return $response;
+        }
 
         $username = $request->request->get('username');
         $password = $request->request->get('password');

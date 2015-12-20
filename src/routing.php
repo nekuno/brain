@@ -7,6 +7,7 @@ use Model\User\RelationsModel;
 $controllers = $app['controllers'];
 
 $app->post('/login', 'auth.controller:loginAction');
+$app->match('/login', 'auth.controller:loginAction')->method('OPTIONS');
 
 $app->get('/users', 'users.controller:indexAction');
 $app->post('/users', 'users.controller:postAction');
@@ -187,8 +188,8 @@ $app->post('/lookUp/webHook', 'lookUp.controller:setFromWebHookAction')->bind('s
  */
 
 $app->get('/threads/{id}/recommendation', 'users.threads.controller:getRecommendationAction');
-$app->put('/threads/{id}','users.threads.controller:putAction');
-$app->delete('/threads/{id}','users.threads.controller:deleteAction');
+$app->put('/threads/{id}', 'users.threads.controller:putAction');
+$app->delete('/threads/{id}', 'users.threads.controller:deleteAction');
 
 $controllers
     ->assert('id', '\d+')
