@@ -90,7 +90,7 @@ class UserModel implements PaginatedInterface
         $qb->match('(u:User {qnoow_id: { id }})')
             ->setParameter('id', (int)$id);
         if (!$includeGhost) {
-            $qb->where('NOT u:'.GhostUserManager::LABEL_GHOST_USER);
+            $qb->where('NOT u:' . GhostUserManager::LABEL_GHOST_USER);
         }
 
         $qb->returns('u');
@@ -332,12 +332,12 @@ class UserModel implements PaginatedInterface
         $qb->match('(g:Group)')
             ->where('id(g) = {groupId}')
             ->match('(u:User)-[:BELONGS_TO]->(g)');
-        if (isset($data['userId'])){
+        if (isset($data['userId'])) {
             $qb->where('NOT u.qnoow_id = {userId}');
             $parameters['userId'] = (integer)$data['userId'];
         }
         $qb->returns('u');
-        if (isset($data['limit'])){
+        if (isset($data['limit'])) {
             $parameters['limit'] = (integer)$data['limit'];
             $qb->limit('{limit}');
         }
@@ -351,7 +351,7 @@ class UserModel implements PaginatedInterface
 
     public function getOneByThread($id)
     {
-        $qb=$this->gm->createQueryBuilder();
+        $qb = $this->gm->createQueryBuilder();
 
         $qb->match('(thread:Thread)')
             ->where('id(thread) = {id}')
@@ -360,8 +360,8 @@ class UserModel implements PaginatedInterface
         $qb->setParameter('id', (integer)$id);
         $result = $qb->getQuery()->getResultSet();
 
-        if ($result->count() == 0){
-            throw new NotFoundHttpException('Thread '.$id.' does not exist or is not from an user.');
+        if ($result->count() == 0) {
+            throw new NotFoundHttpException('Thread ' . $id . ' does not exist or is not from an user.');
         }
 
         return $this->build($result->current());
@@ -399,6 +399,7 @@ class UserModel implements PaginatedInterface
 
             if ($resultSet->count() == 1) {
                 $row = $resultSet->current();
+
                 return $this->build($row);
             }
         }
@@ -814,6 +815,33 @@ class UserModel implements PaginatedInterface
         return $ordered + $properties;
     }
 
+    public function getNextId()
+    {
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User)')
+            ->returns('u.qnoow_id AS id')
+            ->orderBy('id DESC')
+            ->limit(1);
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        $id = 1;
+        if ($result->count() > 0) {
+            /* @var $row Row */
+            $row = $result->current();
+            $id = $row->offsetGet('qnoow_id') + 1;
+        }
+
+        return $id;
+    }
+
+    public function canonicalize($string)
+    {
+        return null === $string ? null : mb_convert_case($string, MB_CASE_LOWER, mb_detect_encoding($string));
+    }
+
     /**
      * @param null $locale
      * @param array $dynamicChoices user-dependent choices (cannot be set from this model)
@@ -900,28 +928,6 @@ class UserModel implements PaginatedInterface
         return array();
     }
 
-    public function getNextId()
-    {
-
-        $qb = $this->gm->createQueryBuilder();
-        $qb->match('(u:User)')
-            ->returns('u.qnoow_id AS id')
-            ->orderBy('id DESC')
-            ->limit(1);
-
-        $query = $qb->getQuery();
-        $result = $query->getResultSet();
-
-        $id = 1;
-        if ($result->count() > 0) {
-            /* @var $row Row */
-            $row = $result->current();
-            $id = $row->offsetGet('qnoow_id') + 1;
-        }
-
-        return $id;
-    }
-
     protected function setDefaults(array &$user)
     {
         foreach ($this->getMetadata() as $fieldName => $fieldData) {
@@ -949,11 +955,6 @@ class UserModel implements PaginatedInterface
             $user['password'] = $this->encoder->encodePassword($user['plainPassword'], $user['salt']);
             unset($user['plainPassword']);
         }
-    }
-
-    protected function canonicalize($string)
-    {
-        return null === $string ? null : mb_convert_case($string, MB_CASE_LOWER, mb_detect_encoding($string));
     }
 
     private function getNodeId($userId)

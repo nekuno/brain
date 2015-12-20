@@ -8,6 +8,13 @@ use Model\Neo4j\Neo4jException;
 
 //Request::setTrustedProxies(array('127.0.0.1'));
 
+$app['auth.controller'] = $app->share(
+    function () {
+
+        return new \Controller\Security\AuthController;
+    }
+);
+
 $app['users.controller'] = $app->share(
     function () {
 

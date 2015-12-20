@@ -40,11 +40,11 @@ class FilterClientIpSubscriber implements EventSubscriberInterface
         }
 
         if ($controller[0] instanceof LookUpController &&
-            $request->attributes->get('_controller') === 'lookUp.controller:setFromWebHookAction') {
+            $request->attributes->get('_controller') === 'lookUp.controller:setFromWebHookAction'
+        ) {
             // TODO: Make this controller public
-        }
-        else {
-            if (! in_array($event->getRequest()->getClientIp(), $this->validIps)) {
+        } else {
+            if (!in_array($event->getRequest()->getClientIp(), $this->validIps)) {
                 throw new AccessDeniedHttpException('Access forbidden');
             }
         }

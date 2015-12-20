@@ -1,10 +1,11 @@
 {
     "_readme": [
         "This file locks the dependencies of your project to a known state",
-        "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "c6f574fa3ab669e2944ace62a219db37",
+    "hash": "2f0972af877e3fdc1294431a5b20989a",
+    "content-hash": "50cc00cc8df6b01ce2d2d3849ee0cbac",
     "packages": [
         {
             "name": "dflydev/doctrine-orm-service-provider",
@@ -715,6 +716,49 @@
             "time": "2014-11-28 09:48:17"
         },
         {
+            "name": "firebase/php-jwt",
+            "version": "v3.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/firebase/php-jwt.git",
+                "reference": "fa8a06e96526eb7c0eeaa47e4f39be59d21f16e1"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/firebase/php-jwt/zipball/fa8a06e96526eb7c0eeaa47e4f39be59d21f16e1",
+                "reference": "fa8a06e96526eb7c0eeaa47e4f39be59d21f16e1",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Firebase\\JWT\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "authors": [
+                {
+                    "name": "Neuman Vong",
+                    "email": "neuman+pear@twilio.com",
+                    "role": "Developer"
+                },
+                {
+                    "name": "Anant Narayanan",
+                    "email": "anant@php.net",
+                    "role": "Developer"
+                }
+            ],
+            "description": "A simple library to encode and decode JSON Web Tokens (JWT) in PHP. Should conform to the current spec.",
+            "homepage": "https://github.com/firebase/php-jwt",
+            "time": "2015-07-22 18:31:08"
+        },
+        {
             "name": "google/apiclient",
             "version": "dev-master",
             "source": {
@@ -724,7 +768,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/google/google-api-php-client/zipball/2bc00ec4e8fa1a5eec793d800fac339f30b730db",
+                "url": "https://api.github.com/repos/google/google-api-php-client/zipball/abeddc079e3ca32b3aee53acc3dd0ba83b31702c",
                 "reference": "bf58f98b5ee2ae14139792d921fb84de01c97a85",
                 "shasum": ""
             },
@@ -1922,12 +1966,12 @@
             "target-dir": "Symfony/Component/Form",
             "source": {
                 "type": "git",
-                "url": "https://github.com/symfony/Form.git",
+                "url": "https://github.com/symfony/form.git",
                 "reference": "bfe4011e6b77e85ccf4df33dd361fa09dfa50303"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/Form/zipball/bfe4011e6b77e85ccf4df33dd361fa09dfa50303",
+                "url": "https://api.github.com/repos/symfony/form/zipball/bfe4011e6b77e85ccf4df33dd361fa09dfa50303",
                 "reference": "bfe4011e6b77e85ccf4df33dd361fa09dfa50303",
                 "shasum": ""
             },
@@ -2918,7 +2962,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/videlalvaro/php-amqplib/zipball/1d64326be24c8c9f74d0b3003035ec945bc4a787",
+                "url": "https://api.github.com/repos/videlalvaro/php-amqplib/zipball/d6bda387d753b04b134c038a2a5c78b97bfea45a",
                 "reference": "f11232f664db841a5ccb63de270925fbc2b766d3",
                 "shasum": ""
             },

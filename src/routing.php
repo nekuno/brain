@@ -6,6 +6,8 @@ use Model\User\RelationsModel;
 /* @var $controllers \Silex\Controller */
 $controllers = $app['controllers'];
 
+$app->post('/login', 'auth.controller:loginAction');
+
 $app->get('/users', 'users.controller:indexAction');
 $app->post('/users', 'users.controller:postAction');
 $app->put('/users/{id}', 'users.controller:putAction');
