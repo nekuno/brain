@@ -29,7 +29,7 @@ class AuthController
         $password = $request->request->get('password');
 
         if (!$username || !$password) {
-            throw new BadRequestHttpException('username and password required');
+            throw new BadRequestHttpException('Username and password required');
         }
 
         /* @var $authService AuthService */
