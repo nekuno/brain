@@ -14,16 +14,17 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 class AuthController
 {
 
+    public function preflightAction(Request $request)
+    {
+        $response = new Response();
+        $response->headers->set('Access-Control-Allow-Methods', $request->headers->get('Access-Control-Request-Method'));
+        $response->headers->set('Access-Control-Allow-Headers', $request->headers->get('Access-Control-Request-Headers'));
+
+        return $response;
+    }
+
     public function loginAction(Request $request, Application $app)
     {
-
-        if ($request->getMethod() === 'OPTIONS') {
-            $response = new Response();
-            $response->headers->set('Access-Control-Allow-Methods', $request->headers->get('Access-Control-Request-Method'));
-            $response->headers->set('Access-Control-Allow-Headers', $request->headers->get('Access-Control-Request-Headers'));
-
-            return $response;
-        }
 
         $username = $request->request->get('username');
         $password = $request->request->get('password');

@@ -6,8 +6,8 @@ use Model\User\RelationsModel;
 /* @var $controllers \Silex\Controller */
 $controllers = $app['controllers'];
 
+$app->match('{url}', 'auth.controller:preflightAction')->assert('url', '.+')->method('OPTIONS');
 $app->post('/login', 'auth.controller:loginAction');
-$app->match('/login', 'auth.controller:loginAction')->method('OPTIONS');
 
 $app->get('/users', 'users.controller:indexAction');
 $app->post('/users', 'users.controller:postAction');
