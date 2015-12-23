@@ -1,5 +1,7 @@
 valid_ips: ['127.0.0.1', %dev_custom_ip_1%, %dev_custom_ip_2%, %dev_custom_ip_3%, %dev_custom_ip_4%]
 
+secret: %secret%
+
 locale.options:
     default: %locale.default%
 

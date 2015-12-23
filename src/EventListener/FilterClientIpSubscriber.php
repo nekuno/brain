@@ -4,10 +4,11 @@
  */
 namespace EventListener;
 
-use Controller\User\LookUpController;
+use Firebase\JWT\JWT;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\FilterControllerEvent;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\HttpKernel\KernelEvents;
 
 /**
@@ -16,11 +17,13 @@ use Symfony\Component\HttpKernel\KernelEvents;
  */
 class FilterClientIpSubscriber implements EventSubscriberInterface
 {
-    private $validIps = array();
+    protected $validIps = array();
+    protected $secret;
 
-    public function __construct(array $validIps)
+    public function __construct(array $validIps, $secret)
     {
         $this->validIps = $validIps;
+        $this->secret = $secret;
     }
 
     public static function getSubscribedEvents()
@@ -39,14 +42,23 @@ class FilterClientIpSubscriber implements EventSubscriberInterface
             return;
         }
 
-        if ($controller[0] instanceof LookUpController &&
-            $request->attributes->get('_controller') === 'lookUp.controller:setFromWebHookAction') {
-            // TODO: Make this controller public
-        }
-        else {
-            if (! in_array($event->getRequest()->getClientIp(), $this->validIps)) {
-                throw new AccessDeniedHttpException('Access forbidden');
+        $publicActions = array(
+            'lookUp.controller:setFromWebHookAction',
+            'auth.controller:loginAction',
+            'auth.controller:preflightAction',
+        );
+
+        if ($request->headers->has('authorization')) {
+            list($jwt) = sscanf($request->headers->get('authorization'), 'Bearer %s');
+            try {
+                JWT::decode($jwt, $this->secret, array('HS256'));
+            } catch (\Exception $e) {
+                throw new UnauthorizedHttpException('', 'JWT token not valid');
             }
+        } elseif (in_array($request->attributes->get('_controller'), $publicActions)) {
+            return;
+        } elseif (!in_array($event->getRequest()->getClientIp(), $this->validIps)) {
+            throw new AccessDeniedHttpException('Access forbidden');
         }
     }
 }

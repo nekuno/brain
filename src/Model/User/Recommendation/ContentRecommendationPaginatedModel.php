@@ -15,7 +15,7 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
     /**
      * @var array
      */
-    private static $validTypes = array('Audio', 'Video', 'Image');
+    private static $validTypes = array('Audio', 'Video', 'Image', 'Link');
 
     /**
      * @var GraphManager

@@ -429,7 +429,8 @@ class ProfileModel
         foreach ($options as $option) {
             $labels = $option->getLabels();
             /* @var Relationship $relationship */
-            $relationships = $option->getRelationships('OPTION_OF', Relationship::DirectionOut);
+            //TODO: Can get slow (increments with profile amount), change to cypher specifying id from beginning
+            $relationships = $option->getRelationships('OPTION_OF',  Relationship::DirectionOut);
             foreach ($relationships as $relationship) {
                 if ($relationship->getStartNode()->getId() === $option->getId() &&
                     $relationship->getEndNode()->getId() === $profile->getId()
@@ -817,6 +818,38 @@ class ProfileModel
         return $tags;
     }
 
+    public function getBirthdayRangeFromAgeRange($min = null, $max = null)
+    {
+        $return = array();
+        if ($min){
+            $now = new \DateTime();
+            $maxBirthday = $now->modify('-'.$min.' years')->format('Y-m-d');
+            $return ['max'] = $maxBirthday;
+        }
+        if ($max){
+            $now = new \DateTime();
+            $minBirthday = $now->modify('-'.$max.' years')->format('Y-m-d');
+            $return['min'] = $minBirthday;
+        }
+
+        return $return;
+    }
+
+    public function getAgeRangeFromBirthdayRange(array $birthday)
+    {
+        $min = $this->getYearsFromDate($birthday['min']);
+        $max = $this->getYearsFromDate($birthday['max']);
+
+        return array('min' => $max, 'max' => $min);
+    }
+
+    private function getYearsFromDate($birthday)
+    {
+        $minDate = new \DateTime($birthday);
+        $minInterval = $minDate->diff(new \DateTime());
+        return $minInterval->y;
+    }
+
     /*
      * Please don't believe in this crap
      */
@@ -869,7 +902,7 @@ class ProfileModel
         return $locale;
     }
 
-    protected function labelToType($labelName)
+    public function labelToType($labelName)
     {
 
         return lcfirst($labelName);

@@ -4,9 +4,11 @@ namespace Provider;
 
 use Service\AffinityRecalculations;
 use Service\AMQPManager;
+use Service\AuthService;
 use Service\ChatMessageNotifications;
 use Service\EmailNotifications;
 use Service\MigrateSocialInvitations;
+use Service\Recommendator;
 use Service\SocialNetwork;
 use Service\TokenGenerator;
 use Silex\Application;
@@ -22,6 +24,13 @@ class ServicesServiceProvider implements ServiceProviderInterface
      */
     public function register(Application $app)
     {
+
+        $app['auth.service'] = $app->share(
+            function (Application $app) {
+                return new AuthService($app['users.model'], $app['security.password_encoder'], $app['secret']);
+            }
+        );
+
         $app['chatMessageNotifications.service'] = $app->share(
             function (Application $app) {
                 return new ChatMessageNotifications($app['emailNotification.service'], $app['orm.ems']['mysql_brain'], $app['dbs']['mysql_social'], $app['translator'], $app['users.model'], $app['users.profile.model']);
@@ -52,6 +61,15 @@ class ServicesServiceProvider implements ServiceProviderInterface
             }
         );
 
+        $app['recommendator.service'] = $app->share(
+            function (Application $app) {
+                return new Recommendator(
+                    $app['paginator'], $app['paginator.content'], $app['users.groups.model'],
+                    $app['users.model'], $app['users.recommendation.users.model'], $app['users.recommendation.content.model']
+                );
+            }
+        );
+
         $app['translator'] = $app->share(
             $app->extend(
                 'translator',
@@ -73,7 +91,7 @@ class ServicesServiceProvider implements ServiceProviderInterface
         );
 
         $app['amqpManager.service'] = $app->share(
-            function (Application $app){
+            function (Application $app) {
                 return new AMQPManager($app['amqp']);
             }
         );

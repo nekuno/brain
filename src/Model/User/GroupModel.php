@@ -426,6 +426,10 @@ class GroupModel
         /* @var $userId Node */
         $usersCount = $row->offsetGet('usersCount');
 
+        return $this->buildGroup($group, $location, $usersCount);
+    }
+
+    public function buildGroup( $group, $location, $usersCount){
         return array(
             'id' => $group->getId(),
             'name' => $group->getProperty('name'),

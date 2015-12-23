@@ -1,11 +1,19 @@
 <?php
 
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Model\Exception\ValidationException;
 use Model\Neo4j\Neo4jException;
 
 //Request::setTrustedProxies(array('127.0.0.1'));
+
+$app['auth.controller'] = $app->share(
+    function () {
+
+        return new \Controller\Security\AuthController;
+    }
+);
 
 $app['users.controller'] = $app->share(
     function () {
@@ -60,6 +68,13 @@ $app['users.groups.controller'] = $app->share(
     function () use ($app) {
 
         return new \Controller\User\GroupController($app['users.groups.model']);
+    }
+);
+
+$app['users.threads.controller'] = $app->share(
+    function () use ($app) {
+
+        return new \Controller\User\ThreadController($app['users.threads.manager']);
     }
 );
 
@@ -119,7 +134,6 @@ $app['lookUp.controller'] = $app->share(
     }
 );
 
-
 /**
  * Middleware for filter some request
  */
@@ -133,6 +147,14 @@ $app->before(
             }
             $request->request->replace(is_array($data) ? $data : array());
         }
+
+        return false;
+    }
+);
+
+$app->after(
+    function (Request $request, Response $response) {
+        $response->headers->set('Access-Control-Allow-Origin', '*');
     }
 );
 

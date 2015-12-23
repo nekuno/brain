@@ -6,6 +6,9 @@ use Model\User\RelationsModel;
 /* @var $controllers \Silex\Controller */
 $controllers = $app['controllers'];
 
+$app->match('{url}', 'auth.controller:preflightAction')->assert('url', '.+')->method('OPTIONS');
+$app->post('/login', 'auth.controller:loginAction');
+
 $app->get('/users', 'users.controller:indexAction');
 $app->post('/users', 'users.controller:postAction');
 $app->put('/users/{id}', 'users.controller:putAction');
@@ -70,6 +73,8 @@ $app->get('/users/{id}/content/compare/{id2}', 'users.controller:getUserContentC
 $app->get('/users/{id}/content/tags', 'users.controller:getUserContentTagsAction');
 $app->post('/users/{id}/content/rate', 'users.controller:rateContentAction');
 $app->get('/users/{id}/filters', 'users.controller:getAllFiltersAction');
+$app->get('/users/{id}/threads', 'users.threads.controller:getByUserAction');
+$app->post('/users/{id}/threads', 'users.threads.controller:postAction');
 $app->get('/users/{id}/recommendations/users', 'users.controller:getUserRecommendationAction');
 $app->get('/users/{id}/recommendations/content', 'users.controller:getContentRecommendationAction');
 $app->get('/users/{id}/recommendations/content/tags', 'users.controller:getContentRecommendationTagsAction');
@@ -177,6 +182,14 @@ $app->get('/lookUp', 'lookUp.controller:getAction');
 $app->post('lookUp/users/{id}', 'lookUp.controller:setAction');
 
 $app->post('/lookUp/webHook', 'lookUp.controller:setFromWebHookAction')->bind('setLookUpFromWebHook');
+
+/**
+ * Thread routes
+ */
+
+$app->get('/threads/{id}/recommendation', 'users.threads.controller:getRecommendationAction');
+$app->put('/threads/{id}', 'users.threads.controller:putAction');
+$app->delete('/threads/{id}', 'users.threads.controller:deleteAction');
 
 $controllers
     ->assert('id', '\d+')
