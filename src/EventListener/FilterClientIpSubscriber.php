@@ -44,7 +44,8 @@ class FilterClientIpSubscriber implements EventSubscriberInterface
 
         $publicActions = array(
             'lookUp.controller:setFromWebHookAction',
-            'auth.controller:loginAction'
+            'auth.controller:loginAction',
+            'auth.controller:preflightAction',
         );
 
         if ($request->headers->has('authorization')) {
