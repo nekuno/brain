@@ -30,7 +30,7 @@ class AuthController
         $password = $request->request->get('password');
 
         if (!$username || !$password) {
-            throw new BadRequestHttpException('Username and password required');
+            throw new BadRequestHttpException('El nombre de usuario y la contraseña que ingresaste no coinciden con nuestros registros.');
         }
 
         /* @var $authService AuthService */

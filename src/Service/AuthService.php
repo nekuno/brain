@@ -41,7 +41,7 @@ class AuthService
         try {
             $user = $this->um->findBy(array('usernameCanonical' => $this->um->canonicalize($username)));
         } catch (\Exception $e) {
-            throw new UnauthorizedHttpException('', 'The username or password don\'t match');
+            throw new UnauthorizedHttpException('', 'El nombre de usuario y la contraseña que ingresaste no coinciden con nuestros registros.');
         }
 
         $encodedPassword = $user['password'];
@@ -49,7 +49,7 @@ class AuthService
         $valid = $this->encoder->isPasswordValid($encodedPassword, $password, $salt);
 
         if (!$valid) {
-            throw new UnauthorizedHttpException('', 'The username or password don\'t match');
+            throw new UnauthorizedHttpException('', 'El nombre de usuario y la contraseña que ingresaste no coinciden con nuestros registros.');
         }
 
         unset($user['password']);
