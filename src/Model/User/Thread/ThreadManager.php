@@ -267,7 +267,7 @@ class ThreadManager
 
         if (isset($data['userId'])) {
             try {
-                $this->userModel->getById((integer)$data['userId']);
+                $this->userModel->getById((integer)$data['userId'], true);
             } catch (NotFoundHttpException $e) {
                 $errors['userId'] = array($e->getMessage());
             }

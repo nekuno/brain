@@ -61,7 +61,7 @@ class UsersThreadsCreateCommand extends ApplicationAwareCommand
         if ($all) {
             $users = $userModel->getAll();
         } else if ($userId) {
-            $users = array($userModel->getById($userId));
+            $users = array($userModel->getById($userId, true));
         }
 
         $threads = $this->loadThreads($scenario);
