@@ -44,7 +44,7 @@ class ThreadController
         $recommendator = $app['recommendator.service'];
 
         try {
-            $result = $recommendator->getRecommendationFromThread($thread, $request);
+            $result = $recommendator->getRecommendationFromThreadAndRequest($thread, $request);
 
             if ($request->get('offset') == 0) {
                 $this->threadManager->cacheResults($thread,
@@ -103,7 +103,7 @@ class ThreadController
         /** @var Recommendator $recommendator */
         $recommendator = $app['recommendator.service'];
         try {
-            $result = $recommendator->getRecommendationFromThread($thread, $request);
+            $result = $recommendator->getRecommendationFromThreadAndRequest($thread, $request);
             $this->threadManager->cacheResults($thread,
                 array_slice($result['items'], 0, 5),
                 $result['pagination']['total']);
@@ -135,9 +135,11 @@ class ThreadController
         $recommendator = $app['recommendator.service'];
 
         try {
-            $result = $recommendator->getRecommendationFromThread($thread, $request);
+            $result = $recommendator->getRecommendationFromThreadAndRequest($thread, $request);
 
-            $this->threadManager->cacheResults($thread, array_slice($result['items'], 0, 5));
+            $this->threadManager->cacheResults($thread,
+                array_slice($result['items'], 0, 5),
+                $result['pagination']['total']);
 
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {

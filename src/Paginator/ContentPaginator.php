@@ -122,6 +122,7 @@ class ContentPaginator extends Paginator
         $url_parts = parse_url($url);
         parse_str($url_parts['query'], $params);
 
+        $params['offset'] = isset($params['offset'])? $params['offset'] : 0;
         if ($next) {
 
             $params['offset'] -= $foreignContent;

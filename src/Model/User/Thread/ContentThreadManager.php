@@ -117,10 +117,10 @@ class ContentThreadManager
         $qb = $this->graphManager->createQueryBuilder();
         $qb->match('(thread:Thread)')
             ->where('id(thread) = {id}')
-            ->optionalMatch('(thread)-[old_tag_rel:FILTERS_BY]->(:Tag')
+            ->optionalMatch('(thread)-[old_tag_rel:FILTERS_BY]->(:Tag)')
             ->delete('old_tag_rel')
             ->with('thread')
-            ->match('(tag:Tag{name: {tagname} })')
+            ->merge('(tag:Tag{name: {tagname} })')
             ->merge('(thread)-[:FILTERS_BY]->(tag)')
             ->returns('thread');
         $qb->setParameters(array(

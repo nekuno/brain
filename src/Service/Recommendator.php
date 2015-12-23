@@ -53,7 +53,48 @@ class Recommendator
         $this->contentRecommendationPaginatedModel = $contentRecommendationPaginatedModel;
     }
 
-    public function getRecommendationFromThread(Thread $thread, Request $request)
+    public function getRecommendationFromThread(Thread $thread)
+    {
+        $user = $this->userModel->getOneByThread($thread->getId());
+        //Todo: Change to Class::class if PHP >= 5.5
+        switch (get_class($thread)) {
+            case 'Model\User\Thread\ContentThread':
+
+                /* @var $thread ContentThread */
+
+                $filters = array('id' => $user['qnoow_id']);
+
+                if ($thread->getTag()) {
+                    $filters['tag'] = urldecode($thread->getTag());
+                }
+
+                $filters['type'] = urldecode($thread->getType());
+
+                return $this->getContentRecommendation($filters);
+
+                break;
+            case 'Model\User\Thread\UsersThread':
+                /* @var $thread UsersThread */
+                $filters = array(
+                    'id' => $user['qnoow_id'],
+                    'profileFilters' => $thread->getProfileFilters(),
+                    'userFilters' => $thread->getUserFilters(),
+                );
+
+                return $this->getUserRecommendation($filters);
+
+                break;
+            default:
+                $recommendation = array();
+                break;
+        }
+
+        return array(
+            'thread' => $thread,
+            'recommendation' => $recommendation);
+    }
+
+    public function getRecommendationFromThreadAndRequest(Thread $thread, Request $request)
     {
         $user = $this->userModel->getOneByThread($thread->getId());
         //Todo: Change to Class::class if PHP >= 5.5
@@ -157,8 +198,11 @@ class Recommendator
 
     }
 
-    private function getUserRecommendation($filters, $request)
+    private function getUserRecommendation($filters, $request = null)
     {
+        if ($request == null){
+            $request = new Request();
+        }
         //TODO: Move to userRecommendationPaginatedModel->validate($filters)
         if (isset($filters['userFilters']['groups']) && null !== $filters['userFilters']['groups']) {
             foreach ($filters['userFilters']['groups'] as $group) {
@@ -172,8 +216,12 @@ class Recommendator
         return $result;
     }
 
-    private function getContentRecommendation($filters, $request)
+    private function getContentRecommendation($filters, $request = null)
     {
+        if ($request == null){
+            $request = new Request();
+        }
+
         $result = $this->contentPaginator->paginate($filters, $this->contentRecommendationPaginatedModel, $request);
 
         return $result;
