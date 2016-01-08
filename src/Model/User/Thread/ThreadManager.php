@@ -104,7 +104,7 @@ class ThreadManager
      * @return Thread
      * @throws \Exception
      */
-    private function buildThread(Node $threadNode)
+    public function buildThread(Node $threadNode)
     {
         $id = $threadNode->getId();
 
@@ -313,6 +313,7 @@ class ThreadManager
     /**
      * @param Thread $thread Which thread returned the results
      * @param array $items
+     * @param $total
      * @return Thread
      * @throws \Exception
      * @throws \Model\Neo4j\Neo4jException

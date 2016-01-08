@@ -31,6 +31,7 @@ use Model\User\SocialNetwork\LinkedinSocialNetworkModel;
 use Model\User\SocialNetwork\SocialProfileManager;
 use Model\User\Thread\ContentThreadManager;
 use Model\User\Thread\ThreadManager;
+use Model\User\Thread\ThreadPaginatedModel;
 use Model\User\Thread\UsersThreadManager;
 use Model\User\TokensModel;
 use Model\User\UserStatsManager;
@@ -255,6 +256,13 @@ class ModelsServiceProvider implements ServiceProviderInterface
             function ($app) {
 
                 return new ThreadManager($app['neo4j.graph_manager'], $app['users.model'], $app['users.threadusers.manager'], $app['users.threadcontent.manager']);
+            }
+        );
+
+        $app['users.threads.paginated.model'] = $app->share(
+            function ($app) {
+
+                return new ThreadPaginatedModel($app['neo4j.graph_manager'], $app['users.threads.manager']);
             }
         );
 

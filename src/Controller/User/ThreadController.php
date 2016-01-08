@@ -6,6 +6,8 @@
 namespace Controller\User;
 
 use Model\User\Thread\ThreadManager;
+use Model\User\Thread\ThreadPaginatedModel;
+use Paginator\Paginator;
 use Service\Recommendator;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
@@ -66,25 +68,26 @@ class ThreadController
     /**
      * Get threads from a given user
      * @param Application $app
+     * @param Request $request
      * @param int $id user id
      * @return \Symfony\Component\HttpFoundation\JsonResponse
-     * @throws \Exception
      */
-    public function getByUserAction(Application $app, $id)
+    public function getByUserAction(Application $app, Request $request, $id)
     {
 
-        try {
-            $threads = $this->threadManager->getByUser($id);
-        } catch (\Exception $e) {
-            if ($app['env'] == 'dev') {
-                throw $e;
-            }
+        $filters = array(
+            'userId' => $id
+        );
 
-            return $app->json($e->getMessage(), 500);
-        }
+        /** @var Paginator $paginator */
+        $paginator = $app['paginator'];
 
+        /** @var ThreadPaginatedModel $model */
+        $model = $app['users.threads.paginated.model'];
 
-        return $app->json(array('threads' => $threads));
+        $result = $paginator->paginate($filters, $model, $request);
+
+        return $app->json($result);
     }
 
     /**
