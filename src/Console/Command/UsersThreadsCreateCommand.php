@@ -1,24 +1,11 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: yawmoght
- * Date: 29/10/15
- * Time: 15:03
- */
 
 namespace Console\Command;
 
 
 use Console\ApplicationAwareCommand;
-use Http\OAuth\Factory\ResourceOwnerFactory;
-use Model\User\LookUpModel;
-use Model\User\GhostUser\GhostUserManager;
-use Model\User\SocialNetwork\SocialProfile;
-use Model\User\SocialNetwork\SocialProfileManager;
 use Model\User\Thread\ThreadManager;
-use Model\User\TokensModel;
 use Model\UserModel;
-use Service\AMQPManager;
 use Service\Recommendator;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -98,8 +85,8 @@ class UsersThreadsCreateCommand extends ApplicationAwareCommand
                     'filters' => array(
                         'profileFilters' => array(
                             'birthday' => array(
-                                'min' => $this->YearsToBirthday(22),
-                                'max' => $this->YearsToBirthday(32),
+                                'min' => $this->YearsToBirthday(32),
+                                'max' => $this->YearsToBirthday(22),
                             ),
                             'location' => array(
                                 'distance' => 10,
@@ -108,6 +95,9 @@ class UsersThreadsCreateCommand extends ApplicationAwareCommand
                                     'longitude' => -3.7037901999999576,
                                     'address' => 'Madrid, Madrid, Spain'
                                 )
+                            ),
+                            'gender' => array(
+                                'female'
                             )
                         ),
                         'order' => 'content',
