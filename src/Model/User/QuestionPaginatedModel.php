@@ -70,7 +70,7 @@ class QuestionPaginatedModel implements PaginatedInterface
             ->orderBy('ID(answers)', 'ID(acceptedAnswers)')
             ->with('a', 'ua', 'q', 'COLLECT(DISTINCT acceptedAnswers) AS acceptedAnswers', 'r', 'COLLECT(DISTINCT answers) AS answers')
             ->returns('a AS answer', 'ua AS userAnswer', 'acceptedAnswers', 'q AS question', 'r AS rates', 'answers')
-            ->orderBy('ua.answeredAt DESC')
+            ->orderBy('id(q)')
             ->skip('{ offset }')
             ->setParameter('offset', (integer)$offset)
             ->limit('{ limit }')
