@@ -30,8 +30,8 @@ profile:
         min: 0
         max: 20000
         label:
-            en: 'Keyword'
-            es: 'Palabra clave'
+            en: 'About me'
+            es: 'Sobre mí'
     birthday:
         type: birthday
         required: true
