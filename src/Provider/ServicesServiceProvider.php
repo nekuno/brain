@@ -11,6 +11,7 @@ use Service\MigrateSocialInvitations;
 use Service\Recommendator;
 use Service\SocialNetwork;
 use Service\TokenGenerator;
+use Service\UserAggregator;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
 use Silex\Translator;
@@ -66,6 +67,15 @@ class ServicesServiceProvider implements ServiceProviderInterface
                 return new Recommendator(
                     $app['paginator'], $app['paginator.content'], $app['users.groups.model'],
                     $app['users.model'], $app['users.recommendation.users.model'], $app['users.recommendation.content.model']
+                );
+            }
+        );
+
+        $app['userAggregator.service'] = $app->share(
+            function (Application $app) {
+                return new UserAggregator(
+                    $app['users.model'], $app['users.ghostuser.manager'], $app['users.socialprofile.manager'],
+                    $app['api_consumer.resource_owner_factory'], $app['users.lookup.model'], $app['amqpManager.service']
                 );
             }
         );

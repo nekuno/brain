@@ -1,23 +1,10 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: yawmoght
- * Date: 29/10/15
- * Time: 15:03
- */
 
 namespace Console\Command;
 
 
 use Console\ApplicationAwareCommand;
-use Http\OAuth\Factory\ResourceOwnerFactory;
-use Model\User\LookUpModel;
-use Model\User\GhostUser\GhostUserManager;
-use Model\User\SocialNetwork\SocialProfile;
-use Model\User\SocialNetwork\SocialProfileManager;
-use Model\User\TokensModel;
-use Model\UserModel;
-use Service\AMQPManager;
+use Service\UserAggregator;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -65,78 +52,15 @@ class UsersSocialMediaAddCommand extends ApplicationAwareCommand
 
             $output->writeln(sprintf('Loading user %s in %s', $username, $resource));
 
-            if (!($username && $resource)){
-                $output->writeln('Skipped user to load');
+            /** @var UserAggregator $userAggregator */
+            $userAggregator = $this->app['userAggregator.service'];
+
+            $user = $userAggregator->addUser($username, $resource, $id);
+
+            if (!$user){
+                $output->writeln(sprintf('Error while creating user with name %s to the resource %s and with the id %s',
+                                    $username, $resource, $id));
                 continue;
-            }
-
-            if (!in_array($resource, TokensModel::getResourceOwners())){
-                $output->writeln('Resource '.$resource.' not supported.');
-                continue;
-            }
-
-            /** @var ResourceOwnerFactory $resourceOwnerFactory */
-            $resourceOwnerFactory = $this->app['api_consumer.resource_owner_factory'];
-
-            $resourceOwner = $resourceOwnerFactory->build($resource);
-
-            //if not implemented for resource or request error when asking API
-            try{
-                $url = $resourceOwner->getProfileUrl(array('screenName'=>$username));
-            } catch (\Exception $e){
-                $output->writeln('ERROR: Could not get profile url for user '.$username. ' and resource '.$resource);
-                $output->writeln('Reason: '.$e->getMessage());
-                continue;
-            }
-
-            /** @var SocialProfileManager $socialProfileManager */
-            $socialProfileManager = $this->app['users.socialprofile.manager'];
-            $socialProfiles = $socialProfileManager->getByUrl($url);
-
-            if (count($socialProfiles) == 0) {
-
-                $output->writeln('Creating new social profile with url '. $url);
-
-                if ($id) {
-                    /** @var UserModel $userModel */
-                    $userModel = $this->app['users.model'];
-                    $user = $userModel->getById((integer)$id, true);
-                    $id = $user['qnoow_id'];
-                    $output->writeln('SUCCESS: Found user with id '.$id);
-                } else {
-                    /** @var GhostUserManager $ghostUserManager */
-                    $ghostUserManager = $this->app['users.ghostuser.manager'];
-                    $user = $ghostUserManager->create();
-                    $id = $user->getId();
-                    $output->writeln('SUCCESS: Created ghost user with id:' . $id);
-                }
-
-                $socialProfileArray = array($resource => $url);
-
-                /** @var LookUpModel $lookupModel */
-                $lookupModel = $this->app['users.lookup.model'];
-                $lookupModel->setSocialProfiles($socialProfileArray, $id);
-                $lookupModel->dispatchSocialNetworksAddedEvent($id, $socialProfileArray);
-
-                /** @var SocialProfileManager $socialProfileManager $sps */
-                $socialProfiles = $socialProfileManager->getByUrl($url);
-
-            } else {
-                $output->writeln('Found an already existing social profile with url '.$url);
-            }
-
-            $output->write('Enqueuing fetching. ');
-
-            /* @var $amqpManager AMQPManager */
-            $amqpManager = $this->app['amqpManager.service'];
-
-            /** @var SocialProfile $socialProfile */
-            foreach ($socialProfiles as $socialProfile) {
-                $amqpManager->enqueueMessage(array(
-                    'userId' => $socialProfile->getUserId(),
-                    'resourceOwner' => $socialProfile->getResource(),
-                    'public' => true,
-                ), 'brain.fetching.links');
             }
 
             $output->writeln('Success!');
