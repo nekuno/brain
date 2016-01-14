@@ -135,12 +135,21 @@ class ThreadManager
      */
     private function getCategory(Node $threadNode)
     {
-        $labels = $threadNode->getLabels();
+        //$labels = $threadNode->getLabels();
+        $id = $threadNode->getId();
+        $qb = $this->graphManager->createQueryBuilder();
+        $qb->setParameter('id', $id);
 
+        $qb->match('(thread:Thread)')
+            ->where('id(thread) = {id}')
+            ->returns('labels(thread) as labels');
+
+        $rs = $qb->getQuery()->getResultSet();
+        $labels = $rs->current()->offsetGet('labels');
         /** @var Label $label */
         foreach ($labels as $label) {
-            if ($label->getName() != ThreadManager::LABEL_THREAD) {
-                return $label->getName();
+            if ($label != ThreadManager::LABEL_THREAD) {
+                return $label;
             }
         }
 
