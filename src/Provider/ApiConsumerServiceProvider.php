@@ -4,6 +4,7 @@ namespace Provider;
 
 use ApiConsumer\Factory\FetcherFactory;
 use ApiConsumer\Fetcher\FetcherService;
+use ApiConsumer\Fetcher\GetOldTweets\GetOldTweets;
 use ApiConsumer\Registry\Registry;
 use Http\OAuth\Factory\ResourceOwnerFactory;
 use Igorw\Silex\ConfigServiceProvider;
@@ -115,6 +116,14 @@ class ApiConsumerServiceProvider implements ServiceProviderInterface
                 }
 
                 return $fetcher;
+            }
+        );
+
+        $app['get_old_tweets'] = $app->share(
+            function ($app) {
+                $getoldtweets = new GetOldTweets();
+
+                return $getoldtweets;
             }
         );
     }
