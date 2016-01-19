@@ -104,7 +104,7 @@ class UserAggregator
                 'userId' => $socialProfile->getUserId(),
                 'resourceOwner' => $socialProfile->getResource(),
                 'public' => true,
-            ), 'brain.fetching.links');
+            ), 'brain.channel.user_aggregator');
         }
     }
 
