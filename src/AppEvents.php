@@ -69,5 +69,5 @@ final class AppEvents
     /**
      * Fired when a channel url is detected
      */
-    const ADD_CHANNEL = 'add.channel';
+    const CHANNEL_ADDED = 'channel.added';
 }

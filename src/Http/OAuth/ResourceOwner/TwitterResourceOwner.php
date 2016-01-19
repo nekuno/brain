@@ -106,7 +106,7 @@ class TwitterResourceOwner extends Oauth1GenericResourceOwner
             throw new \Exception ('Cannot add twitter channel with username and url not set');
         }
 
-        $this->dispatcher->dispatch(\AppEvents::ADD_CHANNEL, new ChannelEvent($this->getName(), $url, $username));
+        $this->dispatcher->dispatch(\AppEvents::CHANNEL_ADDED, new ChannelEvent($this->getName(), $url, $username));
     }
 
     /**

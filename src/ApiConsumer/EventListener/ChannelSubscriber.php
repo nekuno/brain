@@ -32,12 +32,12 @@ class ChannelSubscriber implements EventSubscriberInterface
     {
 
         return array(
-            \AppEvents::ADD_CHANNEL => array('onAddChannel'),
+            \AppEvents::CHANNEL_ADDED => array('onChannelAdded'),
         );
     }
 
 
-    public function onAddChannel(ChannelEvent $event)
+    public function onChannelAdded(ChannelEvent $event)
     {
 
         $resourceOwner = $event->getResourceOwner();
