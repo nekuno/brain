@@ -104,8 +104,18 @@ class ChannelWorker extends LoggerAwareWorker implements RabbitMQConsumerInterfa
                     $this->getOldTweets->execute($userId);
                     $tweets = $this->getOldTweets->loadCSV();
                     $urls = $this->getOldTweets->getURLsFromTweets($tweets);
+
+                    $links = array();
+                    foreach ($urls as $url){
+                        $links[] = array('url' => $url);
+                    }
+                    $processedLinks = $this->fetcherService->processLinks($links, $userId, $resourceOwner);
+
+                    $this->logger->info(sprintf('Processed %s links from %s using GetOldTweets library', count($processedLinks), $userId));
+
                     break;
                 default:
+                    throw new \Exception('Resource %s not supported in this queue', $resourceOwner);
                     break;
             }
 
