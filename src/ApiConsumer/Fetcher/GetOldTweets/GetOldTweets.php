@@ -4,13 +4,17 @@
 namespace ApiConsumer\Fetcher\GetOldTweets;
 
 
+use ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser;
+
 class GetOldTweets
 {
     protected $path;
+    protected $parser;
 
-    public function __construct()
+    public function __construct(TwitterUrlParser $parser)
     {
         $this->path = __DIR__.'/got.jar';
+        $this->parser = $parser;
     }
 
 
@@ -63,6 +67,16 @@ class GetOldTweets
         }
 
         return $tweets;
+    }
+
+    public function getURLsFromTweets(array $tweets)
+    {
+        $urls = array();
+        foreach ($tweets as $tweet)
+        {
+            $urls = array_merge($urls, $this->parser->extractURLsFromText($tweet['text']));
+        }
+        return $urls;
     }
 
     private function getOutputFilePath()

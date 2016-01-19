@@ -5,6 +5,7 @@ namespace Worker;
 
 use ApiConsumer\Fetcher\FetcherService;
 use ApiConsumer\Fetcher\GetOldTweets\GetOldTweets;
+use ApiConsumer\LinkProcessor\UrlParser\UrlParser;
 use Doctrine\DBAL\Connection;
 use Model\Neo4j\Neo4jException;
 use Model\User\TokensModel;
@@ -102,6 +103,7 @@ class ChannelWorker extends LoggerAwareWorker implements RabbitMQConsumerInterfa
                 case TokensModel::TWITTER:
                     $this->getOldTweets->execute($userId);
                     $tweets = $this->getOldTweets->loadCSV();
+                    $urls = $this->getOldTweets->getURLsFromTweets($tweets);
                     break;
                 default:
                     break;
