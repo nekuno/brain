@@ -2,6 +2,7 @@
 
 namespace Http\OAuth\ResourceOwner;
 
+use ApiConsumer\Event\ChannelEvent;
 use GuzzleHttp\Exception\RequestException;
 use Model\User\TokensModel;
 use Service\LookUp\LookUp;
@@ -95,6 +96,17 @@ class TwitterResourceOwner extends Oauth1GenericResourceOwner
         }
 
         return LookUp::TWITTER_BASE_URL . $screenName;
+    }
+
+    public function dispatchChannel(array $data)
+    {
+        $url = isset($data['url']) ? $data['url'] : null;
+        $username = isset($data['username']) ? $data['username'] : null;
+        if (!$username && $url) {
+            throw new \Exception ('Cannot add twitter channel with username and url not set');
+        }
+
+        $this->dispatcher->dispatch(\AppEvents::ADD_CHANNEL, new ChannelEvent($this->getName(), $url, $username));
     }
 
     /**

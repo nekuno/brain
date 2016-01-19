@@ -36,6 +36,12 @@ class UserAggregator
         $this->amqpManager = $AMQPManager;
     }
 
+    /**
+     * @param $username
+     * @param $resource
+     * @param null $id
+     * @return SocialProfile[]|null
+     */
     public function addUser($username, $resource, $id = null)
     {
         if (!($username && $resource)){
@@ -85,9 +91,14 @@ class UserAggregator
             //$output->writeln('Found an already existing social profile with url '.$url);
         }
 
-        //$output->write('Enqueuing fetching. ');
+        return $socialProfiles;
+    }
 
-        /** @var SocialProfile $socialProfile */
+    /**
+     * @param SocialProfile[] $socialProfiles
+     */
+    public function enqueueFetching(array $socialProfiles)
+    {
         foreach ($socialProfiles as $socialProfile) {
             $this->amqpManager->enqueueMessage(array(
                 'userId' => $socialProfile->getUserId(),
@@ -95,8 +106,6 @@ class UserAggregator
                 'public' => true,
             ), 'brain.fetching.links');
         }
-
-        return $socialProfiles;
     }
 
 }

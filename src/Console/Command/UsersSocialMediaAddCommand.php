@@ -55,13 +55,17 @@ class UsersSocialMediaAddCommand extends ApplicationAwareCommand
             /** @var UserAggregator $userAggregator */
             $userAggregator = $this->app['userAggregator.service'];
 
-            $user = $userAggregator->addUser($username, $resource, $id);
+            $socialProfiles = $userAggregator->addUser($username, $resource, $id);
 
-            if (!$user){
+
+            if (!$socialProfiles){
                 $output->writeln(sprintf('Error while creating user with name %s to the resource %s and with the id %s',
                                     $username, $resource, $id));
                 continue;
             }
+
+            $output->writeln('Enqueuing fetching');
+            $userAggregator->enqueueFetching($socialProfiles);
 
             $output->writeln('Success!');
         }
