@@ -4,10 +4,9 @@
 namespace Worker;
 
 use ApiConsumer\Fetcher\FetcherService;
+use ApiConsumer\Fetcher\GetOldTweets\GetOldTweets;
 use Doctrine\DBAL\Connection;
 use Model\Neo4j\Neo4jException;
-use Model\User\LookUpModel;
-use Model\User\SocialNetwork\SocialProfileManager;
 use Model\User\TokensModel;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Message\AMQPMessage;
@@ -25,16 +24,6 @@ class ChannelWorker extends LoggerAwareWorker implements RabbitMQConsumerInterfa
     protected $channel;
 
     /**
-     * @var TokensModel
-     */
-    protected $tm;
-
-    /**
-     * @var LookupModel
-     */
-    protected $lookupModel;
-
-    /**
      * @var FetcherService
      */
     protected $fetcherService;
@@ -45,23 +34,19 @@ class ChannelWorker extends LoggerAwareWorker implements RabbitMQConsumerInterfa
     protected $connectionBrain;
 
     /**
-     * @var SocialProfileManager
+     * @var GetOldTweets
      */
-    protected $socialProfileManager;
+    protected $getOldTweets;
 
     public function __construct(AMQPChannel $channel,
                                 FetcherService $fetcherService,
-                                TokensModel $tm,
-                                LookUpModel $lm,
-                                SocialProfileManager $socialProfileManager,
+                                GetOldTweets $getOldTweets,
                                 Connection $connectionBrain)
     {
 
         $this->channel = $channel;
         $this->fetcherService = $fetcherService;
-        $this->tm = $tm;
-        $this->lookupModel = $lm;
-        $this->socialProfileManager = $socialProfileManager;
+        $this->getOldTweets = $getOldTweets;
         $this->connectionBrain = $connectionBrain;
     }
 
@@ -108,15 +93,22 @@ class ChannelWorker extends LoggerAwareWorker implements RabbitMQConsumerInterfa
             }
             $userId = $data['userId'];
 
-            switch($this->getTrigger($message)){
-                case 'twitter_profile':
-                    $username=$data['username'];
+            if (!isset($data['resourceOwner'])){
+                throw new \Exception('Enqueued message does not include resourceOwner parameter');
+            }
+            $resourceOwner = $data['resourceOwner'];
+
+            switch($resourceOwner){
+                case TokensModel::TWITTER:
+                    $this->getOldTweets->execute($userId);
+                    $tweets = $this->getOldTweets->loadCSV();
                     break;
                 default:
                     break;
             }
+
         } catch (\Exception $e) {
-            $this->logger->error(sprintf('Worker: Error fetching for user %d with message %s on file %s, line %d', $userId, $e->getMessage(), $e->getFile(), $e->getLine()));
+            $this->logger->error(sprintf('Worker: Error fetching for channel with message %s on file %s, line %d', $e->getMessage(), $e->getFile(), $e->getLine()));
             if ($e instanceof Neo4jException) {
                 $this->logger->error(sprintf('Query: %s' . "\n" . 'Data: %s', $e->getQuery(), print_r($e->getData(), true)));
             }

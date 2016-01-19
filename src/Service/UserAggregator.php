@@ -103,7 +103,6 @@ class UserAggregator
             $this->amqpManager->enqueueMessage(array(
                 'userId' => $socialProfile->getUserId(),
                 'resourceOwner' => $socialProfile->getResource(),
-                'public' => true,
             ), 'brain.channel.user_aggregator');
         }
     }

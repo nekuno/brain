@@ -14,7 +14,7 @@ class GetOldTweets
     }
 
 
-    public function execute($username, $maxtweets = null, $since=null, $until=null, $querysearch = null)
+    public function execute($username, $maxtweets = 1000, $since=null, $until=null, $querysearch = null)
     {
         $options = [];
 
