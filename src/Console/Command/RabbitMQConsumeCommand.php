@@ -137,7 +137,7 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
                 $fetcher = $this->app['api_consumer.fetcher'];
                 $fetcher->setLogger($logger);
 
-                $worker = new ChannelWorker($channel, $fetcher, $this->app['getoldtweet'], $this->app['dbs']['mysql_brain']);
+                $worker = new ChannelWorker($channel, $fetcher, $this->app['get_old_tweets'], $this->app['dbs']['mysql_brain']);
                 $worker->setLogger($logger);
                 $logger->notice('Processing channel queue');
                 break;
