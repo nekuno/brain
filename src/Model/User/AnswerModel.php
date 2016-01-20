@@ -70,6 +70,17 @@ class AnswerModel
         return $count;
     }
 
+    public function answer(array $data)
+    {
+        $this->validate($data);
+
+        if ($this->existsUserAnswer($data['userId'], $data['questionId'])) {
+            return $this->update($data);
+        } else {
+            return $this->create($data);
+        }
+    }
+
     public function create(array $data)
     {
 
@@ -444,6 +455,29 @@ class AnswerModel
             ->where('id(q) = { questionId }', 'id(a) = { answerId }')
             ->setParameter('questionId', (integer)$questionId)
             ->setParameter('answerId', (integer)$answerId)
+            ->returns('a AS answer');
+
+        $query = $qb->getQuery();
+
+        $result = $query->getResultSet();
+
+        return $result->count() > 0;
+    }
+
+    /**
+     * @param $userId
+     * @param $questionId
+     * @return bool
+     * @throws \Exception
+     */
+    protected function existsUserAnswer($userId, $questionId)
+    {
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(q:Question)<-[:IS_ANSWER_OF]-(a:Answer)<-[ua:ANSWERS]->(u:User)')
+            ->where('id(q) = { questionId }', 'u.qnoow_id = { userId }')
+            ->setParameter('questionId', (integer)$questionId)
+            ->setParameter('userId', (integer)$userId)
             ->returns('a AS answer');
 
         $query = $qb->getQuery();
