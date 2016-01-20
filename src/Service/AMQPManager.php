@@ -18,6 +18,7 @@ class AMQPManager
     const FETCHING = 'fetching';
     const PREDICTION = 'prediction';
     const SOCIAL_NETWORK = 'social_network';
+    const CHANNEL = 'channel';
 
     protected $connection;
 

@@ -18,6 +18,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
+use Worker\ChannelWorker;
 use Worker\LinkProcessorWorker;
 use Worker\MatchingCalculatorWorker;
 use Worker\PredictionWorker;
@@ -36,6 +37,7 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
         AMQPManager::MATCHING,
         AMQPManager::PREDICTION,
         AMQPManager::SOCIAL_NETWORK,
+        AMQPManager::CHANNEL,
     );
 
     protected function configure()
@@ -125,6 +127,20 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
                 $logger->notice('Processing social network queue');
                 break;
 
+            case AMQPManager::CHANNEL:
+
+                $fetchLinksInstantSubscriber = new FetchLinksInstantSubscriber($this->app['guzzle.client'], $this->app['instant.host']);
+                $fetchLinksSubscriber = new FetchLinksSubscriber($output);
+                $dispatcher->addSubscriber($fetchLinksSubscriber);
+                $dispatcher->addSubscriber($fetchLinksInstantSubscriber);
+                /* @var $fetcher FetcherService */
+                $fetcher = $this->app['api_consumer.fetcher'];
+                $fetcher->setLogger($logger);
+
+                $worker = new ChannelWorker($channel, $fetcher, $this->app['getoldtweet'], $this->app['dbs']['mysql_brain']);
+                $worker->setLogger($logger);
+                $logger->notice('Processing channel queue');
+                break;
             default:
                 throw new \Exception('Invalid consumer name');
         }

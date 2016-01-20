@@ -18,6 +18,10 @@ class UrlParser
     }
 
     // Basic regex from http://www.phpro.org/examples/Get-All-URLs-From-Page.html
+    /**
+     * @param $string
+     * @return array
+     */
     public function extractURLsFromText($string)
     {
         $regex = '/https?\:\/\/[^\" ]+/i';

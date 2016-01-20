@@ -5,7 +5,6 @@ namespace Worker;
 
 use ApiConsumer\Fetcher\FetcherService;
 use ApiConsumer\Fetcher\GetOldTweets\GetOldTweets;
-use ApiConsumer\LinkProcessor\UrlParser\UrlParser;
 use Doctrine\DBAL\Connection;
 use Model\Neo4j\Neo4jException;
 use Model\User\TokensModel;
@@ -101,23 +100,27 @@ class ChannelWorker extends LoggerAwareWorker implements RabbitMQConsumerInterfa
 
             switch($resourceOwner){
                 case TokensModel::TWITTER:
-                    $this->getOldTweets->execute($userId);
-                    $tweets = $this->getOldTweets->loadCSV();
-                    $urls = $this->getOldTweets->getURLsFromTweets($tweets);
-
                     $links = array();
-                    foreach ($urls as $url){
-                        $links[] = array('url' => $url);
-                    }
-                    $processedLinks = $this->fetcherService->processLinks($links, $userId, $resourceOwner);
+                    $minDate = null;
 
-                    $this->logger->info(sprintf('Processed %s links from %s using GetOldTweets library', count($processedLinks), $userId));
+                    do{
+                        $until = $minDate;
+                        $this->getOldTweets->execute($userId, GetOldTweets::MAX_TWEETS, $until);
+                        $tweets = $this->getOldTweets->loadCSV();
+
+                        $links = array_merge($links, $this->getOldTweets->getLinksFromTweets($tweets));
+                        $minDate = $this->getOldTweets->getMinDate($tweets);
+
+                    } while ($this->getOldTweets->needMore($tweets) && ($until !== $minDate));
 
                     break;
                 default:
                     throw new \Exception('Resource %s not supported in this queue', $resourceOwner);
-                    break;
             }
+
+            $processedLinks = $this->fetcherService->processLinks($links, $userId, $resourceOwner);
+
+            $this->logger->info(sprintf('Processed %s links from %s using GetOldTweets library', count($processedLinks), $userId));
 
         } catch (\Exception $e) {
             $this->logger->error(sprintf('Worker: Error fetching for channel with message %s on file %s, line %d', $e->getMessage(), $e->getFile(), $e->getLine()));
