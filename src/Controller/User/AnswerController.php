@@ -30,14 +30,14 @@ class AnswerController
         $data = $request->request->all();
         $data['locale'] = $this->getLocale($request, $app['locale.options']['default']);
 
-        $userAnswer = $this->answerModel->create($data);
+        $userAnswer = $this->answerModel->answer($data);
 
         // TODO: Refactor this to listener
         /* @var $questionModel QuestionModel */
         $questionModel = $app['questionnaire.questions.model'];
         $questionModel->setOrUpdateRankingForQuestion($data['questionId']);
 
-        return $app->json($userAnswer, 201);
+        return $app->json($userAnswer);
     }
 
     public function updateAction(Request $request, Application $app)
