@@ -68,6 +68,10 @@ class AMQPManager
                 $data['topic'] = 'brain.social_network.*';
                 $data['queueName'] = 'brain.social_network';
                 break;
+            case $this::CHANNEL:
+                $data['topic'] = 'brain.channel.*';
+                $data['queueName'] = 'brain.channel';
+                break;
             default:
                 throw new \Exception('RabbitMQ queue not supported');
         }
