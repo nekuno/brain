@@ -99,15 +99,11 @@ class GraphManager implements LoggerAwareInterface
         $id2 = (integer)$id2;
 
         $rels = array();
-
         $rels = array_merge($rels, $this->copyRelationships($id1, $id2, 'outgoing'));
 
         $rels = array_merge($rels, $this->copyRelationships($id1, $id2, 'incoming'));
-
         $props = $this->copyProperties($id1, $id2);
-
         $labels = $this->copyLabels($id1, $id2);
-
         //delete n1
         $qb = $this->createQueryBuilder();
         $qb->match(('(n1)'))
@@ -118,7 +114,6 @@ class GraphManager implements LoggerAwareInterface
             ->returns('count(r1)+count(r2) as amount');
         $qb->setParameter('id1', $id1);
         $deleted = $qb->getQuery()->getResultSet();
-
         $lastProps = $this->setProperties($this->lastProperties, $id2);
 
         return array('relationships' => $rels,
@@ -179,7 +174,7 @@ class GraphManager implements LoggerAwareInterface
     private function copyProperties($id1, $id2)
     {
         //TODO: Improve code placement of unique node properties
-        $unique = array('qnoow_id');
+        $unique = array('qnoow_id', 'twitterID', 'googleID', 'facebookID', 'spotifyID', 'usernameCanonical', 'emailCanonical');
 
         //get properties
         $qb = $this->createQueryBuilder();
@@ -273,10 +268,10 @@ class GraphManager implements LoggerAwareInterface
 
         if (is_string($value)) {
             $value = '"' . addslashes($value) . '"';
-        } else if (is_bool($value) || is_int($value)) {
+        } else if ($value == true || is_int($value)) {
 
         } else if (empty($value) && $value !== 0) {
-            $value = '""';
+            $value = 0;
         };
 
         return $value;
