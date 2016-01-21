@@ -16,6 +16,7 @@ use Model\User\GroupModel;
 use Model\User\InvitationModel;
 use Model\User\LookUpModel;
 use Model\User\Matching\MatchingModel;
+use Model\User\OldQuestionComparePaginatedModel;
 use Model\User\PrivacyModel;
 use Model\User\ProfileModel;
 use Model\User\ProfileTagModel;
@@ -105,10 +106,17 @@ class ModelsServiceProvider implements ServiceProviderInterface
             }
         );
 
+        $app['old.users.questions.compare.model'] = $app->share(
+            function ($app) {
+
+                return new OldQuestionComparePaginatedModel($app['neo4j.client']);
+            }
+        );
+
         $app['users.questions.compare.model'] = $app->share(
             function ($app) {
 
-                return new QuestionComparePaginatedModel($app['neo4j.client']);
+                return new QuestionComparePaginatedModel($app['neo4j.client'], $app['users.answers.model']);
             }
         );
 
