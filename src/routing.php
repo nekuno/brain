@@ -67,7 +67,9 @@ $app->get('/users/{from}/contact/{to}', 'users.relations.controller:contactActio
 $app->get('/users/{id1}/matching/{id2}', 'users.controller:getMatchingAction');
 $app->get('/users/{id1}/similarity/{id2}', 'users.controller:getSimilarityAction');
 $app->get('/users/{id}/questions', 'users.controller:getUserQuestionsAction');
-$app->get('/users/{id}/questions/compare/{id2}', 'users.controller:getUserQuestionsCompareAction');
+// TODO: Refactor in social to use the second compare route instead of the first one
+$app->get('/users/{id}/questions/compare/{id2}', 'users.controller:getOldUserQuestionsCompareAction');
+$app->get('/users/{id}/questions/compare-new/{id2}', 'users.controller:getUserQuestionsCompareAction');
 $app->get('/users/{id}/content', 'users.controller:getUserContentAction');
 $app->get('/users/{id}/content/compare/{id2}', 'users.controller:getUserContentCompareAction');
 $app->get('/users/{id}/content/tags', 'users.controller:getUserContentTagsAction');

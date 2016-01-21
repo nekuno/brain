@@ -6,9 +6,8 @@ use Paginator\PaginatedInterface;
 
 use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
-use Everyman\Neo4j\Query\Row;
 
-class QuestionComparePaginatedModel implements PaginatedInterface
+class OldQuestionComparePaginatedModel implements PaginatedInterface
 {
     /**
      * @var \Everyman\Neo4j\Client
@@ -16,18 +15,11 @@ class QuestionComparePaginatedModel implements PaginatedInterface
     protected $client;
 
     /**
-     * @var AnswerModel
-     */
-    protected $am;
-
-    /**
      * @param \Everyman\Neo4j\Client $client
-     * @param AnswerModel $am
      */
-    public function __construct(Client $client, AnswerModel $am)
+    public function __construct(Client $client)
     {
         $this->client = $client;
-        $this->am = $am;
     }
 
     /**
@@ -53,6 +45,7 @@ class QuestionComparePaginatedModel implements PaginatedInterface
      */
     public function slice(array $filters, $offset, $limit)
     {
+        $response = array();
 
         $id = $filters['id'];
         $id2 = $filters['id2'];
@@ -72,12 +65,12 @@ class QuestionComparePaginatedModel implements PaginatedInterface
 
         $commonQuery = "
             OPTIONAL MATCH
-            (u2)-[ua2:ANSWERS]-(answer2:Answer)-[:IS_ANSWER_OF]-(question)
+            (u2)-[:ANSWERS]-(answer2:Answer)-[:IS_ANSWER_OF]-(question)
         ";
         if ($showOnlyCommon) {
             $commonQuery = "
                 MATCH
-                (u2)-[ua2:ANSWERS]-(answer2:Answer)-[:IS_ANSWER_OF]-(question)
+                (u2)-[:ANSWERS]-(answer2:Answer)-[:IS_ANSWER_OF]-(question)
             ";
         }
 
@@ -86,41 +79,34 @@ class QuestionComparePaginatedModel implements PaginatedInterface
             (u:User), (u2:User)
             WHERE u.qnoow_id = {UserId} AND u2.qnoow_id = {UserId2}
             MATCH
-            (u)-[ua:ANSWERS]-(answer:Answer)-[:IS_ANSWER_OF]-(question:Question)
+            (u)-[:ANSWERS]-(answer:Answer)-[:IS_ANSWER_OF]-(question:Question)
             WHERE HAS(answer.text_$locale)
-            WITH question, answer, ua, u, u2
-
         ";
         $query .= $commonQuery;
         $query .= "
             OPTIONAL MATCH
-            (u)-[:ACCEPTS]-(acceptedAnswers:Answer)-[:IS_ANSWER_OF]-(question)
+            (possible_answers:Answer)-[:IS_ANSWER_OF]-(question)
+            OPTIONAL MATCH
+            (u)-[:ACCEPTS]-(accepted_answers:Answer)-[:IS_ANSWER_OF]-(question)
             OPTIONAL MATCH
             (u)-[rate:RATES]-(question)
+
             OPTIONAL MATCH
-            (u2)-[:ACCEPTS]-(acceptedAnswers2:Answer)-[:IS_ANSWER_OF]-(question)
+            (u2)-[:ACCEPTS]-(accepted_answers2:Answer)-[:IS_ANSWER_OF]-(question)
             OPTIONAL MATCH
             (u2)-[rate2:RATES]-(question)
 
-            OPTIONAL MATCH
-            (possible_answers:Answer)-[:IS_ANSWER_OF]-(question)
             RETURN
-            {
-                question: question,
-                answer: answer,
-                userAnswer: ua,
-                rates: rate,
-                answers: collect(distinct possible_answers),
-                acceptedAnswers: collect(distinct acceptedAnswers)
-            } as other_questions,
-            {
-                question: question,
-                answer: answer2,
-                userAnswer: ua2,
-                rates: rate2,
-                answers: collect(distinct possible_answers),
-                acceptedAnswers: collect(distinct acceptedAnswers2)
-            } as own_questions
+            question,
+            collect(distinct possible_answers) as possible_answers,
+
+            id(answer) as answer,
+            collect(distinct id(accepted_answers)) as accepted_answers,
+            rate.rating AS rating,
+
+            id(answer2) as answer2,
+            collect(distinct id(accepted_answers2)) as accepted_answers2,
+            rate2.rating AS rating2
 
             SKIP {offset}
             LIMIT {limit}
@@ -134,28 +120,52 @@ class QuestionComparePaginatedModel implements PaginatedInterface
             $params
         );
 
-        $result = $contentQuery->getResultSet();
+        //Execute query
+        try {
+            $result = $contentQuery->getResultSet();
 
-        $own_questions_result = array();
-        $other_questions_result = array();
-        /* @var $row Row */
-        foreach ($result as $row) {
-            if ($row->offsetGet('own_questions')->offsetExists('userAnswer')) {
-                $own_question = $row->offsetGet('own_questions');
-                $own_questions_result[$own_question->offsetGet('question')->getId()] = $this->am->build($own_question, $locale);
+            foreach ($result as $row) {
+                $content = array();
+
+                $question = array();
+                $question['id'] = $row['question']->getId();
+                $question['text'] = $row['question']->getProperty('text_' . $locale);
+                foreach ($row['possible_answers'] as $possibleAnswer) {
+                    $answer = array();
+                    $answer['id'] = $possibleAnswer->getId();
+                    $answer['text'] = $possibleAnswer->getProperty('text_' . $locale);
+                    $question['answers'][] = $answer;
+                }
+                $content['question'] = $question;
+
+                $user1 = array();
+                $user1['user']['id'] = $id;
+                $user1['answer'] = $row['answer'];
+                foreach ($row['accepted_answers'] as $acceptedAnswer) {
+                    $user1['accepted_answers'][] = $acceptedAnswer;
+                }
+                $user1['rating'] = $row['rating'];
+                $content['user_answers'][] = $user1;
+
+                if (null != $row['answer2']) {
+                    $user2 = array();
+                    $user2['user']['id'] = $id2;
+                    $user2['answer'] = $row['answer2'];
+                    foreach ($row['accepted_answers2'] as $acceptedAnswer) {
+                        $user2['accepted_answers'][] = $acceptedAnswer;
+                    }
+                    $user2['rating'] = $row['rating2'];
+                    $content['user_answers'][] = $user2;
+                }
+
+                $response[] = $content;
             }
-            if ($row->offsetGet('other_questions')->offsetExists('userAnswer')) {
-                $other_question = $row->offsetGet('other_questions');
-                $other_questions_result[$other_question->offsetGet('question')->getId()] = $this->am->build($other_question, $locale);
-            }
+
+        } catch (\Exception $e) {
+            throw $e;
         }
 
-        $resultArray = array(
-            $id => $other_questions_result,
-            $id2 => $own_questions_result
-        );
-
-        return $resultArray;
+        return $response;
     }
 
     /**

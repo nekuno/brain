@@ -243,6 +243,45 @@ class UserController
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      * @throws \Exception
      */
+    public function getOldUserQuestionsCompareAction(Request $request, Application $app)
+    {
+
+        $id = $request->get('id');
+        $id2 = $request->get('id2');
+        $locale = $request->get('locale');
+        $showOnlyCommon = $request->get('showOnlyCommon', 0);
+
+        if (null === $id || null === $id2) {
+            return $app->json(array(), 400);
+        }
+
+        /* @var $paginator \Paginator\Paginator */
+        $paginator = $app['paginator'];
+
+        $filters = array('id' => $id, 'id2' => $id2, 'locale' => $locale, 'showOnlyCommon' => $showOnlyCommon);
+
+        /* @var $model \Model\User\OldQuestionComparePaginatedModel */
+        $model = $app['old.users.questions.compare.model'];
+
+        try {
+            $result = $paginator->paginate($filters, $model, $request);
+        } catch (\Exception $e) {
+            if ($app['env'] == 'dev') {
+                throw $e;
+            }
+
+            return $app->json(array(), 500);
+        }
+
+        return $app->json($result, !empty($result) ? 201 : 200);
+    }
+
+    /**
+     * @param Request $request
+     * @param Application $app
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @throws \Exception
+     */
     public function getUserQuestionsCompareAction(Request $request, Application $app)
     {
 
