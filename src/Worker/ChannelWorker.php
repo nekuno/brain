@@ -112,7 +112,7 @@ class ChannelWorker extends LoggerAwareWorker implements RabbitMQConsumerInterfa
                     do{
                         $until = $minDate;
                         $this->getOldTweets->execute($username, GetOldTweets::MAX_TWEETS, $until);
-                        $tweets = $this->getOldTweets->loadCSV();
+                        $tweets = $this->getOldTweets->loadTweets();
                         if (!empty($tweets)){
                             $links = array_merge($links, $this->getOldTweets->getLinksFromTweets($tweets));
                             $minDate = $this->getOldTweets->getMinDate($tweets);
@@ -124,7 +124,8 @@ class ChannelWorker extends LoggerAwareWorker implements RabbitMQConsumerInterfa
                 default:
                     throw new \Exception('Resource %s not supported in this queue', $resourceOwner);
             }
-            $this->logger->info(sprintf('Start processing $d links for user $d', count($links), $userId));
+            $this->logger->info(sprintf('Start processing %d links for user %d', count($links), $userId));
+
             $processedLinks = $this->fetcherService->processLinks($links, $userId, $resourceOwner);
 
             $this->logger->info(sprintf('Processed %d links for user %d', count($processedLinks), $userId));

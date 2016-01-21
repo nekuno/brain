@@ -8,6 +8,7 @@ use Event\FetchEvent;
 use Event\ProcessLinkEvent;
 use Event\ProcessLinksEvent;
 use Model\LinkModel;
+use Model\Neo4j\Neo4jException;
 use Model\User\LookUpModel;
 use Model\User\RateModel;
 use Model\User\TokensModel;
@@ -189,6 +190,9 @@ class FetcherService implements LoggerAwareInterface
                 $links[$key] = $linkProcessed;
             } catch (\Exception $e) {
                 $this->logger->error(sprintf('Fetcher: Error processing link "%s" from resource "%s". Reason: %s', $link['url'], $resourceOwner, $e->getMessage()));
+                if ($e instanceof Neo4jException) {
+                    $this->logger->error(sprintf('Query: %s' . "\n" . 'Data: %s', $e->getQuery(), print_r($e->getData(), true)));
+                }
             }
         }
 

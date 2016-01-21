@@ -47,7 +47,7 @@ class GetOldTweets
 
     }
 
-    public function loadCSV()
+    public function loadTweets()
     {
         $tweets = array();
         $first = true;

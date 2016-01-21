@@ -38,7 +38,7 @@ class UsersSocialMediaGetOldTweetsCommand extends ApplicationAwareCommand
 
         $getoldtweets->execute($username, $maxtweets, $since, $until, $querysearch);
 
-        $tweets = $getoldtweets->loadCSV();
+        $tweets = $getoldtweets->loadTweets();
 
         $output->writeln(count($tweets).' tweets loaded');
 
