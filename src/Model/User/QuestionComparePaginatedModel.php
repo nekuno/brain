@@ -136,24 +136,25 @@ class QuestionComparePaginatedModel implements PaginatedInterface
 
         $result = $contentQuery->getResultSet();
 
-        $own_questions_result = array();
-        $other_questions_result = array();
+        $own_questions_results = array();
+        $other_questions_results = array();
         /* @var $row Row */
         foreach ($result as $row) {
             if ($row->offsetGet('own_questions')->offsetExists('userAnswer')) {
                 $own_question = $row->offsetGet('own_questions');
-                $own_questions_result[$own_question->offsetGet('question')->getId()] = $this->am->build($own_question, $locale);
+                $questionId = $own_question->offsetGet('question')->getId();
+                $own_questions_results['questions'][$questionId] = $this->am->build($own_question, $locale);
             }
             if ($row->offsetGet('other_questions')->offsetExists('userAnswer')) {
                 $other_question = $row->offsetGet('other_questions');
-                $other_questions_result[$other_question->offsetGet('question')->getId()] = $this->am->build($other_question, $locale);
+                $questionId = $other_question->offsetGet('question')->getId();
+                $other_questions_results['questions'][$questionId] = $this->am->build($other_question, $locale);
             }
         }
+        $own_questions_results['userId'] = $id2;
+        $other_questions_results['userId'] = $id;
 
-        $resultArray = array(
-            $id => $other_questions_result,
-            $id2 => $own_questions_result
-        );
+        $resultArray = array($other_questions_results, $own_questions_results);
 
         return $resultArray;
     }
