@@ -100,27 +100,34 @@ class ChannelWorker extends LoggerAwareWorker implements RabbitMQConsumerInterfa
 
             switch($resourceOwner){
                 case TokensModel::TWITTER:
+
+                    if (!isset($data['username'])){
+                        throw new \Exception('Enqueued message does not include  username parameter');
+                    }
+                    $username = $data['username'];
+                    $this->logger->info(sprintf('Using GetOldTweets to fetch from %s', $username));
                     $links = array();
                     $minDate = null;
 
                     do{
                         $until = $minDate;
-                        $this->getOldTweets->execute($userId, GetOldTweets::MAX_TWEETS, $until);
+                        $this->getOldTweets->execute($username, GetOldTweets::MAX_TWEETS, $until);
                         $tweets = $this->getOldTweets->loadCSV();
-
-                        $links = array_merge($links, $this->getOldTweets->getLinksFromTweets($tweets));
-                        $minDate = $this->getOldTweets->getMinDate($tweets);
+                        if (!empty($tweets)){
+                            $links = array_merge($links, $this->getOldTweets->getLinksFromTweets($tweets));
+                            $minDate = $this->getOldTweets->getMinDate($tweets);
+                        }
 
                     } while ($this->getOldTweets->needMore($tweets) && ($until !== $minDate));
-
+                    $this->logger->info(sprintf('Total %d links fetched from tweets from %s',count($links), $username));
                     break;
                 default:
                     throw new \Exception('Resource %s not supported in this queue', $resourceOwner);
             }
-
+            $this->logger->info(sprintf('Start processing $d links for user $d', count($links), $userId));
             $processedLinks = $this->fetcherService->processLinks($links, $userId, $resourceOwner);
 
-            $this->logger->info(sprintf('Processed %s links from %s using GetOldTweets library', count($processedLinks), $userId));
+            $this->logger->info(sprintf('Processed %d links for user %d', count($processedLinks), $userId));
 
         } catch (\Exception $e) {
             $this->logger->error(sprintf('Worker: Error fetching for channel with message %s on file %s, line %d', $e->getMessage(), $e->getFile(), $e->getLine()));

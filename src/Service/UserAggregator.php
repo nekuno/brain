@@ -96,13 +96,15 @@ class UserAggregator
 
     /**
      * @param SocialProfile[] $socialProfiles
+     * @param $username
      */
-    public function enqueueFetching(array $socialProfiles)
+    public function enqueueChannel(array $socialProfiles, $username)
     {
         foreach ($socialProfiles as $socialProfile) {
             $this->amqpManager->enqueueMessage(array(
                 'userId' => $socialProfile->getUserId(),
                 'resourceOwner' => $socialProfile->getResource(),
+                'username' => $username,
             ), 'brain.channel.user_aggregator');
         }
     }

@@ -51,7 +51,7 @@ class ChannelSubscriber implements EventSubscriberInterface
         $socialProfiles = $this->userAggregator->addUser($username, $resourceOwner);
 
         if ($socialProfiles){
-            $this->userAggregator->enqueueFetching($socialProfiles);
+            $this->userAggregator->enqueueChannel($socialProfiles, $username);
         }
     }
 

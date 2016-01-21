@@ -64,8 +64,8 @@ class UsersSocialMediaAddCommand extends ApplicationAwareCommand
                 continue;
             }
 
-            $output->writeln('Enqueuing fetching');
-            $userAggregator->enqueueFetching($socialProfiles);
+            $output->writeln('Enqueuing fetching from that resource as channel');
+            $userAggregator->enqueueChannel($socialProfiles, $username);
 
             $output->writeln('Success!');
         }
