@@ -141,7 +141,7 @@ class LinkProcessorWorker extends LoggerAwareWorker implements RabbitMQConsumerI
             foreach ($tokens as $token) {
 
                 $token['public'] = $public;
-                //$this->fetcherService->fetch($token);
+                $this->fetcherService->fetch($token);
 
                 if ($resourceOwner === TokensModel::TWITTER) {
 
