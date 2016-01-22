@@ -2,6 +2,7 @@
 
 namespace Console\Command;
 
+use ApiConsumer\EventListener\ChannelSubscriber;
 use ApiConsumer\EventListener\FetchLinksInstantSubscriber;
 use ApiConsumer\EventListener\FetchLinksSubscriber;
 use ApiConsumer\Fetcher\FetcherService;
@@ -78,14 +79,17 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
             case AMQPManager::FETCHING :
                 $fetchLinksInstantSubscriber = new FetchLinksInstantSubscriber($this->app['guzzle.client'], $this->app['instant.host']);
                 $fetchLinksSubscriber = new FetchLinksSubscriber($output);
+                $channelSubscriber = new ChannelSubscriber($this->app['userAggregator.service']);
                 $dispatcher->addSubscriber($fetchLinksSubscriber);
                 $dispatcher->addSubscriber($fetchLinksInstantSubscriber);
+                $dispatcher->addSubscriber($channelSubscriber);
                 /* @var $fetcher FetcherService */
                 $fetcher = $this->app['api_consumer.fetcher'];
                 $fetcher->setLogger($logger);
 
                 $worker = new LinkProcessorWorker($channel,
                     $fetcher,
+                    $this->app['get_old_tweets'],
                     $this->app['users.tokens.model'],
                     $this->app['users.lookup.model'],
                     $this->app['users.socialprofile.manager'],
