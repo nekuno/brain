@@ -89,7 +89,7 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
 
                 $worker = new LinkProcessorWorker($channel,
                     $fetcher,
-                    $this->app['get_old_tweets'],
+                    $this->app['api_consumer.resource_owner_factory'],
                     $this->app['users.tokens.model'],
                     $this->app['users.lookup.model'],
                     $this->app['users.socialprofile.manager'],
