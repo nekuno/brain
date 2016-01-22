@@ -5,6 +5,7 @@ namespace ApiConsumer\Fetcher\GetOldTweets;
 
 
 use ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser;
+use Model\User\TokensModel;
 use Service\AMQPManager;
 
 class GetOldTweets
@@ -77,11 +78,15 @@ class GetOldTweets
     public function getLinksFromTweets(array $tweets)
     {
         $links = array();
+        $resource = TokensModel::TWITTER;
+        
         foreach ($tweets as $tweet) {
             $newUrls = $this->parser->extractURLsFromText($tweet['text']);
             $timestamp = $this->getDate($tweet);
             foreach ($newUrls as $newUrl){
-                $links[] = array('url' => $newUrl,'timestamp' => $timestamp);
+                $links[] = array('url' => $newUrl,
+                    'timestamp' => $timestamp,
+                    'resource' => $resource);
             }
         }
         return $links;
