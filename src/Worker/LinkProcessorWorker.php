@@ -141,7 +141,7 @@ class LinkProcessorWorker extends LoggerAwareWorker implements RabbitMQConsumerI
             foreach ($tokens as $token) {
 
                 $token['public'] = $public;
-                $this->fetcherService->fetch($token);
+                //$this->fetcherService->fetch($token);
 
                 if ($resourceOwner === TokensModel::TWITTER) {
 
@@ -150,10 +150,12 @@ class LinkProcessorWorker extends LoggerAwareWorker implements RabbitMQConsumerI
 
                         /** @var TwitterResourceOwner $twitterResourceOwner */
                         $twitterResourceOwner = $this->resourceOwnerFactory->build($resourceOwner);
+                        $username = $twitterResourceOwner->getUsername(array('url' => $profile->getUrl()));
                         $twitterResourceOwner->dispatchChannel(array(
                             'url' => $profile->getUrl(),
-                            'username' => $profile->getUserId(),
+                            'username' => $username,
                         ));
+                        $this->logger->info(sprintf('Enqueued fetching old tweets for username %s', $username));
                     };
                 }
             }

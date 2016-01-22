@@ -79,10 +79,8 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
             case AMQPManager::FETCHING :
                 $fetchLinksInstantSubscriber = new FetchLinksInstantSubscriber($this->app['guzzle.client'], $this->app['instant.host']);
                 $fetchLinksSubscriber = new FetchLinksSubscriber($output);
-                $channelSubscriber = new ChannelSubscriber($this->app['userAggregator.service']);
                 $dispatcher->addSubscriber($fetchLinksSubscriber);
                 $dispatcher->addSubscriber($fetchLinksInstantSubscriber);
-                $dispatcher->addSubscriber($channelSubscriber);
                 /* @var $fetcher FetcherService */
                 $fetcher = $this->app['api_consumer.fetcher'];
                 $fetcher->setLogger($logger);
