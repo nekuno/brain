@@ -28,6 +28,10 @@ class RabbitMQEnqueueMatchingCommand extends ApplicationAwareCommand
         $userA = $input->getArgument('userA');
         $userB = $input->getArgument('userB');
 
+        if ($userA == $userB){
+            $output->writeln('The two users must be different.');
+            return;
+        }
         $combinations = array(
             array(
                 0 => $userA,
@@ -49,6 +53,9 @@ class RabbitMQEnqueueMatchingCommand extends ApplicationAwareCommand
             '.' . MatchingCalculatorWorker::TRIGGER_PERIODIC;
 
         foreach ($combinations as $combination) {
+            if ($combination[0] == $combination[1]){
+                continue;
+            }
             $output->writeln(sprintf('Enqueuing matching and similarity task for users %d and %d', $combination[0], $combination[1]));
             $data = array(
                 'user_1_id' => $combination[0],

@@ -49,6 +49,10 @@ class UsersCalculateSimilarityCommand extends ApplicationAwareCommand
             $userA = $users[0];
             $userB = $users[1];
 
+            if ($userA == $userB){
+                continue;
+            }
+
             try {
                 $similarity = $model->getSimilarity($userA, $userB);
             } catch (\Exception $e) {
