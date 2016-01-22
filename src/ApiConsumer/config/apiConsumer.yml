@@ -17,6 +17,9 @@ api_consumer.config:
         twitter_links:
             class: ApiConsumer\Fetcher\TwitterLinksFetcher
             resourceOwner: twitter
+        twitter_favorites:
+            class: ApiConsumer\Fetcher\TwitterFavoritesFetcher
+            resourceOwner: twitter
         twitter_following:
             class: ApiConsumer\Fetcher\TwitterFollowingFetcher
             resourceOwner: twitter
