@@ -101,6 +101,16 @@ class UserAggregator
     public function enqueueChannel(array $socialProfiles, $username)
     {
         foreach ($socialProfiles as $socialProfile) {
+
+            $userId = $socialProfile->getUserId();
+            $resource = $socialProfile->getResource();
+
+            if ($this->userModel->isChannel($userId, $resource)){
+                continue;
+            }
+
+            $this->userModel->setAsChannel($userId, $resource);
+
             $this->amqpManager->enqueueMessage(array(
                 'userId' => $socialProfile->getUserId(),
                 'resourceOwner' => $socialProfile->getResource(),

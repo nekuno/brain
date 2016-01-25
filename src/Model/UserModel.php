@@ -10,6 +10,7 @@ use Model\Neo4j\Neo4jException;
 use Model\User\GhostUser\GhostUserManager;
 use Model\User\LookUpModel;
 use Model\User\SocialNetwork\SocialProfile;
+use Model\User\TokensModel;
 use Model\User\UserComparedStatsModel;
 use Model\User\UserStatsModel;
 use Model\User\UserStatusModel;
@@ -843,6 +844,75 @@ class UserModel implements PaginatedInterface
         return null === $string ? null : mb_convert_case($string, MB_CASE_LOWER, mb_detect_encoding($string));
     }
 
+    public function isChannel($userId, $resource)
+    {
+        $channelLabel = $this->buildChannelLabel($resource);
+        $labels = $this->getLabelsFromId($userId);
+
+        if (in_array($channelLabel, $labels)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public function setAsChannel($userId, $resource)
+    {
+        $channelLabel = $this->buildChannelLabel($resource);
+
+        return $this->setLabel($userId, $channelLabel);
+    }
+
+    protected function buildChannelLabel($resource = null)
+    {
+        if (in_array($resource, TokensModel::getResourceOwners()))
+        {
+           return 'Channel'.ucfirst($resource);
+        }
+
+        return null;
+    }
+
+    protected function getLabelsFromId($id)
+    {
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User {qnoow_id: { id }})')
+            ->setParameter('id', (int)$id);
+
+        $qb->returns('labels(u) as labels');
+
+        $rs = $qb->getQuery()->getResultSet();
+
+        if ($rs->count() == 0){
+            throw new NotFoundHttpException('User to get labels from not found');
+        }
+
+        $labelsRow = $rs->current()->offsetGet('labels');
+        $labels = array();
+        foreach ($labelsRow as $label) {
+            $labels[] = $label;
+        }
+        return $labels;
+    }
+
+    protected function setLabel($id, $label)
+    {
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User {qnoow_id: { id }})')
+            ->setParameter('id', (int)$id);
+        $qb->set("u :$label");
+
+        $qb->returns('u');
+
+        $rs = $qb->getQuery()->getResultSet();
+
+        if ($rs->count() == 0){
+            throw new NotFoundHttpException(sprintf('User to set label %s not found', $label));
+        }
+
+        return $this->build($rs->current());
+    }
+
     /**
      * @param null $locale
      * @param array $dynamicChoices user-dependent choices (cannot be set from this model)
@@ -921,7 +991,7 @@ class UserModel implements PaginatedInterface
     }
 
     /** Returns User tags to use when created user tags
-     * @param $name
+     * @param $type
      * @return array
      */
     protected function getTopUserTags($type)
