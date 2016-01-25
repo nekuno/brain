@@ -40,7 +40,7 @@ class UsersCalculateMatchingCommand extends ApplicationAwareCommand
         if (null === $userA || null === $userB) {
             /* @var $userModel UserModel */
             $userModel = $this->app['users.model'];
-            $combinations = $userModel->getAllCombinations();
+            $combinations = $userModel->getAllCombinations(false);
         }
 
         foreach ($combinations AS $users) {

@@ -256,12 +256,18 @@ class UserModel implements PaginatedInterface
     }
 
     /**
+     * @param bool $includeGhost
      * @return array
-     * @throws \Exception
+     * @throws Neo4jException
      */
-    public function getAllCombinations()
+    public function getAllCombinations($includeGhost = true)
     {
 
+        $conditions = array('u1.qnoow_id < u2.qnoow_id');
+        if (!$includeGhost){
+            $conditions[] = 'NOT u1:' . GhostUserManager::LABEL_GHOST_USER;
+            $conditions[] = 'NOT u2:' . GhostUserManager::LABEL_GHOST_USER;
+        }
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(u1:User), (u2:User)')
             ->where('u1.qnoow_id < u2.qnoow_id')
@@ -275,17 +281,24 @@ class UserModel implements PaginatedInterface
     }
 
     /**
-     * @param null $id
+     * @param $id
+     * @param int $limit
      * @return array
-     * @throws \Exception
+     * @throws Neo4jException
      */
-    public function getByCommonLinksWithUser($id = null)
+    public function getByCommonLinksWithUser($id, $limit = 100)
     {
 
         $qb = $this->gm->createQueryBuilder();
+
+        $qb->setParameters(array('limit' => (integer)$limit));
+
         $qb->match('(ref:User {qnoow_id: { id }})')
             ->setParameter('id', (integer)$id)
             ->match('(ref)-[:LIKES|DISLIKES]->(:Link)<-[:LIKES]-(u:User)')
+            ->with('u', 'count(l) as amount')
+            ->orderBy('amount DESC')
+            ->limit('{limit}')
             ->where('NOT (ref.qnoow_id = u.qnoow_id)')
             ->returns('DISTINCT u')
             ->orderBy('u.qnoow_id');
