@@ -464,12 +464,21 @@ class LinkModel
 
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match('(l:Link)-[r:LIKES]-(:User)')
-            ->with('l', 'count(DISTINCT r) AS total')
-            ->where('total > 1')
-            ->with('total AS max')
-            ->orderBy('max DESC')
-            ->limit(1);
+        $qb->optionalMatch('(l_max:Link)')
+            ->where('l_max.popularity = 1')
+            ->with('l_max')
+            ->limit(1)
+            ->optionalMatch('(l_max)-[likes:LIKES]-(:User)')
+            //if most popular like checked more than 24 hours ago, or not found, calculate again and set it
+            ->with('CASE
+                        WHEN l_max.popularity_timestamp < timestamp()-1000*3600*24 THEN
+                            count(likes)
+                        ELSE
+                            MATCH (l:Link)-[likes:LIKES]-(:User)
+                            RETURN count(likes)
+                            ORDER BY count(likes) DESC LIMIT 1
+                    END as max LIMIT 1
+                        ');
 
         if (isset($filters['userId'])) {
 
