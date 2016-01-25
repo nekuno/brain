@@ -270,7 +270,7 @@ class UserModel implements PaginatedInterface
         }
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(u1:User), (u2:User)')
-            ->where('u1.qnoow_id < u2.qnoow_id')
+            ->where($conditions)
             ->returns('u1.qnoow_id, u2.qnoow_id');
 
         $query = $qb->getQuery();
