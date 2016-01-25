@@ -295,11 +295,11 @@ class UserModel implements PaginatedInterface
 
         $qb->match('(ref:User {qnoow_id: { id }})')
             ->setParameter('id', (integer)$id)
-            ->match('(ref)-[:LIKES|DISLIKES]->(:Link)<-[:LIKES]-(u:User)')
+            ->match('(ref)-[:LIKES|DISLIKES]->(:Link)<-[l:LIKES]-(u:User)')
+            ->where('NOT (ref.qnoow_id = u.qnoow_id)')
             ->with('u', 'count(l) as amount')
             ->orderBy('amount DESC')
             ->limit('{limit}')
-            ->where('NOT (ref.qnoow_id = u.qnoow_id)')
             ->returns('DISTINCT u')
             ->orderBy('u.qnoow_id');
 
