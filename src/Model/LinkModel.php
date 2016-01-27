@@ -494,7 +494,7 @@ class LinkModel
             $qb->optionalMatch('(l:Link)');
         }
 
-        $qb->where('l.popularity_timestamp > timestamp() - 1000*3600*24');
+        $qb->where('l.popularity_timestamp < timestamp() - 1000*3600*24');
         $qb->with('l', 'max');
         $qb->optionalMatch('(l)-[r:LIKES]-(:User)')
             ->with('l', 'count(DISTINCT r) AS total', 'max')
@@ -524,7 +524,8 @@ class LinkModel
                                         END'
         );
 
-        $qb->returns('max');
+        $qb->returns('max')
+            ->limit(1);
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();
