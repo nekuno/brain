@@ -156,12 +156,14 @@ class MatchingModel
         ));
 
         $qb->match('(u1:User {qnoow_id: { id1 }})', '(u2:User {qnoow_id: { id2 }})')
-            ->optionalMatch('(u1)-[:ACCEPTS]->(acceptedAnswerU1:Answer)<-[:ANSWERS]-(u2)',
-                '(acceptedAnswerU1)-[:IS_ANSWER_OF]->(:Question)<-[rateAcceptedAnswerU1:RATES]-(u1)')
+            ->optionalMatch('(u2)-[:ANSWERS]->(acceptedAnswerU1:Answer)')
+            ->where('(u1)-[:ACCEPTS]->(acceptedAnswerU1)')
+            ->optionalMatch('(acceptedAnswerU1)-[:IS_ANSWER_OF]->(q:Question)<-[rateAcceptedAnswerU1:RATES]-(u1)')
             ->with('u1', 'u2',
                 $this->weightedRatingSum('rateAcceptedAnswerU1', 'totalRatingAcceptedAnswersU1'))
-            ->optionalMatch('(u2)-[:ACCEPTS]->(acceptedAnswerU2:Answer)<-[:ANSWERS]-(u1)',
-                '(acceptedAnswerU2)-[:IS_ANSWER_OF]->(:Question)<-[rateAcceptedAnswerU2:RATES]-(u2)')
+            ->optionalMatch('(u1)-[:ANSWERS]->(acceptedAnswerU2:Answer)')
+            ->where('(u2)-[:ACCEPTS]->(acceptedAnswerU2)')
+            ->optionalMatch('(acceptedAnswerU2)-[:IS_ANSWER_OF]->(q)<-[rateAcceptedAnswerU2:RATES]-(u2)')
             ->with('u1', 'u2', 'totalRatingAcceptedAnswersU1',
                 $this->weightedRatingSum('rateAcceptedAnswerU2', 'totalRatingAcceptedAnswersU2'))
             ->optionalMatch('(u1)-[rateCommonAnswerU1:RATES]->(commonQuestions:Question)<-[rateCommonAnswerU2:RATES]-(u2)')
