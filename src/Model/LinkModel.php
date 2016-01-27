@@ -483,18 +483,20 @@ class LinkModel
                             0
                     END as max LIMIT 1
                         ');
+        //get links from user (or all!) to set popularity
         if (isset($filters['userId'])) {
 
-            $qb->match('(:User {qnoow_id: { id } })-[LIKES]-(l:Link)');
+            $qb->optionalMatch('(:User {qnoow_id: { id } })-[LIKES]-(l:Link)');
             $qb->setParameter('id', (integer)$filters['userId']);
 
         } else {
 
-            $qb->match('(l:Link)');
+            $qb->optionalMatch('(l:Link)');
         }
 
         $qb->where('l.popularity_timestamp > timestamp() - 1000*3600*24');
-        $qb->match('(l)-[r:LIKES]-(:User)')
+        $qb->with('l', 'max');
+        $qb->optionalMatch('(l)-[r:LIKES]-(:User)')
             ->with('l', 'count(DISTINCT r) AS total', 'max')
             ->where('total > 1')
             ->with('l', 'toFloat(total) AS total', 'toFloat(max) AS max');
@@ -526,6 +528,11 @@ class LinkModel
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();
+
+        //If user had no links to set popularity, all done
+        if ($result->count() == 0){
+            return true;
+        }
 
         $max = $result->current()->offsetGet('max');
         if ($max == 0) {
