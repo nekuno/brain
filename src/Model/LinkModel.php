@@ -524,7 +524,8 @@ class LinkModel
                                         END'
         );
 
-        $qb->returns('max');
+        $qb->returns('max')
+            ->limit(1);
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();
