@@ -459,29 +459,44 @@ class LinkModel
 
     }
 
+    /**
+     * @param array $filters
+     * @return bool
+     * @throws Neo4j\Neo4jException
+     */
     public function updatePopularity(array $filters)
     {
 
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match('(l:Link)-[r:LIKES]-(:User)')
-            ->with('l', 'count(DISTINCT r) AS total')
-            ->where('total > 1')
-            ->with('total AS max')
-            ->orderBy('max DESC')
-            ->limit(1);
-
+        //get max likes from link with popularity = 1
+        $qb->optionalMatch('(l_max:Link)')
+            ->where('l_max.popularity = 1')
+            ->with('l_max')
+            ->limit(1)
+            ->optionalMatch('(l_max)-[likes:LIKES]-(:User)')
+            //if that link's popularity was calculated more than a day ago, max = 0 as a flag to recalculate
+            ->with('CASE
+                        WHEN l_max.popularity_timestamp > timestamp()-1000*3600*24 THEN
+                            count(likes)
+                        ELSE
+                            0
+                    END as max LIMIT 1
+                        ');
+        //get links from user (or all!) to set popularity
         if (isset($filters['userId'])) {
 
-            $qb->match('(:User {qnoow_id: { id } })-[LIKES]-(l:Link)');
+            $qb->optionalMatch('(:User {qnoow_id: { id } })-[LIKES]-(l:Link)');
             $qb->setParameter('id', (integer)$filters['userId']);
 
         } else {
 
-            $qb->match('(l:Link)');
+            $qb->optionalMatch('(l:Link)');
         }
 
-        $qb->match('(l)-[r:LIKES]-(:User)')
+        $qb->where('l.popularity_timestamp < timestamp() - 1000*3600*24');
+        $qb->with('l', 'max');
+        $qb->optionalMatch('(l)-[r:LIKES]-(:User)')
             ->with('l', 'count(DISTINCT r) AS total', 'max')
             ->where('total > 1')
             ->with('l', 'toFloat(total) AS total', 'toFloat(max) AS max');
@@ -493,16 +508,38 @@ class LinkModel
             $qb->setParameter('limit', (integer)$filters['limit']);
         }
 
+        //ensures max = 0 gives no problems
         $qb->set(
-            'l.popularity = (total/max)^3',
-            'l.unpopularity = (1-(total/max))^3',
-            'l.popularity_timestamp = timestamp()'
+            'l.popularity = CASE max
+                                WHEN 0 THEN 0
+                                ELSE (total/max)^3
+                            END',
+            'l.unpopularity = CASE max
+                                WHEN 0 THEN 1
+                                ELSE (1-(total/max))^3
+                            END',
+            'l.popularity_timestamp =   CASE max
+                                            WHEN 0 THEN 0
+                                            ELSE timestamp()
+                                        END'
         );
 
+        $qb->returns('max')
+            ->limit(1);
+
         $query = $qb->getQuery();
+        $result = $query->getResultSet();
 
-        $query->getResultSet();
+        //If user had no links to set popularity, all done
+        if ($result->count() == 0){
+            return true;
+        }
 
+        $max = $result->current()->offsetGet('max');
+        if ($max == 0) {
+            $this->updateMaxPopularity();
+            return $this->updatePopularity($filters);
+        }
         return true;
     }
 
@@ -881,6 +918,21 @@ class LinkModel
         }
 
         return $linkArray;
+    }
+
+    private function updateMaxPopularity()
+    {
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(l:Link)-[likes:LIKES]-(:User)')
+            ->with('l', 'count(likes) AS amount')
+            ->with('collect(l) as links', 'amount')
+            ->orderBy('amount DESC')
+            ->limit(1)
+            ->add('unwind', 'links as l')
+            ->set('l.popularity = 1', 'l.unpopularity = 0', 'l.popularity_timestamp = timestamp()');
+        $query = $qb->getQuery();
+        $query->getResultSet();
     }
 
 }
