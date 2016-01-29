@@ -2,7 +2,6 @@
 
 namespace Model\User\Similarity;
 
-use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Neo4j\GraphManager;
@@ -18,11 +17,6 @@ use Model\User\QuestionPaginatedModel;
 class SimilarityModel
 {
     const numberOfSecondsToCache = 86400;
-
-    /**
-     * @var Client
-     */
-    protected $client;
 
     /**
      * @var GraphManager
@@ -49,14 +43,12 @@ class SimilarityModel
      */
     protected $profileModel;
 
-    public function __construct(Client $client,
-                                GraphManager $gm,
+    public function __construct(GraphManager $gm,
                                 LinkModel $linkModel,
                                 QuestionPaginatedModel $questionPaginatedModel,
                                 ContentPaginatedModel $contentPaginatedModel,
                                 ProfileModel $profileModel)
     {
-        $this->client = $client;
         $this->gm = $gm;
         $this->linkModel = $linkModel;
         $this->questionPaginatedModel = $questionPaginatedModel;
@@ -86,10 +78,26 @@ class SimilarityModel
             $similarity = $this->getCurrentSimilarity($idA, $idB);
         }
 
-        return $similarity;
+        return $this->returnSimilarity($similarity, $idA, $idB);
     }
 
-    private function getCurrentSimilarity($idA, $idB)
+    public function getSimilarityByInterests($idA, $idB)
+    {
+        $this->calculateSimilarityByInterests($idA, $idB);
+
+        $similarity = $this->getCurrentSimilarity($idA, $idB);
+        return $this->returnSimilarity($similarity, $idA, $idB);
+    }
+
+    public function getSimilarityByQuestions($idA, $idB)
+    {
+        $this->calculateSimilarityByQuestions($idA, $idB);
+
+        $similarity = $this->getCurrentSimilarity($idA, $idB);
+        return $this->returnSimilarity($similarity, $idA, $idB);
+    }
+
+    public function getCurrentSimilarity($idA, $idB)
     {
         $qb = $this->gm->createQueryBuilder();
         $qb
@@ -135,12 +143,10 @@ class SimilarityModel
             $similarity['similarityUpdated'] = $row->offsetGet('similarityUpdated');
         }
 
-        $similarity = $this->returnSimilarity($similarity, $idA, $idB);
-
         return $similarity;
     }
 
-    public function calculateSimilarityByQuestions($idA, $idB)
+    private function calculateSimilarityByQuestions($idA, $idB)
     {
 
         $qb = $this->gm->createQueryBuilder();
@@ -158,7 +164,6 @@ class SimilarityModel
             ->merge('(userA)-[s:SIMILARITY]-(userB)')
             ->set('s.questions = similarity',
                 's.interests = CASE WHEN HAS(s.interests) THEN s.interests ELSE 0 END',
-                's.similarity = (s.questions + s.interests) / 2',
                 's.questionsUpdated = timestamp()',
                 's.similarityUpdated = timestamp()'
             )
@@ -185,7 +190,7 @@ class SimilarityModel
         return $similarity;
     }
 
-    public function calculateSimilarityByInterests($idA, $idB)
+    private function calculateSimilarityByInterests($idA, $idB)
     {
         $this->linkModel->updatePopularity(array('userId' => $idA));
         $this->linkModel->updatePopularity(array('userId' => $idB));
@@ -218,7 +223,6 @@ class SimilarityModel
             ->set(
                 's.interests = similarity',
                 's.questions = CASE WHEN HAS(s.questions) THEN s.questions ELSE 0 END',
-                's.similarity = (s.questions + s.interests) / 2',
                 's.interestsUpdated = timestamp()',
                 's.similarityUpdated = timestamp()'
             )
@@ -245,7 +249,13 @@ class SimilarityModel
         return $similarity;
     }
 
-    private function returnSimilarity($similarity, $idA, $idB)
+    /**
+     * @param array $similarity
+     * @param $idA
+     * @param $idB
+     * @return array
+     */
+    private function returnSimilarity(array $similarity, $idA, $idB)
     {
         $questionLimit = 0;
         $contentLimit = 1000;
@@ -268,8 +278,11 @@ class SimilarityModel
             || ($totalLinksB >= $contentLimit && $totalQuestionsB <= $questionLimit)
         ) {
             $similarity['similarity'] = $similarity['interests'];
-            $this->setSimilarity($idA, $idB, $similarity['interests']);
+        } else {
+            $similarity['similarity'] = ($similarity['interests'] + $similarity['questions'])/2;
         }
+
+        $this->setSimilarity($idA, $idB, $similarity['similarity']);
 
         return $similarity;
     }
