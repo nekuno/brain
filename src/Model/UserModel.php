@@ -439,7 +439,7 @@ class UserModel implements PaginatedInterface
     /**
      * @param $id1
      * @param $id2
-     * @return UserStatsModel
+     * @return UserComparedStatsModel
      * @throws \Exception
      */
     public function getComparedStats($id1, $id2)
@@ -454,11 +454,18 @@ class UserModel implements PaginatedInterface
         );
 
         $qb->match('(u:User {qnoow_id: { id1 }}), (u2:User {qnoow_id: { id2 }})')
-            ->match('(u)-[:BELONGS_TO]->(g:Group)<-[:BELONGS_TO]-(u2)')
-            ->with('u', 'u2', 'g')
+            ->optionalMatch('(u)-[:BELONGS_TO]->(g:Group)<-[:BELONGS_TO]-(u2)')
+            ->with('u', 'u2', 'collect(distinct g) AS groupsBelonged')
             ->optionalmatch('(u)-[:TOKEN_OF]-(token:Token)')
+            ->with('u', 'u2', 'groupsBelonged', 'collect(distinct token.resourceOwner) as resourceOwners')
             ->optionalmatch('(u2)-[:TOKEN_OF]-(token2:Token)');
-        $qb->returns('collect(distinct g) AS groupsBelonged', 'collect(distinct token.resourceOwner) as resourceOwners', 'collect(distinct token2.resourceOwner) as resourceOwners2');
+        $qb->with('u, u2','groupsBelonged', 'resourceOwners', 'collect(distinct token2.resourceOwner) as resourceOwners2')
+            ->optionalMatch('(u)-[:LIKES]->(link:Link)')
+            ->where('(u2)-[:LIKES]->(link)')
+            ->with('u', 'u2', 'groupsBelonged', 'resourceOwners', 'resourceOwners2', 'count(distinct(link)) AS commonContent')
+            ->optionalMatch('(u)-[:ANSWERS]->(answer:Answer)')
+            ->where('(u2)-[:ANSWERS]->(answer)')
+            ->returns('groupsBelonged, resourceOwners, resourceOwners2, commonContent, count(distinct(answer)) as commonAnswers');
 
         $query = $qb->getQuery();
 
@@ -486,10 +493,15 @@ class UserModel implements PaginatedInterface
             $resourceOwners2[] = $resourceOwner2;
         }
 
+        $commonContent = $row->offsetGet('commonContent')?: 0;
+        $commonAnswers = $row->offsetGet('commonAnswers')?: 0;
+
         $userStats = new UserComparedStatsModel(
             $groups,
             $resourceOwners,
-            $resourceOwners2
+            $resourceOwners2,
+            $commonContent,
+            $commonAnswers
         );
 
         return $userStats;

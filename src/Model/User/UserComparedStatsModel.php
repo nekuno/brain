@@ -11,13 +11,37 @@ class UserComparedStatsModel
 
     protected $otherUserResourceOwners;
 
+    protected $commonContent;
+
+    protected $commonAnswers;
+
     function __construct($groupsBelonged,
                          $userResourceOwners,
-                         $otherUserResourceOwners)
+                         $otherUserResourceOwners,
+                         $commonContent,
+                         $commonAnswers)
     {
         $this->groupsBelonged = $groupsBelonged;
         $this->userResourceOwners = $userResourceOwners;
         $this->otherUserResourceOwners = $otherUserResourceOwners;
+        $this->commonContent = $commonContent;
+        $this->commonAnswers = $commonAnswers;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getCommonContent()
+    {
+        return $this->commonContent;
+    }
+
+    /**
+     * @param mixed $commonContent
+     */
+    public function setCommonContent($commonContent)
+    {
+        $this->commonContent = $commonContent;
     }
 
     /**
@@ -72,6 +96,8 @@ class UserComparedStatsModel
         return array('groupsBelonged' => $this->groupsBelonged,
                      'otherUserResourceOwners' => $this->otherUserResourceOwners,
                      'userResourceOwners' => $this->userResourceOwners,
+                     'commonContent' => $this->commonContent,
+                     'commonAnswers' => $this->commonAnswers,
         );
     }
 }
