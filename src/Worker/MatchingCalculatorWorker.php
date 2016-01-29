@@ -123,8 +123,8 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
 
                     foreach ($usersWithSameContent as $currentUser) {
                         $userB = $currentUser['qnoow_id'];
-                        $similarity = $this->similarityModel->calculateSimilarityByInterests($userA, $userB);
-                        $this->logger->info(sprintf('   Similarity by interests between users %d - %d: %s', $userA, $userB, $similarity));
+                        $similarity = $this->similarityModel->getSimilarityByInterests($userA, $userB);
+                        $this->logger->info(sprintf('   Similarity by interests between users %d - %d: %s', $userA, $userB, $similarity['interests']));
                     }
                 } catch (\Exception $e) {
                     $this->logger->error(sprintf('Worker: Error calculating similarity for user %d with message %s on file %s, line %d', $userA, $e->getMessage(), $e->getFile(), $e->getLine()));
@@ -151,9 +151,9 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
 
                         $userB = $currentUser['qnoow_id'];
                         if ($userA <> $userB) {
-                            $similarity = $this->similarityModel->calculateSimilarityByQuestions($userA, $userB);
+                            $similarity = $this->similarityModel->getSimilarityByQuestions($userA, $userB);
                             $matching = $this->matchingModel->calculateMatchingBetweenTwoUsersBasedOnAnswers($userA, $userB);
-                            $this->logger->info(sprintf('   Similarity by questions between users %d - %d: %s', $userA, $userB, $similarity));
+                            $this->logger->info(sprintf('   Similarity by questions between users %d - %d: %s', $userA, $userB, $similarity['questions']));
                             $this->logger->info(sprintf('   Matching by questions between users %d - %d: %s', $userA, $userB, $matching));
                         }
                     }
