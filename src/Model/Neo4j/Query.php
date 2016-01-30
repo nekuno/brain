@@ -41,7 +41,7 @@ class Query extends \Everyman\Neo4j\Cypher\Query implements LoggerAwareInterface
 
                 $errors = $data;
                 if (isset($data['message']) && preg_match('/^.* property "(.*)".*/', $data['message'], $matches)) {
-                    $errors = array($matches[1] => $data['message']);
+                    $errors = array($matches[1] => array($data['message']));
                 }
 
                 throw new ValidationException($errors);
