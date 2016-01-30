@@ -2,7 +2,6 @@
 
 namespace Model\User\Thread;
 
-
 use Everyman\Neo4j\Query\Row;
 use Model\Neo4j\GraphManager;
 use Paginator\PaginatedInterface;
@@ -10,10 +9,14 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class ThreadPaginatedModel implements PaginatedInterface
 {
-    /** @var ThreadManager */
+    /**
+     * @var ThreadManager
+     */
     protected $threadManager;
 
-    /** @var GraphManager */
+    /**
+     * @var GraphManager
+     */
     protected $graphManager;
 
     public function __construct(GraphManager $gm, ThreadManager $threadManager)
@@ -21,7 +24,6 @@ class ThreadPaginatedModel implements PaginatedInterface
         $this->graphManager = $gm;
         $this->threadManager = $threadManager;
     }
-
 
     /**
      * Hook point for validating the $filters.
@@ -46,28 +48,26 @@ class ThreadPaginatedModel implements PaginatedInterface
     {
         $qb = $this->graphManager->createQueryBuilder();
 
-        $qb->setParameters( array (
-            'userId' => (integer) $filters['userId'],
-            'offset' => (integer)$offset,
-            'limit' => (integer)$limit
-        ));
+        $qb->setParameters(
+            array(
+                'userId' => (integer)$filters['userId'],
+                'offset' => (integer)$offset,
+                'limit' => (integer)$limit
+            )
+        );
 
         $qb->match('(user:User)')
             ->where('user.qnoow_id= {userId}')
-            ->optionalMatch('(user)-[:HAS_THREAD]->(thread:Thread)')
+            ->match('(user)-[:HAS_THREAD]->(thread:Thread)')
             ->returns('thread')
             ->skip('{offset}')
             ->limit('{limit}');
 
         $result = $qb->getQuery()->getResultSet();
 
-        if ($result->count() < 1) {
-            throw new NotFoundHttpException('User with id ' . $filters['userId'] . ' not found');
-        }
-
         $threads = array();
-        /** @var Row $row */
         foreach ($result as $row) {
+            /* @var $row Row */
             $threads[] = $this->threadManager->buildThread($row->offsetGet('thread'));
         }
 
@@ -87,7 +87,7 @@ class ThreadPaginatedModel implements PaginatedInterface
 
         $qb->match('(user:User)')
             ->where('user.qnoow_id= {id}')
-            ->optionalMatch('(user)-[:HAS_THREAD]->(thread:Thread)')
+            ->match('(user)-[:HAS_THREAD]->(thread:Thread)')
             ->returns('count(thread) as threads');
 
         $result = $qb->getQuery()->getResultSet();
