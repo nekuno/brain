@@ -2,13 +2,15 @@
 
 namespace Http\OAuth\ResourceOwner;
 
+use ApiConsumer\LinkProcessor\UrlParser\SpotifyUrlParser;
 use Model\User\TokensModel;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
- * Class FacebookResourceOwner
+ * Class SpotifyResourceOwner
  *
  * @package ApiConsumer\ResourceOwner
+ * @method SpotifyUrlParser GetParser
  */
 class SpotifyResourceOwner extends Oauth2GenericResourceOwner
 {

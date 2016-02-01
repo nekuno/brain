@@ -3,6 +3,7 @@
 namespace Http\OAuth\ResourceOwner;
 
 use ApiConsumer\Event\ChannelEvent;
+use ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser;
 use GuzzleHttp\Exception\RequestException;
 use Model\User\TokensModel;
 use Service\LookUp\LookUp;
@@ -12,6 +13,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  * Class TwitterResourceOwner
  *
  * @package ApiConsumer\ResourceOwner
+ * @method TwitterUrlParser GetParser 
  */
 class TwitterResourceOwner extends Oauth1GenericResourceOwner
 {

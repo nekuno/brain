@@ -3,6 +3,7 @@ api_consumer.config:
         twitter:
             class: Http\OAuth\ResourceOwner\TwitterResourceOwner
             client_credential_class: Http\OAuth\ResourceOwner\ClientCredential\TwitterClientCredential
+            parser_class: ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser
         facebook:
             class: Http\OAuth\ResourceOwner\FacebookResourceOwner
         google:
@@ -13,6 +14,7 @@ api_consumer.config:
             client_credential_class: Http\OAuth\ResourceOwner\ClientCredential\GoogleClientCredentialFromLibrary
         spotify:
             class: Http\OAuth\ResourceOwner\SpotifyResourceOwner
+            parser_class: ApiConsumer\LinkProcessor\UrlParser\SpotifyUrlParser
     fetcher:
         twitter_links:
             class: ApiConsumer\Fetcher\TwitterLinksFetcher
