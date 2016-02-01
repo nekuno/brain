@@ -2,7 +2,6 @@
 
 namespace Model\User\Thread;
 
-
 use Everyman\Neo4j\Label;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
@@ -130,33 +129,6 @@ class ThreadManager
     }
 
     /**
-     * @param Node $threadNode
-     * @return null|string
-     */
-    private function getCategory(Node $threadNode)
-    {
-        //$labels = $threadNode->getLabels();
-        $id = $threadNode->getId();
-        $qb = $this->graphManager->createQueryBuilder();
-        $qb->setParameter('id', $id);
-
-        $qb->match('(thread:Thread)')
-            ->where('id(thread) = {id}')
-            ->returns('labels(thread) as labels');
-
-        $rs = $qb->getQuery()->getResultSet();
-        $labels = $rs->current()->offsetGet('labels');
-        /** @var Label $label */
-        foreach ($labels as $label) {
-            if ($label != ThreadManager::LABEL_THREAD) {
-                return $label;
-            }
-        }
-
-        return null;
-    }
-
-    /**
      * Creates an appropriate neo4j node from a set of filters
      * @param $userId
      * @param $data
@@ -168,10 +140,12 @@ class ThreadManager
         //TODO: Avoid duplicate if coincidence of userId and name ?
         $name = isset($data['name']) ? $data['name'] : null;
         $category = isset($data['category']) ? $data['category'] : null;
-        $this->validate(array_merge(
-            array('userId' => (integer)$userId),
-            $data
-        ));
+        $this->validate(
+            array_merge(
+                array('userId' => (integer)$userId),
+                $data
+            )
+        );
 
         $qb = $this->graphManager->createQueryBuilder();
 
@@ -180,9 +154,12 @@ class ThreadManager
             ->set('thread.name = {name}')
             ->create('(u)-[:HAS_THREAD]->(thread)');
         $qb->returns('id(thread) as id');
-        $qb->setParameters(array(
-            'name' => $name,
-            'userId' => (integer)$userId));
+        $qb->setParameters(
+            array(
+                'name' => $name,
+                'userId' => (integer)$userId
+            )
+        );
 
         $result = $qb->getQuery()->getResultSet();
 
@@ -206,13 +183,16 @@ class ThreadManager
 
         $qb->match('(thread:Thread)')
             ->where('id(thread) = {id}')
-            ->remove('thread:' . $this::LABEL_THREAD_USERS .':'. $this::LABEL_THREAD_CONTENT)
+            ->remove('thread:' . $this::LABEL_THREAD_USERS . ':' . $this::LABEL_THREAD_CONTENT)
             ->set('thread:' . $category)
             ->set('thread.name = {name}');
         $qb->returns('thread');
-        $qb->setParameters(array(
-            'name' => $name,
-            'id' => (integer)$threadId));
+        $qb->setParameters(
+            array(
+                'name' => $name,
+                'id' => (integer)$threadId
+            )
+        );
 
         $result = $qb->getQuery()->getResultSet();
 
@@ -225,26 +205,6 @@ class ThreadManager
 
         return $this->updateFromFilters($thread, $data);
 
-    }
-
-    private function updateFromFilters(Thread $thread, $data)
-    {
-
-        $filters = isset($data['filters']) ? $data['filters'] : array();
-        switch (get_class($thread)) {
-            case 'Model\User\Thread\ContentThread':
-
-                $this->contentThreadManager->update($thread->getId(), $filters);
-                break;
-            case 'Model\User\Thread\UsersThread':
-
-                $this->usersThreadManager->update($thread->getId(), $filters);
-                break;
-            default:
-                return null;
-        }
-
-        return $this->getById($thread->getId());
     }
 
     public function validate($data)
@@ -265,8 +225,10 @@ class ThreadManager
                     default:
                         break;
                 }
-            } else if ($fieldData['required'] === true) {
-                $fieldErrors[] = 'It\'s required.';
+            } else {
+                if ($fieldData['required'] === true) {
+                    $fieldErrors[] = 'It\'s required.';
+                }
             }
 
             if (count($fieldErrors) > 0) {
@@ -284,39 +246,10 @@ class ThreadManager
             $errors['userId'] = array('User identification not supplied');
         }
 
-
         if (count($errors) > 0) {
             throw new ValidationException($errors);
         }
 
-    }
-
-    private function getMetadata()
-    {
-        $metadata = array(
-            'name' => array(
-                'type' => 'string',
-                'required' => true,
-            ),
-            'category' => array(
-                'type' => 'choice',
-                'required' => true
-            )
-        );
-        return $metadata;
-    }
-
-    private function getChoices($fieldName)
-    {
-        switch ($fieldName) {
-            case 'category':
-                return array(
-                    ThreadManager::LABEL_THREAD_USERS,
-                    ThreadManager::LABEL_THREAD_CONTENT,
-                );
-            default:
-                return array();
-        }
     }
 
     /**
@@ -381,21 +314,6 @@ class ThreadManager
 
     }
 
-    private function deleteCachedResults(Thread $thread)
-    {
-        $parameters = array(
-            'id' => $thread->getId()
-        );
-        $qb = $this->graphManager->createQueryBuilder();
-        $qb->match('(thread:Thread)')
-            ->where('id(thread) = {id}')
-            ->optionalMatch('(thread)-[r:RECOMMENDS]->()')
-            ->delete('r');
-        $qb->setParameters($parameters);
-        $qb->getQuery()->getResultSet();
-
-    }
-
     public function deleteById($id)
     {
 
@@ -415,6 +333,97 @@ class ThreadManager
         }
 
         return $result->current()->offsetGet('amount');
+    }
+
+    /**
+     * @param Node $threadNode
+     * @return null|string
+     */
+    private function getCategory(Node $threadNode)
+    {
+        //$labels = $threadNode->getLabels();
+        $id = $threadNode->getId();
+        $qb = $this->graphManager->createQueryBuilder();
+        $qb->setParameter('id', $id);
+
+        $qb->match('(thread:Thread)')
+            ->where('id(thread) = {id}')
+            ->returns('labels(thread) as labels');
+
+        $rs = $qb->getQuery()->getResultSet();
+        $labels = $rs->current()->offsetGet('labels');
+        /** @var Label $label */
+        foreach ($labels as $label) {
+            if ($label != ThreadManager::LABEL_THREAD) {
+                return $label;
+            }
+        }
+
+        return null;
+    }
+
+    private function updateFromFilters(Thread $thread, $data)
+    {
+
+        $filters = isset($data['filters']) ? $data['filters'] : array();
+        switch (get_class($thread)) {
+            case 'Model\User\Thread\ContentThread':
+
+                $this->contentThreadManager->update($thread->getId(), $filters);
+                break;
+            case 'Model\User\Thread\UsersThread':
+
+                $this->usersThreadManager->update($thread->getId(), $filters);
+                break;
+            default:
+                return null;
+        }
+
+        return $this->getById($thread->getId());
+    }
+
+    private function getMetadata()
+    {
+        $metadata = array(
+            'name' => array(
+                'type' => 'string',
+                'required' => true,
+            ),
+            'category' => array(
+                'type' => 'choice',
+                'required' => true
+            )
+        );
+
+        return $metadata;
+    }
+
+    private function getChoices($fieldName)
+    {
+        switch ($fieldName) {
+            case 'category':
+                return array(
+                    ThreadManager::LABEL_THREAD_USERS,
+                    ThreadManager::LABEL_THREAD_CONTENT,
+                );
+            default:
+                return array();
+        }
+    }
+
+    private function deleteCachedResults(Thread $thread)
+    {
+        $parameters = array(
+            'id' => $thread->getId()
+        );
+        $qb = $this->graphManager->createQueryBuilder();
+        $qb->match('(thread:Thread)')
+            ->where('id(thread) = {id}')
+            ->optionalMatch('(thread)-[r:RECOMMENDS]->()')
+            ->delete('r');
+        $qb->setParameters($parameters);
+        $qb->getQuery()->getResultSet();
+
     }
 }
 
