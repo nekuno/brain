@@ -15,6 +15,9 @@ class ThreadManager
     const LABEL_THREAD = 'Thread';
     const LABEL_THREAD_USERS = 'ThreadUsers';
     const LABEL_THREAD_CONTENT = 'ThreadContent';
+    const SCENARIO_DEFAULT = 'default';
+
+    static public $scenarios = array(ThreadManager::SCENARIO_DEFAULT);
 
     /** @var  GraphManager */
     protected $graphManager;
@@ -126,6 +129,83 @@ class ThreadManager
         $thread->setTotalResults($threadNode->getProperty('totalResults'));
 
         return $thread;
+    }
+
+    public function getDefaultThreads($scenario = ThreadManager::SCENARIO_DEFAULT)
+    {
+        $threads = array(
+            'default' => array(
+                array(
+                    'name' => 'Chicas de Madrid',
+                    'category' => ThreadManager::LABEL_THREAD_USERS,
+                    'filters' => array(
+                        'profileFilters' => array(
+                            'birthday' => array(
+                                'min' => $this->YearsToBirthday(32),
+                                'max' => $this->YearsToBirthday(22),
+                            ),
+                            'location' => array(
+                                'distance' => 10,
+                                'location' => array(
+                                    'latitude' => 40.4167754,
+                                    'longitude' => -3.7037901999999576,
+                                    'address' => 'Madrid, Madrid, Spain'
+                                )
+                            ),
+                            'gender' => array(
+                                'female'
+                            )
+                        ),
+                        'order' => 'content',
+                    )
+                ),
+                array(
+                    'name' => 'Música',
+                    'category' => ThreadManager::LABEL_THREAD_CONTENT,
+                    'filters' => array(
+                        'type' => 'Audio'
+                    )
+                ),
+                array(
+                    'name' => 'Vídeos',
+                    'category' => ThreadManager::LABEL_THREAD_CONTENT,
+                    'filters' => array(
+                        'type' => 'Video'
+                    )
+                ),
+                array(
+                    'name' => 'Imágenes',
+                    'category' => ThreadManager::LABEL_THREAD_CONTENT,
+                    'filters' => array(
+                        'type' => 'Image'
+                    )
+                ),
+                array(
+                    'name' => 'Contenidos de Madrid',
+                    'category' => ThreadManager::LABEL_THREAD_CONTENT,
+                    'filters' => array(
+                        'tag' => 'madrid'
+                    )
+                ),
+                array(
+                    'name' => 'Noticias',
+                    'category' => ThreadManager::LABEL_THREAD_CONTENT,
+                    'filters' => array(
+                        'tag' => 'noticias'
+                    )
+                ),
+                array(
+                    'name' => 'Los mejores contenidos para ti',
+                    'category' => ThreadManager::LABEL_THREAD_CONTENT,
+                ),
+            )
+        );
+
+        if (!isset($threads[$scenario])) {
+            return null;
+        }
+
+        return $threads[$scenario];
     }
 
     /**
@@ -424,6 +504,14 @@ class ThreadManager
         $qb->setParameters($parameters);
         $qb->getQuery()->getResultSet();
 
+    }
+
+    private function YearsToBirthday($years)
+    {
+        $now = new \DateTime();
+        $birthday = $now->modify('-' . $years . ' years')->format('Y-m-d');
+
+        return $birthday;
     }
 }
 

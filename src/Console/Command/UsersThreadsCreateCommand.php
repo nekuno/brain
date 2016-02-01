@@ -2,7 +2,6 @@
 
 namespace Console\Command;
 
-
 use Console\ApplicationAwareCommand;
 use Model\User\Thread\ThreadManager;
 use Model\UserModel;
@@ -19,7 +18,7 @@ class UsersThreadsCreateCommand extends ApplicationAwareCommand
 
         $this->setName('users:threads:create')
             ->setDescription('Creates threads for users')
-            ->addArgument('scenario', InputArgument::REQUIRED, 'Set of threads to add. Options available: default')
+            ->addArgument('scenario', InputArgument::REQUIRED, sprintf('Set of threads to add. Options available: "%s"', implode('", "', ThreadManager::$scenarios)))
             ->addOption('all', null, InputOption::VALUE_NONE, 'Create them to all users', null)
             ->addOption('userId', null, InputOption::VALUE_REQUIRED, 'Id of thread owner', null);
     }
@@ -31,130 +30,52 @@ class UsersThreadsCreateCommand extends ApplicationAwareCommand
         $all = $input->getOption('all');
         $userId = $input->getOption('userId');
 
-        if (!in_array($scenario, array('default'))) {
-            $output->writeln('Scenario not valid. Available scenarios: default.');
+        if (!in_array($scenario, ThreadManager::$scenarios)) {
+            $output->writeln(sprintf('Scenario not valid. Available scenarios: "%s".', implode('", "', ThreadManager::$scenarios)));
+
             return;
         }
 
         if (!($all || $userId)) {
             $output->writeln('Please specify userId or all users');
+
             return;
         }
 
-        /** @var UserModel $userModel */
+        /* @var $userModel UserModel */
         $userModel = $this->app['users.model'];
 
         $users = array();
         if ($all) {
             $users = $userModel->getAll();
-        } else if ($userId) {
-            $users = array($userModel->getById($userId, true));
+        } else {
+            if ($userId) {
+                $users = array($userModel->getById($userId, true));
+            }
         }
 
-        $threads = $this->loadThreads($scenario);
-
-        /** @var ThreadManager $threadManager */
+        /* @var $threadManager ThreadManager */
         $threadManager = $this->app['users.threads.manager'];
-        /** @var Recommendator $recommendator */
+        /* @var $recommendator Recommendator */
         $recommendator = $this->app['recommendator.service'];
 
-        foreach ($users as $user) {
-            foreach ($threads as $threadProperties){
-                $thread = $threadManager->create($user['qnoow_id'], $threadProperties);
+        $threads = $threadManager->getDefaultThreads($scenario);
 
+        foreach ($users as $user) {
+            foreach ($threads as $threadProperties) {
+                $thread = $threadManager->create($user['qnoow_id'], $threadProperties);
                 $result = $recommendator->getRecommendationFromThread($thread);
 
-                $threadManager->cacheResults($thread,
+                $threadManager->cacheResults(
+                    $thread,
                     array_slice($result['items'], 0, 5),
-                    $result['pagination']['total']);
+                    $result['pagination']['total']
+                );
 
             }
-            $output->writeln('Added threads for scenario '.$scenario.' and user with id '.$user['qnoow_id']);
+            $output->writeln('Added threads for scenario ' . $scenario . ' and user with id ' . $user['qnoow_id']);
         }
 
-
     }
 
-    protected function loadThreads($scenario)
-    {
-        $threads = array(
-            'default' => array(
-                array(
-                    'name' => 'Chicas de Madrid',
-                    'category' => ThreadManager::LABEL_THREAD_USERS,
-                    'filters' => array(
-                        'profileFilters' => array(
-                            'birthday' => array(
-                                'min' => $this->YearsToBirthday(32),
-                                'max' => $this->YearsToBirthday(22),
-                            ),
-                            'location' => array(
-                                'distance' => 10,
-                                'location' => array(
-                                    'latitude' => 40.4167754,
-                                    'longitude' => -3.7037901999999576,
-                                    'address' => 'Madrid, Madrid, Spain'
-                                )
-                            ),
-                            'gender' => array(
-                                'female'
-                            )
-                        ),
-                        'order' => 'content',
-                    )
-                ),
-                array(
-                    'name' => 'Música',
-                    'category' => ThreadManager::LABEL_THREAD_CONTENT,
-                    'filters' => array(
-                        'type' => 'Audio'
-                    )
-                ),
-                array(
-                    'name' => 'Vídeos',
-                    'category' => ThreadManager::LABEL_THREAD_CONTENT,
-                    'filters' => array(
-                        'type' => 'Video'
-                    )
-                ),
-                array(
-                    'name' => 'Imágenes',
-                    'category' => ThreadManager::LABEL_THREAD_CONTENT,
-                    'filters' => array(
-                        'type' => 'Image'
-                    )
-                ),
-                array(
-                    'name' => 'Contenidos de Madrid',
-                    'category' => ThreadManager::LABEL_THREAD_CONTENT,
-                    'filters' => array(
-                        'tag' => 'madrid'
-                    )
-                ),
-                array(
-                    'name' => 'Noticias',
-                    'category' => ThreadManager::LABEL_THREAD_CONTENT,
-                    'filters' => array(
-                        'tag' => 'noticias'
-                    )
-                ),
-                array(
-                    'name' => 'Los mejores contenidos para ti',
-                    'category' => ThreadManager::LABEL_THREAD_CONTENT,
-                ),
-            )
-        );
-
-        if (!isset($threads[$scenario])){
-            return null;
-        }
-
-        return $threads[$scenario];
-    }
-
-    protected function YearsToBirthday($years){
-        $now = new \DateTime();
-        $birthday = $now->modify('-'.$years.' years')->format('Y-m-d');
-        return $birthday;
-    }
 }
