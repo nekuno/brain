@@ -89,6 +89,25 @@ class UserController
     }
 
     /**
+     * @param Application $app
+     * @param string $username
+     * @return JsonResponse
+     */
+    public function availableAction(Application $app, $username)
+    {
+
+        /* @var $model UserModel */
+        $model = $app['users.model'];
+        try {
+            $model->findBy(array('usernameCanonical' => mb_strtolower($username)));
+        } catch (NotFoundHttpException $e) {
+            return $app->json();
+        }
+
+        throw new NotFoundHttpException('Username not available');
+    }
+
+    /**
      * @param Request $request
      * @param Application $app
      * @return JsonResponse
