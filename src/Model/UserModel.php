@@ -2,6 +2,7 @@
 
 namespace Model;
 
+use Event\UserEvent;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Exception\ValidationException;
@@ -11,9 +12,9 @@ use Model\User\GhostUser\GhostUserManager;
 use Model\User\LookUpModel;
 use Model\User\SocialNetwork\SocialProfile;
 use Model\User\UserComparedStatsModel;
-use Model\User\UserStatsModel;
 use Model\User\UserStatusModel;
 use Paginator\PaginatedInterface;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Security\Core\Encoder\PasswordEncoderInterface;
 
@@ -24,6 +25,11 @@ use Symfony\Component\Security\Core\Encoder\PasswordEncoderInterface;
  */
 class UserModel implements PaginatedInterface
 {
+
+    /**
+     * @var EventDispatcher
+     */
+    protected $dispatcher;
 
     /**
      * @var GraphManager
@@ -45,8 +51,9 @@ class UserModel implements PaginatedInterface
      */
     protected $defaultLocale;
 
-    public function __construct(GraphManager $gm, PasswordEncoderInterface $encoder, array $metadata, $defaultLocale)
+    public function __construct(EventDispatcher $dispatcher, GraphManager $gm, PasswordEncoderInterface $encoder, array $metadata, $defaultLocale)
     {
+        $this->dispatcher = $dispatcher;
         $this->gm = $gm;
         $this->encoder = $encoder;
         $this->metadata = $metadata;
@@ -237,7 +244,11 @@ class UserModel implements PaginatedInterface
 
         $this->setDefaults($data);
 
-        return $this->save($id, $data);
+        $user = $this->save($id, $data);
+
+        $this->dispatcher->dispatch(\AppEvents::USER_CREATED, new UserEvent($user));
+
+        return $user;
     }
 
     /**
@@ -250,7 +261,11 @@ class UserModel implements PaginatedInterface
 
         $this->validate($data, true);
 
-        return $this->save($id, $data);
+        $user = $this->save($id, $data);
+
+        $this->dispatcher->dispatch(\AppEvents::USER_UPDATED, new UserEvent($user));
+
+        return $user;
 
     }
 
@@ -459,7 +474,7 @@ class UserModel implements PaginatedInterface
             ->optionalmatch('(u)-[:TOKEN_OF]-(token:Token)')
             ->with('u', 'u2', 'groupsBelonged', 'collect(distinct token.resourceOwner) as resourceOwners')
             ->optionalmatch('(u2)-[:TOKEN_OF]-(token2:Token)');
-        $qb->with('u, u2','groupsBelonged', 'resourceOwners', 'collect(distinct token2.resourceOwner) as resourceOwners2')
+        $qb->with('u, u2', 'groupsBelonged', 'resourceOwners', 'collect(distinct token2.resourceOwner) as resourceOwners2')
             ->optionalMatch('(u)-[:LIKES]->(link:Link)')
             ->where('(u2)-[:LIKES]->(link)')
             ->with('u', 'u2', 'groupsBelonged', 'resourceOwners', 'resourceOwners2', 'count(distinct(link)) AS commonContent')
@@ -493,8 +508,8 @@ class UserModel implements PaginatedInterface
             $resourceOwners2[] = $resourceOwner2;
         }
 
-        $commonContent = $row->offsetGet('commonContent')?: 0;
-        $commonAnswers = $row->offsetGet('commonAnswers')?: 0;
+        $commonContent = $row->offsetGet('commonContent') ?: 0;
+        $commonAnswers = $row->offsetGet('commonAnswers') ?: 0;
 
         $userStats = new UserComparedStatsModel(
             $groups,
