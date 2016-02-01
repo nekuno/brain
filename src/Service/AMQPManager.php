@@ -1,14 +1,12 @@
 <?php
 /**
- * Created by PhpStorm.
- * User: yawmoght
- * Date: 6/10/15
- * Time: 12:14
+ * @author Roberto Martinez <yawmoght@gmail.com>
  */
 
 namespace Service;
 
 
+use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
@@ -20,6 +18,11 @@ class AMQPManager
     const SOCIAL_NETWORK = 'social_network';
 
     protected $connection;
+
+    /**
+     * @var AMQPChannel[]
+     */
+    protected $publishingChannels = array();
 
     function __construct(AMQPStreamConnection $AMQPStreamConnection)
     {
@@ -38,7 +41,13 @@ class AMQPManager
         $topic = $publishData['topic'];
         $queueName = $publishData['queueName'];
 
-        $channel = $this->connection->channel();
+        if (isset($this->publishingChannels[$queueName])){
+            $channel = $this->publishingChannels[$queueName];
+        } else {
+            $channel = $this->connection->channel();
+            $this->publishingChannels[$queueName] = $channel;
+        }
+
         $channel->exchange_declare($exchangeName, $exchangeType, false, true, false);
         $channel->queue_declare($queueName, false, true, false, false);
         $channel->queue_bind($queueName, $exchangeName, $topic);
