@@ -60,7 +60,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.model'] = $app->share(
             function ($app) {
 
-                return new UserModel($app['neo4j.graph_manager'], $app['security.password_encoder'], $app['fields']['user'], $app['locale.options']['default']);
+                return new UserModel($app['dispatcher'], $app['neo4j.graph_manager'], $app['security.password_encoder'], $app['fields']['user'], $app['locale.options']['default']);
             }
         );
 
@@ -158,7 +158,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.similarity.model'] = $app->share(
             function ($app) {
 
-                return new SimilarityModel($app['neo4j.client'], $app['neo4j.graph_manager'], $app['links.model'], $app['users.questions.model'], $app['users.content.model'], $app['users.profile.model']);
+                return new SimilarityModel($app['neo4j.graph_manager'], $app['links.model'], $app['users.questions.model'], $app['users.content.model'], $app['users.profile.model']);
             }
         );
 

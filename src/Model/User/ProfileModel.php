@@ -137,7 +137,7 @@ class ProfileModel
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(user:User)<-[:PROFILE_OF]-(profile:Profile)')
             ->where('user.qnoow_id = { id }')
-            ->setParameter('id', $id)
+            ->setParameter('id', (integer)$id)
             ->optionalMatch('(profile)<-[:OPTION_OF]-(option:ProfileOption)')
             ->optionalMatch('(profile)-[:TAGGED]-(tag:ProfileTag)')
             ->optionalMatch('(profile)-[:LOCATION]->(location:Location)')

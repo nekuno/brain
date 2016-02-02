@@ -68,34 +68,41 @@ class TokensController
 
         $token = $model->create($id, $resourceOwner, $request->request->all());
 
-        /* @var $resourceOwnerFactory ResourceOwnerFactory*/
+        /* @var $resourceOwnerFactory ResourceOwnerFactory */
         $resourceOwnerFactory = $app['api_consumer.resource_owner_factory'];
 
-        if ($resourceOwner === TokensModel::FACEBOOK && array_key_exists('refreshToken', $token) && is_null($token['refreshToken'])) {
+        if ($resourceOwner === TokensModel::FACEBOOK) {
+
             /* @var $facebookResourceOwner FacebookResourceOwner */
             $facebookResourceOwner = $resourceOwnerFactory->build(TokensModel::FACEBOOK);
-            $facebookResourceOwner->forceRefreshAccessToken($token);
+
+            if ($request->query->has('extend')) {
+                $token = $facebookResourceOwner->extend($token);
+            }
+
+            if (array_key_exists('refreshToken', $token) && is_null($token['refreshToken'])) {
+                $token = $facebookResourceOwner->forceRefreshAccessToken($token);
+            }
         }
 
-        if ($resourceOwner == TokensModel::TWITTER)
-        {
+        if ($resourceOwner == TokensModel::TWITTER) {
             $resourceOwnerObject = $resourceOwnerFactory->build($resourceOwner);
             $profileUrl = $resourceOwnerObject->getProfileUrl($token);
-            if (!$profileUrl){
+            if (!$profileUrl) {
                 //TODO: Add information about this if it happens
                 return $app->json($token, 201);
             }
             $profile = new SocialProfile($id, $profileUrl, $resourceOwner);
 
-            /* @var $ghostUserManager GhostUserManager*/
+            /* @var $ghostUserManager GhostUserManager */
             $ghostUserManager = $app['users.ghostuser.manager'];
-            if ($ghostUser = $ghostUserManager->getBySocialProfile($profile)){
+            if ($ghostUser = $ghostUserManager->getBySocialProfile($profile)) {
                 /* @var $userModel UserModel */
                 $userModel = $app['users.model'];
                 $userModel->fuseUsers($id, $ghostUser->getId());
                 $ghostUserManager->saveAsUser($id);
             } else {
-                /** @var $socialProfilesManager SocialProfileManager*/
+                /** @var $socialProfilesManager SocialProfileManager */
                 $socialProfilesManager = $app['users.socialprofile.manager'];
                 $socialProfilesManager->addSocialProfile($profile);
             }

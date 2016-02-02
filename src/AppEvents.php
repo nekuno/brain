@@ -42,6 +42,16 @@ final class AppEvents
     const PROCESS_FINISH = 'process.finish';
 
     /**
+     * Fired when user created
+     */
+    const USER_CREATED = 'user.created';
+
+    /**
+     * Fired when user updated
+     */
+    const USER_UPDATED = 'user.updated';
+
+    /**
      * Fired when user status changes
      */
     const USER_STATUS_CHANGED = 'user.statusChanged';
