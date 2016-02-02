@@ -12,26 +12,11 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  *
  * @package ApiConsumer\ResourceOwner
  */
-class
-FacebookResourceOwner extends Oauth2GenericResourceOwner
+class FacebookResourceOwner extends Oauth2GenericResourceOwner
 {
     protected $name = TokensModel::FACEBOOK;
 
     protected $expire_time_margin = 1728000;// 20 days because expired tokens can´t be refreshed
-
-    /**
-     * {@inheritDoc}
-     */
-    protected function configureOptions(OptionsResolver $resolver)
-    {
-        parent::configureOptions($resolver);
-
-        $resolver->setDefaults(array(
-            'base_url' => 'https://graph.facebook.com/v2.4/',
-        ));
-
-        $resolver->setDefined('redirect_uri');
-    }
 
     /**
      * We use Facebook system for getting new long-lived tokens
@@ -71,6 +56,7 @@ FacebookResourceOwner extends Oauth2GenericResourceOwner
         $request = $this->getAPIRequest($getAccessURL, $query);
         $response = $this->httpClient->send($request);
         $data = $response->json();
+
         return array_merge($data, array('refreshToken' => $data['machine_id']));
 
     }
@@ -81,6 +67,53 @@ FacebookResourceOwner extends Oauth2GenericResourceOwner
         $token = $this->addOauthData($data, $token);
         $event = new OAuthTokenEvent($token);
         $this->dispatcher->dispatch(\AppEvents::TOKEN_REFRESHED, $event);
+
+        return $token;
+    }
+
+    public function extend($token)
+    {
+        $getCodeURL = 'https://graph.facebook.com/oauth/access_token';
+        $query = array(
+            'grant_type' => 'fb_exchange_token',
+            'client_id' => $this->getOption('consumer_key'),
+            'client_secret' => $this->getOption('consumer_secret'),
+            'fb_exchange_token' => $token['oauthToken'],
+        );
+
+        try {
+            $request = $this->getAPIRequest($getCodeURL, $query);
+            $response = $this->httpClient->send($request);
+            parse_str($response->getBody(), $data);
+            if (isset($data['expires'])) {
+                $data['expires_in'] = $data['expires'];
+                unset($data['expires']);
+            }
+        } catch (RequestException $e) {
+            throw $e;
+        }
+
+        $token = $this->addOauthData($data, $token);
+        $event = new OAuthTokenEvent($token);
+        $this->dispatcher->dispatch(\AppEvents::TOKEN_REFRESHED, $event);
+
+        return $token;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function configureOptions(OptionsResolver $resolver)
+    {
+        parent::configureOptions($resolver);
+
+        $resolver->setDefaults(
+            array(
+                'base_url' => 'https://graph.facebook.com/v2.4/',
+            )
+        );
+
+        $resolver->setDefined('redirect_uri');
     }
 
 }
