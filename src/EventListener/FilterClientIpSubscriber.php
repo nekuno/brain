@@ -51,6 +51,7 @@ class FilterClientIpSubscriber implements EventSubscriberInterface
             'users.controller:postAction',
             'users.controller:validateAction',
             'users.controller:availableAction',
+            'users.profile.controller:validateAction',
         );
 
         if ($request->headers->has('authorization')) {
