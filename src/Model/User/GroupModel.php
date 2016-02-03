@@ -155,6 +155,27 @@ class GroupModel
             $errors['date'] = array('"date" must be a valid timestamp');
         }
 
+        if (isset($data['followers'])) {
+            if (!is_bool($data['followers'])) {
+                $errors['followers'] = array('"followers" must be boolean');
+            }
+            if (!isset($data['influencer_id'])) {
+                $errors['influencer_id'] = array('"influencer_id" is required for followers groups');
+            } elseif (!is_int($data['influencer_id'])) {
+                $errors['influencer_id'] = array('"influencer_id" must be integer');
+            }
+            if (!isset($data['min_matching'])) {
+                $errors['min_matching'] = array('"min_matching" is required for followers groups');
+            } elseif (!is_int($data['min_matching'])) {
+                $errors['min_matching'] = array('"min_matching" must be integer');
+            }
+            if (!isset($data['type_matching'])) {
+                $errors['type_matching'] = array('"type_matching" is required for followers groups');
+            } elseif ($data['type_matching'] !== 'similarity' && $data['type_matching'] !== 'compatibility') {
+                $errors['type_matching'] = array('"type_matching" must be "similarity" or "compatibility"');
+            }
+        }
+
         if (!isset($data['location']) || !is_array($data['location'])) {
             $errors['location'] = sprintf('The value "%s" is not valid, it should be an array', $data['location']);
         } elseif (isset($data['location'])) {
@@ -200,8 +221,14 @@ class GroupModel
         $this->validate($data);
 
         $qb = $this->gm->createQueryBuilder();
-        $qb->create('(g:Group {name:{ name }, html: { html }, date: { date }})')
-            ->with('g')
+
+        if ($data['followers']) {
+            $qb->create('(g:Group:Followers {name:{ name }, html: { html }, date: { date }, influencer_id: { influencer_id }, min_matching: { min_matching }, type_matching: { type_matching }})');
+        } else {
+            $qb->create('(g:Group {name:{ name }, html: { html }, date: { date }})');
+        }
+
+        $qb->with('g')
             ->merge('(l:Location {address: { address }, latitude: { latitude }, longitude: { longitude }, locality: { locality }, country: { country }})<-[:LOCATION]-(g)')
             ->setParameters(
                 array(
@@ -214,8 +241,15 @@ class GroupModel
                     'locality' => $data['location']['locality'],
                     'country' => $data['location']['country'],
                 )
-            )
-            ->returns('g', 'l');
+            );
+
+        if ($data['followers']) {
+            $qb->setParameter('influencer_id', $data['influencer_id'])
+                ->setParameter('min_matching', $data['min_matching'])
+                ->setParameter('type_matching', $data['type_matching']);
+        }
+
+        $qb->returns('g', 'l');
 
         $query = $qb->getQuery();
 
@@ -236,8 +270,15 @@ class GroupModel
             ->where('id(g) = { id }')
             ->set('g.name = { name }')
             ->set('g.html = { html }')
-            ->set('g.date = { date }')
-            ->with('g')
+            ->set('g.date = { date }');
+
+        if ($data['followers']) {
+            $qb->set('g.influencer_id = { influencer_id }')
+                ->set('g.min_matching = { min_matching }')
+                ->set('g.type_matching = { type_matching }');
+        }
+
+        $qb->with('g')
             ->match('(l:Location)<-[:LOCATION]-(g)')
             ->merge('(l)<-[:LOCATION]-(g)')
             ->set('l.address = { address }', 'l.latitude = { latitude }', 'l.longitude = { longitude }', 'l.locality = { locality }', 'l.country = { country }')
@@ -253,8 +294,15 @@ class GroupModel
                     'locality' => $data['location']['locality'],
                     'country' => $data['location']['country'],
                 )
-            )
-            ->returns('g', 'l');
+            );
+
+        if ($data['followers']) {
+            $qb->setParameter('influencer_id', $data['influencer_id'])
+                ->setParameter('min_matching', $data['min_matching'])
+                ->setParameter('type_matching', $data['type_matching']);
+        }
+
+        $qb->returns('g', 'l');
 
         $query = $qb->getQuery();
 
@@ -443,6 +491,10 @@ class GroupModel
             ),
             'date' => $group->getProperty('date'),
             'usersCount' => $usersCount,
+            'followers' => $group->getProperty('followers'),
+            'influencer_id' => $group->getProperty('influencer_id'),
+            'min_matching' => $group->getProperty('min_matching'),
+            'type_matching' => $group->getProperty('type_matching'),
         );
     }
 
