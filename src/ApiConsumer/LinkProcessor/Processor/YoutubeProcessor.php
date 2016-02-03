@@ -6,11 +6,12 @@ use ApiConsumer\LinkProcessor\LinkAnalyzer;
 use GuzzleHttp\Exception\RequestException;
 use Http\OAuth\ResourceOwner\GoogleResourceOwner;
 use ApiConsumer\LinkProcessor\UrlParser\YoutubeUrlParser;
+use Service\UserAggregator;
 
 /**
  * @author Juan Luis Martínez <juanlu@comakai.com>
  */
-class YoutubeProcessor implements ProcessorInterface
+class YoutubeProcessor extends AbstractProcessor
 {
 
     /**
@@ -23,8 +24,9 @@ class YoutubeProcessor implements ProcessorInterface
      */
     protected $parser;
 
-    public function __construct(GoogleResourceOwner $resourceOwner, YoutubeUrlParser $parser)
+    public function __construct(UserAggregator $userAggregator, GoogleResourceOwner $resourceOwner, YoutubeUrlParser $parser)
     {
+        parent::__construct($userAggregator);
         $this->resourceOwner = $resourceOwner;
         $this->parser = $parser;
     }

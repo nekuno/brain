@@ -1,18 +1,13 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: yawmoght
- * Date: 27/10/15
- * Time: 13:30
- */
 
 namespace ApiConsumer\LinkProcessor\Processor;
 
 
 use ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser;
 use Http\OAuth\ResourceOwner\TwitterResourceOwner;
+use Service\UserAggregator;
 
-class TwitterProcessor implements ProcessorInterface
+class TwitterProcessor extends AbstractProcessor
 {
 
     /**
@@ -25,15 +20,16 @@ class TwitterProcessor implements ProcessorInterface
      */
     protected $parser;
 
-    public function __construct(TwitterResourceOwner $resourceOwner, TwitterUrlParser $parser)
+    public function __construct(UserAggregator $userAggregator, TwitterResourceOwner $resourceOwner, TwitterUrlParser $parser)
     {
+        parent::__construct($userAggregator);
         $this->resourceOwner = $resourceOwner;
         $this->parser = $parser;
     }
 
     /**
      * @param $link
-     * @return array|false Returns the processed link as array or false if the processer can not process the link
+     * @return array|false Returns the processed link as array or false if this processor can not process the link
      */
     public function process(array $link)
     {
@@ -74,8 +70,9 @@ class TwitterProcessor implements ProcessorInterface
         $userName = $this->parser->getProfileNameFromUrl($link['url']);
 
         $users = $this->resourceOwner->lookupUsersBy('screen_name', array($userName));
-
         if (empty($users)) return false;
+
+        $this->addCreator($userName);
 
         return array_merge($link, $this->resourceOwner->buildProfileFromLookup($users[0]));
     }

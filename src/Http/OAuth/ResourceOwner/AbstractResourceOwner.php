@@ -3,6 +3,7 @@
 namespace Http\OAuth\ResourceOwner;
 
 use ApiConsumer\Event\OAuthTokenEvent;
+use ApiConsumer\LinkProcessor\UrlParser\UrlParser;
 use GuzzleHttp\Client;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\RequestException;
@@ -43,6 +44,11 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
     protected $expire_time_margin = 0;
 
     /**
+     * @var UrlParser
+     */
+    protected $urlParser;
+
+    /**
      * @param ClientInterface $httpClient
      * @param \Symfony\Component\EventDispatcher\EventDispatcher $dispatcher
      * @param array $options
@@ -66,6 +72,13 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
             }
             $this->clientCredential = new $clientCredentialClass($clientCredentialOptions);
         }
+
+        if (isset($options['parser_class'])){
+            $this->urlParser = new $options['parser_class']();
+        } else {
+            $this->urlParser = new UrlParser();
+        }
+
 
         $this->configure();
     }
@@ -96,6 +109,11 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
     public function getName()
     {
         return $this->name;
+    }
+
+    public function getParser()
+    {
+        return $this->urlParser;
     }
 
     /**
@@ -283,7 +301,8 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
         $resolver->setDefined(
             array(
                 'client_credential_class',
-                'client_credential'
+                'client_credential',
+                'parser_class'
             )
         );
     }

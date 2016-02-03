@@ -3,8 +3,9 @@
 namespace ApiConsumer\LinkProcessor\Processor;
 
 use Http\OAuth\ResourceOwner\FacebookResourceOwner;
+use Service\UserAggregator;
 
-class FacebookProcessor implements ProcessorInterface
+class FacebookProcessor extends AbstractProcessor
 {
     const FACEBOOK_VIDEO = 'video';
     const FACEBOOK_OTHER = 'other';
@@ -21,11 +22,13 @@ class FacebookProcessor implements ProcessorInterface
     protected $scraperProcessor;
 
     /**
+     * @param UserAggregator $userAggregator
      * @param FacebookResourceOwner $facebookResourceOwner
      * @param ScraperProcessor $scraperProcessor
      */
-    public function __construct(FacebookResourceOwner $facebookResourceOwner, ScraperProcessor $scraperProcessor)
+    public function __construct(UserAggregator $userAggregator, FacebookResourceOwner $facebookResourceOwner, ScraperProcessor $scraperProcessor)
     {
+        parent::__construct($userAggregator);
         $this->resourceOwner = $facebookResourceOwner;
         $this->scraperProcessor = $scraperProcessor;
     }

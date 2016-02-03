@@ -75,4 +75,9 @@ final class AppEvents
      * Fired when SocialNetworks are detected from LookUp
      */
     const SOCIAL_NETWORKS_ADDED = 'socialNetworks.added';
+
+    /**
+     * Fired when a channel url is detected
+     */
+    const CHANNEL_ADDED = 'channel.added';
 }

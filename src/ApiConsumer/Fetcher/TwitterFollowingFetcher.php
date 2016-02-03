@@ -53,12 +53,17 @@ class TwitterFollowingFetcher extends BasicPaginationFetcher
                     'title' => null,
                     'description' => null,
                     'timestamp' => 1000 * time(),
-                    'resource' => $this->resourceOwner->name);
+                    'resource' => $this->resourceOwner->getName());
             }
         } else {
             foreach ($links as &$link) {
+                $screenName = $link['screen_name'];
                 $link = $this->resourceOwner->buildProfileFromLookup($link);
                 $link['processed'] = 1;
+                $this->resourceOwner->dispatchChannel(array(
+                    'url' => $link['url'],
+                    'username' => $screenName,
+                ));
             }
         }
 

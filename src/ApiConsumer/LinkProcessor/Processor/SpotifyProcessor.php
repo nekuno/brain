@@ -7,8 +7,9 @@ use Http\OAuth\ResourceOwner\SpotifyResourceOwner;
 use ApiConsumer\LinkProcessor\UrlParser\SpotifyUrlParser;
 use Http\OAuth\ResourceOwner\GoogleResourceOwner;
 use ApiConsumer\LinkProcessor\UrlParser\YoutubeUrlParser;
+use Service\UserAggregator;
 
-class SpotifyProcessor implements ProcessorInterface
+class SpotifyProcessor extends AbstractProcessor
 {
     /**
      * @var SpotifyResourceOwner
@@ -30,8 +31,9 @@ class SpotifyProcessor implements ProcessorInterface
      */
     protected $youtubeUrlParser;
 
-    public function __construct(SpotifyResourceOwner $resourceOwner, SpotifyUrlParser $parser, GoogleResourceOwner $googleResourceOwner, YoutubeUrlParser $youtubeUrlParser)
+    public function __construct(UserAggregator $userAggregator, SpotifyResourceOwner $resourceOwner, SpotifyUrlParser $parser, GoogleResourceOwner $googleResourceOwner, YoutubeUrlParser $youtubeUrlParser)
     {
+        parent::__construct($userAggregator);
         $this->resourceOwner = $resourceOwner;
         $this->parser = $parser;
         $this->googleResourceOwner = $googleResourceOwner;

@@ -119,7 +119,7 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                         $userStatusChangedEvent = new UserStatusChangedEvent($userA, $status->getStatus());
                         $this->dispatcher->dispatch(\AppEvents::USER_STATUS_CHANGED, $userStatusChangedEvent);
                     }
-                    $usersWithSameContent = $this->userModel->getByCommonLinksWithUser($userA);
+                    $usersWithSameContent = $this->userModel->getByCommonLinksWithUser($userA, 1000);
 
                     foreach ($usersWithSameContent as $currentUser) {
                         $userB = $currentUser['qnoow_id'];

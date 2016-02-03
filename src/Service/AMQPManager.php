@@ -16,6 +16,7 @@ class AMQPManager
     const FETCHING = 'fetching';
     const PREDICTION = 'prediction';
     const SOCIAL_NETWORK = 'social_network';
+    const CHANNEL = 'channel';
 
     protected $connection;
 
@@ -75,6 +76,10 @@ class AMQPManager
             case $this::SOCIAL_NETWORK:
                 $data['topic'] = 'brain.social_network.*';
                 $data['queueName'] = 'brain.social_network';
+                break;
+            case $this::CHANNEL:
+                $data['topic'] = 'brain.channel.*';
+                $data['queueName'] = 'brain.channel';
                 break;
             default:
                 throw new \Exception('RabbitMQ queue not supported');
