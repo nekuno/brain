@@ -155,7 +155,7 @@ class GroupModel
             $errors['date'] = array('"date" must be a valid timestamp');
         }
 
-        if (isset($data['followers'])) {
+        if (isset($data['followers']) && $data['followers']) {
             if (!is_bool($data['followers'])) {
                 $errors['followers'] = array('"followers" must be boolean');
             }
@@ -222,7 +222,7 @@ class GroupModel
 
         $qb = $this->gm->createQueryBuilder();
 
-        if ($data['followers']) {
+        if (isset($data['followers']) && $data['followers']) {
             $qb->create('(g:Group:Followers {name:{ name }, html: { html }, date: { date }, influencer_id: { influencer_id }, min_matching: { min_matching }, type_matching: { type_matching }})');
         } else {
             $qb->create('(g:Group {name:{ name }, html: { html }, date: { date }})');
@@ -243,7 +243,7 @@ class GroupModel
                 )
             );
 
-        if ($data['followers']) {
+        if (isset($data['followers']) && $data['followers']) {
             $qb->setParameter('influencer_id', $data['influencer_id'])
                 ->setParameter('min_matching', $data['min_matching'])
                 ->setParameter('type_matching', $data['type_matching']);
@@ -272,7 +272,7 @@ class GroupModel
             ->set('g.html = { html }')
             ->set('g.date = { date }');
 
-        if ($data['followers']) {
+        if (isset($data['followers']) && $data['followers']) {
             $qb->set('g.influencer_id = { influencer_id }')
                 ->set('g.min_matching = { min_matching }')
                 ->set('g.type_matching = { type_matching }');
@@ -296,7 +296,7 @@ class GroupModel
                 )
             );
 
-        if ($data['followers']) {
+        if (isset($data['followers']) && $data['followers']) {
             $qb->setParameter('influencer_id', $data['influencer_id'])
                 ->setParameter('min_matching', $data['min_matching'])
                 ->setParameter('type_matching', $data['type_matching']);
