@@ -391,3 +391,17 @@ user:
         label:
             en: 'Groups'
             es: 'Grupos'
+    compatibility:
+        type: integer
+        min: 50
+        max: 99
+        label:
+            en: 'Minimum compatibility (%)'
+            es: 'Compatibilidad mínima (%)'
+    similarity:
+        type: integer
+        min: 50
+        max: 99
+        label:
+            en: 'Minimum similarity (%)'
+            es: 'Similaridad mínima (%)'
