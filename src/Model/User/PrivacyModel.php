@@ -64,7 +64,7 @@ class PrivacyModel
             ->where('user.qnoow_id = { id }')
             ->setParameter('id', (integer)$id)
             ->optionalMatch('(privacy)<-[option_of:OPTION_OF]-(option:PrivacyOption)')
-            ->with('privacy, collect({key: option, value: option_of.value}) AS options')
+            ->with('privacy, collect({node: option, value: option_of.value}) AS options')
             ->returns('privacy', 'options')
             ->limit(1);
 
@@ -236,18 +236,17 @@ class PrivacyModel
         $privacy = $node->getProperties();
 
         foreach ($row->offsetGet('options') as $option) {
-            /* @var $option Node */
-            $optionKey = $option['key'];
+            /* @var $optionNode Node */
+            $optionNode = $option['node'];
             $optionValue = $option['value'];
 
-            /* @var $optionKey Node */
-            $labels = $optionKey->getLabels();
+            $labels = $optionNode->getLabels();
             foreach ($labels as $label) {
                 /* @var $label Label */
                 $labelName = $label->getName();
                 if ($labelName != 'PrivacyOption') {
                     $typeName = $this->labelToType($labelName);
-                    $privacy[$typeName]['key'] = $optionKey->getProperty('id');
+                    $privacy[$typeName]['key'] = $optionNode->getProperty('id');
                     $privacy[$typeName]['value'] = $optionValue;
                 }
             }
