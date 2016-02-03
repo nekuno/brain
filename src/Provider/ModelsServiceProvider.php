@@ -35,6 +35,7 @@ use Model\User\Thread\ThreadManager;
 use Model\User\Thread\ThreadPaginatedModel;
 use Model\User\Thread\UsersThreadManager;
 use Model\User\TokensModel;
+use Model\User\UserFilterModel;
 use Model\User\UserStatsManager;
 use Model\UserModel;
 use Silex\Application;
@@ -75,6 +76,13 @@ class ModelsServiceProvider implements ServiceProviderInterface
             function ($app) {
 
                 return new ProfileModel($app['neo4j.graph_manager'], $app['fields']['profile'], $app['locale.options']['default']);
+            }
+        );
+
+        $app['users.userFilter.model'] = $app->share(
+            function ($app) {
+
+                return new UserFilterModel($app['neo4j.graph_manager'], $app['fields']['user'], $app['locale.options']['default']);
             }
         );
 
@@ -165,7 +173,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.recommendation.users.model'] = $app->share(
             function ($app) {
 
-                return new UserRecommendationPaginatedModel($app['neo4j.graph_manager'], $app['users.profile.model']);
+                return new UserRecommendationPaginatedModel($app['neo4j.graph_manager'], $app['users.profile.model'], $app['users.userFilter.model']);
             }
         );
 

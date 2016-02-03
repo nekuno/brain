@@ -13,6 +13,7 @@ use Everyman\Neo4j\Relationship;
 use Model\Neo4j\GraphManager;
 use Model\User\GroupModel;
 use Model\User\ProfileModel;
+use Model\User\UserFilterModel;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class FilterManager
@@ -30,15 +31,21 @@ class FilterManager
     protected $profileModel;
 
     /**
+     * @var UserFilterModel
+     */
+    protected $userFilterModel;
+
+    /**
      * @var GroupModel
      */
     protected $groupModel;
 
-    public function __construct(array $fields, GraphManager $graphManager, ProfileModel $profileModel, GroupModel $groupModel)
+    public function __construct(array $fields, GraphManager $graphManager, ProfileModel $profileModel, UserFilterModel $userFilterModel, GroupModel $groupModel)
     {
         $this->fields = $fields;
         $this->graphManager = $graphManager;
         $this->profileModel = $profileModel;
+        $this->userFilterModel = $userFilterModel;
         $this->groupModel = $groupModel;
     }
 
@@ -238,6 +245,7 @@ class FilterManager
             ->where('id(filter) = {id}');
 
         //Implement metadata format here if using more than "groups" userFilter
+        $metadata = $this->userFilterModel->getMetadata();
         if (isset($userFilters['groups'])) {
             foreach ($userFilters['groups'] as $group) {
                 $qb->match("(group$group:Group)")

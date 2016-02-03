@@ -7,6 +7,7 @@ use Model\Neo4j\GraphManager;
 use Model\Neo4j\QueryBuilder;
 use Model\User\GhostUser\GhostUserManager;
 use Model\User\ProfileModel;
+use Model\User\UserFilterModel;
 use Paginator\PaginatedInterface;
 
 class UserRecommendationPaginatedModel implements PaginatedInterface
@@ -19,10 +20,13 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
      */
     protected $profileModel;
 
-    public function __construct(GraphManager $gm, ProfileModel $profileModel)
+    protected $userFilterModel;
+
+    public function __construct(GraphManager $gm, ProfileModel $profileModel, UserFilterModel $userFilterModel)
     {
         $this->gm = $gm;
         $this->profileModel = $profileModel;
+        $this->userFilterModel = $userFilterModel;
     }
 
     /**
@@ -174,6 +178,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         );
 
         $profileFilters = $this->getProfileFilters($filters['profileFilters']);
+        $userFilters = $this->getUserFilters($filters['userFilters']);
 
         $qb = $this->gm->createQueryBuilder();
 
@@ -185,6 +190,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
             ->where('u <> anyUser')
             ->optionalMatch('(u)-[m:MATCHES]-(anyUser)')
             ->optionalMatch('(u)-[s:SIMILARITY]-(anyUser)')
+            ->where($userFilters['conditions'])
             ->with(
                 'u, anyUser,
             (CASE WHEN HAS(m.matching_questions) THEN m.matching_questions ELSE 0 END) AS matching_questions,
@@ -288,4 +294,34 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         );
     }
 
+    /**
+     * @param array $filters
+     * @return array
+     */
+    protected function getUserFilters(array $filters)
+    {
+        $conditions = array();
+        $matches = array();
+
+        foreach ($this->userFilterModel->getFilters() as $name => $filter) {
+            if (isset($filters[$name])) {
+                $value = $filters[$name];
+                switch ($name) {
+                    case 'groups':
+                        // TODO: Match for filter groups
+                    case 'compatibility':
+                        $conditions[] = "($value <= m.matching_questions)";
+                        break;
+                    case 'similarity':
+                        $conditions[] ="($value <= s.similarity)";
+                        break;
+                }
+            }
+        }
+
+        return array(
+            'conditions' => $conditions,
+            'matches' => $matches
+        );
+    }
 } 
