@@ -4,6 +4,7 @@ namespace Provider;
 
 use ApiConsumer\EventListener\ChannelSubscriber;
 use ApiConsumer\EventListener\OAuthTokenSubscriber;
+use EventListener\AccountConnectSubscriber;
 use EventListener\FilterClientIpSubscriber;
 use EventListener\InvitationSubscriber;
 use EventListener\LookUpSocialNetworkSubscriber;
@@ -36,6 +37,7 @@ class SubscribersServiceProvider implements ServiceProviderInterface
 
         $dispatcher->addSubscriber(new FilterClientIpSubscriber($app['valid_ips'], $app['secret']));
         $dispatcher->addSubscriber(new OAuthTokenSubscriber($app['users.tokens.model'], $app['mailer'], $app['monolog'], $app['amqp']));
+        $dispatcher->addSubscriber(new AccountConnectSubscriber($app['amqpManager.service']));
         $dispatcher->addSubscriber(new UserSubscriber($app['users.threads.manager']));
         $dispatcher->addSubscriber(new ChannelSubscriber($app['userAggregator.service']));
         $dispatcher->addSubscriber(new UserDataStatusSubscriber($app['orm.ems']['mysql_brain'], $app['amqpManager.service']));
