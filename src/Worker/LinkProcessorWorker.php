@@ -5,6 +5,8 @@ namespace Worker;
 
 use ApiConsumer\Fetcher\FetcherService;
 use Doctrine\DBAL\Connection;
+use Http\OAuth\Factory\ResourceOwnerFactory;
+use Http\OAuth\ResourceOwner\TwitterResourceOwner;
 use Model\Neo4j\Neo4jException;
 use Model\User\LookUpModel;
 use Model\User\SocialNetwork\SocialProfileManager;
@@ -54,8 +56,14 @@ class LinkProcessorWorker extends LoggerAwareWorker implements RabbitMQConsumerI
      */
     protected $socialProfileManager;
 
+    /**
+     * @var ResourceOwnerFactory
+     */
+    protected $resourceOwnerFactory;
+
     public function __construct(AMQPChannel $channel,
                                 FetcherService $fetcherService,
+                                ResourceOwnerFactory $resourceOwnerFactory,
                                 TokensModel $tm,
                                 LookUpModel $lm,
                                 SocialProfileManager $socialProfileManager,
@@ -65,6 +73,7 @@ class LinkProcessorWorker extends LoggerAwareWorker implements RabbitMQConsumerI
 
         $this->channel = $channel;
         $this->fetcherService = $fetcherService;
+        $this->resourceOwnerFactory = $resourceOwnerFactory;
         $this->tm = $tm;
         $this->lookupModel = $lm;
         $this->socialProfileManager = $socialProfileManager;
@@ -132,7 +141,23 @@ class LinkProcessorWorker extends LoggerAwareWorker implements RabbitMQConsumerI
             foreach ($tokens as $token) {
 
                 $token['public'] = $public;
-                $this->fetcherService->fetch($token, $public);
+                $this->fetcherService->fetch($token);
+
+                if ($resourceOwner === TokensModel::TWITTER) {
+
+                    $profiles = $this->socialProfileManager->getSocialProfiles($userId, $resourceOwner, true);
+                    foreach ($profiles as $profile) {
+
+                        /** @var TwitterResourceOwner $twitterResourceOwner */
+                        $twitterResourceOwner = $this->resourceOwnerFactory->build($resourceOwner);
+                        $username = $twitterResourceOwner->getUsername(array('url' => $profile->getUrl()));
+                        $twitterResourceOwner->dispatchChannel(array(
+                            'url' => $profile->getUrl(),
+                            'username' => $username,
+                        ));
+                        $this->logger->info(sprintf('Enqueued fetching old tweets for username %s', $username));
+                    };
+                }
             }
 
         } catch (\Exception $e) {

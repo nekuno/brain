@@ -14,6 +14,7 @@ $app->post('/users', 'users.controller:postAction');
 $app->put('/users/{id}', 'users.controller:putAction');
 $app->get('/users/{id}', 'users.controller:getAction');
 $app->get('/users/find', 'users.controller:findAction');
+$app->get('/users/available/{username}', 'users.controller:availableAction');
 $app->post('/users/validate', 'users.controller:validateAction');
 
 $app->get('/users/{id}/profile', 'users.profile.controller:getAction')->value('id', null);

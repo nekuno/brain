@@ -60,14 +60,14 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.model'] = $app->share(
             function ($app) {
 
-                return new UserModel($app['neo4j.graph_manager'], $app['security.password_encoder'], $app['fields']['user'], $app['locale.options']['default']);
+                return new UserModel($app['dispatcher'], $app['neo4j.graph_manager'], $app['security.password_encoder'], $app['fields']['user'], $app['locale.options']['default']);
             }
         );
 
         $app['users.tokens.model'] = $app->share(
             function ($app) {
 
-                return new TokensModel($app['neo4j.graph_manager'], $app['orm.ems']['mysql_brain']);
+                return new TokensModel($app['dispatcher'], $app['neo4j.graph_manager'], $app['orm.ems']['mysql_brain']);
             }
         );
 

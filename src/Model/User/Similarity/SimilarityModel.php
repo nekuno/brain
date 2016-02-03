@@ -258,7 +258,7 @@ class SimilarityModel
     private function returnSimilarity(array $similarity, $idA, $idB)
     {
         $questionLimit = 0;
-        $contentLimit = 1000;
+        $contentLimit = 100;
 
         $profileA = $this->profileModel->getById($idA);
         $profileB = $this->profileModel->getById($idB);

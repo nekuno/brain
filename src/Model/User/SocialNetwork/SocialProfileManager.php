@@ -41,7 +41,7 @@ class SocialProfileManager
 
 
     /**
-     * @return array of SocialProfile
+     * @return SocialProfile[]
      * @throws \Model\Neo4j\Neo4jException
      */
     public function getAllSocialProfiles()
@@ -61,7 +61,7 @@ class SocialProfileManager
      * @param $userId
      * @param string $resource specific social network
      * @param bool $all if false, only connected using Nekuno and available in LookUpModel::resourceOwners
-     * @return array
+     * @return SocialProfile[]
      * @throws \Model\Neo4j\Neo4jException
      */
     public function getSocialProfiles($userId, $resource = null, $all = false)
@@ -107,7 +107,7 @@ class SocialProfileManager
 
     /**
      * @param $url
-     * @return array of SocialProfile
+     * @return SocialProfile[]
      * @throws \Model\Neo4j\Neo4jException
      */
     public function getByUrl($url)
@@ -129,7 +129,7 @@ class SocialProfileManager
 
     /**
      * @param ResultSet $result
-     * @return array of SocialProfile
+     * @return SocialProfile[]
      */
     protected function buildSocialProfile(ResultSet $result)
     {

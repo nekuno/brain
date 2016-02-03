@@ -2,6 +2,8 @@
 
 namespace Http\OAuth\ResourceOwner;
 
+use ApiConsumer\LinkProcessor\UrlParser\UrlParser;
+
 interface ResourceOwnerInterface
 {
 
@@ -36,4 +38,9 @@ interface ResourceOwnerInterface
     public function getUsername($user);
 
     public function getProfileUrl(array $token);
+
+    /**
+     * @return UrlParser
+     */
+    public function getParser();
 }

@@ -2,6 +2,8 @@
 
 namespace ApiConsumer\Fetcher;
 
+use ApiConsumer\Exception\PaginatedFetchingException;
+
 abstract class BasicPaginationFetcher extends AbstractFetcher
 {
     /**
@@ -33,6 +35,7 @@ abstract class BasicPaginationFetcher extends AbstractFetcher
     /**
      * @param bool $public
      * @return array
+     * @throws PaginatedFetchingException
      */
     protected function getLinksByPage($public = false)
     {
@@ -46,10 +49,14 @@ abstract class BasicPaginationFetcher extends AbstractFetcher
                 $query = array_merge($query, array($this->getPaginationField() => $nextPaginationId));
             }
 
-            if (!$public){
-                $response = $this->resourceOwner->authorizedHttpRequest($this->getUrl(), $query, $this->user);
-            } else {
-                $response = $this->resourceOwner->authorizedApiRequest($this->getUrl(), $query, $this->user);
+            try{
+                if (!$public) {
+                    $response = $this->resourceOwner->authorizedHttpRequest($this->getUrl(), $query, $this->user);
+                } else {
+                    $response = $this->resourceOwner->authorizedApiRequest($this->getUrl(), $query, $this->user);
+                }
+            } catch (\Exception $e) {
+                throw new PaginatedFetchingException($this->rawFeed, $e);
             }
 
             $this->rawFeed = array_merge($this->rawFeed, $this->getItemsFromResponse($response));
@@ -69,7 +76,14 @@ abstract class BasicPaginationFetcher extends AbstractFetcher
         $this->setUser($user);
         $this->rawFeed = array();
 
-        $rawFeed = $this->getLinksByPage($public);
+        try{
+            $rawFeed = $this->getLinksByPage($public);
+        } catch (PaginatedFetchingException $e) {
+            $newLinks = $this->parseLinks($e->getLinks());
+            $e->setLinks($newLinks);
+            throw $e;
+        }
+
         $links = $this->parseLinks($rawFeed);
 
         return $links;

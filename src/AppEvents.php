@@ -42,9 +42,24 @@ final class AppEvents
     const PROCESS_FINISH = 'process.finish';
 
     /**
+     * Fired when user created
+     */
+    const USER_CREATED = 'user.created';
+
+    /**
+     * Fired when user updated
+     */
+    const USER_UPDATED = 'user.updated';
+
+    /**
      * Fired when user status changes
      */
     const USER_STATUS_CHANGED = 'user.statusChanged';
+
+    /**
+     * Fired when an account is connected
+     */
+    const ACCOUNT_CONNECTED = 'account.connected';
 
     /**
      * Fired when matching is outdated
@@ -65,4 +80,9 @@ final class AppEvents
      * Fired when SocialNetworks are detected from LookUp
      */
     const SOCIAL_NETWORKS_ADDED = 'socialNetworks.added';
+
+    /**
+     * Fired when a channel url is detected
+     */
+    const CHANNEL_ADDED = 'channel.added';
 }

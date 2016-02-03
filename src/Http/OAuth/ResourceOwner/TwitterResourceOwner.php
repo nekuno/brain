@@ -2,6 +2,8 @@
 
 namespace Http\OAuth\ResourceOwner;
 
+use ApiConsumer\Event\ChannelEvent;
+use ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser;
 use GuzzleHttp\Exception\RequestException;
 use Model\User\TokensModel;
 use Service\LookUp\LookUp;
@@ -11,6 +13,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  * Class TwitterResourceOwner
  *
  * @package ApiConsumer\ResourceOwner
+ * @method TwitterUrlParser GetParser 
  */
 class TwitterResourceOwner extends Oauth1GenericResourceOwner
 {
@@ -72,6 +75,7 @@ class TwitterResourceOwner extends Oauth1GenericResourceOwner
             'description' => isset($user['description']) ? $user['description'] : $user['name'],
             'url' => isset($user['screen_name']) ? 'https://twitter.com/' . $user['screen_name'] : null,
             'thumbnail' => isset($user['profile_image_url']) ? $user['profile_image_url'] : null,
+            'additionalLabels' => array('Creator'),
             'resource' => TokensModel::TWITTER,
             'timestamp' => 1000 * time(),
         );
@@ -94,6 +98,17 @@ class TwitterResourceOwner extends Oauth1GenericResourceOwner
         }
 
         return LookUp::TWITTER_BASE_URL . $screenName;
+    }
+
+    public function dispatchChannel(array $data)
+    {
+        $url = isset($data['url']) ? $data['url'] : null;
+        $username = isset($data['username']) ? $data['username'] : null;
+        if (!$username && $url) {
+            throw new \Exception ('Cannot add twitter channel with username and url not set');
+        }
+
+        $this->dispatcher->dispatch(\AppEvents::CHANNEL_ADDED, new ChannelEvent($this->getName(), $url, $username));
     }
 
     /**
