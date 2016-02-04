@@ -75,10 +75,11 @@ class Recommendator
                 break;
             case 'Model\User\Thread\UsersThread':
                 /* @var $thread UsersThread */
+                $threadFilters = $thread->getFilterUsers();
                 $filters = array(
                     'id' => $user['qnoow_id'],
-                    'profileFilters' => $thread->getProfileFilters(),
-                    'userFilters' => $thread->getUserFilters(),
+                    'profileFilters' => $threadFilters->getProfileFilters(),
+                    'userFilters' => $threadFilters->getUserFilters(),
                 );
 
                 return $this->getUserRecommendation($filters);
@@ -122,10 +123,12 @@ class Recommendator
                 /* @var $thread UsersThread */
                 $order = $request->get('order', false);
 
+                /* @var $thread UsersThread */
+                $threadFilters = $thread->getFilterUsers();
                 $filters = array(
                     'id' => $user['qnoow_id'],
-                    'profileFilters' => $thread->getProfileFilters(),
-                    'userFilters' => $thread->getUserFilters(),
+                    'profileFilters' => $threadFilters->getProfileFilters(),
+                    'userFilters' => $threadFilters->getUserFilters(),
                 );
 
                 if ($order) {

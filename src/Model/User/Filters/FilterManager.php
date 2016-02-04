@@ -11,7 +11,6 @@ use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Everyman\Neo4j\Relationship;
 use Model\Neo4j\GraphManager;
-use Model\User\GroupModel;
 use Model\User\ProfileModel;
 use Model\User\UserFilterModel;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -35,18 +34,12 @@ class FilterManager
      */
     protected $userFilterModel;
 
-    /**
-     * @var GroupModel
-     */
-    protected $groupModel;
-
-    public function __construct(array $fields, GraphManager $graphManager, ProfileModel $profileModel, UserFilterModel $userFilterModel, GroupModel $groupModel)
+    public function __construct(array $fields, GraphManager $graphManager, ProfileModel $profileModel, UserFilterModel $userFilterModel)
     {
         $this->fields = $fields;
         $this->graphManager = $graphManager;
         $this->profileModel = $profileModel;
         $this->userFilterModel = $userFilterModel;
-        $this->groupModel = $groupModel;
     }
 
     public function getFilterUsersByThreadId($id)
@@ -142,7 +135,7 @@ class FilterManager
         $qb->match('(thread:Thread)')
             ->where('id(thread) = {id}')
             ->with('thread')
-            ->merge('(thread)-[HAS_FILTER]->(filter:Filter:FilterUsers)')
+            ->merge('(thread)-[:HAS_FILTER]->(filter:Filter:FilterUsers)')
             ->returns('id(filter) as filterId');
         $qb->setParameter('id', (integer)$id);
         $result = $qb->getQuery()->getResultSet();
@@ -425,7 +418,7 @@ class FilterManager
         $qb->match('(filter:FilterUsers)')
             ->where('id(filter) = {id}')
             ->optionalMatch('(filter)-[:FILTERS_BY]->(group:Group)')
-            ->returns('collect(group) as groups');
+            ->returns('collect(id(group)) as groups');
         $qb->setParameter('id', (integer)$id);
         $result = $qb->getQuery()->getResultSet();
 
@@ -440,7 +433,7 @@ class FilterManager
 
         $userFilters['groups'] = array();
         foreach ($row->offsetGet('groups') as $group) {
-            $userFilters['groups'] = $this->groupModel->buildGroup($group, null, null);
+            $userFilters['groups'][] = $group;
         }
 
         return $userFilters;

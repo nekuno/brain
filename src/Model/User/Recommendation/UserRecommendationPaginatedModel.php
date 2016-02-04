@@ -2,9 +2,7 @@
 
 namespace Model\User\Recommendation;
 
-use Everyman\Neo4j\Cypher\Query;
 use Model\Neo4j\GraphManager;
-use Model\Neo4j\QueryBuilder;
 use Model\User\GhostUser\GhostUserManager;
 use Model\User\ProfileModel;
 use Model\User\UserFilterModel;
@@ -75,7 +73,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         $qb->setParameters($parameters);
 
         $qb->match('(u:User {qnoow_id: {userId}})-[:MATCHES|SIMILARITY]-(anyUser:User)')
-            ->where('u <> anyUser', 'NOT (anyUser:'.GhostUserManager::LABEL_GHOST_USER.')')
+            ->where('u <> anyUser', 'NOT (anyUser:' . GhostUserManager::LABEL_GHOST_USER . ')')
             ->optionalMatch('(u)-[like:LIKES]-(anyUser)')
             ->optionalMatch('(u)-[m:MATCHES]-(anyUser)')
             ->optionalMatch('(u)-[s:SIMILARITY]-(anyUser)')
@@ -285,17 +283,18 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         $matches = array();
 
         foreach ($this->userFilterModel->getFilters() as $name => $filter) {
-            if (isset($filters[$name])) {
+            if (isset($filters[$name]) && !empty($filters[$name])) {
                 $value = $filters[$name];
                 switch ($name) {
                     case 'groups':
-                        $matches[] = "(anyUser)<-[:BELONGS_TO]-(g:Group) WHERE id(group) IN ['$value']";
+                        $value = json_encode($value);
+                        $matches[] = "(anyUser)-[:BELONGS_TO]->(group:Group) WHERE id(group) IN $value";
                         break;
                     case 'compatibility':
                         $conditions[] = "($value <= m.matching_questions)";
                         break;
                     case 'similarity':
-                        $conditions[] ="($value <= s.similarity)";
+                        $conditions[] = "($value <= s.similarity)";
                         break;
                 }
             }
