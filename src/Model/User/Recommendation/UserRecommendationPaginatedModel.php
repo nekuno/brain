@@ -77,13 +77,13 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
             ->optionalMatch('(u)-[like:LIKES]-(anyUser)')
             ->optionalMatch('(u)-[m:MATCHES]-(anyUser)')
             ->optionalMatch('(u)-[s:SIMILARITY]-(anyUser)')
-            ->where($userFilters['conditions'])
             ->with(
                 'u, anyUser,
                 (CASE WHEN like IS NOT NULL THEN 1 ELSE 0 END) AS like,
                 (CASE WHEN HAS(m.matching_questions) THEN m.matching_questions ELSE 0 END) AS matching_questions,
                 (CASE WHEN HAS(s.similarity) THEN s.similarity ELSE 0 END) AS similarity'
             )
+            ->where($userFilters['conditions'])
             ->match('(anyUser)<-[:PROFILE_OF]-(p:Profile)');
 
         $qb->optionalMatch('(p)-[:LOCATION]->(l:Location)');
@@ -172,12 +172,12 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
             ->where('u <> anyUser')
             ->optionalMatch('(u)-[m:MATCHES]-(anyUser)')
             ->optionalMatch('(u)-[s:SIMILARITY]-(anyUser)')
-            ->where($userFilters['conditions'])
             ->with(
                 'u, anyUser,
             (CASE WHEN HAS(m.matching_questions) THEN m.matching_questions ELSE 0 END) AS matching_questions,
             (CASE WHEN HAS(s.similarity) THEN s.similarity ELSE 0 END) AS similarity'
             )
+            ->where($userFilters['conditions'])
             ->match('(anyUser)<-[:PROFILE_OF]-(p:Profile)');
 
         $qb->optionalMatch('(p)-[:LOCATION]->(l:Location)');
@@ -287,14 +287,19 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                 $value = $filters[$name];
                 switch ($name) {
                     case 'groups':
-                        $value = json_encode($value);
-                        $matches[] = "(anyUser)-[:BELONGS_TO]->(group:Group) WHERE id(group) IN $value";
+                        foreach ($value as $index => $groupId) {
+                            $value[$index] = (int)$groupId;
+                        }
+                        $jsonValues = json_encode($value);
+                        $matches[] = "(anyUser)-[:BELONGS_TO]->(group:Group) WHERE id(group) IN $jsonValues";
                         break;
                     case 'compatibility':
-                        $conditions[] = "($value <= m.matching_questions)";
+                        $valuePerOne = intval($value)/100;
+                        $conditions[] = "($valuePerOne <= matching_questions)";
                         break;
                     case 'similarity':
-                        $conditions[] = "($value <= s.similarity)";
+                        $valuePerOne = intval($value)/100;
+                        $conditions[] = "($valuePerOne <= similarity)";
                         break;
                 }
             }
