@@ -98,6 +98,8 @@ class FilterManager
         $userFilters = $filters->getUserFilters();
         $profileFilters = $filters->getProfileFilters();
 
+        //TODO: Validate filters
+
         if (!empty($userFilters)){
             $this->saveUserFilters($userFilters, $filters->getId());
         }
@@ -290,6 +292,26 @@ class FilterManager
                     ->where("id(group$group) = $group")
                     ->merge("(filter)-[:FILTERS_BY]->(group$group)");
             }
+            unset($userFilters['groups']);
+        }
+
+        foreach ($userFilters as $name=>$value)
+        {
+            if (!isset($metadata[$name])){
+                throw new \Exception(sprintf('Metadata with name %s does not exist', $name));
+            }
+
+            $field = $metadata[$name];
+
+            switch($field['type'])
+            {
+                case 'single_integer':
+                    $qb->set("filter.$name= {$name}");
+                    $qb->setParameter($name, $value);
+                    break;
+                default:
+                    break;
+            }
         }
 
         $qb->setParameter('id', (integer)$id);
@@ -418,7 +440,9 @@ class FilterManager
         $qb->match('(filter:FilterUsers)')
             ->where('id(filter) = {id}')
             ->optionalMatch('(filter)-[:FILTERS_BY]->(group:Group)')
-            ->returns('collect(id(group)) as groups');
+            ->returns('filter.compatibility as compatibility,
+                        filter.similarity as similarity, 
+                        collect(id(group)) as groups');
         $qb->setParameter('id', (integer)$id);
         $result = $qb->getQuery()->getResultSet();
 
@@ -434,6 +458,13 @@ class FilterManager
         $userFilters['groups'] = array();
         foreach ($row->offsetGet('groups') as $group) {
             $userFilters['groups'][] = $group;
+        }
+        if ($row->offsetGet('similarity')){
+            $userFilters['similarity'] = $row->offsetGet('similarity');
+        }
+        
+        if ($row->offsetGet('compatibility')){
+            $userFilters['compatibility'] = $row->offsetGet('compatibility');
         }
 
         return $userFilters;
