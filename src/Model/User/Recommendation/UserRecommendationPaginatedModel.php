@@ -54,15 +54,6 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
     public function slice(array $filters, $offset, $limit)
     {
         $id = $filters['id'];
-        /** TODO: Implement this logic into getUserFilters()
-        $groups = isset($filters['userFilters']['groups']) ? $filters['userFilters']['groups'] : array();
-        $groups = array_map(
-            function ($i) {
-                return (integer)$i;
-            },
-            $groups
-        );*/
-
         $response = array();
 
         $parameters = array(
@@ -114,13 +105,6 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         foreach ($userFilters['matches'] as $match) {
             $qb->match($match);
         }
-
-        /** TODO: Implement this logic into getUserFilters()
-            if ($groups) {
-            $qb->match('(anyUser)-[:BELONGS_TO]->(g:Group)')
-                ->where('id(g) IN { groups }')
-                ->setParameter('groups', $groups);
-        }*/
 
         $qb->returns(
             'DISTINCT anyUser.qnoow_id AS id,
@@ -177,15 +161,6 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         $id = $filters['id'];
         $count = 0;
 
-        /** TODO: Implement this logic into getUserFilters()
-        $groups = isset($filters['userFilters']['groups']) ? $filters['userFilters']['groups'] : array();
-        $groups = array_map(
-            function ($i) {
-                return (integer)$i;
-            },
-            $groups
-        );*/
-
         $profileFilters = $this->getProfileFilters($filters['profileFilters']);
         $userFilters = $this->getUserFilters($filters['userFilters']);
 
@@ -224,13 +199,6 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         foreach ($userFilters['matches'] as $match) {
             $qb->match($match);
         }
-
-        /** TODO: Implement this logic into getUserFilters()
-            if ($groups) {
-            $qb->match('(anyUser)-[:BELONGS_TO]->(g:Group)')
-                ->where('id(g) IN { groups }')
-                ->setParameter('groups', $groups);
-        }*/
 
         $qb->returns('COUNT(DISTINCT anyUser) as total');
         $query = $qb->getQuery();
@@ -321,7 +289,8 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                 $value = $filters[$name];
                 switch ($name) {
                     case 'groups':
-                        // TODO: Match for filter groups
+                        $matches[] = "(anyUser)<-[:BELONGS_TO]-(g:Group) WHERE id(group) IN ['$value']";
+                        break;
                     case 'compatibility':
                         $conditions[] = "($value <= m.matching_questions)";
                         break;
