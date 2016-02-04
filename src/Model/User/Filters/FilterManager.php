@@ -49,18 +49,11 @@ class FilterManager
         $this->groupModel = $groupModel;
     }
 
-    /**
-     * @param $id
-     * @return FilterUsers
-     */
-    public function getFilterUsersById($id)
+    public function getFilterUsersByThreadId($id)
     {
-        $filter = $this->buildFiltersUsers();
-        $filter->setProfileFilters($this->getProfileFilters($id));
-        $filter->setUsersFilters($this->getUserFilters($id));
-        return $filter;
+        $filterId = $this->getFilterUsersIdByThreadId($id);
+        return $this->getFilterUsersById($filterId);
     }
-
     /**
      * @param FilterUsers $filters
      * @return Node|null
@@ -69,7 +62,7 @@ class FilterManager
     public function createFilterUsers(FilterUsers $filters)
     {
         $qb = $this->graphManager->createQueryBuilder();
-        $qb->create('(filter:Filter)')
+        $qb->create('(filter:Filter:FilterUsers)')
             ->returns('filter');
         $result = $qb->getQuery()->getResultSet();
 
@@ -81,19 +74,41 @@ class FilterManager
         return $this->updateFiltersUsers($filters);
     }
 
+    public function updateFilterUsersByThreadId($id, $filtersArray)
+    {
+        $filters = $this->buildFiltersUsers();
+
+        $filterId = $this->getFilterUsersIdByThreadId($id);
+        $filters->setId($filterId);
+
+        if (isset($filtersArray['profileFilters']))
+        {
+            $filters->setProfileFilters($filtersArray['profileFilters']);
+        }
+
+        if (isset($filtersArray['userFilters']))
+        {
+            $filters->setUsersFilters($filtersArray['userFilters']);
+        }
+
+        $this->updateFiltersUsers($filters);
+
+        return $filters;
+    }
+
     /**
      * @param FilterUsers $filters
      * @return bool
      */
-    public function updateFiltersUsers(FilterUsers $filters)
+    protected function updateFiltersUsers(FilterUsers $filters)
     {
         $userFilters = $filters->getUserFilters();
         $profileFilters = $filters->getProfileFilters();
-        
+
         if (!empty($userFilters)){
             $this->saveUserFilters($userFilters, $filters->getId());
         }
-        
+
         if (!empty($profileFilters)){
             $this->saveProfileFilters($profileFilters, $filters->getId());
         }
@@ -104,9 +119,40 @@ class FilterManager
     /**
      * @return FilterUsers
      */
-    public function buildFiltersUsers()
+    protected function buildFiltersUsers()
     {
         return new FilterUsers($this->fields);
+    }
+
+    /**
+     * @param $id
+     * @return FilterUsers
+     */
+    protected function getFilterUsersById($id)
+    {
+        $filter = $this->buildFiltersUsers();
+        $filter->setProfileFilters($this->getProfileFilters($id));
+        $filter->setUsersFilters($this->getUserFilters($id));
+        return $filter;
+    }
+
+    protected function getFilterUsersIdByThreadId($id)
+    {
+        $qb = $this->graphManager->createQueryBuilder();
+        $qb->match('(thread:Thread)')
+            ->where('id(thread) = {id}')
+            ->with('thread')
+            ->merge('(thread)-[HAS_FILTER]->(filter:Filter:FilterUsers)')
+            ->returns('id(filter) as filterId');
+        $qb->setParameter('id', (integer)$id);
+        $result = $qb->getQuery()->getResultSet();
+
+        if ($result->count() == 0){
+            return null;
+        }
+
+        return $result->current()->offsetGet('filterId');
+
     }
 
     private function saveProfileFilters($profileFilters, $id)
@@ -114,7 +160,7 @@ class FilterManager
         $metadata = $this->profileModel->getMetadata();
 
         $qb = $this->graphManager->createQueryBuilder();
-        $qb->match('(filter:Filter)')
+        $qb->match('(filter:FilterUsers)')
             ->where('id(filter) = {id}');
 
         //TODO: More parameters
@@ -241,10 +287,9 @@ class FilterManager
     {
 
         $qb = $this->graphManager->createQueryBuilder();
-        $qb->match('(filter:Filter)')
+        $qb->match('(filter:FilterUsers)')
             ->where('id(filter) = {id}');
 
-        //Implement metadata format here if using more than "groups" userFilter
         $metadata = $this->userFilterModel->getMetadata();
         if (isset($userFilters['groups'])) {
             foreach ($userFilters['groups'] as $group) {
@@ -274,7 +319,7 @@ class FilterManager
     private function getProfileFilters($id)
     {
         $qb = $this->graphManager->createQueryBuilder();
-        $qb->match('(filter:Filter)')
+        $qb->match('(filter:FilterUsers)')
             ->where('id(filter) = {id}')
             ->optionalMatch('(filter)-[:FILTERS_BY]->(po:ProfileOption)')
             ->optionalMatch('(filter)-[loc_rel:FILTERS_BY]->(loc:Location)')
@@ -377,7 +422,7 @@ class FilterManager
     {
 
         $qb = $this->graphManager->createQueryBuilder();
-        $qb->match('(filter:filter)')
+        $qb->match('(filter:FilterUsers)')
             ->where('id(filter) = {id}')
             ->optionalMatch('(filter)-[:FILTERS_BY]->(group:Group)')
             ->returns('collect(group) as groups');

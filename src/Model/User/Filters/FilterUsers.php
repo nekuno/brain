@@ -8,7 +8,7 @@ namespace Model\User\Filters;
 
 use Symfony\Component\Config\Definition\Exception\Exception;
 
-class FilterUsers
+class FilterUsers implements \JsonSerializable
 {
 
     protected $metadata = array();
@@ -88,9 +88,23 @@ class FilterUsers
         return $this->id;
     }
 
-    public function setId()
+    public function setId($id)
     {
-        return $this->id;
+        $this->id = $id;
     }
 
+    /**
+     * Specify data which should be serialized to JSON
+     * @link http://php.net/manual/en/jsonserializable.jsonserialize.php
+     * @return mixed data which can be serialized by <b>json_encode</b>,
+     * which is a value of any type other than a resource.
+     * @since 5.4.0
+     */
+    function jsonSerialize()
+    {
+        return array('profileFilters' => $this->getProfileFilters(),
+            'userFilters' => $this->getUserFilters(),
+            'id' => $this->getId());
+
+    }
 }

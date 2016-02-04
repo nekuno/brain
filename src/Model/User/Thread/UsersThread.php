@@ -1,49 +1,33 @@
 <?php
 /**
- * Created by PhpStorm.
- * User: yawmoght
- * Date: 4/12/15
- * Time: 11:41
+ * @author yawmoght <yawmoght@gmail.com>
  */
 
 namespace Model\User\Thread;
 
 
+use Model\User\Filters\FilterUsers;
+
 class UsersThread extends Thread
 {
-    protected $profileFilters;
-    protected $userFilters;
+
+    /** @var  FilterUsers */
+    protected $filterUsers;
 
     /**
-     * @return array
+     * @return FilterUsers
      */
-    public function getProfileFilters()
+    public function getFilterUsers()
     {
-        return $this->profileFilters;
+        return $this->filterUsers;
     }
 
     /**
-     * @param array $profileFilters
+     * @param FilterUsers $filterUsers
      */
-    public function setProfileFilters($profileFilters)
+    public function setFilterUsers($filterUsers)
     {
-        $this->profileFilters = $profileFilters;
-    }
-
-    /**
-     * @return array
-     */
-    public function getUserFilters()
-    {
-        return $this->userFilters;
-    }
-
-    /**
-     * @param array $userFilters
-     */
-    public function setUserFilters($userFilters)
-    {
-        $this->userFilters = $userFilters;
+        $this->filterUsers = $filterUsers;
     }
 
     function jsonSerialize()
@@ -52,8 +36,7 @@ class UsersThread extends Thread
 
         $array += array(
             'category' => ThreadManager::LABEL_THREAD_USERS,
-            'profileFilters' => $this->getProfileFilters(),
-            'userFilters' => $this->getUserFilters(),
+            'filters' => $this->getFilterUsers(),
         );
 
         return $array;
