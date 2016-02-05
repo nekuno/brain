@@ -192,7 +192,10 @@ class PrivacyModel
                                 $fieldErrors[] = sprintf('Option with value "%s" is not valid, possible values are "%s"', $fieldValueName, implode("', '", array_keys($choices)));
                             }
                             if ($choices[$fieldValueName]['value_required'] && !is_int($fieldValue)) {
-                                $fieldErrors[] = sprintf('Value "%s" must be an integer', $fieldValue);
+                                $fieldErrors[] = sprintf('Integer value required for "%s"', $fieldValueName);
+                            }
+                            if ($fieldValue < 0 || $fieldValue > 100) {
+                                $fieldErrors[] = sprintf('Value "%s" for "%s" must be a percent number between 0 and 100', $fieldValue, $fieldValueName);
                             }
                             break;
                     }
@@ -321,13 +324,14 @@ class PrivacyModel
                         }
                         if (!is_null($fieldValue['key'])) {
                             $optionNode = $this->getPrivacyOptionNode($fieldValue['key'], $fieldName);
-                            $optionNode->relateTo($privacyNode, 'OPTION_OF')->save();
+                            $relationship = $optionNode->relateTo($privacyNode, 'OPTION_OF');
+
+                            if (!is_null($fieldValue['value'])) {
+                                $relationship->setProperty('value', $fieldValue['value']);
+                            }
+                            $relationship->save();
                         }
-                        if (!is_null($fieldValue['value'])) {
-                            /** @var Relationship $optionRelationship */
-                            $optionRelationship = $options[$fieldName];
-                            $optionRelationship->setProperty('value', $fieldValue['value']);
-                        }
+
                         break;
                 }
             }
