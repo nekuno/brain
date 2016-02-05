@@ -194,8 +194,11 @@ class PrivacyModel
                             if ($choices[$fieldValueName]['value_required'] && !is_int($fieldValue)) {
                                 $fieldErrors[] = sprintf('Integer value required for "%s"', $fieldValueName);
                             }
-                            if ($fieldValue < 0 || $fieldValue > 100) {
+                            if ($choices[$fieldValueName]['value_required'] && $fieldValue < 0 || $fieldValue > 100) {
                                 $fieldErrors[] = sprintf('Value "%s" for "%s" must be a percent number between 0 and 100', $fieldValue, $fieldValueName);
+                            }
+                            if (!$choices[$fieldValueName]['value_required'] && $fieldValue) {
+                                $fieldErrors[] = sprintf('"%s" option can`t have a value', $fieldValueName);
                             }
                             break;
                     }
