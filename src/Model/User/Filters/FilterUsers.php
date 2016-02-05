@@ -102,7 +102,8 @@ class FilterUsers implements \JsonSerializable
      */
     function jsonSerialize()
     {
-        return array('profileFilters' => $this->getProfileFilters(),
+        return array(
+            'profileFilters' => $this->getProfileFilters(),
             'userFilters' => $this->getUserFilters(),
             'id' => $this->getId());
 

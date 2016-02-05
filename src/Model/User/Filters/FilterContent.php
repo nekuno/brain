@@ -6,7 +6,7 @@
 namespace Model\User\Filters;
 
 
-class FilterContent
+class FilterContent implements \JsonSerializable
 {
     protected $tag;
 
@@ -69,5 +69,20 @@ class FilterContent
     public function setType($type)
     {
         $this->type = $type;
+    }
+
+    /**
+     * Specify data which should be serialized to JSON
+     * @link http://php.net/manual/en/jsonserializable.jsonserialize.php
+     * @return mixed data which can be serialized by <b>json_encode</b>,
+     * which is a value of any type other than a resource.
+     * @since 5.4.0
+     */
+    function jsonSerialize()
+    {
+        return array(
+            'type' => $this->getType(),
+            'tag' => $this->getTag(),
+            'id' => $this->getId());
     }
 }
