@@ -2,6 +2,7 @@
 
 namespace Model\User\Similarity;
 
+use Event\SimilarityEvent;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Neo4j\GraphManager;
@@ -9,7 +10,7 @@ use Model\LinkModel;
 use Model\User\ContentPaginatedModel;
 use Model\User\ProfileModel;
 use Model\User\QuestionPaginatedModel;
-
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 /**
  * @author Juan Luis Martínez <juanlu@comakai.com>
@@ -17,6 +18,11 @@ use Model\User\QuestionPaginatedModel;
 class SimilarityModel
 {
     const numberOfSecondsToCache = 86400;
+
+    /**
+     * @var EventDispatcher
+     */
+    protected $dispatcher;
 
     /**
      * @var GraphManager
@@ -43,12 +49,15 @@ class SimilarityModel
      */
     protected $profileModel;
 
-    public function __construct(GraphManager $gm,
-                                LinkModel $linkModel,
-                                QuestionPaginatedModel $questionPaginatedModel,
-                                ContentPaginatedModel $contentPaginatedModel,
-                                ProfileModel $profileModel)
-    {
+    public function __construct(
+        EventDispatcher $dispatcher,
+        GraphManager $gm,
+        LinkModel $linkModel,
+        QuestionPaginatedModel $questionPaginatedModel,
+        ContentPaginatedModel $contentPaginatedModel,
+        ProfileModel $profileModel
+    ) {
+        $this->dispatcher = $dispatcher;
         $this->gm = $gm;
         $this->linkModel = $linkModel;
         $this->questionPaginatedModel = $questionPaginatedModel;
@@ -63,7 +72,7 @@ class SimilarityModel
 
         $similarity = $this->getCurrentSimilarity($idA, $idB);
 
-        $minTimestampForCache  = time() - self::numberOfSecondsToCache;
+        $minTimestampForCache = time() - self::numberOfSecondsToCache;
         $hasToRecalculateQuestions = ($similarity['questionsUpdated'] / 1000) < $minTimestampForCache;
         $hasToRecalculateContent = ($similarity['interestsUpdated'] / 1000) < $minTimestampForCache;
 
@@ -76,6 +85,7 @@ class SimilarityModel
             }
 
             $similarity = $this->getCurrentSimilarity($idA, $idB);
+            $this->dispatcher->dispatch(\AppEvents::SIMILARITY_UPDATED, new SimilarityEvent($idA, $idB, $similarity['similarity']));
         }
 
         return $this->returnSimilarity($similarity, $idA, $idB);
@@ -86,6 +96,9 @@ class SimilarityModel
         $this->calculateSimilarityByInterests($idA, $idB);
 
         $similarity = $this->getCurrentSimilarity($idA, $idB);
+
+        $this->dispatcher->dispatch(\AppEvents::SIMILARITY_UPDATED, new SimilarityEvent($idA, $idB, $similarity['similarity']));
+
         return $this->returnSimilarity($similarity, $idA, $idB);
     }
 
@@ -94,6 +107,9 @@ class SimilarityModel
         $this->calculateSimilarityByQuestions($idA, $idB);
 
         $similarity = $this->getCurrentSimilarity($idA, $idB);
+
+        $this->dispatcher->dispatch(\AppEvents::SIMILARITY_UPDATED, new SimilarityEvent($idA, $idB, $similarity['similarity']));
+
         return $this->returnSimilarity($similarity, $idA, $idB);
     }
 
@@ -162,7 +178,8 @@ class SimilarityModel
 
         $qb
             ->merge('(userA)-[s:SIMILARITY]-(userB)')
-            ->set('s.questions = similarity',
+            ->set(
+                's.questions = similarity',
                 's.interests = CASE WHEN HAS(s.interests) THEN s.interests ELSE 0 END',
                 's.questionsUpdated = timestamp()',
                 's.similarityUpdated = timestamp()'
@@ -267,19 +284,25 @@ class SimilarityModel
         $totalLinksA = $this->contentPaginatedModel->countTotal(array('id' => $idA));
         $totalLinksB = $this->contentPaginatedModel->countTotal(array('id' => $idB));
 
-        $totalQuestionsA = $this->questionPaginatedModel->countTotal(array(
-            'id' => $idA,
-            'locale' => $interfaceLanguageA));
-        $totalQuestionsB = $this->questionPaginatedModel->countTotal(array(
-            'id' => $idB,
-            'locale' => $interfaceLanguageB));
+        $totalQuestionsA = $this->questionPaginatedModel->countTotal(
+            array(
+                'id' => $idA,
+                'locale' => $interfaceLanguageA
+            )
+        );
+        $totalQuestionsB = $this->questionPaginatedModel->countTotal(
+            array(
+                'id' => $idB,
+                'locale' => $interfaceLanguageB
+            )
+        );
 
         if (($totalLinksA >= $contentLimit && $totalQuestionsA <= $questionLimit)
             || ($totalLinksB >= $contentLimit && $totalQuestionsB <= $questionLimit)
         ) {
             $similarity['similarity'] = $similarity['interests'];
         } else {
-            $similarity['similarity'] = ($similarity['interests'] + $similarity['questions'])/2;
+            $similarity['similarity'] = ($similarity['interests'] + $similarity['questions']) / 2;
         }
 
         $this->setSimilarity($idA, $idB, $similarity['similarity']);
@@ -290,11 +313,13 @@ class SimilarityModel
     private function setSimilarity($idA, $idB, $similarity)
     {
         $qb = $this->gm->createQueryBuilder();
-        $qb->setParameters(array(
-            'idA' => $idA,
-            'idB' => $idB,
-            'similarity' => $similarity,
-        ));
+        $qb->setParameters(
+            array(
+                'idA' => $idA,
+                'idB' => $idB,
+                'similarity' => $similarity,
+            )
+        );
 
         $qb->match('(ua:User{qnoow_id:{idA}})', '(ub:User{qnoow_id:{idB}})')
             ->merge('(ua)-[s:SIMILARITY]-(ub)')

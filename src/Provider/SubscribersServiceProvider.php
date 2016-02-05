@@ -7,6 +7,7 @@ use ApiConsumer\EventListener\OAuthTokenSubscriber;
 use EventListener\FilterClientIpSubscriber;
 use EventListener\InvitationSubscriber;
 use EventListener\LookUpSocialNetworkSubscriber;
+use EventListener\SimilarityMatchingSubscriber;
 use EventListener\UserAnswerSubscriber;
 use EventListener\UserDataStatusSubscriber;
 use EventListener\UserSubscriber;
@@ -42,6 +43,7 @@ class SubscribersServiceProvider implements ServiceProviderInterface
         $dispatcher->addSubscriber(new UserAnswerSubscriber($app['amqpManager.service']));
         $dispatcher->addSubscriber(new InvitationSubscriber($app['neo4j.graph_manager']));
         $dispatcher->addSubscriber(new LookUpSocialNetworkSubscriber($app['neo4j.graph_manager'], $app['amqpManager.service']));
+        $dispatcher->addSubscriber(new SimilarityMatchingSubscriber($app['emailNotification.service'], $app['users.groups.model']));
     }
 
 }

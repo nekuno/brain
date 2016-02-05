@@ -62,6 +62,18 @@ final class AppEvents
     const MATCHING_EXPIRED = 'matching.expired';
 
     /**
+     * Fired when matching is updated
+     * @see \Event\MatchingEvent
+     */
+    const MATCHING_UPDATED = 'matching.updated';
+
+    /**
+     * Fired when similarity is updated
+     * @see \Event\SimilarityEvent
+     */
+    const SIMILARITY_UPDATED = 'similarity.updated';
+
+    /**
      * Fired when user rated content
      */
     const CONTENT_RATED = 'content.rated';
