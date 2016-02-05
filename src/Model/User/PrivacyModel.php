@@ -179,7 +179,7 @@ class PrivacyModel
 
             $fieldErrors = array();
 
-            if (isset($data[$fieldName]) && isset($data[$fieldName]['key']) && isset($data[$fieldName]['value'])) {
+            if (isset($data[$fieldName]) && isset($data[$fieldName]['key'])) {
 
                 $fieldValueName = $data[$fieldName]['key'];
                 $fieldValue = $data[$fieldName]['value'];
@@ -240,7 +240,7 @@ class PrivacyModel
             $optionNode = $option['node'];
             $optionValue = $option['value'];
 
-            $labels = $optionNode->getLabels();
+            $labels = $optionNode instanceof Node ? $optionNode->getLabels() : array();
             foreach ($labels as $label) {
                 /* @var $label Label */
                 $labelName = $label->getName();
