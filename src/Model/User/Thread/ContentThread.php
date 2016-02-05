@@ -1,58 +1,37 @@
 <?php
 /**
- * Created by PhpStorm.
- * User: yawmoght
- * Date: 07/12/2015
- * Time: 14:21
+ * @author yawmoght <yawmoght@gmail.com>
  */
 
 namespace Model\User\Thread;
 
 
+use Model\User\Filters\FilterContent;
+
 class ContentThread extends Thread
 {
-    protected $type;
+    /**
+     * @var FilterContent
+     */
+    protected $filterContent;
 
-    protected $tag;
-
-    public function __construct($id, $name, $type)
+    /**
+     * @return FilterContent
+     */
+    public function getFilterContent()
     {
-        parent::__construct($id, $name);
-
-        $this->type = $type;
+        return $this->filterContent;
     }
 
     /**
-     * @return mixed
+     * @param FilterContent $filterContent
      */
-    public function getType()
+    public function setFilterContent($filterContent)
     {
-        return $this->type;
+        $this->filterContent = $filterContent;
     }
 
-    /**
-     * @param mixed $type
-     */
-    public function setType($type)
-    {
-        $this->type = $type;
-    }
 
-    /**
-     * @return mixed
-     */
-    public function getTag()
-    {
-        return $this->tag;
-    }
-
-    /**
-     * @param mixed $tags
-     */
-    public function setTag($tag)
-    {
-        $this->tag = $tag;
-    }
 
     function jsonSerialize()
     {
@@ -60,8 +39,7 @@ class ContentThread extends Thread
 
         $array += array(
             'category' => ThreadManager::LABEL_THREAD_CONTENT,
-            'type' => $this->getType(),
-            'tag' => $this->getTag(),
+            'filters' => $this->getFilterContent(),
         );
 
         return $array;

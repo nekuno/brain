@@ -7,7 +7,7 @@ namespace Model\User\Thread;
 
 
 use Model\Neo4j\GraphManager;
-use Model\User\Filters\FilterManager;
+use Model\User\Filters\FilterUsersManager;
 use Model\UserModel;
 
 class UsersThreadManager
@@ -19,14 +19,14 @@ class UsersThreadManager
     /** @var UserModel */
     protected $userModel;
 
-    /** @var FilterManager */
-    protected $filterManager;
+    /** @var FilterUsersManager */
+    protected $filterUsersManager;
 
-    public function __construct(GraphManager $gm, FilterManager $filterManager, UserModel $userModel)
+    public function __construct(GraphManager $gm, FilterUsersManager $filterUsersManager, UserModel $userModel)
     {
         $this->graphManager = $gm;
         $this->userModel = $userModel;
-        $this->filterManager = $filterManager;
+        $this->filterUsersManager = $filterUsersManager;
     }
 
     /**
@@ -38,7 +38,7 @@ class UsersThreadManager
     {
 
         $thread = new UsersThread($id, $name);
-        $filters = $this->filterManager->getFilterUsersByThreadId($thread->getId());
+        $filters = $this->filterUsersManager->getFilterUsersByThreadId($thread->getId());
         $thread->setFilterUsers($filters);
 
         return $thread;
@@ -46,7 +46,7 @@ class UsersThreadManager
 
     public function update($id, array $filters)
     {
-        return $this->filterManager->updateFilterUsersByThreadId($id, $filters);
+        return $this->filterUsersManager->updateFilterUsersByThreadId($id, $filters);
     }
 
     public function getCached(Thread $thread)

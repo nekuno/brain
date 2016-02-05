@@ -15,7 +15,7 @@ use Model\User\ProfileModel;
 use Model\User\UserFilterModel;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-class FilterManager
+class FilterUsersManager
 {
     protected $fields;
 

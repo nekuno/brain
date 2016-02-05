@@ -61,14 +61,14 @@ class Recommendator
             case 'Model\User\Thread\ContentThread':
 
                 /* @var $thread ContentThread */
-
+                $threadFilters = $thread->getFilterContent();
                 $filters = array('id' => $user['qnoow_id']);
 
-                if ($thread->getTag()) {
-                    $filters['tag'] = urldecode($thread->getTag());
+                if ($threadFilters->getTag()) {
+                    $filters['tag'] = urldecode($threadFilters->getTag());
                 }
 
-                $filters['type'] = urldecode($thread->getType());
+                $filters['type'] = urldecode($threadFilters->getType());
 
                 return $this->getContentRecommendation($filters);
 
@@ -105,12 +105,13 @@ class Recommendator
                 /* @var $thread ContentThread */
 
                 $filters = array('id' => $user['qnoow_id']);
+                $threadFilters = $thread->getFilterContent();
 
-                if ($thread->getTag()) {
-                    $filters['tag'] = urldecode($thread->getTag());
+                if ($threadFilters->getTag()) {
+                    $filters['tag'] = urldecode($threadFilters->getTag());
                 }
 
-                $filters['type'] = urldecode($thread->getType());
+                $filters['type'] = urldecode($threadFilters->getType());
 
                 if ($request->get('foreign')) {
                     $filters['foreign'] = urldecode($request->get('foreign'));
