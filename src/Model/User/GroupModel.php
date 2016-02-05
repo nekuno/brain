@@ -6,6 +6,7 @@ use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
+use Model\User\Filters\FilterUsersManager;
 use Model\UserModel;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -23,14 +24,21 @@ class GroupModel
     protected $um;
 
     /**
+     * @var FilterUsersManager
+     */
+    protected $filterUsersManager;
+
+    /**
      * @param GraphManager $gm
      * @param UserModel $um
+     * @param FilterUsersManager $filterUsersManager
      */
-    public function __construct(GraphManager $gm, UserModel $um)
+    public function __construct(GraphManager $gm, UserModel $um, FilterUsersManager $filterUsersManager)
     {
 
         $this->gm = $gm;
         $this->um = $um;
+        $this->filterUsersManager = $filterUsersManager;
     }
 
     public function getAll()
@@ -223,7 +231,7 @@ class GroupModel
         $qb = $this->gm->createQueryBuilder();
 
         if (isset($data['followers']) && $data['followers']) {
-            $qb->create('(g:Group:Followers {name:{ name }, html: { html }, date: { date }, influencer_id: { influencer_id }, min_matching: { min_matching }, type_matching: { type_matching }})');
+            $qb->create('(g:Group:GroupFollowers {name:{ name }, html: { html }, date: { date }, influencer_id: { influencer_id }, min_matching: { min_matching }, type_matching: { type_matching }})');
         } else {
             $qb->create('(g:Group {name:{ name }, html: { html }, date: { date }})');
         }
@@ -258,7 +266,17 @@ class GroupModel
         /* @var $row Row */
         $row = $result->current();
 
-        return $this->build($row);
+        $group = $this->build($row);
+
+        if (isset($data['followers'])){
+            $this->filterUsersManager->updateFilterUsersByGroupId($group['id'], array(
+                'userFilters' => array(
+                    $data['type_matching'] => $data['min_matching']
+                )
+            ));
+        }
+
+        return $group;
     }
 
     public function update($id, array $data)
@@ -311,7 +329,17 @@ class GroupModel
         /* @var $row Row */
         $row = $result->current();
 
-        return $this->build($row);
+        $group = $this->build($row);
+
+        if (isset($data['followers'])){
+            $this->filterUsersManager->updateFilterUsersByGroupId($group['id'], array(
+                'userFilters' => array(
+                    $data['type_matching'] => $data['min_matching']
+                )
+            ));
+        }
+
+        return $group;
     }
 
     public function remove($id)
@@ -471,13 +499,13 @@ class GroupModel
         $group = $row->offsetGet('g');
         /* @var $location Node */
         $location = $row->offsetGet('l');
-        /* @var $userId Node */
+
         $usersCount = $row->offsetGet('usersCount');
 
         return $this->buildGroup($group, $location, $usersCount);
     }
 
-    public function buildGroup( $group, $location, $usersCount){
+    public function buildGroup( Node $group, Node $location, $usersCount){
         return array(
             'id' => $group->getId(),
             'name' => $group->getProperty('name'),

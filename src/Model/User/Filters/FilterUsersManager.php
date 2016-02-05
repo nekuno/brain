@@ -89,6 +89,28 @@ class FilterUsersManager
         return $filters;
     }
 
+    public function updateFilterUsersByGroupId($id, $filtersArray)
+    {
+        $filters = $this->buildFiltersUsers();
+
+        $filterId = $this->getFilterUsersIdByGroupId($id);
+        $filters->setId($filterId);
+
+        if (isset($filtersArray['profileFilters']))
+        {
+            $filters->setProfileFilters($filtersArray['profileFilters']);
+        }
+
+        if (isset($filtersArray['userFilters']))
+        {
+            $filters->setUsersFilters($filtersArray['userFilters']);
+        }
+
+        $this->updateFiltersUsers($filters);
+
+        return $filters;
+    }
+
     /**
      * @param FilterUsers $filters
      * @return bool
@@ -138,6 +160,25 @@ class FilterUsersManager
             ->where('id(thread) = {id}')
             ->with('thread')
             ->merge('(thread)-[:HAS_FILTER]->(filter:Filter:FilterUsers)')
+            ->returns('id(filter) as filterId');
+        $qb->setParameter('id', (integer)$id);
+        $result = $qb->getQuery()->getResultSet();
+
+        if ($result->count() == 0){
+            return null;
+        }
+
+        return $result->current()->offsetGet('filterId');
+
+    }
+
+    protected function getFilterUsersIdByGroupId($id)
+    {
+        $qb = $this->graphManager->createQueryBuilder();
+        $qb->match('(group:Group)')
+            ->where('id(group) = {id}')
+            ->with('group')
+            ->merge('(group)-[:HAS_FILTER]->(filter:Filter:FilterUsers)')
             ->returns('id(filter) as filterId');
         $qb->setParameter('id', (integer)$id);
         $result = $qb->getQuery()->getResultSet();

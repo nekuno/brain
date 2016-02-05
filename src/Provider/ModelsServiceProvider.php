@@ -249,13 +249,6 @@ class ModelsServiceProvider implements ServiceProviderInterface
             }
         );
 
-        $app['users.groups.model'] = $app->share(
-            function ($app) {
-
-                return new GroupModel($app['neo4j.graph_manager'], $app['users.model']);
-            }
-        );
-
         $app['users.filterusers.manager'] = $app->share(
             function ($app) {
 
@@ -267,6 +260,13 @@ class ModelsServiceProvider implements ServiceProviderInterface
             function ($app) {
 
                 return new FilterContentManager($app['neo4j.graph_manager']);
+            }
+        );
+
+        $app['users.groups.model'] = $app->share(
+            function ($app) {
+
+                return new GroupModel($app['neo4j.graph_manager'], $app['users.model'], $app['users.filterusers.manager']);
             }
         );
 
