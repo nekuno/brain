@@ -515,7 +515,11 @@ class GroupModel
         $usersCount = $row->offsetGet('usersCount');
 
         $group = $this->buildGroup($group, $location, $usersCount);
-        $group['filterUsers'] = $this->filterUsersManager->getFilterUsersById($filter->getId());
+
+        if ($filter){
+            $group['filterUsers'] = $this->filterUsersManager->getFilterUsersById($filter->getId());
+        }
+
         return $group;
     }
 
