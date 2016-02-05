@@ -112,6 +112,18 @@ class FilterUsersManager
     }
 
     /**
+     * @param $id
+     * @return FilterUsers
+     */
+    public function getFilterUsersById($id)
+    {
+        $filter = $this->buildFiltersUsers();
+        $filter->setProfileFilters($this->getProfileFilters($id));
+        $filter->setUsersFilters($this->getUserFilters($id));
+        return $filter;
+    }
+
+    /**
      * @param FilterUsers $filters
      * @return bool
      */
@@ -139,18 +151,6 @@ class FilterUsersManager
     protected function buildFiltersUsers()
     {
         return new FilterUsers($this->fields);
-    }
-
-    /**
-     * @param $id
-     * @return FilterUsers
-     */
-    protected function getFilterUsersById($id)
-    {
-        $filter = $this->buildFiltersUsers();
-        $filter->setProfileFilters($this->getProfileFilters($id));
-        $filter->setUsersFilters($this->getUserFilters($id));
-        return $filter;
     }
 
     protected function getFilterUsersIdByThreadId($id)

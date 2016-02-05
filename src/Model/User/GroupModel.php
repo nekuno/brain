@@ -47,7 +47,8 @@ class GroupModel
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(g:Group)')
             ->optionalMatch('(g)-[:LOCATION]->(l:Location)')
-            ->returns('g', 'l');
+            ->optionalMatch('(g)-[:HAS_FILTER]->(f:FilterUsers)')
+            ->returns('g', 'l', 'f');
 
         $query = $qb->getQuery();
 
@@ -72,8 +73,9 @@ class GroupModel
             ->optionalMatch('(g)-[:LOCATION]->(l:Location)')
             ->setParameter('id', (integer)$id)
             ->with('g', 'l')
+            ->optionalMatch('(g)-[:HAS_FILTER]->(f:FilterUsers)')
             ->optionalMatch('(u:User)-[:BELONGS_TO]->(g)')
-            ->returns('g', 'l', 'COUNT(u) AS usersCount');
+            ->returns('g', 'l', 'f', 'COUNT(u) AS usersCount');
 
         $query = $qb->getQuery();
 
@@ -96,8 +98,9 @@ class GroupModel
         $qb->match('(i:Invitation)-[:HAS_GROUP]->(g:Group)<-[:CREATED_GROUP]-(eu:EnterpriseUser)')
             ->where('eu.admin_id = { admin_id }')
             ->optionalMatch('(g)-[:LOCATION]->(l:Location)')
+            ->optionalMatch('(g)-[:HAS_FILTER]->(f:FilterUsers)')
             ->setParameter('admin_id', (integer)$enterpriseUserId)
-            ->returns('g', 'l', 'i');
+            ->returns('g', 'l', 'f', 'i');
 
         $query = $qb->getQuery();
 
@@ -119,13 +122,14 @@ class GroupModel
         $qb->match('(i:Invitation)-[:HAS_GROUP]->(g:Group)<-[:CREATED_GROUP]-(eu:EnterpriseUser)')
             ->where('id(g) = { id }', 'eu.admin_id = { admin_id }')
             ->optionalMatch('(g)-[:LOCATION]->(l:Location)')
+            ->optionalMatch('(g)-[:HAS_FILTER]->(f:FilterUsers)')
             ->setParameters(
                 array(
                     'id' => (integer)$id,
                     'admin_id' => (integer)$enterpriseUserId,
                 )
             )
-            ->returns('g', 'l', 'i');
+            ->returns('g', 'l', 'f',  'i');
 
         $query = $qb->getQuery();
 
@@ -269,11 +273,12 @@ class GroupModel
         $group = $this->build($row);
 
         if (isset($data['followers'])){
-            $this->filterUsersManager->updateFilterUsersByGroupId($group['id'], array(
+            $filterUsers = $this->filterUsersManager->updateFilterUsersByGroupId($group['id'], array(
                 'userFilters' => array(
                     $data['type_matching'] => $data['min_matching']
                 )
             ));
+            $group['filterUsers'] = $filterUsers;
         }
 
         return $group;
@@ -332,11 +337,12 @@ class GroupModel
         $group = $this->build($row);
 
         if (isset($data['followers'])){
-            $this->filterUsersManager->updateFilterUsersByGroupId($group['id'], array(
+            $filterUsers = $this->filterUsersManager->updateFilterUsersByGroupId($group['id'], array(
                 'userFilters' => array(
                     $data['type_matching'] => $data['min_matching']
                 )
             ));
+            $group['filterUsers'] = $filterUsers;
         }
 
         return $group;
@@ -368,13 +374,15 @@ class GroupModel
         $qb->match('(g:Group)', '(eu:EnterpriseUser)')
             ->where('id(g) = { id } AND eu.admin_id = { enterpriseUserId }')
             ->merge('(g)<-[:CREATED_GROUP]-(eu)')
+            ->optionalMatch('(g)-[:LOCATION]->(l:Location)')
+            ->optionalMatch('(g)-[:HAS_FILTER]->(f:FilterUsers)')
             ->setParameters(
                 array(
                     'id' => (integer)$id,
                     'enterpriseUserId' => (integer)$enterpriseUserId,
                 )
             )
-            ->returns('g');
+            ->returns('g', 'l', 'f');
 
         $query = $qb->getQuery();
 
@@ -396,7 +404,9 @@ class GroupModel
             ->match('(u)-[r:BELONGS_TO]->(g:Group)')
             ->with('g')
             ->optionalMatch('(g)-[:LOCATION]->(l:Location)')
-            ->returns('g', 'l');
+            ->optionalMatch('(g)-[:HAS_FILTER]->(f:FilterUsers)')
+
+            ->returns('g', 'l', 'f');
 
         $query = $qb->getQuery();
 
@@ -499,13 +509,17 @@ class GroupModel
         $group = $row->offsetGet('g');
         /* @var $location Node */
         $location = $row->offsetGet('l');
+        /* @var $filter Node */
+        $filter = $row->offsetGet('f');
 
         $usersCount = $row->offsetGet('usersCount');
 
-        return $this->buildGroup($group, $location, $usersCount);
+        $group = $this->buildGroup($group, $location, $usersCount);
+        $group['filterUsers'] = $this->filterUsersManager->getFilterUsersById($filter->getId());
+        return $group;
     }
 
-    public function buildGroup( Node $group, Node $location, $usersCount){
+    protected function buildGroup( Node $group, Node $location, $usersCount){
         return array(
             'id' => $group->getId(),
             'name' => $group->getProperty('name'),
