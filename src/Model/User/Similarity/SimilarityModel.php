@@ -9,6 +9,7 @@ use Model\LinkModel;
 use Model\User\ContentPaginatedModel;
 use Model\User\ProfileModel;
 use Model\User\QuestionPaginatedModel;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 
 /**
@@ -260,8 +261,14 @@ class SimilarityModel
         $questionLimit = 0;
         $contentLimit = 100;
 
-        $profileA = $this->profileModel->getById($idA);
-        $profileB = $this->profileModel->getById($idB);
+        try{
+            $profileA = $this->profileModel->getById($idA);
+            $profileB = $this->profileModel->getById($idB);
+        } catch (NotFoundHttpException $e){
+            $profileA = array();
+            $profileB = array();
+        }
+
         $interfaceLanguageA = isset($profileA['interfaceLanguage']) ? $profileA['interfaceLanguage'] : 'es';
         $interfaceLanguageB = isset($profileB['interfaceLanguage']) ? $profileB['interfaceLanguage'] : 'es';
         $totalLinksA = $this->contentPaginatedModel->countTotal(array('id' => $idA));
