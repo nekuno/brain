@@ -5,6 +5,7 @@ namespace ApiConsumer\Fetcher;
 use ApiConsumer\Exception\PaginatedFetchingException;
 use ApiConsumer\Factory\FetcherFactory;
 use ApiConsumer\LinkProcessor\LinkProcessor;
+use Event\ExceptionEvent;
 use Event\FetchEvent;
 use Event\ProcessLinkEvent;
 use Event\ProcessLinksEvent;
@@ -148,6 +149,7 @@ class FetcherService implements LoggerAwareInterface
                     } catch (PaginatedFetchingException $e) {
                         $newLinks = $e->getLinks();
                         $this->logger->warning(sprintf('Fetcher: Error fetching feed for user "%s" with fetcher "%s" from resource "%s". Reason: %s', $userId, $fetcher, $resourceOwner, $e->getOriginalException()->getMessage()));
+                        $this->dispatcher->dispatch(\AppEvents::EXCEPTION_WARNING, new ExceptionEvent($e, sprintf('Fetcher: Error fetching feed for user "%s" with fetcher "%s" from resource "%s". Reason: %s', $userId, $fetcher, $resourceOwner, $e->getOriginalException()->getMessage())));
                         if (!empty($newLinks)) {
                             $this->logger->info(sprintf('%d links were fetched before the exception happened and are going to be processed.', count($newLinks)));
                             $links = array_merge($links, $newLinks);

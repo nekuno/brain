@@ -13,6 +13,7 @@ use Model\User\SocialNetwork\SocialProfileManager;
 use Model\User\TokensModel;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Message\AMQPMessage;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 /**
  * Class LinkProcessorWorker
@@ -62,6 +63,7 @@ class LinkProcessorWorker extends LoggerAwareWorker implements RabbitMQConsumerI
     protected $resourceOwnerFactory;
 
     public function __construct(AMQPChannel $channel,
+                                EventDispatcher $dispatcher,
                                 FetcherService $fetcherService,
                                 ResourceOwnerFactory $resourceOwnerFactory,
                                 TokensModel $tm,
@@ -165,6 +167,7 @@ class LinkProcessorWorker extends LoggerAwareWorker implements RabbitMQConsumerI
             if ($e instanceof Neo4jException) {
                 $this->logger->error(sprintf('Query: %s' . "\n" . 'Data: %s', $e->getQuery(), print_r($e->getData(), true)));
             }
+            $this->dispatchError($e, 'Fetching');
         }
 
         $message->delivery_info['channel']->basic_ack($message->delivery_info['delivery_tag']);

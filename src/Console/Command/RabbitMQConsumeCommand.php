@@ -2,11 +2,11 @@
 
 namespace Console\Command;
 
-use ApiConsumer\EventListener\ChannelSubscriber;
 use ApiConsumer\EventListener\FetchLinksInstantSubscriber;
 use ApiConsumer\EventListener\FetchLinksSubscriber;
 use ApiConsumer\Fetcher\FetcherService;
 use Console\ApplicationAwareCommand;
+use EventListener\ExceptionLoggerSubscriber;
 use EventListener\UserStatusSubscriber;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
@@ -74,6 +74,8 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
         /* @var $dispatcher EventDispatcher */
         $dispatcher = $this->app['dispatcher'];
 
+        $dispatcher->addSubscriber(new ExceptionLoggerSubscriber());
+
         switch ($consumer) {
 
             case AMQPManager::FETCHING :
@@ -85,7 +87,9 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
                 $fetcher = $this->app['api_consumer.fetcher'];
                 $fetcher->setLogger($logger);
 
-                $worker = new LinkProcessorWorker($channel,
+                $worker = new LinkProcessorWorker(
+                    $channel,
+                    $dispatcher,
                     $fetcher,
                     $this->app['api_consumer.resource_owner_factory'],
                     $this->app['users.tokens.model'],
@@ -101,7 +105,8 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
                 $userStatusSubscriber = new UserStatusSubscriber($this->app['instant.client']);
                 $dispatcher->addSubscriber($userStatusSubscriber);
 
-                $worker = new MatchingCalculatorWorker($channel,
+                $worker = new MatchingCalculatorWorker(
+                    $channel,
                     $this->app['users.model'],
                     $this->app['users.matching.model'],
                     $this->app['users.similarity.model'],
@@ -114,7 +119,9 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
 
             case AMQPManager::PREDICTION:
 
-                $worker = new PredictionWorker($channel,
+                $worker = new PredictionWorker(
+                    $channel,
+                    $dispatcher,
                     $this->app['affinityRecalculations.service'],
                     $this->app['users.affinity.model'],
                     $this->app['links.model']);
@@ -124,7 +131,7 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
 
             case AMQPManager::SOCIAL_NETWORK:
 
-                $worker = new SocialNetworkDataProcessorWorker($channel, $this->app['socialNetwork.service']);
+                $worker = new SocialNetworkDataProcessorWorker($channel, $dispatcher, $this->app['socialNetwork.service']);
                 $worker->setLogger($logger);
                 $logger->notice('Processing social network queue');
                 break;
@@ -139,7 +146,7 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
                 $fetcher = $this->app['api_consumer.fetcher'];
                 $fetcher->setLogger($logger);
 
-                $worker = new ChannelWorker($channel, $fetcher, $this->app['get_old_tweets'], $this->app['dbs']['mysql_brain']);
+                $worker = new ChannelWorker($channel, $dispatcher, $fetcher, $this->app['get_old_tweets'], $this->app['dbs']['mysql_brain']);
                 $worker->setLogger($logger);
                 $logger->notice('Processing channel queue');
                 break;
