@@ -24,6 +24,7 @@ class PaginatedFetchingException extends \Exception
     {
         $this->links = $links;
         $this->originalException = $originalException;
+        $this->message = $this->getOriginalException()->getMessage();
     }
 
     /**

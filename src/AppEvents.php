@@ -85,4 +85,14 @@ final class AppEvents
      * Fired when a channel url is detected
      */
     const CHANNEL_ADDED = 'channel.added';
+
+    /**
+     * Fired when an unexpected exception is thrown
+     */
+    const EXCEPTION_ERROR = 'exception.error';
+
+    /**
+     * Fired when an expected exception is thrown
+     */
+    const EXCEPTION_WARNING = 'exception.warning';
 }
