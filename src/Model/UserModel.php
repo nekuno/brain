@@ -62,15 +62,20 @@ class UserModel implements PaginatedInterface
     }
 
     /**
+     * @param bool $includeGhosts
      * @return array
      * @throws Neo4jException
      */
-    public function getAll()
+    public function getAll($includeGhosts = false)
     {
 
         $qb = $this->gm->createQueryBuilder();
-        $qb->match('(u:User)')
-            ->returns('u')
+        $qb->match('(u:User)');
+        if (!$includeGhosts)
+        {
+            $qb->where('NOT (u:GhostUser)');
+        }
+            $qb->returns('u')
             ->orderBy('u.qnoow_id');
 
         $query = $qb->getQuery();

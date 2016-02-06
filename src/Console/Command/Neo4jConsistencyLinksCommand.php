@@ -40,7 +40,7 @@ class Neo4jConsistencyLinksCommand extends ApplicationAwareCommand
 
             /** @var UserModel $userModel */
             $userModel = $this->app['users.model'];
-            $users = $userModel->getAll();
+            $users = $userModel->getAll(true);
 
             $likes = array();
             foreach ($users as $user) {
