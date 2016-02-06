@@ -10,6 +10,7 @@ use Model\User\Similarity\SimilarityModel;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Message\AMQPMessage;
 use Service\AffinityRecalculations;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 /**
  * Class AffinityCalculatorWorker
@@ -47,12 +48,13 @@ class PredictionWorker extends LoggerAwareWorker implements RabbitMQConsumerInte
     const TRIGGER_LIVE = 'live';
 
     public function __construct(AMQPChannel $channel,
+                                EventDispatcher $dispatcher,
                                 AffinityRecalculations $affinityRecalculations,
                                 AffinityModel $affinityModel,
                                 LinkModel $linkModel)
     {
         $this->channel = $channel;
-
+        $this->dispatcher = $dispatcher;
         $this->linkModel = $linkModel;
         $this->affinityModel = $affinityModel;
         $this->affinityRecalculations = $affinityRecalculations;
@@ -101,6 +103,7 @@ class PredictionWorker extends LoggerAwareWorker implements RabbitMQConsumerInte
                     if ($e instanceof Neo4jException) {
                         $this->logger->error(sprintf('Query: %s' . "\n" . 'Data: %s', $e->getQuery(), print_r($e->getData(), true)));
                     }
+                    $this->dispatchError($e, 'Affinity recalculating with trigger recalculate');
                 }
                 break;
             case $this::TRIGGER_LIVE:
@@ -115,6 +118,7 @@ class PredictionWorker extends LoggerAwareWorker implements RabbitMQConsumerInte
                     if ($e instanceof Neo4jException) {
                         $this->logger->error(sprintf('Query: %s' . "\n" . 'Data: %s', $e->getQuery(), print_r($e->getData(), true)));
                     }
+                    $this->dispatchError($e, 'Affinity recalculating with live trigger');
                 }
 
                 break;

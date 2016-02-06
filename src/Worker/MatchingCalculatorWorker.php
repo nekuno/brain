@@ -4,6 +4,7 @@
 namespace Worker;
 
 use Doctrine\DBAL\Connection;
+use Event\ExceptionEvent;
 use Event\UserStatusChangedEvent;
 use Model\Neo4j\Neo4jException;
 use Model\User\Matching\MatchingModel;
@@ -131,6 +132,7 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                     if ($e instanceof Neo4jException) {
                         $this->logger->error(sprintf('Query: %s' . "\n" . 'Data: %s', $e->getQuery(), print_r($e->getData(), true)));
                     }
+                    $this->dispatchError($e, 'Matching because process finished or content rated');
                 }
                 break;
             case 'question_answered':
@@ -163,6 +165,7 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                     if ($e instanceof Neo4jException) {
                         $this->logger->error(sprintf('Query: %s' . "\n" . 'Data: %s', $e->getQuery(), print_r($e->getData(), true)));
                     }
+                    $this->dispatchError($e, 'Matching because question answered');
                 }
                 break;
             case 'matching_expired':
@@ -188,6 +191,7 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                     if ($e instanceof Neo4jException) {
                         $this->logger->error(sprintf('Query: %s' . "\n" . 'Data: %s', $e->getQuery(), print_r($e->getData(), true)));
                     }
+                    $this->dispatchError($e, 'Matching because matching expired');
                 }
                 break;
             case $this:: TRIGGER_PERIODIC:
@@ -205,6 +209,7 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                     if ($e instanceof Neo4jException) {
                         $this->logger->error(sprintf('Query: %s' . "\n" . 'Data: %s', $e->getQuery(), print_r($e->getData(), true)));
                     }
+                    $this->dispatchError($e, 'Matching with periodic trigger');
                 }
                 break;
             default;

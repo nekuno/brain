@@ -8,6 +8,7 @@ use Model\Neo4j\Neo4jException;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Message\AMQPMessage;
 use Service\SocialNetwork;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 /**
  * Class SocialNetworkDataProcessorWorker
@@ -27,9 +28,10 @@ class SocialNetworkDataProcessorWorker extends LoggerAwareWorker implements Rabb
     protected $sn;
 
 
-    public function __construct(AMQPChannel $channel, SocialNetwork $sn)
+    public function __construct(AMQPChannel $channel, EventDispatcher $dispatcher, SocialNetwork $sn)
     {
         $this->channel = $channel;
+        $this->dispatcher = $dispatcher;
         $this->sn = $sn;
     }
 
@@ -81,6 +83,7 @@ class SocialNetworkDataProcessorWorker extends LoggerAwareWorker implements Rabb
             if ($e instanceof Neo4jException) {
                 $this->logger->error(sprintf('Query: %s' . "\n" . 'Data: %s', $e->getQuery(), print_r($e->getData(), true)));
             }
+            $this->dispatchError($e, 'Social network trigger');
         }
         $message->delivery_info['channel']->basic_ack($message->delivery_info['delivery_tag']);
 
