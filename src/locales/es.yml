@@ -18,5 +18,12 @@ notifications:
         subject: "Invitación recibida de %name%"
         email_txt: "%name% te ha enviado una invitación para unirte a Nekuno.\nHaz click en este enlace %url% para registrarte y comenzar a distrutar.\nEsta invitación caduca el día %expiresAt%.\n"
         email_html: "<p>%name% te ha enviado una invitación para unirte a Nekuno.</p>\n<p>Haz click en este enlace <a href=\"%url%\">%url%</a> para registrarte y distrutar.</p>\n<p>Esta invitación caduca el día %expiresAt%.</p>\n"
-
+    influencer_found:
+      subject: ''
+      body:
+        message: ''
+    follower_found:
+      subject: ''
+      body:
+        message: ''
   footer: 'Saludos del equipo de Nekuno'

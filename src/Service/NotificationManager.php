@@ -22,7 +22,7 @@ class NotificationManager
      * @param $to
      * @return bool
      */
-    public function isNotified($from, $to)
+    public function areNotified($from, $to)
     {
 
         return true;

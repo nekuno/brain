@@ -20,9 +20,11 @@ class EmailNotifications
         $this->tp = $twigServiceProvider;
     }
 
-    function send(EmailNotification $notification)
+    public function send(EmailNotification $notification)
     {
-        if (!$notification->getRecipient()) throw new \Exception("Recipient not set");
+        if (!$notification->getRecipient()) {
+            throw new \Exception('Recipient not set');
+        }
 
         $this->em->persist($notification);
         $this->em->flush();
@@ -56,15 +58,18 @@ class EmailNotifications
             ->setFrom('enredos@nekuno.com', 'Nekuno')
             ->setTo($notification->getRecipient())
             ->setContentType('text/html')
-            ->setBody($this->tp->render(
-                $view,
-                $notification->getInfo()));
-
+            ->setBody(
+                $this->tp->render(
+                    $view,
+                    $notification->getInfo()
+                )
+            );
 
         $recipients = $this->mailer->send($message);
         if (!$recipients) {
-            throw new \RuntimeException("Email could not be sent");
+            throw new \RuntimeException('Email could not be sent');
         }
+
         return $recipients;
     }
 }
