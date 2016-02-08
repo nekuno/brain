@@ -516,7 +516,7 @@ class GroupModel
             ->with('user1', 'user2')
             ->optionalMatch('(user1)-[:BELONGS_TO]->(g:GroupFollowers)<-[:CREATED_GROUP]-(user2)')
             ->optionalMatch('(user2)-[:BELONGS_TO]->(g2:GroupFollowers)<-[:CREATED_GROUP]-(user1)')
-            ->returns('collect(id(g)) as direct, collect(id(g2)) as inverse');
+            ->returns('collect(id(g)) AS direct, collect(id(g2)) AS inverse');
 
         $result = $qb->getQuery()->getResultSet();
 
