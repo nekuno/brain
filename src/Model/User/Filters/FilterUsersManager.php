@@ -343,7 +343,7 @@ class FilterUsersManager
 
             switch ($field['type']) {
                 case 'single_integer':
-                    $qb->set("filter.$name= {$name}");
+                    $qb->set("filter.$name= { $name }");
                     $qb->setParameter($name, $value);
                     break;
                 default:
