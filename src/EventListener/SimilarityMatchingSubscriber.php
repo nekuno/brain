@@ -37,10 +37,28 @@ class SimilarityMatchingSubscriber implements EventSubscriberInterface
     public function onMatchingUpdated(MatchingEvent $event)
     {
         echo sprintf('Matching updated between %d - %d, with value %s' . "\n", $event->getUser1(), $event->getUser2(), $event->getMatching());
+        $groupsFollowers = $this->groupModel->getIsGroupFollowersOf($event->getUser1(), $event->getUser2());
+        foreach ($groupsFollowers['direct'] as $groupId)
+        {
+            //Groups in which 1 is follower of 2
+
+        }
+        foreach ($groupsFollowers['inverse'] as $groupId){
+            //Groups in which 2 is follower of 1
+        }
     }
 
     public function onSimilarityUpdated(SimilarityEvent $event)
     {
         echo sprintf('Similarity updated between %d -  %d, with value %s' . "\n", $event->getUser1(), $event->getUser2(), $event->getSimilarity());
+        $groupsFollowers = $this->groupModel->getIsGroupFollowersOf($event->getUser1(), $event->getUser2());
+        foreach ($groupsFollowers['direct'] as $groupId)
+        {
+            //Groups in which 1 is follower of 2
+
+        }
+        foreach ($groupsFollowers['inverse'] as $groupId){
+            //Groups in which 2 is follower of 1
+        }
     }
 }

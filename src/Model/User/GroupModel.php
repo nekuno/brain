@@ -234,10 +234,12 @@ class GroupModel
 
         $qb = $this->gm->createQueryBuilder();
 
+        $qb->create('(g:Group {name:{ name }, html: { html }, date: { date }})');
+
         if (isset($data['followers']) && $data['followers']) {
-            $qb->create('(g:Group:GroupFollowers {name:{ name }, html: { html }, date: { date }, influencer_id: { influencer_id }, min_matching: { min_matching }, type_matching: { type_matching }})');
-        } else {
-            $qb->create('(g:Group {name:{ name }, html: { html }, date: { date }})');
+            $qb ->set('g:GroupFollowers')
+                ->match('(influencer:User{qnoow_id: {influencer_id}})')
+                ->createUnique('(influencer)-[:CREATED_GROUP]->(g)');
         }
 
         $qb->with('g')
@@ -501,6 +503,40 @@ class GroupModel
         $result = $query->getResultSet();
 
         return $result->count() > 0;
+    }
+
+    /**
+     * @param $userId1
+     * @param $userId2
+     * @return array [ 'direct' => 1 is follower of 2 , 'inverse' => 2 is follower of 1 ]
+     * @throws \Model\Neo4j\Neo4jException
+     */
+    public function getIsGroupFollowersOf($userId1, $userId2)
+    {
+        $qb = $this->gm->createQueryBuilder();
+        $qb->setParameters(array(
+            'id1' => (integer)$userId1,
+            'id2' => (integer)$userId2,
+        ));
+        $qb->match('(user1:User), (user2:User)')
+            ->where('id(user1) = {id1}, id(user2) = {id2}')
+            ->with('user1', 'user2')
+            ->optionalMatch('(user1)-[:BELONGS_TO]->(g:GroupFollowers)<-[:CREATED_GROUP]-(user2)')
+            ->optionalMatch('(user2)-[:BELONGS_TO]->(g2:GroupFollowers)<-[:CREATED_GROUP]-(user1)')
+            ->returns('collect(id(g)) as direct, collect(id(g2)) as inverse');
+
+        $result = $qb->getQuery()->getResultSet();
+
+        $return = array('direct' => array(), 'inverse' => array());
+        if ($result->count() == 0){
+            return $result;
+        }
+
+        /** @var Row $row */
+        $row = $result->current();
+        $return['direct'] = $row->offsetGet('direct');
+        $return['inverse'] = $row->offsetGet('inverse');
+        return $return;
     }
 
     protected function build(Row $row)
