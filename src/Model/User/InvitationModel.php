@@ -40,6 +40,8 @@ class InvitationModel
      */
     protected $adminDomain;
 
+    const MAX_AVAILABLE = 9999999999;
+
     public function __construct(GraphManager $gm, GroupModel $groupModel, UserModel $um, $adminDomain)
     {
         $this->gm = $gm;
@@ -95,6 +97,25 @@ class InvitationModel
         }
 
         throw new NotFoundHttpException(sprintf('There is not invitation with ID %s', $id));
+    }
+
+    public function getByGroupFollowersId($groupId)
+    {
+        $qb = $this->gm->createQueryBuilder();
+        $qb->setParameter('groupId', (integer)$groupId);
+        $qb->match('(group:GroupFollowers))')
+            ->where('id(group) = { groupId }')
+            ->match('(group)<-[:HAS_GROUP]-(inv:Invitation)')
+            ->returns('inv as invitation', 'group');
+        $result = $qb->getQuery()->getResultSet();
+
+        if ($result->count() == 0) {
+            throw new NotFoundHttpException(sprintf('Group with id %s is not a GroupFollowers, doesn´t have invitation or doesn´t exist', $groupId));
+        }
+
+        $row = $result->current();
+
+        return $this->build($row);
     }
 
     public function getCountByUserId($userId)
@@ -551,6 +572,31 @@ class InvitationModel
         $row = $result->current();
 
         return $row->offsetGet('available_invitations');
+    }
+
+    public function setAvailableInvitations($token, $available)
+    {
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->setParameters(array(
+            'token' => $token,
+            'available' => (integer)$available,
+        ));
+        $qb->match('(inv:Invitation)')
+            ->where('inv.token = { token }')
+            ->set('inv.available = { available }')
+            ->optionalMatch('(inv)-[:HAS_GROUP]->(g:Group)')
+            ->returns('inv AS invitation', 'g AS group');
+        $result = $qb->getQuery()->getResultSet();
+
+        if ($result->count() > 0) {
+            /* @var $row Row */
+            $row = $result->current();
+
+            return $this->build($row);
+        }
+
+        throw new NotFoundHttpException(sprintf('Invitation with token %s not found', $token));
     }
 
     public function validateToken($token)

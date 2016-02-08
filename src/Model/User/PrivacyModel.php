@@ -2,24 +2,28 @@
 
 namespace Model\User;
 
+use Event\PrivacyEvent;
 use Everyman\Neo4j\Label;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Everyman\Neo4j\Relationship;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class PrivacyModel
 {
     protected $gm;
+    protected $dispatcher;
     protected $metadata;
     protected $defaultLocale;
 
-    public function __construct(GraphManager $graphManager, array $metadata, $defaultLocale)
+    public function __construct(GraphManager $graphManager, EventDispatcher $dispatcher, array $metadata, $defaultLocale)
     {
         $this->gm = $graphManager;
+        $this->dispatcher = $dispatcher;
         $this->metadata = $metadata;
         $this->defaultLocale = $defaultLocale;
     }
@@ -120,6 +124,7 @@ class PrivacyModel
         $privacyNode = $row->offsetGet('privacy');
 
         $this->savePrivacyData($privacyNode, $data);
+        $this->dispatcher->dispatch(\AppEvents::PRIVACY_UPDATED, new PrivacyEvent($id, $data));
 
         return $this->getById($id);
     }
@@ -146,7 +151,7 @@ class PrivacyModel
         }
 
         $this->savePrivacyData($privacyNode, $data);
-
+        $this->dispatcher->dispatch(\AppEvents::PRIVACY_UPDATED, new PrivacyEvent($id, $data));
         return $this->getById($id);
     }
 
@@ -360,16 +365,22 @@ class PrivacyModel
         return $privacyNode->save();
     }
 
+    /**
+     * @param Node $privacyNode
+     * @return Relationship[]
+     */
     protected function getPrivacyNodeOptions(Node $privacyNode)
     {
         $options = array();
         $optionRelations = $privacyNode->getRelationships('OPTION_OF');
 
+        /* @var $optionRelation Relationship */
         foreach ($optionRelations as $optionRelation) {
 
             $optionNode = $optionRelation->getStartNode();
             $optionLabels = $optionNode->getLabels();
 
+            /* @var $optionLabel Label */
             foreach ($optionLabels as $optionLabel) {
                 $labelName = $optionLabel->getName();
                 if ($labelName != 'PrivacyOption') {

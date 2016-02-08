@@ -496,6 +496,24 @@ class GroupModel
         return $result->count() > 0;
     }
 
+    public function getGroupFollowersFromInfluencerId($userId)
+    {
+        $qb = $this->gm->createQueryBuilder();
+        $qb->setParameter('userId', (integer)$userId);
+        $qb->match('(user:User)')
+            ->where('user.qnoow_id = {userId}')
+            ->with('user')
+            ->match('(user)-[:CREATED_GROUP]->(g:GroupFollowers)')
+            ->returns('collect(id(g)) as groups');
+        $result = $qb->getQuery()->getResultSet();
+
+        if ($result->count() == 0){
+            return array();
+        }
+
+        return $result->current()->offsetGet('groups');
+    }
+
     /**
      * @param $userId1
      * @param $userId2

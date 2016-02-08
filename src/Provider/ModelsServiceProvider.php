@@ -91,7 +91,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.privacy.model'] = $app->share(
             function ($app) {
 
-                return new PrivacyModel($app['neo4j.graph_manager'], $app['fields']['privacy'], $app['locale.options']['default']);
+                return new PrivacyModel($app['neo4j.graph_manager'], $app['dispatcher'], $app['fields']['privacy'], $app['locale.options']['default']);
             }
         );
 

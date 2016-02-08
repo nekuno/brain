@@ -8,6 +8,7 @@ use EventListener\AccountConnectSubscriber;
 use EventListener\FilterClientIpSubscriber;
 use EventListener\InvitationSubscriber;
 use EventListener\LookUpSocialNetworkSubscriber;
+use EventListener\PrivacySubscriber;
 use EventListener\SimilarityMatchingSubscriber;
 use EventListener\UserAnswerSubscriber;
 use EventListener\UserDataStatusSubscriber;
@@ -46,6 +47,7 @@ class SubscribersServiceProvider implements ServiceProviderInterface
         $dispatcher->addSubscriber(new InvitationSubscriber($app['neo4j.graph_manager']));
         $dispatcher->addSubscriber(new LookUpSocialNetworkSubscriber($app['neo4j.graph_manager'], $app['amqpManager.service']));
         $dispatcher->addSubscriber(new SimilarityMatchingSubscriber($app['emailNotification.service'], $app['users.groups.model'], $app['translator'], $app['notificationManager.service']));
+        $dispatcher->addSubscriber(new PrivacySubscriber($app['users.groups.model']));
     }
 
 }

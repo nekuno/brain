@@ -107,4 +107,9 @@ final class AppEvents
      * Fired when an expected exception is thrown
      */
     const EXCEPTION_WARNING = 'exception.warning';
+
+    /**
+     * Fired when privacy is updated
+     */
+    const PRIVACY_UPDATED = 'privacy.updated';
 }
