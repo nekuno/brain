@@ -555,7 +555,7 @@ class GroupModel
         /* @var $location Node */
         $location = $row->offsetGet('l');
         /* @var $filter Node */
-        $filter = $row->offsetGet('f');
+        $filter = $row->offsetExists('f') ? $row->offsetGet('f') : null;
 
         $usersCount = $row->offsetGet('usersCount');
 
