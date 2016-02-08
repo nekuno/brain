@@ -10,6 +10,7 @@ use Model\Neo4j\Neo4jException;
 use Model\User\TokensModel;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Message\AMQPMessage;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 /**
  * Class LinkProcessorWorker
@@ -39,12 +40,14 @@ class ChannelWorker extends LoggerAwareWorker implements RabbitMQConsumerInterfa
     protected $getOldTweets;
 
     public function __construct(AMQPChannel $channel,
+                                EventDispatcher $dispatcher,
                                 FetcherService $fetcherService,
                                 GetOldTweets $getOldTweets,
                                 Connection $connectionBrain)
     {
 
         $this->channel = $channel;
+        $this->dispatcher = $dispatcher;
         $this->fetcherService = $fetcherService;
         $this->getOldTweets = $getOldTweets;
         $this->connectionBrain = $connectionBrain;
@@ -135,6 +138,7 @@ class ChannelWorker extends LoggerAwareWorker implements RabbitMQConsumerInterfa
             if ($e instanceof Neo4jException) {
                 $this->logger->error(sprintf('Query: %s' . "\n" . 'Data: %s', $e->getQuery(), print_r($e->getData(), true)));
             }
+            $this->dispatchError($e, 'Channel fetching');
         }
 
         $message->delivery_info['channel']->basic_ack($message->delivery_info['delivery_tag']);

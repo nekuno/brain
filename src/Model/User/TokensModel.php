@@ -3,12 +3,14 @@
 namespace Model\User;
 
 use Doctrine\ORM\EntityManager;
+use Event\AccountConnectEvent;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Entity\DataStatus;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
 use Model\User\SocialNetwork\SocialProfile;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -21,6 +23,11 @@ class TokensModel
     CONST SPOTIFY = 'spotify';
 
     /**
+     * @var EventDispatcher
+     */
+    protected $dispatcher;
+
+    /**
      * @var GraphManager
      */
     protected $gm;
@@ -30,8 +37,9 @@ class TokensModel
      */
     protected $entityManagerBrain;
 
-    public function __construct(GraphManager $graphManager, EntityManager $entityManagerBrain)
+    public function __construct(EventDispatcher $dispatcher, GraphManager $graphManager, EntityManager $entityManagerBrain)
     {
+        $this->dispatcher = $dispatcher;
         $this->gm = $graphManager;
         $this->entityManagerBrain = $entityManagerBrain;
     }
@@ -138,6 +146,8 @@ class TokensModel
         $tokenNode = $row->offsetGet('token');
 
         $this->saveTokenData($tokenNode, $resourceOwner, $data);
+
+        $this->dispatcher->dispatch(\AppEvents::ACCOUNT_CONNECTED, new AccountConnectEvent($id, $resourceOwner));
 
         return $this->getById($id, $resourceOwner);
     }
@@ -347,17 +357,18 @@ class TokensModel
         $resourceOwners = $this->getResourceOwners();
 
         $unconnected = array();
-        foreach ($resourceOwners as $resource){
+        foreach ($resourceOwners as $resource) {
             $connected = false;
-            foreach($tokens as $token){
-                if ($token['resourceOwner'] == $resource){
+            foreach ($tokens as $token) {
+                if ($token['resourceOwner'] == $resource) {
                     $connected = true;
                 }
             }
-            if (!$connected){
+            if (!$connected) {
                 $unconnected[] = $resource;
             }
         }
+
         return $unconnected;
 
     }
@@ -367,9 +378,10 @@ class TokensModel
         $tokens = $this->getAll($userId);
 
         $resourceOwners = array();
-        foreach ($tokens as $token){
+        foreach ($tokens as $token) {
             $resourceOwners[] = $token['resourceOwner'];
         }
+
         return $resourceOwners;
     }
 
@@ -407,10 +419,14 @@ class TokensModel
 
         $properties = $ordered + $properties;
 
-        return array_merge(array('id' => $user->getProperty('qnoow_id'),
-                                'username' => $user->getProperty('username'),
-                                'email' => $user->getProperty('email')),
-                                    $properties);
+        return array_merge(
+            array(
+                'id' => $user->getProperty('qnoow_id'),
+                'username' => $user->getProperty('username'),
+                'email' => $user->getProperty('email')
+            ),
+            $properties
+        );
     }
 
     protected function getMetadata()

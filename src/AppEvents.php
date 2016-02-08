@@ -57,6 +57,11 @@ final class AppEvents
     const USER_STATUS_CHANGED = 'user.statusChanged';
 
     /**
+     * Fired when an account is connected
+     */
+    const ACCOUNT_CONNECTED = 'account.connected';
+
+    /**
      * Fired when matching is outdated
      */
     const MATCHING_EXPIRED = 'matching.expired';
@@ -92,4 +97,14 @@ final class AppEvents
      * Fired when a channel url is detected
      */
     const CHANNEL_ADDED = 'channel.added';
+
+    /**
+     * Fired when an unexpected exception is thrown
+     */
+    const EXCEPTION_ERROR = 'exception.error';
+
+    /**
+     * Fired when an expected exception is thrown
+     */
+    const EXCEPTION_WARNING = 'exception.warning';
 }
