@@ -5,7 +5,6 @@
 
 namespace Model\User\Filters;
 
-
 use Everyman\Neo4j\Label;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
@@ -45,8 +44,10 @@ class FilterUsersManager
     public function getFilterUsersByThreadId($id)
     {
         $filterId = $this->getFilterUsersIdByThreadId($id);
+
         return $this->getFilterUsersById($filterId);
     }
+
     /**
      * @param FilterUsers $filters
      * @return Node|null
@@ -60,7 +61,7 @@ class FilterUsersManager
         $result = $qb->getQuery()->getResultSet();
 
         $filter = $result->current()->offsetGet('filter');
-        if ($filter == null){
+        if ($filter == null) {
             return null;
         }
 
@@ -74,13 +75,11 @@ class FilterUsersManager
         $filterId = $this->getFilterUsersIdByThreadId($id);
         $filters->setId($filterId);
 
-        if (isset($filtersArray['profileFilters']))
-        {
+        if (isset($filtersArray['profileFilters'])) {
             $filters->setProfileFilters($filtersArray['profileFilters']);
         }
 
-        if (isset($filtersArray['userFilters']))
-        {
+        if (isset($filtersArray['userFilters'])) {
             $filters->setUsersFilters($filtersArray['userFilters']);
         }
 
@@ -96,13 +95,11 @@ class FilterUsersManager
         $filterId = $this->getFilterUsersIdByGroupId($id);
         $filters->setId($filterId);
 
-        if (isset($filtersArray['profileFilters']))
-        {
+        if (isset($filtersArray['profileFilters'])) {
             $filters->setProfileFilters($filtersArray['profileFilters']);
         }
 
-        if (isset($filtersArray['userFilters']))
-        {
+        if (isset($filtersArray['userFilters'])) {
             $filters->setUsersFilters($filtersArray['userFilters']);
         }
 
@@ -120,6 +117,7 @@ class FilterUsersManager
         $filter = $this->buildFiltersUsers();
         $filter->setProfileFilters($this->getProfileFilters($id));
         $filter->setUsersFilters($this->getUserFilters($id));
+
         return $filter;
     }
 
@@ -134,11 +132,11 @@ class FilterUsersManager
 
         //TODO: Validate filters
 
-        if (!empty($userFilters)){
+        if (!empty($userFilters)) {
             $this->saveUserFilters($userFilters, $filters->getId());
         }
 
-        if (!empty($profileFilters)){
+        if (!empty($profileFilters)) {
             $this->saveProfileFilters($profileFilters, $filters->getId());
         }
 
@@ -164,7 +162,7 @@ class FilterUsersManager
         $qb->setParameter('id', (integer)$id);
         $result = $qb->getQuery()->getResultSet();
 
-        if ($result->count() == 0){
+        if ($result->count() == 0) {
             return null;
         }
 
@@ -183,7 +181,7 @@ class FilterUsersManager
         $qb->setParameter('id', (integer)$id);
         $result = $qb->getQuery()->getResultSet();
 
-        if ($result->count() == 0){
+        if ($result->count() == 0) {
             return null;
         }
 
@@ -336,16 +334,14 @@ class FilterUsersManager
             unset($userFilters['groups']);
         }
 
-        foreach ($userFilters as $name=>$value)
-        {
-            if (!isset($metadata[$name])){
+        foreach ($userFilters as $name => $value) {
+            if (!isset($metadata[$name])) {
                 throw new \Exception(sprintf('Metadata with name %s does not exist', $name));
             }
 
             $field = $metadata[$name];
 
-            switch($field['type'])
-            {
+            switch ($field['type']) {
                 case 'single_integer':
                     $qb->set("filter.$name= {$name}");
                     $qb->setParameter($name, $value);
@@ -359,9 +355,8 @@ class FilterUsersManager
         $result = $qb->getQuery()->getResultSet();
 
         if ($result->count() == 0) {
-            return null ;
+            return null;
         }
-
 
         return;
     }
@@ -398,8 +393,10 @@ class FilterUsersManager
         $profileFilters += array(
             'birthday' => $this->profileModel->getBirthdayRangeFromAgeRange(
                 $filterNode->getProperty('age_min'),
-                $filterNode->getProperty('age_max')),
-            'description' => $filterNode->getProperty('description'));
+                $filterNode->getProperty('age_max')
+            ),
+            'description' => $filterNode->getProperty('description')
+        );
         $height = array(
             'min' => $filterNode->getProperty('height_min'),
             'max' => $filterNode->getProperty('height_max')
@@ -414,14 +411,16 @@ class FilterUsersManager
 
             /** @var Relationship $locationRelationship */
             $locationRelationship = $row->offsetGet('loc_rel');
-            $profileFilters += array('location' => array(
-                'distance' => $locationRelationship->getProperty('distance'),
+            $profileFilters += array(
                 'location' => array(
-                    'latitude' => $location->getProperty('latitude'),
-                    'longitude' => $location->getProperty('longitude'),
-                    'address' => $location->getProperty('address'),
+                    'distance' => $locationRelationship->getProperty('distance'),
+                    'location' => array(
+                        'latitude' => $location->getProperty('latitude'),
+                        'longitude' => $location->getProperty('longitude'),
+                        'address' => $location->getProperty('address'),
+                    )
                 )
-            ));
+            );
         }
 
         return array_filter($profileFilters);
@@ -481,9 +480,11 @@ class FilterUsersManager
         $qb->match('(filter:FilterUsers)')
             ->where('id(filter) = {id}')
             ->optionalMatch('(filter)-[:FILTERS_BY]->(group:Group)')
-            ->returns('filter.compatibility as compatibility,
+            ->returns(
+                'filter.compatibility as compatibility,
                         filter.similarity as similarity, 
-                        collect(id(group)) as groups');
+                        collect(id(group)) as groups'
+            );
         $qb->setParameter('id', (integer)$id);
         $result = $qb->getQuery()->getResultSet();
 
@@ -500,16 +501,15 @@ class FilterUsersManager
         foreach ($row->offsetGet('groups') as $group) {
             $userFilters['groups'][] = $group;
         }
-        if ($row->offsetGet('similarity')){
+        if ($row->offsetGet('similarity')) {
             $userFilters['similarity'] = $row->offsetGet('similarity');
         }
-        
-        if ($row->offsetGet('compatibility')){
+
+        if ($row->offsetGet('compatibility')) {
             $userFilters['compatibility'] = $row->offsetGet('compatibility');
         }
 
         return $userFilters;
     }
-
 
 }
