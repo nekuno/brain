@@ -519,7 +519,7 @@ class GroupModel
             'id2' => (integer)$userId2,
         ));
         $qb->match('(user1:User), (user2:User)')
-            ->where('id(user1) = {id1}, id(user2) = {id2}')
+            ->where('user1.qnoow_id = {id1}', 'user2.qnoow_id = {id2}')
             ->with('user1', 'user2')
             ->optionalMatch('(user1)-[:BELONGS_TO]->(g:GroupFollowers)<-[:CREATED_GROUP]-(user2)')
             ->optionalMatch('(user2)-[:BELONGS_TO]->(g2:GroupFollowers)<-[:CREATED_GROUP]-(user1)')
