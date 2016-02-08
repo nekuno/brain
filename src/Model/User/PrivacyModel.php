@@ -194,8 +194,17 @@ class PrivacyModel
                             if ($choices[$fieldValueName]['value_required'] && !is_int($fieldValue)) {
                                 $fieldErrors[] = sprintf('Integer value required for "%s"', $fieldValueName);
                             }
-                            if ($choices[$fieldValueName]['value_required'] && $fieldValue < 0 || $fieldValue > 100) {
-                                $fieldErrors[] = sprintf('Value "%s" for "%s" must be a percent number between 0 and 100', $fieldValue, $fieldValueName);
+                            $minValue = isset($choices[$fieldValueName]['min_value']) ? $choices[$fieldValueName]['min_value'] : null;
+                            if ($choices[$fieldValueName]['value_required']
+                                && !is_null($minValue)
+                                && $fieldValue < $minValue) {
+                                $fieldErrors[] = sprintf('Value "%s" for "%s" must be equal or greater than "%s"', $fieldValue, $fieldValueName, $minValue);
+                            }
+                            $maxValue = isset($choices[$fieldValueName]['max_value']) ? $choices[$fieldValueName]['max_value'] : null;
+                            if ($choices[$fieldValueName]['value_required']
+                                && !is_null($maxValue)
+                                && $fieldValue > $maxValue) {
+                                $fieldErrors[] = sprintf('Value "%s" for "%s" must be equal or lesser than "%s"', $fieldValue, $fieldValueName, $maxValue);
                             }
                             if (!$choices[$fieldValueName]['value_required'] && $fieldValue) {
                                 $fieldErrors[] = sprintf('"%s" option can`t have a value', $fieldValueName);
@@ -226,7 +235,7 @@ class PrivacyModel
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(option:PrivacyOption)')
-            ->returns("head(filter(x IN labels(option) WHERE x <> 'PrivacyOption')) AS labelName, option.id AS id, option." . $translationField . " AS name, option.value_required AS value_required")
+            ->returns("head(filter(x IN labels(option) WHERE x <> 'PrivacyOption')) AS labelName, option.id AS id, option." . $translationField . " AS name, option.value_required AS value_required, option.min_value AS min_value, option.max_value AS max_value")
             ->orderBy('labelName');
 
         $query = $qb->getQuery();
@@ -270,9 +279,17 @@ class PrivacyModel
             $optionId = $row->offsetGet('id');
             $optionName = $row->offsetGet('name');
             $valueRequired = $row->offsetGet('value_required');
+            $minValue = $row->offsetGet('min_value');
+            $maxValue = $row->offsetGet('max_value');
 
             $choiceOptions[$typeName][$optionId]['name'] = $optionName;
             $choiceOptions[$typeName][$optionId]['value_required'] = $valueRequired;
+            if ($minValue) {
+                $choiceOptions[$typeName][$optionId]['min_value'] = $minValue;
+            }
+            if ($maxValue) {
+                $choiceOptions[$typeName][$optionId]['max_value'] = $maxValue;
+            }
         }
 
         return $choiceOptions;
