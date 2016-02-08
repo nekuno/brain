@@ -568,7 +568,6 @@ class GroupModel
             ),
             'date' => $group->getProperty('date'),
             'usersCount' => $usersCount,
-            'followers' => $group->getProperty('followers'),
         );
     }
 
