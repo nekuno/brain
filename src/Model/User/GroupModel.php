@@ -238,6 +238,7 @@ class GroupModel
 
         if (isset($data['followers']) && $data['followers']) {
             $qb->set('g:GroupFollowers')
+                ->with('g')
                 ->match('(influencer:User{qnoow_id: {influencer_id}})')
                 ->createUnique('(influencer)-[:CREATED_GROUP]->(g)');
         }
@@ -539,7 +540,7 @@ class GroupModel
             return $result;
         }
 
-        /** @var Row $row */
+        /* @var $row Row */
         $row = $result->current();
         $return['direct'] = $row->offsetGet('direct');
         $return['inverse'] = $row->offsetGet('inverse');
