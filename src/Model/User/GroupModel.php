@@ -129,7 +129,7 @@ class GroupModel
                     'admin_id' => (integer)$enterpriseUserId,
                 )
             )
-            ->returns('g', 'l', 'f',  'i');
+            ->returns('g', 'l', 'f', 'i');
 
         $query = $qb->getQuery();
 
@@ -237,7 +237,7 @@ class GroupModel
         $qb->create('(g:Group {name:{ name }, html: { html }, date: { date }})');
 
         if (isset($data['followers']) && $data['followers']) {
-            $qb ->set('g:GroupFollowers')
+            $qb->set('g:GroupFollowers')
                 ->match('(influencer:User{qnoow_id: {influencer_id}})')
                 ->createUnique('(influencer)-[:CREATED_GROUP]->(g)');
         }
@@ -274,12 +274,15 @@ class GroupModel
 
         $group = $this->build($row);
 
-        if (isset($data['followers'])){
-            $filterUsers = $this->filterUsersManager->updateFilterUsersByGroupId($group['id'], array(
-                'userFilters' => array(
-                    $data['type_matching'] => $data['min_matching']
+        if (isset($data['followers'])) {
+            $filterUsers = $this->filterUsersManager->updateFilterUsersByGroupId(
+                $group['id'],
+                array(
+                    'userFilters' => array(
+                        $data['type_matching'] => $data['min_matching']
+                    )
                 )
-            ));
+            );
             $group['filterUsers'] = $filterUsers;
         }
 
@@ -338,12 +341,15 @@ class GroupModel
 
         $group = $this->build($row);
 
-        if (isset($data['followers'])){
-            $filterUsers = $this->filterUsersManager->updateFilterUsersByGroupId($group['id'], array(
-                'userFilters' => array(
-                    $data['type_matching'] => $data['min_matching']
+        if (isset($data['followers'])) {
+            $filterUsers = $this->filterUsersManager->updateFilterUsersByGroupId(
+                $group['id'],
+                array(
+                    'userFilters' => array(
+                        $data['type_matching'] => $data['min_matching']
+                    )
                 )
-            ));
+            );
             $group['filterUsers'] = $filterUsers;
         }
 
@@ -407,7 +413,6 @@ class GroupModel
             ->with('g')
             ->optionalMatch('(g)-[:LOCATION]->(l:Location)')
             ->optionalMatch('(g)-[:HAS_FILTER]->(f:FilterUsers)')
-
             ->returns('g', 'l', 'f');
 
         $query = $qb->getQuery();
@@ -514,10 +519,12 @@ class GroupModel
     public function getIsGroupFollowersOf($userId1, $userId2)
     {
         $qb = $this->gm->createQueryBuilder();
-        $qb->setParameters(array(
-            'id1' => (integer)$userId1,
-            'id2' => (integer)$userId2,
-        ));
+        $qb->setParameters(
+            array(
+                'id1' => (integer)$userId1,
+                'id2' => (integer)$userId2,
+            )
+        );
         $qb->match('(user1:User), (user2:User)')
             ->where('user1.qnoow_id = {id1}', 'user2.qnoow_id = {id2}')
             ->with('user1', 'user2')
@@ -528,7 +535,7 @@ class GroupModel
         $result = $qb->getQuery()->getResultSet();
 
         $return = array('direct' => array(), 'inverse' => array());
-        if ($result->count() == 0){
+        if ($result->count() == 0) {
             return $result;
         }
 
@@ -536,6 +543,7 @@ class GroupModel
         $row = $result->current();
         $return['direct'] = $row->offsetGet('direct');
         $return['inverse'] = $row->offsetGet('inverse');
+
         return $return;
     }
 
@@ -552,14 +560,15 @@ class GroupModel
 
         $group = $this->buildGroup($group, $location, $usersCount);
 
-        if ($filter){
+        if ($filter) {
             $group['filterUsers'] = $this->filterUsersManager->getFilterUsersById($filter->getId());
         }
 
         return $group;
     }
 
-    protected function buildGroup( Node $group, Node $location, $usersCount){
+    protected function buildGroup(Node $group, Node $location, $usersCount)
+    {
         return array(
             'id' => $group->getId(),
             'name' => $group->getProperty('name'),
