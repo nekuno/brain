@@ -76,7 +76,8 @@ class PrivacySubscriber implements EventSubscriberInterface
 
             if (isset($groupsFollowers[0])) {
                 $groupId = $groupsFollowers[0];
-                $this->groupModel->update($groupId, $groupData);
+                $group = $this->groupModel->update($groupId, $groupData);
+                $this->invitationModel->setAvailableInvitations($group['invitation_token'], InvitationModel::MAX_AVAILABLE);
             } else {
                 $group = $this->groupModel->create($groupData);
 

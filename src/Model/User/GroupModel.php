@@ -326,9 +326,10 @@ class GroupModel
             ->set('g.html = { html }')
             ->set('g.date = { date }')
             ->with('g')
-            ->match('(l:Location)<-[:LOCATION]-(g)')
-            ->merge('(l)<-[:LOCATION]-(g)')
+            ->merge('(l:Location)<-[:LOCATION]-(g)')
             ->set('l.address = { address }', 'l.latitude = { latitude }', 'l.longitude = { longitude }', 'l.locality = { locality }', 'l.country = { country }')
+            ->with('g', 'l')
+            ->optionalMatch('(g)<-[:HAS_GROUP]-(i:Invitation)')
             ->setParameters(
                 array(
                     'id' => (integer)$id,
@@ -343,7 +344,7 @@ class GroupModel
                 )
             );
 
-        $qb->returns('g', 'l');
+        $qb->returns('g', 'l', 'i');
 
         $query = $qb->getQuery();
 
@@ -352,7 +353,7 @@ class GroupModel
         /* @var $row Row */
         $row = $result->current();
 
-        $group = $this->build($row);
+        $group = $this->buildWithInvitationData($row);
 
         if (isset($data['followers'])) {
             $filterUsers = $this->filterUsersManager->updateFilterUsersByGroupId(
@@ -628,13 +629,21 @@ class GroupModel
     protected function buildWithInvitationData(Row $row)
     {
         $return = $this->build($row);
-        /* @var $invitation Node */
-        $invitation = $row->offsetGet('i');
+        if ($row->offsetExists('i'))
+        {
+            $invitation = $row->offsetGet('i');
 
-        return $return + array(
-            'invitation_id' => $invitation->getId(),
-            'invitation_token' => $invitation->getProperty('token'),
-            'invitation_image_path' => $invitation->getProperty('image_path'),
-        );
+            if ($invitation instanceof Node){
+                $return += array(
+                    'invitation_id' => $invitation->getId(),
+                    'invitation_token' => $invitation->getProperty('token'),
+                    'invitation_image_path' => $invitation->getProperty('image_path'),
+                );
+            }
+
+        }
+
+        return $return;
+
     }
 }
