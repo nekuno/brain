@@ -47,7 +47,7 @@ class SubscribersServiceProvider implements ServiceProviderInterface
         $dispatcher->addSubscriber(new InvitationSubscriber($app['neo4j.graph_manager']));
         $dispatcher->addSubscriber(new LookUpSocialNetworkSubscriber($app['neo4j.graph_manager'], $app['amqpManager.service']));
         $dispatcher->addSubscriber(new SimilarityMatchingSubscriber($app['emailNotification.service'], $app['users.model'], $app['users.profile.model'], $app['users.groups.model'], $app['translator'], $app['notificationManager.service'], $app['social_host']));
-        $dispatcher->addSubscriber(new PrivacySubscriber($app['users.groups.model'], $app['users.invitations.model'], $app['tokenGenerator.service']));
+        $dispatcher->addSubscriber(new PrivacySubscriber($app['users.groups.model'], $app['users.model'], $app['users.invitations.model'], $app['tokenGenerator.service'], $app['social_host']));
     }
 
 }

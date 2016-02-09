@@ -9,6 +9,7 @@ namespace EventListener;
 use Event\PrivacyEvent;
 use Model\User\GroupModel;
 use Model\User\InvitationModel;
+use Model\UserModel;
 use Service\TokenGenerator;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -30,16 +31,29 @@ class PrivacySubscriber implements EventSubscriberInterface
     protected $tokenGenerator;
 
     /**
+     * @var UserModel
+     */
+    protected $userModel;
+
+    /**
+     * @var string
+     */
+    protected $socialhost;
+
+    /**
      * PrivacySubscriber constructor.
      * @param GroupModel $groupModel
+     * @param UserModel $userModel
      * @param InvitationModel $invitationModel
      * @param TokenGenerator $tokenGenerator
      */
-    public function __construct(GroupModel $groupModel, InvitationModel $invitationModel, TokenGenerator $tokenGenerator)
+    public function __construct(GroupModel $groupModel, UserModel $userModel, InvitationModel $invitationModel, TokenGenerator $tokenGenerator, $socialhost)
     {
         $this->groupModel = $groupModel;
+        $this->userModel = $userModel;
         $this->invitationModel = $invitationModel;
         $this->tokenGenerator = $tokenGenerator;
+        $this->socialhost = $socialhost;
     }
 
     public static function getSubscribedEvents()
@@ -80,12 +94,17 @@ class PrivacySubscriber implements EventSubscriberInterface
                 $this->invitationModel->setAvailableInvitations($group['invitation_token'], InvitationModel::MAX_AVAILABLE);
             } else {
                 $group = $this->groupModel->create($groupData);
+                $influencer = $this->userModel->getById($event->getUserId());
+                $picture = isset($influencer['picture'])? $influencer['picture']:'media/cache/user_avatar_180x180/bundles/qnoowweb/images/user-no-img.jpg';
 
                 $invitationData = array(
                     'userId' => $event->getUserId(),
                     'groupId' => $group['id'],
                     'available' => InvitationModel::MAX_AVAILABLE,
                 );
+
+                $invitationData['image_url'] = $this->socialhost.$picture;
+
                 $this->invitationModel->create($invitationData, $this->tokenGenerator);
             }
 
