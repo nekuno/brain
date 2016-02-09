@@ -305,7 +305,8 @@ class GroupModel
                 $group['id'],
                 array(
                     'userFilters' => array(
-                        $data['type_matching'] => $data['min_matching']
+                        $data['type_matching'] => $data['min_matching'],
+                        'groups' => array($group['id']),
                     )
                 )
             );
