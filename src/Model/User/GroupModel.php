@@ -67,7 +67,7 @@ class GroupModel
     {
 
         $qb = $this->gm->createQueryBuilder();
-        $qb->match('(g:Group)<-[:CREATED_GROUP]-(u:User)')
+        $qb->match('(g:Group)<-[:BELONGS_TO]-(u:User)')
             ->where('u.qnoow_id = { userId }')
             ->setParameter('userId', $userId)
             ->optionalMatch('(g)-[:LOCATION]->(l:Location)')
