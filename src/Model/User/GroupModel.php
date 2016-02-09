@@ -188,7 +188,9 @@ class GroupModel
             }
         }
 
-        if (!isset($data['location']) || !is_array($data['location'])) {
+        if (!isset($data['location'])) {
+            $errors['location'] = array('"location" is required');
+        } else if(!is_array($data['location'])) {
             $errors['location'] = sprintf('The value "%s" is not valid, it should be an array', $data['location']);
         } elseif (isset($data['location'])) {
             if (!array_key_exists('address', $data['location'])) {
@@ -496,6 +498,11 @@ class GroupModel
         return $result->count() > 0;
     }
 
+    /**
+     * @param $userId
+     * @return \ArrayAccess
+     * @throws \Model\Neo4j\Neo4jException
+     */
     public function getGroupFollowersFromInfluencerId($userId)
     {
         $qb = $this->gm->createQueryBuilder();
@@ -551,6 +558,10 @@ class GroupModel
         return $return;
     }
 
+    /**
+     * @param Row $row
+     * @return array
+     */
     protected function build(Row $row)
     {
         /* @var $group Node */

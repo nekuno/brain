@@ -60,26 +60,37 @@ class PrivacySubscriber implements EventSubscriberInterface
             if ($data['messages']['value'] >= 50) {
 
                 $groupData = array(
+                    'date' => 4102444799000,
+                    'name' => 'Your group of followers',
+                    'html' => '<h3> Your group of followers </h3>',
+                    'location' => array(
+                        'latitude' => 40.4167754,
+                        'longitude' => -3.7037902,
+                        'address' => 'Madrid',
+                        'locality' => 'Madrid',
+                        'country' => 'Spain'
+                    ),
                     'followers' => true,
                     'influencer_id' => $event->getUserId(),
+                    'min_matching' => $data['messages']['value'],
+                    'type_matching' => str_replace("min_","",$data['messages']['key']),
                 );
 
-                if (!empty($groupsFollowers)) {
+                if (isset($groupsFollowers[0])) {
                     $groupId = $groupsFollowers[0];
                     $this->groupModel->update($groupId, $groupData);
                 } else {
-                    $groupNode = $this->groupModel->create($groupData);
+                    $group = $this->groupModel->create($groupData);
 
                     $invitationData = array(
                         'userId' => $event->getUserId(),
-                        'groupId' => $groupNode->getId(),
+                        'groupId' => $group['id'],
+                        'available' => InvitationModel::MAX_AVAILABLE,
                     );
-                    $invitation = $this->invitationModel->create($invitationData, $this->tokenGenerator);
-
-                    $this->invitationModel->setAvailableInvitations($invitation['token'], InvitationModel::MAX_AVAILABLE);
+                    $this->invitationModel->create($invitationData, $this->tokenGenerator);
                 }
 
-            } else if (!empty($groupsFollowers)) {
+            } else if (isset($groupsFollowers[0])) {
                 $groupId = $groupsFollowers[0];
                 $invitation = $this->invitationModel->getByGroupFollowersId($groupId);
                 if ($invitation['available'] > 0) {
