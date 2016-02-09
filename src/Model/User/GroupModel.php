@@ -634,11 +634,14 @@ class GroupModel
             ),
             'date' => $group->getProperty('date'),
             'usersCount' => $usersCount,
-            'additionalLabels' => $additionalLabels,
         );
 
         if (in_array('GroupFollowers', $additionalLabels)){
-            $group['influencer'] = $this->um->getByCreatedGroup($group['id']);
+            $user = $this->um->getByCreatedGroup($group['id']);
+            $group['influencer'] = array(
+                'username' => $user['username'],
+                'id' => $user['qnoow_id'],
+            );
         }
 
         return $group;

@@ -393,11 +393,12 @@ class UserModel implements PaginatedInterface
         $qb->match('(g:Group)')
             ->where('id(g) = {groupId}')
             ->match('(u:User)-[:CREATED_GROUP]->(g)')
-            ->returns('u');
+            ->returns('u')
+            ->limit(1);
         $qb->setParameters($parameters);
         $result = $qb->getQuery()->getResultSet();
 
-        return $this->parseResultSet($result);
+        return $this->build($result->current());
     }
 
     public function getOneByThread($id)
