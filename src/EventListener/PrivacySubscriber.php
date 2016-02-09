@@ -53,54 +53,50 @@ class PrivacySubscriber implements EventSubscriberInterface
     {
         $data = $event->getPrivacy();
 
+        $groupsFollowers = $this->groupModel->getGroupFollowersFromInfluencerId($event->getUserId());
+
         if ($this->needsGroupFollowers($data)) {
 
-            $groupsFollowers = $this->groupModel->getGroupFollowersFromInfluencerId($event->getUserId());
+            $groupData = array(
+                'date' => 4102444799000,
+                'name' => 'Your group of followers',
+                'html' => '<h3> Your group of followers </h3>',
+                'location' => array(
+                    'latitude' => 40.4167754,
+                    'longitude' => -3.7037902,
+                    'address' => 'Madrid',
+                    'locality' => 'Madrid',
+                    'country' => 'Spain'
+                ),
+                'followers' => true,
+                'influencer_id' => $event->getUserId(),
+                'min_matching' => $data['messages']['value'],
+                'type_matching' => str_replace("min_", "", $data['messages']['key']),
+            );
 
-            if ($data['messages']['value'] >= 50) {
-
-                $groupData = array(
-                    'date' => 4102444799000,
-                    'name' => 'Your group of followers',
-                    'html' => '<h3> Your group of followers </h3>',
-                    'location' => array(
-                        'latitude' => 40.4167754,
-                        'longitude' => -3.7037902,
-                        'address' => 'Madrid',
-                        'locality' => 'Madrid',
-                        'country' => 'Spain'
-                    ),
-                    'followers' => true,
-                    'influencer_id' => $event->getUserId(),
-                    'min_matching' => $data['messages']['value'],
-                    'type_matching' => str_replace("min_","",$data['messages']['key']),
-                );
-
-                if (isset($groupsFollowers[0])) {
-                    $groupId = $groupsFollowers[0];
-                    $this->groupModel->update($groupId, $groupData);
-                } else {
-                    $group = $this->groupModel->create($groupData);
-
-                    $invitationData = array(
-                        'userId' => $event->getUserId(),
-                        'groupId' => $group['id'],
-                        'available' => InvitationModel::MAX_AVAILABLE,
-                    );
-                    $this->invitationModel->create($invitationData, $this->tokenGenerator);
-                }
-
-            } else if (isset($groupsFollowers[0])) {
+            if (isset($groupsFollowers[0])) {
                 $groupId = $groupsFollowers[0];
-                $invitation = $this->invitationModel->getByGroupFollowersId($groupId);
-                if ($invitation['available'] > 0) {
-                    $this->invitationModel->setAvailableInvitations($invitation['token'], 0);
-                }
+                $this->groupModel->update($groupId, $groupData);
+            } else {
+                $group = $this->groupModel->create($groupData);
 
+                $invitationData = array(
+                    'userId' => $event->getUserId(),
+                    'groupId' => $group['id'],
+                    'available' => InvitationModel::MAX_AVAILABLE,
+                );
+                $this->invitationModel->create($invitationData, $this->tokenGenerator);
+            }
+
+        } else if (isset($groupsFollowers[0])) {
+
+            $groupId = $groupsFollowers[0];
+            $invitation = $this->invitationModel->getByGroupFollowersId($groupId);
+            if ($invitation['invitation']['available'] > 0) {
+                $this->invitationModel->setAvailableInvitations($invitation['invitation']['token'], 0);
             }
 
         }
-
     }
 
     /**
@@ -111,7 +107,9 @@ class PrivacySubscriber implements EventSubscriberInterface
     {
         if (isset($data['messages']['key']) && isset($data['messages']['value'])) {
             if (in_array($data['messages']['key'], array('min_compatibility', 'min_similarity'))) {
-                return true;
+                if ($data['messages']['value'] >= 50) {
+                    return true;
+                }
             }
         }
         return false;

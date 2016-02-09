@@ -103,7 +103,7 @@ class InvitationModel
     {
         $qb = $this->gm->createQueryBuilder();
         $qb->setParameter('groupId', (integer)$groupId);
-        $qb->match('(group:GroupFollowers))')
+        $qb->match('(group:GroupFollowers)')
             ->where('id(group) = { groupId }')
             ->match('(group)<-[:HAS_GROUP]-(inv:Invitation)')
             ->returns('inv as invitation', 'group');
@@ -585,6 +585,7 @@ class InvitationModel
         $qb->match('(inv:Invitation)')
             ->where('inv.token = { token }')
             ->set('inv.available = { available }')
+            ->with('inv')
             ->optionalMatch('(inv)-[:HAS_GROUP]->(g:Group)')
             ->returns('inv AS invitation', 'g AS group');
         $result = $qb->getQuery()->getResultSet();
