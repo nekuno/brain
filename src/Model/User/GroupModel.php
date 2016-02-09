@@ -242,7 +242,8 @@ class GroupModel
             $qb->set('g:GroupFollowers')
                 ->with('g')
                 ->match('(influencer:User{qnoow_id: { influencer_id }})')
-                ->createUnique('(influencer)-[:CREATED_GROUP]->(g)');
+                ->createUnique('(influencer)-[:CREATED_GROUP]->(g)')
+                ->createUnique('(influencer)-[:BELONGS_TO]->(g)');
         }
 
         $qb->with('g')
