@@ -122,23 +122,23 @@ class SimilarityMatchingSubscriber implements EventSubscriberInterface
             $this->translator->setLocale($profile['interfaceLanguage']);
         }
 
+        $info = array(
+            'follower' => $follower,
+            'influencer' => $influencer,
+            'filter' => $filter,
+            'value' => $value,
+            'username' => $username,
+            'email' => $email,
+            'url' => $url,
+        );
+
         $recipients = $this->emailNotifications->send(
             EmailNotification::create()
                 ->setType(EmailNotification::INFLUENCER_FOUND)
-                ->setSubject($this->translator->trans('notifications.messages.influencer_found.subject'))
+                ->setSubject($this->translator->trans('notifications.messages.influencer_found.subject', $info))
                 ->setUserId($follower)
                 ->setRecipient($email)
-                ->setInfo(
-                    array(
-                        'follower' => $follower,
-                        'influencer' => $influencer,
-                        'filter' => $filter,
-                        'value' => $value,
-                        'username' => $username,
-                        'email' => $email,
-                        'url' => $url,
-                    )
-                )
+                ->setInfo($info)
         );
 
         return $recipients;
@@ -157,23 +157,23 @@ class SimilarityMatchingSubscriber implements EventSubscriberInterface
             $this->translator->setLocale($profile['interfaceLanguage']);
         }
 
+        $info = array(
+            'follower' => $follower,
+            'influencer' => $influencer,
+            'filter' => $filter,
+            'value' => $value,
+            'username' => $username,
+            'email' => $email,
+            'url' => $url,
+        );
+
         $recipients = $this->emailNotifications->send(
             EmailNotification::create()
                 ->setType(EmailNotification::FOLLOWER_FOUND)
-                ->setSubject($this->translator->trans('notifications.messages.follower_found.subject'))
+                ->setSubject($this->translator->trans('notifications.messages.follower_found.subject', $info))
                 ->setUserId($influencer)
                 ->setRecipient($email)
-                ->setInfo(
-                    array(
-                        'follower' => $follower,
-                        'influencer' => $influencer,
-                        'filter' => $filter,
-                        'value' => $value,
-                        'username' => $username,
-                        'email' => $email,
-                        'url' => $url,
-                    )
-                )
+                ->setInfo($info)
         );
 
         return $recipients;
