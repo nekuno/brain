@@ -217,7 +217,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.stats.manager'] = $app->share(
             function ($app) {
 
-                return new UserStatsManager($app['neo4j.graph_manager'], $app['orm.ems']['mysql_brain'], $app['users.tokens.model'], $app['users.relations.model']);
+                return new UserStatsManager($app['neo4j.graph_manager'], $app['orm.ems']['mysql_brain'], $app['users.tokens.model'], $app['users.groups.model'], $app['users.relations.model']);
             }
         );
 

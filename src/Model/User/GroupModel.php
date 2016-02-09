@@ -63,6 +63,30 @@ class GroupModel
         return $return;
     }
 
+    public function getAllByUserId($userId)
+    {
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(g:Group)<-[:CREATED_GROUP]-(u:User)')
+            ->where('u.qnoow_id = { userId }')
+            ->setParameter('userId', $userId)
+            ->optionalMatch('(g)-[:LOCATION]->(l:Location)')
+            ->optionalMatch('(g)-[:HAS_FILTER]->(f:FilterUsers)')
+            ->returns('g', 'l', 'f');
+
+        $query = $qb->getQuery();
+
+        $result = $query->getResultSet();
+
+        $return = array();
+
+        foreach ($result as $row) {
+            $return[] = $this->build($row);
+        }
+
+        return $return;
+    }
+
     public function getById($id)
     {
 

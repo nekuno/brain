@@ -31,19 +31,27 @@ class UserStatsManager
      * @var GraphManager
      */
     protected $graphManager;
+
     /**
      * @var RelationsModel
      */
     protected $relationsModel;
 
+    /**
+     * @var GroupModel
+     */
+    protected $groupModel;
+
     function __construct(GraphManager $graphManager,
                          EntityManager $entityManagerBrain,
                          TokensModel $tokensModel,
+                         GroupModel $groupModel,
                          RelationsModel $relationsModel)
     {
         $this->entityManagerBrain = $entityManagerBrain;
         $this->tokensModel = $tokensModel;
         $this->graphManager = $graphManager;
+        $this->groupModel = $groupModel;
         $this->relationsModel = $relationsModel;
     }
 
@@ -62,11 +70,9 @@ class UserStatsManager
             ->optionalMatch('(u)-[r:LIKES]->(:Audio)')
             ->with('u,contentLikes,videoLikes,count(r) AS audioLikes')
             ->optionalMatch('(u)-[r:LIKES]->(:Image)')
-            ->with('u,contentLikes,videoLikes,audioLikes,count(r) AS imageLikes')
-            ->optionalMatch('(u)-[:BELONGS_TO]->(g:Group)')
-            ->with('u,contentLikes, videoLikes, audioLikes, imageLikes, collect(g) AS groupsBelonged')
+            ->with('u, contentLikes, videoLikes, audioLikes, count(r) AS imageLikes')
             ->optionalMatch('(u)-[r:ANSWERS]->(:Answer)')
-            ->returns('contentLikes', 'videoLikes', 'audioLikes', 'imageLikes', 'groupsBelonged', 'count(r) AS questionsAnswered', 'u.available_invitations AS available_invitations');
+            ->returns('contentLikes', 'videoLikes', 'audioLikes', 'imageLikes', 'count(r) AS questionsAnswered', 'u.available_invitations AS available_invitations');
 
         $query = $qb->getQuery();
 
@@ -79,16 +85,6 @@ class UserStatsManager
         /* @var $row Row */
         $row = $result->current();
 
-        $groups = array();
-        foreach ($row->offsetGet('groupsBelonged') as $group) {
-            /* @var $group Node */
-            $groups[] = array(
-                'id' => $group->getId(),
-                'name' => $group->getProperty('name'),
-                'html' => $group->getProperty('html'),
-            );
-        }
-
         $numberOfReceivedLikes = $this->relationsModel->countTo($id, RelationsModel::LIKES);
         $numberOfUserLikes = $this->relationsModel->countFrom($id, RelationsModel::LIKES);
 
@@ -100,6 +96,8 @@ class UserStatsManager
         $spotifyStatus = $dataStatusRepository->findOneBy(array('userId' => (int)$id, 'resourceOwner' => 'spotify'));
 
         $networks = $this->tokensModel->getConnectedNetworks($id);
+
+        $groups = $this->groupModel->getAllByUserId($id);
 
         $userStats = new UserStatsModel(
             $row->offsetGet('contentLikes'),
