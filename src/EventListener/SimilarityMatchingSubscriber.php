@@ -6,6 +6,7 @@ use Event\MatchingEvent;
 use Event\SimilarityEvent;
 use Model\Entity\EmailNotification;
 use Model\User\GroupModel;
+use Model\User\ProfileModel;
 use Model\UserModel;
 use Service\EmailNotifications;
 use Service\NotificationManager;
@@ -23,6 +24,11 @@ class SimilarityMatchingSubscriber implements EventSubscriberInterface
      * @var UserModel
      */
     protected $userModel;
+
+    /**
+     * @var ProfileModel
+     */
+    protected $profileModel;
 
     /**
      * @var GroupModel
@@ -44,10 +50,11 @@ class SimilarityMatchingSubscriber implements EventSubscriberInterface
      */
     protected $socialHost;
 
-    public function __construct(EmailNotifications $emailNotifications, UserModel $userModel, GroupModel $groupModel, Translator $translator, NotificationManager $notificationManager, $socialHost)
+    public function __construct(EmailNotifications $emailNotifications, UserModel $userModel, ProfileModel $profileModel, GroupModel $groupModel, Translator $translator, NotificationManager $notificationManager, $socialHost)
     {
         $this->emailNotifications = $emailNotifications;
         $this->userModel = $userModel;
+        $this->profileModel = $profileModel;
         $this->groupModel = $groupModel;
         $this->translator = $translator;
         $this->notificationManager = $notificationManager;
@@ -110,6 +117,11 @@ class SimilarityMatchingSubscriber implements EventSubscriberInterface
         $email = $user['email'];
         $url = $this->socialHost . 'profile/show/' . $influencer;
 
+        $profile = $this->profileModel->getById($follower);
+        if (isset($profile['interfaceLanguage'])) {
+            $this->translator->setLocale($profile['interfaceLanguage']);
+        }
+
         $recipients = $this->emailNotifications->send(
             EmailNotification::create()
                 ->setType(EmailNotification::INFLUENCER_FOUND)
@@ -139,6 +151,11 @@ class SimilarityMatchingSubscriber implements EventSubscriberInterface
         $username = $user['username'];
         $email = $user['email'];
         $url = $this->socialHost . 'profile/show/' . $follower;
+
+        $profile = $this->profileModel->getById($influencer);
+        if (isset($profile['interfaceLanguage'])) {
+            $this->translator->setLocale($profile['interfaceLanguage']);
+        }
 
         $recipients = $this->emailNotifications->send(
             EmailNotification::create()
