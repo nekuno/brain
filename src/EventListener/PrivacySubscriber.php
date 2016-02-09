@@ -9,6 +9,7 @@ namespace EventListener;
 use Event\PrivacyEvent;
 use Model\User\GroupModel;
 use Model\User\InvitationModel;
+use Model\User\ProfileModel;
 use Model\UserModel;
 use Service\TokenGenerator;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -41,16 +42,24 @@ class PrivacySubscriber implements EventSubscriberInterface
     protected $socialhost;
 
     /**
+     * @var ProfileModel
+     */
+    protected $profileModel;
+
+    /**
      * PrivacySubscriber constructor.
      * @param GroupModel $groupModel
      * @param UserModel $userModel
+     * @param ProfileModel $profileModel
      * @param InvitationModel $invitationModel
      * @param TokenGenerator $tokenGenerator
+     * @param $socialhost
      */
-    public function __construct(GroupModel $groupModel, UserModel $userModel, InvitationModel $invitationModel, TokenGenerator $tokenGenerator, $socialhost)
+    public function __construct(GroupModel $groupModel, UserModel $userModel, ProfileModel $profileModel, InvitationModel $invitationModel, TokenGenerator $tokenGenerator, $socialhost)
     {
         $this->groupModel = $groupModel;
         $this->userModel = $userModel;
+        $this->profileModel = $profileModel;
         $this->invitationModel = $invitationModel;
         $this->tokenGenerator = $tokenGenerator;
         $this->socialhost = $socialhost;
@@ -71,10 +80,23 @@ class PrivacySubscriber implements EventSubscriberInterface
 
         if ($this->needsGroupFollowers($data)) {
 
+            $influencerProfile = $this->profileModel->getById($event->getUserId());
+            if (isset($influencerProfile['interfaceLanguage'])){
+                $language = $influencerProfile['interfaceLanguage'];
+            } else {
+                $language = 'es';
+            }
+
+            if ($language == 'es'){
+                $groupName = 'Tu grupo de seguidores';
+            } else {
+                $groupName = "Your group of followers";
+            }
+
             $groupData = array(
                 'date' => 4102444799000,
-                'name' => 'Your group of followers',
-                'html' => '<h3> Your group of followers </h3>',
+                'name' => $groupName,
+                'html' => '<h3> '.$groupName.' </h3>',
                 'location' => array(
                     'latitude' => 40.4167754,
                     'longitude' => -3.7037902,
