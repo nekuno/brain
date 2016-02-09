@@ -12,10 +12,16 @@ use Model\User\InvitationModel;
 use Model\User\ProfileModel;
 use Model\UserModel;
 use Service\TokenGenerator;
+use Silex\Translator;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class PrivacySubscriber implements EventSubscriberInterface
 {
+    /**
+     * @var Translator
+     */
+    protected $translator;
+
     /**
      * @var GroupModel
      */
@@ -48,6 +54,7 @@ class PrivacySubscriber implements EventSubscriberInterface
 
     /**
      * PrivacySubscriber constructor.
+     * @param Translator $translator
      * @param GroupModel $groupModel
      * @param UserModel $userModel
      * @param ProfileModel $profileModel
@@ -55,8 +62,9 @@ class PrivacySubscriber implements EventSubscriberInterface
      * @param TokenGenerator $tokenGenerator
      * @param $socialhost
      */
-    public function __construct(GroupModel $groupModel, UserModel $userModel, ProfileModel $profileModel, InvitationModel $invitationModel, TokenGenerator $tokenGenerator, $socialhost)
+    public function __construct(Translator $translator, GroupModel $groupModel, UserModel $userModel, ProfileModel $profileModel, InvitationModel $invitationModel, TokenGenerator $tokenGenerator, $socialhost)
     {
+        $this->translator = $translator;
         $this->groupModel = $groupModel;
         $this->userModel = $userModel;
         $this->profileModel = $profileModel;
@@ -79,20 +87,14 @@ class PrivacySubscriber implements EventSubscriberInterface
         $groupsFollowers = $this->groupModel->getGroupFollowersFromInfluencerId($event->getUserId());
 
         if ($this->needsGroupFollowers($data)) {
-
+            $influencer = $this->userModel->getById($event->getUserId());
             $influencerProfile = $this->profileModel->getById($event->getUserId());
             if (isset($influencerProfile['interfaceLanguage'])){
-                $language = $influencerProfile['interfaceLanguage'];
-            } else {
-                $language = 'es';
+                $this->translator->setLocale($influencerProfile['interfaceLanguage']);
             }
 
-            if ($language == 'es'){
-                $groupName = 'Tu grupo de seguidores';
-            } else {
-                $groupName = "Your group of followers";
-            }
-
+            $groupName = $this->translator->trans('followers.group_name', array('%username%' => $influencer['username']));
+            $typeMatching = str_replace("min_", "", $data['messages']['key']);
             $groupData = array(
                 'date' => 4102444799000,
                 'name' => $groupName,
@@ -107,7 +109,7 @@ class PrivacySubscriber implements EventSubscriberInterface
                 'followers' => true,
                 'influencer_id' => $event->getUserId(),
                 'min_matching' => $data['messages']['value'],
-                'type_matching' => str_replace("min_", "", $data['messages']['key']),
+                'type_matching' => $typeMatching,
             );
 
             if (isset($groupsFollowers[0])) {
@@ -116,16 +118,16 @@ class PrivacySubscriber implements EventSubscriberInterface
                 $this->invitationModel->setAvailableInvitations($group['invitation_token'], InvitationModel::MAX_AVAILABLE);
             } else {
                 $group = $this->groupModel->create($groupData);
-                $influencer = $this->userModel->getById($event->getUserId());
-                $picture = isset($influencer['picture'])? $influencer['picture']:'media/cache/user_avatar_180x180/bundles/qnoowweb/images/user-no-img.jpg';
-
+                $picture = isset($influencer['picture']) ? $influencer['picture'] : 'media/cache/user_avatar_180x180/bundles/qnoowweb/images/user-no-img.jpg';
+                $compatibleOrSimilar = $typeMatching === 'compatibility' ? 'compatible' : 'similar';
+                $slogan = $this->translator->trans('followers.invitation_slogan', array('%username%' => $influencer['username'], '%compatible_or_similar%' => $compatibleOrSimilar));
                 $invitationData = array(
                     'userId' => $event->getUserId(),
                     'groupId' => $group['id'],
                     'available' => InvitationModel::MAX_AVAILABLE,
+                    'slogan' => $slogan,
+                    'image_url' => $this->socialhost . $picture,
                 );
-
-                $invitationData['image_url'] = $this->socialhost.$picture;
 
                 $this->invitationModel->create($invitationData, $this->tokenGenerator);
             }
@@ -149,7 +151,7 @@ class PrivacySubscriber implements EventSubscriberInterface
     {
         if (isset($data['messages']['key']) && isset($data['messages']['value'])) {
             if (in_array($data['messages']['key'], array('min_compatibility', 'min_similarity'))) {
-                if ($data['messages']['value'] >= 50) {
+                if (isset($data['messages']['value'])) {
                     return true;
                 }
             }

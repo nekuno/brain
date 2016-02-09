@@ -27,3 +27,6 @@ notifications:
       body:
         message: '¡Acabamos de descubrir que <a href=\"%url%\">%username%</a> es un follower con un %value% % de %filter% contigo!'
   footer: 'Saludos del equipo de Nekuno'
+followers:
+  invitation_slogan: '¡Descubre si eres %compatible_or_similar% con %username%!'
+  group_name: 'Seguidores de %username%'
