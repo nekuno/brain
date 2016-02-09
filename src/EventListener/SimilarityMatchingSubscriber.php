@@ -6,6 +6,7 @@ use Event\MatchingEvent;
 use Event\SimilarityEvent;
 use Model\Entity\EmailNotification;
 use Model\User\GroupModel;
+use Model\UserModel;
 use Service\EmailNotifications;
 use Service\NotificationManager;
 use Silex\Translator;
@@ -17,6 +18,11 @@ class SimilarityMatchingSubscriber implements EventSubscriberInterface
      * @var EmailNotifications
      */
     protected $emailNotifications;
+
+    /**
+     * @var UserModel
+     */
+    protected $userModel;
 
     /**
      * @var GroupModel
@@ -33,12 +39,19 @@ class SimilarityMatchingSubscriber implements EventSubscriberInterface
      */
     protected $notificationManager;
 
-    public function __construct(EmailNotifications $emailNotifications, GroupModel $groupModel, Translator $translator, NotificationManager $notificationManager)
+    /**
+     * @var string
+     */
+    protected $socialHost;
+
+    public function __construct(EmailNotifications $emailNotifications, UserModel $userModel, GroupModel $groupModel, Translator $translator, NotificationManager $notificationManager, $socialHost)
     {
         $this->emailNotifications = $emailNotifications;
+        $this->userModel = $userModel;
         $this->groupModel = $groupModel;
         $this->translator = $translator;
         $this->notificationManager = $notificationManager;
+        $this->socialHost = $socialHost;
     }
 
     public static function getSubscribedEvents()
@@ -92,8 +105,10 @@ class SimilarityMatchingSubscriber implements EventSubscriberInterface
     protected function sendFollowerMail($follower, $influencer, $filter, $value)
     {
 
-        //TODO: Extract from user
-        $email = 'juanlu@comakai.com';
+        $user = $this->userModel->getById($follower);
+        $username = $user['username'];
+        $email = $user['email'];
+        $url = $this->socialHost . 'profile/show/' . $influencer;
 
         $recipients = $this->emailNotifications->send(
             EmailNotification::create()
@@ -107,6 +122,9 @@ class SimilarityMatchingSubscriber implements EventSubscriberInterface
                         'influencer' => $influencer,
                         'filter' => $filter,
                         'value' => $value,
+                        'username' => $username,
+                        'email' => $email,
+                        'url' => $url,
                     )
                 )
         );
@@ -117,8 +135,10 @@ class SimilarityMatchingSubscriber implements EventSubscriberInterface
     protected function sendInfluencerMail($influencer, $follower, $filter, $value)
     {
 
-        //TODO: Extract from user
-        $email = 'juanlu@comakai.com';
+        $user = $this->userModel->getById($influencer);
+        $username = $user['username'];
+        $email = $user['email'];
+        $url = $this->socialHost . 'profile/show/' . $follower;
 
         $recipients = $this->emailNotifications->send(
             EmailNotification::create()
@@ -132,6 +152,9 @@ class SimilarityMatchingSubscriber implements EventSubscriberInterface
                         'influencer' => $influencer,
                         'filter' => $filter,
                         'value' => $value,
+                        'username' => $username,
+                        'email' => $email,
+                        'url' => $url,
                     )
                 )
         );

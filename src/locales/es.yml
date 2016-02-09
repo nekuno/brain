@@ -19,11 +19,11 @@ notifications:
         email_txt: "%name% te ha enviado una invitación para unirte a Nekuno.\nHaz click en este enlace %url% para registrarte y comenzar a distrutar.\nEsta invitación caduca el día %expiresAt%.\n"
         email_html: "<p>%name% te ha enviado una invitación para unirte a Nekuno.</p>\n<p>Haz click en este enlace <a href=\"%url%\">%url%</a> para registrarte y distrutar.</p>\n<p>Esta invitación caduca el día %expiresAt%.</p>\n"
     influencer_found:
-      subject: ''
+      subject: '¡Que suerte! Acabamos de descubrir a alguien para tí.'
       body:
-        message: ''
+        message: '¡Que suerte! Acabamos de descubrir que superas el porcentaje mínimo exigido por <a href=\"%url%\">%username%</a> para que puedas enviarle un mensaje. Se original y enviale algo que sólo tú podrías decir, ¡Por que es a ti a quien busca!'
     follower_found:
-      subject: ''
+      subject: '¡Acabamos de descubrir a alguien para tí!'
       body:
-        message: ''
+        message: '¡Acabamos de descubrir que <a href=\"%url%\">%username%</a> es un follower con un %value% % de %filter% contigo!'
   footer: 'Saludos del equipo de Nekuno'

@@ -48,6 +48,15 @@ class EmailNotifications
             case EmailNotification::INVITATION :
                 $view = 'email-notifications/invitation.html.twig';
                 break;
+
+            case EmailNotification::FOLLOWER_FOUND :
+                $view = 'email-notifications/follower-found.html.twig';
+                break;
+
+            case EmailNotification::INFLUENCER_FOUND :
+                $view = 'email-notifications/influencer-found.html.twig';
+                break;
+
             default:
                 $view = null;
                 break;
@@ -58,12 +67,7 @@ class EmailNotifications
             ->setFrom('enredos@nekuno.com', 'Nekuno')
             ->setTo($notification->getRecipient())
             ->setContentType('text/html')
-            ->setBody(
-                $this->tp->render(
-                    $view,
-                    $notification->getInfo()
-                )
-            );
+            ->setBody($this->tp->render($view, $notification->getInfo()));
 
         $recipients = $this->mailer->send($message);
         if (!$recipients) {
