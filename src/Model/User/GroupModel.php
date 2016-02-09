@@ -2,6 +2,7 @@
 
 namespace Model\User;
 
+use Everyman\Neo4j\Label;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Exception\ValidationException;
@@ -611,7 +612,16 @@ class GroupModel
 
     protected function buildGroup(Node $group, Node $location, $usersCount)
     {
-        return array(
+        $additionalLabels = array();
+        $labels = $group->getLabels();
+        /* @var $label Label */
+        foreach ($labels as $label) {
+            if ($label->getName() !== 'Group') {
+                $additionalLabels[] = $label->getName();
+            }
+        }
+
+        $group = array(
             'id' => $group->getId(),
             'name' => $group->getProperty('name'),
             'html' => $group->getProperty('html'),
@@ -624,7 +634,14 @@ class GroupModel
             ),
             'date' => $group->getProperty('date'),
             'usersCount' => $usersCount,
+            'additionalLabels' => $additionalLabels,
         );
+
+        if (in_array('GroupFollowers', $additionalLabels)){
+            $group['influencer'] = $this->um->getByCreatedGroup($group['id']);
+        }
+
+        return $group;
     }
 
     protected function buildWithInvitationData(Row $row)

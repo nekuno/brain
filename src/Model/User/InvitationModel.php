@@ -788,13 +788,7 @@ class InvitationModel
         $invitationArray += array('invitationId' => $invitation->getId());
 
         if ($group) {
-            $invitationArray += array(
-                'group' => array(
-                    'id' => $group->getId(),
-                    'name' => $group->getProperty('name'),
-                    'html' => $group->getProperty('html'),
-                )
-            );
+            $invitationArray['group'] = $this->groupM->getById($group->getId());
         }
 
         if ($userId) {
