@@ -95,6 +95,10 @@ class SimilarityMatchingSubscriber implements EventSubscriberInterface
 
     protected function handleGroups(array $groups, $follower, $influencer, $filter, $value)
     {
+
+        // Filter is stored in base 100, value is stored in base 1
+        $value = $value * 100;
+
         foreach ($groups as $groupId) {
             $group = $this->groupModel->getById($groupId);
             if (isset($group['filterUsers']['userFilters'][$filter])) {
