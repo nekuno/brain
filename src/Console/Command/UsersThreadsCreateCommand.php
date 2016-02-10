@@ -62,12 +62,14 @@ class UsersThreadsCreateCommand extends ApplicationAwareCommand
         $threads = $threadManager->getDefaultThreads($scenario);
 
         foreach ($users as $user) {
-            foreach ($threads as $threadProperties) {
-                $thread = $threadManager->create($user['qnoow_id'], $threadProperties);
-                $result = $recommendator->getRecommendationFromThread($thread);
+
+            $createdThreads = $threadManager->createBatchForUser($user['qnoow_id'], $threads);
+            foreach ($createdThreads as $createdThread) {
+
+                $result = $recommendator->getRecommendationFromThread($createdThread);
 
                 $threadManager->cacheResults(
-                    $thread,
+                    $createdThread,
                     array_slice($result['items'], 0, 5),
                     $result['pagination']['total']
                 );

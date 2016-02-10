@@ -11,6 +11,7 @@ $input = new ArgvInput();
 $env = $input->getParameterOption(array('--env', '-e'), getenv('SYMFONY_ENV') ?: 'dev');
 
 $app = require __DIR__ . '/../src/app.php';
+$app['swiftmailer.use_spool'] = false;
 require __DIR__ . '/../src/routing.php';
 $console = require __DIR__ . '/../src/console.php';
 $app->boot();

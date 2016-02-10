@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Model\Entity;
 
 use Doctrine\ORM\Mapping\Column;
@@ -23,6 +22,8 @@ class EmailNotification
     const UNREAD_CHAT_MESSAGES = 1;
     const EXCEPTIONAL_LINKS = 2;
     const INVITATION = 3;
+    const FOLLOWER_FOUND = 4;
+    const INFLUENCER_FOUND = 5;
 
     /**
      * @Id()
@@ -64,6 +65,21 @@ class EmailNotification
      */
     protected $createdAt;
 
+    /**
+     * Get types
+     *
+     * @return array
+     */
+    public static function getTypes()
+    {
+        return array(
+            self::UNREAD_CHAT_MESSAGES,
+            self::EXCEPTIONAL_LINKS,
+            self::INVITATION,
+            self::FOLLOWER_FOUND,
+            self::INFLUENCER_FOUND,
+        );
+    }
 
     static public function create()
     {
@@ -167,20 +183,6 @@ class EmailNotification
         $this->type = $type;
 
         return $this;
-    }
-
-    /**
-     * Get types
-     *
-     * @return array
-     */
-    public static function getTypes()
-    {
-        return array(
-            self::UNREAD_CHAT_MESSAGES,
-            self::EXCEPTIONAL_LINKS,
-            self::INVITATION,
-        );
     }
 
     /**

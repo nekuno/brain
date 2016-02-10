@@ -18,5 +18,15 @@ notifications:
         subject: "Invitation received from %name%"
         email_txt: "%name% has sent you an invitation to join Nekuno.\nClick on this link %url% to register and enjoy.\nThis invitation expires on %expiresAt%.\n"
         email_html: "%name% has sent you an invitation to join Nekuno.</p>\n<p>Click on this link <a href=\"%url%\">%url%</a> to register and enjoy.</p>\n<p>This invitation expires on %expiresAt%.</p>\n"
-
+    influencer_found:
+      subject: '¡Que suerte! Acabamos de descubrir a alguien para tí.'
+      body:
+        message: "¡Que suerte! Acabamos de descubrir que superas el porcentaje mínimo exigido por <a href=\"%url%\">%username%</a> para que puedas enviarle un mensaje. Se original y enviale algo que sólo tú podrías decir, ¡Por que es a ti a quien busca!"
+    follower_found:
+      subject: '¡Acabamos de descubrir a alguien para tí!'
+      body:
+        message: "¡Acabamos de descubrir que <a href=\"%url%\">%username%</a> es un follower con un %value% % de %filter% contigo!"
   footer: 'Regards from Nekuno team'
+followers:
+  invitation_slogan: 'Find out if you are %compatible_or_similar% with %username%!'
+  group_name: 'Followers of %username%'

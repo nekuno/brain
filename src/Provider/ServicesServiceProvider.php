@@ -8,6 +8,7 @@ use Service\AuthService;
 use Service\ChatMessageNotifications;
 use Service\EmailNotifications;
 use Service\MigrateSocialInvitations;
+use Service\NotificationManager;
 use Service\Recommendator;
 use Service\SocialNetwork;
 use Service\TokenGenerator;
@@ -105,6 +106,13 @@ class ServicesServiceProvider implements ServiceProviderInterface
                 return new AMQPManager($app['amqp']);
             }
         );
+
+        $app['notificationManager.service'] = $app->share(
+            function (Application $app) {
+                return new NotificationManager($app['neo4j.graph_manager']);
+            }
+        );
+
     }
 
     /**

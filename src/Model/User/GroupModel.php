@@ -2,10 +2,12 @@
 
 namespace Model\User;
 
+use Everyman\Neo4j\Label;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
+use Model\User\Filters\FilterUsersManager;
 use Model\UserModel;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -23,14 +25,21 @@ class GroupModel
     protected $um;
 
     /**
+     * @var FilterUsersManager
+     */
+    protected $filterUsersManager;
+
+    /**
      * @param GraphManager $gm
      * @param UserModel $um
+     * @param FilterUsersManager $filterUsersManager
      */
-    public function __construct(GraphManager $gm, UserModel $um)
+    public function __construct(GraphManager $gm, UserModel $um, FilterUsersManager $filterUsersManager)
     {
 
         $this->gm = $gm;
         $this->um = $um;
+        $this->filterUsersManager = $filterUsersManager;
     }
 
     public function getAll()
@@ -39,7 +48,32 @@ class GroupModel
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(g:Group)')
             ->optionalMatch('(g)-[:LOCATION]->(l:Location)')
-            ->returns('g', 'l');
+            ->optionalMatch('(g)-[:HAS_FILTER]->(f:FilterUsers)')
+            ->returns('g', 'l', 'f');
+
+        $query = $qb->getQuery();
+
+        $result = $query->getResultSet();
+
+        $return = array();
+
+        foreach ($result as $row) {
+            $return[] = $this->build($row);
+        }
+
+        return $return;
+    }
+
+    public function getAllByUserId($userId)
+    {
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(g:Group)<-[:BELONGS_TO]-(u:User)')
+            ->where('u.qnoow_id = { userId }')
+            ->setParameter('userId', $userId)
+            ->optionalMatch('(g)-[:LOCATION]->(l:Location)')
+            ->optionalMatch('(g)-[:HAS_FILTER]->(f:FilterUsers)')
+            ->returns('g', 'l', 'f');
 
         $query = $qb->getQuery();
 
@@ -64,8 +98,9 @@ class GroupModel
             ->optionalMatch('(g)-[:LOCATION]->(l:Location)')
             ->setParameter('id', (integer)$id)
             ->with('g', 'l')
+            ->optionalMatch('(g)-[:HAS_FILTER]->(f:FilterUsers)')
             ->optionalMatch('(u:User)-[:BELONGS_TO]->(g)')
-            ->returns('g', 'l', 'COUNT(u) AS usersCount');
+            ->returns('g', 'l', 'f', 'COUNT(u) AS usersCount');
 
         $query = $qb->getQuery();
 
@@ -88,8 +123,9 @@ class GroupModel
         $qb->match('(i:Invitation)-[:HAS_GROUP]->(g:Group)<-[:CREATED_GROUP]-(eu:EnterpriseUser)')
             ->where('eu.admin_id = { admin_id }')
             ->optionalMatch('(g)-[:LOCATION]->(l:Location)')
+            ->optionalMatch('(g)-[:HAS_FILTER]->(f:FilterUsers)')
             ->setParameter('admin_id', (integer)$enterpriseUserId)
-            ->returns('g', 'l', 'i');
+            ->returns('g', 'l', 'f', 'i');
 
         $query = $qb->getQuery();
 
@@ -111,13 +147,14 @@ class GroupModel
         $qb->match('(i:Invitation)-[:HAS_GROUP]->(g:Group)<-[:CREATED_GROUP]-(eu:EnterpriseUser)')
             ->where('id(g) = { id }', 'eu.admin_id = { admin_id }')
             ->optionalMatch('(g)-[:LOCATION]->(l:Location)')
+            ->optionalMatch('(g)-[:HAS_FILTER]->(f:FilterUsers)')
             ->setParameters(
                 array(
                     'id' => (integer)$id,
                     'admin_id' => (integer)$enterpriseUserId,
                 )
             )
-            ->returns('g', 'l', 'i');
+            ->returns('g', 'l', 'f', 'i');
 
         $query = $qb->getQuery();
 
@@ -151,11 +188,34 @@ class GroupModel
 
         if (!array_key_exists('date', $data)) {
             $errors['date'] = array('"date" is required');
-        } elseif (isset($data['date']) && (string)(int)$data['date'] !== (string)$data['date']) {
+        } elseif (isset($data['date']) && !(is_int($data['date']) || is_double($data['date']))) {
             $errors['date'] = array('"date" must be a valid timestamp');
         }
 
-        if (!isset($data['location']) || !is_array($data['location'])) {
+        if (isset($data['followers']) && $data['followers']) {
+            if (!is_bool($data['followers'])) {
+                $errors['followers'] = array('"followers" must be boolean');
+            }
+            if (!isset($data['influencer_id'])) {
+                $errors['influencer_id'] = array('"influencer_id" is required for followers groups');
+            } elseif (!is_int($data['influencer_id'])) {
+                $errors['influencer_id'] = array('"influencer_id" must be integer');
+            }
+            if (!isset($data['min_matching'])) {
+                $errors['min_matching'] = array('"min_matching" is required for followers groups');
+            } elseif (!is_int($data['min_matching'])) {
+                $errors['min_matching'] = array('"min_matching" must be integer');
+            }
+            if (!isset($data['type_matching'])) {
+                $errors['type_matching'] = array('"type_matching" is required for followers groups');
+            } elseif ($data['type_matching'] !== 'similarity' && $data['type_matching'] !== 'compatibility') {
+                $errors['type_matching'] = array('"type_matching" must be "similarity" or "compatibility"');
+            }
+        }
+
+        if (!isset($data['location'])) {
+            $errors['location'] = array('"location" is required');
+        } elseif (!is_array($data['location'])) {
             $errors['location'] = sprintf('The value "%s" is not valid, it should be an array', $data['location']);
         } elseif (isset($data['location'])) {
             if (!array_key_exists('address', $data['location'])) {
@@ -200,8 +260,18 @@ class GroupModel
         $this->validate($data);
 
         $qb = $this->gm->createQueryBuilder();
-        $qb->create('(g:Group {name:{ name }, html: { html }, date: { date }})')
-            ->with('g')
+
+        $qb->create('(g:Group {name:{ name }, html: { html }, date: { date }})');
+
+        if (isset($data['followers']) && $data['followers']) {
+            $qb->set('g:GroupFollowers')
+                ->with('g')
+                ->match('(influencer:User{qnoow_id: { influencer_id }})')
+                ->createUnique('(influencer)-[:CREATED_GROUP]->(g)')
+                ->createUnique('(influencer)-[:BELONGS_TO]->(g)');
+        }
+
+        $qb->with('g')
             ->merge('(l:Location {address: { address }, latitude: { latitude }, longitude: { longitude }, locality: { locality }, country: { country }})<-[:LOCATION]-(g)')
             ->setParameters(
                 array(
@@ -214,8 +284,13 @@ class GroupModel
                     'locality' => $data['location']['locality'],
                     'country' => $data['location']['country'],
                 )
-            )
-            ->returns('g', 'l');
+            );
+
+        if (isset($data['followers']) && $data['followers']) {
+            $qb->setParameter('influencer_id', $data['influencer_id']);
+        }
+
+        $qb->returns('g', 'l');
 
         $query = $qb->getQuery();
 
@@ -224,7 +299,22 @@ class GroupModel
         /* @var $row Row */
         $row = $result->current();
 
-        return $this->build($row);
+        $group = $this->build($row);
+
+        if (isset($data['followers'])) {
+            $filterUsers = $this->filterUsersManager->updateFilterUsersByGroupId(
+                $group['id'],
+                array(
+                    'userFilters' => array(
+                        $data['type_matching'] => $data['min_matching'],
+                        'groups' => array($group['id']),
+                    )
+                )
+            );
+            $group['filterUsers'] = $filterUsers;
+        }
+
+        return $group;
     }
 
     public function update($id, array $data)
@@ -238,9 +328,10 @@ class GroupModel
             ->set('g.html = { html }')
             ->set('g.date = { date }')
             ->with('g')
-            ->match('(l:Location)<-[:LOCATION]-(g)')
-            ->merge('(l)<-[:LOCATION]-(g)')
+            ->merge('(l:Location)<-[:LOCATION]-(g)')
             ->set('l.address = { address }', 'l.latitude = { latitude }', 'l.longitude = { longitude }', 'l.locality = { locality }', 'l.country = { country }')
+            ->with('g', 'l')
+            ->optionalMatch('(g)<-[:HAS_GROUP]-(i:Invitation)')
             ->setParameters(
                 array(
                     'id' => (integer)$id,
@@ -253,8 +344,9 @@ class GroupModel
                     'locality' => $data['location']['locality'],
                     'country' => $data['location']['country'],
                 )
-            )
-            ->returns('g', 'l');
+            );
+
+        $qb->returns('g', 'l', 'i');
 
         $query = $qb->getQuery();
 
@@ -263,7 +355,21 @@ class GroupModel
         /* @var $row Row */
         $row = $result->current();
 
-        return $this->build($row);
+        $group = $this->buildWithInvitationData($row);
+
+        if (isset($data['followers'])) {
+            $filterUsers = $this->filterUsersManager->updateFilterUsersByGroupId(
+                $group['id'],
+                array(
+                    'userFilters' => array(
+                        $data['type_matching'] => $data['min_matching']
+                    )
+                )
+            );
+            $group['filterUsers'] = $filterUsers;
+        }
+
+        return $group;
     }
 
     public function remove($id)
@@ -292,13 +398,15 @@ class GroupModel
         $qb->match('(g:Group)', '(eu:EnterpriseUser)')
             ->where('id(g) = { id } AND eu.admin_id = { enterpriseUserId }')
             ->merge('(g)<-[:CREATED_GROUP]-(eu)')
+            ->optionalMatch('(g)-[:LOCATION]->(l:Location)')
+            ->optionalMatch('(g)-[:HAS_FILTER]->(f:FilterUsers)')
             ->setParameters(
                 array(
                     'id' => (integer)$id,
                     'enterpriseUserId' => (integer)$enterpriseUserId,
                 )
             )
-            ->returns('g');
+            ->returns('g', 'l', 'f');
 
         $query = $qb->getQuery();
 
@@ -320,7 +428,8 @@ class GroupModel
             ->match('(u)-[r:BELONGS_TO]->(g:Group)')
             ->with('g')
             ->optionalMatch('(g)-[:LOCATION]->(l:Location)')
-            ->returns('g', 'l');
+            ->optionalMatch('(g)-[:HAS_FILTER]->(f:FilterUsers)')
+            ->returns('g', 'l', 'f');
 
         $query = $qb->getQuery();
 
@@ -417,20 +526,107 @@ class GroupModel
         return $result->count() > 0;
     }
 
+    /**
+     * @param $userId
+     * @return \ArrayAccess
+     * @throws \Model\Neo4j\Neo4jException
+     */
+    public function getGroupFollowersFromInfluencerId($userId)
+    {
+        $qb = $this->gm->createQueryBuilder();
+        $qb->setParameter('userId', (integer)$userId);
+        $qb->match('(user:User)')
+            ->where('user.qnoow_id = {userId}')
+            ->with('user')
+            ->match('(user)-[:CREATED_GROUP]->(g:GroupFollowers)')
+            ->returns('collect(id(g)) as groups');
+        $result = $qb->getQuery()->getResultSet();
+
+        if ($result->count() == 0) {
+            return array();
+        }
+
+        return $result->current()->offsetGet('groups');
+    }
+
+    /**
+     * @param $userId1
+     * @param $userId2
+     * @return array [ 'direct' => 1 is follower of 2 , 'inverse' => 2 is follower of 1 ]
+     * @throws \Model\Neo4j\Neo4jException
+     */
+    public function getIsGroupFollowersOf($userId1, $userId2)
+    {
+        $qb = $this->gm->createQueryBuilder();
+        $qb->setParameters(
+            array(
+                'id1' => (integer)$userId1,
+                'id2' => (integer)$userId2,
+            )
+        );
+        $qb->match('(user1:User), (user2:User)')
+            ->where('user1.qnoow_id = {id1}', 'user2.qnoow_id = {id2}')
+            ->with('user1', 'user2')
+            ->optionalMatch('(user1)-[:BELONGS_TO]->(g:GroupFollowers)<-[:CREATED_GROUP]-(user2)')
+            ->optionalMatch('(user2)-[:BELONGS_TO]->(g2:GroupFollowers)<-[:CREATED_GROUP]-(user1)')
+            ->returns('collect(id(g)) AS direct, collect(id(g2)) AS inverse');
+
+        $result = $qb->getQuery()->getResultSet();
+
+        $return = array('direct' => array(), 'inverse' => array());
+        if ($result->count() == 0) {
+            return $result;
+        }
+
+        /* @var $row Row */
+        $row = $result->current();
+        foreach ($row->offsetGet('direct') as $item) {
+            $return['direct'][] = $item;
+        }
+
+        foreach ($row->offsetGet('inverse') as $inverse) {
+            $return['inverse'][] = $inverse;
+        }
+
+        return $return;
+    }
+
+    /**
+     * @param Row $row
+     * @return array
+     */
     protected function build(Row $row)
     {
         /* @var $group Node */
         $group = $row->offsetGet('g');
         /* @var $location Node */
         $location = $row->offsetGet('l');
-        /* @var $userId Node */
+        /* @var $filter Node */
+        $filter = $row->offsetExists('f') ? $row->offsetGet('f') : null;
+
         $usersCount = $row->offsetGet('usersCount');
 
-        return $this->buildGroup($group, $location, $usersCount);
+        $group = $this->buildGroup($group, $location, $usersCount);
+
+        if ($filter) {
+            $group['filterUsers'] = $this->filterUsersManager->getFilterUsersById($filter->getId());
+        }
+
+        return $group;
     }
 
-    public function buildGroup( $group, $location, $usersCount){
-        return array(
+    protected function buildGroup(Node $group, Node $location, $usersCount)
+    {
+        $additionalLabels = array();
+        $labels = $group->getLabels();
+        /* @var $label Label */
+        foreach ($labels as $label) {
+            if ($label->getName() !== 'Group') {
+                $additionalLabels[] = $label->getName();
+            }
+        }
+
+        $group = array(
             'id' => $group->getId(),
             'name' => $group->getProperty('name'),
             'html' => $group->getProperty('html'),
@@ -444,18 +640,35 @@ class GroupModel
             'date' => $group->getProperty('date'),
             'usersCount' => $usersCount,
         );
+
+        if (in_array('GroupFollowers', $additionalLabels)) {
+            $user = $this->um->getByCreatedGroup($group['id']);
+            $group['influencer'] = array(
+                'username' => $user['username'],
+                'id' => $user['qnoow_id'],
+            );
+        }
+
+        return $group;
     }
 
     protected function buildWithInvitationData(Row $row)
     {
         $return = $this->build($row);
-        /* @var $invitation Node */
-        $invitation = $row->offsetGet('i');
+        if ($row->offsetExists('i')) {
+            $invitation = $row->offsetGet('i');
 
-        return $return + array(
-            'invitation_id' => $invitation->getId(),
-            'invitation_token' => $invitation->getProperty('token'),
-            'invitation_image_path' => $invitation->getProperty('image_path'),
-        );
+            if ($invitation instanceof Node) {
+                $return += array(
+                    'invitation_id' => $invitation->getId(),
+                    'invitation_token' => $invitation->getProperty('token'),
+                    'invitation_image_path' => $invitation->getProperty('image_path'),
+                );
+            }
+
+        }
+
+        return $return;
+
     }
 }

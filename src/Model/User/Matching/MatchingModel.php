@@ -2,6 +2,7 @@
 
 namespace Model\User\Matching;
 
+use Event\MatchingEvent;
 use Event\MatchingExpiredEvent;
 use Model\Neo4j\GraphManager;
 use Model\User\AnswerModel;
@@ -45,8 +46,7 @@ class MatchingModel
         GraphManager $graphManager,
         ContentPaginatedModel $contentPaginatedModel,
         AnswerModel $answerModel
-    )
-    {
+    ) {
 
         $this->dispatcher = $dispatcher;
         $this->graphManager = $graphManager;
@@ -65,10 +65,12 @@ class MatchingModel
 
         $qb = $this->graphManager->createQueryBuilder();
 
-        $qb->setParameters(array(
-            'id1' => (int)$id1,
-            'id2' => (int)$id2,
-        ));
+        $qb->setParameters(
+            array(
+                'id1' => (int)$id1,
+                'id2' => (int)$id2,
+            )
+        );
 
         //Check that both users have at least one url in common
         $qb->match('(u1:User {qnoow_id: {id1}})', '(u2:User {qnoow_id: {id2}})')
@@ -150,32 +152,46 @@ class MatchingModel
 
         $qb = $this->graphManager->createQueryBuilder();
 
-        $qb->setParameters(array(
-            'id1' => (integer)$id1,
-            'id2' => (integer)$id2
-        ));
+        $qb->setParameters(
+            array(
+                'id1' => (integer)$id1,
+                'id2' => (integer)$id2
+            )
+        );
 
         $qb->match('(u1:User {qnoow_id: { id1 }})', '(u2:User {qnoow_id: { id2 }})')
             ->optionalMatch('(u2)-[:ANSWERS]->(acceptedAnswerU1:Answer)')
             ->where('(u1)-[:ACCEPTS]->(acceptedAnswerU1)')
             ->optionalMatch('(acceptedAnswerU1)-[:IS_ANSWER_OF]->(q:Question)<-[rateAcceptedAnswerU1:RATES]-(u1)')
-            ->with('u1', 'u2',
-                $this->weightedRatingSum('rateAcceptedAnswerU1', 'totalRatingAcceptedAnswersU1'))
+            ->with(
+                'u1',
+                'u2',
+                $this->weightedRatingSum('rateAcceptedAnswerU1', 'totalRatingAcceptedAnswersU1')
+            )
             ->optionalMatch('(u1)-[:ANSWERS]->(acceptedAnswerU2:Answer)')
             ->where('(u2)-[:ACCEPTS]->(acceptedAnswerU2)')
             ->optionalMatch('(acceptedAnswerU2)-[:IS_ANSWER_OF]->(q)<-[rateAcceptedAnswerU2:RATES]-(u2)')
-            ->with('u1', 'u2', 'totalRatingAcceptedAnswersU1',
-                $this->weightedRatingSum('rateAcceptedAnswerU2', 'totalRatingAcceptedAnswersU2'))
+            ->with(
+                'u1',
+                'u2',
+                'totalRatingAcceptedAnswersU1',
+                $this->weightedRatingSum('rateAcceptedAnswerU2', 'totalRatingAcceptedAnswersU2')
+            )
             ->optionalMatch('(u1)-[rateCommonAnswerU1:RATES]->(commonQuestions:Question)<-[rateCommonAnswerU2:RATES]-(u2)')
-            ->with('count(DISTINCT commonQuestions) AS numOfCommonQuestions',
-                'totalRatingAcceptedAnswersU1', 'totalRatingAcceptedAnswersU2',
+            ->with(
+                'count(DISTINCT commonQuestions) AS numOfCommonQuestions',
+                'totalRatingAcceptedAnswersU1',
+                'totalRatingAcceptedAnswersU2',
                 $this->weightedRatingSum('rateCommonAnswerU1', 'totalRatingCommonAnswersU1'),
-                $this->weightedRatingSum('rateCommonAnswerU2', 'totalRatingCommonAnswersU2'))
-            ->with('toFloat(numOfCommonQuestions) as numOfCommonQuestions',
+                $this->weightedRatingSum('rateCommonAnswerU2', 'totalRatingCommonAnswersU2')
+            )
+            ->with(
+                'toFloat(numOfCommonQuestions) as numOfCommonQuestions',
                 'toFloat(totalRatingAcceptedAnswersU1) AS totalRatingAcceptedAnswersU1',
                 'toFloat(totalRatingAcceptedAnswersU2) AS totalRatingAcceptedAnswersU2',
                 'toFloat(totalRatingCommonAnswersU1) AS totalRatingCommonAnswersU1',
-                'toFloat(totalRatingCommonAnswersU2) AS totalRatingCommonAnswersU2')
+                'toFloat(totalRatingCommonAnswersU2) AS totalRatingCommonAnswersU2'
+            )
             //'error' == max matching depending on common questions
             ->with(
                 'CASE
@@ -183,18 +199,27 @@ class MatchingModel
                         1 - (1 / numOfCommonQuestions)
                     ELSE tofloat(0)
                 END AS error',
-                $this->rawMatching('totalRatingCommonAnswersU1',
+                $this->rawMatching(
+                    'totalRatingCommonAnswersU1',
                     'totalRatingAcceptedAnswersU1',
-                    'rawMatchingU1'),
-                $this->rawMatching('totalRatingCommonAnswersU2',
+                    'rawMatchingU1'
+                ),
+                $this->rawMatching(
+                    'totalRatingCommonAnswersU2',
                     'totalRatingAcceptedAnswersU2',
-                    'rawMatchingU2'))
-            ->with('error',
-                'tofloat( sqrt(rawMatchingU1 * rawMatchingU2)) AS rawMatching')
-            ->with('CASE
+                    'rawMatchingU2'
+                )
+            )
+            ->with(
+                'error',
+                'tofloat( sqrt(rawMatchingU1 * rawMatchingU2)) AS rawMatching'
+            )
+            ->with(
+                'CASE
 		        WHEN error < rawMatching THEN error
 		        ELSE rawMatching
-                END AS matching')
+                END AS matching'
+            )
             ->returns('matching');
 
         $result = $qb->getQuery()->getResultSet();
@@ -215,15 +240,21 @@ class MatchingModel
             ->returns('m');
 
         //State the value of the variables in the query string
-        $qb->setParameters(array(
-            'id1' => (integer)$id1,
-            'id2' => (integer)$id2,
-            'matching' => (float)$matching
-        ));
+        $qb->setParameters(
+            array(
+                'id1' => (integer)$id1,
+                'id2' => (integer)$id2,
+                'matching' => (float)$matching
+            )
+        );
 
         $qb->getQuery()->getResultSet();
 
-        return $matching == null ? 0 : $matching;
+        $matching = $matching == null ? 0 : $matching;
+
+        $this->dispatcher->dispatch(\AppEvents::MATCHING_UPDATED, new MatchingEvent($id1, $id2, $matching));
+
+        return $matching;
     }
 
     private function weightedRatingSum($variable, $alias)
