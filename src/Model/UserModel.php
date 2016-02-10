@@ -384,6 +384,23 @@ class UserModel implements PaginatedInterface
         return $this->parseResultSet($query->getResultSet());
     }
 
+    public function getByCreatedGroup($groupId)
+    {
+        $qb = $this->gm->createQueryBuilder();
+
+        $parameters = array('groupId' => $groupId);
+
+        $qb->match('(g:Group)')
+            ->where('id(g) = {groupId}')
+            ->match('(u:User)-[:CREATED_GROUP]->(g)')
+            ->returns('u')
+            ->limit(1);
+        $qb->setParameters($parameters);
+        $result = $qb->getQuery()->getResultSet();
+
+        return $this->build($result->current());
+    }
+
     public function getOneByThread($id)
     {
         $qb = $this->gm->createQueryBuilder();

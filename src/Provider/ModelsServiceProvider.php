@@ -11,6 +11,8 @@ use Model\EnterpriseUser\CommunityModel;
 use Model\User\ContentComparePaginatedModel;
 use Model\User\ContentPaginatedModel;
 use Model\User\ContentTagModel;
+use Model\User\Filters\FilterContentManager;
+use Model\User\Filters\FilterUsersManager;
 use Model\User\GhostUser\GhostUserManager;
 use Model\User\GroupModel;
 use Model\User\InvitationModel;
@@ -35,6 +37,7 @@ use Model\User\Thread\ThreadManager;
 use Model\User\Thread\ThreadPaginatedModel;
 use Model\User\Thread\UsersThreadManager;
 use Model\User\TokensModel;
+use Model\User\UserFilterModel;
 use Model\User\UserStatsManager;
 use Model\UserModel;
 use Silex\Application;
@@ -78,10 +81,17 @@ class ModelsServiceProvider implements ServiceProviderInterface
             }
         );
 
+        $app['users.userFilter.model'] = $app->share(
+            function ($app) {
+
+                return new UserFilterModel($app['neo4j.graph_manager'], $app['fields']['user'], $app['locale.options']['default']);
+            }
+        );
+
         $app['users.privacy.model'] = $app->share(
             function ($app) {
 
-                return new PrivacyModel($app['neo4j.graph_manager'], $app['fields']['privacy'], $app['locale.options']['default']);
+                return new PrivacyModel($app['neo4j.graph_manager'], $app['dispatcher'], $app['fields']['privacy'], $app['locale.options']['default']);
             }
         );
 
@@ -158,14 +168,14 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.similarity.model'] = $app->share(
             function ($app) {
 
-                return new SimilarityModel($app['neo4j.graph_manager'], $app['links.model'], $app['users.questions.model'], $app['users.content.model'], $app['users.profile.model']);
+                return new SimilarityModel($app['dispatcher'], $app['neo4j.graph_manager'], $app['links.model'], $app['users.questions.model'], $app['users.content.model'], $app['users.profile.model']);
             }
         );
 
         $app['users.recommendation.users.model'] = $app->share(
             function ($app) {
 
-                return new UserRecommendationPaginatedModel($app['neo4j.graph_manager'], $app['users.profile.model']);
+                return new UserRecommendationPaginatedModel($app['neo4j.graph_manager'], $app['users.profile.model'], $app['users.userFilter.model']);
             }
         );
 
@@ -207,7 +217,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.stats.manager'] = $app->share(
             function ($app) {
 
-                return new UserStatsManager($app['neo4j.graph_manager'], $app['orm.ems']['mysql_brain'], $app['users.tokens.model'], $app['users.relations.model']);
+                return new UserStatsManager($app['neo4j.graph_manager'], $app['orm.ems']['mysql_brain'], $app['users.tokens.model'], $app['users.groups.model'], $app['users.relations.model']);
             }
         );
 
@@ -239,24 +249,38 @@ class ModelsServiceProvider implements ServiceProviderInterface
             }
         );
 
+        $app['users.filterusers.manager'] = $app->share(
+            function ($app) {
+
+                return new FilterUsersManager($app['fields']['user'], $app['neo4j.graph_manager'], $app['users.profile.model'], $app['users.userFilter.model']);
+            }
+        );
+
+        $app['users.filtercontent.manager'] = $app->share(
+            function ($app) {
+
+                return new FilterContentManager($app['neo4j.graph_manager']);
+            }
+        );
+
         $app['users.groups.model'] = $app->share(
             function ($app) {
 
-                return new GroupModel($app['neo4j.graph_manager'], $app['users.model']);
+                return new GroupModel($app['neo4j.graph_manager'], $app['users.model'], $app['users.filterusers.manager']);
             }
         );
 
         $app['users.threadusers.manager'] = $app->share(
             function ($app) {
 
-                return new UsersThreadManager($app['neo4j.graph_manager'], $app['users.profile.model'], $app['users.groups.model'], $app['users.model']);
+                return new UsersThreadManager($app['neo4j.graph_manager'], $app['users.filterusers.manager'], $app['users.model']);
             }
         );
 
         $app['users.threadcontent.manager'] = $app->share(
             function ($app) {
 
-                return new ContentThreadManager($app['neo4j.graph_manager'], $app['links.model']);
+                return new ContentThreadManager($app['neo4j.graph_manager'], $app['links.model'], $app['users.filtercontent.manager']);
             }
         );
 

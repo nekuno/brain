@@ -2,23 +2,28 @@
 
 namespace Model\User;
 
+use Event\PrivacyEvent;
 use Everyman\Neo4j\Label;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
+use Everyman\Neo4j\Relationship;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class PrivacyModel
 {
     protected $gm;
+    protected $dispatcher;
     protected $metadata;
     protected $defaultLocale;
 
-    public function __construct(GraphManager $graphManager, array $metadata, $defaultLocale)
+    public function __construct(GraphManager $graphManager, EventDispatcher $dispatcher, array $metadata, $defaultLocale)
     {
         $this->gm = $graphManager;
+        $this->dispatcher = $dispatcher;
         $this->metadata = $metadata;
         $this->defaultLocale = $defaultLocale;
     }
@@ -62,8 +67,8 @@ class PrivacyModel
         $qb->match('(user:User)<-[:PRIVACY_OF]-(privacy:Privacy)')
             ->where('user.qnoow_id = { id }')
             ->setParameter('id', (integer)$id)
-            ->optionalMatch('(privacy)<-[:OPTION_OF]-(option:PrivacyOption)')
-            ->with('privacy, collect(option) AS options')
+            ->optionalMatch('(privacy)<-[option_of:OPTION_OF]-(option:PrivacyOption)')
+            ->with('privacy, collect({node: option, value: option_of.value}) AS options')
             ->returns('privacy', 'options')
             ->limit(1);
 
@@ -119,6 +124,7 @@ class PrivacyModel
         $privacyNode = $row->offsetGet('privacy');
 
         $this->savePrivacyData($privacyNode, $data);
+        $this->dispatcher->dispatch(\AppEvents::PRIVACY_UPDATED, new PrivacyEvent($id, $data));
 
         return $this->getById($id);
     }
@@ -145,7 +151,7 @@ class PrivacyModel
         }
 
         $this->savePrivacyData($privacyNode, $data);
-
+        $this->dispatcher->dispatch(\AppEvents::PRIVACY_UPDATED, new PrivacyEvent($id, $data));
         return $this->getById($id);
     }
 
@@ -178,16 +184,35 @@ class PrivacyModel
 
             $fieldErrors = array();
 
-            if (isset($data[$fieldName])) {
+            if (isset($data[$fieldName]) && isset($data[$fieldName]['key'])) {
 
-                $fieldValue = $data[$fieldName];
+                $fieldValueName = $data[$fieldName]['key'];
+                $fieldValue = $data[$fieldName]['value'];
 
                 if (isset($fieldData['type'])) {
                     switch ($fieldData['type']) {
                         case 'choice':
                             $choices = $fieldData['choices'];
-                            if (!in_array($fieldValue, array_keys($choices))) {
-                                $fieldErrors[] = sprintf('Option with value "%s" is not valid, possible values are "%s"', $fieldValue, implode("', '", array_keys($choices)));
+                            if (!in_array($fieldValueName, array_keys($choices))) {
+                                $fieldErrors[] = sprintf('Option with value "%s" is not valid, possible values are "%s"', $fieldValueName, implode("', '", array_keys($choices)));
+                            }
+                            if ($choices[$fieldValueName]['value_required'] && !is_int($fieldValue)) {
+                                $fieldErrors[] = sprintf('Integer value required for "%s"', $fieldValueName);
+                            }
+                            $minValue = isset($choices[$fieldValueName]['min_value']) ? $choices[$fieldValueName]['min_value'] : null;
+                            if ($choices[$fieldValueName]['value_required']
+                                && !is_null($minValue)
+                                && $fieldValue < $minValue) {
+                                $fieldErrors[] = sprintf('Value "%s" for "%s" must be equal or greater than "%s"', $fieldValue, $fieldValueName, $minValue);
+                            }
+                            $maxValue = isset($choices[$fieldValueName]['max_value']) ? $choices[$fieldValueName]['max_value'] : null;
+                            if ($choices[$fieldValueName]['value_required']
+                                && !is_null($maxValue)
+                                && $fieldValue > $maxValue) {
+                                $fieldErrors[] = sprintf('Value "%s" for "%s" must be equal or lesser than "%s"', $fieldValue, $fieldValueName, $maxValue);
+                            }
+                            if (!$choices[$fieldValueName]['value_required'] && $fieldValue) {
+                                $fieldErrors[] = sprintf('"%s" option can`t have a value', $fieldValueName);
                             }
                             break;
                     }
@@ -215,7 +240,7 @@ class PrivacyModel
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(option:PrivacyOption)')
-            ->returns("head(filter(x IN labels(option) WHERE x <> 'PrivacyOption')) AS labelName, option.id AS id, option." . $translationField . " AS name")
+            ->returns("head(filter(x IN labels(option) WHERE x <> 'PrivacyOption')) AS labelName, option.id AS id, option." . $translationField . " AS name, option.value_required AS value_required, option.min_value AS min_value, option.max_value AS max_value")
             ->orderBy('labelName');
 
         $query = $qb->getQuery();
@@ -231,16 +256,19 @@ class PrivacyModel
         $privacy = $node->getProperties();
 
         foreach ($row->offsetGet('options') as $option) {
-            /* @var $option Node */
-            $labels = $option->getLabels();
+            /* @var $optionNode Node */
+            $optionNode = $option['node'];
+            $optionValue = $option['value'];
+
+            $labels = $optionNode instanceof Node ? $optionNode->getLabels() : array();
             foreach ($labels as $label) {
                 /* @var $label Label */
                 $labelName = $label->getName();
                 if ($labelName != 'PrivacyOption') {
                     $typeName = $this->labelToType($labelName);
-                    $privacy[$typeName] = $option->getProperty('id');
+                    $privacy[$typeName]['key'] = $optionNode->getProperty('id');
+                    $privacy[$typeName]['value'] = $optionValue;
                 }
-
             }
         }
 
@@ -255,8 +283,18 @@ class PrivacyModel
             $typeName = $this->labelToType($row->offsetGet('labelName'));
             $optionId = $row->offsetGet('id');
             $optionName = $row->offsetGet('name');
+            $valueRequired = $row->offsetGet('value_required');
+            $minValue = $row->offsetGet('min_value');
+            $maxValue = $row->offsetGet('max_value');
 
-            $choiceOptions[$typeName][$optionId] = $optionName;
+            $choiceOptions[$typeName][$optionId]['name'] = $optionName;
+            $choiceOptions[$typeName][$optionId]['value_required'] = $valueRequired;
+            if ($minValue) {
+                $choiceOptions[$typeName][$optionId]['min_value'] = $minValue;
+            }
+            if ($maxValue) {
+                $choiceOptions[$typeName][$optionId]['max_value'] = $maxValue;
+            }
         }
 
         return $choiceOptions;
@@ -309,10 +347,16 @@ class PrivacyModel
                         if (isset($options[$fieldName])) {
                             $options[$fieldName]->delete();
                         }
-                        if (!is_null($fieldValue)) {
-                            $optionNode = $this->getPrivacyOptionNode($fieldValue, $fieldName);
-                            $optionNode->relateTo($privacyNode, 'OPTION_OF')->save();
+                        if (!is_null($fieldValue['key'])) {
+                            $optionNode = $this->getPrivacyOptionNode($fieldValue['key'], $fieldName);
+                            $relationship = $optionNode->relateTo($privacyNode, 'OPTION_OF');
+
+                            if (!is_null($fieldValue['value'])) {
+                                $relationship->setProperty('value', $fieldValue['value']);
+                            }
+                            $relationship->save();
                         }
+
                         break;
                 }
             }
@@ -321,16 +365,22 @@ class PrivacyModel
         return $privacyNode->save();
     }
 
+    /**
+     * @param Node $privacyNode
+     * @return Relationship[]
+     */
     protected function getPrivacyNodeOptions(Node $privacyNode)
     {
         $options = array();
         $optionRelations = $privacyNode->getRelationships('OPTION_OF');
 
+        /* @var $optionRelation Relationship */
         foreach ($optionRelations as $optionRelation) {
 
             $optionNode = $optionRelation->getStartNode();
             $optionLabels = $optionNode->getLabels();
 
+            /* @var $optionLabel Label */
             foreach ($optionLabels as $optionLabel) {
                 $labelName = $optionLabel->getName();
                 if ($labelName != 'PrivacyOption') {

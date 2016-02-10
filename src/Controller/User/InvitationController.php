@@ -4,6 +4,7 @@ namespace Controller\User;
 
 use Model\Entity\EmailNotification;
 use Model\User\InvitationModel;
+use Service\EmailNotifications;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -175,19 +176,23 @@ class InvitationController
         /* @var $model InvitationModel */
         $model = $app['users.invitations.model'];
 
-        if(isset($data['locale'])) {
+        if (isset($data['locale'])) {
             $app['translator']->setLocale($data['locale']);
         }
 
-        if($sendData = $model->prepareSend($id, $userId, $data, $app['social_host']))
-        {
-            $recipients = $app['emailNotification.service']->send(EmailNotification::create()
-                ->setType(EmailNotification::INVITATION)
-                ->setUserId($userId)
-                ->setRecipient($data['email'])
-                ->setSubject($app['translator']->trans('notifications.messages.invitation.subject', array('%name%' => $sendData['username'] )))
-                ->setInfo($sendData));
+        if ($sendData = $model->prepareSend($id, $userId, $data, $app['social_host'])) {
+            /* @var $emailNotification EmailNotifications */
+            $emailNotification = $app['emailNotification.service'];
+            $recipients = $emailNotification->send(
+                EmailNotification::create()
+                    ->setType(EmailNotification::INVITATION)
+                    ->setUserId($userId)
+                    ->setRecipient($data['email'])
+                    ->setSubject($app['translator']->trans('notifications.messages.invitation.subject', array('%name%' => $sendData['username'])))
+                    ->setInfo($sendData)
+            );
         }
+
         return $recipients;
     }
 }

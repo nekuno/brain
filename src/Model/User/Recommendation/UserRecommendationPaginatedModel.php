@@ -2,11 +2,10 @@
 
 namespace Model\User\Recommendation;
 
-use Everyman\Neo4j\Cypher\Query;
 use Model\Neo4j\GraphManager;
-use Model\Neo4j\QueryBuilder;
 use Model\User\GhostUser\GhostUserManager;
 use Model\User\ProfileModel;
+use Model\User\UserFilterModel;
 use Paginator\PaginatedInterface;
 
 class UserRecommendationPaginatedModel implements PaginatedInterface
@@ -19,10 +18,13 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
      */
     protected $profileModel;
 
-    public function __construct(GraphManager $gm, ProfileModel $profileModel)
+    protected $userFilterModel;
+
+    public function __construct(GraphManager $gm, ProfileModel $profileModel, UserFilterModel $userFilterModel)
     {
         $this->gm = $gm;
         $this->profileModel = $profileModel;
+        $this->userFilterModel = $userFilterModel;
     }
 
     /**
@@ -50,14 +52,6 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
     public function slice(array $filters, $offset, $limit)
     {
         $id = $filters['id'];
-        $groups = isset($filters['userFilters']['groups']) ? $filters['userFilters']['groups'] : array();
-        $groups = array_map(
-            function ($i) {
-                return (integer)$i;
-            },
-            $groups
-        );
-
         $response = array();
 
         $parameters = array(
@@ -67,6 +61,8 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         );
 
         $profileFilters = $this->getProfileFilters($filters['profileFilters']);
+        $userFilters = $this->getUserFilters($filters['userFilters']);
+
         $orderQuery = '  similarity DESC, matching_questions DESC ';
         if (isset($filters['order']) && $filters['order'] == 'questions') {
             $orderQuery = ' matching_questions DESC, similarity DESC ';
@@ -77,7 +73,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         $qb->setParameters($parameters);
 
         $qb->match('(u:User {qnoow_id: {userId}})-[:MATCHES|SIMILARITY]-(anyUser:User)')
-            ->where('u <> anyUser', 'NOT (anyUser:'.GhostUserManager::LABEL_GHOST_USER.')')
+            ->where('u <> anyUser', 'NOT (anyUser:' . GhostUserManager::LABEL_GHOST_USER . ')')
             ->optionalMatch('(u)-[like:LIKES]-(anyUser)')
             ->optionalMatch('(u)-[m:MATCHES]-(anyUser)')
             ->optionalMatch('(u)-[s:SIMILARITY]-(anyUser)')
@@ -87,6 +83,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                 (CASE WHEN HAS(m.matching_questions) THEN m.matching_questions ELSE 0 END) AS matching_questions,
                 (CASE WHEN HAS(s.similarity) THEN s.similarity ELSE 0 END) AS similarity'
             )
+            ->where($userFilters['conditions'])
             ->match('(anyUser)<-[:PROFILE_OF]-(p:Profile)');
 
         $qb->optionalMatch('(p)-[:LOCATION]->(l:Location)');
@@ -103,11 +100,8 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         foreach ($profileFilters['matches'] as $match) {
             $qb->match($match);
         }
-
-        if ($groups) {
-            $qb->match('(anyUser)-[:BELONGS_TO]->(g:Group)')
-                ->where('id(g) IN { groups }')
-                ->setParameter('groups', $groups);
+        foreach ($userFilters['matches'] as $match) {
+            $qb->match($match);
         }
 
         $qb->returns(
@@ -165,15 +159,8 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         $id = $filters['id'];
         $count = 0;
 
-        $groups = isset($filters['userFilters']['groups']) ? $filters['userFilters']['groups'] : array();
-        $groups = array_map(
-            function ($i) {
-                return (integer)$i;
-            },
-            $groups
-        );
-
         $profileFilters = $this->getProfileFilters($filters['profileFilters']);
+        $userFilters = $this->getUserFilters($filters['userFilters']);
 
         $qb = $this->gm->createQueryBuilder();
 
@@ -190,6 +177,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
             (CASE WHEN HAS(m.matching_questions) THEN m.matching_questions ELSE 0 END) AS matching_questions,
             (CASE WHEN HAS(s.similarity) THEN s.similarity ELSE 0 END) AS similarity'
             )
+            ->where($userFilters['conditions'])
             ->match('(anyUser)<-[:PROFILE_OF]-(p:Profile)');
 
         $qb->optionalMatch('(p)-[:LOCATION]->(l:Location)');
@@ -206,11 +194,8 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         foreach ($profileFilters['matches'] as $match) {
             $qb->match($match);
         }
-
-        if ($groups) {
-            $qb->match('(anyUser)-[:BELONGS_TO]->(g:Group)')
-                ->where('id(g) IN { groups }')
-                ->setParameter('groups', $groups);
+        foreach ($userFilters['matches'] as $match) {
+            $qb->match($match);
         }
 
         $qb->returns('COUNT(DISTINCT anyUser) as total');
@@ -288,4 +273,41 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         );
     }
 
+    /**
+     * @param array $filters
+     * @return array
+     */
+    protected function getUserFilters(array $filters)
+    {
+        $conditions = array();
+        $matches = array();
+
+        foreach ($this->userFilterModel->getFilters() as $name => $filter) {
+            if (isset($filters[$name]) && !empty($filters[$name])) {
+                $value = $filters[$name];
+                switch ($name) {
+                    case 'groups':
+                        foreach ($value as $index => $groupId) {
+                            $value[$index] = (int)$groupId;
+                        }
+                        $jsonValues = json_encode($value);
+                        $matches[] = "(anyUser)-[:BELONGS_TO]->(group:Group) WHERE id(group) IN $jsonValues";
+                        break;
+                    case 'compatibility':
+                        $valuePerOne = intval($value)/100;
+                        $conditions[] = "($valuePerOne <= matching_questions)";
+                        break;
+                    case 'similarity':
+                        $valuePerOne = intval($value)/100;
+                        $conditions[] = "($valuePerOne <= similarity)";
+                        break;
+                }
+            }
+        }
+
+        return array(
+            'conditions' => $conditions,
+            'matches' => $matches
+        );
+    }
 } 

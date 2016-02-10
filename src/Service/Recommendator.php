@@ -61,24 +61,25 @@ class Recommendator
             case 'Model\User\Thread\ContentThread':
 
                 /* @var $thread ContentThread */
-
+                $threadFilters = $thread->getFilterContent();
                 $filters = array('id' => $user['qnoow_id']);
 
-                if ($thread->getTag()) {
-                    $filters['tag'] = urldecode($thread->getTag());
+                if ($threadFilters->getTag()) {
+                    $filters['tag'] = urldecode($threadFilters->getTag());
                 }
 
-                $filters['type'] = urldecode($thread->getType());
+                $filters['type'] = urldecode($threadFilters->getType());
 
                 return $this->getContentRecommendation($filters);
 
                 break;
             case 'Model\User\Thread\UsersThread':
                 /* @var $thread UsersThread */
+                $threadFilters = $thread->getFilterUsers();
                 $filters = array(
                     'id' => $user['qnoow_id'],
-                    'profileFilters' => $thread->getProfileFilters(),
-                    'userFilters' => $thread->getUserFilters(),
+                    'profileFilters' => $threadFilters->getProfileFilters(),
+                    'userFilters' => $threadFilters->getUserFilters(),
                 );
 
                 return $this->getUserRecommendation($filters);
@@ -104,12 +105,13 @@ class Recommendator
                 /* @var $thread ContentThread */
 
                 $filters = array('id' => $user['qnoow_id']);
+                $threadFilters = $thread->getFilterContent();
 
-                if ($thread->getTag()) {
-                    $filters['tag'] = urldecode($thread->getTag());
+                if ($threadFilters->getTag()) {
+                    $filters['tag'] = urldecode($threadFilters->getTag());
                 }
 
-                $filters['type'] = urldecode($thread->getType());
+                $filters['type'] = urldecode($threadFilters->getType());
 
                 if ($request->get('foreign')) {
                     $filters['foreign'] = urldecode($request->get('foreign'));
@@ -122,10 +124,12 @@ class Recommendator
                 /* @var $thread UsersThread */
                 $order = $request->get('order', false);
 
+                /* @var $thread UsersThread */
+                $threadFilters = $thread->getFilterUsers();
                 $filters = array(
                     'id' => $user['qnoow_id'],
-                    'profileFilters' => $thread->getProfileFilters(),
-                    'userFilters' => $thread->getUserFilters(),
+                    'profileFilters' => $threadFilters->getProfileFilters(),
+                    'userFilters' => $threadFilters->getUserFilters(),
                 );
 
                 if ($order) {
