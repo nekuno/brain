@@ -188,7 +188,7 @@ class GroupModel
 
         if (!array_key_exists('date', $data)) {
             $errors['date'] = array('"date" is required');
-        } elseif (isset($data['date']) && (string)(int)$data['date'] !== (string)$data['date']) {
+        } elseif (isset($data['date']) && !(is_int($data['date']) || is_double($data['date']))) {
             $errors['date'] = array('"date" must be a valid timestamp');
         }
 

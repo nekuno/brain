@@ -73,7 +73,7 @@ class InvitationModel
 
     public function getById($id)
     {
-        if ((string)$id !== (string)(int)$id) {
+        if (!is_numeric($id)) {
             throw new \RuntimeException('invitationId ID must be an integer');
         }
 
@@ -143,10 +143,10 @@ class InvitationModel
 
     public function getPaginatedInvitations($offset, $limit)
     {
-        if ((string)$offset !== (string)(int)$offset) {
+        if (!is_numeric($offset)) {
             throw new \RuntimeException('offset must be an integer');
         }
-        if ((string)$limit !== (string)(int)$limit) {
+        if (!is_numeric($limit)) {
             throw new \RuntimeException('limit must be an integer');
         }
 
@@ -179,13 +179,13 @@ class InvitationModel
 
     public function getPaginatedInvitationsByUser($offset, $limit, $userId)
     {
-        if ((string)$offset !== (string)(int)$offset) {
+        if (!is_numeric($offset)) {
             throw new \RuntimeException('offset must be an integer');
         }
-        if ((string)$limit !== (string)(int)$limit) {
+        if (!is_numeric($limit)) {
             throw new \RuntimeException('limit must be an integer');
         }
-        if ((string)$userId !== (string)(int)$userId) {
+        if (!is_numeric($userId)) {
             throw new \RuntimeException('$userId ID must be an integer');
         }
 
@@ -398,7 +398,7 @@ class InvitationModel
 
     public function remove($invitationId)
     {
-        if (!is_int($invitationId)) {
+        if (!is_numeric($invitationId)) {
             throw new \RuntimeException('invitation ID must be an integer');
         }
         if (!$this->existsInvitation($invitationId)) {
@@ -439,7 +439,7 @@ class InvitationModel
         if (!is_numeric($token) && !is_string($token)) {
             throw new \RuntimeException('token must be numeric or string');
         }
-        if ((string)$userId !== (string)(int)$userId) {
+        if (!is_numeric($userId)) {
             throw new \RuntimeException('user ID must be an integer');
         }
 
@@ -472,10 +472,10 @@ class InvitationModel
 
     public function prepareSend($id, $userId, array $data, $socialHost)
     {
-        if ((string)$id !== (string)(int)$id) {
+        if (!is_numeric($id)) {
             throw new \RuntimeException('invitation ID must be an integer');
         }
-        if ((string)$userId !== (string)(int)$userId) {
+        if (!is_numeric($userId)) {
             throw new \RuntimeException('user ID must be an integer');
         }
 
@@ -501,10 +501,10 @@ class InvitationModel
     /* Not used but may needed to initialize available invitations */
     public function setUserAvailable($userId, $nOfAvailable)
     {
-        if ((string)$nOfAvailable !== (string)(int)$nOfAvailable) {
+        if (!is_numeric($nOfAvailable)) {
             throw new \RuntimeException('nOfAvailable must be an integer');
         }
-        if ((string)$userId !== (string)(int)$userId) {
+        if (!is_numeric($userId)) {
             throw new \RuntimeException('userId ID must be an integer');
         }
 
@@ -524,33 +524,9 @@ class InvitationModel
         $query->getResultSet();
     }
 
-    /* Already user in subscriber
-    public function addUserAvailable($userId, $nOfAvailable)
-    {
-        if((string)$nOfAvailable !== (string)(int)$nOfAvailable) {
-            throw new \RuntimeException('nOfAvailable must be an integer');
-        }
-        if((string)$userId !== (string)(int)$userId) {
-            throw new \RuntimeException('userId ID must be an integer');
-        }
-
-        $qb = $this->gm->createQueryBuilder();
-        $qb->match('(u:User)')
-            ->where('u.qnoow_id = { userId }')
-            ->set('u.available_invitations = u.available_invitations + { nOfAvailable }')
-            ->setParameters(array(
-                'nOfAvailable' => (integer)$nOfAvailable,
-                'userId' => (integer)$userId,
-            ));
-
-        $query = $qb->getQuery();
-
-        $query->getResultSet();
-    }*/
-
     public function getUserAvailable($userId)
     {
-        if ((string)$userId !== (string)(int)$userId) {
+        if (!is_numeric($userId)) {
             throw new \RuntimeException('userId ID must be an integer');
         }
 
@@ -578,10 +554,12 @@ class InvitationModel
     {
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->setParameters(array(
-            'token' => $token,
-            'available' => (integer)$available,
-        ));
+        $qb->setParameters(
+            array(
+                'token' => $token,
+                'available' => (integer)$available,
+            )
+        );
         $qb->match('(inv:Invitation)')
             ->where('inv.token = { token }')
             ->set('inv.available = { available }')
@@ -675,9 +653,9 @@ class InvitationModel
                             }
                             break;
                         case 'available':
-                            if ((string)(int)$fieldValue !== (string)$fieldValue) {
+                            if (!(is_int($fieldValue) || is_double($fieldValue))) {
                                 $fieldErrors[] = 'available must be an integer';
-                            } elseif ((int)$fieldValue < 0) {
+                            } elseif ((double)$fieldValue < 0) {
                                 $fieldErrors[] = 'available must be equal or greater than zero';
                             }
                             break;
@@ -687,12 +665,12 @@ class InvitationModel
                             }
                             break;
                         case 'expiresAt':
-                            if ((string)(int)$fieldValue !== (string)$fieldValue) {
+                            if (!(is_int($fieldValue) || is_double($fieldValue))) {
                                 $fieldErrors[] = 'expiresAt must be a valid timestamp';
                             }
                             break;
                         case 'groupId':
-                            if ((string)(int)$fieldValue !== (string)$fieldValue) {
+                            if (!(is_int($fieldValue) || is_double($fieldValue))) {
                                 $fieldErrors[] = 'groupId must be an integer';
                             } elseif (!$this->groupM->existsGroup($fieldValue)) {
                                 $fieldErrors[] = 'Invalid group ID';
@@ -725,7 +703,7 @@ class InvitationModel
                             break;
                         case 'userId':
                             if ($fieldValue) {
-                                if ((string)(int)$fieldValue !== (string)$fieldValue) {
+                                if (!(is_int($fieldValue) || is_double($fieldValue))) {
                                     $fieldErrors[] = 'userId must be an integer';
                                 } else {
                                     try {
