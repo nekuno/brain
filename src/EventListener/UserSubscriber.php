@@ -29,9 +29,8 @@ class UserSubscriber implements EventSubscriberInterface
     {
         $user = $event->getUser();
         $threads = $this->threadManager->getDefaultThreads();
-        foreach ($threads as $threadProperties) {
-            $this->threadManager->create($user['qnoow_id'], $threadProperties);
-            // TODO: Enqueue thread recomendation
-        }
+
+        $createdThreads = $this->threadManager->createBatchForUser($user['qnoow_id'], $threads);
+            // TODO: Enqueue thread recommendation
     }
 }

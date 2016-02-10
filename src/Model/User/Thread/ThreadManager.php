@@ -70,7 +70,7 @@ class ThreadManager
 
     /**
      * @param $userId
-     * @return array of Thread
+     * @return Thread[]
      * @throws \Exception
      * @throws \Model\Neo4j\Neo4jException
      */
@@ -209,6 +209,30 @@ class ThreadManager
     }
 
     /**
+     * @param $userId
+     * @param array $threadsData
+     * @return Thread[]
+     */
+    public function createBatchForUser($userId, array $threadsData)
+    {
+        $returnThreads=array();
+
+        $existingThreads = $this->getByUser($userId);
+
+        foreach ($threadsData as $threadData){
+            foreach ($existingThreads as $existingThread){
+                if ($threadData['name'] == $existingThread->getName()){
+                    continue 2;
+                }
+            }
+
+            $returnThreads[] = $this->create($userId, $threadData);
+        }
+
+        return $returnThreads;
+    }
+
+    /**
      * Creates an appropriate neo4j node from a set of filters
      * @param $userId
      * @param $data
@@ -217,7 +241,7 @@ class ThreadManager
      */
     public function create($userId, $data)
     {
-        //TODO: Avoid duplicate if coincidence of userId and name ?
+
         $name = isset($data['name']) ? $data['name'] : null;
         $category = isset($data['category']) ? $data['category'] : null;
         $this->validate(
