@@ -276,8 +276,15 @@ class InvitationModel
             $qb->match('(user:User)')
                 ->where('user.qnoow_id = { userId }')
                 ->createUnique('(user)-[r:CREATED_INVITATION]->(inv)')
-                ->set('user.available_invitations = { userAvailable } - 1')
-                ->setParameters(
+                ->set('user.available_invitations = { userAvailable } - 1');
+
+            if (isset($data['groupId'])){
+                $qb->with('user', 'inv', 'g');
+                $qb->optionalMatch('(gf:GroupFollowers)');
+                $qb->with('user', 'inv', 'g', 'collect(gf) as gfs');
+                $qb->add('FOREACH', '( g in gfs | SET user.available_invitations = { userAvailable } )');
+            }
+                $qb->setParameters(
                     array(
                         'userId' => (integer)$data['userId'],
                         'userAvailable' => (integer)$userAvailable,
