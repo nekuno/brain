@@ -215,7 +215,7 @@ class GroupModel
 
         if (!isset($data['location'])) {
             $errors['location'] = array('"location" is required');
-        } else if(!is_array($data['location'])) {
+        } elseif (!is_array($data['location'])) {
             $errors['location'] = sprintf('The value "%s" is not valid, it should be an array', $data['location']);
         } elseif (isset($data['location'])) {
             if (!array_key_exists('address', $data['location'])) {
@@ -542,7 +542,7 @@ class GroupModel
             ->returns('collect(id(g)) as groups');
         $result = $qb->getQuery()->getResultSet();
 
-        if ($result->count() == 0){
+        if ($result->count() == 0) {
             return array();
         }
 
@@ -580,8 +580,13 @@ class GroupModel
 
         /* @var $row Row */
         $row = $result->current();
-        $return['direct'] = $row->offsetGet('direct');
-        $return['inverse'] = $row->offsetGet('inverse');
+        foreach ($row->offsetGet('direct') as $item) {
+            $return['direct'][] = $item;
+        }
+
+        foreach ($row->offsetGet('inverse') as $inverse) {
+            $return['inverse'][] = $inverse;
+        }
 
         return $return;
     }
@@ -636,7 +641,7 @@ class GroupModel
             'usersCount' => $usersCount,
         );
 
-        if (in_array('GroupFollowers', $additionalLabels)){
+        if (in_array('GroupFollowers', $additionalLabels)) {
             $user = $this->um->getByCreatedGroup($group['id']);
             $group['influencer'] = array(
                 'username' => $user['username'],
@@ -650,11 +655,10 @@ class GroupModel
     protected function buildWithInvitationData(Row $row)
     {
         $return = $this->build($row);
-        if ($row->offsetExists('i'))
-        {
+        if ($row->offsetExists('i')) {
             $invitation = $row->offsetGet('i');
 
-            if ($invitation instanceof Node){
+            if ($invitation instanceof Node) {
                 $return += array(
                     'invitation_id' => $invitation->getId(),
                     'invitation_token' => $invitation->getProperty('token'),
