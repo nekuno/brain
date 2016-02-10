@@ -334,6 +334,12 @@ class FilterUsersManager
             unset($userFilters['groups']);
         }
 
+        foreach ($metadata as $name => $value){
+            if ($value['type'] == 'single_integer'){
+                $qb->set("filter.$name = null");
+            }
+        }
+
         foreach ($userFilters as $name => $value) {
             if (!isset($metadata[$name])) {
                 throw new \Exception(sprintf('Metadata with name %s does not exist', $name));
