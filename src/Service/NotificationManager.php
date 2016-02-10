@@ -12,7 +12,7 @@ class NotificationManager
      */
     protected $graphManager;
 
-    public function _construct(GraphManager $graphManager)
+    public function __construct(GraphManager $graphManager)
     {
         $this->graphManager = $graphManager;
     }
