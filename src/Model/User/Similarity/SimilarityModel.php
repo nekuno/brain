@@ -152,12 +152,12 @@ class SimilarityModel
             /* @var $row Row */
             $row = $result->current();
             /* @var $node Node */
-            $similarity['questions'] = $row->offsetGet('questions');
-            $similarity['interests'] = $row->offsetGet('interests');
-            $similarity['similarity'] = $row->offsetGet('similarity');
-            $similarity['questionsUpdated'] = $row->offsetGet('questionsUpdated');
-            $similarity['interestsUpdated'] = $row->offsetGet('interestsUpdated');
-            $similarity['similarityUpdated'] = $row->offsetGet('similarityUpdated');
+            $similarity['questions'] = $row->offsetExists('questions') ? $row->offsetGet('questions') : 0;
+            $similarity['interests'] = $row->offsetExists('interests') ? $row->offsetGet('interests') : 0;
+            $similarity['similarity'] = $row->offsetExists('similarity') ? $row->offsetGet('similarity') : 0;
+            $similarity['questionsUpdated'] = $row->offsetExists('questionsUpdated') ? $row->offsetGet('questionsUpdated') : 0;
+            $similarity['interestsUpdated'] = $row->offsetExists('interestsUpdated') ? $row->offsetGet('interestsUpdated') : 0;
+            $similarity['similarityUpdated'] = $row->offsetExists('similarityUpdated') ? $row->offsetGet('similarityUpdated') : 0;
         }
 
         return $similarity;
@@ -278,10 +278,10 @@ class SimilarityModel
         $questionLimit = 0;
         $contentLimit = 100;
 
-        try{
+        try {
             $profileA = $this->profileModel->getById($idA);
             $profileB = $this->profileModel->getById($idB);
-        } catch (NotFoundHttpException $e){
+        } catch (NotFoundHttpException $e) {
             $profileA = array();
             $profileB = array();
         }
