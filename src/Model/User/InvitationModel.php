@@ -161,7 +161,8 @@ class InvitationModel
             ->setParameters(
                 array(
                     'offset' => (integer)$offset,
-                    'limit' => (integer)$limit,
+                    // TODO: Refactor when using invitations pagination
+                    'limit' => 1000,
                 )
             );
 
@@ -199,7 +200,8 @@ class InvitationModel
             ->setParameters(
                 array(
                     'offset' => (integer)$offset,
-                    'limit' => (integer)$limit,
+                    // TODO: Refactor when using invitations pagination
+                    'limit' => 1000,
                     'userId' => (integer)$userId,
                 )
             );
