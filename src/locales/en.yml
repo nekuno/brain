@@ -25,7 +25,7 @@ notifications:
     follower_found:
       subject: '¡Acabamos de descubrir a alguien para tí!'
       body:
-        message: "¡Acabamos de descubrir que <a href=\"%url%\">%username%</a> es un follower con un %value% %% de %filter% contigo!"
+        message: "¡Acabamos de descubrir que <a href=\"%url%\">%username%</a> es un follower con un %value% % de %filter% contigo!"
   footer: 'Regards from Nekuno team'
 followers:
   invitation_slogan: 'Find out if you are %compatible_or_similar% with %username%!'
