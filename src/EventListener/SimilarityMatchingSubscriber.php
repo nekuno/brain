@@ -76,10 +76,10 @@ class SimilarityMatchingSubscriber implements EventSubscriberInterface
         $groupsFollowers = $this->groupModel->getIsGroupFollowersOf($event->getUser1(), $event->getUser2());
 
         // Groups in which 1 is follower and 2 is influencer (group creator)
-        $this->handleGroups($groupsFollowers['direct'], $event->getUser1(), $event->getUser2(), 'matching', $event->getMatching());
+        $this->handleGroups($groupsFollowers['direct'], $event->getUser1(), $event->getUser2(), 'compatibility', $event->getMatching());
 
         // Groups in which 2 is follower and 1 is influencer (group creator)
-        $this->handleGroups($groupsFollowers['inverse'], $event->getUser2(), $event->getUser1(), 'matching', $event->getMatching());
+        $this->handleGroups($groupsFollowers['inverse'], $event->getUser2(), $event->getUser1(), 'compatibility', $event->getMatching());
     }
 
     public function onSimilarityUpdated(SimilarityEvent $event)
