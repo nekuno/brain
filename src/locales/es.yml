@@ -21,11 +21,11 @@ notifications:
     influencer_found:
       subject: '¡Que suerte! Acabamos de descubrir a alguien para tí.'
       body:
-        message: "¡Que suerte! Acabamos de descubrir que superas el porcentaje mínimo exigido por <a href=\"%url%\">%username%</a> para que puedas enviarle un mensaje. Se original y enviale algo que sólo tú podrías decir, ¡Por que es a ti a quien busca!"
+        message: "¡Que suerte! Acabamos de descubrir que superas el porcentaje mínimo exigido por <a href=\"%urlOther%\">%usernameOther%</a> para que puedas enviarle un mensaje. Se original y enviale algo que sólo tú podrías decir, ¡Por que es a ti a quien busca!"
     follower_found:
       subject: '¡Acabamos de descubrir a alguien para tí!'
       body:
-        message: "¡Acabamos de descubrir que <a href=\"%url%\">%username%</a> es un follower con un %value% % de %filter% contigo!"
+        message: "¡Acabamos de descubrir que <a href=\"%urlOther%\">%usernameOther%</a> es un follower con un %value%% de %filter% contigo!"
   footer: 'Saludos del equipo de Nekuno'
 followers:
   invitation_slogan: '¡Descubre si eres %compatible_or_similar% con %username%!'
