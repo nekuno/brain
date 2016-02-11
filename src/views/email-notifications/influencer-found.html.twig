@@ -1,7 +1,7 @@
-{% include 'email-notifications/partials/header-notification.html.twig' with { 'username': email } %}
+{% include 'email-notifications/partials/header-notification.html.twig' with { 'username': username } %}
 
 
-<p>{{ 'notifications.messages.influencer_found.body.message'|trans({'%username%': username, '%url%': url, '%filter%': filter, '%value%': value|round})|raw }}</p>
+<p>{{ 'notifications.messages.influencer_found.body.message'|trans({'%username%': username, '%email%': email, '%usernameOther%': usernameOther, '%emailOther%': emailOther, '%urlOther%': urlOther, '%filter%': filter, '%value%': value|round})|raw }}</p>
 
 
 {% include 'email-notifications/partials/footer-notification.html.twig' %}

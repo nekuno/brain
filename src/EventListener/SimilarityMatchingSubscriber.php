@@ -123,12 +123,16 @@ class SimilarityMatchingSubscriber implements EventSubscriberInterface
         $user = $this->userModel->getById($follower);
         $username = $user['username'];
         $email = $user['email'];
-        $url = $this->socialHost . 'profile/show/' . $influencer;
 
         $profile = $this->profileModel->getById($follower);
         if (isset($profile['interfaceLanguage'])) {
             $this->translator->setLocale($profile['interfaceLanguage']);
         }
+
+        $userOther = $this->userModel->getById($influencer);
+        $usernameOther = $userOther['username'];
+        $emailOther = $userOther['email'];
+        $urlOther = $this->socialHost . 'profile/show/' . $influencer;
 
         $info = array(
             'follower' => $follower,
@@ -137,7 +141,9 @@ class SimilarityMatchingSubscriber implements EventSubscriberInterface
             'value' => $value,
             'username' => $username,
             'email' => $email,
-            'url' => $url,
+            'usernameOther' => $usernameOther,
+            'emailOther' => $emailOther,
+            'urlOther' => $urlOther,
         );
 
         $recipients = $this->emailNotifications->send(
@@ -158,12 +164,16 @@ class SimilarityMatchingSubscriber implements EventSubscriberInterface
         $user = $this->userModel->getById($influencer);
         $username = $user['username'];
         $email = $user['email'];
-        $url = $this->socialHost . 'profile/show/' . $follower;
 
         $profile = $this->profileModel->getById($influencer);
         if (isset($profile['interfaceLanguage'])) {
             $this->translator->setLocale($profile['interfaceLanguage']);
         }
+
+        $userOther = $this->userModel->getById($follower);
+        $usernameOther = $userOther['username'];
+        $emailOther = $userOther['email'];
+        $urlOther = $this->socialHost . 'profile/show/' . $follower;
 
         $info = array(
             'follower' => $follower,
@@ -172,7 +182,9 @@ class SimilarityMatchingSubscriber implements EventSubscriberInterface
             'value' => $value,
             'username' => $username,
             'email' => $email,
-            'url' => $url,
+            'usernameOther' => $usernameOther,
+            'emailOther' => $emailOther,
+            'urlOther' => $urlOther,
         );
 
         $recipients = $this->emailNotifications->send(
