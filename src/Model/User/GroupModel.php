@@ -398,6 +398,7 @@ class GroupModel
         $qb->match('(g:Group)', '(eu:EnterpriseUser)')
             ->where('id(g) = { id } AND eu.admin_id = { enterpriseUserId }')
             ->merge('(g)<-[:CREATED_GROUP]-(eu)')
+            ->with('g')
             ->optionalMatch('(g)-[:LOCATION]->(l:Location)')
             ->optionalMatch('(g)-[:HAS_FILTER]->(f:FilterUsers)')
             ->setParameters(
