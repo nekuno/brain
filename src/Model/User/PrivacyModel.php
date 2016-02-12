@@ -347,11 +347,11 @@ class PrivacyModel
                         if (isset($options[$fieldName])) {
                             $options[$fieldName]->delete();
                         }
-                        if (!is_null($fieldValue['key'])) {
+                        if (isset($fieldValue['key'])) {
                             $optionNode = $this->getPrivacyOptionNode($fieldValue['key'], $fieldName);
                             $relationship = $optionNode->relateTo($privacyNode, 'OPTION_OF');
 
-                            if (!is_null($fieldValue['value'])) {
+                            if (isset($fieldValue['value'])) {
                                 $relationship->setProperty('value', $fieldValue['value']);
                             }
                             $relationship->save();
