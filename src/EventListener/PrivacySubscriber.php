@@ -118,7 +118,9 @@ class PrivacySubscriber implements EventSubscriberInterface
                 $this->invitationModel->setAvailableInvitations($group['invitation_token'], InvitationModel::MAX_AVAILABLE);
             } else {
                 $group = $this->groupModel->create($groupData);
-                $picture = isset($influencer['picture']) ? $influencer['picture'] : 'media/cache/user_avatar_180x180/bundles/qnoowweb/images/user-no-img.jpg';
+                $picture = isset($influencer['picture']) ?
+                    'media/cache/resolve/user_avatar_180x180/user/images/' . $influencer['picture']
+                    : 'media/cache/user_avatar_180x180/bundles/qnoowweb/images/user-no-img.jpg';
                 $compatibleOrSimilar = $typeMatching === 'compatibility' ? 'compatible' : 'similar';
                 $slogan = $this->translator->trans('followers.invitation_slogan', array('%username%' => $influencer['username'], '%compatible_or_similar%' => $compatibleOrSimilar));
                 $invitationData = array(
