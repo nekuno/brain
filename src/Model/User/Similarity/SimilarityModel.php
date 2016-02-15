@@ -170,8 +170,8 @@ class SimilarityModel
         $qb
             ->match('(userA:User {qnoow_id: { idA } }), (userB:User {qnoow_id: { idB } })')
             ->where('userA <> userB')
-            ->match('(userA)-[:ANSWERS]-(answerA:Answer)-[:IS_ANSWER_OF]-(q:Question)')
-            ->match('(userB)-[:ANSWERS]-(answerB:Answer)-[:IS_ANSWER_OF]-(q)')
+            ->optionalMatch('(userA)-[:ANSWERS]-(answerA:Answer)-[:IS_ANSWER_OF]-(q:Question)')
+            ->optionalMatch('(userB)-[:ANSWERS]-(answerB:Answer)-[:IS_ANSWER_OF]-(q)')
             ->with('userA, userB, q, CASE WHEN answerA = answerB THEN 1 ELSE 0 END AS equal')
             ->with('userA, userB, toFloat(COUNT(q)) AS PC, toFloat(SUM(equal)) AS RI')
             ->with('userA, userB, CASE WHEN PC <= 0 THEN toFloat(0) ELSE RI/PC - 1/PC END AS similarity')
@@ -217,24 +217,26 @@ class SimilarityModel
         $qb
             ->match('(userA:User {qnoow_id: { idA } }), (userB:User {qnoow_id: { idB } })')
             ->where('userA <> userB')
-            ->match('(userA)-[:LIKES]-(l:Link)-[:LIKES]-(userB)')
+            ->optionalMatch('(userA)-[:LIKES]-(l:Link)-[:LIKES]-(userB)')
             ->where('HAS(l.unpopularity)')
             ->with('userA, userB, COUNT(DISTINCT l) AS numberCommonContent, SUM(l.unpopularity) AS common')
-            ->where('numberCommonContent > 4')
-            ->with('userA, userB, common');
+            ->with('userA', 'userB', 'CASE WHEN numberCommonContent > 4 THEN true ELSE false END AS valid', 'common')
+            ->with('userA', 'userB', 'valid', 'CASE WHEN valid THEN common ELSE 1 END AS common') //prevents divide by zero
+            ->with('userA', 'userB','valid', 'common');
 
         $qb
             ->optionalMatch('(userA)-[:LIKES]-(l1:Link)')
             ->where('NOT (userB)-[:LIKES]->(l1) AND HAS(l1.popularity)')
-            ->with('userA, userB, common, SUM(l1.popularity) AS onlyUserA');
+            ->with('userA, userB, valid, common, SUM(l1.popularity) AS onlyUserA');
 
         $qb
             ->optionalMatch('(userB)-[:LIKES]-(l2:Link)')
             ->where('NOT (userA)-[:LIKES]->(l2) AND HAS(l2.popularity)')
-            ->with(' userA, userB, common, onlyUserA, SUM(l2.popularity) AS onlyUserB');
+            ->with(' userA, userB, valid, common, onlyUserA, SUM(l2.popularity) AS onlyUserB');
 
         $qb
-            ->with('userA, userB, sqrt( common / (onlyUserA + common)) * sqrt( common / (onlyUserB + common)) AS similarity');
+            ->with('userA, userB, valid, sqrt( common / (onlyUserA + common)) * sqrt( common / (onlyUserB + common)) AS similarity')
+            ->with('userA', 'userB', 'CASE WHEN valid THEN similarity ELSE 0 END AS similarity');
 
         $qb
             ->merge('(userA)-[s:SIMILARITY]-(userB)')
