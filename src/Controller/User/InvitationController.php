@@ -72,10 +72,7 @@ class InvitationController
 
         /* @var $model InvitationModel */
         $model = $app['users.invitations.model'];
-        /** @var  $TokenGenerator \Service\TokenGenerator */
-        $tokenGenerator = $app['tokenGenerator.service'];
-
-        $invitation = $model->create($data, $tokenGenerator);
+        $invitation = $model->create($data);
 
         return $app->json($invitation, 201);
     }
