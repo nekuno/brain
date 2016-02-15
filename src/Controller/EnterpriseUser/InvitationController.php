@@ -51,7 +51,7 @@ class InvitationController
             throw new NotFoundHttpException(sprintf('There is not enterprise user with id "%s"', $enterpriseUserId));
         }
 
-        $invitation = $this->im->create($data, $app['tokenGenerator.service']);
+        $invitation = $this->im->create($data);
 
         return $app->json($invitation, 201);
     }

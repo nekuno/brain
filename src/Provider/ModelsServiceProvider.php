@@ -300,7 +300,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
 
         $app['users.invitations.model'] = $app->share(
             function ($app) {
-                return new InvitationModel($app['neo4j.graph_manager'], $app['users.groups.model'], $app['users.model'], $app['admin_domain_plus_post']);
+                return new InvitationModel($app['tokenGenerator.service'], $app['neo4j.graph_manager'], $app['users.groups.model'], $app['users.model'], $app['admin_domain_plus_post']);
             }
         );
 
