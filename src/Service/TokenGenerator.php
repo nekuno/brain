@@ -28,9 +28,9 @@ class TokenGenerator
         }
     }
 
-    public function generateToken()
+    public function generateToken($length = 5)
     {
-        return rtrim(strtr(base64_encode($this->getRandomNumber()), '+/', '-_'), '=');
+        return substr(rtrim(strtr(base64_encode($this->getRandomNumber()), '+/', '-_'), '='), 0, $length);
     }
 
     private function getRandomNumber()
