@@ -14,7 +14,6 @@ use Model\User\InvitationModel;
 use Model\User\PrivacyModel;
 use Psr\Log\LoggerInterface;
 use Silex\Application;
-use Service\TokenGenerator;
 
 class Fixtures
 {
@@ -87,11 +86,6 @@ class Fixtures
     protected $im;
 
     /**
-     * @var TokenGenerator
-     */
-    protected $tg;
-
-    /**
      * @var array
      */
     protected $scenario = array();
@@ -120,7 +114,6 @@ class Fixtures
         $this->pm = $app['users.profile.model'];
         $this->prim = $app['users.privacy.model'];
         $this->rm = $app['users.rate.model'];
-        $this->tg = $app['tokenGenerator.service'];
         $this->scenario = $scenario;
     }
 
@@ -244,7 +237,7 @@ class Fixtures
                 'orientationRequired' => false,
                 'available' => 100,
             );
-            $invitation = $this->im->create($invitationData, $this->tg);
+            $invitation = $this->im->create($invitationData);
 
             foreach ($this->um->getAll() as $index => $user) {
                 if ($index > 25) {
