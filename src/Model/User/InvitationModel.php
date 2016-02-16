@@ -619,6 +619,28 @@ class InvitationModel
         return $result->count() > 0;
     }
 
+    /**
+     * @param $token
+     * @param $id
+     * @return string
+     * @throws \Model\Neo4j\Neo4jException
+     */
+    protected function isTokenFromInvitationId($token, $id)
+    {
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(invitation:Invitation)')
+            ->where('id(invitation) = { id }')
+            ->setParameter('id', (integer)$id)
+            ->returns('invitation.token AS token');
+
+        $query = $qb->getQuery();
+
+        $result = $query->getResultSet();
+
+        return $result->current()->offsetGet('token') === $token;
+    }
+
     public function validateToken($token)
     {
 
@@ -694,7 +716,9 @@ class InvitationModel
                                 $fieldErrors[] = 'token must be a string or a numeric';
                             }
                             if ($this->existsToken($fieldValue)) {
-                                $fieldErrors[] = 'token already exists';
+                                if (!$this->isAnUpdate($data) || !$this->isTokenFromInvitationId($fieldValue, $data['invitationId'])) {
+                                    $fieldErrors[] = 'token already exists';
+                                }
                             }
                             break;
                         case 'available':
@@ -914,5 +938,10 @@ class InvitationModel
         $row = $result->current();
 
         return (integer)$row->offsetGet('available');
+    }
+
+    protected function isAnUpdate($data)
+    {
+        return isset($data['invitationId']);
     }
 }
