@@ -22,6 +22,7 @@ use Silex\Provider\UrlGeneratorServiceProvider;
 use Silex\Provider\ValidatorServiceProvider;
 use Silex\Provider\TwigServiceProvider;
 use Silex\Provider\TranslationServiceProvider;
+use Sorien\Provider\PimpleDumpProvider;
 
 $app = new Application();
 
@@ -52,5 +53,6 @@ $app->register(new ConfigServiceProvider(__DIR__ . "/../config/fields.yml", arra
 $app->register(new SubscribersServiceProvider());
 $app->register(new ServicesServiceProvider());
 $app->register(new ModelsServiceProvider());
+$app->register(new PimpleDumpProvider());
 
 return $app;
