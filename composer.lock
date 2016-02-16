@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "2f0972af877e3fdc1294431a5b20989a",
-    "content-hash": "50cc00cc8df6b01ce2d2d3849ee0cbac",
+    "hash": "2904bb0db998cee01c4f650ec02091ba",
+    "content-hash": "7e4c2252d040763e0b2ebbb1014b3c23",
     "packages": [
         {
             "name": "dflydev/doctrine-orm-service-provider",
@@ -768,7 +768,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/google/google-api-php-client/zipball/abeddc079e3ca32b3aee53acc3dd0ba83b31702c",
+                "url": "https://api.github.com/repos/google/google-api-php-client/zipball/91afc209835afb0e3795d98c82a9701b6fc3abea",
                 "reference": "bf58f98b5ee2ae14139792d921fb84de01c97a85",
                 "shasum": ""
             },
@@ -1066,7 +1066,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/KnpLabs/ConsoleServiceProvider/zipball/1f1a3315409814d01702a47a8823549c6996de41",
+                "url": "https://api.github.com/repos/KnpLabs/ConsoleServiceProvider/zipball/7a839206270755483f6a06a6cfb3308fa6f9c562",
                 "reference": "1f1a3315409814d01702a47a8823549c6996de41",
                 "shasum": ""
             },
@@ -1383,6 +1383,48 @@
             "description": "A WebProfiler for Silex",
             "homepage": "http://silex.sensiolabs.org/",
             "time": "2014-11-24 08:26:12"
+        },
+        {
+            "name": "sorien/silex-pimple-dumper",
+            "version": "1.0.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Sorien/silex-pimple-dumper.git",
+                "reference": "867b47181aab86b79cc78bad953419c1a327b2c6"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Sorien/silex-pimple-dumper/zipball/867b47181aab86b79cc78bad953419c1a327b2c6",
+                "reference": "867b47181aab86b79cc78bad953419c1a327b2c6",
+                "shasum": ""
+            },
+            "require-dev": {
+                "silex/silex": "~1.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Sorien\\Provider\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Stanislav Turza",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Pimple File Dumper - Helper Provider for Silex Idea Plugin",
+            "keywords": [
+                "dumper",
+                "idea",
+                "plugin",
+                "silex"
+            ],
+            "time": "2015-11-11 07:16:28"
         },
         {
             "name": "swiftmailer/swiftmailer",
@@ -2448,12 +2490,12 @@
             "target-dir": "Symfony/Component/Routing",
             "source": {
                 "type": "git",
-                "url": "https://github.com/symfony/Routing.git",
+                "url": "https://github.com/symfony/routing.git",
                 "reference": "47e350dadadabdf64c8dbab499a1132c567f9411"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/Routing/zipball/47e350dadadabdf64c8dbab499a1132c567f9411",
+                "url": "https://api.github.com/repos/symfony/routing/zipball/47e350dadadabdf64c8dbab499a1132c567f9411",
                 "reference": "47e350dadadabdf64c8dbab499a1132c567f9411",
                 "shasum": ""
             },
@@ -2957,12 +2999,12 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://github.com/videlalvaro/php-amqplib.git",
-                "reference": "f11232f664db841a5ccb63de270925fbc2b766d3"
+                "url": "https://github.com/php-amqplib/php-amqplib.git",
+                "reference": "a0b99e0b5d728a33c419617d18625ae27c5721f3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/videlalvaro/php-amqplib/zipball/d6bda387d753b04b134c038a2a5c78b97bfea45a",
+                "url": "https://api.github.com/repos/php-amqplib/php-amqplib/zipball/a0b99e0b5d728a33c419617d18625ae27c5721f3",
                 "reference": "f11232f664db841a5ccb63de270925fbc2b766d3",
                 "shasum": ""
             },

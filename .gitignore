@@ -2,4 +2,4 @@
 /vendor
 /config/params.yml
 /csv
-neo4j-community-*
+/pimple.json
