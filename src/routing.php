@@ -6,6 +6,11 @@ use Model\User\RelationsModel;
 /* @var $controllers \Silex\Controller */
 $controllers = $app['controllers'];
 
+/**
+ * Only client and social routes
+ */
+
+/** User Routes */
 $app->match('{url}', 'auth.controller:preflightAction')->assert('url', '.+')->method('OPTIONS');
 $app->post('/login', 'auth.controller:loginAction');
 
@@ -98,9 +103,7 @@ $app->post('/answers/validate', 'users.answers.controller:validateAction');
 
 $app->get('/users/{userId}/data/status', 'users.data.controller:getStatusAction')->value('resourceOwner', null);
 
-/**
- * Questionnaire routes
- */
+/** Questionnaire routes */
 $app->get('/questionnaire/questions', 'questionnaire.questions.controller:getQuestionsAction')->value('limit', 20); //TODO: Remove
 $app->get('/questionnaire/questions/next', 'questionnaire.questions.controller:getNextQuestionAction');
 $app->get('/questionnaire/questions/register', 'questionnaire.questions.controller:getDivisiveQuestionsAction');
@@ -111,56 +114,76 @@ $app->get('/questionnaire/questions/{id}/stats', 'questionnaire.questions.contro
 $app->post('/questionnaire/questions/{id}/skip', 'questionnaire.questions.controller:skipAction');
 $app->post('/questionnaire/questions/{id}/report', 'questionnaire.questions.controller:reportAction');
 
-/**
- * Content routes
- */
+/** Content routes */
 $app->post('/add/links', 'fetch.controller:addLinkAction');
 $app->get('/fetch/links', 'fetch.controller:fetchLinksAction')->value('userId', null)->value('resource', null);
 
-/**
- * Group routes
- */
-$app->get('/groups', 'users.groups.controller:getAllAction');
-$app->get('/groups/{id}', 'users.groups.controller:getAction');
-$app->post('/groups', 'users.groups.controller:postAction');
-$app->put('/groups/{id}', 'users.groups.controller:putAction');
-$app->delete('/groups/{id}', 'users.groups.controller:deleteAction');
-$app->post('/groups/validate', 'users.groups.controller:validateAction');
+/** LookUp routes */
+$app->get('/lookUp', 'lookUp.controller:getAction');
+$app->post('lookUp/users/{id}', 'lookUp.controller:setAction');
+
+$app->post('/lookUp/webHook', 'lookUp.controller:setFromWebHookAction')->bind('setLookUpFromWebHook');
+
+/** Thread routes */
+$app->get('/threads/{id}/recommendation', 'users.threads.controller:getRecommendationAction');
+$app->put('/threads/{id}', 'users.threads.controller:putAction');
+$app->delete('/threads/{id}', 'users.threads.controller:deleteAction');
+
+/** Group routes */
 $app->get('/groups/{id}/members', 'users.groups.controller:getMembersAction');
 $app->post('/groups/{id}/users/{userId}', 'users.groups.controller:addUserAction');
 $app->delete('/groups/{id}/users/{userId}', 'users.groups.controller:removeUserAction');
 
-/**
- * Invitation routes
- */
-$app->get('/invitations', 'users.invitations.controller:indexAction');
+/** Invitation routes */
+// TODO: Beware before refactoring this route that admin uses '/invitations' route
 $app->get('/user/{id}/invitations', 'users.invitations.controller:indexByUserAction');
 $app->get('/user/{id}/invitations/available', 'users.invitations.controller:getAvailableByUserAction');
 $app->post('/user/{id}/invitations/available/{nOfAvailable}', 'users.invitations.controller:setUserAvailableAction');
-$app->get('/invitations/{id}', 'users.invitations.controller:getAction');
-$app->post('/invitations', 'users.invitations.controller:postAction');
-$app->put('/invitations/{id}', 'users.invitations.controller:putAction');
-$app->delete('/invitations/{id}', 'users.invitations.controller:deleteAction');
-$app->delete('/invitations', 'users.invitations.controller:deleteAllAction');
-$app->post('/invitations/validate', 'users.invitations.controller:validateAction');
+
 $app->post('/invitations/token/validate/{token}', 'users.invitations.controller:validateTokenAction');
 $app->post('/user/{userId}/invitations/consume/{token}', 'users.invitations.controller:consumeAction');
 $app->get('/invitations/count', 'users.invitations.controller:countTotalAction');
 $app->get('/invitations/users/{id}/count', 'users.invitations.controller:countByUserAction');
 $app->post('/invitations/{id}/users/{userId}/send', 'users.invitations.controller:sendAction');
 
+
 /**
- * EnterpriseUser routes
+ * Client, social and admin routes (shared routes)
  */
+
+/** Group routes */
+$app->get('/groups/{id}', 'users.groups.controller:getAction');
+
+/** Invitation routes */
+$app->get('/invitations/{id}', 'users.invitations.controller:getAction');
+$app->post('/invitations', 'users.invitations.controller:postAction');
+$app->put('/invitations/{id}', 'users.invitations.controller:putAction');
+$app->delete('/invitations/{id}', 'users.invitations.controller:deleteAction');
+$app->post('/invitations/validate', 'users.invitations.controller:validateAction');
+
+
+/**
+ * Admin routes
+ */
+
+/** Group routes */
+$app->get('/groups', 'users.groups.controller:getAllAction');
+$app->post('/groups', 'users.groups.controller:postAction');
+$app->put('/groups/{id}', 'users.groups.controller:putAction');
+$app->delete('/groups/{id}', 'users.groups.controller:deleteAction');
+$app->post('/groups/validate', 'users.groups.controller:validateAction');
+
+/** Invitation routes */
+$app->get('/invitations', 'users.invitations.controller:indexAction');
+
+/** EnterpriseUser routes */
 $app->get('/enterpriseUsers/{id}', 'enterpriseUsers.controller:getAction');
 $app->post('/enterpriseUsers', 'enterpriseUsers.controller:postAction');
 $app->put('/enterpriseUsers/{id}', 'enterpriseUsers.controller:putAction');
 $app->delete('/enterpriseUsers/{id}', 'enterpriseUsers.controller:deleteAction');
 $app->post('/enterpriseUsers/{id}', 'enterpriseUsers.controller:validateAction');
 
-/**
- * EnterpriseUser Group routes
- */
+/** EnterpriseUser Group routes */
 $app->get('/enterpriseUsers/{enterpriseUserId}/groups', 'enterpriseUsers.groups.controller:getAllAction');
 $app->get('/enterpriseUsers/{enterpriseUserId}/groups/{id}', 'enterpriseUsers.groups.controller:getAction');
 $app->post('/enterpriseUsers/{enterpriseUserId}/groups', 'enterpriseUsers.groups.controller:postAction');
@@ -169,30 +192,12 @@ $app->delete('/enterpriseUsers/{enterpriseUserId}/groups/{id}', 'enterpriseUsers
 $app->post('/enterpriseUsers/{enterpriseUserId}/groups/{id}', 'enterpriseUsers.groups.controller:validateAction');
 $app->get('/enterpriseUsers/groups/{id}/communities', 'enterpriseUsers.communities.controller:getByGroupAction');
 
-/**
- * EnterpriseUser Invitation routes
- */
+/** EnterpriseUser Invitation routes */
 $app->post('/enterpriseUsers/{enterpriseUserId}/invitations', 'enterpriseUsers.invitations.controller:postAction');
 $app->delete('/enterpriseUsers/{enterpriseUserId}/invitations/{id}', 'enterpriseUsers.invitations.controller:deleteAction');
 $app->get('/enterpriseUsers/{enterpriseUserId}/invitations/{id}', 'enterpriseUsers.invitations.controller:getAction');
 $app->put('/enterpriseUsers/{enterpriseUserId}/invitations/{id}', 'enterpriseUsers.invitations.controller:putAction');
 $app->post('/enterpriseUsers/{enterpriseUserId}/invitations/{id}', 'enterpriseUsers.invitations.controller:validateAction');
-
-/**
- * LookUp routes
- */
-$app->get('/lookUp', 'lookUp.controller:getAction');
-$app->post('lookUp/users/{id}', 'lookUp.controller:setAction');
-
-$app->post('/lookUp/webHook', 'lookUp.controller:setFromWebHookAction')->bind('setLookUpFromWebHook');
-
-/**
- * Thread routes
- */
-
-$app->get('/threads/{id}/recommendation', 'users.threads.controller:getRecommendationAction');
-$app->put('/threads/{id}', 'users.threads.controller:putAction');
-$app->delete('/threads/{id}', 'users.threads.controller:deleteAction');
 
 $controllers
     ->assert('id', '\d+')

@@ -124,13 +124,13 @@ class FilterClientIpSubscriber implements EventSubscriberInterface
             'enterpriseUsers.invitations.controller:validateAction',
             'users.groups.controller:getAllAction',
             'users.groups.controller:postAction',
+            'users.groups.controller:putAction',
             'users.groups.controller:deleteAction',
             'users.groups.controller:validateAction',
-
+            'users.invitations.controller:indexAction',
         );
 
         $this->sharedActions = array(
-            'users.invitations.controller:indexAction',
             'users.invitations.controller:getAction',
             'users.invitations.controller:postAction',
             'users.invitations.controller:putAction',
