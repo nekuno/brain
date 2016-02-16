@@ -92,6 +92,35 @@ $app['users.relations.controller'] = $app->share(
     }
 );
 
+
+$app['fetch.controller'] = $app->share(
+    function () {
+
+        return new Controller\FetchController;
+    }
+);
+
+$app['lookUp.controller'] = $app->share(
+    function () use ($app) {
+
+        return new \Controller\User\LookUpController($app['users.lookup.model']);
+    }
+);
+
+$app['admin.groups.controller'] = $app->share(
+    function () use ($app) {
+
+        return new \Controller\Admin\GroupController($app['users.groups.model']);
+    }
+);
+
+$app['admin.invitations.controller'] = $app->share(
+    function () use ($app) {
+
+        return new \Controller\Admin\InvitationController;
+    }
+);
+
 $app['enterpriseUsers.controller'] = $app->share(
     function () use ($app) {
 
@@ -120,19 +149,6 @@ $app['enterpriseUsers.invitations.controller'] = $app->share(
     }
 );
 
-$app['fetch.controller'] = $app->share(
-    function () {
-
-        return new Controller\FetchController;
-    }
-);
-
-$app['lookUp.controller'] = $app->share(
-    function () use ($app) {
-
-        return new \Controller\User\LookUpController($app['users.lookup.model']);
-    }
-);
 
 /**
  * Middleware for filter some request

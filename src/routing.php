@@ -167,14 +167,14 @@ $app->post('/invitations/validate', 'users.invitations.controller:validateAction
  */
 
 /** Group routes */
-$app->get('/groups', 'users.groups.controller:getAllAction');
-$app->post('/groups', 'users.groups.controller:postAction');
-$app->put('/groups/{id}', 'users.groups.controller:putAction');
-$app->delete('/groups/{id}', 'users.groups.controller:deleteAction');
-$app->post('/groups/validate', 'users.groups.controller:validateAction');
+$app->get('/groups', 'admin.groups.controller:getAllAction');
+$app->post('/groups', 'admin.groups.controller:postAction');
+$app->put('/groups/{id}', 'admin.groups.controller:putAction');
+$app->delete('/groups/{id}', 'admin.groups.controller:deleteAction');
+$app->post('/groups/validate', 'admin.groups.controller:validateAction');
 
 /** Invitation routes */
-$app->get('/invitations', 'users.invitations.controller:indexAction');
+$app->get('/invitations', 'admin.invitations.controller:indexAction');
 
 /** EnterpriseUser routes */
 $app->get('/enterpriseUsers/{id}', 'enterpriseUsers.controller:getAction');
