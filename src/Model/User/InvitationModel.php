@@ -20,6 +20,12 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class InvitationModel
 {
+
+    /**
+     * @var TokenGenerator
+     */
+    protected $tokenGenerator;
+
     /**
      * @var GraphManager
      */
@@ -42,8 +48,9 @@ class InvitationModel
 
     const MAX_AVAILABLE = 9999999999;
 
-    public function __construct(GraphManager $gm, GroupModel $groupModel, UserModel $um, $adminDomain)
+    public function __construct(TokenGenerator $tokenGenerator, GraphManager $gm, GroupModel $groupModel, UserModel $um, $adminDomain)
     {
+        $this->tokenGenerator = $tokenGenerator;
         $this->gm = $gm;
         $this->groupM = $groupModel;
         $this->um = $um;
@@ -218,7 +225,7 @@ class InvitationModel
         return $invitations;
     }
 
-    public function create(array $data, TokenGenerator $tokenGenerator)
+    public function create(array $data)
     {
         $this->validate($data, false);
 
@@ -239,7 +246,11 @@ class InvitationModel
             if ($index === 'token') {
                 // set auto-created token if invitation has user or token is not set
                 if (isset($data['userId']) || !$data['token']) {
-                    $qb->set('inv.token = "' . $tokenGenerator->generateToken() . '"');
+                    do {
+                        $token = $this->tokenGenerator->generateToken();
+                        $exists = $this->existsToken($token);
+                    } while ($exists);
+                    $qb->set('inv.token = "' . $token . '"');
                     continue;
                 }
             }
@@ -280,19 +291,19 @@ class InvitationModel
                 ->createUnique('(user)-[r:CREATED_INVITATION]->(inv)')
                 ->set('user.available_invitations = { userAvailable } - 1');
 
-            if (isset($data['groupId'])){
+            if (isset($data['groupId'])) {
                 $qb->with('user', 'inv', 'g');
                 $qb->optionalMatch('(gf:GroupFollowers)');
                 $qb->with('user', 'inv', 'g', 'collect(gf) as gfs');
                 $qb->add('FOREACH', '( g in gfs | SET user.available_invitations = { userAvailable } )');
             }
-                $qb->setParameters(
-                    array(
-                        'userId' => (integer)$data['userId'],
-                        'userAvailable' => (integer)$userAvailable,
-                        'groupId' => (integer)$data['groupId'],
-                    )
-                );
+            $qb->setParameters(
+                array(
+                    'userId' => (integer)$data['userId'],
+                    'userAvailable' => (integer)$userAvailable,
+                    'groupId' => (integer)$data['groupId'],
+                )
+            );
         }
         if (isset($data['groupId'])) {
             $qb->returns('inv AS invitation', 'g AS group');
@@ -587,8 +598,30 @@ class InvitationModel
         throw new NotFoundHttpException(sprintf('Invitation with token %s not found', $token));
     }
 
+    /**
+     * @param $token
+     * @return bool
+     * @throws \Model\Neo4j\Neo4jException
+     */
+    public function existsToken($token)
+    {
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(invitation:Invitation)')
+            ->where('invitation.token = { token }')
+            ->setParameter('token', (string)$token)
+            ->returns('invitation');
+
+        $query = $qb->getQuery();
+
+        $result = $query->getResultSet();
+
+        return $result->count() > 0;
+    }
+
     public function validateToken($token)
     {
+
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(inv:Invitation)')
             ->where('inv.token = { token } AND coalesce(inv.available, 0) > 0')
@@ -659,6 +692,9 @@ class InvitationModel
                             }*/
                             if (!is_string($fieldValue) && !is_numeric($fieldValue)) {
                                 $fieldErrors[] = 'token must be a string or a numeric';
+                            }
+                            if ($this->existsToken($fieldValue)) {
+                                $fieldErrors[] = 'token already exists';
                             }
                             break;
                         case 'available':
