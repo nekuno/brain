@@ -121,31 +121,31 @@ $app['admin.invitations.controller'] = $app->share(
     }
 );
 
-$app['enterpriseUsers.controller'] = $app->share(
+$app['admin.enterpriseUsers.controller'] = $app->share(
     function () use ($app) {
 
-        return new \Controller\EnterpriseUser\EnterpriseUserController($app['enterpriseUsers.model']);
+        return new \Controller\Admin\EnterpriseUser\EnterpriseUserController($app['enterpriseUsers.model']);
     }
 );
 
-$app['enterpriseUsers.groups.controller'] = $app->share(
+$app['admin.enterpriseUsers.groups.controller'] = $app->share(
     function () use ($app) {
 
-        return new \Controller\EnterpriseUser\GroupController($app['users.groups.model'], $app['enterpriseUsers.model']);
+        return new \Controller\Admin\EnterpriseUser\GroupController($app['users.groups.model'], $app['enterpriseUsers.model']);
     }
 );
 
-$app['enterpriseUsers.communities.controller'] = $app->share(
+$app['admin.enterpriseUsers.communities.controller'] = $app->share(
     function () use ($app) {
 
-        return new \Controller\EnterpriseUser\CommunityController($app['enterpriseUsers.model'], $app['enterpriseUsers.communities.model']);
+        return new \Controller\Admin\EnterpriseUser\CommunityController($app['enterpriseUsers.model'], $app['enterpriseUsers.communities.model']);
     }
 );
 
-$app['enterpriseUsers.invitations.controller'] = $app->share(
+$app['admin.enterpriseUsers.invitations.controller'] = $app->share(
     function () use ($app) {
 
-        return new \Controller\EnterpriseUser\InvitationController($app['users.invitations.model'], $app['enterpriseUsers.model']);
+        return new \Controller\Admin\EnterpriseUser\InvitationController($app['users.invitations.model'], $app['enterpriseUsers.model']);
     }
 );
 

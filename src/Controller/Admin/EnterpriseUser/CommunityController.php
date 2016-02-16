@@ -1,10 +1,9 @@
 <?php
 
-namespace Controller\EnterpriseUser;
+namespace Controller\Admin\EnterpriseUser;
 
 use Model\EnterpriseUser\CommunityModel;
 use Model\EnterpriseUser\EnterpriseUserModel;
-use Model\Exception\ValidationException;
 use Silex\Application;
 
 /**

@@ -2,7 +2,7 @@
 /**
  * @author Manolo Salsas <manolez@gmail.com>
  */
-namespace Controller\EnterpriseUser;
+namespace Controller\Admin\EnterpriseUser;
 
 use Model\User\GroupModel;
 use Model\EnterpriseUser\EnterpriseUserModel;
