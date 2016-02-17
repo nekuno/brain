@@ -38,8 +38,7 @@ class QuestionController
      */
     public function getNextQuestionAction(Request $request, Application $app)
     {
-
-        $userId = $request->query->get('userId');
+        $userId = $request->request->get('userId');
 
         $locale = $this->getLocale($request, $app['locale.options']['default']);
         /* @var QuestionModel $model */

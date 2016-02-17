@@ -62,11 +62,15 @@ class FilterClientIpSubscriber implements EventSubscriberInterface
         if ($request->headers->has('authorization')) {
             list($jwt) = sscanf($request->headers->get('authorization'), 'Bearer %s');
             try {
-                JWT::decode($jwt, $this->secret, array('HS256'));
+                $decodedJwt = JWT::decode($jwt, $this->secret, array('HS256'));
+                $request->request->set('userId', $decodedJwt->user->qnoow_id);
             } catch (\Exception $e) {
                 throw new UnauthorizedHttpException('', 'JWT token not valid');
             }
-        }
+        } /* TODO: Uncomment to deny access without JWT
+        else {
+            throw new UnauthorizedHttpException('', 'JWT token not sent');
+        }*/
 
     }
 
