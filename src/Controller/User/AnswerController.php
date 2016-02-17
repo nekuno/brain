@@ -71,7 +71,6 @@ class AnswerController
     {
 
         $data = $request->request->all();
-        $data['userId'] = (integer)$request->attributes->get('userId');
         $data['locale'] = $this->getLocale($request, $app['locale.options']['default']);
 
         $userAnswer = $this->answerModel->explain($data);
@@ -81,8 +80,7 @@ class AnswerController
 
     public function indexAction(Request $request, Application $app)
     {
-        // TODO: Refactor this
-        $id = $request->get('userId');
+        $id = $request->request->get('userId');
         $locale = $this->getLocale($request, $app['locale.options']['default']);
 
         /* @var $paginator \Paginator\Paginator */
@@ -99,8 +97,7 @@ class AnswerController
 
     public function countAction(Request $request, Application $app)
     {
-        // TODO: Refactor this
-        $userId = $request->get('userId');
+        $userId = $request->request->get('userId');
 
         $userAnswerResult = $this->answerModel->getNumberOfUserAnswers($userId);
 
@@ -123,7 +120,7 @@ class AnswerController
     public function getAnswerAction(Request $request, Application $app)
     {
 
-        $userId = (integer)$request->attributes->get('userId');
+        $userId = $request->request->get('userId');
         $questionId = (integer)$request->attributes->get('questionId');
         $locale = $this->getLocale($request, $app['locale.options']['default']);
 
@@ -135,7 +132,7 @@ class AnswerController
 
     public function deleteAnswerAction(Request $request, Application $app)
     {
-        $userId = (integer)$request->attributes->get('userId');
+        $userId = (integer)$request->request->get('userId');
         $questionId = (integer)$request->attributes->get('questionId');
         $locale = $this->getLocale($request, $app['locale.options']['default']);
 

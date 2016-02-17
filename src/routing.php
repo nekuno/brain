@@ -92,13 +92,13 @@ $app->get('/users/{id1}/stats/compare/{id2}', 'users.controller:statsCompareActi
 
 $app->get('/users/{userId}/affinity/{linkId}', 'users.controller:getAffinityAction');
 
-$app->post('/users/{userId}/answers/explain', 'users.answers.controller:explainAction');
-$app->get('/users/{userId}/answers', 'users.answers.controller:indexAction');
-$app->post('/users/{userId}/answers', 'users.answers.controller:createAction'); // TODO: rename to answerAction
+$app->get('/answers', 'users.answers.controller:indexAction');
+$app->post('/answers/explain', 'users.answers.controller:explainAction');
+$app->post('/answers', 'users.answers.controller:createAction'); // TODO: rename to answerAction
 $app->get('/users/{userId}/answers/count', 'users.answers.controller:countAction');
-$app->get('/users/{userId}/answers/{questionId}', 'users.answers.controller:getAnswerAction');
-$app->delete('/users/{userId}/answers/{questionId}', 'users.answers.controller:deleteAnswerAction');
-$app->post('/users/{userId}/answers/{questionId}', 'users.answers.controller:updateAction'); // TODO: Remove this
+$app->get('/answers/{questionId}', 'users.answers.controller:getAnswerAction');
+$app->delete('/answers/{questionId}', 'users.answers.controller:deleteAnswerAction');
+$app->post('/answers/{questionId}', 'users.answers.controller:updateAction'); // TODO: Remove this
 $app->post('/answers/validate', 'users.answers.controller:validateAction');
 
 $app->get('/users/{userId}/data/status', 'users.data.controller:getStatusAction')->value('resourceOwner', null);
