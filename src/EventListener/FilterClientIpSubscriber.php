@@ -67,10 +67,10 @@ class FilterClientIpSubscriber implements EventSubscriberInterface
             } catch (\Exception $e) {
                 throw new UnauthorizedHttpException('', 'JWT token not valid');
             }
-        } /* TODO: Uncomment to deny access without JWT
+        }
         else {
             throw new UnauthorizedHttpException('', 'JWT token not sent');
-        }*/
+        }
 
     }
 
@@ -100,6 +100,8 @@ class FilterClientIpSubscriber implements EventSubscriberInterface
             'lookUp.controller:setFromWebHookAction',
             'auth.controller:loginAction',
             'auth.controller:preflightAction',
+            'users.controller:findAction',
+            'users.tokens.controller:getAllAction',
             'users.invitations.controller:validateTokenAction',
             'users.profile.controller:getMetadataAction',
             'users.controller:postAction',
