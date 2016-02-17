@@ -53,10 +53,29 @@ class UserController
 
     /**
      * @param Application $app
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getAction(Application $app, Request $request)
+    {
+
+        $userId = $request->request->get('userId');
+        /* @var $model UserModel */
+        $model = $app['users.model'];
+        $user = $model->getById($userId);
+        /* @var $groupModel GroupModel */
+        $groupModel = $app['users.groups.model'];
+        $user['groups'] = $groupModel->getByUser($userId);
+
+        return $app->json($user);
+    }
+
+    /**
+     * @param Application $app
      * @param int $id
      * @return JsonResponse
      */
-    public function getAction(Application $app, $id)
+    public function getOtherAction(Application $app, $id)
     {
 
         /* @var $model UserModel */
@@ -91,6 +110,7 @@ class UserController
     /**
      * @param Application $app
      * @param string $username
+     * @throws NotFoundHttpException
      * @return JsonResponse
      */
     public function availableAction(Application $app, $username)
@@ -141,15 +161,14 @@ class UserController
     /**
      * @param Application $app
      * @param Request $request
-     * @param int $id
      * @return JsonResponse
      */
-    public function putAction(Application $app, Request $request, $id)
+    public function putAction(Application $app, Request $request)
     {
 
         /* @var $model UserModel */
         $model = $app['users.model'];
-        $user = $model->update($id, $request->request->all());
+        $user = $model->update($request->request->all());
 
         return $app->json($user);
     }

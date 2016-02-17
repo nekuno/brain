@@ -95,6 +95,7 @@ class UserModel implements PaginatedInterface
      * @param bool $includeGhost
      * @return array
      * @throws Neo4jException
+     * @throws NotFoundHttpException
      */
     public function getById($id, $includeGhost = false)
     {
@@ -125,6 +126,7 @@ class UserModel implements PaginatedInterface
      * @param array $criteria
      * @return array
      * @throws Neo4jException
+     * @throws NotFoundHttpException
      */
     public function findBy(array $criteria = array())
     {
@@ -218,6 +220,14 @@ class UserModel implements PaginatedInterface
             }
         }
 
+        if ($isUpdate && !isset($data['userId'])) {
+            $errors['userId'] = array('user ID is not defined');
+        }
+
+        if (isset($data['userId'])) {
+            $public['userId'] = $data['userId'];
+        }
+
         $diff = array_diff_key($data, $public);
         if (count($diff) > 0) {
             foreach ($diff as $invalidKey => $invalidValue) {
@@ -235,12 +245,12 @@ class UserModel implements PaginatedInterface
 
         $this->validate($data);
 
-        $id = $this->getNextId();
+        $data['userId'] = $this->getNextId();
 
         $qb = $this->gm->createQueryBuilder();
         $qb->create('(u:User)')
             ->set('u.qnoow_id = { qnoow_id }')
-            ->setParameter('qnoow_id', $id)
+            ->setParameter('qnoow_id', $data['userId'])
             ->set('u.status = { status }')
             ->setParameter('status', UserStatusModel::USER_STATUS_INCOMPLETE)
             ->set('u.createdAt = { createdAt }')
@@ -250,7 +260,7 @@ class UserModel implements PaginatedInterface
 
         $this->setDefaults($data);
 
-        $user = $this->save($id, $data);
+        $user = $this->save($data);
 
         $this->dispatcher->dispatch(\AppEvents::USER_CREATED, new UserEvent($user));
 
@@ -258,16 +268,15 @@ class UserModel implements PaginatedInterface
     }
 
     /**
-     * @param $id
      * @param array $data
      * @return array
      */
-    public function update($id, array $data)
+    public function update(array $data)
     {
 
         $this->validate($data, true);
 
-        $user = $this->save($id, $data);
+        $user = $this->save($data);
 
         $this->dispatcher->dispatch(\AppEvents::USER_UPDATED, new UserEvent($user));
 
@@ -818,8 +827,10 @@ class UserModel implements PaginatedInterface
         return $metadata;
     }
 
-    public function save($id, array $data)
+    public function save(array $data)
     {
+        $userId = $data['userId'];
+        unset($data['userId']);
 
         $this->updateCanonicalFields($data);
         $this->updatePassword($data);
@@ -829,7 +840,7 @@ class UserModel implements PaginatedInterface
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(u:User)')
             ->where('u.qnoow_id = { id }')
-            ->setParameter('id', (int)$id)
+            ->setParameter('id', $userId)
             ->with('u');
 
         foreach ($data as $key => $value) {

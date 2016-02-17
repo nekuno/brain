@@ -14,10 +14,10 @@ $controllers = $app['controllers'];
 $app->match('{url}', 'auth.controller:preflightAction')->assert('url', '.+')->method('OPTIONS');
 $app->post('/login', 'auth.controller:loginAction');
 
-$app->get('/users', 'users.controller:indexAction');
+$app->get('/users', 'users.controller:getAction');
 $app->post('/users', 'users.controller:postAction');
-$app->put('/users/{id}', 'users.controller:putAction');
-$app->get('/users/{id}', 'users.controller:getAction');
+$app->put('/users', 'users.controller:putAction');
+$app->get('/users/{id}', 'users.controller:getOtherAction');
 $app->get('/users/find', 'users.controller:findAction');
 $app->get('/users/available/{username}', 'users.controller:availableAction');
 $app->post('/users/validate', 'users.controller:validateAction');
