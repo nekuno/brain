@@ -149,27 +149,6 @@ class QuestionController
         return $app->json($question);
     }
 
-    /**
-     * @param Request $request
-     * @param Application $app
-     * @return JsonResponse
-     * @throws \Exception
-     */
-    public function statsAction(Request $request, Application $app)
-    {
-
-        $id = $request->attributes->get('id');
-        $locale = $this->getLocale($request, $app['locale.options']['default']);
-        /* @var QuestionModel $model */
-        $model = $app['questionnaire.questions.model'];
-
-        $question = $model->getById($id, $locale);
-
-        $stats = $model->getQuestionStats($id);
-
-        return $app->json($stats);
-    }
-
     public function getDivisiveQuestionsAction(Request $request, Application $app)
     {
 
