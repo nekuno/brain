@@ -32,6 +32,14 @@ class GroupController
 
     }
 
+    public function getAction(Application $app, $id)
+    {
+
+        $group = $this->gm->getById($id);
+
+        return $app->json($group);
+    }
+
     public function postAction(Request $request, Application $app)
     {
 

@@ -92,17 +92,6 @@ class InvitationController
         return $app->json($invitation);
     }
 
-    public function deleteAllAction(Application $app)
-    {
-
-        /* @var $model InvitationModel */
-        $model = $app['users.invitations.model'];
-
-        $model->removeAll();
-
-        return true;
-    }
-
     public function validateTokenAction(Application $app, $token)
     {
         /* @var $model InvitationModel */

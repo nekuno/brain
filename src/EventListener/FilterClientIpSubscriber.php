@@ -22,7 +22,6 @@ class FilterClientIpSubscriber implements EventSubscriberInterface
     protected $secret;
     protected $adminActions = array();
     protected $publicActions = array();
-    protected $sharedActions = array();
 
     public function __construct(array $validIps, $secret)
     {
@@ -51,12 +50,12 @@ class FilterClientIpSubscriber implements EventSubscriberInterface
             return;
         }
 
-        if ($this->isAdminAction($request) && !$this->isValidIp($request)) {
-            throw new AccessDeniedHttpException('Access forbidden');
+        if ($this->isAdminAction($request) && $this->isValidIp($request)) {
+            return;
         }
 
-        if ($this->isSharedAction($request) && $this->isValidIp($request)) {
-            return;
+        if ($this->isAdminAction($request) && !$this->isValidIp($request)) {
+            throw new AccessDeniedHttpException('Access forbidden');
         }
 
         if ($request->headers->has('authorization')) {
@@ -77,11 +76,6 @@ class FilterClientIpSubscriber implements EventSubscriberInterface
     protected function isAdminAction(Request $request)
     {
         return in_array($request->attributes->get('_controller'), $this->adminActions);
-    }
-
-    protected function isSharedAction(Request $request)
-    {
-        return in_array($request->attributes->get('_controller'), $this->sharedActions);
     }
 
     protected function isPublicAction(Request $request)
@@ -129,21 +123,18 @@ class FilterClientIpSubscriber implements EventSubscriberInterface
             'admin.enterpriseUsers.invitations.controller:getAction',
             'admin.enterpriseUsers.invitations.controller:putAction',
             'admin.enterpriseUsers.invitations.controller:validateAction',
+            'admin.groups.controller:getAction',
             'admin.groups.controller:getAllAction',
             'admin.groups.controller:postAction',
             'admin.groups.controller:putAction',
             'admin.groups.controller:deleteAction',
             'admin.groups.controller:validateAction',
             'admin.invitations.controller:indexAction',
-        );
-
-        $this->sharedActions = array(
-            'users.invitations.controller:getAction',
-            'users.invitations.controller:postAction',
-            'users.invitations.controller:putAction',
-            'users.invitations.controller:deleteAction',
-            'users.invitations.controller:validateAction',
-            'users.groups.controller:getAction',
+            'admin.invitations.controller:getAction',
+            'admin.invitations.controller:postAction',
+            'admin.invitations.controller:putAction',
+            'admin.invitations.controller:deleteAction',
+            'admin.invitations.controller:validateAction'
         );
     }
 }
