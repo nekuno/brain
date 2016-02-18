@@ -8,6 +8,8 @@ use Model\Neo4j\Neo4jException;
 
 //Request::setTrustedProxies(array('127.0.0.1'));
 
+/** @var $app Silex\Application */
+
 $app['auth.controller'] = $app->share(
     function () {
 
@@ -92,6 +94,11 @@ $app['users.relations.controller'] = $app->share(
     }
 );
 
+$app['client.controller'] = $app->share(
+    function() {
+        return new Controller\ClientController();
+    }
+);
 
 $app['fetch.controller'] = $app->share(
     function () {

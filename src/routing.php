@@ -143,6 +143,8 @@ $app->get('/invitations/count', 'users.invitations.controller:countTotalAction')
 $app->get('/invitations/users/{id}/count', 'users.invitations.controller:countByUserAction');
 $app->post('/invitations/{id}/users/{userId}/send', 'users.invitations.controller:sendAction');
 
+/** Client routes */
+$app->get('/client/version', 'client.controller:versionAction');
 
 /**
  * Client, social and admin routes (shared routes)

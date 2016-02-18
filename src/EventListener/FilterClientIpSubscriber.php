@@ -108,6 +108,7 @@ class FilterClientIpSubscriber implements EventSubscriberInterface
             'users.controller:validateAction',
             'users.controller:availableAction',
             'users.profile.controller:validateAction',
+            'client.controller:versionAction',
         );
 
         $this->adminActions = array(
