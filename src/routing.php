@@ -72,10 +72,6 @@ $app->get('/users/{from}/contact/{to}', 'users.relations.controller:contactActio
 
 $app->get('/users/{id1}/matching/{id2}', 'users.controller:getMatchingAction');
 $app->get('/users/{id1}/similarity/{id2}', 'users.controller:getSimilarityAction');
-$app->get('/users/{id}/questions', 'users.controller:getUserQuestionsAction');
-// TODO: Refactor in social to use the second compare route instead of the first one
-$app->get('/users/{id}/questions/compare/{id2}', 'users.controller:getOldUserQuestionsCompareAction');
-$app->get('/users/{id}/questions/compare-new/{id2}', 'users.controller:getUserQuestionsCompareAction');
 $app->get('/users/{id}/content', 'users.controller:getUserContentAction');
 $app->get('/users/{id}/content/compare/{id2}', 'users.controller:getUserContentCompareAction');
 $app->get('/users/{id}/content/tags', 'users.controller:getUserContentTagsAction');
@@ -93,8 +89,11 @@ $app->get('/users/{id1}/stats/compare/{id2}', 'users.controller:statsCompareActi
 $app->get('/users/{userId}/affinity/{linkId}', 'users.controller:getAffinityAction');
 
 $app->get('/answers', 'users.answers.controller:indexAction');
+// TODO: Refactor in social to use the second compare route instead of the first one
+$app->get('/answers/compare/{id}', 'users.answers.controller:getOldUserAnswersCompareAction');
+$app->get('/answers/compare-new/{id}', 'users.answers.controller:getUserAnswersCompareAction');
 $app->post('/answers/explain', 'users.answers.controller:explainAction');
-$app->post('/answers', 'users.answers.controller:createAction'); // TODO: rename to answerAction
+$app->post('/answers', 'users.answers.controller:answerAction'); // TODO: rename to answerAction
 $app->get('/users/{userId}/answers/count', 'users.answers.controller:countAction');
 $app->get('/answers/{questionId}', 'users.answers.controller:getAnswerAction');
 $app->delete('/answers/{questionId}', 'users.answers.controller:deleteAnswerAction');

@@ -24,7 +24,7 @@ class AnswerController
         $this->answerModel = $am;
     }
 
-    public function createAction(Request $request, Application $app)
+    public function answerAction(Request $request, Application $app)
     {
 
         $data = $request->request->all();
@@ -164,6 +164,84 @@ class AnswerController
 
         return $app->json($answer, 200);
 
+    }
+
+    /**
+     * @param Request $request
+     * @param Application $app
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @throws \Exception
+     */
+    public function getOldUserAnswersCompareAction(Request $request, Application $app)
+    {
+
+        $otherUserId = $request->get('id');
+        $userId = $request->request->get('userId');
+        $locale = $request->query->get('locale');
+        $showOnlyCommon = $request->query->get('showOnlyCommon', 0);
+
+        if (null === $otherUserId || null === $userId) {
+            return $app->json(array(), 400);
+        }
+
+        /* @var $paginator \Paginator\Paginator */
+        $paginator = $app['paginator'];
+
+        $filters = array('id' => $otherUserId, 'id2' => $userId, 'locale' => $locale, 'showOnlyCommon' => $showOnlyCommon);
+
+        /* @var $model \Model\User\OldQuestionComparePaginatedModel */
+        $model = $app['old.users.questions.compare.model'];
+
+        try {
+            $result = $paginator->paginate($filters, $model, $request);
+        } catch (\Exception $e) {
+            if ($app['env'] == 'dev') {
+                throw $e;
+            }
+
+            return $app->json(array(), 500);
+        }
+
+        return $app->json($result, !empty($result) ? 201 : 200);
+    }
+
+    /**
+     * @param Request $request
+     * @param Application $app
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @throws \Exception
+     */
+    public function getUserAnswersCompareAction(Request $request, Application $app)
+    {
+
+        $otherUserId = $request->get('id');
+        $userId = $request->request->get('userId');
+        $locale = $request->query->get('locale');
+        $showOnlyCommon = $request->query->get('showOnlyCommon', 0);
+
+        if (null === $otherUserId || null === $userId) {
+            return $app->json(array(), 400);
+        }
+
+        /* @var $paginator \Paginator\Paginator */
+        $paginator = $app['paginator'];
+
+        $filters = array('id' => $otherUserId, 'id2' => $userId, 'locale' => $locale, 'showOnlyCommon' => $showOnlyCommon);
+
+        /* @var $model \Model\User\QuestionComparePaginatedModel */
+        $model = $app['users.questions.compare.model'];
+
+        try {
+            $result = $paginator->paginate($filters, $model, $request);
+        } catch (\Exception $e) {
+            if ($app['env'] == 'dev') {
+                throw $e;
+            }
+
+            return $app->json(array(), 500);
+        }
+
+        return $app->json($result, !empty($result) ? 201 : 200);
     }
 
     protected function getLocale(Request $request, $defaultLocale)
