@@ -81,10 +81,15 @@ class GetOldTweets
         $resource = TokensModel::TWITTER;
         
         foreach ($tweets as $tweet) {
-            $newUrls = $this->parser->extractURLsFromText($tweet['text']);
+            $text = utf8_encode($tweet['text']);
+            $text = str_replace(htmlentities(' '), '', htmlentities($text)); //not a space, html special char &nbsp;
+            $text = html_entity_decode($text);
+
+            $newUrls = $this->parser->extractURLsFromText($text);
             $timestamp = $this->getDate($tweet);
             foreach ($newUrls as $newUrl){
-                $links[] = array('url' => $newUrl,
+                $links[] = array(
+                    'url' => $newUrl,
                     'timestamp' => $timestamp,
                     'resource' => $resource);
             }
