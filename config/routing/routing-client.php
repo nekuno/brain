@@ -28,11 +28,11 @@ $app->get('/profile/metadata', 'users.profile.controller:getMetadataAction');
 $app->get('/profile/filters', 'users.profile.controller:getFiltersAction');
 $app->get('/profile/tags/{type}', 'users.profile.controller:getProfileTagsAction');
 
-$app->get('/users/{id}/tokens', 'users.tokens.controller:getAllAction')->value('id', null);
-$app->get('/users/{id}/tokens/{resourceOwner}', 'users.tokens.controller:getAction')->value('id', null);
-$app->post('/users/{id}/tokens/{resourceOwner}', 'users.tokens.controller:postAction')->value('id', null);
-$app->put('/users/{id}/tokens/{resourceOwner}', 'users.tokens.controller:putAction')->value('id', null);
-$app->delete('/users/{id}/tokens/{resourceOwner}', 'users.tokens.controller:deleteAction')->value('id', null);
+$app->get('/tokens', 'users.tokens.controller:getAllAction');
+$app->get('/tokens/{resourceOwner}', 'users.tokens.controller:getAction');
+$app->post('/tokens/{resourceOwner}', 'users.tokens.controller:postAction');
+$app->put('/tokens/{resourceOwner}', 'users.tokens.controller:putAction');
+$app->delete('/tokens/{resourceOwner}', 'users.tokens.controller:deleteAction');
 
 $app->get('/users/{id}/privacy', 'users.privacy.controller:getAction')->value('id', null);
 $app->post('/users/{id}/privacy', 'users.privacy.controller:postAction')->value('id', null);

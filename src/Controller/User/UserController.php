@@ -95,6 +95,8 @@ class UserController
      */
     public function findAction(Application $app, Request $request)
     {
+        //TODO: Remove this once userId is not in the request
+        $request->request->remove('userId');
 
         /* @var $model UserModel */
         $model = $app['users.model'];
@@ -134,6 +136,8 @@ class UserController
      */
     public function validateAction(Request $request, Application $app)
     {
+        //TODO: Remove this once userId is not in the request
+        $request->request->remove('userId');
 
         /* @var $model UserModel */
         $model = $app['users.model'];
@@ -150,6 +154,8 @@ class UserController
      */
     public function postAction(Application $app, Request $request)
     {
+        //TODO: Remove this once userId is not in the request
+        $request->request->remove('userId');
 
         /* @var $model UserModel */
         $model = $app['users.model'];

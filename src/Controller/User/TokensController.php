@@ -21,12 +21,14 @@ class TokensController
 {
 
     /**
+     * @param Request $request
      * @param Application $app
-     * @param int $id
      * @return JsonResponse
      */
-    public function getAllAction(Application $app, $id)
+    public function getAllAction(Request $request, Application $app)
     {
+        // TODO: Change with $this->getUserId() and remove Request from parameters
+        $id = $request->request->get('userId');
 
         /* @var $model TokensModel */
         $model = $app['users.tokens.model'];
@@ -37,13 +39,15 @@ class TokensController
     }
 
     /**
+     * @param Request $request
      * @param Application $app
-     * @param int $id
      * @param string $resourceOwner
      * @return JsonResponse
      */
-    public function getAction(Application $app, $id, $resourceOwner)
+    public function getAction(Request $request, Application $app, $resourceOwner)
     {
+        // TODO: Change with $this->getUserId() and remove Request from parameters
+        $id = $request->request->get('userId');
 
         /* @var $model TokensModel */
         $model = $app['users.tokens.model'];
@@ -56,12 +60,14 @@ class TokensController
     /**
      * @param Request $request
      * @param Application $app
-     * @param int $id
      * @param string $resourceOwner
      * @return JsonResponse
      */
-    public function postAction(Request $request, Application $app, $id, $resourceOwner)
+    public function postAction(Request $request, Application $app, $resourceOwner)
     {
+        // TODO: Change with $this->getUserId()
+        $id = $request->request->get('userId');
+        $request->request->remove('userId');
 
         /* @var $model TokensModel */
         $model = $app['users.tokens.model'];
@@ -115,12 +121,13 @@ class TokensController
     /**
      * @param Request $request
      * @param Application $app
-     * @param int $id
      * @param string $resourceOwner
      * @return JsonResponse
      */
-    public function putAction(Request $request, Application $app, $id, $resourceOwner)
+    public function putAction(Request $request, Application $app, $resourceOwner)
     {
+        // TODO: Change with $this->getUserId()
+        $id = $request->request->get('userId');
 
         /* @var $model TokensModel */
         $model = $app['users.tokens.model'];
@@ -131,13 +138,15 @@ class TokensController
     }
 
     /**
+     * @param Request $request
      * @param Application $app
-     * @param int $id
      * @param string $resourceOwner
      * @return JsonResponse
      */
-    public function deleteAction(Application $app, $id, $resourceOwner)
+    public function deleteAction(Request $request, Application $app, $resourceOwner)
     {
+        // TODO: Change with $this->getUserId() and remove Request from parameters
+        $id = $request->request->get('userId');
 
         /* @var $model TokensModel */
         $model = $app['users.tokens.model'];
