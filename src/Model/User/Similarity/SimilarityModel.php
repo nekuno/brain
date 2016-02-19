@@ -163,6 +163,15 @@ class SimilarityModel
         return $similarity;
     }
 
+    /**
+     * Similarity By Questions = (equal answers -1)/ common questions
+     * To get equal answers we match every answer answered by both users
+     * To get common questions we match every questions answered by both users, even with different answers
+     * @param $idA
+     * @param $idB
+     * @return array|int|mixed|null
+     * @throws \Model\Neo4j\Neo4jException
+     */
     private function calculateSimilarityByQuestions($idA, $idB)
     {
 
@@ -170,10 +179,15 @@ class SimilarityModel
         $qb
             ->match('(userA:User {qnoow_id: { idA } }), (userB:User {qnoow_id: { idB } })')
             ->where('userA <> userB')
-            ->optionalMatch('(userA)-[:ANSWERS]-(answerA:Answer)-[:IS_ANSWER_OF]-(q:Question)')
-            ->optionalMatch('(userB)-[:ANSWERS]-(answerB:Answer)-[:IS_ANSWER_OF]-(q)')
-            ->with('userA, userB, q, CASE WHEN answerA = answerB THEN 1 ELSE 0 END AS equal')
-            ->with('userA, userB, toFloat(COUNT(q)) AS PC, toFloat(SUM(equal)) AS RI')
+            /* optional match to allow cases with 0 coincidences and still set parameters */
+            ->optionalMatch('(userA)-[:ANSWERS]-(answerA:Answer)-[:IS_ANSWER_OF]-(qa:Question)')
+            ->optionalMatch('(userB)-[:ANSWERS]-(answerB:Answer)-[:IS_ANSWER_OF]-(qb:Question)')
+            /* _equal variables are booleans for all purposes to count correctly */
+            ->with('userA, userB,
+                CASE WHEN qa = qb THEN 1 ELSE 0 END AS question_equal,
+                CASE WHEN answerA = answerB THEN 1 ELSE 0 END AS answer_equal')
+            ->with('userA, userB, toFloat(SUM(question_equal)) AS PC, toFloat(SUM(answer_equal)) AS RI')
+            /* 1/PC correction is to account for errors */
             ->with('userA, userB, CASE WHEN PC <= 0 THEN toFloat(0) ELSE RI/PC - 1/PC END AS similarity')
             ->with('userA, userB, CASE WHEN similarity < 0 THEN toFloat(0) ELSE similarity END AS similarity');
 
