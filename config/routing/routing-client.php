@@ -125,8 +125,8 @@ $app->delete('/threads/{id}', 'users.threads.controller:deleteAction');
 /** Group routes */
 $app->get('/groups/{id}', 'users.groups.controller:getAction');
 $app->get('/groups/{id}/members', 'users.groups.controller:getMembersAction');
-$app->post('/groups/{id}/add-member', 'users.groups.controller:addUserAction');
-$app->delete('/groups/{id}/remove-member', 'users.groups.controller:removeUserAction');
+$app->post('/groups/{id}/members', 'users.groups.controller:addUserAction');
+$app->delete('/groups/{id}/members', 'users.groups.controller:removeUserAction');
 
 /** Invitation routes */
 $app->get('/invitations', 'users.invitations.controller:indexByUserAction');
