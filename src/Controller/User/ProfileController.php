@@ -22,6 +22,25 @@ class ProfileController
      */
     public function getAction(Request $request, Application $app)
     {
+        // TODO: Change with $this->getUserId() and remove Request from parameters
+        $userId = $request->request->get('userId');
+
+        $locale = $request->query->get('locale');
+        /* @var $model ProfileModel */
+        $model = $app['users.profile.model'];
+
+        $profile = $model->getById($userId, $locale);
+
+        return $app->json($profile);
+    }
+
+    /**
+     * @param Request $request
+     * @param Application $app
+     * @return JsonResponse
+     */
+    public function getOtherAction(Request $request, Application $app)
+    {
         $locale = $request->query->get('locale');
         $id = $request->get('id');
         /* @var $model ProfileModel */

@@ -11,21 +11,22 @@ $app->match('{url}', 'auth.controller:preflightAction')->assert('url', '.+')->me
 $app->post('/login', 'auth.controller:loginAction');
 
 $app->get('/users', 'users.controller:getAction');
+$app->get('/users/{id}', 'users.controller:getOtherAction');
 $app->post('/users', 'users.controller:postAction');
 $app->put('/users', 'users.controller:putAction');
-$app->get('/users/{id}', 'users.controller:getOtherAction');
+$app->post('/users/validate', 'users.controller:validateAction');
 $app->get('/users/find', 'users.controller:findAction');
 $app->get('/users/available/{username}', 'users.controller:availableAction');
-$app->post('/users/validate', 'users.controller:validateAction');
 
-$app->get('/users/{id}/profile', 'users.profile.controller:getAction')->value('id', null);
-$app->post('/profile', 'users.profile.controller:postAction')->value('id', null);
-$app->put('/profile', 'users.profile.controller:putAction')->value('id', null);
-$app->delete('/profile', 'users.profile.controller:deleteAction')->value('id', null);
+$app->get('/profile', 'users.profile.controller:getAction');
+$app->get('/profile/{id}', 'users.profile.controller:getOtherAction')->value('id', null);
+$app->post('/profile', 'users.profile.controller:postAction');
+$app->put('/profile', 'users.profile.controller:putAction');
+$app->post('/profile/validate', 'users.profile.controller:validateAction');
+$app->delete('/profile', 'users.profile.controller:deleteAction');
 $app->get('/profile/metadata', 'users.profile.controller:getMetadataAction');
 $app->get('/profile/filters', 'users.profile.controller:getFiltersAction');
 $app->get('/profile/tags/{type}', 'users.profile.controller:getProfileTagsAction');
-$app->post('/profile/validate', 'users.profile.controller:validateAction')->value('id', null);
 
 $app->get('/users/{id}/tokens', 'users.tokens.controller:getAllAction')->value('id', null);
 $app->get('/users/{id}/tokens/{resourceOwner}', 'users.tokens.controller:getAction')->value('id', null);
