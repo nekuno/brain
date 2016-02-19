@@ -125,14 +125,14 @@ $app->delete('/threads/{id}', 'users.threads.controller:deleteAction');
 /** Group routes */
 $app->get('/groups/{id}', 'users.groups.controller:getAction');
 $app->get('/groups/{id}/members', 'users.groups.controller:getMembersAction');
-$app->post('/groups/{id}/users/{userId}', 'users.groups.controller:addUserAction');
-$app->delete('/groups/{id}/users/{userId}', 'users.groups.controller:removeUserAction');
+$app->post('/groups/{id}/add-member', 'users.groups.controller:addUserAction');
+$app->delete('/groups/{id}/remove-member', 'users.groups.controller:removeUserAction');
 
 /** Invitation routes */
-$app->get('/invitations', 'users.invitations.controller:indexByUserAction'); //
+$app->get('/invitations', 'users.invitations.controller:indexByUserAction');
 $app->get('/invitations/available', 'users.invitations.controller:getAvailableByUserAction');
 $app->post('/invitations/available/{nOfAvailable}', 'users.invitations.controller:setUserAvailableAction');
-$app->get('/invitations/{id}', 'users.invitations.controller:getAction'); //
+$app->get('/invitations/{id}', 'users.invitations.controller:getAction');
 $app->post('/invitations', 'users.invitations.controller:postAction');
 $app->put('/invitations/{id}', 'users.invitations.controller:putAction');
 $app->delete('/invitations/{id}', 'users.invitations.controller:deleteAction');

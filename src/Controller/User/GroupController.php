@@ -61,16 +61,20 @@ class GroupController
         return $app->json(array('items' => $users));
     }
 
-    public function addUserAction(Application $app, $id, $userId)
+    public function addUserAction(Request $request, Application $app, $id)
     {
+        // TODO: Change with $this->getUserId() and remove Request from parameters
+        $userId = $request->request->get('userId');
 
         $this->gm->addUser($id, $userId);
 
         return $app->json();
     }
 
-    public function removeUserAction(Application $app, $id, $userId)
+    public function removeUserAction(Request $request, Application $app, $id)
     {
+        // TODO: Change with $this->getUserId() and remove Request from parameters
+        $userId = $request->request->get('userId');
 
         $this->gm->removeUser($id, $userId);
 
