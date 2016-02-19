@@ -39,12 +39,13 @@ class ProfileController
      */
     public function postAction(Request $request, Application $app)
     {
+        // TODO: Change with $this->getUserId()
+        $userId = $request->request->get('userId');
 
-        $id = $request->get('id');
         /* @var $model ProfileModel */
         $model = $app['users.profile.model'];
 
-        $profile = $model->create($id, $request->request->all());
+        $profile = $model->create($userId, $request->request->all());
 
         return $app->json($profile, 201);
     }
@@ -56,12 +57,13 @@ class ProfileController
      */
     public function putAction(Request $request, Application $app)
     {
+        // TODO: Change with $this->getUserId()
+        $userId = $request->request->get('userId');
 
-        $id = $request->get('id');
         /* @var $model ProfileModel */
         $model = $app['users.profile.model'];
 
-        $profile = $model->update($id, $request->request->all());
+        $profile = $model->update($userId, $request->request->all());
 
         return $app->json($profile);
     }
@@ -73,13 +75,14 @@ class ProfileController
      */
     public function deleteAction(Request $request, Application $app)
     {
+        // TODO: Change with $this->getUserId()
+        $userId = $request->request->get('userId');
 
-        $id = $request->get('id');
         /* @var $model ProfileModel */
         $model = $app['users.profile.model'];
 
-        $profile = $model->getById($id);
-        $model->remove($id);
+        $profile = $model->getById($userId);
+        $model->remove($userId);
 
         return $app->json($profile);
     }
@@ -135,6 +138,7 @@ class ProfileController
      * @param Request $request
      * @param Application $app
      * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @throws NotFoundHttpException
      */
     public function getProfileTagsAction(Request $request, Application $app)
     {

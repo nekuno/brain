@@ -19,9 +19,9 @@ $app->get('/users/available/{username}', 'users.controller:availableAction');
 $app->post('/users/validate', 'users.controller:validateAction');
 
 $app->get('/users/{id}/profile', 'users.profile.controller:getAction')->value('id', null);
-$app->post('/users/{id}/profile', 'users.profile.controller:postAction')->value('id', null);
-$app->put('/users/{id}/profile', 'users.profile.controller:putAction')->value('id', null);
-$app->delete('/users/{id}/profile', 'users.profile.controller:deleteAction')->value('id', null);
+$app->post('/profile', 'users.profile.controller:postAction')->value('id', null);
+$app->put('/profile', 'users.profile.controller:putAction')->value('id', null);
+$app->delete('/profile', 'users.profile.controller:deleteAction')->value('id', null);
 $app->get('/profile/metadata', 'users.profile.controller:getMetadataAction');
 $app->get('/profile/filters', 'users.profile.controller:getFiltersAction');
 $app->get('/profile/tags/{type}', 'users.profile.controller:getProfileTagsAction');
