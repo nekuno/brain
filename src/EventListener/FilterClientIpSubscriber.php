@@ -95,6 +95,7 @@ class FilterClientIpSubscriber implements EventSubscriberInterface
             'auth.controller:loginAction',
             'auth.controller:preflightAction',
             'users.controller:findAction',
+            'users.controller:postAction',
             'users.tokens.controller:getAllAction',
             'users.invitations.controller:validateTokenAction',
             'users.profile.controller:getMetadataAction',
