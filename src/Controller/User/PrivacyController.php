@@ -20,6 +20,24 @@ class PrivacyController
      */
     public function getAction(Request $request, Application $app)
     {
+        // TODO: Change with $this->getUserId() and remove Request from parameters
+        $userId = $request->request->get('userId');
+
+        /* @var $model PrivacyModel */
+        $model = $app['users.privacy.model'];
+
+        $privacy = $model->getById($userId);
+
+        return $app->json($privacy);
+    }
+
+    /**
+     * @param Request $request
+     * @param Application $app
+     * @return JsonResponse
+     */
+    public function getOtherAction(Request $request, Application $app)
+    {
 
         $id = $request->get('id');
         /* @var $model PrivacyModel */
@@ -37,12 +55,13 @@ class PrivacyController
      */
     public function postAction(Request $request, Application $app)
     {
+        // TODO: Change with $this->getUserId()
+        $userId = $request->request->get('userId');
 
-        $id = $request->get('id');
         /* @var $model PrivacyModel */
         $model = $app['users.privacy.model'];
 
-        $privacy = $model->create($id, $request->request->all());
+        $privacy = $model->create($userId, $request->request->all());
 
         return $app->json($privacy, 201);
     }
@@ -54,12 +73,13 @@ class PrivacyController
      */
     public function putAction(Request $request, Application $app)
     {
+        // TODO: Change with $this->getUserId()
+        $userId = $request->request->get('userId');
 
-        $id = $request->get('id');
         /* @var $model PrivacyModel */
         $model = $app['users.privacy.model'];
 
-        $privacy = $model->update($id, $request->request->all());
+        $privacy = $model->update($userId, $request->request->all());
 
         return $app->json($privacy);
     }
@@ -71,13 +91,14 @@ class PrivacyController
      */
     public function deleteAction(Request $request, Application $app)
     {
+        // TODO: Change with $this->getUserId() and remove Request from parameters
+        $userId = $request->request->get('userId');
 
-        $id = $request->get('id');
         /* @var $model PrivacyModel */
         $model = $app['users.privacy.model'];
 
-        $privacy = $model->getById($id);
-        $model->remove($id);
+        $privacy = $model->getById($userId);
+        $model->remove($userId);
 
         return $app->json($privacy);
     }

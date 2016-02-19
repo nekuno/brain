@@ -34,12 +34,14 @@ $app->post('/tokens/{resourceOwner}', 'users.tokens.controller:postAction');
 $app->put('/tokens/{resourceOwner}', 'users.tokens.controller:putAction');
 $app->delete('/tokens/{resourceOwner}', 'users.tokens.controller:deleteAction');
 
-$app->get('/users/{id}/privacy', 'users.privacy.controller:getAction')->value('id', null);
-$app->post('/users/{id}/privacy', 'users.privacy.controller:postAction')->value('id', null);
-$app->put('/users/{id}/privacy', 'users.privacy.controller:putAction')->value('id', null);
-$app->delete('/users/{id}/privacy', 'users.privacy.controller:deleteAction')->value('id', null);
+$app->get('/privacy', 'users.privacy.controller:getAction');
+//TODO: This route is only used in social
+$app->get('/users/{id}/privacy', 'users.privacy.controller:getOtherAction')->value('id', null);
+$app->post('/privacy', 'users.privacy.controller:postAction');
+$app->put('/privacy', 'users.privacy.controller:putAction');
+$app->delete('/privacy', 'users.privacy.controller:deleteAction');
 $app->get('/privacy/metadata', 'users.privacy.controller:getMetadataAction');
-$app->post('/privacy/validate', 'users.privacy.controller:validateAction')->value('id', null);
+$app->post('/privacy/validate', 'users.privacy.controller:validateAction');
 
 $app->get('/users/{from}/blocks', 'users.relations.controller:indexAction')->value('relation', RelationsModel::BLOCKS);
 $app->get('/users/{from}/blocks/{to}', 'users.relations.controller:getAction')->value('relation', RelationsModel::BLOCKS);

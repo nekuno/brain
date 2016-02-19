@@ -2,7 +2,6 @@
 
 namespace Service;
 
-use Firebase\JWT\JWT;
 use Model\UserModel;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\Security\Core\Encoder\PasswordEncoderInterface;
@@ -58,7 +57,7 @@ class AuthService
             'user' => $user,
         );
 
-        $jwt = JWT::encode($token, $this->secret);
+        $jwt = \JWT::encode($token, $this->secret);
 
         return $jwt;
     }
