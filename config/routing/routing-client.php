@@ -129,19 +129,18 @@ $app->post('/groups/{id}/users/{userId}', 'users.groups.controller:addUserAction
 $app->delete('/groups/{id}/users/{userId}', 'users.groups.controller:removeUserAction');
 
 /** Invitation routes */
-$app->get('/user/{id}/invitations', 'users.invitations.controller:indexByUserAction');
-$app->get('/user/{id}/invitations/available', 'users.invitations.controller:getAvailableByUserAction');
-$app->post('/user/{id}/invitations/available/{nOfAvailable}', 'users.invitations.controller:setUserAvailableAction');
-$app->get('/invitations/{id}', 'users.invitations.controller:getAction');
+$app->get('/invitations', 'users.invitations.controller:indexByUserAction'); //
+$app->get('/invitations/available', 'users.invitations.controller:getAvailableByUserAction');
+$app->post('/invitations/available/{nOfAvailable}', 'users.invitations.controller:setUserAvailableAction');
+$app->get('/invitations/{id}', 'users.invitations.controller:getAction'); //
 $app->post('/invitations', 'users.invitations.controller:postAction');
 $app->put('/invitations/{id}', 'users.invitations.controller:putAction');
 $app->delete('/invitations/{id}', 'users.invitations.controller:deleteAction');
 $app->post('/invitations/validate', 'users.invitations.controller:validateAction');
 $app->post('/invitations/token/validate/{token}', 'users.invitations.controller:validateTokenAction');
-$app->post('/user/{userId}/invitations/consume/{token}', 'users.invitations.controller:consumeAction');
-$app->get('/invitations/count', 'users.invitations.controller:countTotalAction');
-$app->get('/invitations/users/{id}/count', 'users.invitations.controller:countByUserAction');
-$app->post('/invitations/{id}/users/{userId}/send', 'users.invitations.controller:sendAction');
+$app->post('/invitations/consume/{token}', 'users.invitations.controller:consumeAction');
+$app->get('/invitations/count', 'users.invitations.controller:countByUserAction');
+$app->post('/invitations/{id}/send', 'users.invitations.controller:sendAction');
 
 /**
  * Client routes

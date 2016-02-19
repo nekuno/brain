@@ -11,8 +11,10 @@ use Symfony\Component\HttpFoundation\Request;
 class InvitationController
 {
 
-    public function indexByUserAction(Request $request, Application $app, $id)
+    public function indexByUserAction(Request $request, Application $app)
     {
+        // TODO: Change with $this->getUserId()
+        $id = $request->request->get('userId');
 
         /* @var $model InvitationModel */
         $model = $app['users.invitations.model'];
@@ -32,8 +34,11 @@ class InvitationController
         return $app->json($result);
     }
 
-    public function getAvailableByUserAction(Application $app, $id)
+    public function getAvailableByUserAction(Request $request, Application $app)
     {
+        // TODO: Change with $this->getUserId() and remove Request from parameters
+        $id = $request->request->get('userId');
+
         /* @var $model InvitationModel */
         $model = $app['users.invitations.model'];
 
@@ -42,8 +47,11 @@ class InvitationController
         return $app->json($result);
     }
 
-    public function setUserAvailableAction(Application $app, $id, $nOfAvailable)
+    public function setUserAvailableAction(Request $request, Application $app, $nOfAvailable)
     {
+        // TODO: Change with $this->getUserId() and remove Request from parameters
+        $id = $request->request->get('userId');
+
         /* @var $model InvitationModel */
         $model = $app['users.invitations.model'];
 
@@ -113,8 +121,10 @@ class InvitationController
         return $app->json(array(), 200);
     }
 
-    public function consumeAction(Application $app, $token, $userId)
+    public function consumeAction(Request $request, Application $app, $token)
     {
+        // TODO: Change with $this->getUserId() and remove Request from parameters
+        $userId = $request->request->get('userId');
 
         /* @var $model InvitationModel */
         $model = $app['users.invitations.model'];
@@ -124,18 +134,10 @@ class InvitationController
         return $app->json($invitation);
     }
 
-    public function countTotalAction(Application $app)
+    public function countByUserAction(Request $request, Application $app)
     {
-
-        /* @var $model InvitationModel */
-        $model = $app['users.invitations.model'];
-        $invitation = $model->getCountTotal();
-
-        return $app->json($invitation);
-    }
-
-    public function countByUserAction(Application $app, $id)
-    {
+        // TODO: Change with $this->getUserId() and remove Request from parameters
+        $id = $request->request->get('userId');
 
         /* @var $model InvitationModel */
         $model = $app['users.invitations.model'];
@@ -144,8 +146,11 @@ class InvitationController
         return $app->json($invitation);
     }
 
-    public function sendAction(Request $request, Application $app, $id, $userId)
+    public function sendAction(Request $request, Application $app, $id)
     {
+        // TODO: Change with $this->getUserId()
+        $userId = $request->request->get('userId');
+
         $data = $request->request->all();
         $recipients = 0;
         /* @var $model InvitationModel */
