@@ -49,7 +49,7 @@ class RabbitMQEnqueueFetchingCommand extends ApplicationAwareCommand
         }
 
         /* @var $usersModel UserManager */
-        $usersModel = $this->app['users.model'];
+        $usersModel = $this->app['users.manager'];
 
         if ($userId == null) {
             $users = $usersModel->getAll();

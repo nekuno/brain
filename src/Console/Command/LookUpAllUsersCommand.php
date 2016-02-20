@@ -30,7 +30,7 @@ class LookUpAllUsersCommand extends BaseCommand
         $this->setFormat($output);
 
         /* @var $usersModel UserManager */
-        $usersModel = $this->app['users.model'];
+        $usersModel = $this->app['users.manager'];
         $users = $usersModel->getAll();
 
         /* @var $lookUpModel LookUpModel */

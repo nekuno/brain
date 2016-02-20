@@ -33,7 +33,7 @@ class Neo4jConsistencyUsersCommand extends ApplicationAwareCommand
 
         $output->writeln('Getting user list.');
         /** @var UserManager $userManager */
-        $userManager = $this->app['users.model'];
+        $userManager = $this->app['users.manager'];
 
         $users = $userManager->getAll();
         $output->writeln('Got ' . count($users) . ' users.');
@@ -59,7 +59,7 @@ class Neo4jConsistencyUsersCommand extends ApplicationAwareCommand
     private function checkStatus($users, $force, $output)
     {
         /** @var UserManager $userManager */
-        $userManager = $this->app['users.model'];
+        $userManager = $this->app['users.manager'];
 
         $output->writeln('Checking users status.');
 

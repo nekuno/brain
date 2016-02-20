@@ -37,7 +37,7 @@ class LookUpByEmailCommand extends BaseCommand
         if ($id) {
 
             /* @var $userManager UserManager */
-            $userManager = $this->app['users.model'];
+            $userManager = $this->app['users.manager'];
 
             try {
                 $user = $userManager->getById($id, true);

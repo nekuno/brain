@@ -104,7 +104,7 @@ class TokensController
             $ghostUserManager = $app['users.ghostuser.manager'];
             if ($ghostUser = $ghostUserManager->getBySocialProfile($profile)) {
                 /* @var $userManager UserManager */
-                $userManager = $app['users.model'];
+                $userManager = $app['users.manager'];
                 $userManager->fuseUsers($id, $ghostUser->getId());
                 $ghostUserManager->saveAsUser($id);
             } else {

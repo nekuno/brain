@@ -26,7 +26,7 @@ class UsersCalculateAffinityCommand extends ApplicationAwareCommand
     {
 
         /* @var $userManager UserManager */
-        $userManager = $this->app['users.model'];
+        $userManager = $this->app['users.manager'];
         /* @var $linkModel LinkModel */
         $linkModel = $this->app['links.model'];
 

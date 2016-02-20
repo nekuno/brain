@@ -43,7 +43,7 @@ class Neo4jLoadQuestionsCommand extends ApplicationAwareCommand
         $file = $input->getArgument('file');
 
         /* @var UserManager $usersModel */
-        $usersModel = $this->app['users.model'];
+        $usersModel = $this->app['users.manager'];
         $user = $usersModel->getById($userId);
 
         if (!is_readable($file)) {

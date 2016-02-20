@@ -39,7 +39,7 @@ class Neo4jConsistencyLinksCommand extends ApplicationAwareCommand
             $output->writeln('Getting likes list.');
 
             /** @var UserManager $userManager */
-            $userManager = $this->app['users.model'];
+            $userManager = $this->app['users.manager'];
             $users = $userManager->getAll(true);
 
             $likes = array();

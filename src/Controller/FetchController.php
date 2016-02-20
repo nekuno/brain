@@ -74,7 +74,7 @@ class FetchController
         }
 
         /* @var $userManager UserManager*/
-        $userManager = $app['users.model'];
+        $userManager = $app['users.manager'];
 
         $hasUser = count($userManager->getById($userId)) > 0;
         if (false === $hasUser) {

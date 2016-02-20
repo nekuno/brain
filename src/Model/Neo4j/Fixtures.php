@@ -104,7 +104,7 @@ class Fixtures
     {
         $this->gm = $app['neo4j.graph_manager'];
         $this->constraints = $app['neo4j.constraints'];
-        $this->um = $app['users.model'];
+        $this->um = $app['users.manager'];
         $this->eu = $app['enterpriseUsers.model'];
         $this->gpm = $app['users.groups.model'];
         $this->im = $app['users.invitations.model'];

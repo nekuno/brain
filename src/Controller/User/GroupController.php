@@ -46,7 +46,7 @@ class GroupController
     {
         $data = $request->query->all();
         /** @var UserManager $userManager */
-        $userManager = $app['users.model'];
+        $userManager = $app['users.manager'];
         $users = $userManager->getByGroup($id, $data);
 
         foreach ($users as &$user){

@@ -41,7 +41,7 @@ class RabbitMQEnqueueMatchingCommand extends ApplicationAwareCommand
 
         if (null === $userA || null === $userB) {
             /* @var $userManager UserManager */
-            $userManager = $this->app['users.model'];
+            $userManager = $this->app['users.manager'];
             $combinations = $userManager->getAllCombinations(false);
         }
 

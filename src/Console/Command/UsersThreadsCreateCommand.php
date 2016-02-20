@@ -43,7 +43,7 @@ class UsersThreadsCreateCommand extends ApplicationAwareCommand
         }
 
         /* @var $userManager UserManager */
-        $userManager = $this->app['users.model'];
+        $userManager = $this->app['users.manager'];
 
         $users = array();
         if ($all) {

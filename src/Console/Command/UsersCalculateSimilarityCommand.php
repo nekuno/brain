@@ -41,7 +41,7 @@ class UsersCalculateSimilarityCommand extends ApplicationAwareCommand
         if (null === $userA || null === $userB) {
             $output->writeln('Calculating for all users, including ghost users.');
             /* @var $userManager UserManager */
-            $userManager = $this->app['users.model'];
+            $userManager = $this->app['users.manager'];
             $combinations = $userManager->getAllCombinations(true);
         }
 

@@ -44,7 +44,7 @@ class UserController
         /* @var $paginator \Paginator\Paginator */
         $paginator = $app['paginator'];
 
-        $model = $app['users.model'];
+        $model = $app['users.manager'];
 
         $result = $paginator->paginate($filters, $model, $request);
 
@@ -61,7 +61,7 @@ class UserController
 
         $userId = $request->request->get('userId');
         /* @var $model UserManager */
-        $model = $app['users.model'];
+        $model = $app['users.manager'];
         $user = $model->getById($userId);
         /* @var $groupModel GroupModel */
         $groupModel = $app['users.groups.model'];
@@ -79,7 +79,7 @@ class UserController
     {
 
         /* @var $model UserManager */
-        $model = $app['users.model'];
+        $model = $app['users.manager'];
         $user = $model->getById($id);
         /* @var $groupModel GroupModel */
         $groupModel = $app['users.groups.model'];
@@ -99,7 +99,7 @@ class UserController
         $request->request->remove('userId');
 
         /* @var $model UserManager */
-        $model = $app['users.model'];
+        $model = $app['users.manager'];
         $criteria = $request->query->all();
         $user = isset($criteria['id']) ? $model->getById($criteria['id']) : $model->findBy($criteria);
         /* @var $groupModel GroupModel */
@@ -119,7 +119,7 @@ class UserController
     {
 
         /* @var $model UserManager */
-        $model = $app['users.model'];
+        $model = $app['users.manager'];
         try {
             $model->findBy(array('usernameCanonical' => mb_strtolower($username)));
         } catch (NotFoundHttpException $e) {
@@ -140,7 +140,7 @@ class UserController
         $request->request->remove('userId');
 
         /* @var $model UserManager */
-        $model = $app['users.model'];
+        $model = $app['users.manager'];
 
         $model->validate($request->request->all());
 
@@ -158,7 +158,7 @@ class UserController
         $request->request->remove('userId');
 
         /* @var $model UserManager */
-        $model = $app['users.model'];
+        $model = $app['users.manager'];
         $user = $model->create($request->request->all());
 
         return $app->json($user, 201);
@@ -173,7 +173,7 @@ class UserController
     {
 
         /* @var $model UserManager */
-        $model = $app['users.model'];
+        $model = $app['users.manager'];
         $user = $model->update($request->request->all());
 
         return $app->json($user);
@@ -547,7 +547,7 @@ class UserController
         $groupModel = $app['users.groups.model'];
         $dynamicFilters['groups'] = $groupModel->getByUser((integer)$id);
         /* @var $userManager UserManager */
-        $userManager = $app['users.model'];
+        $userManager = $app['users.manager'];
         $filters['userFilters'] = $userManager->getFilters($locale, $dynamicFilters);
 
         return $app->json($filters, 200);
@@ -568,7 +568,7 @@ class UserController
         }
 
         /* @var $model UserManager */
-        $model = $app['users.model'];
+        $model = $app['users.manager'];
 
         $status = $model->getStatus($id);
 
@@ -602,7 +602,7 @@ class UserController
             return $app->json(array(), 400);
         }
         /* @var $model UserManager */
-        $model = $app['users.model'];
+        $model = $app['users.manager'];
 
         $stats = $model->getComparedStats($id1, $id2);
 

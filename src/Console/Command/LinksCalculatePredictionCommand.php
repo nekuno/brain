@@ -32,7 +32,7 @@ class LinksCalculatePredictionCommand extends ApplicationAwareCommand
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         /* @var $userManager UserManager */
-        $userManager = $this->app['users.model'];
+        $userManager = $this->app['users.manager'];
         /* @var $linkModel LinkModel */
         $linkModel = $this->app['links.model'];
         /* @var $affinityModel AffinityModel */

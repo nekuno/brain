@@ -107,7 +107,7 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
 
                 $worker = new MatchingCalculatorWorker(
                     $channel,
-                    $this->app['users.model'],
+                    $this->app['users.manager'],
                     $this->app['users.matching.model'],
                     $this->app['users.similarity.model'],
                     $this->app['dbs']['mysql_social'],

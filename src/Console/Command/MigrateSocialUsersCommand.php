@@ -47,7 +47,7 @@ class MigrateSocialUsersCommand extends ApplicationAwareCommand
     {
 
         /* @var $um UserManager */
-        $um = $this->app['users.model'];
+        $um = $this->app['users.manager'];
 
         $id = (int)$user['id'];
         unset($user['id']);
