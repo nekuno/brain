@@ -8,6 +8,7 @@ use Everyman\Neo4j\Query\Row;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
 use Model\Neo4j\Neo4jException;
+use Model\User;
 use Model\User\GhostUser\GhostUserManager;
 use Model\User\LookUpModel;
 use Model\User\SocialNetwork\SocialProfile;
@@ -18,6 +19,7 @@ use Paginator\PaginatedInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Security\Core\Encoder\PasswordEncoderInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
  * Class UserManager
@@ -62,6 +64,19 @@ class UserManager implements PaginatedInterface
     }
 
     /**
+     * Returns an empty user instance
+     *
+     * @return UserInterface
+     */
+    public function createUser()
+    {
+
+        $user = new User();
+
+        return $user;
+    }
+
+    /**
      * @param bool $includeGhosts
      * @return array
      * @throws Neo4jException
@@ -71,11 +86,10 @@ class UserManager implements PaginatedInterface
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(u:User)');
-        if (!$includeGhosts)
-        {
+        if (!$includeGhosts) {
             $qb->where('NOT (u:GhostUser)');
         }
-            $qb->returns('u')
+        $qb->returns('u')
             ->orderBy('u.qnoow_id');
 
         $query = $qb->getQuery();
@@ -128,7 +142,7 @@ class UserManager implements PaginatedInterface
      * @throws Neo4jException
      * @throws NotFoundHttpException
      */
-    public function findBy(array $criteria = array())
+    public function findUserBy(array $criteria = array())
     {
 
         if (empty($criteria)) {
@@ -157,6 +171,58 @@ class UserManager implements PaginatedInterface
         $row = $result->current();
 
         return $this->build($row);
+    }
+
+    /**
+     * Finds a user by email
+     *
+     * @param string $email
+     *
+     * @return UserInterface
+     */
+    public function findUserByEmail($email)
+    {
+        return $this->findUserBy(array('emailCanonical' => $this->canonicalize($email)));
+    }
+
+    /**
+     * Finds a user by username
+     *
+     * @param string $username
+     *
+     * @return UserInterface
+     */
+    public function findUserByUsername($username)
+    {
+        return $this->findUserBy(array('usernameCanonical' => $this->canonicalize($username)));
+    }
+
+    /**
+     * Finds a user either by email, or username
+     *
+     * @param string $usernameOrEmail
+     *
+     * @return UserInterface
+     */
+    public function findUserByUsernameOrEmail($usernameOrEmail)
+    {
+        if (filter_var($usernameOrEmail, FILTER_VALIDATE_EMAIL)) {
+            return $this->findUserByEmail($usernameOrEmail);
+        }
+
+        return $this->findUserByUsername($usernameOrEmail);
+    }
+
+    /**
+     * Finds a user either by confirmation token
+     *
+     * @param string $token
+     *
+     * @return UserInterface
+     */
+    public function findUserByConfirmationToken($token)
+    {
+        return $this->findUserBy(array('confirmationToken' => $token));
     }
 
     public function validate(array $data, $isUpdate = false)
@@ -293,7 +359,7 @@ class UserManager implements PaginatedInterface
     {
 
         $conditions = array('u1.qnoow_id < u2.qnoow_id');
-        if (!$includeGhost){
+        if (!$includeGhost) {
             $conditions[] = 'NOT u1:' . GhostUserManager::LABEL_GHOST_USER;
             $conditions[] = 'NOT u2:' . GhostUserManager::LABEL_GHOST_USER;
         }
@@ -870,24 +936,24 @@ class UserManager implements PaginatedInterface
         /* @var $node Node */
         $node = $row->offsetGet('u');
         $properties = $node->getProperties();
+        if (isset($properties['qnoow_id'])) {
+            $properties['id'] = $properties['qnoow_id'];
+            unset($properties['qnoow_id']);
+        }
+        $metadata = $this->getMetadata();
+        $user = $this->createUser();
 
-        $ordered = array();
-        foreach ($this->getMetadata() as $fieldName => $fieldData) {
-
-            if (isset($fieldData['visible']) && $fieldData['visible'] === false) {
-                unset($properties[$fieldName]);
-                continue;
-            }
-
-            if (array_key_exists($fieldName, $properties)) {
-                $ordered[$fieldName] = $properties[$fieldName];
-                unset($properties[$fieldName]);
-            } else {
-                $ordered[$fieldName] = null;
+        foreach ($properties as $key => $value) {
+            $method = 'set' . ucfirst($key);
+            if (method_exists($user, $method)) {
+                if (isset($metadata[$key]['type']) && $metadata[$key]['type'] === 'datetime') {
+                    $value = new \DateTime($value);
+                }
+                $user->{$method}($value);
             }
         }
 
-        return $ordered + $properties;
+        return $user;
     }
 
     public function getNextId()
@@ -938,9 +1004,8 @@ class UserManager implements PaginatedInterface
 
     protected function buildChannelLabel($resource = null)
     {
-        if (in_array($resource, TokensModel::getResourceOwners()))
-        {
-           return 'Channel'.ucfirst($resource);
+        if (in_array($resource, TokensModel::getResourceOwners())) {
+            return 'Channel' . ucfirst($resource);
         }
 
         return null;
@@ -956,7 +1021,7 @@ class UserManager implements PaginatedInterface
 
         $rs = $qb->getQuery()->getResultSet();
 
-        if ($rs->count() == 0){
+        if ($rs->count() == 0) {
             throw new NotFoundHttpException('User to get labels from not found');
         }
 
@@ -965,6 +1030,7 @@ class UserManager implements PaginatedInterface
         foreach ($labelsRow as $label) {
             $labels[] = $label;
         }
+
         return $labels;
     }
 
@@ -979,7 +1045,7 @@ class UserManager implements PaginatedInterface
 
         $rs = $qb->getQuery()->getResultSet();
 
-        if ($rs->count() == 0){
+        if ($rs->count() == 0) {
             throw new NotFoundHttpException(sprintf('User to set label %s not found', $label));
         }
 

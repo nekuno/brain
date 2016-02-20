@@ -38,7 +38,7 @@ class AuthService
     {
 
         try {
-            $user = $this->um->findBy(array('usernameCanonical' => $this->um->canonicalize($username)));
+            $user = $this->um->findUserBy(array('usernameCanonical' => $this->um->canonicalize($username)));
         } catch (\Exception $e) {
             throw new UnauthorizedHttpException('', 'El nombre de usuario y la contraseña que ingresaste no coinciden con nuestros registros.');
         }

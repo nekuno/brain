@@ -101,7 +101,7 @@ class UserController
         /* @var $model UserManager */
         $model = $app['users.manager'];
         $criteria = $request->query->all();
-        $user = isset($criteria['id']) ? $model->getById($criteria['id']) : $model->findBy($criteria);
+        $user = isset($criteria['id']) ? $model->getById($criteria['id']) : $model->findUserBy($criteria);
         /* @var $groupModel GroupModel */
         $groupModel = $app['users.groups.model'];
         $user['groups'] = $groupModel->getByUser($user['qnoow_id']);
@@ -121,7 +121,7 @@ class UserController
         /* @var $model UserManager */
         $model = $app['users.manager'];
         try {
-            $model->findBy(array('usernameCanonical' => mb_strtolower($username)));
+            $model->findUserBy(array('usernameCanonical' => mb_strtolower($username)));
         } catch (NotFoundHttpException $e) {
             return $app->json();
         }

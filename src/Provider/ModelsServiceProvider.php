@@ -40,6 +40,7 @@ use Model\User\TokensModel;
 use Model\User\UserFilterModel;
 use Model\User\UserStatsManager;
 use Manager\UserManager;
+use Security\UserProvider;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
 use Symfony\Component\Security\Core\Encoder\MessageDigestPasswordEncoder;
@@ -57,6 +58,13 @@ class ModelsServiceProvider implements ServiceProviderInterface
             function () {
 
                 return new MessageDigestPasswordEncoder();
+            }
+        );
+
+        $app['security.users_provider'] = $app['users'] = $app->share(
+            function ($app) {
+
+                return new UserProvider($app['users.manager']);
             }
         );
 
