@@ -5,7 +5,7 @@ namespace Console\Command;
 use Console\ApplicationAwareCommand;
 use Model\User\Affinity\AffinityModel;
 use Model\LinkModel;
-use Model\UserModel;
+use Manager\UserManager;
 use Silex\Application;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -25,15 +25,15 @@ class UsersCalculateAffinityCommand extends ApplicationAwareCommand
     protected function execute(InputInterface $input, OutputInterface $output)
     {
 
-        /* @var $userModel UserModel */
-        $userModel = $this->app['users.model'];
+        /* @var $userManager UserManager */
+        $userManager = $this->app['users.model'];
         /* @var $linkModel LinkModel */
         $linkModel = $this->app['links.model'];
 
         $user = $input->getOption('user');
         $linkId = $input->getOption('link');
 
-        $users = null === $user ? $userModel->getAll() : array($userModel->getById($user, true));
+        $users = null === $user ? $userManager->getAll() : array($userManager->getById($user, true));
 
         try {
 

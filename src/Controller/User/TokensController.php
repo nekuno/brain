@@ -8,7 +8,7 @@ use Model\User\GhostUser\GhostUserManager;
 use Model\User\SocialNetwork\SocialProfile;
 use Model\User\SocialNetwork\SocialProfileManager;
 use Model\User\TokensModel;
-use Model\UserModel;
+use Manager\UserManager;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -103,9 +103,9 @@ class TokensController
             /* @var $ghostUserManager GhostUserManager */
             $ghostUserManager = $app['users.ghostuser.manager'];
             if ($ghostUser = $ghostUserManager->getBySocialProfile($profile)) {
-                /* @var $userModel UserModel */
-                $userModel = $app['users.model'];
-                $userModel->fuseUsers($id, $ghostUser->getId());
+                /* @var $userManager UserManager */
+                $userManager = $app['users.model'];
+                $userManager->fuseUsers($id, $ghostUser->getId());
                 $ghostUserManager->saveAsUser($id);
             } else {
                 /** @var $socialProfilesManager SocialProfileManager */

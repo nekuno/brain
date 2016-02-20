@@ -7,7 +7,7 @@ namespace Console\Command;
 
 use Console\ApplicationAwareCommand;
 use Model\User\ProfileModel;
-use Model\UserModel;
+use Manager\UserManager;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -32,10 +32,10 @@ class Neo4jConsistencyUsersCommand extends ApplicationAwareCommand
         $profile = $input->getOption('profile');
 
         $output->writeln('Getting user list.');
-        /** @var UserModel $userModel */
-        $userModel = $this->app['users.model'];
+        /** @var UserManager $userManager */
+        $userManager = $this->app['users.model'];
 
-        $users = $userModel->getAll();
+        $users = $userManager->getAll();
         $output->writeln('Got ' . count($users) . ' users.');
 
         //checking status
@@ -58,15 +58,15 @@ class Neo4jConsistencyUsersCommand extends ApplicationAwareCommand
      */
     private function checkStatus($users, $force, $output)
     {
-        /** @var UserModel $userModel */
-        $userModel = $this->app['users.model'];
+        /** @var UserManager $userManager */
+        $userManager = $this->app['users.model'];
 
         $output->writeln('Checking users status.');
 
         $userStatusChanged = array();
         foreach ($users as $user) {
             try {
-                $status = $userModel->calculateStatus($user['qnoow_id'], $force);
+                $status = $userManager->calculateStatus($user['qnoow_id'], $force);
 
                 if ($status->getStatusChanged()) {
 

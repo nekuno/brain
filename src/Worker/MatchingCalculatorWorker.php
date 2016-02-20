@@ -9,7 +9,7 @@ use Event\UserStatusChangedEvent;
 use Model\Neo4j\Neo4jException;
 use Model\User\Matching\MatchingModel;
 use Model\User\Similarity\SimilarityModel;
-use Model\UserModel;
+use Manager\UserManager;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Message\AMQPMessage;
 use Symfony\Component\EventDispatcher\EventDispatcher;
@@ -27,9 +27,9 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
      */
     protected $channel;
     /**
-     * @var UserModel
+     * @var UserManager
      */
-    protected $userModel;
+    protected $userManager;
     /**
      * @var MatchingModel
      */
@@ -51,11 +51,11 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
      */
     protected $dispatcher;
 
-    public function __construct(AMQPChannel $channel, UserModel $userModel, MatchingModel $matchingModel, SimilarityModel $similarityModel, Connection $connectionSocial, Connection $connectionBrain, EventDispatcher $dispatcher)
+    public function __construct(AMQPChannel $channel, UserManager $userManager, MatchingModel $matchingModel, SimilarityModel $similarityModel, Connection $connectionSocial, Connection $connectionBrain, EventDispatcher $dispatcher)
     {
 
         $this->channel = $channel;
-        $this->userModel = $userModel;
+        $this->userManager = $userManager;
         $this->matchingModel = $matchingModel;
         $this->similarityModel = $similarityModel;
         $this->connectionSocial = $connectionSocial;
@@ -114,13 +114,13 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                 $this->logger->notice(sprintf('[%s] Calculating matching by trigger "%s" for user "%s"', date('Y-m-d H:i:s'), $trigger, $userA));
 
                 try {
-                    $status = $this->userModel->calculateStatus($userA);
+                    $status = $this->userManager->calculateStatus($userA);
                     $this->logger->notice(sprintf('Calculating user "%s" new status: "%s"', $userA, $status->getStatus()));
                     if ($status->getStatusChanged()) {
                         $userStatusChangedEvent = new UserStatusChangedEvent($userA, $status->getStatus());
                         $this->dispatcher->dispatch(\AppEvents::USER_STATUS_CHANGED, $userStatusChangedEvent);
                     }
-                    $usersWithSameContent = $this->userModel->getByCommonLinksWithUser($userA, 1000);
+                    $usersWithSameContent = $this->userManager->getByCommonLinksWithUser($userA, 1000);
 
                     foreach ($usersWithSameContent as $currentUser) {
                         $userB = $currentUser['qnoow_id'];
@@ -142,13 +142,13 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                 $this->logger->notice(sprintf('[%s] Calculating matching by trigger "%s" for user "%s" and question "%s"', date('Y-m-d H:i:s'), $trigger, $userA, $questionId));
 
                 try {
-                    $status = $this->userModel->calculateStatus($userA);
+                    $status = $this->userManager->calculateStatus($userA);
                     $this->logger->notice(sprintf('Calculating user "%s" new status: "%s"', $userA, $status->getStatus()));
                     if ($status->getStatusChanged()) {
                         $userStatusChangedEvent = new UserStatusChangedEvent($userA, $status->getStatus());
                         $this->dispatcher->dispatch(\AppEvents::USER_STATUS_CHANGED, $userStatusChangedEvent);
                     }
-                    $usersAnsweredQuestion = $this->userModel->getByQuestionAnswered($questionId);
+                    $usersAnsweredQuestion = $this->userManager->getByQuestionAnswered($questionId);
                     foreach ($usersAnsweredQuestion as $currentUser) {
 
                         $userB = $currentUser['qnoow_id'];

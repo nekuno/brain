@@ -8,7 +8,7 @@ use Everyman\Neo4j\Query\Row;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
 use Model\Questionnaire\QuestionModel;
-use Model\UserModel;
+use Manager\UserManager;
 use Silex\Application;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -42,7 +42,7 @@ class Neo4jLoadQuestionsCommand extends ApplicationAwareCommand
         $userId = $input->getArgument('userId');
         $file = $input->getArgument('file');
 
-        /* @var UserModel $usersModel */
+        /* @var UserManager $usersModel */
         $usersModel = $this->app['users.model'];
         $user = $usersModel->getById($userId);
 

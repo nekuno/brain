@@ -7,7 +7,7 @@ namespace Console\Command;
 
 use Console\ApplicationAwareCommand;
 use Model\User\RateModel;
-use Model\UserModel;
+use Manager\UserManager;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -38,9 +38,9 @@ class Neo4jConsistencyLinksCommand extends ApplicationAwareCommand
 
             $output->writeln('Getting likes list.');
 
-            /** @var UserModel $userModel */
-            $userModel = $this->app['users.model'];
-            $users = $userModel->getAll(true);
+            /** @var UserManager $userManager */
+            $userManager = $this->app['users.model'];
+            $users = $userManager->getAll(true);
 
             $likes = array();
             foreach ($users as $user) {

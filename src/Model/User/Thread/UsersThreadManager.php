@@ -8,7 +8,7 @@ namespace Model\User\Thread;
 
 use Model\Neo4j\GraphManager;
 use Model\User\Filters\FilterUsersManager;
-use Model\UserModel;
+use Manager\UserManager;
 
 class UsersThreadManager
 {
@@ -16,16 +16,16 @@ class UsersThreadManager
     /** @var  GraphManager */
     protected $graphManager;
 
-    /** @var UserModel */
-    protected $userModel;
+    /** @var UserManager */
+    protected $userManager;
 
     /** @var FilterUsersManager */
     protected $filterUsersManager;
 
-    public function __construct(GraphManager $gm, FilterUsersManager $filterUsersManager, UserModel $userModel)
+    public function __construct(GraphManager $gm, FilterUsersManager $filterUsersManager, UserManager $userManager)
     {
         $this->graphManager = $gm;
-        $this->userModel = $userModel;
+        $this->userManager = $userManager;
         $this->filterUsersManager = $filterUsersManager;
     }
 
@@ -65,7 +65,7 @@ class UsersThreadManager
 
         $cached = array();
         foreach ($result as $row) {
-            $cached[] = $this->userModel->build($row);
+            $cached[] = $this->userManager->build($row);
         }
 
         return $cached;

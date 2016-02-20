@@ -7,7 +7,7 @@ use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
-use Model\UserModel;
+use Manager\UserManager;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class QuestionModel
@@ -19,15 +19,15 @@ class QuestionModel
     protected $gm;
 
     /**
-     * @var UserModel
+     * @var UserManager
      */
     protected $um;
 
     /**
      * @param GraphManager $gm
-     * @param UserModel $um
+     * @param UserManager $um
      */
-    public function __construct(GraphManager $gm, UserModel $um)
+    public function __construct(GraphManager $gm, UserManager $um)
     {
 
         $this->gm = $gm;

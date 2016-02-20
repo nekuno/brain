@@ -5,7 +5,7 @@ namespace Console\Command;
 use Console\ApplicationAwareCommand;
 use Model\Neo4j\Neo4jException;
 use Model\User\Matching\MatchingModel;
-use Model\UserModel;
+use Manager\UserManager;
 use Silex\Application;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -38,9 +38,9 @@ class UsersCalculateMatchingCommand extends ApplicationAwareCommand
         );
 
         if (null === $userA || null === $userB) {
-            /* @var $userModel UserModel */
-            $userModel = $this->app['users.model'];
-            $combinations = $userModel->getAllCombinations(false);
+            /* @var $userManager UserManager */
+            $userManager = $this->app['users.model'];
+            $combinations = $userManager->getAllCombinations(false);
         }
 
         foreach ($combinations AS $users) {

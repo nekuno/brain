@@ -3,7 +3,7 @@
 namespace Console\Command;
 
 use Console\ApplicationAwareCommand;
-use Model\UserModel;
+use Manager\UserManager;
 use Service\AMQPManager;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -48,7 +48,7 @@ class RabbitMQEnqueueFetchingCommand extends ApplicationAwareCommand
             exit;
         }
 
-        /* @var $usersModel UserModel */
+        /* @var $usersModel UserManager */
         $usersModel = $this->app['users.model'];
 
         if ($userId == null) {

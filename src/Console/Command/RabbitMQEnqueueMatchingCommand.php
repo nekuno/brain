@@ -3,7 +3,7 @@
 namespace Console\Command;
 
 use Console\ApplicationAwareCommand;
-use Model\UserModel;
+use Manager\UserManager;
 use Service\AMQPManager;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -40,9 +40,9 @@ class RabbitMQEnqueueMatchingCommand extends ApplicationAwareCommand
         );
 
         if (null === $userA || null === $userB) {
-            /* @var $userModel UserModel */
-            $userModel = $this->app['users.model'];
-            $combinations = $userModel->getAllCombinations(false);
+            /* @var $userManager UserManager */
+            $userManager = $this->app['users.model'];
+            $combinations = $userManager->getAllCombinations(false);
         }
 
         /* @var $amqpManager AMQPManager */

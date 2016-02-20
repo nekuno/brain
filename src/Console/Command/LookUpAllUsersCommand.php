@@ -11,7 +11,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Model\User\LookUpModel;
-use Model\UserModel;
+use Manager\UserManager;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use EventListener\LookUpSocialNetworkSubscriber;
 
@@ -29,7 +29,7 @@ class LookUpAllUsersCommand extends BaseCommand
     {
         $this->setFormat($output);
 
-        /* @var $usersModel UserModel */
+        /* @var $usersModel UserManager */
         $usersModel = $this->app['users.model'];
         $users = $usersModel->getAll();
 

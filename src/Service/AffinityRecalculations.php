@@ -9,7 +9,7 @@ use Model\Entity\EmailNotification;
 use Model\LinkModel;
 use Model\Neo4j\GraphManager;
 use Model\User\Affinity\AffinityModel;
-use Model\UserModel;
+use Manager\UserManager;
 use Silex\Translator;
 
 class AffinityRecalculations
@@ -21,8 +21,8 @@ class AffinityRecalculations
     /* @var $linkModel LinkModel */
     protected $linkModel;
 
-    /* @var $userModel UserModel */
-    protected $userModel;
+    /* @var $userManager UserManager */
+    protected $userManager;
 
     /* @var $affinityModel AffinityModel */
     protected $affinityModel;
@@ -37,11 +37,11 @@ class AffinityRecalculations
 
     const MIN_AFFINITY = 0.7;
 
-    function __construct($emailNotifications, $translator, $graphManager, $linkModel, $userModel, $affinityModel)
+    function __construct($emailNotifications, $translator, $graphManager, $linkModel, $userManager, $affinityModel)
     {
         $this->graphManager = $graphManager;
         $this->linkModel = $linkModel;
-        $this->userModel = $userModel;
+        $this->userManager = $userManager;
         $this->affinityModel = $affinityModel;
         $this->emailNotifications = $emailNotifications;
         $this->translator = $translator;
@@ -62,7 +62,7 @@ class AffinityRecalculations
      */
     public function recalculateAffinities($userId, $limitContent = 40, $limitUsers = 20, $notifyLimit = 99999, $seconds = null)
     {
-        $user = $this->userModel->getById((integer)$userId, true);
+        $user = $this->userManager->getById((integer)$userId, true);
 
         $filters = array('affinity' => true);
         $links = $this->linkModel->getPredictedContentForAUser($userId, (integer)$limitContent, (integer)$limitUsers, $filters);

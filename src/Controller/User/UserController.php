@@ -7,7 +7,7 @@ use Model\User\GroupModel;
 use Model\User\ProfileModel;
 use Model\User\RateModel;
 use Model\User\UserStatsManager;
-use Model\UserModel;
+use Manager\UserManager;
 use Service\Recommendator;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -60,7 +60,7 @@ class UserController
     {
 
         $userId = $request->request->get('userId');
-        /* @var $model UserModel */
+        /* @var $model UserManager */
         $model = $app['users.model'];
         $user = $model->getById($userId);
         /* @var $groupModel GroupModel */
@@ -78,7 +78,7 @@ class UserController
     public function getOtherAction(Application $app, $id)
     {
 
-        /* @var $model UserModel */
+        /* @var $model UserManager */
         $model = $app['users.model'];
         $user = $model->getById($id);
         /* @var $groupModel GroupModel */
@@ -98,7 +98,7 @@ class UserController
         //TODO: Remove this once userId is not in the request
         $request->request->remove('userId');
 
-        /* @var $model UserModel */
+        /* @var $model UserManager */
         $model = $app['users.model'];
         $criteria = $request->query->all();
         $user = isset($criteria['id']) ? $model->getById($criteria['id']) : $model->findBy($criteria);
@@ -118,7 +118,7 @@ class UserController
     public function availableAction(Application $app, $username)
     {
 
-        /* @var $model UserModel */
+        /* @var $model UserManager */
         $model = $app['users.model'];
         try {
             $model->findBy(array('usernameCanonical' => mb_strtolower($username)));
@@ -139,7 +139,7 @@ class UserController
         //TODO: Remove this once userId is not in the request
         $request->request->remove('userId');
 
-        /* @var $model UserModel */
+        /* @var $model UserManager */
         $model = $app['users.model'];
 
         $model->validate($request->request->all());
@@ -157,7 +157,7 @@ class UserController
         //TODO: Remove this once userId is not in the request
         $request->request->remove('userId');
 
-        /* @var $model UserModel */
+        /* @var $model UserManager */
         $model = $app['users.model'];
         $user = $model->create($request->request->all());
 
@@ -172,7 +172,7 @@ class UserController
     public function putAction(Application $app, Request $request)
     {
 
-        /* @var $model UserModel */
+        /* @var $model UserManager */
         $model = $app['users.model'];
         $user = $model->update($request->request->all());
 
@@ -546,9 +546,9 @@ class UserController
         /* @var $groupModel GroupModel */
         $groupModel = $app['users.groups.model'];
         $dynamicFilters['groups'] = $groupModel->getByUser((integer)$id);
-        /* @var $userModel UserModel */
-        $userModel = $app['users.model'];
-        $filters['userFilters'] = $userModel->getFilters($locale, $dynamicFilters);
+        /* @var $userManager UserManager */
+        $userManager = $app['users.model'];
+        $filters['userFilters'] = $userManager->getFilters($locale, $dynamicFilters);
 
         return $app->json($filters, 200);
     }
@@ -567,7 +567,7 @@ class UserController
             throw new NotFoundHttpException('User not found');
         }
 
-        /* @var $model UserModel */
+        /* @var $model UserManager */
         $model = $app['users.model'];
 
         $status = $model->getStatus($id);
@@ -601,7 +601,7 @@ class UserController
         if ($id1 === $id2) {
             return $app->json(array(), 400);
         }
-        /* @var $model UserModel */
+        /* @var $model UserManager */
         $model = $app['users.model'];
 
         $stats = $model->getComparedStats($id1, $id2);

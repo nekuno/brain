@@ -8,7 +8,7 @@ use Everyman\Neo4j\Query\Row;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
 use Model\User\Filters\FilterUsersManager;
-use Model\UserModel;
+use Manager\UserManager;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class GroupModel
@@ -20,7 +20,7 @@ class GroupModel
     protected $gm;
 
     /**
-     * @var UserModel
+     * @var UserManager
      */
     protected $um;
 
@@ -31,10 +31,10 @@ class GroupModel
 
     /**
      * @param GraphManager $gm
-     * @param UserModel $um
+     * @param UserManager $um
      * @param FilterUsersManager $filterUsersManager
      */
-    public function __construct(GraphManager $gm, UserModel $um, FilterUsersManager $filterUsersManager)
+    public function __construct(GraphManager $gm, UserManager $um, FilterUsersManager $filterUsersManager)
     {
 
         $this->gm = $gm;

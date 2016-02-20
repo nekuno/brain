@@ -4,7 +4,7 @@ namespace Controller\User;
 
 use Model\User\GroupModel;
 use Model\User\ProfileModel;
-use Model\UserModel;
+use Manager\UserManager;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -45,9 +45,9 @@ class GroupController
     public function getMembersAction(Request $request, Application $app, $id)
     {
         $data = $request->query->all();
-        /** @var UserModel $userModel */
-        $userModel = $app['users.model'];
-        $users = $userModel->getByGroup($id, $data);
+        /** @var UserManager $userManager */
+        $userManager = $app['users.model'];
+        $users = $userManager->getByGroup($id, $data);
 
         foreach ($users as &$user){
             $user['id'] = $user['qnoow_id'];

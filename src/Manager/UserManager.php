@@ -1,6 +1,6 @@
 <?php
 
-namespace Model;
+namespace Manager;
 
 use Event\UserEvent;
 use Everyman\Neo4j\Node;
@@ -20,11 +20,11 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Security\Core\Encoder\PasswordEncoderInterface;
 
 /**
- * Class UserModel
+ * Class UserManager
  *
  * @package Model
  */
-class UserModel implements PaginatedInterface
+class UserManager implements PaginatedInterface
 {
 
     /**

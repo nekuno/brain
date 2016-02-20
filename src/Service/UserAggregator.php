@@ -9,18 +9,18 @@ use Model\User\LookUpModel;
 use Model\User\SocialNetwork\SocialProfile;
 use Model\User\SocialNetwork\SocialProfileManager;
 use Model\User\TokensModel;
-use Model\UserModel;
+use Manager\UserManager;
 
 class UserAggregator
 {
-    protected $userModel;
+    protected $userManager;
     protected $ghostUserManager;
     protected $socialProfileManager;
     protected $resourceOwnerFactory;
     protected $lookUpModel;
     protected $amqpManager;
 
-    public function __construct(UserModel $userModel,
+    public function __construct(UserManager $userManager,
                                 GhostUserManager $ghostUserManager,
                                 SocialProfileManager $socialProfileManager,
                                 ResourceOwnerFactory $resourceOwnerFactory,
@@ -28,7 +28,7 @@ class UserAggregator
                                 AMQPManager $AMQPManager)
 
     {
-        $this->userModel = $userModel;
+        $this->userManager = $userManager;
         $this->ghostUserManager = $ghostUserManager;
         $this->socialProfileManager = $socialProfileManager;
         $this->resourceOwnerFactory = $resourceOwnerFactory;
@@ -71,7 +71,7 @@ class UserAggregator
             //$output->writeln('Creating new social profile with url '. $url);
 
             if ($id) {
-                $user = $this->userModel->getById((integer)$id, true);
+                $user = $this->userManager->getById((integer)$id, true);
                 $id = $user['qnoow_id'];
                 //$output->writeln('SUCCESS: Found user with id '.$id);
             } else {
@@ -105,11 +105,11 @@ class UserAggregator
             $userId = $socialProfile->getUserId();
             $resource = $socialProfile->getResource();
 
-            if ($this->userModel->isChannel($userId, $resource)){
+            if ($this->userManager->isChannel($userId, $resource)){
                 continue;
             }
 
-            $this->userModel->setAsChannel($userId, $resource);
+            $this->userManager->setAsChannel($userId, $resource);
 
             $this->amqpManager->enqueueMessage(array(
                 'userId' => $socialProfile->getUserId(),

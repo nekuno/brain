@@ -4,7 +4,7 @@ namespace Console\Command;
 
 use Console\ApplicationAwareCommand;
 use Model\User\Thread\ThreadManager;
-use Model\UserModel;
+use Manager\UserManager;
 use Service\Recommendator;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -42,15 +42,15 @@ class UsersThreadsCreateCommand extends ApplicationAwareCommand
             return;
         }
 
-        /* @var $userModel UserModel */
-        $userModel = $this->app['users.model'];
+        /* @var $userManager UserManager */
+        $userManager = $this->app['users.model'];
 
         $users = array();
         if ($all) {
-            $users = $userModel->getAll();
+            $users = $userManager->getAll();
         } else {
             if ($userId) {
-                $users = array($userModel->getById($userId, true));
+                $users = array($userManager->getById($userId, true));
             }
         }
 

@@ -2,7 +2,7 @@
 
 namespace Service;
 
-use Model\UserModel;
+use Manager\UserManager;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\Security\Core\Encoder\PasswordEncoderInterface;
 
@@ -13,7 +13,7 @@ class AuthService
 {
 
     /**
-     * @var UserModel
+     * @var UserManager
      */
     protected $um;
 
@@ -27,7 +27,7 @@ class AuthService
      */
     protected $secret;
 
-    public function __construct(UserModel $um, PasswordEncoderInterface $encoder, $secret)
+    public function __construct(UserManager $um, PasswordEncoderInterface $encoder, $secret)
     {
         $this->um = $um;
         $this->encoder = $encoder;
@@ -54,6 +54,8 @@ class AuthService
         unset($user['password']);
         $token = array(
             'iss' => 'https://nekuno.com',
+            'exp' => time() + 86400,
+            'sub' => $user['usernameCanonical'],
             'user' => $user,
         );
 

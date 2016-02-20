@@ -39,7 +39,7 @@ use Model\User\Thread\UsersThreadManager;
 use Model\User\TokensModel;
 use Model\User\UserFilterModel;
 use Model\User\UserStatsManager;
-use Model\UserModel;
+use Manager\UserManager;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
 use Symfony\Component\Security\Core\Encoder\MessageDigestPasswordEncoder;
@@ -63,7 +63,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.model'] = $app->share(
             function ($app) {
 
-                return new UserModel($app['dispatcher'], $app['neo4j.graph_manager'], $app['security.password_encoder'], $app['fields']['user'], $app['locale.options']['default']);
+                return new UserManager($app['dispatcher'], $app['neo4j.graph_manager'], $app['security.password_encoder'], $app['fields']['user'], $app['locale.options']['default']);
             }
         );
 

@@ -13,7 +13,7 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Model\UserModel;
+use Manager\UserManager;
 
 class UsersSocialMediaRefreshCommand extends BaseCommand
 {
@@ -31,7 +31,7 @@ class UsersSocialMediaRefreshCommand extends BaseCommand
 
         $this->setFormat($output);
 
-        /* @var $usersModel UserModel */
+        /* @var $usersModel UserManager */
         $usersModel = $this->app['users.model'];
         if ($input->getOption('user')) {
             $users = array($usersModel->getById($input->getOption('user')));

@@ -4,7 +4,7 @@ namespace Controller;
 
 use Model\LinkModel;
 use Model\User\RateModel;
-use Model\UserModel;
+use Manager\UserManager;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -73,10 +73,10 @@ class FetchController
             return $app->json(array(), 400);
         }
 
-        /* @var $userModel UserModel*/
-        $userModel = $app['users.model'];
+        /* @var $userManager UserManager*/
+        $userManager = $app['users.model'];
 
-        $hasUser = count($userModel->getById($userId)) > 0;
+        $hasUser = count($userManager->getById($userId)) > 0;
         if (false === $hasUser) {
             return $app->json('User not found', 404);
         }

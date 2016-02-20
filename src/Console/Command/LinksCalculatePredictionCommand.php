@@ -7,7 +7,7 @@ use Everyman\Neo4j\Query\ResultSet;
 use Model\Entity\EmailNotification;
 use Model\LinkModel;
 use Model\User\Affinity\AffinityModel;
-use Model\UserModel;
+use Manager\UserManager;
 use Service\AffinityRecalculations;
 use Service\EmailNotifications;
 use Silex\Application;
@@ -31,8 +31,8 @@ class LinksCalculatePredictionCommand extends ApplicationAwareCommand
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        /* @var $userModel UserModel */
-        $userModel = $this->app['users.model'];
+        /* @var $userManager UserManager */
+        $userManager = $this->app['users.model'];
         /* @var $linkModel LinkModel */
         $linkModel = $this->app['links.model'];
         /* @var $affinityModel AffinityModel */
@@ -46,7 +46,7 @@ class LinksCalculatePredictionCommand extends ApplicationAwareCommand
 
         try {
 
-            $users = null === $user ? $userModel->getAll() : array($userModel->getById($user, true));
+            $users = null === $user ? $userManager->getAll() : array($userManager->getById($user, true));
 
             $recalculate = $recalculate ? true : false;
 

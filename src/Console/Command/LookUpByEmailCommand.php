@@ -5,7 +5,7 @@
 namespace Console\Command;
 
 use Console\BaseCommand;
-use Model\UserModel;
+use Manager\UserManager;
 use Silex\Application;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -36,11 +36,11 @@ class LookUpByEmailCommand extends BaseCommand
 
         if ($id) {
 
-            /* @var $userModel UserModel */
-            $userModel = $this->app['users.model'];
+            /* @var $userManager UserManager */
+            $userManager = $this->app['users.model'];
 
             try {
-                $user = $userModel->getById($id, true);
+                $user = $userManager->getById($id, true);
             } catch (\Exception $e) {
                 $this->displayError($e->getMessage());
                 exit;

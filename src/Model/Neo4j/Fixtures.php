@@ -7,7 +7,7 @@ use Model\Questionnaire\QuestionModel;
 use Model\User\AnswerModel;
 use Model\User\ProfileModel;
 use Model\User\RateModel;
-use Model\UserModel;
+use Manager\UserManager;
 use Model\EnterpriseUser\EnterpriseUserModel;
 use Model\User\GroupModel;
 use Model\User\InvitationModel;
@@ -41,7 +41,7 @@ class Fixtures
     protected $constraints;
 
     /**
-     * @var UserModel
+     * @var UserManager
      */
     protected $um;
 
