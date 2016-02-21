@@ -512,7 +512,7 @@ class InvitationModel
 
         return array(
             'email' => $data['email'],
-            'username' => $user['username'],
+            'username' => $user->getUsername(),
             'url' => $socialHost . 'invitation/' . (string)$invitation['invitation']['token'],
             'expiresAt' => (integer)$invitation['invitation']['expiresAt'],
         );

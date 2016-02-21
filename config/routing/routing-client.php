@@ -112,7 +112,6 @@ $app->post('/questions/{id}/report', 'questionnaire.questions.controller:reportA
 
 /** Content routes */
 $app->post('/add/links', 'fetch.controller:addLinkAction');
-$app->get('/fetch/links', 'fetch.controller:fetchLinksAction')->value('userId', null)->value('resource', null);
 
 /** LookUp routes */
 $app->get('/lookUp', 'lookUp.controller:getAction');

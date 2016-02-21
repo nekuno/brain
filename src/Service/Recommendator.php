@@ -62,7 +62,7 @@ class Recommendator
 
                 /* @var $thread ContentThread */
                 $threadFilters = $thread->getFilterContent();
-                $filters = array('id' => $user['qnoow_id']);
+                $filters = array('id' => $user->getId());
 
                 if ($threadFilters->getTag()) {
                     $filters['tag'] = urldecode($threadFilters->getTag());
@@ -77,7 +77,7 @@ class Recommendator
                 /* @var $thread UsersThread */
                 $threadFilters = $thread->getFilterUsers();
                 $filters = array(
-                    'id' => $user['qnoow_id'],
+                    'id' => $user->getId(),
                     'profileFilters' => $threadFilters->getProfileFilters(),
                     'userFilters' => $threadFilters->getUserFilters(),
                 );
@@ -104,7 +104,7 @@ class Recommendator
 
                 /* @var $thread ContentThread */
 
-                $filters = array('id' => $user['qnoow_id']);
+                $filters = array('id' => $user->getId());
                 $threadFilters = $thread->getFilterContent();
 
                 if ($threadFilters->getTag()) {
@@ -127,7 +127,7 @@ class Recommendator
                 /* @var $thread UsersThread */
                 $threadFilters = $thread->getFilterUsers();
                 $filters = array(
-                    'id' => $user['qnoow_id'],
+                    'id' => $user->getId(),
                     'profileFilters' => $threadFilters->getProfileFilters(),
                     'userFilters' => $threadFilters->getUserFilters(),
                 );

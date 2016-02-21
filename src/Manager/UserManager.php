@@ -66,7 +66,7 @@ class UserManager implements PaginatedInterface
     /**
      * Returns an empty user instance
      *
-     * @return UserInterface
+     * @return User
      */
     public function createUser()
     {
@@ -107,7 +107,7 @@ class UserManager implements PaginatedInterface
     /**
      * @param $id
      * @param bool $includeGhost
-     * @return array
+     * @return User
      * @throws Neo4jException
      * @throws NotFoundHttpException
      */
@@ -138,7 +138,7 @@ class UserManager implements PaginatedInterface
 
     /**
      * @param array $criteria
-     * @return array
+     * @return User
      * @throws Neo4jException
      * @throws NotFoundHttpException
      */
@@ -306,6 +306,11 @@ class UserManager implements PaginatedInterface
         }
     }
 
+    /**
+     * @param array $data
+     * @return User
+     * @throws Neo4jException
+     */
     public function create(array $data)
     {
 
@@ -335,7 +340,7 @@ class UserManager implements PaginatedInterface
 
     /**
      * @param array $data
-     * @return array
+     * @return User
      */
     public function update(array $data)
     {
@@ -408,7 +413,7 @@ class UserManager implements PaginatedInterface
     /**
      * @param $questionId
      * @return array
-     * @throws \Exception
+     * @throws Neo4jException
      */
     public function getByQuestionAnswered($questionId)
     {
@@ -430,7 +435,7 @@ class UserManager implements PaginatedInterface
     /**
      * @param $groupId
      * @param array $data
-     * @return array
+     * @return User
      * @throws Neo4jException
      */
     public function getByGroup($groupId, array $data = array())
@@ -476,6 +481,11 @@ class UserManager implements PaginatedInterface
         return $this->build($result->current());
     }
 
+    /**
+     * @param $id
+     * @return User
+     * @throws Neo4jException
+     */
     public function getOneByThread($id)
     {
         $qb = $this->gm->createQueryBuilder();
@@ -496,7 +506,7 @@ class UserManager implements PaginatedInterface
 
     /**
      * @param SocialProfile $profile
-     * @return array
+     * @return User
      * @throws Neo4jException
      */
     public function getBySocialProfile(SocialProfile $profile)

@@ -3,6 +3,7 @@
 namespace Console\Command;
 
 use Console\ApplicationAwareCommand;
+use Model\User;
 use Model\User\Affinity\AffinityModel;
 use Model\LinkModel;
 use Manager\UserManager;
@@ -39,7 +40,8 @@ class UsersCalculateAffinityCommand extends ApplicationAwareCommand
 
             foreach ($users as $user) {
 
-                $userId = $user['qnoow_id'];
+                /* @var $user User */
+                $userId = $user->getId();
 
                 $output->writeln(sprintf('Calculating affinity for user %d', $userId));
 

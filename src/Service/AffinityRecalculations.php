@@ -8,6 +8,7 @@ namespace Service;
 use Model\Entity\EmailNotification;
 use Model\LinkModel;
 use Model\Neo4j\GraphManager;
+use Model\User;
 use Model\User\Affinity\AffinityModel;
 use Manager\UserManager;
 use Silex\Translator;
@@ -106,20 +107,20 @@ class AffinityRecalculations
 
     /**
      * @param array $links
-     * @param array $user
+     * @param User $user
      * @return array
      * @throws \Exception
      */
-    protected function sendEmail(array $links, array $user)
+    protected function sendEmail(array $links, User $user)
     {
-        $emailInfo = $this->saveInfo($links, $user['username']);
+        $emailInfo = $this->saveInfo($links, $user->getUsername());
 
         $recipients = $this->emailNotifications->send(
             EmailNotification::create()
                 ->setType(EmailNotification::EXCEPTIONAL_LINKS)
                 ->setSubject($this->translator->trans('notifications.messages.exceptional_links.subject'))
-                ->setUserId($user['qnoow_id'])
-                ->setRecipient($user['email'])
+                ->setUserId($user->getId())
+                ->setRecipient($user->getEmail())
                 ->setInfo($emailInfo));
 
         $emailInfo['recipients'] = $recipients;

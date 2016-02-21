@@ -6,6 +6,7 @@ namespace Console\Command;
 
 use Console\BaseCommand;
 use Model\Exception\ValidationException;
+use Model\User;
 use Silex\Application;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -37,10 +38,11 @@ class LookUpAllUsersCommand extends BaseCommand
         $lookUpModel = $this->app['users.lookup.model'];
 
         foreach ($users as $user) {
-            if (isset($user['qnoow_id']) && isset($user['email']) && $user['qnoow_id'] >= $input->getOption('start')) {
+            /* @var $user User */
+            if ($user->getId() && isset($user['email']) && $user->getId() >= $input->getOption('start')) {
                 try {
-                    $this->displayTitle('Looking up user ' . $user['qnoow_id']);
-                    $lookUpData = $lookUpModel->set($user['qnoow_id'], array('email' =>  $user['email']), $output);
+                    $this->displayTitle('Looking up user ' . $user->getId());
+                    $lookUpData = $lookUpModel->set($user->getId(), array('email' =>  $user['email']), $output);
                     $this->displayData($lookUpData);
                     $this->displayMessage('waiting...');
                     sleep(1);

@@ -4,7 +4,7 @@ namespace Model;
 
 use Symfony\Component\Security\Core\User\UserInterface;
 
-class User implements UserInterface
+class User implements UserInterface, \JsonSerializable
 {
 
     const ROLE_DEFAULT = 'ROLE_USER';
@@ -830,4 +830,21 @@ class User implements UserInterface
     {
         return (string)$this->getUsername();
     }
+
+    public function jsonSerialize()
+    {
+        $vars = get_object_vars($this);
+
+        unset($vars['password']);
+        unset($vars['plainPassword']);
+        $vars['qnoow_id'] = $vars['id'];
+        foreach ($vars as $key => $value) {
+            if ($value instanceof \DateTime) {
+                $vars[$key] = $value->format('Y-m-d H:i:s');
+            }
+        }
+
+        return $vars;
+    }
+
 }

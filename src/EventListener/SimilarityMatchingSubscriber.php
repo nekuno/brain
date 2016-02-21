@@ -121,8 +121,8 @@ class SimilarityMatchingSubscriber implements EventSubscriberInterface
     {
 
         $user = $this->userManager->getById($follower);
-        $username = $user['username'];
-        $email = $user['email'];
+        $username = $user->getUsername();
+        $email = $user->getEmail();
 
         $profile = $this->profileModel->getById($follower);
         if (isset($profile['interfaceLanguage'])) {
@@ -130,8 +130,8 @@ class SimilarityMatchingSubscriber implements EventSubscriberInterface
         }
 
         $userOther = $this->userManager->getById($influencer);
-        $usernameOther = $userOther['username'];
-        $emailOther = $userOther['email'];
+        $usernameOther = $userOther->getUsername();
+        $emailOther = $userOther->getEmail();
         $urlOther = $this->socialHost . 'profile/show/' . $influencer;
 
         $info = array(
@@ -162,8 +162,8 @@ class SimilarityMatchingSubscriber implements EventSubscriberInterface
     {
 
         $user = $this->userManager->getById($influencer);
-        $username = $user['username'];
-        $email = $user['email'];
+        $username = $user->getUsername();
+        $email = $user->getEmail();
 
         $profile = $this->profileModel->getById($influencer);
         if (isset($profile['interfaceLanguage'])) {
@@ -171,8 +171,8 @@ class SimilarityMatchingSubscriber implements EventSubscriberInterface
         }
 
         $userOther = $this->userManager->getById($follower);
-        $usernameOther = $userOther['username'];
-        $emailOther = $userOther['email'];
+        $usernameOther = $userOther->getUsername();
+        $emailOther = $userOther->getEmail();
         $urlOther = $this->socialHost . 'profile/show/' . $follower;
 
         $info = array(

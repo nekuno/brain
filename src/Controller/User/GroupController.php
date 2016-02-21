@@ -2,6 +2,7 @@
 
 namespace Controller\User;
 
+use Model\User;
 use Model\User\GroupModel;
 use Model\User\ProfileModel;
 use Manager\UserManager;
@@ -45,14 +46,21 @@ class GroupController
     public function getMembersAction(Request $request, Application $app, $id)
     {
         $data = $request->query->all();
-        /** @var UserManager $userManager */
+        /* @var UserManager $userManager */
         $userManager = $app['users.manager'];
-        $users = $userManager->getByGroup($id, $data);
+        $usersByGroup = $userManager->getByGroup($id, $data);
+
+        // TODO: Refactor this action, getByGroups returns now objects
+        $users = array();
+        foreach ($usersByGroup as $u) {
+            /* @var $u User */
+            $users[] = $u->jsonSerialize();
+        }
 
         foreach ($users as &$user){
             $user['id'] = $user['qnoow_id'];
         }
-        /** @var ProfileModel $profileModel */
+        /* @var ProfileModel $profileModel */
         $profileModel = $app['users.profile.model'];
         foreach ($users as &$user){
             $user = array_merge($user, $profileModel->getById($user['qnoow_id']));

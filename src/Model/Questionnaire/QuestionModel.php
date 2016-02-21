@@ -247,7 +247,7 @@ class QuestionModel
         $qb
             ->match('(q:Question)', '(u:User)')
             ->where('NOT q:RegisterQuestion', 'u.qnoow_id = { userId } AND id(q) = { id }')
-            ->setParameter('userId', $user['qnoow_id'])
+            ->setParameter('userId', $user->getId())
             ->setParameter('id', (integer)$id)
             ->createUnique('(u)-[r:SKIPS]->(q)')
             ->set('r.timestamp = timestamp()')
@@ -276,7 +276,7 @@ class QuestionModel
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(q:Question)', '(u:User)')
             ->where('u.qnoow_id = { userId } AND id(q) = { id }')
-            ->setParameter('userId', $user['qnoow_id'])
+            ->setParameter('userId', $user->getId())
             ->setParameter('id', (integer)$id)
             ->createUnique('(u)-[r:REPORTS]->(q)')
             ->set('r.reason = { reason }', 'r.timestamp = timestamp()')

@@ -6,6 +6,7 @@
 namespace Console\Command;
 
 use Console\ApplicationAwareCommand;
+use Model\User;
 use Model\User\ProfileModel;
 use Manager\UserManager;
 use Symfony\Component\Console\Input\InputInterface;
@@ -65,16 +66,17 @@ class Neo4jConsistencyUsersCommand extends ApplicationAwareCommand
 
         $userStatusChanged = array();
         foreach ($users as $user) {
+            /* @var $user User */
             try {
-                $status = $userManager->calculateStatus($user['qnoow_id'], $force);
+                $status = $userManager->calculateStatus($user->getId(), $force);
 
                 if ($status->getStatusChanged()) {
 
-                    $userStatusChanged[$user['qnoow_id']] = $status->getStatus();
+                    $userStatusChanged[$user->getId()] = $status->getStatus();
 
                 }
             } catch (\Exception $e) {
-                $output->writeln(sprintf('ERROR: Fail to calculate status for user %d', $user['qnoow_id']));
+                $output->writeln(sprintf('ERROR: Fail to calculate status for user %d', $user->getId()));
             }
 
         }
@@ -105,13 +107,14 @@ class Neo4jConsistencyUsersCommand extends ApplicationAwareCommand
         /** @var ProfileModel $profileModel */
         $profileModel = $this->app['users.profile.model'];
         foreach ($users as $user) {
+            /* @var $user User */
             try {
-                $profile = $profileModel->getById($user['qnoow_id']);
+                $profile = $profileModel->getById($user->getId());
             } catch (NotFoundHttpException $e) {
-                $output->writeln(sprintf('Profile for user with id %d not found.', $user['qnoow_id']));
+                $output->writeln(sprintf('Profile for user with id %d not found.', $user->getId()));
                 if ($force) {
-                    $output->writeln(sprintf('Creating profile for user %d.', $user['qnoow_id']));
-                    $profile = $profileModel->create($user['qnoow_id'], array(
+                    $output->writeln(sprintf('Creating profile for user %d.', $user->getId()));
+                    $profile = $profileModel->create($user->getId(), array(
                         'birthday' => '1970-01-01',
                         'gender' => 'male',
                         'orientation' => 'heterosexual',
@@ -124,12 +127,12 @@ class Neo4jConsistencyUsersCommand extends ApplicationAwareCommand
                             'country' => 'Spain'
                         )
                     ));
-                    $output->writeln(sprintf('SUCCESS: Created profile for user %d.', $user['qnoow_id']));
+                    $output->writeln(sprintf('SUCCESS: Created profile for user %d.', $user->getId()));
                 }
             }
 
             if (isset($profile) && is_array($profile)) {
-                $output->writeln(sprintf('Found profile for user %d.', $user['qnoow_id']));
+                $output->writeln(sprintf('Found profile for user %d.', $user->getId()));
             }
 
         }

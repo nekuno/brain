@@ -104,7 +104,7 @@ class UserController
         $user = isset($criteria['id']) ? $model->getById($criteria['id']) : $model->findUserBy($criteria);
         /* @var $groupModel GroupModel */
         $groupModel = $app['users.groups.model'];
-        $user['groups'] = $groupModel->getByUser($user['qnoow_id']);
+        $user['groups'] = $groupModel->getByUser($user->getId());
 
         return $app->json($user);
     }

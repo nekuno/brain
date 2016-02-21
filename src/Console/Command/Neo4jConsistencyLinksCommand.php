@@ -6,6 +6,7 @@
 namespace Console\Command;
 
 use Console\ApplicationAwareCommand;
+use Model\User;
 use Model\User\RateModel;
 use Manager\UserManager;
 use Symfony\Component\Console\Input\InputInterface;
@@ -44,7 +45,8 @@ class Neo4jConsistencyLinksCommand extends ApplicationAwareCommand
 
             $likes = array();
             foreach ($users as $user) {
-                $likes = array_merge($likes, $rateModel->getRatesByUser($user['qnoow_id'], RateModel::LIKE));
+                /* @var $user User */
+                $likes = array_merge($likes, $rateModel->getRatesByUser($user->getId(), RateModel::LIKE));
             }
 
             $output->writeln(sprintf('Got %d likes', count($likes)));

@@ -4,6 +4,7 @@ namespace Console\Command;
 
 use Console\ApplicationAwareCommand;
 use Manager\UserManager;
+use Model\User;
 use Service\AMQPManager;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -65,8 +66,9 @@ class RabbitMQEnqueuePredictionCommand extends ApplicationAwareCommand
         $amqpManager = $this->app['amqpManager.service'];
 
         foreach ($users as $user) {
-            $output->writeln('Enqueuing prediction for user '.$user['qnoow_id']);
-            $data = array('userId' => $user['qnoow_id']);
+            /* @var $user User */
+            $output->writeln('Enqueuing prediction for user '.$user->getId());
+            $data = array('userId' => $user->getId());
             $amqpManager->enqueueMessage($data, $routingKey);
         }
     }

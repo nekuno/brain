@@ -7,6 +7,7 @@ use Doctrine\DBAL\Connection;
 use Event\ExceptionEvent;
 use Event\UserStatusChangedEvent;
 use Model\Neo4j\Neo4jException;
+use Model\User;
 use Model\User\Matching\MatchingModel;
 use Model\User\Similarity\SimilarityModel;
 use Manager\UserManager;
@@ -123,7 +124,8 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                     $usersWithSameContent = $this->userManager->getByCommonLinksWithUser($userA, 1000);
 
                     foreach ($usersWithSameContent as $currentUser) {
-                        $userB = $currentUser['qnoow_id'];
+                        /* @var $currentUser User */
+                        $userB = $currentUser->getId();
                         $similarity = $this->similarityModel->getSimilarityByInterests($userA, $userB);
                         $this->logger->info(sprintf('   Similarity by interests between users %d - %d: %s', $userA, $userB, $similarity['interests']));
                     }
@@ -150,8 +152,8 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                     }
                     $usersAnsweredQuestion = $this->userManager->getByQuestionAnswered($questionId);
                     foreach ($usersAnsweredQuestion as $currentUser) {
-
-                        $userB = $currentUser['qnoow_id'];
+                        /* @var $currentUser User */
+                        $userB = $currentUser->getId();
                         if ($userA <> $userB) {
                             $similarity = $this->similarityModel->getSimilarityByQuestions($userA, $userB);
                             $matching = $this->matchingModel->calculateMatchingBetweenTwoUsersBasedOnAnswers($userA, $userB);

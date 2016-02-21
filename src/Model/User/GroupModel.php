@@ -645,8 +645,8 @@ class GroupModel
         if (in_array('GroupFollowers', $additionalLabels)) {
             $user = $this->um->getByCreatedGroup($group['id']);
             $group['influencer'] = array(
-                'username' => $user['username'],
-                'id' => $user['qnoow_id'],
+                'username' => $user->getUsername(),
+                'id' => $user->getId(),
             );
         }
 

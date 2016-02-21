@@ -72,7 +72,7 @@ class UserAggregator
 
             if ($id) {
                 $user = $this->userManager->getById((integer)$id, true);
-                $id = $user['qnoow_id'];
+                $id = $user->getId();
                 //$output->writeln('SUCCESS: Found user with id '.$id);
             } else {
                 $user = $this->ghostUserManager->create();

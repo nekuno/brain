@@ -3,6 +3,7 @@
 namespace Console\Command;
 
 use Console\ApplicationAwareCommand;
+use Model\User;
 use Model\User\Thread\ThreadManager;
 use Manager\UserManager;
 use Service\Recommendator;
@@ -63,7 +64,8 @@ class UsersThreadsCreateCommand extends ApplicationAwareCommand
 
         foreach ($users as $user) {
 
-            $createdThreads = $threadManager->createBatchForUser($user['qnoow_id'], $threads);
+            /* @var $user User */
+            $createdThreads = $threadManager->createBatchForUser($user->getId(), $threads);
             foreach ($createdThreads as $createdThread) {
 
                 $result = $recommendator->getRecommendationFromThread($createdThread);
@@ -75,7 +77,7 @@ class UsersThreadsCreateCommand extends ApplicationAwareCommand
                 );
 
             }
-            $output->writeln('Added threads for scenario ' . $scenario . ' and user with id ' . $user['qnoow_id']);
+            $output->writeln('Added threads for scenario ' . $scenario . ' and user with id ' . $user->getId());
         }
 
     }

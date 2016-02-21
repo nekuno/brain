@@ -124,7 +124,7 @@ class GhostUserManager
         $user = $this->userManager->getBySocialProfile($profile);
 
         try {
-            $ghostUser = $this->getById($user['qnoow_id']);
+            $ghostUser = $this->getById($user->getId());
         } catch (NotFoundHttpException $e) {
             return false;
         }

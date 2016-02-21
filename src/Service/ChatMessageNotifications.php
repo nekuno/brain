@@ -91,10 +91,6 @@ class ChatMessageNotifications
             $user = $this->userManager->getById($userId);
             $profile = $this->profileModel->getById($userId);
 
-            if (!$user) {
-                throw new \Exception('User not found', 404);
-            }
-
             if (!$profile && OutputInterface::VERBOSITY_VERBOSE <= $output->getVerbosity()) {
                 $output->writeln('Profile ' . $userId . ' not found. Using default locale (' . $this->translator->getLocale() . ').');
             }
@@ -206,7 +202,7 @@ class ChatMessageNotifications
     protected function saveInfo(array $user, array $chatMessages, $totalMessages)
     {
         foreach ($chatMessages as $index => $chatMessage) {
-            $chatMessages[$index]['username_from'] = $this->userManager->getById($chatMessage['user_from'])['username'];
+            $chatMessages[$index]['username_from'] = $this->userManager->getById($chatMessage['user_from'])->getUsername();
         }
 
         return array(

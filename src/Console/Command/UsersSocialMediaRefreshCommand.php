@@ -7,6 +7,7 @@ namespace Console\Command;
 use Console\BaseCommand;
 use Http\OAuth\ResourceOwner\AbstractResourceOwner;
 use Model\Exception\ValidationException;
+use Model\User;
 use Model\User\TokensModel;
 use Silex\Application;
 use Symfony\Component\Console\Input\InputArgument;
@@ -47,17 +48,18 @@ class UsersSocialMediaRefreshCommand extends BaseCommand
 
         foreach ($users as $user) {
 
-            if (isset($user['qnoow_id'])) {
+            /* @var $user User */
+            if ($user->getId()) {
 
                 try {
-                    $tokens = $tm->getByUserOrResource($user['qnoow_id'], $input->getArgument('resource'));
+                    $tokens = $tm->getByUserOrResource($user->getId(), $input->getArgument('resource'));
                     if (!$tokens) {
                         continue;
                     } else {
                         $token = current($tokens);
                     }
                     $resourceOwner->forceRefreshAccessToken($token);
-                    $this->displayMessage('Refreshed ' . $input->getArgument('resource') . ' token for user ' . $user['qnoow_id']);
+                    $this->displayMessage('Refreshed ' . $input->getArgument('resource') . ' token for user ' . $user->getId());
 
                 } catch (\Exception $e) {
 

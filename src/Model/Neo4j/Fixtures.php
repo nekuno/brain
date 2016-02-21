@@ -4,6 +4,7 @@ namespace Model\Neo4j;
 
 use Model\LinkModel;
 use Model\Questionnaire\QuestionModel;
+use Model\User;
 use Model\User\AnswerModel;
 use Model\User\ProfileModel;
 use Model\User\RateModel;
@@ -240,11 +241,12 @@ class Fixtures
             $invitation = $this->im->create($invitationData);
 
             foreach ($this->um->getAll() as $index => $user) {
+                /* @var $user User */
                 if ($index > 25) {
                     break;
                 }
-                $this->im->consume($invitation['invitation']['token'], $user['qnoow_id']);
-                $this->gpm->addUser($group['id'], $user['qnoow_id']);
+                $this->im->consume($invitation['invitation']['token'], $user->getId());
+                $this->gpm->addUser($group['id'], $user->getId());
             }
         }
 

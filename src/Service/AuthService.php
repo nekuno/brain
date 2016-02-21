@@ -43,20 +43,19 @@ class AuthService
             throw new UnauthorizedHttpException('', 'El nombre de usuario y la contraseña que ingresaste no coinciden con nuestros registros.');
         }
 
-        $encodedPassword = $user['password'];
-        $salt = $user['salt'];
+        $encodedPassword = $user->getPassword();
+        $salt = $user->getSalt();
         $valid = $this->encoder->isPasswordValid($encodedPassword, $password, $salt);
 
         if (!$valid) {
             throw new UnauthorizedHttpException('', 'El nombre de usuario y la contraseña que ingresaste no coinciden con nuestros registros.');
         }
 
-        unset($user['password']);
         $token = array(
             'iss' => 'https://nekuno.com',
             'exp' => time() + 86400,
-            'sub' => $user['usernameCanonical'],
-            'user' => $user,
+            'sub' => $user->getUsernameCanonical(),
+            'user' => $user->jsonSerialize(),
         );
 
         $jwt = \JWT::encode($token, $this->secret);

@@ -194,7 +194,7 @@ class AnswerModel
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(q:Question)', '(u:User)')
             ->where('u.qnoow_id = { userId }', 'id(q) = { questionId }', "HAS(q.text_$locale)")
-            ->setParameter('userId', $user['qnoow_id'])
+            ->setParameter('userId', $user->getId())
             ->setParameter('questionId', $question['questionId'])
             ->with('u', 'q')
             ->match('(u)-[ua:ANSWERS]->(a:Answer)-[:IS_ANSWER_OF]->(q)')
@@ -213,7 +213,7 @@ class AnswerModel
         $result = $query->getResultSet();
 
         if ($result->count() < 1) {
-            throw new NotFoundHttpException(sprintf('There is not answer for user "%s" to question "%s"', $user['qnoow_id'], $question['questionId']));
+            throw new NotFoundHttpException(sprintf('There is not answer for user "%s" to question "%s"', $user->getId(), $question['questionId']));
         }
 
         /* @var $row Row */

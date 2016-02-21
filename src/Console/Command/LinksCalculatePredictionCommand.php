@@ -6,6 +6,7 @@ use Console\ApplicationAwareCommand;
 use Everyman\Neo4j\Query\ResultSet;
 use Model\Entity\EmailNotification;
 use Model\LinkModel;
+use Model\User;
 use Model\User\Affinity\AffinityModel;
 use Manager\UserManager;
 use Service\AffinityRecalculations;
@@ -54,15 +55,15 @@ class LinksCalculatePredictionCommand extends ApplicationAwareCommand
 
             if (!$recalculate) {
                 foreach ($users as $user) {
-
+                    /* @var $user User */
                     $filters = array('affinity' => false);
-                    $linkIds = $linkModel->getPredictedContentForAUser($user['qnoow_id'], $limitContent, $limitUsers, $filters);
+                    $linkIds = $linkModel->getPredictedContentForAUser($user->getId(), $limitContent, $limitUsers, $filters);
                     foreach ($linkIds as $link) {
 
                         $linkId = $link['id'];
-                        $affinity = $affinityModel->getAffinity($user['qnoow_id'], $linkId);
+                        $affinity = $affinityModel->getAffinity($user->getId(), $linkId);
                         if (OutputInterface::VERBOSITY_NORMAL <= $output->getVerbosity()) {
-                            $output->writeln(sprintf('User: %d --> Link: %d (Affinity: %f)', $user['qnoow_id'], $linkId, $affinity['affinity']));
+                            $output->writeln(sprintf('User: %d --> Link: %d (Affinity: %f)', $user->getId(), $linkId, $affinity['affinity']));
                         }
                     }
                 }
@@ -70,21 +71,24 @@ class LinksCalculatePredictionCommand extends ApplicationAwareCommand
                 /* @var $affinityRecalculations AffinityRecalculations */
                 $affinityRecalculations = $this->app['affinityRecalculations.service'];
                 foreach ($users as $user) {
-                    $count = $affinityModel->countPotentialAffinities($user['qnoow_id'], $limitUsers);
+                    /* @var $user User */
+                    $count = $affinityModel->countPotentialAffinities($user->getId(), $limitUsers);
                     $estimatedTime = $affinityRecalculations->estimateTime($count);
                     $targetTime = AffinityModel::numberOfSecondsToCalculateAffinity;
                     if ($estimatedTime > $targetTime) {
-                        $usedLimitUsers = max(AffinityModel::minimumUsersToPredict,
-                            intval($limitUsers * sqrt($targetTime / $estimatedTime)));
+                        $usedLimitUsers = max(
+                            AffinityModel::minimumUsersToPredict,
+                            intval($limitUsers * sqrt($targetTime / $estimatedTime))
+                        );
                     } else {
                         $usedLimitUsers = $limitUsers;
                     }
-                    $output->writeln(sprintf('%s potential affinities for user %s', $count, $user['qnoow_id']));
+                    $output->writeln(sprintf('%s potential affinities for user %s', $count, $user->getId()));
                     $output->writeln($estimatedTime . '  ' . $usedLimitUsers);
-                    $result = $affinityRecalculations->recalculateAffinities($user['qnoow_id'], $limitContent, $limitUsers, $notify);
+                    $result = $affinityRecalculations->recalculateAffinities($user->getId(), $limitContent, $limitUsers, $notify);
 
                     foreach ($result['affinities'] as $linkId => $affinity) {
-                        $output->writeln(sprintf('User: %d --> Link: %d (Affinity: %f)', $user['qnoow_id'], $linkId, $affinity));
+                        $output->writeln(sprintf('User: %d --> Link: %d (Affinity: %f)', $user->getId(), $linkId, $affinity));
                     }
                     if (!empty($result['emailInfo'])) {
                         $emailInfo = $result['emailInfo'];
@@ -93,13 +97,14 @@ class LinksCalculatePredictionCommand extends ApplicationAwareCommand
                             $linkIds[] = $link['id'];
                         }
                         $output->writeln(sprintf('Email sent to %s users', $emailInfo['recipients']));
-                        $output->writeln(sprintf('Email sent to user: %s with links: %s', $user['qnoow_id'], implode(', ', $linkIds)));
+                        $output->writeln(sprintf('Email sent to user: %s with links: %s', $user->getId(), implode(', ', $linkIds)));
                     }
                 }
             }
 
         } catch (\Exception $e) {
             $output->writeln('Error trying to recalculate predicted links with message: ' . $e->getMessage());
+
             return;
         }
 
