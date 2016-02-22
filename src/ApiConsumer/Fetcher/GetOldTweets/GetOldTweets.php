@@ -82,12 +82,15 @@ class GetOldTweets
         
         foreach ($tweets as $tweet) {
             $text = utf8_encode($tweet['text']);
-            $text = str_replace(htmlentities(' '), '', htmlentities($text)); //not a space, html special char &nbsp;
-            $text = html_entity_decode($text);
 
             $newUrls = $this->parser->extractURLsFromText($text);
             $timestamp = $this->getDate($tweet);
-            foreach ($newUrls as $newUrl){
+
+            $errorCharacters = array('&Acirc;', '&acirc;', '&brvbar;', '&nbsp;');
+            foreach ($newUrls as $newUrl) {
+                
+                $newUrl = str_replace($errorCharacters, '', htmlentities($newUrl));
+                $newUrl = html_entity_decode($newUrl);
                 $links[] = array(
                     'url' => $newUrl,
                     'timestamp' => $timestamp,
@@ -105,8 +108,9 @@ class GetOldTweets
         return false;
     }
 
-    public function getMinDate(array $tweets){
-        return min(array_map(array($this,'getDate'), $tweets));
+    public function getMinDate(array $tweets)
+    {
+        return min(array_map(array($this, 'getDate'), $tweets));
     }
 
     public function getDate(array $tweet)
