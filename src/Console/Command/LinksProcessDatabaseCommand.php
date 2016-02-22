@@ -10,14 +10,14 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class LinksProcessCommand extends ApplicationAwareCommand
+class LinksProcessDatabaseCommand extends ApplicationAwareCommand
 {
 
     protected function configure()
     {
 
-        $this->setName('links:process')
-            ->setDescription('Process links')
+        $this->setName('links:process:database')
+            ->setDescription('Reprocess already saved and unprocessed links')
             ->setDefinition(
                 array(
                     new InputArgument('limit', InputArgument::OPTIONAL, 'Items limit', 100)
