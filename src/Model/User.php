@@ -835,7 +835,7 @@ class User implements UserInterface, \JsonSerializable
     {
         $vars = get_object_vars($this);
 
-        unset($vars['password']);
+        //unset($vars['password']);
         unset($vars['plainPassword']);
         $vars['qnoow_id'] = $vars['id'];
         foreach ($vars as $key => $value) {
