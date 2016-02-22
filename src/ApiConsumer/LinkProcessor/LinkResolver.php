@@ -33,6 +33,11 @@ class LinkResolver
     {
 
         try {
+            if(!parse_url($url, PHP_URL_HOST)){
+                $url = 'http://'.$url;
+            };
+
+            $this->client->getHistory()->clear();
             $crawler = $this->client->request('GET', $url);
             $statusCode = $this->client->getResponse()->getStatus();
         } catch (RequestException $e) {
