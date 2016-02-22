@@ -54,9 +54,12 @@ class TwitterProcessor extends AbstractProcessor
     {
         if (!isset($link['url'])) return false;
 
-        $userId = isset($link['resourceItemId']) ? $link['resourceItemId'] : $this->parser->getProfileIdFromUrl($link['url']);
+        $userId = isset($link['resourceItemId']) ?
+            array('user_id' => $link['resourceItemId']) :
+            $this->parser->getProfileIdFromIntentUrl($link['url']);
 
-        $users = $this->resourceOwner->lookupUsersBy('user_id', array($userId));
+        $key = array_keys($userId)[0];
+        $users = $this->resourceOwner->lookupUsersBy($key, array($userId[$key]));
 
         if (empty($users)) return false;
 
@@ -67,7 +70,7 @@ class TwitterProcessor extends AbstractProcessor
     {
         if (!isset($link['url'])) return false;
 
-        $userName = $this->parser->getProfileNameFromUrl($link['url']);
+        $userName = $this->parser->getProfileNameFromProfileUrl($link['url']);
 
         $users = $this->resourceOwner->lookupUsersBy('screen_name', array($userName));
         if (empty($users)) return false;
