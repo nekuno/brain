@@ -28,7 +28,7 @@ $app->get('/profile/metadata', 'users.profile.controller:getMetadataAction');
 $app->get('/profile/filters', 'users.profile.controller:getFiltersAction');
 $app->get('/profile/tags/{type}', 'users.profile.controller:getProfileTagsAction');
 
-$app->get('/tokens', 'users.tokens.controller:getAllAction');
+$app->get('/users/tokens/{id}', 'users.tokens.controller:getAllAction');
 $app->get('/tokens/{resourceOwner}', 'users.tokens.controller:getAction');
 $app->post('/tokens/{resourceOwner}', 'users.tokens.controller:postAction');
 $app->put('/tokens/{resourceOwner}', 'users.tokens.controller:putAction');
@@ -43,31 +43,28 @@ $app->delete('/privacy', 'users.privacy.controller:deleteAction');
 $app->get('/privacy/metadata', 'users.privacy.controller:getMetadataAction');
 $app->post('/privacy/validate', 'users.privacy.controller:validateAction');
 
-$app->get('/users/{from}/blocks', 'users.relations.controller:indexAction')->value('relation', RelationsModel::BLOCKS);
-$app->get('/users/{from}/blocks/{to}', 'users.relations.controller:getAction')->value('relation', RelationsModel::BLOCKS);
-$app->post('/users/{from}/blocks/{to}', 'users.relations.controller:postAction')->value('relation', RelationsModel::BLOCKS);
-$app->delete('/users/{from}/blocks/{to}', 'users.relations.controller:deleteAction')->value('relation', RelationsModel::BLOCKS);
+$app->get('/blocks', 'users.relations.controller:indexAction')->value('relation', RelationsModel::BLOCKS);
+$app->get('/blocks/{to}', 'users.relations.controller:getAction')->value('relation', RelationsModel::BLOCKS);
+$app->post('/blocks/{to}', 'users.relations.controller:postAction')->value('relation', RelationsModel::BLOCKS);
+$app->delete('/blocks/{to}', 'users.relations.controller:deleteAction')->value('relation', RelationsModel::BLOCKS);
 
-$app->get('/users/{from}/favorites', 'users.relations.controller:indexAction')->value('relation', RelationsModel::FAVORITES);
-$app->get('/users/{from}/favorites/{to}', 'users.relations.controller:getAction')->value('relation', RelationsModel::FAVORITES);
-$app->post('/users/{from}/favorites/{to}', 'users.relations.controller:postAction')->value('relation', RelationsModel::FAVORITES);
-$app->delete('/users/{from}/favorites/{to}', 'users.relations.controller:deleteAction')->value('relation', RelationsModel::FAVORITES);
+$app->get('/favorites', 'users.relations.controller:indexAction')->value('relation', RelationsModel::FAVORITES);
+$app->get('/favorites/{to}', 'users.relations.controller:getAction')->value('relation', RelationsModel::FAVORITES);
+$app->post('/favorites/{to}', 'users.relations.controller:postAction')->value('relation', RelationsModel::FAVORITES);
+$app->delete('/favorites/{to}', 'users.relations.controller:deleteAction')->value('relation', RelationsModel::FAVORITES);
 
-$app->get('/users/{from}/likes', 'users.relations.controller:indexAction')->value('relation', RelationsModel::LIKES);
-$app->get('/users/{from}/likes/{to}', 'users.relations.controller:getAction')->value('relation', RelationsModel::LIKES);
-$app->post('/users/{from}/likes/{to}', 'users.relations.controller:postAction')->value('relation', RelationsModel::LIKES);
-$app->delete('/users/{from}/likes/{to}', 'users.relations.controller:deleteAction')->value('relation', RelationsModel::LIKES);
+$app->get('/likes', 'users.relations.controller:indexAction')->value('relation', RelationsModel::LIKES);
+$app->get('/likes/{to}', 'users.relations.controller:getAction')->value('relation', RelationsModel::LIKES);
+$app->post('/likes/{to}', 'users.relations.controller:postAction')->value('relation', RelationsModel::LIKES);
+$app->delete('/likes/{to}', 'users.relations.controller:deleteAction')->value('relation', RelationsModel::LIKES);
 
-$app->get('/users/{from}/reports', 'users.relations.controller:indexAction')->value('relation', RelationsModel::REPORTS);
-$app->get('/users/{from}/reports/{to}', 'users.relations.controller:getAction')->value('relation', RelationsModel::REPORTS);
-$app->post('/users/{from}/reports/{to}', 'users.relations.controller:postAction')->value('relation', RelationsModel::REPORTS);
-$app->delete('/users/{from}/reports/{to}', 'users.relations.controller:deleteAction')->value('relation', RelationsModel::REPORTS);
+$app->get('/reports', 'users.relations.controller:indexAction')->value('relation', RelationsModel::REPORTS);
+$app->get('/reports/{to}', 'users.relations.controller:getAction')->value('relation', RelationsModel::REPORTS);
+$app->post('/reports/{to}', 'users.relations.controller:postAction')->value('relation', RelationsModel::REPORTS);
+$app->delete('/reports/{to}', 'users.relations.controller:deleteAction')->value('relation', RelationsModel::REPORTS);
 
-$app->get('/users/{from}/relations/{to}', 'users.relations.controller:getAction');
-
-$app->get('/users/{id}/contact/from', 'users.relations.controller:contactFromAction');
-$app->get('/users/{id}/contact/to', 'users.relations.controller:contactToAction');
-$app->get('/users/{from}/contact/{to}', 'users.relations.controller:contactAction');
+$app->get('/relations/{to}', 'users.relations.controller:getAction');
+$app->get('/other-relations/{from}', 'users.relations.controller:getOtherAction');
 
 $app->get('/users/{id1}/matching/{id2}', 'users.controller:getMatchingAction');
 $app->get('/users/{id1}/similarity/{id2}', 'users.controller:getSimilarityAction');

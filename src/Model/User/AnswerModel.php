@@ -261,6 +261,7 @@ class AnswerModel
     /**
      * @param array $data
      * @param bool $userRequired
+     * @throws ValidationException
      */
     public function validate(array $data, $userRequired = true)
     {

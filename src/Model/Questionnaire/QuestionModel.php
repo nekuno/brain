@@ -155,7 +155,6 @@ class QuestionModel
      */
     public function create(array $data)
     {
-
         $this->validate($data);
 
         $locale = $data['locale'];
@@ -395,6 +394,7 @@ class QuestionModel
     /**
      * @param array $data
      * @param bool $userRequired
+     * @throws ValidationException
      */
     public function validate(array $data, $userRequired = true)
     {

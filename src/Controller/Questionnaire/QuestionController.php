@@ -2,14 +2,14 @@
 
 namespace Controller\Questionnaire;
 
+use Controller\BaseController;
 use Model\Questionnaire\QuestionModel;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 
-class QuestionController
+class QuestionController extends BaseController
 {
-
     /**
      * @param Request $request
      * @param Application $app
@@ -17,7 +17,6 @@ class QuestionController
      */
     public function getQuestionsAction(Request $request, Application $app)
     {
-
         $locale = $this->getLocale($request, $app['locale.options']['default']);
         $skip = $request->query->get('skip');
         $limit = $request->query->get('limit', 10);
@@ -27,7 +26,6 @@ class QuestionController
         $questions = $model->getAll($locale, $skip, $limit);
 
         return $app->json($questions);
-
     }
 
     /**
@@ -38,13 +36,11 @@ class QuestionController
      */
     public function getNextQuestionAction(Request $request, Application $app)
     {
-        $userId = $app['user']->getId();
-
         $locale = $this->getLocale($request, $app['locale.options']['default']);
         /* @var QuestionModel $model */
         $model = $app['questionnaire.questions.model'];
 
-        $question = $model->getNextByUser($userId, $locale);
+        $question = $model->getNextByUser($this->getUserId(), $locale);
 
         return $app->json($question);
     }
@@ -56,7 +52,6 @@ class QuestionController
      */
     public function getQuestionAction(Request $request, Application $app)
     {
-
         $id = $request->get('id');
         $locale = $this->getLocale($request, $app['locale.options']['default']);
         /* @var $model QuestionModel */
@@ -69,7 +64,6 @@ class QuestionController
 
     public function validateAction(Request $request, Application $app)
     {
-
         $data = $request->request->all();
         $data['locale'] = $this->getLocale($request, $app['locale.options']['default']);
 
@@ -88,8 +82,8 @@ class QuestionController
      */
     public function postQuestionAction(Request $request, Application $app)
     {
-
         $data = $request->request->all();
+        $data['userId'] = $this->getUserId();
         $data['locale'] = $this->getLocale($request, $app['locale.options']['default']);
 
         /* @var $model QuestionModel */
@@ -98,7 +92,6 @@ class QuestionController
         $question = $model->create($data);
 
         return $app->json($question, 201);
-
     }
 
     /**
@@ -109,17 +102,14 @@ class QuestionController
      */
     public function skipAction(Request $request, Application $app)
     {
-
         $id = $request->attributes->get('id');
-        $userId = $request->request->get('userId');
-
         $locale = $this->getLocale($request, $app['locale.options']['default']);
         /* @var QuestionModel $model */
         $model = $app['questionnaire.questions.model'];
 
         $question = $model->getById($id, $locale);
 
-        $model->skip($id, $userId);
+        $model->skip($id, $this->getUserId());
 
         return $app->json($question);
     }
@@ -132,9 +122,7 @@ class QuestionController
      */
     public function reportAction(Request $request, Application $app)
     {
-
         $id = $request->attributes->get('id');
-        $userId = $request->request->get('userId');
         $reason = $request->request->get('reason');
 
         $locale = $this->getLocale($request, $app['locale.options']['default']);
@@ -143,14 +131,13 @@ class QuestionController
 
         $question = $model->getById($id, $locale);
 
-        $model->report($id, $userId, $reason);
+        $model->report($id, $this->getUserId(), $reason);
 
         return $app->json($question);
     }
 
     public function getDivisiveQuestionsAction(Request $request, Application $app)
     {
-
         $locale = $request->get('locale', $app['locale.options']['default']);
         /* @var QuestionModel $model */
         $model = $app['questionnaire.questions.model'];
@@ -169,5 +156,4 @@ class QuestionController
 
         return $locale;
     }
-
 }

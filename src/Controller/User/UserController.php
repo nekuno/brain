@@ -2,6 +2,7 @@
 
 namespace Controller\User;
 
+use Controller\BaseController;
 use Model\User\ContentPaginatedModel;
 use Model\User\GroupModel;
 use Model\User\ProfileModel;
@@ -18,9 +19,8 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  * Class UserController
  * @package Controller
  */
-class UserController
+class UserController extends BaseController
 {
-
     /**
      * @param Application $app
      * @param Request $request
@@ -28,7 +28,6 @@ class UserController
      */
     public function indexAction(Application $app, Request $request)
     {
-
         $filters = array();
 
         $referenceUserId = $request->get('referenceUserId');
@@ -53,19 +52,16 @@ class UserController
 
     /**
      * @param Application $app
-     * @param Request $request
      * @return JsonResponse
      */
-    public function getAction(Application $app, Request $request)
+    public function getAction(Application $app)
     {
-
-        $userId = $request->request->get('userId');
         /* @var $model UserManager */
         $model = $app['users.manager'];
-        $user = $model->getById($userId)->jsonSerialize();
+        $user = $model->getById($this->getUserId())->jsonSerialize();
         /* @var $groupModel GroupModel */
         $groupModel = $app['users.groups.model'];
-        $user['groups'] = $groupModel->getByUser($userId);
+        $user['groups'] = $groupModel->getByUser($this->getUserId());
 
         return $app->json($user);
     }
@@ -77,7 +73,6 @@ class UserController
      */
     public function getOtherAction(Application $app, $id)
     {
-
         /* @var $model UserManager */
         $model = $app['users.manager'];
         $user = $model->getById($id)->jsonSerialize();
@@ -95,9 +90,6 @@ class UserController
      */
     public function findAction(Application $app, Request $request)
     {
-        //TODO: Remove this once userId is not in the request
-        $request->request->remove('userId');
-
         /* @var $model UserManager */
         $model = $app['users.manager'];
         $criteria = $request->query->all();
@@ -117,7 +109,6 @@ class UserController
      */
     public function availableAction(Application $app, $username)
     {
-
         /* @var $model UserManager */
         $model = $app['users.manager'];
         try {
@@ -136,12 +127,8 @@ class UserController
      */
     public function validateAction(Request $request, Application $app)
     {
-        //TODO: Remove this once userId is not in the request
-        $request->request->remove('userId');
-
         /* @var $model UserManager */
         $model = $app['users.manager'];
-
         $model->validate($request->request->all());
 
         return $app->json();
@@ -154,9 +141,6 @@ class UserController
      */
     public function postAction(Application $app, Request $request)
     {
-        //TODO: Remove this once userId is not in the request
-        $request->request->remove('userId');
-
         /* @var $model UserManager */
         $model = $app['users.manager'];
         $user = $model->create($request->request->all());
@@ -171,10 +155,11 @@ class UserController
      */
     public function putAction(Application $app, Request $request)
     {
-
+        $data = $request->request->all();
+        $data['userId'] = $this->getUserId();
         /* @var $model UserManager */
         $model = $app['users.manager'];
-        $user = $model->update($request->request->all());
+        $user = $model->update($data);
 
         return $app->json($user);
     }

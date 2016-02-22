@@ -3,27 +3,25 @@
 
 namespace Controller\User;
 
+use Controller\BaseController;
 use Doctrine\ORM\EntityManager;
 use Model\Entity\DataStatus;
 use Model\User\TokensModel;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 
-class DataController
+class DataController extends BaseController
 {
 
     public function getStatusAction(Request $request, Application $app)
     {
-
-        $userId = $request->get('userId');
-
         $resourceOwner = $request->query->get('resourceOwner');
 
         /** @var EntityManager $em */
         $em = $app['orm.ems']['mysql_brain'];
         $dataStatusRepository = $em->getRepository('\Model\Entity\DataStatus');
 
-        $criteria['userId'] = $userId;
+        $criteria['userId'] = $this->getUserId();;
 
         if ($resourceOwner) {
             $criteria['resourceOwner'] = $resourceOwner;

@@ -2,24 +2,21 @@
 
 namespace Controller\User;
 
+use Controller\BaseController;
 use Model\Entity\EmailNotification;
 use Model\User\InvitationModel;
 use Service\EmailNotifications;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 
-class InvitationController
+class InvitationController extends BaseController
 {
-
     public function indexByUserAction(Request $request, Application $app)
     {
-        // TODO: Change with $this->getUserId()
-        $id = $request->request->get('userId');
-
         /* @var $model InvitationModel */
         $model = $app['users.invitations.model'];
 
-        $result = $model->getPaginatedInvitationsByUser($request->get('offset') ?: 0, $request->get('limit') ?: 20, $id);
+        $result = $model->getPaginatedInvitationsByUser($request->get('offset') ?: 0, $request->get('limit') ?: 20, $this->getUserId());
 
         return $app->json($result);
     }
@@ -34,39 +31,32 @@ class InvitationController
         return $app->json($result);
     }
 
-    public function getAvailableByUserAction(Request $request, Application $app)
+    public function getAvailableByUserAction(Application $app)
     {
-        // TODO: Change with $this->getUserId() and remove Request from parameters
-        $id = $request->request->get('userId');
-
         /* @var $model InvitationModel */
         $model = $app['users.invitations.model'];
 
-        $result = $model->getUserAvailable($id);
+        $result = $model->getUserAvailable($this->getUserId());
 
         return $app->json($result);
     }
 
-    public function setUserAvailableAction(Request $request, Application $app, $nOfAvailable)
+    public function setUserAvailableAction(Application $app, $nOfAvailable)
     {
-        // TODO: Change with $this->getUserId() and remove Request from parameters
-        $id = $request->request->get('userId');
-
         /* @var $model InvitationModel */
         $model = $app['users.invitations.model'];
 
-        $model->setUserAvailable($id, $nOfAvailable);
+        $model->setUserAvailable($this->getUserId(), $nOfAvailable);
 
-        $nOfAvailable = $model->getUserAvailable($id);
+        $nOfAvailable = $model->getUserAvailable($this->getUserId());
 
         return $nOfAvailable;
     }
 
     public function postAction(Request $request, Application $app)
     {
-
         $data = $request->request->all();
-
+        $data['userId'] = $this->getUserId();
         /* @var $model InvitationModel */
         $model = $app['users.invitations.model'];
         $invitation = $model->create($data);
@@ -76,9 +66,8 @@ class InvitationController
 
     public function putAction(Request $request, Application $app, $id)
     {
-
         $data = $request->request->all();
-
+        $data['userId'] = $this->getUserId();
         /* @var $model InvitationModel */
         $model = $app['users.invitations.model'];
 
@@ -89,7 +78,6 @@ class InvitationController
 
     public function deleteAction(Application $app, $id)
     {
-
         /* @var $model InvitationModel */
         $model = $app['users.invitations.model'];
 
@@ -111,46 +99,36 @@ class InvitationController
 
     public function validateAction(Request $request, Application $app)
     {
-
         $data = $request->request->all();
-
+        $data['userId'] = $this->getUserId();
         /* @var $model InvitationModel */
         $model = $app['users.invitations.model'];
-        $model->validate($data, false);
+        $model->validate($data);
 
         return $app->json(array(), 200);
     }
 
-    public function consumeAction(Request $request, Application $app, $token)
+    public function consumeAction(Application $app, $token)
     {
-        // TODO: Change with $this->getUserId() and remove Request from parameters
-        $userId = $request->request->get('userId');
-
         /* @var $model InvitationModel */
         $model = $app['users.invitations.model'];
 
-        $invitation = $model->consume($token, $userId);
+        $invitation = $model->consume($token, $this->getUserId());
 
         return $app->json($invitation);
     }
 
-    public function countByUserAction(Request $request, Application $app)
+    public function countByUserAction(Application $app)
     {
-        // TODO: Change with $this->getUserId() and remove Request from parameters
-        $id = $request->request->get('userId');
-
         /* @var $model InvitationModel */
         $model = $app['users.invitations.model'];
-        $invitation = $model->getCountByUserId($id);
+        $invitation = $model->getCountByUserId($this->getUserId());
 
         return $app->json($invitation);
     }
 
     public function sendAction(Request $request, Application $app, $id)
     {
-        // TODO: Change with $this->getUserId()
-        $userId = $request->request->get('userId');
-
         $data = $request->request->all();
         $recipients = 0;
         /* @var $model InvitationModel */
@@ -160,13 +138,13 @@ class InvitationController
             $app['translator']->setLocale($data['locale']);
         }
 
-        if ($sendData = $model->prepareSend($id, $userId, $data, $app['social_host'])) {
+        if ($sendData = $model->prepareSend($id, $this->getUserId(), $data, $app['social_host'])) {
             /* @var $emailNotification EmailNotifications */
             $emailNotification = $app['emailNotification.service'];
             $recipients = $emailNotification->send(
                 EmailNotification::create()
                     ->setType(EmailNotification::INVITATION)
-                    ->setUserId($userId)
+                    ->setUserId($this->getUserId())
                     ->setRecipient($data['email'])
                     ->setSubject($app['translator']->trans('notifications.messages.invitation.subject', array('%name%' => $sendData['username'])))
                     ->setInfo($sendData)

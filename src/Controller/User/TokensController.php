@@ -2,6 +2,7 @@
 
 namespace Controller\User;
 
+use Controller\BaseController;
 use Http\OAuth\Factory\ResourceOwnerFactory;
 use Http\OAuth\ResourceOwner\FacebookResourceOwner;
 use Model\User\GhostUser\GhostUserManager;
@@ -17,19 +18,15 @@ use Symfony\Component\HttpFoundation\JsonResponse;
  * Class TokensController
  * @package Controller
  */
-class TokensController
+class TokensController extends BaseController
 {
-
     /**
-     * @param Request $request
+     * @param integer $id
      * @param Application $app
      * @return JsonResponse
      */
-    public function getAllAction(Request $request, Application $app)
+    public function getAllAction(Application $app, $id)
     {
-        // TODO: Change with $this->getUserId() and remove Request from parameters
-        $id = $request->request->get('userId');
-
         /* @var $model TokensModel */
         $model = $app['users.tokens.model'];
 
@@ -39,16 +36,13 @@ class TokensController
     }
 
     /**
-     * @param Request $request
      * @param Application $app
+     * @param integer $id
      * @param string $resourceOwner
      * @return JsonResponse
      */
-    public function getAction(Request $request, Application $app, $resourceOwner)
+    public function getAction(Application $app, $id, $resourceOwner)
     {
-        // TODO: Change with $this->getUserId() and remove Request from parameters
-        $id = $request->request->get('userId');
-
         /* @var $model TokensModel */
         $model = $app['users.tokens.model'];
 
@@ -65,14 +59,10 @@ class TokensController
      */
     public function postAction(Request $request, Application $app, $resourceOwner)
     {
-        // TODO: Change with $this->getUserId()
-        $id = $request->request->get('userId');
-        $request->request->remove('userId');
-
         /* @var $model TokensModel */
         $model = $app['users.tokens.model'];
 
-        $token = $model->create($id, $resourceOwner, $request->request->all());
+        $token = $model->create($this->getUserId(), $resourceOwner, $request->request->all());
 
         /* @var $resourceOwnerFactory ResourceOwnerFactory */
         $resourceOwnerFactory = $app['api_consumer.resource_owner_factory'];
@@ -98,21 +88,20 @@ class TokensController
                 //TODO: Add information about this if it happens
                 return $app->json($token, 201);
             }
-            $profile = new SocialProfile($id, $profileUrl, $resourceOwner);
+            $profile = new SocialProfile($this->getUserId(), $profileUrl, $resourceOwner);
 
             /* @var $ghostUserManager GhostUserManager */
             $ghostUserManager = $app['users.ghostuser.manager'];
             if ($ghostUser = $ghostUserManager->getBySocialProfile($profile)) {
                 /* @var $userManager UserManager */
                 $userManager = $app['users.manager'];
-                $userManager->fuseUsers($id, $ghostUser->getId());
-                $ghostUserManager->saveAsUser($id);
+                $userManager->fuseUsers($this->getUserId(), $ghostUser->getId());
+                $ghostUserManager->saveAsUser($this->getUserId());
             } else {
                 /** @var $socialProfilesManager SocialProfileManager */
                 $socialProfilesManager = $app['users.socialprofile.manager'];
                 $socialProfilesManager->addSocialProfile($profile);
             }
-
         }
 
         return $app->json($token, 201);
@@ -126,34 +115,26 @@ class TokensController
      */
     public function putAction(Request $request, Application $app, $resourceOwner)
     {
-        // TODO: Change with $this->getUserId()
-        $id = $request->request->get('userId');
-
         /* @var $model TokensModel */
         $model = $app['users.tokens.model'];
 
-        $token = $model->update($id, $resourceOwner, $request->request->all());
+        $token = $model->update($this->getUserId(), $resourceOwner, $request->request->all());
 
         return $app->json($token);
     }
 
     /**
-     * @param Request $request
      * @param Application $app
      * @param string $resourceOwner
      * @return JsonResponse
      */
-    public function deleteAction(Request $request, Application $app, $resourceOwner)
+    public function deleteAction(Application $app, $resourceOwner)
     {
-        // TODO: Change with $this->getUserId() and remove Request from parameters
-        $id = $request->request->get('userId');
-
         /* @var $model TokensModel */
         $model = $app['users.tokens.model'];
 
-        $token = $model->remove($id, $resourceOwner);
+        $token = $model->remove($this->getUserId(), $resourceOwner);
 
         return $app->json($token);
     }
-
 }

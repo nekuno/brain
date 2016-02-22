@@ -2,6 +2,7 @@
 
 namespace Controller\User;
 
+use Controller\BaseController;
 use Model\User;
 use Model\User\GroupModel;
 use Model\User\ProfileModel;
@@ -13,31 +14,21 @@ use Symfony\Component\HttpFoundation\Request;
  * Class GroupController
  * @package Controller
  */
-class GroupController
+class GroupController extends BaseController
 {
-
     /**
      * @var GroupModel
      */
     protected $gm;
 
-    public function __construct(GroupModel $gm)
+    public function __construct(User $user, GroupModel $gm)
     {
+        $this->user = $user;
         $this->gm = $gm;
-    }
-
-    public function getAllAction(Application $app)
-    {
-
-        $groups = $this->gm->getAll();
-
-        return $app->json($groups);
-
     }
 
     public function getAction(Application $app, $id)
     {
-
         $group = $this->gm->getById($id);
 
         return $app->json($group);
@@ -46,6 +37,7 @@ class GroupController
     public function getMembersAction(Request $request, Application $app, $id)
     {
         $data = $request->query->all();
+        $data['userId'] = $this->getUserId();
         /* @var UserManager $userManager */
         $userManager = $app['users.manager'];
         $usersByGroup = $userManager->getByGroup($id, $data);
@@ -69,24 +61,17 @@ class GroupController
         return $app->json(array('items' => $users));
     }
 
-    public function addUserAction(Request $request, Application $app, $id)
+    public function addUserAction(Application $app, $id)
     {
-        // TODO: Change with $this->getUserId() and remove Request from parameters
-        $userId = $request->request->get('userId');
-
-        $this->gm->addUser($id, $userId);
+        $this->gm->addUser($id, $this->getUserId());
 
         return $app->json();
     }
 
-    public function removeUserAction(Request $request, Application $app, $id)
+    public function removeUserAction(Application $app, $id)
     {
-        // TODO: Change with $this->getUserId() and remove Request from parameters
-        $userId = $request->request->get('userId');
-
-        $this->gm->removeUser($id, $userId);
+        $this->gm->removeUser($id, $this->getUserId());
 
         return $app->json();
     }
-
 }

@@ -37,7 +37,7 @@ class SubscribersServiceProvider implements ServiceProviderInterface
         /* @var $dispatcher EventDispatcher */
         $dispatcher = $app['dispatcher'];
 
-        $dispatcher->addSubscriber(new FilterClientIpSubscriber($app['valid_ips'], $app['secret']));
+        //$dispatcher->addSubscriber(new FilterClientIpSubscriber($app['valid_ips'], $app['secret']));
         $dispatcher->addSubscriber(new OAuthTokenSubscriber($app['users.tokens.model'], $app['mailer'], $app['monolog'], $app['amqp']));
         $dispatcher->addSubscriber(new AccountConnectSubscriber($app['amqpManager.service']));
         $dispatcher->addSubscriber(new UserSubscriber($app['users.threads.manager']));

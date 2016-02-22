@@ -2,6 +2,7 @@
 
 namespace Controller\User;
 
+use Controller\BaseController;
 use Model\User\ProfileModel;
 use Model\User\ProfileTagModel;
 use Silex\Application;
@@ -13,7 +14,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  * Class ProfileController
  * @package Controller
  */
-class ProfileController
+class ProfileController extends BaseController
 {
     /**
      * @param Request $request
@@ -22,14 +23,11 @@ class ProfileController
      */
     public function getAction(Request $request, Application $app)
     {
-        // TODO: Change with $this->getUserId() and remove Request from parameters
-        $userId = $request->request->get('userId');
-
         $locale = $request->query->get('locale');
         /* @var $model ProfileModel */
         $model = $app['users.profile.model'];
 
-        $profile = $model->getById($userId, $locale);
+        $profile = $model->getById($this->getUserId(), $locale);
 
         return $app->json($profile);
     }
@@ -58,13 +56,10 @@ class ProfileController
      */
     public function postAction(Request $request, Application $app)
     {
-        // TODO: Change with $this->getUserId()
-        $userId = $request->request->get('userId');
-
         /* @var $model ProfileModel */
         $model = $app['users.profile.model'];
 
-        $profile = $model->create($userId, $request->request->all());
+        $profile = $model->create($this->getUserId(), $request->request->all());
 
         return $app->json($profile, 201);
     }
@@ -76,32 +71,25 @@ class ProfileController
      */
     public function putAction(Request $request, Application $app)
     {
-        // TODO: Change with $this->getUserId()
-        $userId = $request->request->get('userId');
-
         /* @var $model ProfileModel */
         $model = $app['users.profile.model'];
 
-        $profile = $model->update($userId, $request->request->all());
+        $profile = $model->update($this->getUserId(), $request->request->all());
 
         return $app->json($profile);
     }
 
     /**
-     * @param Request $request
      * @param Application $app
      * @return JsonResponse
      */
-    public function deleteAction(Request $request, Application $app)
+    public function deleteAction(Application $app)
     {
-        // TODO: Change with $this->getUserId()
-        $userId = $request->request->get('userId');
-
         /* @var $model ProfileModel */
         $model = $app['users.profile.model'];
 
-        $profile = $model->getById($userId);
-        $model->remove($userId);
+        $profile = $model->getById($this->getUserId());
+        $model->remove($this->getUserId());
 
         return $app->json($profile);
     }
@@ -161,7 +149,6 @@ class ProfileController
      */
     public function getProfileTagsAction(Request $request, Application $app)
     {
-
         $type = $request->get('type');
         $search = $request->get('search', '');
         $limit = $request->get('limit', 0);

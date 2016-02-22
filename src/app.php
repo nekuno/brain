@@ -23,6 +23,7 @@ use Silex\Provider\ValidatorServiceProvider;
 use Silex\Provider\TwigServiceProvider;
 use Silex\Provider\TranslationServiceProvider;
 use Sorien\Provider\PimpleDumpProvider;
+use Symfony\Component\HttpFoundation\RequestMatcher;
 
 $app = new Application();
 
@@ -55,8 +56,14 @@ $app['security.firewalls'] = array(
         'pattern' => '^/login$',
         'anonymous' => true,
     ],
-    'public' => array(
-        'pattern' => '^/users/find',
+    'public_get' => array(
+        'pattern' => new RequestMatcher('(^/users/find)|(^/users/tokens/)|(^/tokens/)|(^/lookup)|(^/profile/metadata$)|(^/users/available/)|(^/client/version$)',
+                null, 'GET'),
+        'anonymous' => true,
+    ),
+    'public_post' => array(
+        'pattern' => new RequestMatcher('(^/users$)|(^/invitations/token/validate/)|(^/lookUp/webHook$)|(^/users/validate$)|(^/profile/validate$)',
+                null, array('POST')),
         'anonymous' => true,
     ),
     'secured' => array(
@@ -67,6 +74,14 @@ $app['security.firewalls'] = array(
             'require_previous_session' => false,
             'stateless' => true,
         )
+    ),
+    'instant' => array(
+        'pattern' => new RequestMatcher('^/instant/', null, null, $app['valid_ips']),
+        'anonymous' => true,
+    ),
+    'admin' => array(
+        'pattern' => new RequestMatcher('^/admin/', null, null, $app['valid_ips']),
+        'anonymous' => true,
     ),
 );
 $app->register(new Silex\Provider\SecurityServiceProvider());

@@ -18,79 +18,79 @@ $app['auth.controller'] = $app->share(
 );
 
 $app['users.controller'] = $app->share(
-    function () {
+    function () use ($app) {
 
-        return new \Controller\User\UserController;
+        return new \Controller\User\UserController($app['user']);
     }
 );
 
 $app['users.tokens.controller'] = $app->share(
-    function () {
+    function () use ($app) {
 
-        return new \Controller\User\TokensController();
+        return new \Controller\User\TokensController($app['user']);
     }
 );
 
 $app['users.profile.controller'] = $app->share(
-    function () {
+    function () use ($app) {
 
-        return new \Controller\User\ProfileController();
+        return new \Controller\User\ProfileController($app['user']);
     }
 );
 
 $app['users.privacy.controller'] = $app->share(
-    function () {
+    function () use ($app) {
 
-        return new \Controller\User\PrivacyController();
+        return new \Controller\User\PrivacyController($app['user']);
     }
 );
 
 $app['users.data.controller'] = $app->share(
-    function () {
+    function () use ($app) {
 
-        return new \Controller\User\DataController();
+        return new \Controller\User\DataController($app['user']);
     }
 );
 
 $app['questionnaire.questions.controller'] = $app->share(
-    function () {
+    function () use ($app) {
 
-        return new Controller\Questionnaire\QuestionController;
+        return new Controller\Questionnaire\QuestionController($app['user']);
     }
 );
 
 $app['users.answers.controller'] = $app->share(
     function () use ($app) {
 
-        return new \Controller\User\AnswerController($app['users.answers.model']);
+        return new \Controller\User\AnswerController($app['user'], $app['users.answers.model']);
     }
 );
 
 $app['users.groups.controller'] = $app->share(
     function () use ($app) {
 
-        return new \Controller\User\GroupController($app['users.groups.model']);
+        return new \Controller\User\GroupController($app['user'], $app['users.groups.model']);
     }
 );
 
 $app['users.threads.controller'] = $app->share(
     function () use ($app) {
 
-        return new \Controller\User\ThreadController($app['users.threads.manager']);
+        return new \Controller\User\ThreadController($app['user'], $app['users.threads.manager']);
     }
 );
 
 $app['users.invitations.controller'] = $app->share(
     function () use ($app) {
 
-        return new \Controller\User\InvitationController;
+        return new \Controller\User\InvitationController($app['user']);
     }
 );
 
 $app['users.relations.controller'] = $app->share(
-    function () {
+    function () use ($app) {
 
-        return new \Controller\User\RelationsController;
+        return new \Controller\User\RelationsController($app['user']);
     }
 );
 
