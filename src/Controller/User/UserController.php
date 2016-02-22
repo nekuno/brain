@@ -62,7 +62,7 @@ class UserController
         $userId = $request->request->get('userId');
         /* @var $model UserManager */
         $model = $app['users.manager'];
-        $user = $model->getById($userId);
+        $user = $model->getById($userId)->jsonSerialize();
         /* @var $groupModel GroupModel */
         $groupModel = $app['users.groups.model'];
         $user['groups'] = $groupModel->getByUser($userId);
@@ -80,7 +80,7 @@ class UserController
 
         /* @var $model UserManager */
         $model = $app['users.manager'];
-        $user = $model->getById($id);
+        $user = $model->getById($id)->jsonSerialize();
         /* @var $groupModel GroupModel */
         $groupModel = $app['users.groups.model'];
         $user['groups'] = $groupModel->getByUser($id);
@@ -101,7 +101,7 @@ class UserController
         /* @var $model UserManager */
         $model = $app['users.manager'];
         $criteria = $request->query->all();
-        $user = isset($criteria['id']) ? $model->getById($criteria['id']) : $model->findUserBy($criteria);
+        $user = isset($criteria['id']) ? $model->getById($criteria['id'])->jsonSerialize() : $model->findUserBy($criteria)->jsonSerialize();
         /* @var $groupModel GroupModel */
         $groupModel = $app['users.groups.model'];
         $user['groups'] = $groupModel->getByUser($user->getId());
