@@ -39,10 +39,10 @@ class LookUpAllUsersCommand extends BaseCommand
 
         foreach ($users as $user) {
             /* @var $user User */
-            if ($user->getId() && isset($user['email']) && $user->getId() >= $input->getOption('start')) {
+            if ($user->getId() && $user->getEmail() && $user->getId() >= $input->getOption('start')) {
                 try {
                     $this->displayTitle('Looking up user ' . $user->getId());
-                    $lookUpData = $lookUpModel->set($user->getId(), array('email' =>  $user['email']), $output);
+                    $lookUpData = $lookUpModel->set($user->getId(), array('email' =>  $user->getEmail()), $output);
                     $this->displayData($lookUpData);
                     $this->displayMessage('waiting...');
                     sleep(1);
