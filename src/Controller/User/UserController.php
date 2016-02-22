@@ -104,7 +104,7 @@ class UserController
         $user = isset($criteria['id']) ? $model->getById($criteria['id'])->jsonSerialize() : $model->findUserBy($criteria)->jsonSerialize();
         /* @var $groupModel GroupModel */
         $groupModel = $app['users.groups.model'];
-        $user['groups'] = $groupModel->getByUser($user->getId());
+        $user['groups'] = $groupModel->getByUser($user['id']);
 
         return $app->json($user);
     }
