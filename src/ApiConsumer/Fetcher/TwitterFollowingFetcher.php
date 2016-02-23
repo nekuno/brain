@@ -2,6 +2,7 @@
 
 namespace ApiConsumer\Fetcher;
 
+use ApiConsumer\LinkProcessor\PreprocessedLink;
 use Http\OAuth\ResourceOwner\TwitterResourceOwner;
 
 class TwitterFollowingFetcher extends BasicPaginationFetcher
@@ -42,18 +43,24 @@ class TwitterFollowingFetcher extends BasicPaginationFetcher
         return $paginationId;
     }
 
+    /**
+     * @inheritdoc
+     */
     protected function parseLinks(array $rawFeed)
     {
         $links = $this->resourceOwner->lookupUsersBy('user_id', $rawFeed);
 
         if ($links == false || empty($links)) {
             foreach ($rawFeed as $id) {
-                $links[] = array('url' => 'https://twitter.com/intent/user?user_id=' . $id,
+                $link = array('url' => 'https://twitter.com/intent/user?user_id=' . $id,
                     'resourceItemId' => $id,
                     'title' => null,
                     'description' => null,
                     'timestamp' => 1000 * time(),
                     'resource' => $this->resourceOwner->getName());
+                $preprocessedLink = new PreprocessedLink($link['url']);
+                $preprocessedLink->setLink($link);
+                $links[] = $preprocessedLink;
             }
         } else {
             foreach ($links as &$link) {
@@ -64,6 +71,9 @@ class TwitterFollowingFetcher extends BasicPaginationFetcher
                     'url' => $link['url'],
                     'username' => $screenName,
                 ));
+                $preprocessedLink = new PreprocessedLink($link['url']);
+                $preprocessedLink->setLink($link);
+                $links[] = $preprocessedLink;
             }
         }
 

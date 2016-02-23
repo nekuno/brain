@@ -2,6 +2,8 @@
 
 namespace ApiConsumer\Fetcher;
 
+use ApiConsumer\LinkProcessor\PreprocessedLink;
+
 interface FetcherInterface
 {
 
@@ -10,7 +12,7 @@ interface FetcherInterface
      *
      * @param $user
      * @param boolean $public
-     * @return array
+     * @return PreprocessedLink[]
      */
     public function fetchLinksFromUserFeed($user, $public);
 }

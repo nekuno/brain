@@ -2,6 +2,8 @@
 
 namespace ApiConsumer\Fetcher;
 
+use ApiConsumer\LinkProcessor\PreprocessedLink;
+
 abstract class AbstractFacebookFetcher extends BasicPaginationFetcher
 {
     protected $paginationField = 'after';
@@ -69,7 +71,11 @@ abstract class AbstractFacebookFetcher extends BasicPaginationFetcher
                 continue;
             }
             $id = $item['id'];
-            $parsed[] = $this->getLinkArrayFromUrl($url, $id, $item);
+            $link = $this->getLinkArrayFromUrl($url, $id, $item);
+
+            $parsedLink = new PreprocessedLink($link['url']);
+            $parsedLink->setLink($link);
+            $parsed[] = $parsedLink;
 
             //if it's a like with website outside facebook
             if (isset($item['website'])) {
@@ -85,7 +91,14 @@ abstract class AbstractFacebookFetcher extends BasicPaginationFetcher
                     if (substr($websiteUrl, 0, 3) == 'www') {
                         $websiteUrl = 'http://' . $websiteUrl;
                     }
-                    $parsed[] = $this->getLinkArrayFromUrl(trim($websiteUrl), $id . '-' . $counter, $item);
+                    $link = $this->getLinkArrayFromUrl(trim($websiteUrl), $id . '-' . $counter, $item);
+
+                    //TODO: Use PreprocessedLink->additional logic
+
+                    $parsedLink = new PreprocessedLink($link['url']);
+                    $parsedLink->setLink($link);
+                    $parsed[] = $parsedLink;
+
                     $counter++;
                 }
             }

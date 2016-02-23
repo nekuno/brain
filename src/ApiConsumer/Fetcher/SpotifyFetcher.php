@@ -2,6 +2,8 @@
 
 namespace ApiConsumer\Fetcher;
 
+use ApiConsumer\LinkProcessor\PreprocessedLink;
+
 class SpotifyFetcher extends BasicPaginationFetcher
 {
     //max limits allowed by Spotify API to reduce calls
@@ -75,8 +77,8 @@ class SpotifyFetcher extends BasicPaginationFetcher
      */
     protected function parseLinks(array $response = array())
     {
-
         $parsed = array();
+
         foreach ($response as $item) {
             if (isset($item['track']) && null !== $item['track']['id']) {
                 $link['url'] = $item['track']['external_urls']['spotify'];
@@ -93,13 +95,17 @@ class SpotifyFetcher extends BasicPaginationFetcher
                     $timestamp = ($date->getTimestamp()) * 1000;
                 }
 
+                $preprocessedLink = new PreprocessedLink($link['url']);
+
                 $link['description'] = $item['track']['album']['name'] . ' : ' . implode(', ', $artistList);
                 $link['resourceItemId'] = $item['track']['id'];
                 $link['timestamp'] = $timestamp;
 
                 $link['resource'] = 'spotify';
 
-                $parsed[] = $link;
+                $preprocessedLink->setLink($link);
+
+                $parsed[] = $preprocessedLink;
             }
         }
 

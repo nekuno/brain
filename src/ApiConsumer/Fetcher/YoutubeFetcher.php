@@ -2,7 +2,7 @@
 
 namespace ApiConsumer\Fetcher;
 
-use ApiConsumer\LinkProcessor\LinkAnalyzer;
+use ApiConsumer\LinkProcessor\PreprocessedLink;
 
 class YoutubeFetcher extends BasicPaginationFetcher
 {
@@ -230,8 +230,7 @@ class YoutubeFetcher extends BasicPaginationFetcher
     }
 
     /**
-     * @param array $rawFeed
-     * @return array
+     * @inheritdoc
      */
     protected function parseLinks(array $rawFeed)
     {
@@ -253,14 +252,17 @@ class YoutubeFetcher extends BasicPaginationFetcher
                 $timestamp = ($date->getTimestamp()) * 1000;
             }
 
-            $link['url'] = $url;
+            $preprocessedLink = new PreprocessedLink($url);
+
             $link['title'] = array_key_exists('title', $item['snippet']) ? $item['snippet']['title'] : '';
             $link['description'] = array_key_exists('description', $item['snippet']) ? $item['snippet']['description'] : '';
             $link['resourceItemId'] = array_key_exists('id', $item) ? $item['id'] : null;
             $link['timestamp'] = $timestamp;
             $link['resource'] = 'google';
 
-            $parsed[] = $link;
+            $preprocessedLink->setLink($link);
+
+            $parsed[] = $preprocessedLink;
         }
 
         return $parsed;
