@@ -2,9 +2,7 @@
 
 namespace Controller\User;
 
-use Controller\BaseController;
 use Model\User;
-use Model\User\GroupModel;
 use Model\User\ProfileModel;
 use Manager\UserManager;
 use Silex\Application;
@@ -14,30 +12,33 @@ use Symfony\Component\HttpFoundation\Request;
  * Class GroupController
  * @package Controller
  */
-class GroupController extends BaseController
+class GroupController
 {
     /**
-     * @var GroupModel
+     * @param Application $app
+     * @param integer $id
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @throws \Exception
      */
-    protected $gm;
-
-    public function __construct(User $user, GroupModel $gm)
-    {
-        $this->user = $user;
-        $this->gm = $gm;
-    }
-
     public function getAction(Application $app, $id)
     {
-        $group = $this->gm->getById($id);
+        $group = $app['users.groups.model']->getById($id);
 
         return $app->json($group);
     }
 
-    public function getMembersAction(Request $request, Application $app, $id)
+    /**
+     * @param Request $request
+     * @param Application $app
+     * @param User $user
+     * @param integer $id
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @throws \Exception
+     */
+    public function getMembersAction(Request $request, Application $app, User $user, $id)
     {
         $data = $request->query->all();
-        $data['userId'] = $this->getUserId();
+        $data['userId'] = $user->getId();
         /* @var UserManager $userManager */
         $userManager = $app['users.manager'];
         $usersByGroup = $userManager->getByGroup($id, $data);
@@ -61,16 +62,30 @@ class GroupController extends BaseController
         return $app->json(array('items' => $users));
     }
 
-    public function addUserAction(Application $app, $id)
+    /**
+     * @param Application $app
+     * @param User $user
+     * @param integer $id
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @throws \Exception
+     */
+    public function addUserAction(Application $app, User $user, $id)
     {
-        $this->gm->addUser($id, $this->getUserId());
+        $app['users.groups.model']->addUser($id, $user->getId());
 
         return $app->json();
     }
 
-    public function removeUserAction(Application $app, $id)
+    /**
+     * @param Application $app
+     * @param User $user
+     * @param integer $id
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @throws \Exception
+     */
+    public function removeUserAction(Application $app, User $user, $id)
     {
-        $this->gm->removeUser($id, $this->getUserId());
+        $app['users.groups.model']->removeUser($id, $user->getId());
 
         return $app->json();
     }

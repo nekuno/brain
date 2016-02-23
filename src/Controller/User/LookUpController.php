@@ -5,7 +5,6 @@
 namespace Controller\User;
 
 use Silex\Application;
-use Model\User\LookUpModel;
 use Symfony\Component\HttpFoundation\Request;
 use Psr\Log\LoggerInterface;
 
@@ -15,16 +14,6 @@ use Psr\Log\LoggerInterface;
  */
 class LookUpController
 {
-    /**
-     * @var LookUpModel
-     */
-    protected $lookUpModel;
-
-    public function __construct(LookUpModel $lookUpModel)
-    {
-        $this->lookUpModel = $lookUpModel;
-    }
-
     /**
      * @param Application $app
      * @param Request $request
@@ -40,7 +29,7 @@ class LookUpController
         $userData['gender'] = $request->query->get('gender');
         $userData['location'] = $request->query->get('location');
 
-        $lookUpData = $this->lookUpModel->completeUserData($userData);
+        $lookUpData = $app['users.lookup.model']->completeUserData($userData);
 
         return $app->json($lookUpData);
     }
@@ -62,7 +51,7 @@ class LookUpController
         $userData['gender'] = $request->request->get('gender');
         $userData['location'] = $request->request->get('location');
 
-        $lookUpData = $this->lookUpModel->set($id, $userData);
+        $lookUpData = $app['users.lookup.model']->set($id, $userData);
 
         return $app->json($lookUpData);
     }
@@ -73,7 +62,7 @@ class LookUpController
         $logger = $app['monolog'];
         $logger->info(sprintf('Web hook called with content: %s', $request->getContent()));
 
-        $this->lookUpModel->setFromWebHook($request);
+        $app['users.lookup.model']->setFromWebHook($request);
 
         return true;
     }

@@ -4,8 +4,6 @@
  */
 namespace Controller\Admin\EnterpriseUser;
 
-use Model\User\InvitationModel;
-use Model\EnterpriseUser\EnterpriseUserModel;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -16,29 +14,13 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class InvitationController
 {
-    /**
-     * @var InvitationModel
-     */
-    protected $im;
-
-    /**
-     * @var EnterpriseUserModel
-     */
-    protected $eum;
-
-    public function __construct(InvitationModel $im, EnterpriseUserModel $eum)
-    {
-        $this->im = $im;
-        $this->eum = $eum;
-    }
-
     public function getAction(Application $app, $id, $enterpriseUserId)
     {
-        if(!$this->eum->exists($enterpriseUserId)) {
+        if(!$app['enterpriseUsers.model']->exists($enterpriseUserId)) {
             throw new NotFoundHttpException(sprintf('There is not enterprise user with id "%s"', $enterpriseUserId));
         }
 
-        $invitation = $this->im->getById($id);
+        $invitation = $app['users.invitations.model']->getById($id);
 
         return $app->json($invitation);
     }
@@ -47,11 +29,11 @@ class InvitationController
     {
         $data = $request->request->all();
 
-        if(!$this->eum->exists($enterpriseUserId)) {
+        if(!$app['enterpriseUsers.model']->exists($enterpriseUserId)) {
             throw new NotFoundHttpException(sprintf('There is not enterprise user with id "%s"', $enterpriseUserId));
         }
 
-        $invitation = $this->im->create($data);
+        $invitation = $app['users.invitations.model']->create($data);
 
         return $app->json($invitation, 201);
     }
@@ -60,23 +42,23 @@ class InvitationController
     {
         $data = $request->request->all();
 
-        if(!$this->eum->exists($enterpriseUserId)) {
+        if(!$app['enterpriseUsers.model']->exists($enterpriseUserId)) {
             throw new NotFoundHttpException(sprintf('There is not enterprise user with id "%s"', $enterpriseUserId));
         }
 
-        $invitation = $this->im->update($data);
+        $invitation = $app['users.invitations.model']->update($data);
 
         return $app->json($invitation, 201);
     }
 
     public function deleteAction(Application $app, $id, $enterpriseUserId)
     {
-        if(!$this->eum->exists($enterpriseUserId)) {
+        if(!$app['enterpriseUsers.model']->exists($enterpriseUserId)) {
             throw new NotFoundHttpException(sprintf('There is not enterprise user with id "%s"', $enterpriseUserId));
         }
 
-        $invitation = $this->im->getById($id);
-        $this->im->remove($id);
+        $invitation = $app['users.invitations.model']->getById($id);
+        $app['users.invitations.model']->remove($id);
 
         return $app->json($invitation);
     }
@@ -85,11 +67,11 @@ class InvitationController
     {
         $data = $request->request->all();
 
-        if(!$this->eum->exists($enterpriseUserId)) {
+        if(!$app['enterpriseUsers.model']->exists($enterpriseUserId)) {
             throw new NotFoundHttpException(sprintf('There is not enterprise user with id "%s"', $enterpriseUserId));
         }
 
-        $this->im->validate($data);
+        $app['users.invitations.model']->validate($data);
 
         return $app->json();
     }

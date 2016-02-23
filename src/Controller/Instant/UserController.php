@@ -2,7 +2,6 @@
 
 namespace Controller\Instant;
 
-use Controller\BaseController;
 use Model\User\GroupModel;
 use Manager\UserManager;
 use Silex\Application;
@@ -13,7 +12,7 @@ use Symfony\Component\HttpFoundation\Request;
  * Class UserController
  * @package Controller
  */
-class UserController extends BaseController
+class UserController
 {
     /**
      * @param Application $app

@@ -2,9 +2,9 @@
 
 namespace Controller\User;
 
-use Controller\BaseController;
 use Model\User\ProfileModel;
 use Model\User\ProfileTagModel;
+use Model\User;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -14,20 +14,21 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  * Class ProfileController
  * @package Controller
  */
-class ProfileController extends BaseController
+class ProfileController
 {
     /**
      * @param Request $request
      * @param Application $app
+     * @param User $user
      * @return JsonResponse
      */
-    public function getAction(Request $request, Application $app)
+    public function getAction(Request $request, Application $app, User $user)
     {
         $locale = $request->query->get('locale');
         /* @var $model ProfileModel */
         $model = $app['users.profile.model'];
 
-        $profile = $model->getById($this->getUserId(), $locale);
+        $profile = $model->getById($user->getId(), $locale);
 
         return $app->json($profile);
     }
@@ -52,14 +53,15 @@ class ProfileController extends BaseController
     /**
      * @param Request $request
      * @param Application $app
+     * @param User $user
      * @return JsonResponse
      */
-    public function postAction(Request $request, Application $app)
+    public function postAction(Request $request, Application $app, User $user)
     {
         /* @var $model ProfileModel */
         $model = $app['users.profile.model'];
 
-        $profile = $model->create($this->getUserId(), $request->request->all());
+        $profile = $model->create($user->getId(), $request->request->all());
 
         return $app->json($profile, 201);
     }
@@ -67,29 +69,31 @@ class ProfileController extends BaseController
     /**
      * @param Request $request
      * @param Application $app
+     * @param User $user
      * @return JsonResponse
      */
-    public function putAction(Request $request, Application $app)
+    public function putAction(Request $request, Application $app, User $user)
     {
         /* @var $model ProfileModel */
         $model = $app['users.profile.model'];
 
-        $profile = $model->update($this->getUserId(), $request->request->all());
+        $profile = $model->update($user->getId(), $request->request->all());
 
         return $app->json($profile);
     }
 
     /**
      * @param Application $app
+     * @param User $user
      * @return JsonResponse
      */
-    public function deleteAction(Application $app)
+    public function deleteAction(Application $app, User $user)
     {
         /* @var $model ProfileModel */
         $model = $app['users.profile.model'];
 
-        $profile = $model->getById($this->getUserId());
-        $model->remove($this->getUserId());
+        $profile = $model->getById($user->getId());
+        $model->remove($user->getId());
 
         return $app->json($profile);
     }

@@ -1,19 +1,24 @@
 <?php
 
-
 namespace Controller\User;
 
-use Controller\BaseController;
 use Doctrine\ORM\EntityManager;
 use Model\Entity\DataStatus;
 use Model\User\TokensModel;
+use Model\User;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 
-class DataController extends BaseController
+class DataController
 {
-
-    public function getStatusAction(Request $request, Application $app)
+    /**
+     * @param Request $request
+     * @param Application $app
+     * @param User $user
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @throws \Exception
+     */
+    public function getStatusAction(Request $request, Application $app, User $user)
     {
         $resourceOwner = $request->query->get('resourceOwner');
 
@@ -21,7 +26,7 @@ class DataController extends BaseController
         $em = $app['orm.ems']['mysql_brain'];
         $dataStatusRepository = $em->getRepository('\Model\Entity\DataStatus');
 
-        $criteria['userId'] = $this->getUserId();;
+        $criteria['userId'] = $user->getId();
 
         if ($resourceOwner) {
             $criteria['resourceOwner'] = $resourceOwner;
@@ -35,7 +40,7 @@ class DataController extends BaseController
 
         /* @var TokensModel $tokensModel */
         $tokensModel = $app['users.tokens.model'];
-        $connectedNetworks = $tokensModel->getConnectedNetworks($userId);
+        $connectedNetworks = $tokensModel->getConnectedNetworks($user->getId());
 
         $responseData = array();
         /* @var $row DataStatus */

@@ -2,38 +2,33 @@
 
 namespace Controller\User;
 
-use Controller\BaseController;
 use Event\AnswerEvent;
 use Model\Questionnaire\QuestionModel;
-use Model\User\AnswerModel;
 use Model\User\QuestionPaginatedModel;
 use Model\User;
 use Silex\Application;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
-class AnswerController extends BaseController
+class AnswerController
 {
     /**
-     * @var AnswerModel $answerModel
+     * @param Request $request
+     * @param Application $app
+     * @param User $user
+     * @return JsonResponse
+     * @throws \Exception
      */
-    protected $answerModel;
-
-    public function __construct(User $user, AnswerModel $am)
-    {
-        $this->answerModel = $am;
-        $this->user = $user;
-    }
-
-    public function indexAction(Request $request, Application $app)
+    public function indexAction(Request $request, Application $app, User $user)
     {
         $locale = $this->getLocale($request, $app['locale.options']['default']);
 
         /* @var $paginator \Paginator\Paginator */
         $paginator = $app['paginator'];
 
-        $filters = array('id' => $this->getUserId(), 'locale' => $locale);
+        $filters = array('id' => $user->getId(), 'locale' => $locale);
         /* @var $model QuestionPaginatedModel */
         $model = $app['users.questions.model'];
 
@@ -42,23 +37,37 @@ class AnswerController extends BaseController
         return $app->json($result);
     }
 
-    public function getAnswerAction(Request $request, Application $app)
+    /**
+     * @param Request $request
+     * @param Application $app
+     * @param User $user
+     * @return JsonResponse
+     * @throws \Exception
+     */
+    public function getAnswerAction(Request $request, Application $app, User $user)
     {
         $questionId = (integer)$request->attributes->get('questionId');
         $locale = $this->getLocale($request, $app['locale.options']['default']);
 
-        $result = $this->answerModel->getUserAnswer($this->getUserId(), $questionId, $locale);
+        $result = $app['users.answers.model']->getUserAnswer($user->getId(), $questionId, $locale);
 
         return $app->json($result);
     }
 
-    public function answerAction(Request $request, Application $app)
+    /**
+     * @param Request $request
+     * @param Application $app
+     * @param User $user
+     * @return JsonResponse
+     * @throws \Exception
+     */
+    public function answerAction(Request $request, Application $app, User $user)
     {
         $data = $request->request->all();
-        $data['userId'] = $this->getUserId();
+        $data['userId'] = $user->getId();
         $data['locale'] = $this->getLocale($request, $app['locale.options']['default']);
 
-        $userAnswer = $this->answerModel->answer($data);
+        $userAnswer = $app['users.answers.model']->answer($data);
 
         // TODO: Refactor this to listener
         /* @var $questionModel QuestionModel */
@@ -68,13 +77,20 @@ class AnswerController extends BaseController
         return $app->json($userAnswer);
     }
 
-    public function updateAction(Request $request, Application $app)
+    /**
+     * @param Request $request
+     * @param Application $app
+     * @param User $user
+     * @return JsonResponse
+     * @throws \Exception
+     */
+    public function updateAction(Request $request, Application $app, User $user)
     {
         $data = $request->request->all();
-        $data['userId'] = $this->getUserId();
+        $data['userId'] = $user->getId();
         $data['locale'] = $this->getLocale($request, $app['locale.options']['default']);
 
-        $userAnswer = $this->answerModel->update($data);
+        $userAnswer = $app['users.answers.model']->update($data);
 
         // TODO: Refactor this to listener
         /* @var $questionModel QuestionModel */
@@ -84,34 +100,54 @@ class AnswerController extends BaseController
         return $app->json($userAnswer);
     }
 
-    public function validateAction(Request $request, Application $app)
+    /**
+     * @param Request $request
+     * @param Application $app
+     * @param User $user
+     * @return JsonResponse
+     * @throws \Exception
+     */
+    public function validateAction(Request $request, Application $app, User $user)
     {
         $data = $request->request->all();
-        $data['userId'] = $this->getUserId();
+        $data['userId'] = $user->getId();
         $data['locale'] = $this->getLocale($request, $app['locale.options']['default']);
 
-        $this->answerModel->validate($data);
+        $app['users.answers.model']->validate($data);
 
         return $app->json(array(), 200);
     }
 
-    public function explainAction(Request $request, Application $app)
+    /**
+     * @param Request $request
+     * @param Application $app
+     * @param User $user
+     * @return JsonResponse
+     * @throws \Exception
+     */
+    public function explainAction(Request $request, Application $app, User $user)
     {
         $data = $request->request->all();
-        $data['userId'] = $this->getUserId();
+        $data['userId'] = $user->getId();
         $data['locale'] = $this->getLocale($request, $app['locale.options']['default']);
 
-        $userAnswer = $this->answerModel->explain($data);
+        $userAnswer = $app['users.answers.model']->explain($data);
 
         return $app->json($userAnswer);
     }
 
-    public function countAction(Application $app)
+    /**
+     * @param Application $app
+     * @param User $user
+     * @return JsonResponse
+     * @throws \Exception
+     */
+    public function countAction(Application $app, User $user)
     {
-        $userAnswerResult = $this->answerModel->getNumberOfUserAnswers($this->getUserId());
+        $userAnswerResult = $app['users.answers.model']->getNumberOfUserAnswers($user->getId());
 
         $data = array(
-            'userId' => $this->getUserId(),
+            'userId' => $user->getId(),
         );
 
         foreach ($userAnswerResult as $row) {
@@ -125,19 +161,26 @@ class AnswerController extends BaseController
         return $app->json($data);
     }
 
-    public function deleteAnswerAction(Request $request, Application $app)
+    /**
+     * @param Request $request
+     * @param Application $app
+     * @param User $user
+     * @return JsonResponse
+     * @throws \Exception
+     */
+    public function deleteAnswerAction(Request $request, Application $app, User $user)
     {
         $questionId = (integer)$request->attributes->get('questionId');
         $locale = $this->getLocale($request, $app['locale.options']['default']);
 
         try {
-            $userAnswer = $this->answerModel->getUserAnswer($this->getUserId(), $questionId, $locale);
+            $userAnswer = $app['users.answers.model']->getUserAnswer($user->getId(), $questionId, $locale);
             $answer = $userAnswer['userAnswer'];
         } catch (NotFoundHttpException $e) {
             return $app->json($e->getMessage(), 404);
         }
 
-        $deletion = $this->answerModel->deleteUserAnswer($this->getUserId(), $answer);
+        $deletion = $app['users.answers.model']->deleteUserAnswer($user->getId(), $answer);
 
         if (!$deletion) {
             return $app->json('Answer not deleted', 500);
@@ -145,13 +188,13 @@ class AnswerController extends BaseController
 
         /* @var $dispatcher EventDispatcher */
         $dispatcher = $app['dispatcher'];
-        $dispatcher->dispatch(\AppEvents::ANSWER_ADDED, new AnswerEvent($this->getUserId(),$questionId));
+        $dispatcher->dispatch(\AppEvents::ANSWER_ADDED, new AnswerEvent($user->getId(),$questionId));
 
         /* @var $questionModel QuestionModel */
         $questionModel = $app['questionnaire.questions.model'];
 
         try {
-            $questionModel->skip($answer['questionId'], $this->getUserId());
+            $questionModel->skip($answer['questionId'], $user->getId());
         } catch (\Exception $e) {
             return $app->json($e->getMessage(), 405);
         }
@@ -162,23 +205,24 @@ class AnswerController extends BaseController
     /**
      * @param Request $request
      * @param Application $app
-     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @param User $user
+     * @return JsonResponse
      * @throws \Exception
      */
-    public function getOldUserAnswersCompareAction(Request $request, Application $app)
+    public function getOldUserAnswersCompareAction(Request $request, Application $app, User $user)
     {
         $otherUserId = $request->get('id');
         $locale = $request->query->get('locale');
         $showOnlyCommon = $request->query->get('showOnlyCommon', 0);
 
-        if (null === $otherUserId || null === $this->getUserId()) {
+        if (null === $otherUserId || null === $user->getId()) {
             return $app->json(array(), 400);
         }
 
         /* @var $paginator \Paginator\Paginator */
         $paginator = $app['paginator'];
 
-        $filters = array('id' => $otherUserId, 'id2' => $this->getUserId(), 'locale' => $locale, 'showOnlyCommon' => $showOnlyCommon);
+        $filters = array('id' => $otherUserId, 'id2' => $user->getId(), 'locale' => $locale, 'showOnlyCommon' => $showOnlyCommon);
 
         /* @var $model \Model\User\OldQuestionComparePaginatedModel */
         $model = $app['old.users.questions.compare.model'];
@@ -199,23 +243,24 @@ class AnswerController extends BaseController
     /**
      * @param Request $request
      * @param Application $app
-     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @param User $user
+     * @return JsonResponse
      * @throws \Exception
      */
-    public function getUserAnswersCompareAction(Request $request, Application $app)
+    public function getUserAnswersCompareAction(Request $request, Application $app, User $user)
     {
         $otherUserId = $request->get('id');
         $locale = $request->query->get('locale');
         $showOnlyCommon = $request->query->get('showOnlyCommon', 0);
 
-        if (null === $otherUserId || null === $this->getUserId()) {
+        if (null === $otherUserId || null === $user->getId()) {
             return $app->json(array(), 400);
         }
 
         /* @var $paginator \Paginator\Paginator */
         $paginator = $app['paginator'];
 
-        $filters = array('id' => $otherUserId, 'id2' => $this->getUserId(), 'locale' => $locale, 'showOnlyCommon' => $showOnlyCommon);
+        $filters = array('id' => $otherUserId, 'id2' => $user->getId(), 'locale' => $locale, 'showOnlyCommon' => $showOnlyCommon);
 
         /* @var $model \Model\User\QuestionComparePaginatedModel */
         $model = $app['users.questions.compare.model'];

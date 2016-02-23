@@ -2,12 +2,11 @@
 
 namespace Controller\Instant;
 
-use Controller\BaseController;
 use Model\User\RelationsModel;
 use Model\User;
 use Silex\Application;
 
-class RelationsController extends BaseController
+class RelationsController
 {
     public function contactFromAction(Application $app, $id)
     {
