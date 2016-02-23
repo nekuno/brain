@@ -5,6 +5,7 @@ namespace ApiConsumer\Fetcher;
 use ApiConsumer\Exception\PaginatedFetchingException;
 use ApiConsumer\Factory\FetcherFactory;
 use ApiConsumer\LinkProcessor\LinkProcessor;
+use ApiConsumer\LinkProcessor\PreprocessedLink;
 use Event\ExceptionEvent;
 use Event\FetchEvent;
 use Event\ProcessLinkEvent;
@@ -136,6 +137,7 @@ class FetcherService implements LoggerAwareInterface
 
         $public = isset($token['public'])? $token['public'] : false;
 
+        /* @var $links PreprocessedLink[] */
         $links = array();
         try {
 
@@ -163,10 +165,14 @@ class FetcherService implements LoggerAwareInterface
                 }
             }
 
+            foreach($links as $link){
+                $link->setToken($token);
+                $link->setSource($resourceOwner);
+            }
 
             $this->dispatcher->dispatch(\AppEvents::FETCH_FINISH, new FetchEvent($userId, $resourceOwner));
 
-            $links = $this->processLinks($links, $userId, $resourceOwner, $token);
+            $links = $this->processLinks($links, $userId);
 
         } catch (\Exception $e) {
             throw new \Exception(sprintf('Fetcher: Error fetching from resource "%s" for user "%d". Message: %s on file %s in line %d', $resourceOwner, $userId, $e->getMessage(), $e->getFile(), $e->getLine()), 1);
@@ -175,21 +181,25 @@ class FetcherService implements LoggerAwareInterface
         return $links;
     }
 
-    public function processLinks(array $links, $userId, $resourceOwner = null, $token = array())
+    /**
+     * @param PreprocessedLink[] $links
+     * @param int $userId
+     * @return array
+     */
+    public function processLinks(array $links, $userId)
     {
-        $this->dispatcher->dispatch(\AppEvents::PROCESS_START, new ProcessLinksEvent($userId, $resourceOwner, $links));
+        if (empty($links)){
+            return array();
+        } else {
+            $source = $links[0]->getSource();
+        }
+
+        $this->dispatcher->dispatch(\AppEvents::PROCESS_START, new ProcessLinksEvent($userId, $source, $links));
 
         foreach ($links as $key => $link) {
             try {
 
-                if ($resourceOwner == TokensModel::FACEBOOK && isset($token['oauthToken']) && isset($token['expireTime'])) {
-                    $link['resourceOwnerToken'] = array(
-                        'oauthToken' => $token['oauthToken'],
-                        'expireTime' => $token['expireTime']
-                    );
-                };
-
-                $this->dispatcher->dispatch(\AppEvents::PROCESS_LINK, new ProcessLinkEvent($userId, $resourceOwner, $link));
+                $this->dispatcher->dispatch(\AppEvents::PROCESS_LINK, new ProcessLinkEvent($userId, $source, $link));
 
                 $linkProcessed = $this->linkProcessor->process($link);
 
@@ -200,14 +210,14 @@ class FetcherService implements LoggerAwareInterface
 
                 $links[$key] = $linkProcessed;
             } catch (\Exception $e) {
-                $this->logger->error(sprintf('Fetcher: Error processing link "%s" from resource "%s". Reason: %s', $link['url'], $resourceOwner, $e->getMessage()));
+                $this->logger->error(sprintf('Fetcher: Error processing link "%s" from resource "%s". Reason: %s', $link['url'], $source, $e->getMessage()));
                 if ($e instanceof Neo4jException) {
                     $this->logger->error(sprintf('Query: %s' . "\n" . 'Data: %s', $e->getQuery(), print_r($e->getData(), true)));
                 }
             }
         }
 
-        $this->dispatcher->dispatch(\AppEvents::PROCESS_FINISH, new ProcessLinksEvent($userId, $resourceOwner, $links));
+        $this->dispatcher->dispatch(\AppEvents::PROCESS_FINISH, new ProcessLinksEvent($userId, $source, $links));
 
         return $links;
     }

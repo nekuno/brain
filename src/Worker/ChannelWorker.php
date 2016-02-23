@@ -5,6 +5,7 @@ namespace Worker;
 
 use ApiConsumer\Fetcher\FetcherService;
 use ApiConsumer\Fetcher\GetOldTweets\GetOldTweets;
+use ApiConsumer\LinkProcessor\PreprocessedLink;
 use Doctrine\DBAL\Connection;
 use Model\Neo4j\Neo4jException;
 use Model\User\TokensModel;
@@ -129,7 +130,15 @@ class ChannelWorker extends LoggerAwareWorker implements RabbitMQConsumerInterfa
             }
             $this->logger->info(sprintf('Start processing %d links for user %d', count($links), $userId));
 
-            $processedLinks = $this->fetcherService->processLinks($links, $userId, $resourceOwner);
+            $preprocessedLinks = array();
+            foreach ($links as $link)
+            {
+                $preprocessedLink = new PreprocessedLink($link);
+                $preprocessedLink->setSource($resourceOwner);
+                $preprocessedLinks[] = $preprocessedLink;
+            }
+
+            $processedLinks = $this->fetcherService->processLinks($preprocessedLinks, $userId);
 
             $this->logger->info(sprintf('Processed %d links for user %d', count($processedLinks), $userId));
 

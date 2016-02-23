@@ -2,6 +2,7 @@
 
 namespace ApiConsumer\LinkProcessor\Processor;
 
+use ApiConsumer\LinkProcessor\PreprocessedLink;
 use Http\OAuth\ResourceOwner\FacebookResourceOwner;
 use Service\UserAggregator;
 
@@ -34,10 +35,9 @@ class FacebookProcessor extends AbstractProcessor
     }
 
     /**
-     * @param array $link
-     * @return array
+     * @inheritdoc
      */
-    public function process(array $link)
+    public function process($link)
     {
         $type = $this->getAttachmentType($link);
         switch ($type) {
@@ -55,9 +55,13 @@ class FacebookProcessor extends AbstractProcessor
         return $link;
     }
 
-    protected function processVideo($link)
+    /**
+     * @param $preprocessedLink PreprocessedLink
+     * @return array
+     */
+    protected function processVideo($preprocessedLink)
     {
-        $id = $this->getVideoIdFromURL($link['url']);
+        $id = $this->getVideoIdFromURL($preprocessedLink->getFetched());
 
         $link['title'] = null;
         $link['additionalLabels'] = array('Video');
@@ -72,11 +76,12 @@ class FacebookProcessor extends AbstractProcessor
             'fields' => 'description,picture'
         );
 
-        $token = array();
-        if (isset($link['resourceOwnerToken'])) {
-            $token = $link['resourceOwnerToken'];
+        if ($preprocessedLink->getSource() == 'facebook') {
+            $response = $this->resourceOwner->authorizedHTTPRequest($url, $query, $preprocessedLink->getToken());
+        } else {
+            $response = array();
         }
-        $response = $this->resourceOwner->authorizedHTTPRequest($url, $query, $token);
+
         $link['description'] = isset($response['description']) ? $response['description'] : null;
         $link['thumbnail'] = isset($response['picture']) ? $response['picture'] : null;
 

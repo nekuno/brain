@@ -33,7 +33,12 @@ class PreprocessedLink
 
     protected $link = array();
 
+    /**
+     * @var array Token which was used for fetching
+     */
     protected $token = array();
+
+    protected $source;
 
     /**
      * PreprocessedLink constructor.
@@ -97,7 +102,7 @@ class PreprocessedLink
      */
     public function getStatusCode()
     {
-        return $this->statusCode;
+        return (int)$this->statusCode;
     }
 
     /**
@@ -122,6 +127,14 @@ class PreprocessedLink
     public function setExceptions($exceptions)
     {
         $this->exceptions = $exceptions;
+    }
+
+    /**
+     * @param \Exception $e
+     */
+    public function addException(\Exception $e)
+    {
+        $this->exceptions[] = $e;
     }
 
     /**
@@ -187,5 +200,23 @@ class PreprocessedLink
     {
         $this->token = $token;
     }
+
+    /**
+     * @return mixed
+     */
+    public function getSource()
+    {
+        return $this->source;
+    }
+
+    /**
+     * @param mixed $source
+     */
+    public function setSource($source)
+    {
+        $this->source = $source;
+    }
+
+
 
 }

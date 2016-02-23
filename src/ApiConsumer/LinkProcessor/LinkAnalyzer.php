@@ -15,29 +15,24 @@ class LinkAnalyzer
     const SCRAPPER = 'scrapper';
 
     /**
-     * @param $link
+     * @param $url
      * @return string
      */
-    public function getProcessor($link)
+    public function getProcessor($url)
     {
-
-        if (!array_key_exists('url', $link)){
-            return self::SCRAPPER;
-        }
-
-        if (strpos($link['url'], 'youtube.com') !== false || strpos($link['url'], 'youtu.be') !== false) {
+        if (strpos($url, 'youtube.com') !== false || strpos($url, 'youtu.be') !== false) {
             return self::YOUTUBE;
         }
 
-        if (strpos($link['url'], 'spotify.com') !== false) {
+        if (strpos($url, 'spotify.com') !== false) {
             return self::SPOTIFY;
         }
 
-        if (strpos($link['url'], 'facebook.com') !== false) {
+        if (strpos($url, 'facebook.com') !== false) {
             return self::FACEBOOK;
         }
 
-        if (strpos($link['url'], 'twitter.com') !== false) {
+        if (strpos($url, 'twitter.com') !== false) {
             return self::TWITTER;
         }
 

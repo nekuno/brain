@@ -47,13 +47,13 @@ class ScraperProcessor implements ProcessorInterface
     }
 
     /**
-     * @param array $link
-     * @return array
+     * @inheritdoc
      */
-    public function process(array $link)
+    public function process($preprocessedLink)
     {
+        $url = $preprocessedLink->getFetched();
 
-        $url = $link['url'];
+        $link = array('url' => $url);
 
         try {
             $crawler = $this->client->request('GET', $url);

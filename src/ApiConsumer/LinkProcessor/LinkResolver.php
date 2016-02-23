@@ -26,29 +26,30 @@ class LinkResolver
     }
 
     /**
-     * @param $url
-     * @return null|string
+     * @param $preprocessedLink PreprocessedLink
+     * @return PreprocessedLink
      */
-    public function resolve($url)
+    public function resolve($preprocessedLink)
     {
 
         try {
-            if(!parse_url($url, PHP_URL_HOST)){
-                $url = 'http://'.$url;
+            if(!parse_url($preprocessedLink->getFetched(), PHP_URL_HOST)){
+                $preprocessedLink->setFetched('http://'.$preprocessedLink->getFetched());
             };
 
             $this->client->getHistory()->clear();
-            $crawler = $this->client->request('GET', $url);
-            $statusCode = $this->client->getResponse()->getStatus();
-        } catch (RequestException $e) {
-            return $this->client->getRequest()->getUri();
-        } catch (\LogicException $e) {
-            return $url;
+            $crawler = $this->client->request('GET', $preprocessedLink->getFetched());
+
+        } catch (\Exception $e) {
+            $preprocessedLink->addException($e);
         }
+
+        $preprocessedLink->setStatusCode($this->client->getResponse()->getStatus());
+        $preprocessedLink->setHistory($this->client->getHistory());
 
         $uri = $this->client->getRequest()->getUri();
 
-        if ($statusCode == 200) {
+        if ($preprocessedLink->getStatusCode() == 200 && isset($crawler)) {
 
             try {
                 $canonical = $crawler->filterXPath('//link[@rel="canonical"]')->attr('href');
@@ -59,17 +60,12 @@ class LinkResolver
             if ($canonical && $uri !== $canonical) {
 
                 $canonical = $this->verifyCanonical($canonical, $uri);
-
-                return $canonical;
             }
 
+            $preprocessedLink->setCanonical($canonical);
         }
 
-        if ($statusCode >= 400){
-            return null;
-        }
-
-        return $uri;
+        return $preprocessedLink;
 
     }
 
