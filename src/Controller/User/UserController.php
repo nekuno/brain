@@ -93,12 +93,14 @@ class UserController extends BaseController
         /* @var $model UserManager */
         $model = $app['users.manager'];
         $criteria = $request->query->all();
-        $user = isset($criteria['id']) ? $model->getById($criteria['id'])->jsonSerialize() : $model->findUserBy($criteria)->jsonSerialize();
+        $user = isset($criteria['id']) ? $model->getById($criteria['id']) : $model->findUserBy($criteria);
+        $return = $user->jsonSerialize();
+
         /* @var $groupModel GroupModel */
         $groupModel = $app['users.groups.model'];
-        $user['groups'] = $groupModel->getByUser($user['id']);
+        $return['groups'] = $groupModel->getByUser($user->getId());
 
-        return $app->json($user);
+        return $app->json($return);
     }
 
     /**
