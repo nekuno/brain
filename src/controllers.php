@@ -157,6 +157,21 @@ $app['admin.enterpriseUsers.invitations.controller'] = $app->share(
 );
 
 
+$app['instant.users.controller'] = $app->share(
+    function () use ($app) {
+
+        return new \Controller\Instant\UserController($app['user']);
+    }
+);
+
+$app['instant.relations.controller'] = $app->share(
+    function () use ($app) {
+
+        return new \Controller\Instant\RelationsController($app['user']);
+    }
+);
+
+
 /**
  * Middleware for filter some request
  */
