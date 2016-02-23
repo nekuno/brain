@@ -66,6 +66,14 @@ $app['security.firewalls'] = array(
                 null, array('POST')),
         'anonymous' => true,
     ),
+    'instant' => array(
+        'pattern' => new RequestMatcher('^/instant/', null, null, $app['valid_ips']),
+        'anonymous' => true,
+    ),
+    'admin' => array(
+        'pattern' => new RequestMatcher('^/admin/', null, null, $app['valid_ips']),
+        'anonymous' => true,
+    ),
     'secured' => array(
         'pattern' => '^.*$',
         'users' => $app['security.users_provider'],
@@ -75,14 +83,7 @@ $app['security.firewalls'] = array(
             'stateless' => true,
         )
     ),
-    'instant' => array(
-        'pattern' => new RequestMatcher('^/instant/', null, null, $app['valid_ips']),
-        'anonymous' => true,
-    ),
-    'admin' => array(
-        'pattern' => new RequestMatcher('^/admin/', null, null, $app['valid_ips']),
-        'anonymous' => true,
-    ),
+
 );
 $app->register(new Silex\Provider\SecurityServiceProvider());
 $app['security.jwt'] = [
