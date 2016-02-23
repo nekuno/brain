@@ -16,7 +16,19 @@ class ControllerResolver extends BaseControllerResolver
     {
         foreach ($parameters as $param) {
             /* @var $param \ReflectionParameter */
-            if ($param->getClass() && $this->app['user'] && $param->getClass()->isInstance($this->app['user'])) {
+            if ($param->getClass() && $param->getClass()->isSubclassOf('Symfony\Component\Security\Core\User\UserInterface')) {
+
+                if (!$this->app['user']) {
+                    if (is_array($controller)) {
+                        $repr = sprintf('%s::%s()', get_class($controller[0]), $controller[1]);
+                    } elseif (is_object($controller)) {
+                        $repr = get_class($controller);
+                    } else {
+                        $repr = $controller;
+                    }
+                    throw new \RuntimeException(sprintf('Controller "%s" uses User "$%s" but user is not authenticated (missing jwt).', $repr, $param->name));
+                }
+
                 $request->attributes->set($param->getName(), $this->app['user']);
 
                 break;
