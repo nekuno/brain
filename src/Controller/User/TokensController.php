@@ -37,16 +37,16 @@ class TokensController
 
     /**
      * @param Application $app
-     * @param integer $id
+     * @param User $user
      * @param string $resourceOwner
      * @return JsonResponse
      */
-    public function getAction(Application $app, $id, $resourceOwner)
+    public function getAction(Application $app, User $user, $resourceOwner)
     {
         /* @var $model TokensModel */
         $model = $app['users.tokens.model'];
 
-        $token = $model->getById($id, $resourceOwner);
+        $token = $model->getById($user->getId(), $resourceOwner);
 
         return $app->json($token);
     }

@@ -211,7 +211,7 @@ class AnswerController
      */
     public function getOldUserAnswersCompareAction(Request $request, Application $app, User $user)
     {
-        $otherUserId = $request->get('id');
+        $otherUserId = $request->attributes->get('id');
         $locale = $request->query->get('locale');
         $showOnlyCommon = $request->query->get('showOnlyCommon', 0);
 
@@ -249,7 +249,7 @@ class AnswerController
      */
     public function getUserAnswersCompareAction(Request $request, Application $app, User $user)
     {
-        $otherUserId = $request->get('id');
+        $otherUserId = $request->attributes->get('id');
         $locale = $request->query->get('locale');
         $showOnlyCommon = $request->query->get('showOnlyCommon', 0);
 
