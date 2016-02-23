@@ -5,6 +5,7 @@
 
 namespace Controller\User;
 
+use Controller\BaseController;
 use Model\User\Thread\ThreadManager;
 use Model\User\Thread\ThreadPaginatedModel;
 use Paginator\Paginator;
@@ -12,7 +13,7 @@ use Service\Recommendator;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 
-class ThreadController
+class ThreadController extends BaseController
 {
 
     /**
@@ -69,14 +70,13 @@ class ThreadController
      * Get threads from a given user
      * @param Application $app
      * @param Request $request
-     * @param int $id user id
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      */
-    public function getByUserAction(Application $app, Request $request, $id)
+    public function getByUserAction(Application $app, Request $request)
     {
 
         $filters = array(
-            'userId' => $id
+            'userId' => $this->getUserId()
         );
 
         /** @var Paginator $paginator */
@@ -94,14 +94,13 @@ class ThreadController
      * Create new thread for a given user
      * @param Application $app
      * @param Request $request
-     * @param string $id Qnoow_id of the user creating the thread
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      * @throws \Exception
      */
-    public function postAction(Application $app, Request $request, $id)
+    public function postAction(Application $app, Request $request)
     {
 
-        $thread = $this->threadManager->create($id, $request->request->all());
+        $thread = $this->threadManager->create($this->getUserId(), $request->request->all());
 
         /** @var Recommendator $recommendator */
         $recommendator = $app['recommendator.service'];

@@ -174,19 +174,16 @@ class UserController extends BaseController
      */
     public function getMatchingAction(Request $request, Application $app)
     {
+        $otherUserId = $request->get('id');
 
-        // Get params
-        $id1 = $request->get('id1');
-        $id2 = $request->get('id2');
-
-        if (null === $id1 || null === $id2) {
+        if (null === $otherUserId) {
             return $app->json(array(), 400);
         }
 
         try {
             /* @var $model \Model\User\Matching\MatchingModel */
             $model = $app['users.matching.model'];
-            $result = $model->getMatchingBetweenTwoUsersBasedOnAnswers($id1, $id2);
+            $result = $model->getMatchingBetweenTwoUsersBasedOnAnswers($this->getUserId(), $otherUserId);
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;
@@ -206,19 +203,16 @@ class UserController extends BaseController
      */
     public function getSimilarityAction(Request $request, Application $app)
     {
+        $otherUserId = $request->get('id');
 
-        // Get params
-        $id1 = $request->get('id1');
-        $id2 = $request->get('id2');
-
-        if (null === $id1 || null === $id2) {
+        if (null === $otherUserId) {
             return $app->json(array(), 400);
         }
 
         try {
             /* @var $model \Model\User\Similarity\SimilarityModel */
             $model = $app['users.similarity.model'];
-            $similarity = $model->getCurrentSimilarity($id1, $id2);
+            $similarity = $model->getCurrentSimilarity($this->getUserId(), $otherUserId);
             $result = array('similarity' => $similarity['similarity']);
 
         } catch (\Exception $e) {
@@ -240,20 +234,14 @@ class UserController extends BaseController
      */
     public function getUserContentAction(Request $request, Application $app)
     {
-
-        $id = $request->get('id');
         $commonWithId = $request->get('commonWithId', null);
         $tag = $request->get('tag', null);
         $type = $request->get('type', null);
 
-        if (null === $id) {
-            return $app->json(array(), 400);
-        }
-
         /* @var $paginator \Paginator\Paginator */
         $paginator = $app['paginator'];
 
-        $filters = array('id' => $id);
+        $filters = array('id' => $this->getUserId());
 
         if ($commonWithId) {
             $filters['commonWithId'] = (int)$commonWithId;
@@ -291,20 +279,19 @@ class UserController extends BaseController
      */
     public function getUserContentCompareAction(Request $request, Application $app)
     {
-        $id = $request->get('id');
-        $id2 = $request->get('id2');
+        $otherUserId = $request->get('id');
         $tag = $request->get('tag', null);
         $type = $request->get('type', null);
         $showOnlyCommon = $request->get('showOnlyCommon', 0);
 
-        if (null === $id || null === $id2) {
+        if (null === $otherUserId) {
             return $app->json(array(), 400);
         }
 
         /* @var $paginator \Paginator\Paginator */
         $paginator = $app['paginator'];
 
-        $filters = array('id' => (int)$id, 'id2' => (int)$id2, 'showOnlyCommon' => (int)$showOnlyCommon);
+        $filters = array('id' => (int)$this->getUserId(), 'id2' => (int)$otherUserId, 'showOnlyCommon' => (int)$showOnlyCommon);
 
         if ($tag) {
             $filters['tag'] = urldecode($tag);
@@ -338,14 +325,8 @@ class UserController extends BaseController
      */
     public function getUserContentTagsAction(Request $request, Application $app)
     {
-
-        $id = $request->get('id');
         $search = $request->get('search', '');
         $limit = $request->get('limit', 0);
-
-        if (null === $id) {
-            return $app->json(array(), 400);
-        }
 
         if ($search) {
             $search = urldecode($search);
@@ -355,7 +336,7 @@ class UserController extends BaseController
         $model = $app['users.content.tag.model'];
 
         try {
-            $result = $model->getContentTags($id, $search, $limit);
+            $result = $model->getContentTags($this->getUserId(), $search, $limit);
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;
@@ -375,21 +356,20 @@ class UserController extends BaseController
      */
     public function rateContentAction(Request $request, Application $app)
     {
-        $userId = $request->get('id');
         $rate = $request->request->get('rate');
         $data = $request->request->all();
         if (isset($data['linkId']) && !isset($data['id'])) {
             $data['id'] = $data['linkId'];
         }
 
-        if (null == $userId || null == $data['linkId'] || null == $rate) {
-            return $app->json(array('text' => 'Link Not Found', 'id' => $userId, 'linkId' => $data['linkId']), 400);
+        if (null == $data['linkId'] || null == $rate) {
+            return $app->json(array('text' => 'Link Not Found', 'id' => $this->getUserId(), 'linkId' => $data['linkId']), 400);
         }
 
         try {
             /* @var RateModel $model */
             $model = $app['users.rate.model'];
-            $result = $model->userRateLink($userId, $data, $rate);
+            $result = $model->userRateLink($this->getUserId(), $data, $rate);
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;
@@ -401,13 +381,19 @@ class UserController extends BaseController
         return $app->json($result, !empty($result) ? 201 : 200);
     }
 
-    public function getUserRecommendationAction(Request $request, Application $app, $id)
+    /**
+     * @param Request $request
+     * @param Application $app
+     * @return JsonResponse
+     * @throws \Exception
+     */
+    public function getUserRecommendationAction(Request $request, Application $app)
     {
         /** @var Recommendator $recommendator */
         $recommendator = $app['recommendator.service'];
 
         try {
-            $result = $recommendator->getUserRecommendationFromRequest($request, $id);
+            $result = $recommendator->getUserRecommendationFromRequest($request, $this->getUserId());
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;
@@ -427,18 +413,16 @@ class UserController extends BaseController
      */
     public function getAffinityAction(Request $request, Application $app)
     {
-
-        $userId = $request->get('userId');
         $linkId = $request->get('linkId');
 
-        if (null === $userId || null === $linkId) {
+        if (null === $linkId) {
             return $app->json(array(), 400);
         }
 
         try {
             /* @var $model \Model\User\Affinity\AffinityModel */
             $model = $app['users.affinity.model'];
-            $affinity = $model->getAffinity($userId, $linkId);
+            $affinity = $model->getAffinity($this->getUserId(), $linkId);
             $result = array('affinity' => $affinity['affinity']);
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
@@ -454,18 +438,17 @@ class UserController extends BaseController
     /**
      * @param Request $request
      * @param Application $app
-     * @param $id
      * @return JsonResponse
      * @throws \Exception
      */
-    public function getContentRecommendationAction(Request $request, Application $app, $id)
+    public function getContentRecommendationAction(Request $request, Application $app)
     {
 
         /* @var $recommendator Recommendator */
         $recommendator = $app['recommendator.service'];
 
         try {
-            $result = $recommendator->getContentRecommendationFromRequest($request, $id);
+            $result = $recommendator->getContentRecommendationFromRequest($request, $this->getUserId());
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;
@@ -485,14 +468,8 @@ class UserController extends BaseController
      */
     public function getContentRecommendationTagsAction(Request $request, Application $app)
     {
-
-        $id = $request->get('id');
         $search = $request->get('search', '');
         $limit = $request->get('limit', 0);
-
-        if (null === $id) {
-            return $app->json(array(), 400);
-        }
 
         if ($search) {
             $search = urldecode($search);
@@ -502,7 +479,7 @@ class UserController extends BaseController
         $model = $app['users.recommendation.content.tag.model'];
 
         try {
-            $result = $model->getRecommendedTags($id, $search, $limit);
+            $result = $model->getRecommendedTags($this->getUserId(), $search, $limit);
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;
@@ -522,7 +499,6 @@ class UserController extends BaseController
     public function getAllFiltersAction(Request $request, Application $app)
     {
         $locale = $request->query->get('locale');
-        $id = $request->get('id');
         $filters = array();
         /* @var $model ProfileModel */
         $profileModel = $app['users.profile.model'];
@@ -532,7 +508,7 @@ class UserController extends BaseController
         $dynamicFilters = array();
         /* @var $groupModel GroupModel */
         $groupModel = $app['users.groups.model'];
-        $dynamicFilters['groups'] = $groupModel->getByUser((integer)$id);
+        $dynamicFilters['groups'] = $groupModel->getByUser($this->getUserId());
         /* @var $userManager UserManager */
         $userManager = $app['users.manager'];
         $filters['userFilters'] = $userManager->getFilters($locale, $dynamicFilters);
@@ -541,57 +517,43 @@ class UserController extends BaseController
     }
 
     /**
-     * @param Request $request
      * @param Application $app
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      * @throws \Exception
      */
-    public function statusAction(Request $request, Application $app)
+    public function statusAction(Application $app)
     {
-
-        $id = (integer)$request->get('id');
-        if (null === $id) {
-            throw new NotFoundHttpException('User not found');
-        }
-
         /* @var $model UserManager */
         $model = $app['users.manager'];
 
-        $status = $model->getStatus($id);
+        $status = $model->getStatus($this->getUserId());
 
         return $app->json(array('status' => $status));
     }
 
-    public function statsAction(Request $request, Application $app)
+    public function statsAction(Application $app)
     {
-
-        $id = (integer)$request->get('id');
-        if (null === $id) {
-            throw new NotFoundHttpException('User not found');
-        }
-
         /* @var $manager UserStatsManager */
         $manager = $app['users.stats.manager'];
 
-        $stats = $manager->getStats($id);
+        $stats = $manager->getStats($this->getUserId());
 
         return $app->json($stats->toArray());
     }
 
     public function statsCompareAction(Request $request, Application $app)
     {
-        $id1 = (integer)$request->get('id1');
-        $id2 = (integer)$request->get('id2');
-        if (null === $id1 || null === $id2) {
+        $otherUserId = $request->get('id');
+        if (null === $otherUserId) {
             throw new NotFoundHttpException('User not found');
         }
-        if ($id1 === $id2) {
+        if ($this->getUserId() === $otherUserId) {
             return $app->json(array(), 400);
         }
         /* @var $model UserManager */
         $model = $app['users.manager'];
 
-        $stats = $model->getComparedStats($id1, $id2);
+        $stats = $model->getComparedStats($this->getUserId(), $otherUserId);
 
         return $app->json($stats->toArray());
 

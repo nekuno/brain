@@ -66,23 +66,23 @@ $app->delete('/reports/{to}', 'users.relations.controller:deleteAction')->value(
 $app->get('/relations/{to}', 'users.relations.controller:getAction');
 $app->get('/other-relations/{from}', 'users.relations.controller:getOtherAction');
 
-$app->get('/users/{id1}/matching/{id2}', 'users.controller:getMatchingAction');
-$app->get('/users/{id1}/similarity/{id2}', 'users.controller:getSimilarityAction');
-$app->get('/users/{id}/content', 'users.controller:getUserContentAction');
-$app->get('/users/{id}/content/compare/{id2}', 'users.controller:getUserContentCompareAction');
-$app->get('/users/{id}/content/tags', 'users.controller:getUserContentTagsAction');
-$app->post('/users/{id}/content/rate', 'users.controller:rateContentAction');
-$app->get('/users/{id}/filters', 'users.controller:getAllFiltersAction');
-$app->get('/users/{id}/threads', 'users.threads.controller:getByUserAction');
-$app->post('/users/{id}/threads', 'users.threads.controller:postAction');
-$app->get('/users/{id}/recommendations/users', 'users.controller:getUserRecommendationAction');
-$app->get('/users/{id}/recommendations/content', 'users.controller:getContentRecommendationAction');
-$app->get('/users/{id}/recommendations/content/tags', 'users.controller:getContentRecommendationTagsAction');
-$app->get('/users/{id}/status', 'users.controller:statusAction');
-$app->get('/users/{id}/stats', 'users.controller:statsAction');
-$app->get('/users/{id1}/stats/compare/{id2}', 'users.controller:statsCompareAction');
+$app->get('/matching/{id}', 'users.controller:getMatchingAction');
+$app->get('/similarity/{id}', 'users.controller:getSimilarityAction');
+$app->get('content', 'users.controller:getUserContentAction');
+$app->get('/content/compare/{id}', 'users.controller:getUserContentCompareAction');
+$app->get('/content/tags', 'users.controller:getUserContentTagsAction');
+$app->post('/content/rate', 'users.controller:rateContentAction');
+$app->get('/filters', 'users.controller:getAllFiltersAction');
+$app->get('/threads', 'users.threads.controller:getByUserAction');
+$app->post('/threads', 'users.threads.controller:postAction');
+$app->get('/recommendations/users', 'users.controller:getUserRecommendationAction');
+$app->get('/recommendations/content', 'users.controller:getContentRecommendationAction');
+$app->get('/recommendations/content/tags', 'users.controller:getContentRecommendationTagsAction');
+$app->get('/status', 'users.controller:statusAction');
+$app->get('/stats', 'users.controller:statsAction');
+$app->get('/stats/compare/{id}', 'users.controller:statsCompareAction');
 
-$app->get('/users/{userId}/affinity/{linkId}', 'users.controller:getAffinityAction');
+$app->get('/affinity/{linkId}', 'users.controller:getAffinityAction');
 
 $app->get('/answers', 'users.answers.controller:indexAction');
 // TODO: Remove compare-old route when social is gone
@@ -96,7 +96,7 @@ $app->delete('/answers/{questionId}', 'users.answers.controller:deleteAnswerActi
 $app->post('/answers/{questionId}', 'users.answers.controller:updateAction'); // TODO: Remove this
 $app->post('/answers/validate', 'users.answers.controller:validateAction');
 
-$app->get('/users/{userId}/data/status', 'users.data.controller:getStatusAction')->value('resourceOwner', null);
+$app->get('/data/status', 'users.data.controller:getStatusAction')->value('resourceOwner', null);
 
 /** Questionnaire routes */
 $app->get('/questions/next', 'questionnaire.questions.controller:getNextQuestionAction');
