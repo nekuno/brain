@@ -94,6 +94,7 @@ class LinkProcessor
             return $preprocessedLink->getLink();
         }
 
+        //sets canonical url
         $preprocessedLink = $this->resolver->resolve($preprocessedLink);
 
         if (!$this->isProcessable($preprocessedLink)) {
@@ -102,9 +103,7 @@ class LinkProcessor
             return $link;
         }
 
-        $processor = $this->scrapperProcessor;
-
-        $cleanURL = $this->cleanURL($preprocessedLink->getCanonical(), $processor);
+        $cleanURL = $this->cleanURL($preprocessedLink->getCanonical());
         $preprocessedLink->setCanonical($cleanURL);
 
         if (!$reprocess && $this->isLinkProcessed($preprocessedLink)) {
@@ -114,11 +113,13 @@ class LinkProcessor
         }
 
         try {
+            $processor = $this->selectProcessor($preprocessedLink->getCanonical());
             $link = $processor->process($preprocessedLink);
         } catch (RequestException $e) {
 
-            $preprocessedLink['processed'] = 0;
-            return $preprocessedLink;
+            $link = $preprocessedLink->getLink();
+            $link['processed'] = 0;
+            return $link;
         }
 
         if (!$link) {
@@ -126,16 +127,6 @@ class LinkProcessor
         }
 
         return $link;
-    }
-
-    public function cleanExternalURLs($link)
-    {
-        return $this->cleanURL($link, $this->scrapperProcessor);
-    }
-
-    public function getLinkAnalyzer()
-    {
-        return $this->analyzer;
     }
 
     /**
@@ -184,36 +175,38 @@ class LinkProcessor
         return true;
     }
 
-    private function cleanURL($url, &$processor)
+    public function cleanURL($url)
     {
-        $processorName = $this->analyzer->getProcessor($url);
+        $processor = $this->selectProcessor($url);
 
-        //TODO: Simplify, upcast getParser to AbstractProcessor
+        return $processor->getParser()->cleanURL($url);
+    }
+
+    private function selectProcessor($url)
+    {
+        $processorName = $this->analyzer->getProcessorName($url);
+
         switch ($processorName) {
             case LinkAnalyzer::YOUTUBE:
                 $processor = $this->youtubeProcessor;
-                $url = $this->youtubeProcessor->getParser()->cleanURL($url);
                 break;
             case LinkAnalyzer::SPOTIFY:
                 $processor = $this->spotifyProcessor;
-                $url = $this->spotifyProcessor->getParser()->cleanURL($url);
                 break;
             case LinkAnalyzer::FACEBOOK:
                 $processor = $this->facebookProcessor;
-                $url = $this->urlParser->cleanURL($url);
                 break;
             case LinkAnalyzer::TWITTER:
+
                 $processor = $this->twitterProcessor;
-                $url = $this->urlParser->cleanURL($url);
                 break;
             case LinkAnalyzer::SCRAPPER:
             default:
                 $processor = $this->scrapperProcessor;
-                $url = $this->urlParser->cleanURL($url);
                 break;
         }
 
-        return $url;
+        return $processor;
     }
 
 }

@@ -17,7 +17,7 @@ class LinkAnalyzerTest extends \PHPUnit_Framework_TestCase
     public function testYoutubeUrl($url)
     {
         $analyzer = new LinkAnalyzer();
-        $this->assertEquals(LinkAnalyzer::YOUTUBE, $analyzer->getProcessor(array('url' => $url)));
+        $this->assertEquals(LinkAnalyzer::YOUTUBE, $analyzer->getProcessorName(array('url' => $url)));
     }
 
     /**
@@ -27,7 +27,7 @@ class LinkAnalyzerTest extends \PHPUnit_Framework_TestCase
     public function testSpotifyUrl($url)
     {
         $analyzer = new LinkAnalyzer();
-        $this->assertEquals(LinkAnalyzer::SPOTIFY, $analyzer->getProcessor(array('url' => $url)));
+        $this->assertEquals(LinkAnalyzer::SPOTIFY, $analyzer->getProcessorName(array('url' => $url)));
     }
 
     /**
@@ -37,7 +37,7 @@ class LinkAnalyzerTest extends \PHPUnit_Framework_TestCase
     public function testScrapperUrl($url)
     {
         $analyzer = new LinkAnalyzer();
-        $this->assertEquals(LinkAnalyzer::SCRAPPER, $analyzer->getProcessor(array('url' => $url)));
+        $this->assertEquals(LinkAnalyzer::SCRAPPER, $analyzer->getProcessorName(array('url' => $url)));
     }
 
     /**

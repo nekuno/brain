@@ -18,7 +18,7 @@ class LinkAnalyzer
      * @param $url
      * @return string
      */
-    public function getProcessor($url)
+    public function getProcessorName($url)
     {
         if (strpos($url, 'youtube.com') !== false || strpos($url, 'youtu.be') !== false) {
             return self::YOUTUBE;

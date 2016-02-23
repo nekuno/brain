@@ -292,12 +292,4 @@ class SpotifyProcessor extends AbstractProcessor
 
         return $link;
     }
-
-    /**
-     * @return SpotifyUrlParser
-     */
-    public function getParser()
-    {
-        return $this->parser;
-    }
 }

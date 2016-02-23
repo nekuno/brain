@@ -136,7 +136,7 @@ class LinksFindDuplicatesCommand extends ApplicationAwareCommand
         $linkProcessor = $this->app['api_consumer.link_processor'];
 
         foreach ($links as $link) {
-            $cleanUrl = $linkProcessor->cleanExternalURLs($link);
+            $cleanUrl = $linkProcessor->cleanURL($link['url']);
 
             if ($cleanUrl !== $link['url']) {
                 $output->writeln('Changing ' . $link['url'] . ' to ' . $cleanUrl);

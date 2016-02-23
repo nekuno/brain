@@ -182,12 +182,4 @@ class YoutubeProcessor extends AbstractProcessor
         return $link;
     }
 
-    /**
-     * @return YoutubeUrlParser
-     */
-    public function getParser()
-    {
-        return $this->parser;
-    }
-
 }

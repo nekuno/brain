@@ -52,9 +52,9 @@ class ScraperProcessor implements ProcessorInterface
      */
     public function process(PreprocessedLink $preprocessedLink)
     {
-        $url = $preprocessedLink->getFetched();
+        $link = $preprocessedLink->getLink();
 
-        $link = array('url' => $url);
+        $url = $preprocessedLink->getCanonical();
 
         try {
             $crawler = $this->client->request('GET', $url);
