@@ -3,6 +3,7 @@
 namespace Console\Command;
 
 use ApiConsumer\LinkProcessor\LinkProcessor;
+use ApiConsumer\LinkProcessor\PreprocessedLink;
 use Console\ApplicationAwareCommand;
 use Model\LinkModel;
 use Model\User\RateModel;
@@ -57,17 +58,17 @@ class LinksProcessNewCommand extends ApplicationAwareCommand
 
             try {
 
-                $link = array('url' => $url);
+                $preprocessedLink = new PreprocessedLink($url);
 
                 /* @var LinkProcessor $processor */
                 $processor = $this->app['api_consumer.link_processor'];
-                $processedLink = $processor->process($link);
+                $processedLink = $processor->process($preprocessedLink);
 
                 $processed = array_key_exists('processed', $processedLink) ? $processedLink['processed'] : 1;
                 if ($processed) {
-                    $output->writeln(sprintf('Success: Link %s processed', $link['url']));
+                    $output->writeln(sprintf('Success: Link %s processed', $preprocessedLink->getFetched()));
                 } else {
-                    $output->writeln(sprintf('Failed request: Link %s not processed', $link['url']));
+                    $output->writeln(sprintf('Failed request: Link %s not processed', $preprocessedLink->getFetched()));
                 }
 
             } catch (\Exception $e) {

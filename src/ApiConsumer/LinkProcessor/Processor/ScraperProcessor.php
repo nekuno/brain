@@ -4,6 +4,7 @@ namespace ApiConsumer\LinkProcessor\Processor;
 
 use ApiConsumer\LinkProcessor\MetadataParser\BasicMetadataParser;
 use ApiConsumer\LinkProcessor\MetadataParser\FacebookMetadataParser;
+use ApiConsumer\LinkProcessor\PreprocessedLink;
 use Goutte\Client;
 use GuzzleHttp\Exception\RequestException;
 
@@ -49,7 +50,7 @@ class ScraperProcessor implements ProcessorInterface
     /**
      * @inheritdoc
      */
-    public function process($preprocessedLink)
+    public function process(PreprocessedLink $preprocessedLink)
     {
         $url = $preprocessedLink->getFetched();
 

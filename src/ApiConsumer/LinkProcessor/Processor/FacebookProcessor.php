@@ -37,7 +37,7 @@ class FacebookProcessor extends AbstractProcessor
     /**
      * @inheritdoc
      */
-    public function process($link)
+    public function process(PreprocessedLink $link)
     {
         $type = $this->getAttachmentType($link);
         switch ($type) {

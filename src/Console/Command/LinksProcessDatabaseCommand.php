@@ -3,6 +3,7 @@
 namespace Console\Command;
 
 use ApiConsumer\LinkProcessor\LinkProcessor;
+use ApiConsumer\LinkProcessor\PreprocessedLink;
 use Console\ApplicationAwareCommand;
 use Model\LinkModel;
 use Symfony\Component\Console\Input\InputArgument;
@@ -48,26 +49,35 @@ class LinksProcessDatabaseCommand extends ApplicationAwareCommand
             $links = $linksModel->getUnprocessedLinks($limit);
         }
 
+        /* @var $preprocessedLinks PreprocessedLink[] */
+        $preprocessedLinks = array();
+        foreach ($links as $link)
+        {
+            $preprocessedLink = new PreprocessedLink($link['url']);
+            $preprocessedLink->setLink($link);
+            $preprocessedLinks[] = $preprocessedLink;
+        }
+
         $output->writeln('Got '.count($links).' links to process');
 
-        foreach ($links as $link) {
+        foreach ($preprocessedLinks as $preprocessedLink) {
 
             try {
                 /* @var LinkProcessor $processor */
                 $processor = $this->app['api_consumer.link_processor'];
-                $processedLink = $processor->process($link, $all);
+                $processedLink = $processor->process($preprocessedLink, $all);
 
                 $processed = array_key_exists('processed', $processedLink)? $processedLink['processed'] : 1;
                 if ($processed){
-                    $output->writeln(sprintf('Success: Link %s processed', $link['url']));
+                    $output->writeln(sprintf('Success: Link %s processed', $preprocessedLink->getFetched()));
                 } else {
-                    $output->writeln(sprintf('Failed request: Link %s not processed', $link['url']));
+                    $output->writeln(sprintf('Failed request: Link %s not processed', $preprocessedLink->getFetched()));
                 }
 
             } catch (\Exception $e) {
                 $output->writeln(sprintf('Error: %s', $e->getMessage()));
-                $output->writeln(sprintf('Error: Link %s not processed', $link['url']));
-                $linksModel->updateLink($link, true);
+                $output->writeln(sprintf('Error: Link %s not processed', $preprocessedLink->getFetched()));
+                $linksModel->updateLink($preprocessedLink->getLink(), true);
                 continue;
             }
 
@@ -81,10 +91,10 @@ class LinksProcessDatabaseCommand extends ApplicationAwareCommand
                     }
                 }
 
-                $output->writeln(sprintf('Success: Link %s saved', $processedLink['url']));
+                $output->writeln(sprintf('Success: Link %s saved', $preprocessedLink->getFetched()));
 
             } catch (\Exception $e) {
-                $output->writeln(sprintf('Error: Link %s not saved', $processedLink['url']));
+                $output->writeln(sprintf('Error: Link %s not saved', $preprocessedLink->getFetched()));
                 $output->writeln($e->getMessage());
             }
         }
