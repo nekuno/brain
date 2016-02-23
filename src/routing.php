@@ -6,6 +6,7 @@ $controllers = $app['controllers'];
 
 require __DIR__.'/../config/routing/routing-client.php';
 require __DIR__.'/../config/routing/routing-admin.php';
+require __DIR__.'/../config/routing/routing-instant.php';
 
 $controllers
     ->assert('id', '\d+')
