@@ -53,18 +53,26 @@ $app->register(new TranslationServiceProvider(), array('locale_fallbacks' => arr
 $app->register(new ServicesServiceProvider());
 $app->register(new ModelsServiceProvider());
 $app['security.firewalls'] = array(
-    'login' => [
+    'login' => array(
         'pattern' => '^/login$',
         'anonymous' => true,
-    ],
+    ),
+    'preFlight' => array(
+        'pattern' => new RequestMatcher('^.*$', null, 'OPTIONS'),
+        'anonymous' => true,
+    ),
     'public_get' => array(
-        'pattern' => new RequestMatcher('(^/users/find)|(^/users/tokens/)|(^/tokens/)|(^/lookup)|(^/profile/metadata$)|(^/users/available/)|(^/client/version$)',
-                null, 'GET'),
+        'pattern' => new RequestMatcher(
+            '(^/users/find)|(^/users/tokens/)|(^/tokens/)|(^/lookup)|(^/profile/metadata$)|(^/users/available/)|(^/client/version$)',
+            null, 'GET'
+        ),
         'anonymous' => true,
     ),
     'public_post' => array(
-        'pattern' => new RequestMatcher('(^/users$)|(^/invitations/token/validate/)|(^/lookUp/webHook$)|(^/users/validate$)|(^/profile/validate$)',
-                null, array('POST')),
+        'pattern' => new RequestMatcher(
+            '(^/users$)|(^/invitations/token/validate/)|(^/lookUp/webHook$)|(^/users/validate$)|(^/profile/validate$)',
+            null, array('POST')
+        ),
         'anonymous' => true,
     ),
     'instant' => array(
@@ -87,15 +95,15 @@ $app['security.firewalls'] = array(
 
 );
 $app->register(new Silex\Provider\SecurityServiceProvider());
-$app['security.jwt'] = [
+$app['security.jwt'] = array(
     'secret_key' => $app['secret'],
     'life_time' => 86400,
-    'options' => [
+    'options' => array(
         'username_claim' => 'sub', // default name, option specifying claim containing username
         'header_name' => 'Authorization', // default null, option for usage normal oauth2 header
         'token_prefix' => 'Bearer',
-    ]
-];
+    )
+);
 $app->register(new Silex\Provider\SecurityJWTServiceProvider());
 $app->register(new SubscribersServiceProvider());
 $app->register(new TwigServiceProvider(), array('twig.path' => __DIR__ . '/views'));
