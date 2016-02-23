@@ -16,7 +16,7 @@ class ControllerResolver extends BaseControllerResolver
     {
         foreach ($parameters as $param) {
             /* @var $param \ReflectionParameter */
-            if ($param->getClass() && $param->getClass()->isInstance($this->app['user'])) {
+            if ($param->getClass() && $this->app['user'] && $param->getClass()->isInstance($this->app['user'])) {
                 $request->attributes->set($param->getName(), $this->app['user']);
 
                 break;
