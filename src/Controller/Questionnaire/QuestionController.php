@@ -4,6 +4,7 @@ namespace Controller\Questionnaire;
 
 use Controller\BaseController;
 use Model\Questionnaire\QuestionModel;
+use Model\User;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -32,15 +33,16 @@ class QuestionController extends BaseController
      * Returns an unanswered question for given user
      * @param Request $request
      * @param Application $app
+     * @param User $user
      * @return JsonResponse
      */
-    public function getNextQuestionAction(Request $request, Application $app)
+    public function getNextQuestionAction(Request $request, Application $app, User $user)
     {
         $locale = $this->getLocale($request, $app['locale.options']['default']);
         /* @var QuestionModel $model */
         $model = $app['questionnaire.questions.model'];
 
-        $question = $model->getNextByUser($this->getUserId(), $locale);
+        $question = $model->getNextByUser($user->getId(), $locale);
 
         return $app->json($question);
     }

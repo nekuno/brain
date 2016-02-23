@@ -40,6 +40,7 @@ $app->register(new Neo4jPHPServiceProvider());
 $app->register(new UrlGeneratorServiceProvider());
 $app->register(new GuzzleServiceProvider());
 $app->register(new ValidatorServiceProvider());
+$app->register(new \Provider\ServiceControllerServiceProvider());
 $app->register(new ServiceControllerServiceProvider());
 $app->register(new ApiConsumerServiceProvider());
 $app->register(new LinkProcessorServiceProvider());
