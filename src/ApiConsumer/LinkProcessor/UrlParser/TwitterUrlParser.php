@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: yawmoght
- * Date: 27/10/15
- * Time: 13:32
- */
 
 namespace ApiConsumer\LinkProcessor\UrlParser;
 
@@ -13,9 +7,13 @@ class TwitterUrlParser extends UrlParser
 {
     const TWITTER_INTENT = 'intent';
     const TWITTER_PROFILE = 'profile';
+    const TWITTER_IMAGE = 'image';
 
     public function getUrlType($url)
     {
+        if ($this->isTwitterImageUrl($url)){
+            return self::TWITTER_IMAGE;
+        }
         if ($this->getProfileIdFromIntentUrl($url)) {
             return self::TWITTER_INTENT;
         }
@@ -80,6 +78,12 @@ class TwitterUrlParser extends UrlParser
         }
 
         return false;
+    }
+
+    private function isTwitterImageUrl($url)
+    {
+        $host = parse_url($url, PHP_URL_HOST);
+        return $host === 'pic.twitter.com';
     }
 
 }
