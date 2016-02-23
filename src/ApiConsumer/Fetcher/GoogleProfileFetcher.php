@@ -9,6 +9,8 @@
 namespace ApiConsumer\Fetcher;
 
 
+use ApiConsumer\LinkProcessor\PreprocessedLink;
+
 class GoogleProfileFetcher extends AbstractFetcher{
 
 
@@ -19,7 +21,9 @@ class GoogleProfileFetcher extends AbstractFetcher{
     {
         $this->setUser($user);
         $response = $this->resourceOwner->authorizedApiRequest($this->getUrl(), $this->getQuery(), $this->user);
-        return array($response);
+
+        $preprocessedLink = new PreprocessedLink($response['url']);
+        return array($preprocessedLink);
     }
 
     public function getUrl()

@@ -62,7 +62,7 @@ class SpotifyFetcher extends BasicPaginationFetcher
 
             $links = array();
             foreach ($parsed as $parsedLink){
-                $links[$parsedLink['url']] = $parsedLink;
+                $links[$parsedLink->getFetched()] = $parsedLink;
             }
 
         } catch (\Exception $e) {

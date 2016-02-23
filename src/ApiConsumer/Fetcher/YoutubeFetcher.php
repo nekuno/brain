@@ -16,6 +16,9 @@ class YoutubeFetcher extends BasicPaginationFetcher
 
     static public $PLAYLISTS_TO_EXCLUDE = array('watchHistory', 'watchLater');
 
+    /**
+     * {@inheritDoc}
+     */
     public function getUrl()
     {
         return $this->url;
@@ -27,6 +30,9 @@ class YoutubeFetcher extends BasicPaginationFetcher
         $this->url = $url;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     protected function getQuery()
     {
         return $this->query;
@@ -54,6 +60,9 @@ class YoutubeFetcher extends BasicPaginationFetcher
         return $items;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     protected function getPaginationIdFromResponse($response)
     {
         $paginationId = null;
@@ -140,6 +149,9 @@ class YoutubeFetcher extends BasicPaginationFetcher
         return $url;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function fetchLinksFromUserFeed($user, $public)
     {
         $this->user = $user;
