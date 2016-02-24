@@ -46,6 +46,9 @@ class TwitterProcessor extends AbstractProcessor
                 case TwitterUrlParser::TWITTER_PROFILE:
                     $link = $this->processProfile($preprocessedLink);
                     break;
+                case TwitterUrlParser::TWITTER_TWEET:
+                    $link = $this->processTweet($preprocessedLink);
+                    break;
                 default:
                     return false;
                     break;
@@ -57,8 +60,6 @@ class TwitterProcessor extends AbstractProcessor
 
     private function processIntent(PreprocessedLink $preprocessedLink)
     {
-        if (!$preprocessedLink->getCanonical()) return false;
-
         $link = $preprocessedLink->getLink();
 
         $userId = isset($link['resourceItemId']) ?
@@ -75,8 +76,6 @@ class TwitterProcessor extends AbstractProcessor
 
     private function processProfile(PreprocessedLink $preprocessedLink)
     {
-        if (!$preprocessedLink->getCanonical()) return false;
-
         $link = $preprocessedLink->getLink();
 
         $userName = $this->parser->getProfileNameFromProfileUrl($preprocessedLink->getCanonical());
@@ -87,6 +86,88 @@ class TwitterProcessor extends AbstractProcessor
         $this->addCreator($userName);
 
         return array_merge($link, $this->resourceOwner->buildProfileFromLookup($users[0]));
+    }
+
+    private function processTweet(PreprocessedLink $preprocessedLink)
+    {
+        $statusId = $this->parser->getStatusIdFromTweetUrl($preprocessedLink->getCanonical());
+
+        $url = $this->processTweetStatus($statusId, 0);
+
+        if ($url) {
+            $preprocessedLink->setCanonical($url);
+        }
+
+        //send to scraperProcessor
+        return false;
+
+    }
+
+    private function processTweetStatus($statusId, $counter)
+    {
+        //avoid infinite loops and some "joke" tweet chains
+        if ($counter >= 10) {
+            return false;
+        }
+
+        $query = array('id' => (int)$statusId);
+        $apiResponse = $this->resourceOwner->authorizedAPIRequest('statuses/show.json', $query);
+
+        $link = $this->extractLinkFromResponse($apiResponse);
+
+        if (isset($link['id'])) {
+            return $this->processTweetStatus($link['id'], ++$counter);
+        }
+
+        if (isset($link['url'])) {
+            return $link['url'];
+        }
+
+        return false;
+    }
+
+    private function extractLinkFromResponse($apiResponse)
+    {
+        //if tweet quotes another
+        if (isset($apiResponse['quoted_status_id'])) {
+            //if tweet is main, API returns quoted_status
+            if (isset($apiResponse['quoted_status'])) {
+
+                return $this->extractLinkFromResponse($apiResponse['quoted_status']);
+
+            } else if (isset($apiResponse['is_quote_status']) && $apiResponse['is_quote_status'] == true) {
+                return array('id' => $apiResponse['quoted_status_id']);
+            } else {
+                //should not be able to enter here
+            }
+        }
+
+        //if tweet includes url or media in text
+        if (isset($apiResponse['entities'])) {
+            $entities = $apiResponse['entities'];
+
+            $media = $this->getEntityUrl($entities, 'media');
+            if ($media) {
+                return $media;
+            }
+
+            $url = $this->getEntityUrl($entities, 'urls');
+            if ($url) {
+                return $url;
+            }
+        }
+        //we do not want tweets with no content
+        return false;
+    }
+
+    private function getEntityUrl($entities, $name)
+    {
+        if (isset($entities[$name]) && !empty($entities[$name])) {
+            $urlObject = $entities[$name][0]; //TODO: Foreach
+            return array('url' => $urlObject['expanded_url']);
+        }
+
+        return false;
     }
 
 }

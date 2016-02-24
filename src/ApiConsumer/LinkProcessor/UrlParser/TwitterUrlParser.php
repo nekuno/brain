@@ -8,11 +8,15 @@ class TwitterUrlParser extends UrlParser
     const TWITTER_INTENT = 'intent';
     const TWITTER_PROFILE = 'profile';
     const TWITTER_IMAGE = 'image';
+    const TWITTER_TWEET = 'tweet';
 
     public function getUrlType($url)
     {
-        if ($this->isTwitterImageUrl($url)){
+        if ($this->isTwitterImageUrl($url)) {
             return self::TWITTER_IMAGE;
+        }
+        if ($this->getStatusIdFromTweetUrl($url)) {
+            return self::TWITTER_TWEET;
         }
         if ($this->getProfileIdFromIntentUrl($url)) {
             return self::TWITTER_INTENT;
@@ -74,6 +78,28 @@ class TwitterUrlParser extends UrlParser
 
             if (!empty($path) && !in_array($path[0], $reserved) && !isset($path[1])) {
                 return $path[0];
+            }
+        }
+
+        return false;
+    }
+
+    public function getStatusIdFromTweetUrl($url)
+    {
+        $parts = parse_url($url);
+        if (isset($parts['host'])) {
+
+            $host = explode('.', $parts['host']);
+            if ($host[0] !== 'twitter') {
+                return false;
+            }
+        }
+        if (isset($parts['path'])) {
+
+            $path = explode('/', trim($parts['path'], '/'));
+
+            if (count($path) >= 2 && $path[1] == 'status' && is_numeric($path[2])) {
+                return (int)$path[2];
             }
         }
 
