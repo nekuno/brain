@@ -3,3 +3,4 @@
 /config/params.yml
 /csv
 /pimple.json
+src/ApiConsumer/Fetcher/GetOldTweets/got.jar
