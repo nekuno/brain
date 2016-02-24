@@ -15,7 +15,6 @@ $app->get('/users/{id}', 'users.controller:getOtherAction');
 $app->post('/users', 'users.controller:postAction');
 $app->put('/users', 'users.controller:putAction');
 $app->post('/users/validate', 'users.controller:validateAction');
-$app->get('/users/find', 'users.controller:findAction');
 $app->get('/users/available/{username}', 'users.controller:availableAction');
 
 $app->get('/profile', 'users.profile.controller:getAction');
@@ -28,21 +27,14 @@ $app->get('/profile/metadata', 'users.profile.controller:getMetadataAction');
 $app->get('/profile/filters', 'users.profile.controller:getFiltersAction');
 $app->get('/profile/tags/{type}', 'users.profile.controller:getProfileTagsAction');
 
-$app->get('/tokens', 'users.tokens.controller:getAllAction');
-$app->get('/tokens/{resourceOwner}', 'users.tokens.controller:getAction');
-$app->post('/tokens/{resourceOwner}', 'users.tokens.controller:postAction');
-$app->put('/tokens/{resourceOwner}', 'users.tokens.controller:putAction');
-$app->delete('/tokens/{resourceOwner}', 'users.tokens.controller:deleteAction');
-
 $app->get('/privacy', 'users.privacy.controller:getAction');
-//TODO: This route is only used in social
-$app->get('/users/{id}/privacy', 'users.privacy.controller:getOtherAction')->value('id', null);
 $app->post('/privacy', 'users.privacy.controller:postAction');
 $app->put('/privacy', 'users.privacy.controller:putAction');
 $app->delete('/privacy', 'users.privacy.controller:deleteAction');
 $app->get('/privacy/metadata', 'users.privacy.controller:getMetadataAction');
 $app->post('/privacy/validate', 'users.privacy.controller:validateAction');
 
+/** Relations routes */
 $app->get('/blocks', 'users.relations.controller:indexAction')->value('relation', RelationsModel::BLOCKS);
 $app->get('/blocks/{to}', 'users.relations.controller:getAction')->value('relation', RelationsModel::BLOCKS);
 $app->post('/blocks/{to}', 'users.relations.controller:postAction')->value('relation', RelationsModel::BLOCKS);
@@ -85,15 +77,12 @@ $app->get('/stats/compare/{id}', 'users.controller:statsCompareAction');
 $app->get('/affinity/{linkId}', 'users.controller:getAffinityAction');
 
 $app->get('/answers', 'users.answers.controller:indexAction');
-// TODO: Remove compare-old route when social is gone
-$app->get('/answers/compare-old/{id}', 'users.answers.controller:getOldUserAnswersCompareAction');
 $app->get('/answers/compare/{id}', 'users.answers.controller:getUserAnswersCompareAction');
 $app->post('/answers/explain', 'users.answers.controller:explainAction');
 $app->post('/answers', 'users.answers.controller:answerAction');
 $app->get('/users/{userId}/answers/count', 'users.answers.controller:countAction');
 $app->get('/answers/{questionId}', 'users.answers.controller:getAnswerAction');
 $app->delete('/answers/{questionId}', 'users.answers.controller:deleteAnswerAction');
-$app->post('/answers/{questionId}', 'users.answers.controller:updateAction'); // TODO: Remove this
 $app->post('/answers/validate', 'users.answers.controller:validateAction');
 
 $app->get('/data/status', 'users.data.controller:getStatusAction')->value('resourceOwner', null);

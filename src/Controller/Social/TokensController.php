@@ -1,6 +1,6 @@
 <?php
 
-namespace Controller\User;
+namespace Controller\Social;
 
 use Http\OAuth\Factory\ResourceOwnerFactory;
 use Http\OAuth\ResourceOwner\FacebookResourceOwner;
@@ -37,16 +37,16 @@ class TokensController
 
     /**
      * @param Application $app
-     * @param User $user
+     * @param integer $id
      * @param string $resourceOwner
      * @return JsonResponse
      */
-    public function getAction(Application $app, User $user, $resourceOwner)
+    public function getAction(Application $app, $id, $resourceOwner)
     {
         /* @var $model TokensModel */
         $model = $app['users.tokens.model'];
 
-        $token = $model->getById($user->getId(), $resourceOwner);
+        $token = $model->getById($id, $resourceOwner);
 
         return $app->json($token);
     }
@@ -54,16 +54,16 @@ class TokensController
     /**
      * @param Request $request
      * @param Application $app
-     * @param User $user
+     * @@param integer $id
      * @param string $resourceOwner
      * @return JsonResponse
      */
-    public function postAction(Request $request, Application $app, User $user, $resourceOwner)
+    public function postAction(Request $request, Application $app, $id, $resourceOwner)
     {
         /* @var $model TokensModel */
         $model = $app['users.tokens.model'];
 
-        $token = $model->create($user->getId(), $resourceOwner, $request->request->all());
+        $token = $model->create($id, $resourceOwner, $request->request->all());
 
         /* @var $resourceOwnerFactory ResourceOwnerFactory */
         $resourceOwnerFactory = $app['api_consumer.resource_owner_factory'];
@@ -89,15 +89,15 @@ class TokensController
                 //TODO: Add information about this if it happens
                 return $app->json($token, 201);
             }
-            $profile = new SocialProfile($user->getId(), $profileUrl, $resourceOwner);
+            $profile = new SocialProfile($id, $profileUrl, $resourceOwner);
 
             /* @var $ghostUserManager GhostUserManager */
             $ghostUserManager = $app['users.ghostuser.manager'];
             if ($ghostUser = $ghostUserManager->getBySocialProfile($profile)) {
                 /* @var $userManager UserManager */
                 $userManager = $app['users.manager'];
-                $userManager->fuseUsers($user->getId(), $ghostUser->getId());
-                $ghostUserManager->saveAsUser($user->getId());
+                $userManager->fuseUsers($id, $ghostUser->getId());
+                $ghostUserManager->saveAsUser($id);
             } else {
                 /** @var $socialProfilesManager SocialProfileManager */
                 $socialProfilesManager = $app['users.socialprofile.manager'];
@@ -111,32 +111,32 @@ class TokensController
     /**
      * @param Request $request
      * @param Application $app
-     * @param User $user
+     * @param integer $id
      * @param string $resourceOwner
      * @return JsonResponse
      */
-    public function putAction(Request $request, Application $app, User $user, $resourceOwner)
+    public function putAction(Request $request, Application $app, $id, $resourceOwner)
     {
         /* @var $model TokensModel */
         $model = $app['users.tokens.model'];
 
-        $token = $model->update($user->getId(), $resourceOwner, $request->request->all());
+        $token = $model->update($id, $resourceOwner, $request->request->all());
 
         return $app->json($token);
     }
 
     /**
      * @param Application $app
-     * @param User $user
+     * @param integer $id
      * @param string $resourceOwner
      * @return JsonResponse
      */
-    public function deleteAction(Application $app, User $user, $resourceOwner)
+    public function deleteAction(Application $app, $id, $resourceOwner)
     {
         /* @var $model TokensModel */
         $model = $app['users.tokens.model'];
 
-        $token = $model->remove($user->getId(), $resourceOwner);
+        $token = $model->remove($id, $resourceOwner);
 
         return $app->json($token);
     }

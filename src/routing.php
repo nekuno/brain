@@ -21,7 +21,7 @@ $app['security.firewalls'] = array(
     ),
     'public_get' => array(
         'pattern' => new RequestMatcher(
-                '(^/profile/metadata$)|(^/users/available/)|(^/client/version$)',
+                '(^/profile/metadata$)|(^/users/available/)|(^/client/version$)|(^/lookup)',
                 null, 'GET'
             ),
         'anonymous' => true,
@@ -42,7 +42,7 @@ $app['security.firewalls'] = array(
         'anonymous' => true,
     ),
     'social' => array(
-        'pattern' => new RequestMatcher('(^/users/find)|(^/users/tokens/)|(^/tokens/)|(^/lookup)', null, 'GET', $app['valid_ips']),
+        'pattern' => new RequestMatcher('^/social', null, null, $app['valid_ips']),
         'anonymous' => true,
     ),
     'secured' => array(
@@ -57,6 +57,7 @@ $app['security.firewalls'] = array(
 );
 
 require __DIR__.'/../config/routing/routing-client.php';
+require __DIR__ . '/../config/routing/routing-social.php';
 require __DIR__.'/../config/routing/routing-admin.php';
 require __DIR__.'/../config/routing/routing-instant.php';
 

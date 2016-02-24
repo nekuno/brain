@@ -24,13 +24,6 @@ $app['users.controller'] = $app->share(
     }
 );
 
-$app['users.tokens.controller'] = $app->share(
-    function () {
-
-        return new \Controller\User\TokensController;
-    }
-);
-
 $app['users.profile.controller'] = $app->share(
     function () {
 
@@ -111,6 +104,34 @@ $app['lookUp.controller'] = $app->share(
     function () use ($app) {
 
         return new \Controller\User\LookUpController;
+    }
+);
+
+$app['social.tokens.controller'] = $app->share(
+    function () {
+
+        return new \Controller\Social\TokensController;
+    }
+);
+
+$app['social.users.controller'] = $app->share(
+    function () {
+
+        return new \Controller\Social\UserController;
+    }
+);
+
+$app['social.profile.controller'] = $app->share(
+    function () {
+
+        return new \Controller\Social\ProfileController;
+    }
+);
+
+$app['social.privacy.controller'] = $app->share(
+    function () {
+
+        return new \Controller\Social\PrivacyController;
     }
 );
 

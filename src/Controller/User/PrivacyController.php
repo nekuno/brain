@@ -32,22 +32,6 @@ class PrivacyController
     /**
      * @param Request $request
      * @param Application $app
-     * @return JsonResponse
-     */
-    public function getOtherAction(Request $request, Application $app)
-    {
-        $id = $request->get('id');
-        /* @var $model PrivacyModel */
-        $model = $app['users.privacy.model'];
-
-        $privacy = $model->getById($id);
-
-        return $app->json($privacy);
-    }
-
-    /**
-     * @param Request $request
-     * @param Application $app
      * @param User $user
      * @return JsonResponse
      */
