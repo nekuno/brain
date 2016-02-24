@@ -186,6 +186,19 @@ class PreprocessedLink
     }
 
     /**
+     * TODO: Refactor to Link object whenever available
+     * @param $label
+     */
+    public function addAdditionalLabel($label)
+    {
+        if (!isset($this->link['additionalLabels'])){
+            $this->link['additionalLabels'] = array();
+        }
+
+        $this->link['additionalLabels'][] = $label;
+    }
+
+    /**
      * @return mixed
      */
     public function getToken()

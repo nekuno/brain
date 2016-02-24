@@ -124,6 +124,7 @@ class LinkProcessor
 
         if (!$link) {
             $link = $this->scrapperProcessor->process($preprocessedLink);
+            $link['url'] = $preprocessedLink->getCanonical();
         }
 
         return $link;

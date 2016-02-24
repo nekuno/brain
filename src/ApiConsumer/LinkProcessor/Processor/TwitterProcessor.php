@@ -31,19 +31,20 @@ class TwitterProcessor extends AbstractProcessor
     /**
      * @inheritdoc
      */
-    public function process(PreprocessedLink $link)
+    public function process(PreprocessedLink $preprocessedLink)
     {
-        if ($this->parser->getUrlType($link->getFetched()) === TwitterUrlParser::TWITTER_IMAGE) {
+        if ($this->parser->getUrlType($preprocessedLink->getFetched()) === TwitterUrlParser::TWITTER_IMAGE) {
+            $preprocessedLink->addAdditionalLabel('Image');
             return false;
         } else {
-            $type = $this->parser->getUrlType($link->getCanonical());
+            $type = $this->parser->getUrlType($preprocessedLink->getCanonical());
 
             switch ($type) {
                 case TwitterUrlParser::TWITTER_INTENT:
-                    $link = $this->processIntent($link);
+                    $link = $this->processIntent($preprocessedLink);
                     break;
                 case TwitterUrlParser::TWITTER_PROFILE:
-                    $link = $this->processProfile($link);
+                    $link = $this->processProfile($preprocessedLink);
                     break;
                 default:
                     return false;
@@ -86,13 +87,6 @@ class TwitterProcessor extends AbstractProcessor
         $this->addCreator($userName);
 
         return array_merge($link, $this->resourceOwner->buildProfileFromLookup($users[0]));
-    }
-
-    private function processImage(PreprocessedLink $preprocessedLink)
-    {
-        $link = $preprocessedLink->getLink();
-
-
     }
 
 }
