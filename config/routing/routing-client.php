@@ -28,7 +28,7 @@ $app->get('/profile/metadata', 'users.profile.controller:getMetadataAction');
 $app->get('/profile/filters', 'users.profile.controller:getFiltersAction');
 $app->get('/profile/tags/{type}', 'users.profile.controller:getProfileTagsAction');
 
-$app->get('/users/tokens/{id}', 'users.tokens.controller:getAllAction');
+$app->get('/tokens', 'users.tokens.controller:getAllAction');
 $app->get('/tokens/{resourceOwner}', 'users.tokens.controller:getAction');
 $app->post('/tokens/{resourceOwner}', 'users.tokens.controller:postAction');
 $app->put('/tokens/{resourceOwner}', 'users.tokens.controller:putAction');
@@ -89,7 +89,7 @@ $app->get('/answers', 'users.answers.controller:indexAction');
 $app->get('/answers/compare-old/{id}', 'users.answers.controller:getOldUserAnswersCompareAction');
 $app->get('/answers/compare/{id}', 'users.answers.controller:getUserAnswersCompareAction');
 $app->post('/answers/explain', 'users.answers.controller:explainAction');
-$app->post('/answers', 'users.answers.controller:answerAction'); // TODO: rename to answerAction
+$app->post('/answers', 'users.answers.controller:answerAction');
 $app->get('/users/{userId}/answers/count', 'users.answers.controller:countAction');
 $app->get('/answers/{questionId}', 'users.answers.controller:getAnswerAction');
 $app->delete('/answers/{questionId}', 'users.answers.controller:deleteAnswerAction');

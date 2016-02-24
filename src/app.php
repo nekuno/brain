@@ -23,7 +23,6 @@ use Silex\Provider\ValidatorServiceProvider;
 use Silex\Provider\TwigServiceProvider;
 use Silex\Provider\TranslationServiceProvider;
 use Sorien\Provider\PimpleDumpProvider;
-use Symfony\Component\HttpFoundation\RequestMatcher;
 
 $app = new Application();
 
@@ -52,48 +51,6 @@ $app->register(new AMQPServiceProvider());
 $app->register(new TranslationServiceProvider(), array('locale_fallbacks' => array('en', 'es')));
 $app->register(new ServicesServiceProvider());
 $app->register(new ModelsServiceProvider());
-$app['security.firewalls'] = array(
-    'login' => array(
-        'pattern' => '^/login$',
-        'anonymous' => true,
-    ),
-    'preFlight' => array(
-        'pattern' => new RequestMatcher('^.*$', null, 'OPTIONS'),
-        'anonymous' => true,
-    ),
-    'public_get' => array(
-        'pattern' => new RequestMatcher(
-            '(^/users/find)|(^/users/tokens/)|(^/tokens/)|(^/lookup)|(^/profile/metadata$)|(^/users/available/)|(^/client/version$)',
-            null, 'GET'
-        ),
-        'anonymous' => true,
-    ),
-    'public_post' => array(
-        'pattern' => new RequestMatcher(
-            '(^/users$)|(^/invitations/token/validate/)|(^/lookUp/webHook$)|(^/users/validate$)|(^/profile/validate$)',
-            null, array('POST')
-        ),
-        'anonymous' => true,
-    ),
-    'instant' => array(
-        'pattern' => new RequestMatcher('^/instant/', null, null, $app['valid_ips']),
-        'anonymous' => true,
-    ),
-    'admin' => array(
-        'pattern' => new RequestMatcher('^/admin/', null, null, $app['valid_ips']),
-        'anonymous' => true,
-    ),
-    'secured' => array(
-        'pattern' => '^.*$',
-        'users' => $app['security.users_provider'],
-        'jwt' => array(
-            'use_forward' => true,
-            'require_previous_session' => false,
-            'stateless' => true,
-        )
-    ),
-
-);
 $app->register(new Silex\Provider\SecurityServiceProvider());
 $app['security.jwt'] = array(
     'secret_key' => $app['secret'],

@@ -1,8 +1,60 @@
 <?php
 
+use Symfony\Component\HttpFoundation\RequestMatcher;
+
+
 /* @var $app Silex\Application */
 /* @var $controllers \Silex\Controller */
 $controllers = $app['controllers'];
+
+/**
+ * Firewall
+ */
+$app['security.firewalls'] = array(
+    'login' => array(
+        'pattern' => '^/login$',
+        'anonymous' => true,
+    ),
+    'preFlight' => array(
+        'pattern' => new RequestMatcher('^.*$', null, 'OPTIONS'),
+        'anonymous' => true,
+    ),
+    'public_get' => array(
+        'pattern' => new RequestMatcher(
+                '(^/profile/metadata$)|(^/users/available/)|(^/client/version$)',
+                null, 'GET'
+            ),
+        'anonymous' => true,
+    ),
+    'public_post' => array(
+        'pattern' => new RequestMatcher(
+                '(^/users$)|(^/invitations/token/validate/)|(^/lookUp/webHook$)|(^/users/validate$)|(^/profile/validate$)',
+                null, array('POST')
+            ),
+        'anonymous' => true,
+    ),
+    'instant' => array(
+        'pattern' => new RequestMatcher('^/instant/', null, null, $app['valid_ips']),
+        'anonymous' => true,
+    ),
+    'admin' => array(
+        'pattern' => new RequestMatcher('^/admin/', null, null, $app['valid_ips']),
+        'anonymous' => true,
+    ),
+    'social' => array(
+        'pattern' => new RequestMatcher('(^/users/find)|(^/users/tokens/)|(^/tokens/)|(^/lookup)', null, 'GET', $app['valid_ips']),
+        'anonymous' => true,
+    ),
+    'secured' => array(
+        'pattern' => '^.*$',
+        'users' => $app['security.users_provider'],
+        'jwt' => array(
+            'use_forward' => true,
+            'require_previous_session' => false,
+            'stateless' => true,
+        )
+    ),
+);
 
 require __DIR__.'/../config/routing/routing-client.php';
 require __DIR__.'/../config/routing/routing-admin.php';
