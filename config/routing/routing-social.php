@@ -22,7 +22,7 @@ $social->delete('/users/{id}/tokens/{resourceOwner}', 'social.tokens.controller:
 $social->get('/users/{id}/privacy', 'social.privacy.controller:getAction')->value('id', null);
 $social->get('/privacy/metadata', 'users.privacy.controller:getMetadataAction');
 
-$social->get('/answers/compare-old/{id}', 'social.users.answers.controller:getUserAnswersCompareAction');
+$social->get('/answers/compare/{id}', 'social.users.answers.controller:getUserAnswersCompareAction');
 $social->post('/answers/{questionId}', 'social.users.answers.controller:updateAction');
 
 $app->mount('/social', $social);
