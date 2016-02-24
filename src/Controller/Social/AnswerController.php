@@ -13,14 +13,16 @@ class AnswerController
     /**
      * @param Request $request
      * @param Application $app
-     * @param User $user
+     * @param integer $id
+     * @param mixed $questionId
      * @return JsonResponse
      * @throws \Exception
      */
-    public function updateAction(Request $request, Application $app, User $user)
+    public function updateAction(Request $request, Application $app, $id, $questionId)
     {
         $data = $request->request->all();
-        $data['userId'] = $user->getId();
+        $data['userId'] = (int)$id;
+        $data['questionId'] = (int)$questionId;
         $data['locale'] = $this->getLocale($request, $app['locale.options']['default']);
 
         $userAnswer = $app['users.answers.model']->update($data);
@@ -36,24 +38,24 @@ class AnswerController
     /**
      * @param Request $request
      * @param Application $app
-     * @param User $user
+     * @param integer $id
+     * @param integer $id2
      * @return JsonResponse
      * @throws \Exception
      */
-    public function getUserAnswersCompareAction(Request $request, Application $app, User $user)
+    public function getUserAnswersCompareAction(Request $request, Application $app, $id, $id2)
     {
-        $otherUserId = $request->attributes->get('id');
         $locale = $request->query->get('locale');
         $showOnlyCommon = $request->query->get('showOnlyCommon', 0);
 
-        if (null === $otherUserId || null === $user->getId()) {
+        if (null === $id2 || null === $id) {
             return $app->json(array(), 400);
         }
 
         /* @var $paginator \Paginator\Paginator */
         $paginator = $app['paginator'];
 
-        $filters = array('id' => $otherUserId, 'id2' => $user->getId(), 'locale' => $locale, 'showOnlyCommon' => $showOnlyCommon);
+        $filters = array('id' => $id2, 'id2' => $id, 'locale' => $locale, 'showOnlyCommon' => $showOnlyCommon);
 
         /* @var $model \Model\User\OldQuestionComparePaginatedModel */
         $model = $app['old.users.questions.compare.model'];

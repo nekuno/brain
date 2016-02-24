@@ -135,6 +135,13 @@ $app['social.privacy.controller'] = $app->share(
     }
 );
 
+$app['social.answers.controller'] = $app->share(
+    function () {
+
+        return new \Controller\Social\AnswerController;
+    }
+);
+
 $app['admin.groups.controller'] = $app->share(
     function () use ($app) {
 
