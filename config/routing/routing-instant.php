@@ -7,7 +7,6 @@
 $instant = $app['controllers_factory'];
 
 $instant->get('/users/{id}', 'instant.users.controller:getAction');
-$instant->get('/users/find', 'instant.users.controller:findAction');
 
 $instant->get('/users/{id}/contact/from', 'instant.relations.controller:contactFromAction');
 $instant->get('/users/{id}/contact/to', 'instant.relations.controller:contactToAction');

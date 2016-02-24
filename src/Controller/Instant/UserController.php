@@ -31,23 +31,4 @@ class UserController
         return $app->json($user);
     }
 
-    /**
-     * @param Application $app
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function findAction(Application $app, Request $request)
-    {
-        /* @var $model UserManager */
-        $model = $app['users.manager'];
-        $criteria = $request->query->all();
-        $user = isset($criteria['id']) ? $model->getById($criteria['id']) : $model->findUserBy($criteria);
-        $return = $user->jsonSerialize();
-
-        /* @var $groupModel GroupModel */
-        $groupModel = $app['users.groups.model'];
-        $return['groups'] = $groupModel->getByUser($user->getId());
-
-        return $app->json($return);
-    }
 }
