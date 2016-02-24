@@ -44,7 +44,7 @@ class LinkProcessorServiceProvider implements ServiceProviderInterface
                 $basicMetadataParser = new BasicMetadataParser();
                 $fbMetadataParser = new FacebookMetadataParser();
 
-                return new ScraperProcessor($app['api_consumer.link_processor.goutte'], $basicMetadataParser, $fbMetadataParser);
+                return new ScraperProcessor($app['userAggregator.service'], $app['api_consumer.link_processor.url_parser.parser'], $app['api_consumer.link_processor.goutte'], $basicMetadataParser, $fbMetadataParser);
             }
         );
 

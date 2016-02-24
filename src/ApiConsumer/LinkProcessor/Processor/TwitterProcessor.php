@@ -35,7 +35,7 @@ class TwitterProcessor extends AbstractProcessor
     {
         if ($this->parser->getUrlType($preprocessedLink->getFetched()) === TwitterUrlParser::TWITTER_IMAGE) {
             $preprocessedLink->addAdditionalLabel('Image');
-            return false;
+            return $preprocessedLink->getLink();
         } else {
             $type = $this->parser->getUrlType($preprocessedLink->getCanonical());
 
@@ -164,7 +164,7 @@ class TwitterProcessor extends AbstractProcessor
     {
         if (isset($entities[$name]) && !empty($entities[$name])) {
             $urlObject = $entities[$name][0]; //TODO: Foreach
-            return array('url' => $urlObject['expanded_url']);
+            return array('url' => $urlObject['display_url']);
         }
 
         return false;

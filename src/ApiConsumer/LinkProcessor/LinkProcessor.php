@@ -90,39 +90,49 @@ class LinkProcessor
      */
     public function process($preprocessedLink, $reprocess = false)
     {
-        if (!$reprocess && $this->isLinkProcessed($preprocessedLink)) {
-            return $preprocessedLink->getLink();
-        }
+        $processings = 0;
 
-        //sets canonical url
-        $preprocessedLink = $this->resolver->resolve($preprocessedLink);
+        do {
+            if (!$reprocess && $this->isLinkProcessed($preprocessedLink)) {
+                return $preprocessedLink->getLink();
+            }
 
-        if (!$this->isProcessable($preprocessedLink)) {
-            $link = $preprocessedLink->getLink();
-            $link['processed'] = 0;
-            return $link;
-        }
+            //sets canonical url
+            $preprocessedLink = $this->resolver->resolve($preprocessedLink);
 
-        $cleanURL = $this->cleanURL($preprocessedLink->getCanonical());
-        $preprocessedLink->setCanonical($cleanURL);
+            if (!$this->isProcessable($preprocessedLink)) {
+                $link = $preprocessedLink->getLink();
+                $link['processed'] = 0;
+                return $link;
+            }
 
-        if (!$reprocess && $this->isLinkProcessed($preprocessedLink)) {
-            $link = $preprocessedLink->getLink();
-            $link['url'] = $preprocessedLink->getCanonical();
-            return $link;
-        }
+            $cleanURL = $this->cleanURL($preprocessedLink->getCanonical());
+            $preprocessedLink->setCanonical($cleanURL);
 
-        try {
-            $processor = $this->selectProcessor($preprocessedLink->getCanonical());
-            $link = $processor->process($preprocessedLink);
-        } catch (RequestException $e) {
+            if (!$reprocess && $this->isLinkProcessed($preprocessedLink)) {
+                $link = $preprocessedLink->getLink();
+                $link['url'] = $preprocessedLink->getCanonical();
+                return $link;
+            }
 
-            $link = $preprocessedLink->getLink();
-            $link['processed'] = 0;
-            return $link;
-        }
+            try {
 
-        if (!$link) {
+                $processor = $this->selectProcessor($preprocessedLink->getCanonical());
+                $link = $processor->process($preprocessedLink);
+                $processings++;
+
+            } catch (RequestException $e) {
+
+                $link = $preprocessedLink->getLink();
+                $link['processed'] = 0;
+                return $link;
+            }
+
+            $preprocessedLink->setFetched($preprocessedLink->getCanonical());
+
+        } while ($preprocessedLink->getCanonical() !== $cleanURL && $processings < 10);
+
+        if (!isset($link['url'])) {
             $link = $this->scrapperProcessor->process($preprocessedLink);
             $link['url'] = $preprocessedLink->getCanonical();
         }
@@ -168,8 +178,7 @@ class LinkProcessor
             return false;
         }
 
-        if (null == $link->getCanonical())
-        {
+        if (null == $link->getCanonical()) {
             return false;
         }
 
