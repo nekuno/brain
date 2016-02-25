@@ -65,13 +65,13 @@ class LinksProcessNewCommand extends ApplicationAwareCommand
                 $processedLink = $processor->process($preprocessedLink);
 
                 if (OutputInterface::VERBOSITY_NORMAL < $output->getVerbosity()) {
-                    $output->writeln('------Link outputted-------');
+                    $output->writeln('----------Link outputted------------');
                     foreach ($processedLink as $key => $value)
                     {
                         $value = is_array($value)? json_encode($value) : $value;
                         $output->writeln(sprintf('%s => %s', $key, $value));
                     }
-                    $output->writeln('-----------');
+                    $output->writeln('-----------------------------------');
                 }
 
                 $processed = array_key_exists('processed', $processedLink) ? $processedLink['processed'] : 1;

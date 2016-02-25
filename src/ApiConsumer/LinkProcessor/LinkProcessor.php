@@ -2,6 +2,7 @@
 
 namespace ApiConsumer\LinkProcessor;
 
+use ApiConsumer\LinkProcessor\Processor\AbstractProcessor;
 use ApiConsumer\LinkProcessor\Processor\FacebookProcessor;
 use ApiConsumer\LinkProcessor\Processor\ScraperProcessor;
 use ApiConsumer\LinkProcessor\Processor\SpotifyProcessor;
@@ -98,7 +99,11 @@ class LinkProcessor
             }
 
             //sets canonical url
-            $preprocessedLink = $this->resolver->resolve($preprocessedLink);
+            if ($this->mustResolve($preprocessedLink)) {
+                $preprocessedLink = $this->resolver->resolve($preprocessedLink);
+            } else {
+                $preprocessedLink->setCanonical($preprocessedLink->getFetched());
+            }
 
             if (!$this->isProcessable($preprocessedLink)) {
                 $link = $preprocessedLink->getLink();
@@ -185,6 +190,21 @@ class LinkProcessor
         return true;
     }
 
+    /**
+     *
+     * @param PreprocessedLink $preprocessedLink
+     * @return bool
+     */
+    private function mustResolve(PreprocessedLink $preprocessedLink)
+    {
+        $processorName = $this->analyzer->getProcessorName($preprocessedLink->getFetched());
+        if ($processorName == LinkAnalyzer::SPOTIFY){
+            return false;
+        }
+
+        return true;
+    }
+
     public function cleanURL($url)
     {
         $processor = $this->selectProcessor($url);
@@ -192,6 +212,10 @@ class LinkProcessor
         return $processor->getParser()->cleanURL($url);
     }
 
+    /**
+     * @param $url string
+     * @return AbstractProcessor
+     */
     private function selectProcessor($url)
     {
         $processorName = $this->analyzer->getProcessorName($url);

@@ -61,6 +61,7 @@ class ScraperProcessor extends AbstractProcessor
         $link = $preprocessedLink->getLink();
 
         $url = $preprocessedLink->getCanonical();
+        $link['url'] = $url;
 
         try {
             $crawler = $this->client->request('GET', $url);

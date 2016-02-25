@@ -39,20 +39,22 @@ class FacebookProcessor extends AbstractProcessor
     /**
      * @inheritdoc
      */
-    public function process(PreprocessedLink $link)
+    public function process(PreprocessedLink $preprocessedLink)
     {
-        $type = $this->getAttachmentType($link);
+        $type = $this->getAttachmentType($preprocessedLink);
         switch ($type) {
             case $this::FACEBOOK_VIDEO:
-                $link = $this->processVideo($link);
+                $link = $this->processVideo($preprocessedLink);
                 break;
             case $this::FACEBOOK_OTHER:
-                $link = $this->scraperProcessor->process($link);
+                $link = $this->scraperProcessor->process($preprocessedLink);
                 break;
             default:
                 return false;
                 break;
         }
+
+        $link['url'] = $preprocessedLink->getCanonical();
 
         return $link;
     }
@@ -65,13 +67,14 @@ class FacebookProcessor extends AbstractProcessor
     {
         $id = $this->getVideoIdFromURL($preprocessedLink->getFetched());
 
+        $link = array();
         $link['title'] = null;
         $link['additionalLabels'] = array('Video');
         $link['additionalFields'] = array(
             'embed_type' => 'facebook',
             'embed_id' => $id);
 
-        $link = $this->scraperProcessor->process($link);
+        $link = array_merge($link, $this->scraperProcessor->process($preprocessedLink));
 
         $url = (string)$id;
         $query = array(

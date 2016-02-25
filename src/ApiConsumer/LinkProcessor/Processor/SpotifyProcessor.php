@@ -64,6 +64,7 @@ class SpotifyProcessor extends AbstractProcessor
                 break;
         }
 
+        $link['url'] = $preprocessedLink->getCanonical();
         return $link;
     }
 

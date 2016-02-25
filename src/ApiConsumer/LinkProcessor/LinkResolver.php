@@ -3,7 +3,6 @@
 namespace ApiConsumer\LinkProcessor;
 
 use Goutte\Client;
-use GuzzleHttp\Exception\RequestException;
 
 /**
  * @author Juan Luis Martínez <juanlu@comakai.com>

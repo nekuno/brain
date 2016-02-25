@@ -35,25 +35,26 @@ class YoutubeProcessor extends AbstractProcessor
     /**
      * @inheritdoc
      */
-    public function process(PreprocessedLink $link)
+    public function process(PreprocessedLink $preprocessedLink)
     {
-        $type = $this->parser->getUrlType($link->getCanonical());
+        $type = $this->parser->getUrlType($preprocessedLink->getCanonical());
 
         switch ($type) {
             case YoutubeUrlParser::VIDEO_URL:
-                $link = $this->processVideo($link);
+                $link = $this->processVideo($preprocessedLink);
                 break;
             case YoutubeUrlParser::CHANNEL_URL:
-                $link = $this->processChannel($link);
+                $link = $this->processChannel($preprocessedLink);
                 break;
             case YoutubeUrlParser::PLAYLIST_URL:
-                $link = $this->processPlaylist($link);
+                $link = $this->processPlaylist($preprocessedLink);
                 break;
             default:
                 return false;
                 break;
         }
 
+        $link['url'] = $preprocessedLink->getCanonical();
         return $link;
     }
 
