@@ -3,6 +3,7 @@
 namespace ApiConsumer\LinkProcessor\Processor;
 
 use ApiConsumer\LinkProcessor\PreprocessedLink;
+use ApiConsumer\LinkProcessor\UrlParser\UrlParser;
 use Http\OAuth\ResourceOwner\FacebookResourceOwner;
 use Service\UserAggregator;
 
@@ -27,11 +28,12 @@ class FacebookProcessor extends AbstractProcessor
      * @param FacebookResourceOwner $facebookResourceOwner
      * @param ScraperProcessor $scraperProcessor
      */
-    public function __construct(UserAggregator $userAggregator, FacebookResourceOwner $facebookResourceOwner, ScraperProcessor $scraperProcessor)
+    public function __construct(UserAggregator $userAggregator, FacebookResourceOwner $facebookResourceOwner, ScraperProcessor $scraperProcessor, UrlParser $urlParser)
     {
         parent::__construct($userAggregator);
         $this->resourceOwner = $facebookResourceOwner;
         $this->scraperProcessor = $scraperProcessor;
+        $this->parser = $urlParser;
     }
 
     /**
@@ -89,8 +91,9 @@ class FacebookProcessor extends AbstractProcessor
         return $link;
     }
 
-    private function getAttachmentType($link)
+    private function getAttachmentType(PreprocessedLink $preprocessedLink)
     {
+        $link = $preprocessedLink->getLink();
         if (empty($link['types'])
         ) {
             return null;

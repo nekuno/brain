@@ -64,6 +64,16 @@ class LinksProcessNewCommand extends ApplicationAwareCommand
                 $processor = $this->app['api_consumer.link_processor'];
                 $processedLink = $processor->process($preprocessedLink);
 
+                if (OutputInterface::VERBOSITY_NORMAL < $output->getVerbosity()) {
+                    $output->writeln('------Link outputted-------');
+                    foreach ($processedLink as $key => $value)
+                    {
+                        $value = is_array($value)? json_encode($value) : $value;
+                        $output->writeln(sprintf('%s => %s', $key, $value));
+                    }
+                    $output->writeln('-----------');
+                }
+
                 $processed = array_key_exists('processed', $processedLink) ? $processedLink['processed'] : 1;
                 if ($processed) {
                     $output->writeln(sprintf('Success: Link %s processed', $preprocessedLink->getFetched()));

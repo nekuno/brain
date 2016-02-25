@@ -62,7 +62,7 @@ class LinkProcessorServiceProvider implements ServiceProviderInterface
 
         $app['api_consumer.link_processor.processor.facebook'] = $app->share(
             function ($app) {
-                return new FacebookProcessor($app['userAggregator.service'], $app['api_consumer.resource_owner.facebook'], $app['api_consumer.link_processor.processor.scrapper']);
+                return new FacebookProcessor($app['userAggregator.service'], $app['api_consumer.resource_owner.facebook'], $app['api_consumer.link_processor.processor.scrapper'], $app['api_consumer.link_processor.url_parser.parser']);
             }
         );
 

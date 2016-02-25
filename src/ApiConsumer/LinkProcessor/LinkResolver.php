@@ -54,7 +54,7 @@ class LinkResolver
             try {
                 $canonical = $crawler->filterXPath('//link[@rel="canonical"]')->attr('href');
             } catch (\InvalidArgumentException $e) {
-                $canonical = null;
+                $canonical = $uri;
             }
 
             if ($canonical && $uri !== $canonical) {

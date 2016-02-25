@@ -207,7 +207,6 @@ class LinkProcessor
                 $processor = $this->facebookProcessor;
                 break;
             case LinkAnalyzer::TWITTER:
-
                 $processor = $this->twitterProcessor;
                 break;
             case LinkAnalyzer::SCRAPPER:
