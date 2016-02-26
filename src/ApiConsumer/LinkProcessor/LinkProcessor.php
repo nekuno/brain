@@ -2,8 +2,8 @@
 
 namespace ApiConsumer\LinkProcessor;
 
-use ApiConsumer\LinkProcessor\Processor\AbstractProcessor;
 use ApiConsumer\LinkProcessor\Processor\FacebookProcessor;
+use ApiConsumer\LinkProcessor\Processor\ProcessorInterface;
 use ApiConsumer\LinkProcessor\Processor\ScraperProcessor;
 use ApiConsumer\LinkProcessor\Processor\SpotifyProcessor;
 use ApiConsumer\LinkProcessor\Processor\TwitterProcessor;
@@ -214,7 +214,7 @@ class LinkProcessor
 
     /**
      * @param $url string
-     * @return AbstractProcessor
+     * @return ProcessorInterface
      */
     private function selectProcessor($url)
     {

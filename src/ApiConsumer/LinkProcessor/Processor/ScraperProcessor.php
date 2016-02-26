@@ -8,14 +8,12 @@ use ApiConsumer\LinkProcessor\PreprocessedLink;
 use ApiConsumer\LinkProcessor\UrlParser\UrlParser;
 use Goutte\Client;
 use GuzzleHttp\Exception\RequestException;
-use Service\UserAggregator;
 
 /**
  * @author Juan Luis Martínez <juanlu@comakai.com>
  */
-class ScraperProcessor extends AbstractProcessor
+class ScraperProcessor implements ProcessorInterface
 {
-
     /**
      * @var Client
      */
@@ -31,22 +29,20 @@ class ScraperProcessor extends AbstractProcessor
      */
     private $basicMetadataParser;
 
+    protected $parser;
     /**
-     * @param UserAggregator $userAggregator
      * @param UrlParser $urlParser
      * @param Client $client
      * @param \ApiConsumer\LinkProcessor\MetadataParser\BasicMetadataParser $basicMetadataParser
      * @param \ApiConsumer\LinkProcessor\MetadataParser\FacebookMetadataParser $facebookMetadataParser
      */
     public function __construct(
-        UserAggregator $userAggregator,
         UrlParser $urlParser,
         Client $client,
         BasicMetadataParser $basicMetadataParser,
         FacebookMetadataParser $facebookMetadataParser
     )
     {
-        parent::__construct($userAggregator);
         $this->parser = $urlParser;
         $this->client = $client;
         $this->basicMetadataParser = $basicMetadataParser;
@@ -130,5 +126,14 @@ class ScraperProcessor extends AbstractProcessor
                 $link[$name] = $scrapedData[$name];
             }
         }
+    }
+
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getParser()
+    {
+        return $this->parser;
     }
 }

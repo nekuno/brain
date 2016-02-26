@@ -133,7 +133,8 @@ class ChannelWorker extends LoggerAwareWorker implements RabbitMQConsumerInterfa
             $preprocessedLinks = array();
             foreach ($links as $link)
             {
-                $preprocessedLink = new PreprocessedLink($link);
+                $preprocessedLink = new PreprocessedLink($link['url']);
+                $preprocessedLink->setLink($link);
                 $preprocessedLink->setSource($resourceOwner);
                 $preprocessedLinks[] = $preprocessedLink;
             }
@@ -150,7 +151,9 @@ class ChannelWorker extends LoggerAwareWorker implements RabbitMQConsumerInterfa
             $this->dispatchError($e, 'Channel fetching');
         }
 
-        $message->delivery_info['channel']->basic_ack($message->delivery_info['delivery_tag']);
+        /** @var AMQPChannel $channel */
+        $channel = $message->delivery_info['channel'];
+        $channel->basic_ack($message->delivery_info['delivery_tag']);
 
         $this->memory();
     }

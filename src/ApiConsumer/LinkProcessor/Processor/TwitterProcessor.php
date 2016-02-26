@@ -21,9 +21,9 @@ class TwitterProcessor extends AbstractProcessor
      */
     protected $parser;
 
-    public function __construct(UserAggregator $userAggregator, TwitterResourceOwner $resourceOwner, TwitterUrlParser $parser)
+    public function __construct(UserAggregator $userAggregator, ScraperProcessor $scraperProcessor, TwitterResourceOwner $resourceOwner, TwitterUrlParser $parser)
     {
-        parent::__construct($userAggregator);
+        parent::__construct($userAggregator, $scraperProcessor);
         $this->resourceOwner = $resourceOwner;
         $this->parser = $parser;
     }
@@ -35,9 +35,14 @@ class TwitterProcessor extends AbstractProcessor
     {
         if ($this->parser->getUrlType($preprocessedLink->getFetched()) === TwitterUrlParser::TWITTER_IMAGE) {
             $preprocessedLink->addAdditionalLabel('Image');
-            return $preprocessedLink->getLink();
+            $link = array_merge($preprocessedLink->getLink(), $this->scraperProcessor->process($preprocessedLink));
+            return $link;
         } else {
             $type = $this->parser->getUrlType($preprocessedLink->getCanonical());
+
+            $link = $preprocessedLink->getLink();
+            $link['url'] = $preprocessedLink->getCanonical();
+            $preprocessedLink->setLink($link);
 
             switch ($type) {
                 case TwitterUrlParser::TWITTER_INTENT:
@@ -50,7 +55,7 @@ class TwitterProcessor extends AbstractProcessor
                     $link = $this->processTweet($preprocessedLink);
                     break;
                 default:
-                    return false;
+                    $link = $this->scraperProcessor->process($preprocessedLink);
                     break;
             }
         };
@@ -92,20 +97,24 @@ class TwitterProcessor extends AbstractProcessor
     {
         $statusId = $this->parser->getStatusIdFromTweetUrl($preprocessedLink->getCanonical());
 
-        $url = $this->processTweetStatus($statusId, 0);
+        $url = $this->processTweetStatus($statusId);
 
         if ($url) {
             $preprocessedLink->setCanonical($url);
         }
 
-        //send to scraperProcessor
-        return false;
+        return $this->scraperProcessor->process($preprocessedLink);
 
     }
 
-    private function processTweetStatus($statusId, $counter)
+    /**
+     * Follow embedded tweets (like from retweets) until last url
+     * @param $statusId
+     * @param $counter int Avoid infinite loops and some "joke" tweet chains
+     * @return string|bool
+     */
+    private function processTweetStatus($statusId, $counter = 0)
     {
-        //avoid infinite loops and some "joke" tweet chains
         if ($counter >= 10) {
             return false;
         }

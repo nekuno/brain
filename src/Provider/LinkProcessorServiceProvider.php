@@ -44,31 +44,31 @@ class LinkProcessorServiceProvider implements ServiceProviderInterface
                 $basicMetadataParser = new BasicMetadataParser();
                 $fbMetadataParser = new FacebookMetadataParser();
 
-                return new ScraperProcessor($app['userAggregator.service'], $app['api_consumer.link_processor.url_parser.parser'], $app['api_consumer.link_processor.goutte'], $basicMetadataParser, $fbMetadataParser);
+                return new ScraperProcessor($app['api_consumer.link_processor.url_parser.parser'], $app['api_consumer.link_processor.goutte'], $basicMetadataParser, $fbMetadataParser);
             }
         );
 
         $app['api_consumer.link_processor.processor.youtube'] = $app->share(
             function ($app) {
-                return new YoutubeProcessor($app['userAggregator.service'], $app['api_consumer.resource_owner.google'], new YoutubeUrlParser());
+                return new YoutubeProcessor($app['userAggregator.service'], $app['api_consumer.link_processor.processor.scrapper'], $app['api_consumer.resource_owner.google'], new YoutubeUrlParser());
             }
         );
 
         $app['api_consumer.link_processor.processor.spotify'] = $app->share(
             function ($app) {
-                return new SpotifyProcessor($app['userAggregator.service'], $app['api_consumer.resource_owner.spotify'], new SpotifyUrlParser(), $app['api_consumer.resource_owner.google'], new YoutubeUrlParser());
+                return new SpotifyProcessor($app['userAggregator.service'], $app['api_consumer.link_processor.processor.scrapper'], $app['api_consumer.resource_owner.spotify'], new SpotifyUrlParser(), $app['api_consumer.resource_owner.google'], new YoutubeUrlParser());
             }
         );
 
         $app['api_consumer.link_processor.processor.facebook'] = $app->share(
             function ($app) {
-                return new FacebookProcessor($app['userAggregator.service'], $app['api_consumer.resource_owner.facebook'], $app['api_consumer.link_processor.processor.scrapper'], $app['api_consumer.link_processor.url_parser.parser']);
+                return new FacebookProcessor($app['userAggregator.service'], $app['api_consumer.link_processor.processor.scrapper'], $app['api_consumer.resource_owner.facebook'], $app['api_consumer.link_processor.url_parser.parser']);
             }
         );
 
         $app['api_consumer.link_processor.processor.twitter'] = $app->share(
             function ($app) {
-                return new TwitterProcessor($app['userAggregator.service'], $app['api_consumer.resource_owner.twitter'], new TwitterUrlParser());
+                return new TwitterProcessor($app['userAggregator.service'], $app['api_consumer.link_processor.processor.scrapper'], $app['api_consumer.resource_owner.twitter'], new TwitterUrlParser());
             }
         );
 

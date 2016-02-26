@@ -19,18 +19,14 @@ class FacebookProcessor extends AbstractProcessor
     protected $resourceOwner;
 
     /**
-     * @var $scrapperProcessor ScraperProcessor
-     */
-    protected $scraperProcessor;
-
-    /**
      * @param UserAggregator $userAggregator
      * @param FacebookResourceOwner $facebookResourceOwner
      * @param ScraperProcessor $scraperProcessor
+     * @param UrlParser $urlParser
      */
-    public function __construct(UserAggregator $userAggregator, FacebookResourceOwner $facebookResourceOwner, ScraperProcessor $scraperProcessor, UrlParser $urlParser)
+    public function __construct(UserAggregator $userAggregator, ScraperProcessor $scraperProcessor, FacebookResourceOwner $facebookResourceOwner, UrlParser $urlParser)
     {
-        parent::__construct($userAggregator);
+        parent::__construct($userAggregator, $scraperProcessor);
         $this->resourceOwner = $facebookResourceOwner;
         $this->scraperProcessor = $scraperProcessor;
         $this->parser = $urlParser;

@@ -25,9 +25,9 @@ class YoutubeProcessor extends AbstractProcessor
      */
     protected $parser;
 
-    public function __construct(UserAggregator $userAggregator, GoogleResourceOwner $resourceOwner, YoutubeUrlParser $parser)
+    public function __construct(UserAggregator $userAggregator, ScraperProcessor $scraperProcessor, GoogleResourceOwner $resourceOwner, YoutubeUrlParser $parser)
     {
-        parent::__construct($userAggregator);
+        parent::__construct($userAggregator, $scraperProcessor);
         $this->resourceOwner = $resourceOwner;
         $this->parser = $parser;
     }
@@ -38,6 +38,10 @@ class YoutubeProcessor extends AbstractProcessor
     public function process(PreprocessedLink $preprocessedLink)
     {
         $type = $this->parser->getUrlType($preprocessedLink->getCanonical());
+
+        $link = $preprocessedLink->getLink();
+        $link['url'] = $preprocessedLink->getCanonical();
+        $preprocessedLink->setLink($link);
 
         switch ($type) {
             case YoutubeUrlParser::VIDEO_URL:
@@ -50,7 +54,7 @@ class YoutubeProcessor extends AbstractProcessor
                 $link = $this->processPlaylist($preprocessedLink);
                 break;
             default:
-                return false;
+                $link = $this->scraperProcessor->process($preprocessedLink);
                 break;
         }
 
@@ -58,10 +62,10 @@ class YoutubeProcessor extends AbstractProcessor
         return $link;
     }
 
-    protected function processVideo(PreprocessedLink $link)
+    protected function processVideo(PreprocessedLink $preprocessedLink)
     {
 
-        $id = $this->parser->getYoutubeIdFromUrl($link->getCanonical());
+        $id = $this->parser->getYoutubeIdFromUrl($preprocessedLink->getCanonical());
 
         $url = 'youtube/v3/videos';
         $query = array(
@@ -71,7 +75,7 @@ class YoutubeProcessor extends AbstractProcessor
         $token = array('network' => LinkAnalyzer::YOUTUBE);
         $response = $this->resourceOwner->authorizedAPIRequest($url, $query, $token);
 
-        $link = array();
+        $link = $preprocessedLink->getLink();
         $link['tags'] = array();
 
         if (isset($response['items']) && is_array($response['items']) && count($response['items']) > 0) {
