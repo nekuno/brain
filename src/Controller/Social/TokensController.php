@@ -1,6 +1,6 @@
 <?php
 
-namespace Controller\User;
+namespace Controller\Social;
 
 use Http\OAuth\Factory\ResourceOwnerFactory;
 use Http\OAuth\ResourceOwner\FacebookResourceOwner;
@@ -8,7 +8,8 @@ use Model\User\GhostUser\GhostUserManager;
 use Model\User\SocialNetwork\SocialProfile;
 use Model\User\SocialNetwork\SocialProfileManager;
 use Model\User\TokensModel;
-use Model\UserModel;
+use Manager\UserManager;
+use Model\User;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -19,15 +20,13 @@ use Symfony\Component\HttpFoundation\JsonResponse;
  */
 class TokensController
 {
-
     /**
+     * @param integer $id
      * @param Application $app
-     * @param int $id
      * @return JsonResponse
      */
     public function getAllAction(Application $app, $id)
     {
-
         /* @var $model TokensModel */
         $model = $app['users.tokens.model'];
 
@@ -38,13 +37,12 @@ class TokensController
 
     /**
      * @param Application $app
-     * @param int $id
+     * @param integer $id
      * @param string $resourceOwner
      * @return JsonResponse
      */
     public function getAction(Application $app, $id, $resourceOwner)
     {
-
         /* @var $model TokensModel */
         $model = $app['users.tokens.model'];
 
@@ -56,13 +54,12 @@ class TokensController
     /**
      * @param Request $request
      * @param Application $app
-     * @param int $id
+     * @@param integer $id
      * @param string $resourceOwner
      * @return JsonResponse
      */
     public function postAction(Request $request, Application $app, $id, $resourceOwner)
     {
-
         /* @var $model TokensModel */
         $model = $app['users.tokens.model'];
 
@@ -97,16 +94,15 @@ class TokensController
             /* @var $ghostUserManager GhostUserManager */
             $ghostUserManager = $app['users.ghostuser.manager'];
             if ($ghostUser = $ghostUserManager->getBySocialProfile($profile)) {
-                /* @var $userModel UserModel */
-                $userModel = $app['users.model'];
-                $userModel->fuseUsers($id, $ghostUser->getId());
+                /* @var $userManager UserManager */
+                $userManager = $app['users.manager'];
+                $userManager->fuseUsers($id, $ghostUser->getId());
                 $ghostUserManager->saveAsUser($id);
             } else {
                 /** @var $socialProfilesManager SocialProfileManager */
                 $socialProfilesManager = $app['users.socialprofile.manager'];
                 $socialProfilesManager->addSocialProfile($profile);
             }
-
         }
 
         return $app->json($token, 201);
@@ -115,13 +111,12 @@ class TokensController
     /**
      * @param Request $request
      * @param Application $app
-     * @param int $id
+     * @param integer $id
      * @param string $resourceOwner
      * @return JsonResponse
      */
     public function putAction(Request $request, Application $app, $id, $resourceOwner)
     {
-
         /* @var $model TokensModel */
         $model = $app['users.tokens.model'];
 
@@ -132,13 +127,12 @@ class TokensController
 
     /**
      * @param Application $app
-     * @param int $id
+     * @param integer $id
      * @param string $resourceOwner
      * @return JsonResponse
      */
     public function deleteAction(Application $app, $id, $resourceOwner)
     {
-
         /* @var $model TokensModel */
         $model = $app['users.tokens.model'];
 
@@ -146,5 +140,4 @@ class TokensController
 
         return $app->json($token);
     }
-
 }

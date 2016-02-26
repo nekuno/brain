@@ -3,6 +3,7 @@
 namespace Controller\User;
 
 use Model\User\PrivacyModel;
+use Model\User;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -14,18 +15,16 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 class PrivacyController
 {
     /**
-     * @param Request $request
      * @param Application $app
+     * @param User $user
      * @return JsonResponse
      */
-    public function getAction(Request $request, Application $app)
+    public function getAction(Application $app, User $user)
     {
-
-        $id = $request->get('id');
         /* @var $model PrivacyModel */
         $model = $app['users.privacy.model'];
 
-        $privacy = $model->getById($id);
+        $privacy = $model->getById($user->getId());
 
         return $app->json($privacy);
     }
@@ -33,16 +32,15 @@ class PrivacyController
     /**
      * @param Request $request
      * @param Application $app
+     * @param User $user
      * @return JsonResponse
      */
-    public function postAction(Request $request, Application $app)
+    public function postAction(Request $request, Application $app, User $user)
     {
-
-        $id = $request->get('id');
         /* @var $model PrivacyModel */
         $model = $app['users.privacy.model'];
 
-        $privacy = $model->create($id, $request->request->all());
+        $privacy = $model->create($user->getId(), $request->request->all());
 
         return $app->json($privacy, 201);
     }
@@ -50,34 +48,31 @@ class PrivacyController
     /**
      * @param Request $request
      * @param Application $app
+     * @param User $user
      * @return JsonResponse
      */
-    public function putAction(Request $request, Application $app)
+    public function putAction(Request $request, Application $app, User $user)
     {
-
-        $id = $request->get('id');
         /* @var $model PrivacyModel */
         $model = $app['users.privacy.model'];
 
-        $privacy = $model->update($id, $request->request->all());
+        $privacy = $model->update($user->getId(), $request->request->all());
 
         return $app->json($privacy);
     }
 
     /**
-     * @param Request $request
      * @param Application $app
+     * @param User $user
      * @return JsonResponse
      */
-    public function deleteAction(Request $request, Application $app)
+    public function deleteAction(Application $app, User $user)
     {
-
-        $id = $request->get('id');
         /* @var $model PrivacyModel */
         $model = $app['users.privacy.model'];
 
-        $privacy = $model->getById($id);
-        $model->remove($id);
+        $privacy = $model->getById($user->getId());
+        $model->remove($user->getId());
 
         return $app->json($privacy);
     }
@@ -112,5 +107,4 @@ class PrivacyController
 
         return $app->json();
     }
-
 }

@@ -2,9 +2,8 @@
 /**
  * @author Manolo Salsas <manolez@gmail.com>
  */
-namespace Controller\EnterpriseUser;
+namespace Controller\Admin\EnterpriseUser;
 
-use Model\EnterpriseUser\EnterpriseUserModel;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -14,20 +13,10 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class EnterpriseUserController
 {
-    /**
-     * @var EnterpriseUserModel
-     */
-    protected $eum;
-
-    public function __construct(EnterpriseUserModel $eum)
-    {
-        $this->eum = $eum;
-    }
-
     public function getAction(Application $app, $id)
     {
 
-        $enterpriseUser = $this->eum->getById($id);
+        $enterpriseUser = $app['enterpriseUsers.model']->getById($id);
 
         return $app->json($enterpriseUser);
     }
@@ -36,7 +25,7 @@ class EnterpriseUserController
     {
         $data = $request->request->all();
 
-        $enterpriseUser = $this->eum->create($data);
+        $enterpriseUser = $app['enterpriseUsers.model']->create($data);
 
         return $app->json($enterpriseUser, 201);
     }
@@ -45,15 +34,15 @@ class EnterpriseUserController
     {
         $data = $request->request->all();
 
-        $enterpriseUser = $this->eum->update($id, $data);
+        $enterpriseUser = $app['enterpriseUsers.model']->update($id, $data);
 
         return $app->json($enterpriseUser, 200);
     }
 
     public function deleteAction(Application $app, $id)
     {
-        $enterpriseUser = $this->eum->getById($id);
-        $this->eum->remove($id);
+        $enterpriseUser = $app['enterpriseUsers.model']->getById($id);
+        $app['enterpriseUsers.model']->remove($id);
 
         return $app->json($enterpriseUser);
     }
@@ -62,7 +51,7 @@ class EnterpriseUserController
     {
         $data = $request->request->all();
 
-        $this->eum->validate($data);
+        $app['enterpriseUsers.model']->validate($data);
 
         return $app->json();
     }

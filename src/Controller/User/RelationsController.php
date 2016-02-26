@@ -3,39 +3,49 @@
 namespace Controller\User;
 
 use Model\User\RelationsModel;
+use Model\User;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 class RelationsController
 {
-
-    public function indexAction(Application $app, $from, $relation)
+    /**
+     * @param Application $app
+     * @param User $user
+     * @param string $relation
+     * @return JsonResponse
+     */
+    public function indexAction(Application $app, User $user, $relation)
     {
-
         /* @var $model RelationsModel */
         $model = $app['users.relations.model'];
 
-        $result = $model->getAll($from, $relation);
+        $result = $model->getAll($user->getId(), $relation);
 
         return $app->json($result);
     }
 
-    public function getAction(Application $app, $from, $to, $relation = null)
+    /**
+     * @param Application $app
+     * @param User $user
+     * @param integer $to
+     * @param string $relation
+     * @return JsonResponse
+     */
+    public function getAction(Application $app, User $user, $to, $relation = null)
     {
         /* @var $model RelationsModel */
         $model = $app['users.relations.model'];
 
         if (!is_null($relation)) {
-
-            $result = $model->get($from, $to, $relation);
-
+            $result = $model->get($user->getId(), $to, $relation);
         } else {
-
             $result = array();
             foreach (RelationsModel::getRelations() as $relation) {
                 try {
-                    $model->get($from, $to, $relation);
+                    $model->get($user->getId(), $to, $relation);
                     $result[$relation] = true;
                 } catch (NotFoundHttpException $e) {
                     $result[$relation] = false;
@@ -46,61 +56,69 @@ class RelationsController
         return $app->json($result);
     }
 
-    public function postAction(Request $request, Application $app, $from, $to, $relation)
+    /**
+     * @param Application $app
+     * @param User $user
+     * @param integer $from
+     * @param string $relation
+     * @return JsonResponse
+     */
+    public function getOtherAction(Application $app, User $user, $from, $relation = null)
     {
+        /* @var $model RelationsModel */
+        $model = $app['users.relations.model'];
 
+        if (!is_null($relation)) {
+            $result = $model->get($from, $user->getId(), $relation);
+        } else {
+            $result = array();
+            foreach (RelationsModel::getRelations() as $relation) {
+                try {
+                    $model->get($from, $user->getId(), $relation);
+                    $result[$relation] = true;
+                } catch (NotFoundHttpException $e) {
+                    $result[$relation] = false;
+                }
+            }
+        }
+
+        return $app->json($result);
+    }
+
+    /**
+     * @param Request $request
+     * @param Application $app
+     * @param User $user
+     * @param integer $to
+     * @param string $relation
+     * @return JsonResponse
+     */
+    public function postAction(Request $request, Application $app, User $user, $to, $relation)
+    {
         $data = $request->request->all();
 
         /* @var $model RelationsModel */
         $model = $app['users.relations.model'];
 
-        $result = $model->create($from, $to, $relation, $data);
+        $result = $model->create($user->getId(), $to, $relation, $data);
 
         return $app->json($result);
     }
 
-    public function deleteAction(Application $app, $from, $to, $relation)
+    /**
+     * @param Application $app
+     * @param User $user
+     * @param integer $to
+     * @param string $relation
+     * @return JsonResponse
+     */
+    public function deleteAction(Application $app, User $user, $to, $relation)
     {
-
         /* @var $model RelationsModel */
         $model = $app['users.relations.model'];
 
-        $result = $model->remove($from, $to, $relation);
+        $result = $model->remove($user->getId(), $to, $relation);
 
         return $app->json($result);
-    }
-
-    public function contactFromAction(Application $app, $id)
-    {
-
-        /* @var $model RelationsModel */
-        $model = $app['users.relations.model'];
-
-        $users = $model->contactFrom($id);
-
-        return $app->json($users);
-    }
-
-    public function contactToAction(Application $app, $id)
-    {
-
-        /* @var $model RelationsModel */
-        $model = $app['users.relations.model'];
-
-        $users = $model->contactTo($id);
-
-        return $app->json($users);
-    }
-
-    public function contactAction(Application $app, $from, $to)
-    {
-
-        /* @var $model RelationsModel */
-        $model = $app['users.relations.model'];
-
-        $contact = $model->contact($from, $to);
-
-        return $app->json(array(), $contact ? 200 : 404);
-
     }
 }

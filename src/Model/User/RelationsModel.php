@@ -8,7 +8,7 @@ use Everyman\Neo4j\Query\Row;
 use Everyman\Neo4j\Relationship;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
-use Model\UserModel;
+use Manager\UserManager;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class RelationsModel
@@ -30,16 +30,16 @@ class RelationsModel
     protected $connectionSocial;
 
     /**
-     * @var UserModel
+     * @var UserManager
      */
-    protected $userModel;
+    protected $userManager;
 
-    public function __construct(GraphManager $gm, Connection $connectionSocial, UserModel $userModel)
+    public function __construct(GraphManager $gm, Connection $connectionSocial, UserManager $userManager)
     {
 
         $this->gm = $gm;
         $this->connectionSocial = $connectionSocial;
-        $this->userModel = $userModel;
+        $this->userManager = $userManager;
     }
 
     static public function getRelations()
@@ -225,7 +225,7 @@ class RelationsModel
 
         foreach ($result as $row) {
             /* @var $row Row */
-            $return[] = $this->userModel->build($row);
+            $return[] = $this->userManager->build($row);
         }
 
         return $return;
@@ -255,7 +255,7 @@ class RelationsModel
 
         foreach ($result as $row) {
             /* @var $row Row */
-            $return[] = $this->userModel->build($row);
+            $return[] = $this->userManager->build($row);
         }
 
         return $return;

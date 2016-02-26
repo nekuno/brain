@@ -6,7 +6,7 @@ namespace Model\EnterpriseUser;
 
 use Everyman\Neo4j\Query\Row;
 use Model\Neo4j\GraphManager;
-use Model\UserModel;
+use Manager\UserManager;
 
 class CommunityModel
 {
@@ -17,15 +17,15 @@ class CommunityModel
     protected $gm;
 
     /**
-     * @var UserModel
+     * @var
      */
     protected $um;
 
     /**
      * @param GraphManager $gm
-     * @param UserModel $um
+     * @param UserManager $um
      */
-    public function __construct(GraphManager $gm, UserModel $um)
+    public function __construct(GraphManager $gm, UserManager $um)
     {
 
         $this->gm = $gm;

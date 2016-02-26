@@ -7,7 +7,7 @@ use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
-use Model\UserModel;
+use Manager\UserManager;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class ThreadManager
@@ -21,8 +21,8 @@ class ThreadManager
 
     /** @var  GraphManager */
     protected $graphManager;
-    /** @var  UserModel */
-    protected $userModel;
+    /** @var  UserManager */
+    protected $userManager;
     /** @var  UsersThreadManager */
     protected $usersThreadManager;
     /** @var  ContentThreadManager */
@@ -31,14 +31,14 @@ class ThreadManager
     /**
      * ThreadManager constructor.
      * @param GraphManager $graphManager
-     * @param UserModel $userModel
+     * @param UserManager $userManager
      * @param UsersThreadManager $um
      * @param ContentThreadManager $cm
      */
-    public function __construct(GraphManager $graphManager, UserModel $userModel, UsersThreadManager $um, ContentThreadManager $cm)
+    public function __construct(GraphManager $graphManager, UserManager $userManager, UsersThreadManager $um, ContentThreadManager $cm)
     {
         $this->graphManager = $graphManager;
-        $this->userModel = $userModel;
+        $this->userManager = $userManager;
         $this->usersThreadManager = $um;
         $this->contentThreadManager = $cm;
     }
@@ -342,7 +342,7 @@ class ThreadManager
 
         if (isset($data['userId'])) {
             try {
-                $this->userModel->getById((integer)$data['userId'], true);
+                $this->userManager->getById((integer)$data['userId'], true);
             } catch (NotFoundHttpException $e) {
                 $errors['userId'] = array($e->getMessage());
             }

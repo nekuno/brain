@@ -3,13 +3,13 @@
 namespace Controller\Questionnaire;
 
 use Model\Questionnaire\QuestionModel;
+use Model\User;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 
 class QuestionController
 {
-
     /**
      * @param Request $request
      * @param Application $app
@@ -17,7 +17,6 @@ class QuestionController
      */
     public function getQuestionsAction(Request $request, Application $app)
     {
-
         $locale = $this->getLocale($request, $app['locale.options']['default']);
         $skip = $request->query->get('skip');
         $limit = $request->query->get('limit', 10);
@@ -27,25 +26,22 @@ class QuestionController
         $questions = $model->getAll($locale, $skip, $limit);
 
         return $app->json($questions);
-
     }
 
     /**
      * Returns an unanswered question for given user
      * @param Request $request
      * @param Application $app
+     * @param User $user
      * @return JsonResponse
      */
-    public function getNextQuestionAction(Request $request, Application $app)
+    public function getNextQuestionAction(Request $request, Application $app, User $user)
     {
-
-        $userId = $request->query->get('userId');
-
         $locale = $this->getLocale($request, $app['locale.options']['default']);
         /* @var QuestionModel $model */
         $model = $app['questionnaire.questions.model'];
 
-        $question = $model->getNextByUser($userId, $locale);
+        $question = $model->getNextByUser($user->getId(), $locale);
 
         return $app->json($question);
     }
@@ -57,7 +53,6 @@ class QuestionController
      */
     public function getQuestionAction(Request $request, Application $app)
     {
-
         $id = $request->get('id');
         $locale = $this->getLocale($request, $app['locale.options']['default']);
         /* @var $model QuestionModel */
@@ -68,9 +63,13 @@ class QuestionController
         return $app->json($question);
     }
 
+    /**
+     * @param Request $request
+     * @param Application $app
+     * @return JsonResponse
+     */
     public function validateAction(Request $request, Application $app)
     {
-
         $data = $request->request->all();
         $data['locale'] = $this->getLocale($request, $app['locale.options']['default']);
 
@@ -84,13 +83,14 @@ class QuestionController
     /**
      * @param Request $request
      * @param Application $app
+     * @param User $user
      * @return JsonResponse
      * @throws \Exception
      */
-    public function postQuestionAction(Request $request, Application $app)
+    public function postQuestionAction(Request $request, Application $app, User $user)
     {
-
         $data = $request->request->all();
+        $data['userId'] = $user->getId();
         $data['locale'] = $this->getLocale($request, $app['locale.options']['default']);
 
         /* @var $model QuestionModel */
@@ -99,28 +99,25 @@ class QuestionController
         $question = $model->create($data);
 
         return $app->json($question, 201);
-
     }
 
     /**
      * @param Request $request
      * @param Application $app
+     * @param User $user
      * @return JsonResponse
      * @throws \Exception
      */
-    public function skipAction(Request $request, Application $app)
+    public function skipAction(Request $request, Application $app, User $user)
     {
-
         $id = $request->attributes->get('id');
-        $userId = $request->request->get('userId');
-
         $locale = $this->getLocale($request, $app['locale.options']['default']);
         /* @var QuestionModel $model */
         $model = $app['questionnaire.questions.model'];
 
         $question = $model->getById($id, $locale);
 
-        $model->skip($id, $userId);
+        $model->skip($id, $user->getId());
 
         return $app->json($question);
     }
@@ -128,14 +125,13 @@ class QuestionController
     /**
      * @param Request $request
      * @param Application $app
+     * @param User $user
      * @return JsonResponse
      * @throws \Exception
      */
-    public function reportAction(Request $request, Application $app)
+    public function reportAction(Request $request, Application $app, User $user)
     {
-
         $id = $request->attributes->get('id');
-        $userId = $request->request->get('userId');
         $reason = $request->request->get('reason');
 
         $locale = $this->getLocale($request, $app['locale.options']['default']);
@@ -144,7 +140,7 @@ class QuestionController
 
         $question = $model->getById($id, $locale);
 
-        $model->report($id, $userId, $reason);
+        $model->report($id, $user->getId(), $reason);
 
         return $app->json($question);
     }
@@ -155,24 +151,8 @@ class QuestionController
      * @return JsonResponse
      * @throws \Exception
      */
-    public function statsAction(Request $request, Application $app)
-    {
-
-        $id = $request->attributes->get('id');
-        $locale = $this->getLocale($request, $app['locale.options']['default']);
-        /* @var QuestionModel $model */
-        $model = $app['questionnaire.questions.model'];
-
-        $question = $model->getById($id, $locale);
-
-        $stats = $model->getQuestionStats($id);
-
-        return $app->json($stats);
-    }
-
     public function getDivisiveQuestionsAction(Request $request, Application $app)
     {
-
         $locale = $request->get('locale', $app['locale.options']['default']);
         /* @var QuestionModel $model */
         $model = $app['questionnaire.questions.model'];
@@ -191,5 +171,4 @@ class QuestionController
 
         return $locale;
     }
-
 }

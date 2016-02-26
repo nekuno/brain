@@ -13,7 +13,7 @@ use Model\User\Recommendation\UserRecommendationPaginatedModel;
 use Model\User\Thread\ContentThread;
 use Model\User\Thread\Thread;
 use Model\User\Thread\UsersThread;
-use Model\UserModel;
+use Manager\UserManager;
 use Paginator\ContentPaginator;
 use Paginator\Paginator;
 use Symfony\Component\HttpFoundation\Request;
@@ -31,38 +31,38 @@ class Recommendator
     protected $userRecommendationPaginatedModel;
     /** @var  $contentRecommendationPaginatedModel ContentRecommendationPaginatedModel */
     protected $contentRecommendationPaginatedModel;
-    /** @var  $userModel UserModel */
-    protected $userModel;
+    /** @var  $userManager UserManager */
+    protected $userManager;
 
     /**
      * Recommendator constructor.
      * @param Paginator $paginator
      * @param ContentPaginator $contentPaginator
      * @param GroupModel $groupModel
-     * @param UserModel $userModel
+     * @param UserManager $userManager
      * @param UserRecommendationPaginatedModel $userRecommendationPaginatedModel
      * @param ContentRecommendationPaginatedModel $contentRecommendationPaginatedModel
      */
-    public function __construct(Paginator $paginator, ContentPaginator $contentPaginator, GroupModel $groupModel, UserModel $userModel, UserRecommendationPaginatedModel $userRecommendationPaginatedModel, ContentRecommendationPaginatedModel $contentRecommendationPaginatedModel)
+    public function __construct(Paginator $paginator, ContentPaginator $contentPaginator, GroupModel $groupModel, UserManager $userManager, UserRecommendationPaginatedModel $userRecommendationPaginatedModel, ContentRecommendationPaginatedModel $contentRecommendationPaginatedModel)
     {
         $this->paginator = $paginator;
         $this->contentPaginator = $contentPaginator;
         $this->groupModel = $groupModel;
-        $this->userModel = $userModel;
+        $this->userManager = $userManager;
         $this->userRecommendationPaginatedModel = $userRecommendationPaginatedModel;
         $this->contentRecommendationPaginatedModel = $contentRecommendationPaginatedModel;
     }
 
     public function getRecommendationFromThread(Thread $thread)
     {
-        $user = $this->userModel->getOneByThread($thread->getId());
+        $user = $this->userManager->getOneByThread($thread->getId());
         //Todo: Change to Class::class if PHP >= 5.5
         switch (get_class($thread)) {
             case 'Model\User\Thread\ContentThread':
 
                 /* @var $thread ContentThread */
                 $threadFilters = $thread->getFilterContent();
-                $filters = array('id' => $user['qnoow_id']);
+                $filters = array('id' => $user->getId());
 
                 if ($threadFilters->getTag()) {
                     $filters['tag'] = urldecode($threadFilters->getTag());
@@ -77,7 +77,7 @@ class Recommendator
                 /* @var $thread UsersThread */
                 $threadFilters = $thread->getFilterUsers();
                 $filters = array(
-                    'id' => $user['qnoow_id'],
+                    'id' => $user->getId(),
                     'profileFilters' => $threadFilters->getProfileFilters(),
                     'userFilters' => $threadFilters->getUserFilters(),
                 );
@@ -97,14 +97,14 @@ class Recommendator
 
     public function getRecommendationFromThreadAndRequest(Thread $thread, Request $request)
     {
-        $user = $this->userModel->getOneByThread($thread->getId());
+        $user = $this->userManager->getOneByThread($thread->getId());
         //Todo: Change to Class::class if PHP >= 5.5
         switch (get_class($thread)) {
             case 'Model\User\Thread\ContentThread':
 
                 /* @var $thread ContentThread */
 
-                $filters = array('id' => $user['qnoow_id']);
+                $filters = array('id' => $user->getId());
                 $threadFilters = $thread->getFilterContent();
 
                 if ($threadFilters->getTag()) {
@@ -127,7 +127,7 @@ class Recommendator
                 /* @var $thread UsersThread */
                 $threadFilters = $thread->getFilterUsers();
                 $filters = array(
-                    'id' => $user['qnoow_id'],
+                    'id' => $user->getId(),
                     'profileFilters' => $threadFilters->getProfileFilters(),
                     'userFilters' => $threadFilters->getUserFilters(),
                 );

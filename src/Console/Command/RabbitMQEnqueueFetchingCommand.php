@@ -3,7 +3,8 @@
 namespace Console\Command;
 
 use Console\ApplicationAwareCommand;
-use Model\UserModel;
+use Manager\UserManager;
+use Model\User;
 use Service\AMQPManager;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -48,8 +49,8 @@ class RabbitMQEnqueueFetchingCommand extends ApplicationAwareCommand
             exit;
         }
 
-        /* @var $usersModel UserModel */
-        $usersModel = $this->app['users.model'];
+        /* @var $usersModel UserManager */
+        $usersModel = $this->app['users.manager'];
 
         if ($userId == null) {
             $users = $usersModel->getAll();
@@ -75,9 +76,10 @@ class RabbitMQEnqueueFetchingCommand extends ApplicationAwareCommand
         $amqpManager = $this->app['amqpManager.service'];
 
         foreach ($users as $user) {
+            /* @var $user User */
             foreach ($resourceOwners as $name) {
                 $data = array(
-                    'userId' => $user['qnoow_id'],
+                    'userId' => $user->getId(),
                     'resourceOwner' => $name,
                     'public' => $public,
                 );
