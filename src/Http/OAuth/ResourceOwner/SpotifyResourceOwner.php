@@ -42,6 +42,9 @@ class SpotifyResourceOwner extends Oauth2GenericResourceOwner
         return $this->httpClient->createRequest('GET', $url, $clientConfig);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function refreshAccessToken($token, array $extraParameters = array())
     {
         $refreshToken = $token['refreshToken'];

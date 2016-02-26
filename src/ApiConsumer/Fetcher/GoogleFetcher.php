@@ -2,6 +2,8 @@
 
 namespace ApiConsumer\Fetcher;
 
+use ApiConsumer\LinkProcessor\PreprocessedLink;
+
 class GoogleFetcher extends BasicPaginationFetcher
 {
     protected $paginationField = 'pageToken';
@@ -17,11 +19,17 @@ class GoogleFetcher extends BasicPaginationFetcher
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function getUrl()
     {
         return 'plus/v1/people/' . $this->user['googleID'] . '/activities/public';
     }
 
+    /**
+     * {@inheritDoc}
+     */
     protected function getQuery()
     {
         return array(
@@ -35,6 +43,9 @@ class GoogleFetcher extends BasicPaginationFetcher
         return $response['items'] ?: array();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     protected function getPaginationIdFromResponse($response)
     {
 
@@ -53,9 +64,9 @@ class GoogleFetcher extends BasicPaginationFetcher
         return $paginationId;
     }
 
+
     /**
-     * @param $rawFeed array
-     * @return array
+     * {@inheritDoc}
      */
     protected function parseLinks(array $rawFeed)
     {
@@ -82,9 +93,12 @@ class GoogleFetcher extends BasicPaginationFetcher
             $link['description'] = array_key_exists('content', $item) ? $item['content'] : null;
             $link['resourceItemId'] = array_key_exists('id', $item) ? $item['id'] : null;
             $link['timestamp'] = $timestamp;
-            $link['resource'] = 'google';
+            $link['resource'] = $this->resourceOwner->getName();
 
-            $parsed[] = $link;
+            $preprocessedLink = new PreprocessedLink($link['url']);
+            $preprocessedLink->setLink($link);
+
+            $parsed[] = $preprocessedLink;
         }
 
         return $parsed;

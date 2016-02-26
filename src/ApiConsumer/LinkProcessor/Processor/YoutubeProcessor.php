@@ -3,6 +3,7 @@
 namespace ApiConsumer\LinkProcessor\Processor;
 
 use ApiConsumer\LinkProcessor\LinkAnalyzer;
+use ApiConsumer\LinkProcessor\PreprocessedLink;
 use GuzzleHttp\Exception\RequestException;
 use Http\OAuth\ResourceOwner\GoogleResourceOwner;
 use ApiConsumer\LinkProcessor\UrlParser\YoutubeUrlParser;
@@ -24,44 +25,47 @@ class YoutubeProcessor extends AbstractProcessor
      */
     protected $parser;
 
-    public function __construct(UserAggregator $userAggregator, GoogleResourceOwner $resourceOwner, YoutubeUrlParser $parser)
+    public function __construct(UserAggregator $userAggregator, ScraperProcessor $scraperProcessor, GoogleResourceOwner $resourceOwner, YoutubeUrlParser $parser)
     {
-        parent::__construct($userAggregator);
+        parent::__construct($userAggregator, $scraperProcessor);
         $this->resourceOwner = $resourceOwner;
         $this->parser = $parser;
     }
 
     /**
-     * @param array $link
-     * @return array
+     * @inheritdoc
      */
-    public function process(array $link)
+    public function process(PreprocessedLink $preprocessedLink)
     {
+        $type = $this->parser->getUrlType($preprocessedLink->getCanonical());
 
-        $type = $this->parser->getUrlType($link['url']);
+        $link = $preprocessedLink->getLink();
+        $link['url'] = $preprocessedLink->getCanonical();
+        $preprocessedLink->setLink($link);
 
         switch ($type) {
             case YoutubeUrlParser::VIDEO_URL:
-                $link = $this->processVideo($link);
+                $link = $this->processVideo($preprocessedLink);
                 break;
             case YoutubeUrlParser::CHANNEL_URL:
-                $link = $this->processChannel($link);
+                $link = $this->processChannel($preprocessedLink);
                 break;
             case YoutubeUrlParser::PLAYLIST_URL:
-                $link = $this->processPlaylist($link);
+                $link = $this->processPlaylist($preprocessedLink);
                 break;
             default:
-                return false;
+                $link = $this->scraperProcessor->process($preprocessedLink);
                 break;
         }
 
+        $link['url'] = $preprocessedLink->getCanonical();
         return $link;
     }
 
-    protected function processVideo($link)
+    protected function processVideo(PreprocessedLink $preprocessedLink)
     {
 
-        $id = $this->parser->getYoutubeIdFromUrl($link['url']);
+        $id = $this->parser->getYoutubeIdFromUrl($preprocessedLink->getCanonical());
 
         $url = 'youtube/v3/videos';
         $query = array(
@@ -71,6 +75,7 @@ class YoutubeProcessor extends AbstractProcessor
         $token = array('network' => LinkAnalyzer::YOUTUBE);
         $response = $this->resourceOwner->authorizedAPIRequest($url, $query, $token);
 
+        $link = $preprocessedLink->getLink();
         $link['tags'] = array();
 
         if (isset($response['items']) && is_array($response['items']) && count($response['items']) > 0) {
@@ -93,6 +98,7 @@ class YoutubeProcessor extends AbstractProcessor
                 }
             }
         } else {
+            //TODO: Use exceptions logic here
             //YouTube API returns 200 on non-existent videos, against its documentation
             $request = $this->resourceOwner->getAPIRequest($this->resourceOwner->getOption('base_url').$url,
                                                             $query,
@@ -104,10 +110,10 @@ class YoutubeProcessor extends AbstractProcessor
         return $link;
     }
 
-    protected function processChannel($link)
+    protected function processChannel(PreprocessedLink $preprocessedLink)
     {
 
-        $id = $this->parser->getChannelIdFromUrl($link['url']);
+        $id = $this->parser->getChannelIdFromUrl($preprocessedLink->getCanonical());
 
         $url = 'youtube/v3/channels';
         $query = array(
@@ -115,6 +121,8 @@ class YoutubeProcessor extends AbstractProcessor
             'id' => $id,
         );
         $response = $this->resourceOwner->authorizedAPIRequest($url, $query);
+
+        $link = $preprocessedLink->getLink();
 
         $link['tags'] = array();
 
@@ -140,10 +148,10 @@ class YoutubeProcessor extends AbstractProcessor
         return $link;
     }
 
-    protected function processPlaylist($link)
+    protected function processPlaylist(PreprocessedLink $preprocessedLink)
     {
 
-        $id = $this->parser->getPlaylistIdFromUrl($link['url']);
+        $id = $this->parser->getPlaylistIdFromUrl($preprocessedLink->getCanonical());
 
         $url = 'youtube/v3/playlists';
         $query = array(
@@ -151,6 +159,8 @@ class YoutubeProcessor extends AbstractProcessor
             'id' => $id,
         );
         $response = $this->resourceOwner->authorizedAPIRequest($url, $query);
+
+        $link = $preprocessedLink->getLink();
 
         $link['tags'] = array();
 
@@ -168,21 +178,13 @@ class YoutubeProcessor extends AbstractProcessor
                 foreach ($info['topicDetails']['topicIds'] as $tagName) {
                     $link['tags'][] = array(
                         'name' => $tagName,
-                        'aditionalLabels' => array('Freebase'),
+                        'additionalLabels' => array('Freebase'),
                     );
                 }
             }
         }
 
         return $link;
-    }
-
-    /**
-     * @return YoutubeUrlParser
-     */
-    public function getParser()
-    {
-        return $this->parser;
     }
 
 }

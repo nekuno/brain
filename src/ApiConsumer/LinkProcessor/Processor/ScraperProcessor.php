@@ -4,6 +4,8 @@ namespace ApiConsumer\LinkProcessor\Processor;
 
 use ApiConsumer\LinkProcessor\MetadataParser\BasicMetadataParser;
 use ApiConsumer\LinkProcessor\MetadataParser\FacebookMetadataParser;
+use ApiConsumer\LinkProcessor\PreprocessedLink;
+use ApiConsumer\LinkProcessor\UrlParser\UrlParser;
 use Goutte\Client;
 use GuzzleHttp\Exception\RequestException;
 
@@ -12,7 +14,6 @@ use GuzzleHttp\Exception\RequestException;
  */
 class ScraperProcessor implements ProcessorInterface
 {
-
     /**
      * @var Client
      */
@@ -28,32 +29,35 @@ class ScraperProcessor implements ProcessorInterface
      */
     private $basicMetadataParser;
 
+    protected $parser;
     /**
+     * @param UrlParser $urlParser
      * @param Client $client
      * @param \ApiConsumer\LinkProcessor\MetadataParser\BasicMetadataParser $basicMetadataParser
      * @param \ApiConsumer\LinkProcessor\MetadataParser\FacebookMetadataParser $facebookMetadataParser
      */
     public function __construct(
+        UrlParser $urlParser,
         Client $client,
         BasicMetadataParser $basicMetadataParser,
         FacebookMetadataParser $facebookMetadataParser
     )
     {
-
+        $this->parser = $urlParser;
         $this->client = $client;
         $this->basicMetadataParser = $basicMetadataParser;
         $this->facebookMetadataParser = $facebookMetadataParser;
-
     }
 
     /**
-     * @param array $link
-     * @return array
+     * @inheritdoc
      */
-    public function process(array $link)
+    public function process(PreprocessedLink $preprocessedLink)
     {
+        $link = $preprocessedLink->getLink();
 
-        $url = $link['url'];
+        $url = $preprocessedLink->getCanonical();
+        $link['url'] = $url;
 
         try {
             $crawler = $this->client->request('GET', $url);
@@ -65,7 +69,7 @@ class ScraperProcessor implements ProcessorInterface
             return $link;
         }
 
-        $responseHeaders =$this->client->getResponse()->getHeaders();
+        $responseHeaders = $this->client->getResponse()->getHeaders();
         if ($responseHeaders) {
             if (isset($responseHeaders['Content-Type'][0]) && false !== strpos($responseHeaders['Content-Type'][0], "image/")) {
                 $link['additionalLabels'] = array('Image');
@@ -91,23 +95,10 @@ class ScraperProcessor implements ProcessorInterface
     private function overrideLinkDataWithScrapedData(array $link, array $scrapedData = array())
     {
 
-        if (array_key_exists('title', $scrapedData)) {
-            if (null !== $scrapedData['title'] && "" !== $scrapedData['title']) {
-                $link['title'] = $scrapedData['title'];
-            }
-        }
-
-        if (array_key_exists('description', $scrapedData)) {
-            if (null !== $scrapedData['description'] && "" !== $scrapedData['description']) {
-                $link['description'] = $scrapedData['description'];
-            }
-        }
-
-        if (array_key_exists('language', $scrapedData)) {
-            if (null !== $scrapedData['language'] && "" !== $scrapedData['language']) {
-                $link['language'] = $scrapedData['language'];
-            }
-        }
+        $this->overrideAttribute('title', $link, $scrapedData);
+        $this->overrideAttribute('description', $link, $scrapedData);
+        $this->overrideAttribute('language', $link, $scrapedData);
+        $this->overrideAttribute('image', $link, $scrapedData);
 
         if (array_key_exists('tags', $scrapedData)) {
             if (!array_key_exists('tags', $link)) {
@@ -126,5 +117,23 @@ class ScraperProcessor implements ProcessorInterface
         }
 
         return $link;
+    }
+
+    private function overrideAttribute($name, &$link, $scrapedData)
+    {
+        if (array_key_exists($name, $scrapedData)) {
+            if (null !== $scrapedData[$name] && "" !== $scrapedData[$name]) {
+                $link[$name] = $scrapedData[$name];
+            }
+        }
+    }
+
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getParser()
+    {
+        return $this->parser;
     }
 }

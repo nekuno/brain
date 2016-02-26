@@ -2,6 +2,7 @@
 
 namespace ApiConsumer\Fetcher;
 
+use ApiConsumer\LinkProcessor\PreprocessedLink;
 use Http\OAuth\ResourceOwner\TwitterResourceOwner;
 
 abstract class AbstractTweetsFetcher extends BasicPaginationFetcher
@@ -73,9 +74,12 @@ abstract class AbstractTweetsFetcher extends BasicPaginationFetcher
             $link['description'] = null;
             $link['resourceItemId'] = array_key_exists('id', $item) ? $item['id'] : null;
             $link['timestamp'] = $timestamp;
-            $link['resource'] = 'twitter';
+            $link['resource'] = $this->resourceOwner->getName();
 
-            $formatted[] = $link;
+            $preprocessedLink = new PreprocessedLink($link['url']);
+            $preprocessedLink->setLink($link);
+
+            $formatted[] = $preprocessedLink;
         }
 
         return $formatted;

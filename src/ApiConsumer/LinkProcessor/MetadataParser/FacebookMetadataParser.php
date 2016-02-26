@@ -22,12 +22,12 @@ class FacebookMetadataParser implements MetadataParserInterface
      */
     public function extractMetadata(Crawler $crawler)
     {
-
         $facebookMetadata = array();
 
         $facebookMetadata['title'] = $this->getOgTitleText($crawler);
         $facebookMetadata['description'] = $this->getOgDescriptionText($crawler);
         $facebookMetadata['language'] = $this->getLanguage($crawler);
+        $facebookMetadata['image'] = $this->getOgImage($crawler);
 
         return $facebookMetadata;
     }
@@ -38,7 +38,6 @@ class FacebookMetadataParser implements MetadataParserInterface
      */
     private function getOgTitleText(Crawler $crawler)
     {
-
         try {
             $title = $crawler->filterXPath('//meta[@property="og:title"]')->attr('content');
         } catch (\InvalidArgumentException $e) {
@@ -54,7 +53,6 @@ class FacebookMetadataParser implements MetadataParserInterface
      */
     private function getOgDescriptionText(Crawler $crawler)
     {
-
         try {
             $description = $crawler->filterXPath('//meta[@property="og:description"]')->attr('content');
         } catch (\InvalidArgumentException $e) {
@@ -64,13 +62,23 @@ class FacebookMetadataParser implements MetadataParserInterface
         return '' !== trim($description) ? $description : null;
     }
 
+    private function getOgImage(Crawler $crawler)
+    {
+        try {
+            $image = $crawler->filterXPath('//meta[@property="og:image"]')->attr('content');
+        } catch (\InvalidArgumentException $e) {
+            $image = null;
+        }
+
+        return '' !== trim($image) ? $image : null;
+    }
+
     /**
      * @param Crawler $crawler
      * @return null|string
      */
     private function getLanguage(Crawler $crawler)
     {
-
         try {
             $language = strtolower(substr($crawler->filterXPath('//meta[@property="og:locale"]')->attr('content'), 0, 2));
         } catch (\InvalidArgumentException $e) {
@@ -85,7 +93,6 @@ class FacebookMetadataParser implements MetadataParserInterface
      */
     public function extractTags(Crawler $crawler)
     {
-
         $tags = $crawler->filterXPath('//meta[@property="article:tag"]');
 
         $scrapedTags = $tags->each(
@@ -111,7 +118,6 @@ class FacebookMetadataParser implements MetadataParserInterface
      */
     private function filterTags(array &$scrapedTags)
     {
-
         foreach ($scrapedTags as $index => $tag) {
             if (null === $tag['name'] || '' === $tag['name'] || str_word_count($tag['name']) > self::MAX_WORDS) {
                 unset($scrapedTags[$index]);
