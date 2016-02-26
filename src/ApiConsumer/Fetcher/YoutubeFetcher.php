@@ -2,7 +2,7 @@
 
 namespace ApiConsumer\Fetcher;
 
-use ApiConsumer\LinkProcessor\LinkAnalyzer;
+use ApiConsumer\LinkProcessor\PreprocessedLink;
 
 class YoutubeFetcher extends BasicPaginationFetcher
 {
@@ -16,6 +16,9 @@ class YoutubeFetcher extends BasicPaginationFetcher
 
     static public $PLAYLISTS_TO_EXCLUDE = array('watchHistory', 'watchLater');
 
+    /**
+     * {@inheritDoc}
+     */
     public function getUrl()
     {
         return $this->url;
@@ -27,6 +30,9 @@ class YoutubeFetcher extends BasicPaginationFetcher
         $this->url = $url;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     protected function getQuery()
     {
         return $this->query;
@@ -54,6 +60,9 @@ class YoutubeFetcher extends BasicPaginationFetcher
         return $items;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     protected function getPaginationIdFromResponse($response)
     {
         $paginationId = null;
@@ -140,6 +149,9 @@ class YoutubeFetcher extends BasicPaginationFetcher
         return $url;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function fetchLinksFromUserFeed($user, $public)
     {
         $this->user = $user;
@@ -230,8 +242,7 @@ class YoutubeFetcher extends BasicPaginationFetcher
     }
 
     /**
-     * @param array $rawFeed
-     * @return array
+     * @inheritdoc
      */
     protected function parseLinks(array $rawFeed)
     {
@@ -253,14 +264,17 @@ class YoutubeFetcher extends BasicPaginationFetcher
                 $timestamp = ($date->getTimestamp()) * 1000;
             }
 
-            $link['url'] = $url;
+            $preprocessedLink = new PreprocessedLink($url);
+
             $link['title'] = array_key_exists('title', $item['snippet']) ? $item['snippet']['title'] : '';
             $link['description'] = array_key_exists('description', $item['snippet']) ? $item['snippet']['description'] : '';
             $link['resourceItemId'] = array_key_exists('id', $item) ? $item['id'] : null;
             $link['timestamp'] = $timestamp;
-            $link['resource'] = 'google';
+            $link['resource'] = $this->resourceOwner->getName();
 
-            $parsed[] = $link;
+            $preprocessedLink->setLink($link);
+
+            $parsed[] = $preprocessedLink;
         }
 
         return $parsed;

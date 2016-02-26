@@ -53,9 +53,9 @@ class LinksFetchCommand extends ApplicationAwareCommand
     protected function execute(InputInterface $input, OutputInterface $output)
     {
 
-        $resource = $input->getOption('resource', null);
-        $userId = $input->getOption('user', null);
-        $public = $input->getOption('public', false);
+        $resource = $input->getOption('resource');
+        $userId = $input->getOption('user');
+        $public = $input->getOption('public');
 
         if (null === $resource && null === $userId) {
             throw new MissingOptionsException ("You must provide the user or the resource to fetch links from", array("resource", "user"));
@@ -111,7 +111,7 @@ class LinksFetchCommand extends ApplicationAwareCommand
             } catch (\Exception $e) {
                 $output->writeln(
                     sprintf(
-                        'Error fetching links for user %s with message: %s',
+                        'Error fetching links for user %d with message: %s',
                         $token['id'],
                         $e->getMessage()
                     )

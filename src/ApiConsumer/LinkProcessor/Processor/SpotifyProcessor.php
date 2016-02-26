@@ -3,6 +3,7 @@
 namespace ApiConsumer\LinkProcessor\Processor;
 
 use ApiConsumer\LinkProcessor\LinkAnalyzer;
+use ApiConsumer\LinkProcessor\PreprocessedLink;
 use Http\OAuth\ResourceOwner\SpotifyResourceOwner;
 use ApiConsumer\LinkProcessor\UrlParser\SpotifyUrlParser;
 use Http\OAuth\ResourceOwner\GoogleResourceOwner;
@@ -31,9 +32,9 @@ class SpotifyProcessor extends AbstractProcessor
      */
     protected $youtubeUrlParser;
 
-    public function __construct(UserAggregator $userAggregator, SpotifyResourceOwner $resourceOwner, SpotifyUrlParser $parser, GoogleResourceOwner $googleResourceOwner, YoutubeUrlParser $youtubeUrlParser)
+    public function __construct(UserAggregator $userAggregator, ScraperProcessor $scraperProcessor, SpotifyResourceOwner $resourceOwner, SpotifyUrlParser $parser, GoogleResourceOwner $googleResourceOwner, YoutubeUrlParser $youtubeUrlParser)
     {
-        parent::__construct($userAggregator);
+        parent::__construct($userAggregator, $scraperProcessor);
         $this->resourceOwner = $resourceOwner;
         $this->parser = $parser;
         $this->googleResourceOwner = $googleResourceOwner;
@@ -41,39 +42,44 @@ class SpotifyProcessor extends AbstractProcessor
     }
 
     /**
-     * @param array $link
-     * @return array
+     * @inheritdoc
      */
-    public function process(array $link)
+    public function process(PreprocessedLink $preprocessedLink)
     {
-        $type = $this->parser->getUrlType($link['url']);
+        $type = $this->parser->getUrlType($preprocessedLink->getCanonical());
+
+        $link = $preprocessedLink->getLink();
+        $link['url'] = $preprocessedLink->getCanonical();
+        $preprocessedLink->setLink($link);
 
         switch ($type) {
             case SpotifyUrlParser::TRACK_URL:
             case SpotifyUrlParser::ALBUM_TRACK_URL:
-                $link = $this->processTrack($link);
+                $link = $this->processTrack($preprocessedLink);
                 break;
             case SpotifyUrlParser::ALBUM_URL:
-                $link = $this->processAlbum($link);
+                $link = $this->processAlbum($preprocessedLink);
                 break;
             case SpotifyUrlParser::ARTIST_URL:
-                $link = $this->processArtist($link);
+                $link = $this->processArtist($preprocessedLink);
                 break;
             default:
-                return false;
+                $link = $this->scraperProcessor->process($preprocessedLink);
                 break;
         }
 
         return $link;
     }
 
-    protected function processTrack($link)
+    protected function processTrack(PreprocessedLink $preprocessedLink)
     {
-        $id = $this->parser->getSpotifyIdFromUrl($link['url']);
+        $id = $this->parser->getSpotifyIdFromUrl($preprocessedLink->getCanonical());
 
         if (!$id) {
             return false;
         }
+
+        $link = $preprocessedLink->getLink();
 
         $urlTrack = 'tracks/' . $id;
         $queryTrack = array();
@@ -134,13 +140,15 @@ class SpotifyProcessor extends AbstractProcessor
         return $link;
     }
 
-    protected function processAlbum($link)
+    protected function processAlbum(PreprocessedLink $preprocessedLink)
     {
-        $id = $this->parser->getSpotifyIdFromUrl($link['url']);
+        $id = $this->parser->getSpotifyIdFromUrl($preprocessedLink->getCanonical());
 
         if (!$id) {
             return false;
         }
+
+        $link = $preprocessedLink->getLink();
 
         $urlAlbum = 'albums/' . $id;
         $queryAlbum = array();
@@ -183,13 +191,15 @@ class SpotifyProcessor extends AbstractProcessor
         return $link;
     }
 
-    protected function processArtist($link)
+    protected function processArtist(PreprocessedLink $preprocessedLink)
     {
-        $id = $this->parser->getSpotifyIdFromUrl($link['url']);
+        $id = $this->parser->getSpotifyIdFromUrl($preprocessedLink->getCanonical());
 
         if (!$id) {
             return false;
         }
+
+        $link = $preprocessedLink->getLink();
 
         $urlArtist = 'artists/' . $id;
         $queryArtist = array();
@@ -203,6 +213,7 @@ class SpotifyProcessor extends AbstractProcessor
                 $link['tags'][] = $tag;
             }
 
+            //TODO: Check consistency of this with channels
             $tag = array();
             $tag['name'] = $artist['name'];
             $tag['additionalLabels'][] = 'Artist';
@@ -210,6 +221,7 @@ class SpotifyProcessor extends AbstractProcessor
             $link['tags'][] = $tag;
 
             $link['title'] = $artist['name'];
+            //TODO: Add description
         }
 
         return $link;
@@ -283,13 +295,5 @@ class SpotifyProcessor extends AbstractProcessor
         }
 
         return $link;
-    }
-
-    /**
-     * @return SpotifyUrlParser
-     */
-    public function getParser()
-    {
-        return $this->parser;
     }
 }

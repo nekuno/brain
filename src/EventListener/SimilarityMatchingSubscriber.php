@@ -8,7 +8,7 @@ use Model\Entity\EmailNotification;
 use Model\User\Filters\FilterUsers;
 use Model\User\GroupModel;
 use Model\User\ProfileModel;
-use Model\UserModel;
+use Manager\UserManager;
 use Service\EmailNotifications;
 use Service\NotificationManager;
 use Silex\Translator;
@@ -22,9 +22,9 @@ class SimilarityMatchingSubscriber implements EventSubscriberInterface
     protected $emailNotifications;
 
     /**
-     * @var UserModel
+     * @var UserManager
      */
-    protected $userModel;
+    protected $userManager;
 
     /**
      * @var ProfileModel
@@ -51,10 +51,10 @@ class SimilarityMatchingSubscriber implements EventSubscriberInterface
      */
     protected $socialHost;
 
-    public function __construct(EmailNotifications $emailNotifications, UserModel $userModel, ProfileModel $profileModel, GroupModel $groupModel, Translator $translator, NotificationManager $notificationManager, $socialHost)
+    public function __construct(EmailNotifications $emailNotifications, UserManager $userManager, ProfileModel $profileModel, GroupModel $groupModel, Translator $translator, NotificationManager $notificationManager, $socialHost)
     {
         $this->emailNotifications = $emailNotifications;
-        $this->userModel = $userModel;
+        $this->userManager = $userManager;
         $this->profileModel = $profileModel;
         $this->groupModel = $groupModel;
         $this->translator = $translator;
@@ -120,18 +120,18 @@ class SimilarityMatchingSubscriber implements EventSubscriberInterface
     protected function sendFollowerMail($follower, $influencer, $filter, $value)
     {
 
-        $user = $this->userModel->getById($follower);
-        $username = $user['username'];
-        $email = $user['email'];
+        $user = $this->userManager->getById($follower);
+        $username = $user->getUsername();
+        $email = $user->getEmail();
 
         $profile = $this->profileModel->getById($follower);
         if (isset($profile['interfaceLanguage'])) {
             $this->translator->setLocale($profile['interfaceLanguage']);
         }
 
-        $userOther = $this->userModel->getById($influencer);
-        $usernameOther = $userOther['username'];
-        $emailOther = $userOther['email'];
+        $userOther = $this->userManager->getById($influencer);
+        $usernameOther = $userOther->getUsername();
+        $emailOther = $userOther->getEmail();
         $urlOther = $this->socialHost . 'profile/show/' . $influencer;
 
         $info = array(
@@ -161,18 +161,18 @@ class SimilarityMatchingSubscriber implements EventSubscriberInterface
     protected function sendInfluencerMail($influencer, $follower, $filter, $value)
     {
 
-        $user = $this->userModel->getById($influencer);
-        $username = $user['username'];
-        $email = $user['email'];
+        $user = $this->userManager->getById($influencer);
+        $username = $user->getUsername();
+        $email = $user->getEmail();
 
         $profile = $this->profileModel->getById($influencer);
         if (isset($profile['interfaceLanguage'])) {
             $this->translator->setLocale($profile['interfaceLanguage']);
         }
 
-        $userOther = $this->userModel->getById($follower);
-        $usernameOther = $userOther['username'];
-        $emailOther = $userOther['email'];
+        $userOther = $this->userManager->getById($follower);
+        $usernameOther = $userOther->getUsername();
+        $emailOther = $userOther->getEmail();
         $urlOther = $this->socialHost . 'profile/show/' . $follower;
 
         $info = array(

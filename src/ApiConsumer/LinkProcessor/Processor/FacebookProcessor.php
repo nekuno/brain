@@ -2,6 +2,8 @@
 
 namespace ApiConsumer\LinkProcessor\Processor;
 
+use ApiConsumer\LinkProcessor\PreprocessedLink;
+use ApiConsumer\LinkProcessor\UrlParser\UrlParser;
 use Http\OAuth\ResourceOwner\FacebookResourceOwner;
 use Service\UserAggregator;
 
@@ -17,66 +19,70 @@ class FacebookProcessor extends AbstractProcessor
     protected $resourceOwner;
 
     /**
-     * @var $scrapperProcessor ScraperProcessor
-     */
-    protected $scraperProcessor;
-
-    /**
      * @param UserAggregator $userAggregator
      * @param FacebookResourceOwner $facebookResourceOwner
      * @param ScraperProcessor $scraperProcessor
+     * @param UrlParser $urlParser
      */
-    public function __construct(UserAggregator $userAggregator, FacebookResourceOwner $facebookResourceOwner, ScraperProcessor $scraperProcessor)
+    public function __construct(UserAggregator $userAggregator, ScraperProcessor $scraperProcessor, FacebookResourceOwner $facebookResourceOwner, UrlParser $urlParser)
     {
-        parent::__construct($userAggregator);
+        parent::__construct($userAggregator, $scraperProcessor);
         $this->resourceOwner = $facebookResourceOwner;
         $this->scraperProcessor = $scraperProcessor;
+        $this->parser = $urlParser;
     }
 
     /**
-     * @param array $link
-     * @return array
+     * @inheritdoc
      */
-    public function process(array $link)
+    public function process(PreprocessedLink $preprocessedLink)
     {
-        $type = $this->getAttachmentType($link);
+        $type = $this->getAttachmentType($preprocessedLink);
         switch ($type) {
             case $this::FACEBOOK_VIDEO:
-                $link = $this->processVideo($link);
+                $link = $this->processVideo($preprocessedLink);
                 break;
             case $this::FACEBOOK_OTHER:
-                $link = $this->scraperProcessor->process($link);
+                $link = $this->scraperProcessor->process($preprocessedLink);
                 break;
             default:
                 return false;
                 break;
         }
 
+        $link['url'] = $preprocessedLink->getCanonical();
+
         return $link;
     }
 
-    protected function processVideo($link)
+    /**
+     * @param $preprocessedLink PreprocessedLink
+     * @return array
+     */
+    protected function processVideo($preprocessedLink)
     {
-        $id = $this->getVideoIdFromURL($link['url']);
+        $id = $this->getVideoIdFromURL($preprocessedLink->getFetched());
 
+        $link = array();
         $link['title'] = null;
         $link['additionalLabels'] = array('Video');
         $link['additionalFields'] = array(
             'embed_type' => 'facebook',
             'embed_id' => $id);
 
-        $link = $this->scraperProcessor->process($link);
+        $link = array_merge($link, $this->scraperProcessor->process($preprocessedLink));
 
         $url = (string)$id;
         $query = array(
             'fields' => 'description,picture'
         );
 
-        $token = array();
-        if (isset($link['resourceOwnerToken'])) {
-            $token = $link['resourceOwnerToken'];
+        if ($preprocessedLink->getSource() == 'facebook') {
+            $response = $this->resourceOwner->authorizedHTTPRequest($url, $query, $preprocessedLink->getToken());
+        } else {
+            $response = array();
         }
-        $response = $this->resourceOwner->authorizedHTTPRequest($url, $query, $token);
+
         $link['description'] = isset($response['description']) ? $response['description'] : null;
         $link['thumbnail'] = isset($response['picture']) ? $response['picture'] : null;
 
@@ -84,8 +90,9 @@ class FacebookProcessor extends AbstractProcessor
         return $link;
     }
 
-    private function getAttachmentType($link)
+    private function getAttachmentType(PreprocessedLink $preprocessedLink)
     {
+        $link = $preprocessedLink->getLink();
         if (empty($link['types'])
         ) {
             return null;

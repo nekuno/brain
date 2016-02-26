@@ -6,12 +6,13 @@ namespace Console\Command;
 
 use Console\BaseCommand;
 use Model\Exception\ValidationException;
+use Model\User;
 use Silex\Application;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Model\User\LookUpModel;
-use Model\UserModel;
+use Manager\UserManager;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use EventListener\LookUpSocialNetworkSubscriber;
 
@@ -29,18 +30,19 @@ class LookUpAllUsersCommand extends BaseCommand
     {
         $this->setFormat($output);
 
-        /* @var $usersModel UserModel */
-        $usersModel = $this->app['users.model'];
+        /* @var $usersModel UserManager */
+        $usersModel = $this->app['users.manager'];
         $users = $usersModel->getAll();
 
         /* @var $lookUpModel LookUpModel */
         $lookUpModel = $this->app['users.lookup.model'];
 
         foreach ($users as $user) {
-            if (isset($user['qnoow_id']) && isset($user['email']) && $user['qnoow_id'] >= $input->getOption('start')) {
+            /* @var $user User */
+            if ($user->getId() && $user->getEmail() && $user->getId() >= $input->getOption('start')) {
                 try {
-                    $this->displayTitle('Looking up user ' . $user['qnoow_id']);
-                    $lookUpData = $lookUpModel->set($user['qnoow_id'], array('email' =>  $user['email']), $output);
+                    $this->displayTitle('Looking up user ' . $user->getId());
+                    $lookUpData = $lookUpModel->set($user->getId(), array('email' =>  $user->getEmail()), $output);
                     $this->displayData($lookUpData);
                     $this->displayMessage('waiting...');
                     sleep(1);

@@ -8,7 +8,8 @@ use Everyman\Neo4j\Query\Row;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
 use Model\Questionnaire\QuestionModel;
-use Model\UserModel;
+use Manager\UserManager;
+use Model\User;
 use Silex\Application;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -42,8 +43,8 @@ class Neo4jLoadQuestionsCommand extends ApplicationAwareCommand
         $userId = $input->getArgument('userId');
         $file = $input->getArgument('file');
 
-        /* @var UserModel $usersModel */
-        $usersModel = $this->app['users.model'];
+        /* @var UserManager $usersModel */
+        $usersModel = $this->app['users.manager'];
         $user = $usersModel->getById($userId);
 
         if (!is_readable($file)) {
@@ -182,7 +183,7 @@ class Neo4jLoadQuestionsCommand extends ApplicationAwareCommand
         return $all;
     }
 
-    protected function process($csv, $all, $user)
+    protected function process($csv, $all, User $user)
     {
 
         /* @var $questionModel QuestionModel */
@@ -264,7 +265,7 @@ class Neo4jLoadQuestionsCommand extends ApplicationAwareCommand
                 $question_es = array(
                     'text' => $csvQuestion['text_es'],
                     'locale' => 'es',
-                    'userId' => $user['qnoow_id'],
+                    'userId' => $user->getId(),
                     'answers' => $answers_es,
                 );
 

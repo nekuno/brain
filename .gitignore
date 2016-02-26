@@ -2,4 +2,5 @@
 /vendor
 /config/params.yml
 /csv
-neo4j-community-*
+/pimple.json
+src/ApiConsumer/Fetcher/GetOldTweets/got.jar

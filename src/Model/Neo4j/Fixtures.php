@@ -4,10 +4,11 @@ namespace Model\Neo4j;
 
 use Model\LinkModel;
 use Model\Questionnaire\QuestionModel;
+use Model\User;
 use Model\User\AnswerModel;
 use Model\User\ProfileModel;
 use Model\User\RateModel;
-use Model\UserModel;
+use Manager\UserManager;
 use Model\EnterpriseUser\EnterpriseUserModel;
 use Model\User\GroupModel;
 use Model\User\InvitationModel;
@@ -41,7 +42,7 @@ class Fixtures
     protected $constraints;
 
     /**
-     * @var UserModel
+     * @var UserManager
      */
     protected $um;
 
@@ -104,7 +105,7 @@ class Fixtures
     {
         $this->gm = $app['neo4j.graph_manager'];
         $this->constraints = $app['neo4j.constraints'];
-        $this->um = $app['users.model'];
+        $this->um = $app['users.manager'];
         $this->eu = $app['enterpriseUsers.model'];
         $this->gpm = $app['users.groups.model'];
         $this->im = $app['users.invitations.model'];
@@ -240,11 +241,12 @@ class Fixtures
             $invitation = $this->im->create($invitationData);
 
             foreach ($this->um->getAll() as $index => $user) {
+                /* @var $user User */
                 if ($index > 25) {
                     break;
                 }
-                $this->im->consume($invitation['invitation']['token'], $user['qnoow_id']);
-                $this->gpm->addUser($group['id'], $user['qnoow_id']);
+                $this->im->consume($invitation['invitation']['token'], $user->getId());
+                $this->gpm->addUser($group['id'], $user->getId());
             }
         }
 

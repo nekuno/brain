@@ -3,6 +3,7 @@
 namespace ApiConsumer\Fetcher;
 
 use ApiConsumer\Exception\PaginatedFetchingException;
+use ApiConsumer\LinkProcessor\PreprocessedLink;
 
 abstract class BasicPaginationFetcher extends AbstractFetcher
 {
@@ -91,8 +92,16 @@ abstract class BasicPaginationFetcher extends AbstractFetcher
 
     abstract protected function getItemsFromResponse($response);
 
+    /**
+     * @param array $response
+     * @return string|null
+     */
     abstract protected function getPaginationIdFromResponse($response);
 
+    /**
+     * @param array $rawFeed
+     * @return PreprocessedLink[]
+     */
     abstract protected function parseLinks(array $rawFeed);
 
 }

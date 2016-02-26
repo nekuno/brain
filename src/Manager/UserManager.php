@@ -1,6 +1,6 @@
 <?php
 
-namespace Model;
+namespace Manager;
 
 use Event\UserEvent;
 use Everyman\Neo4j\Node;
@@ -8,6 +8,7 @@ use Everyman\Neo4j\Query\Row;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
 use Model\Neo4j\Neo4jException;
+use Model\User;
 use Model\User\GhostUser\GhostUserManager;
 use Model\User\LookUpModel;
 use Model\User\SocialNetwork\SocialProfile;
@@ -18,13 +19,14 @@ use Paginator\PaginatedInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Security\Core\Encoder\PasswordEncoderInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
- * Class UserModel
+ * Class UserManager
  *
  * @package Model
  */
-class UserModel implements PaginatedInterface
+class UserManager implements PaginatedInterface
 {
 
     /**
@@ -62,6 +64,19 @@ class UserModel implements PaginatedInterface
     }
 
     /**
+     * Returns an empty user instance
+     *
+     * @return User
+     */
+    public function createUser()
+    {
+
+        $user = new User();
+
+        return $user;
+    }
+
+    /**
      * @param bool $includeGhosts
      * @return array
      * @throws Neo4jException
@@ -71,11 +86,10 @@ class UserModel implements PaginatedInterface
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(u:User)');
-        if (!$includeGhosts)
-        {
+        if (!$includeGhosts) {
             $qb->where('NOT (u:GhostUser)');
         }
-            $qb->returns('u')
+        $qb->returns('u')
             ->orderBy('u.qnoow_id');
 
         $query = $qb->getQuery();
@@ -93,8 +107,9 @@ class UserModel implements PaginatedInterface
     /**
      * @param $id
      * @param bool $includeGhost
-     * @return array
+     * @return User
      * @throws Neo4jException
+     * @throws NotFoundHttpException
      */
     public function getById($id, $includeGhost = false)
     {
@@ -123,10 +138,11 @@ class UserModel implements PaginatedInterface
 
     /**
      * @param array $criteria
-     * @return array
+     * @return User
      * @throws Neo4jException
+     * @throws NotFoundHttpException
      */
-    public function findBy(array $criteria = array())
+    public function findUserBy(array $criteria = array())
     {
 
         if (empty($criteria)) {
@@ -155,6 +171,58 @@ class UserModel implements PaginatedInterface
         $row = $result->current();
 
         return $this->build($row);
+    }
+
+    /**
+     * Finds a user by email
+     *
+     * @param string $email
+     *
+     * @return UserInterface
+     */
+    public function findUserByEmail($email)
+    {
+        return $this->findUserBy(array('emailCanonical' => $this->canonicalize($email)));
+    }
+
+    /**
+     * Finds a user by username
+     *
+     * @param string $username
+     *
+     * @return UserInterface
+     */
+    public function findUserByUsername($username)
+    {
+        return $this->findUserBy(array('usernameCanonical' => $this->canonicalize($username)));
+    }
+
+    /**
+     * Finds a user either by email, or username
+     *
+     * @param string $usernameOrEmail
+     *
+     * @return UserInterface
+     */
+    public function findUserByUsernameOrEmail($usernameOrEmail)
+    {
+        if (filter_var($usernameOrEmail, FILTER_VALIDATE_EMAIL)) {
+            return $this->findUserByEmail($usernameOrEmail);
+        }
+
+        return $this->findUserByUsername($usernameOrEmail);
+    }
+
+    /**
+     * Finds a user either by confirmation token
+     *
+     * @param string $token
+     *
+     * @return UserInterface
+     */
+    public function findUserByConfirmationToken($token)
+    {
+        return $this->findUserBy(array('confirmationToken' => $token));
     }
 
     public function validate(array $data, $isUpdate = false)
@@ -218,6 +286,14 @@ class UserModel implements PaginatedInterface
             }
         }
 
+        if ($isUpdate && !isset($data['userId'])) {
+            $errors['userId'] = array('user ID is not defined');
+        }
+
+        if (isset($data['userId'])) {
+            $public['userId'] = $data['userId'];
+        }
+
         $diff = array_diff_key($data, $public);
         if (count($diff) > 0) {
             foreach ($diff as $invalidKey => $invalidValue) {
@@ -230,17 +306,22 @@ class UserModel implements PaginatedInterface
         }
     }
 
+    /**
+     * @param array $data
+     * @return User
+     * @throws Neo4jException
+     */
     public function create(array $data)
     {
 
         $this->validate($data);
 
-        $id = $this->getNextId();
+        $data['userId'] = $this->getNextId();
 
         $qb = $this->gm->createQueryBuilder();
         $qb->create('(u:User)')
             ->set('u.qnoow_id = { qnoow_id }')
-            ->setParameter('qnoow_id', $id)
+            ->setParameter('qnoow_id', $data['userId'])
             ->set('u.status = { status }')
             ->setParameter('status', UserStatusModel::USER_STATUS_INCOMPLETE)
             ->set('u.createdAt = { createdAt }')
@@ -250,7 +331,7 @@ class UserModel implements PaginatedInterface
 
         $this->setDefaults($data);
 
-        $user = $this->save($id, $data);
+        $user = $this->save($data);
 
         $this->dispatcher->dispatch(\AppEvents::USER_CREATED, new UserEvent($user));
 
@@ -258,16 +339,14 @@ class UserModel implements PaginatedInterface
     }
 
     /**
-     * @param $id
      * @param array $data
-     * @return array
+     * @return User
      */
-    public function update($id, array $data)
+    public function update(array $data)
     {
-
         $this->validate($data, true);
 
-        $user = $this->save($id, $data);
+        $user = $this->save($data);
 
         $this->dispatcher->dispatch(\AppEvents::USER_UPDATED, new UserEvent($user));
 
@@ -284,7 +363,7 @@ class UserModel implements PaginatedInterface
     {
 
         $conditions = array('u1.qnoow_id < u2.qnoow_id');
-        if (!$includeGhost){
+        if (!$includeGhost) {
             $conditions[] = 'NOT u1:' . GhostUserManager::LABEL_GHOST_USER;
             $conditions[] = 'NOT u2:' . GhostUserManager::LABEL_GHOST_USER;
         }
@@ -333,7 +412,7 @@ class UserModel implements PaginatedInterface
     /**
      * @param $questionId
      * @return array
-     * @throws \Exception
+     * @throws Neo4jException
      */
     public function getByQuestionAnswered($questionId)
     {
@@ -355,7 +434,7 @@ class UserModel implements PaginatedInterface
     /**
      * @param $groupId
      * @param array $data
-     * @return array
+     * @return User
      * @throws Neo4jException
      */
     public function getByGroup($groupId, array $data = array())
@@ -401,6 +480,11 @@ class UserModel implements PaginatedInterface
         return $this->build($result->current());
     }
 
+    /**
+     * @param $id
+     * @return User
+     * @throws Neo4jException
+     */
     public function getOneByThread($id)
     {
         $qb = $this->gm->createQueryBuilder();
@@ -421,7 +505,7 @@ class UserModel implements PaginatedInterface
 
     /**
      * @param SocialProfile $profile
-     * @return array
+     * @return User
      * @throws Neo4jException
      */
     public function getBySocialProfile(SocialProfile $profile)
@@ -818,8 +902,10 @@ class UserModel implements PaginatedInterface
         return $metadata;
     }
 
-    public function save($id, array $data)
+    public function save(array $data)
     {
+        $userId = $data['userId'];
+        unset($data['userId']);
 
         $this->updateCanonicalFields($data);
         $this->updatePassword($data);
@@ -829,7 +915,7 @@ class UserModel implements PaginatedInterface
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(u:User)')
             ->where('u.qnoow_id = { id }')
-            ->setParameter('id', (int)$id)
+            ->setParameter('id', $userId)
             ->with('u');
 
         foreach ($data as $key => $value) {
@@ -859,24 +945,24 @@ class UserModel implements PaginatedInterface
         /* @var $node Node */
         $node = $row->offsetGet('u');
         $properties = $node->getProperties();
+        if (isset($properties['qnoow_id'])) {
+            $properties['id'] = $properties['qnoow_id'];
+            unset($properties['qnoow_id']);
+        }
+        $metadata = $this->getMetadata();
+        $user = $this->createUser();
 
-        $ordered = array();
-        foreach ($this->getMetadata() as $fieldName => $fieldData) {
-
-            if (isset($fieldData['visible']) && $fieldData['visible'] === false) {
-                unset($properties[$fieldName]);
-                continue;
-            }
-
-            if (array_key_exists($fieldName, $properties)) {
-                $ordered[$fieldName] = $properties[$fieldName];
-                unset($properties[$fieldName]);
-            } else {
-                $ordered[$fieldName] = null;
+        foreach ($properties as $key => $value) {
+            $method = 'set' . ucfirst($key);
+            if (method_exists($user, $method)) {
+                if (isset($metadata[$key]['type']) && $metadata[$key]['type'] === 'datetime') {
+                    $value = new \DateTime($value);
+                }
+                $user->{$method}($value);
             }
         }
 
-        return $ordered + $properties;
+        return $user;
     }
 
     public function getNextId()
@@ -927,9 +1013,8 @@ class UserModel implements PaginatedInterface
 
     protected function buildChannelLabel($resource = null)
     {
-        if (in_array($resource, TokensModel::getResourceOwners()))
-        {
-           return 'Channel'.ucfirst($resource);
+        if (in_array($resource, TokensModel::getResourceOwners())) {
+            return 'Channel' . ucfirst($resource);
         }
 
         return null;
@@ -945,7 +1030,7 @@ class UserModel implements PaginatedInterface
 
         $rs = $qb->getQuery()->getResultSet();
 
-        if ($rs->count() == 0){
+        if ($rs->count() == 0) {
             throw new NotFoundHttpException('User to get labels from not found');
         }
 
@@ -954,6 +1039,7 @@ class UserModel implements PaginatedInterface
         foreach ($labelsRow as $label) {
             $labels[] = $label;
         }
+
         return $labels;
     }
 
@@ -968,7 +1054,7 @@ class UserModel implements PaginatedInterface
 
         $rs = $qb->getQuery()->getResultSet();
 
-        if ($rs->count() == 0){
+        if ($rs->count() == 0) {
             throw new NotFoundHttpException(sprintf('User to set label %s not found', $label));
         }
 

@@ -3,8 +3,9 @@
 namespace Console\Command;
 
 use Console\ApplicationAwareCommand;
+use Model\User;
 use Model\User\Thread\ThreadManager;
-use Model\UserModel;
+use Manager\UserManager;
 use Service\Recommendator;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -42,15 +43,15 @@ class UsersThreadsCreateCommand extends ApplicationAwareCommand
             return;
         }
 
-        /* @var $userModel UserModel */
-        $userModel = $this->app['users.model'];
+        /* @var $userManager UserManager */
+        $userManager = $this->app['users.manager'];
 
         $users = array();
         if ($all) {
-            $users = $userModel->getAll();
+            $users = $userManager->getAll();
         } else {
             if ($userId) {
-                $users = array($userModel->getById($userId, true));
+                $users = array($userManager->getById($userId, true));
             }
         }
 
@@ -63,7 +64,8 @@ class UsersThreadsCreateCommand extends ApplicationAwareCommand
 
         foreach ($users as $user) {
 
-            $createdThreads = $threadManager->createBatchForUser($user['qnoow_id'], $threads);
+            /* @var $user User */
+            $createdThreads = $threadManager->createBatchForUser($user->getId(), $threads);
             foreach ($createdThreads as $createdThread) {
 
                 $result = $recommendator->getRecommendationFromThread($createdThread);
@@ -75,7 +77,7 @@ class UsersThreadsCreateCommand extends ApplicationAwareCommand
                 );
 
             }
-            $output->writeln('Added threads for scenario ' . $scenario . ' and user with id ' . $user['qnoow_id']);
+            $output->writeln('Added threads for scenario ' . $scenario . ' and user with id ' . $user->getId());
         }
 
     }
