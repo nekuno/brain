@@ -29,19 +29,19 @@ class ServicesServiceProvider implements ServiceProviderInterface
 
         $app['auth.service'] = $app->share(
             function (Application $app) {
-                return new AuthService($app['users.model'], $app['security.password_encoder'], $app['secret']);
+                return new AuthService($app['users.manager'], $app['security.password_encoder'], $app['secret']);
             }
         );
 
         $app['chatMessageNotifications.service'] = $app->share(
             function (Application $app) {
-                return new ChatMessageNotifications($app['emailNotification.service'], $app['orm.ems']['mysql_brain'], $app['dbs']['mysql_social'], $app['translator'], $app['users.model'], $app['users.profile.model']);
+                return new ChatMessageNotifications($app['emailNotification.service'], $app['orm.ems']['mysql_brain'], $app['dbs']['mysql_social'], $app['translator'], $app['users.manager'], $app['users.profile.model']);
             }
         );
 
         $app['affinityRecalculations.service'] = $app->share(
             function (Application $app) {
-                return new AffinityRecalculations($app['emailNotification.service'], $app['translator'], $app['neo4j.graph_manager'], $app['links.model'], $app['users.model'], $app['users.affinity.model']);
+                return new AffinityRecalculations($app['emailNotification.service'], $app['translator'], $app['neo4j.graph_manager'], $app['links.model'], $app['users.manager'], $app['users.affinity.model']);
             }
         );
 
@@ -67,7 +67,7 @@ class ServicesServiceProvider implements ServiceProviderInterface
             function (Application $app) {
                 return new Recommendator(
                     $app['paginator'], $app['paginator.content'], $app['users.groups.model'],
-                    $app['users.model'], $app['users.recommendation.users.model'], $app['users.recommendation.content.model']
+                    $app['users.manager'], $app['users.recommendation.users.model'], $app['users.recommendation.content.model']
                 );
             }
         );
@@ -75,7 +75,7 @@ class ServicesServiceProvider implements ServiceProviderInterface
         $app['userAggregator.service'] = $app->share(
             function (Application $app) {
                 return new UserAggregator(
-                    $app['users.model'], $app['users.ghostuser.manager'], $app['users.socialprofile.manager'],
+                    $app['users.manager'], $app['users.ghostuser.manager'], $app['users.socialprofile.manager'],
                     $app['api_consumer.resource_owner_factory'], $app['users.lookup.model'], $app['amqpManager.service']
                 );
             }

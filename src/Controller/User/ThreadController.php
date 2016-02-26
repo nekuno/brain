@@ -5,8 +5,8 @@
 
 namespace Controller\User;
 
-use Model\User\Thread\ThreadManager;
 use Model\User\Thread\ThreadPaginatedModel;
+use Model\User;
 use Paginator\Paginator;
 use Service\Recommendator;
 use Silex\Application;
@@ -14,17 +14,6 @@ use Symfony\Component\HttpFoundation\Request;
 
 class ThreadController
 {
-
-    /**
-     * @var ThreadManager
-     */
-    protected $threadManager;
-
-    public function __construct(ThreadManager $threadManager)
-    {
-        $this->threadManager = $threadManager;
-    }
-
     /**
      * Parameters accepted when ContentThread:
      * -offset, limit and foreign
@@ -39,8 +28,7 @@ class ThreadController
      */
     public function getRecommendationAction(Application $app, Request $request, $id)
     {
-
-        $thread = $this->threadManager->getById($id);
+        $thread = $app['users.threads.manager']->getById($id);
 
         /** @var Recommendator $recommendator */
         $recommendator = $app['recommendator.service'];
@@ -49,7 +37,7 @@ class ThreadController
             $result = $recommendator->getRecommendationFromThreadAndRequest($thread, $request);
 
             if ($request->get('offset') == 0) {
-                $this->threadManager->cacheResults($thread,
+                $app['users.threads.manager']->cacheResults($thread,
                     array_slice($result['items'], 0, 5),
                     $result['pagination']['total']);
             }
@@ -69,14 +57,13 @@ class ThreadController
      * Get threads from a given user
      * @param Application $app
      * @param Request $request
-     * @param int $id user id
+     * @param User $user
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      */
-    public function getByUserAction(Application $app, Request $request, $id)
+    public function getByUserAction(Application $app, Request $request, User $user)
     {
-
         $filters = array(
-            'userId' => $id
+            'userId' => $user->getId()
         );
 
         /** @var Paginator $paginator */
@@ -94,24 +81,23 @@ class ThreadController
      * Create new thread for a given user
      * @param Application $app
      * @param Request $request
-     * @param string $id Qnoow_id of the user creating the thread
+     * @param User $user
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      * @throws \Exception
      */
-    public function postAction(Application $app, Request $request, $id)
+    public function postAction(Application $app, Request $request, User $user)
     {
-
-        $thread = $this->threadManager->create($id, $request->request->all());
+        $thread = $app['users.threads.manager']->create($user->getId(), $request->request->all());
 
         /** @var Recommendator $recommendator */
         $recommendator = $app['recommendator.service'];
         try {
             $result = $recommendator->getRecommendationFromThreadAndRequest($thread, $request);
-            $this->threadManager->cacheResults($thread,
+            $app['users.threads.manager']->cacheResults($thread,
                 array_slice($result['items'], 0, 5),
                 $result['pagination']['total']);
 
-            $thread = $this->threadManager->getById($thread->getId());
+            $thread = $app['users.threads.manager']->getById($thread->getId());
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;
@@ -125,14 +111,14 @@ class ThreadController
     /**
      * @param Application $app
      * @param Request $request
-     * @param $id
+     * @param integer $id
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      * @throws \Exception
      */
     public function putAction(Application $app, Request $request, $id)
     {
 
-        $thread = $this->threadManager->update($id, $request->request->all());
+        $thread = $app['users.threads.manager']->update($id, $request->request->all());
 
         /** @var Recommendator $recommendator */
         $recommendator = $app['recommendator.service'];
@@ -140,7 +126,7 @@ class ThreadController
         try {
             $result = $recommendator->getRecommendationFromThreadAndRequest($thread, $request);
 
-            $this->threadManager->cacheResults($thread,
+            $app['users.threads.manager']->cacheResults($thread,
                 array_slice($result['items'], 0, 5),
                 $result['pagination']['total']);
 
@@ -151,15 +137,21 @@ class ThreadController
 
         }
 
-        $thread = $this->threadManager->getById($thread->getId());
+        $thread = $app['users.threads.manager']->getById($thread->getId());
 
         return $app->json($thread, 201);
     }
 
+    /**
+     * @param Application $app
+     * @param integer $id
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @throws \Exception
+     */
     public function deleteAction(Application $app, $id)
     {
         try {
-            $relationships = $this->threadManager->deleteById($id);
+            $relationships = $app['users.threads.manager']->deleteById($id);
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;
@@ -168,8 +160,6 @@ class ThreadController
             return $app->json($e->getMessage(), 500);
         }
 
-
         return $app->json($relationships);
     }
-
 }

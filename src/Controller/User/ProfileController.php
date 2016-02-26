@@ -4,6 +4,7 @@ namespace Controller\User;
 
 use Model\User\ProfileModel;
 use Model\User\ProfileTagModel;
+use Model\User;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -18,9 +19,26 @@ class ProfileController
     /**
      * @param Request $request
      * @param Application $app
+     * @param User $user
      * @return JsonResponse
      */
-    public function getAction(Request $request, Application $app)
+    public function getAction(Request $request, Application $app, User $user)
+    {
+        $locale = $request->query->get('locale');
+        /* @var $model ProfileModel */
+        $model = $app['users.profile.model'];
+
+        $profile = $model->getById($user->getId(), $locale);
+
+        return $app->json($profile);
+    }
+
+    /**
+     * @param Request $request
+     * @param Application $app
+     * @return JsonResponse
+     */
+    public function getOtherAction(Request $request, Application $app)
     {
         $locale = $request->query->get('locale');
         $id = $request->get('id');
@@ -35,16 +53,15 @@ class ProfileController
     /**
      * @param Request $request
      * @param Application $app
+     * @param User $user
      * @return JsonResponse
      */
-    public function postAction(Request $request, Application $app)
+    public function postAction(Request $request, Application $app, User $user)
     {
-
-        $id = $request->get('id');
         /* @var $model ProfileModel */
         $model = $app['users.profile.model'];
 
-        $profile = $model->create($id, $request->request->all());
+        $profile = $model->create($user->getId(), $request->request->all());
 
         return $app->json($profile, 201);
     }
@@ -52,34 +69,31 @@ class ProfileController
     /**
      * @param Request $request
      * @param Application $app
+     * @param User $user
      * @return JsonResponse
      */
-    public function putAction(Request $request, Application $app)
+    public function putAction(Request $request, Application $app, User $user)
     {
-
-        $id = $request->get('id');
         /* @var $model ProfileModel */
         $model = $app['users.profile.model'];
 
-        $profile = $model->update($id, $request->request->all());
+        $profile = $model->update($user->getId(), $request->request->all());
 
         return $app->json($profile);
     }
 
     /**
-     * @param Request $request
      * @param Application $app
+     * @param User $user
      * @return JsonResponse
      */
-    public function deleteAction(Request $request, Application $app)
+    public function deleteAction(Application $app, User $user)
     {
-
-        $id = $request->get('id');
         /* @var $model ProfileModel */
         $model = $app['users.profile.model'];
 
-        $profile = $model->getById($id);
-        $model->remove($id);
+        $profile = $model->getById($user->getId());
+        $model->remove($user->getId());
 
         return $app->json($profile);
     }
@@ -135,10 +149,10 @@ class ProfileController
      * @param Request $request
      * @param Application $app
      * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @throws NotFoundHttpException
      */
     public function getProfileTagsAction(Request $request, Application $app)
     {
-
         $type = $request->get('type');
         $search = $request->get('search', '');
         $limit = $request->get('limit', 0);

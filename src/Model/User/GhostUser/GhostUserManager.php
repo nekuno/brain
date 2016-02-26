@@ -13,7 +13,7 @@ use Everyman\Neo4j\Query\ResultSet;
 use Everyman\Neo4j\Query\Row;
 use Model\Neo4j\GraphManager;
 use Model\User\SocialNetwork\SocialProfile;
-use Model\UserModel;
+use Manager\UserManager;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class GhostUserManager
@@ -23,20 +23,20 @@ class GhostUserManager
 
     const LABEL_GHOST_USER = "GhostUser";
 
-    /** @var UserModel */
-    protected $userModel;
+    /** @var UserManager */
+    protected $userManager;
 
-    function __construct(GraphManager $graphManager, UserModel $userModel)
+    function __construct(GraphManager $graphManager, UserManager $userManager)
     {
         $this->graphManager = $graphManager;
-        $this->userModel = $userModel;
+        $this->userManager = $userManager;
     }
 
 
     public function create()
     {
 
-        $nextId = $this->userModel->getNextId();
+        $nextId = $this->userManager->getNextId();
         $qb = $this->graphManager->createQueryBuilder();
         $qb->create('(u:User:' . $this::LABEL_GHOST_USER . ')')
             ->set('u.createdAt = { createdAt }', 'u.qnoow_id = {qnoow_id}')
@@ -121,10 +121,10 @@ class GhostUserManager
 
     public function getBySocialProfile(SocialProfile $profile)
     {
-        $user = $this->userModel->getBySocialProfile($profile);
+        $user = $this->userManager->getBySocialProfile($profile);
 
         try {
-            $ghostUser = $this->getById($user['qnoow_id']);
+            $ghostUser = $this->getById($user->getId());
         } catch (NotFoundHttpException $e) {
             return false;
         }

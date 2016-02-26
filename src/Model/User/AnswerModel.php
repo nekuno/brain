@@ -9,7 +9,7 @@ use Everyman\Neo4j\Relationship;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
 use Model\Questionnaire\QuestionModel;
-use Model\UserModel;
+use Manager\UserManager;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -27,7 +27,7 @@ class AnswerModel
     protected $qm;
 
     /**
-     * @var UserModel
+     * @var UserManager
      */
     protected $um;
 
@@ -36,7 +36,7 @@ class AnswerModel
      */
     protected $eventDispatcher;
 
-    public function __construct(GraphManager $gm, QuestionModel $qm, UserModel $um, EventDispatcher $eventDispatcher)
+    public function __construct(GraphManager $gm, QuestionModel $qm, UserManager $um, EventDispatcher $eventDispatcher)
     {
 
         $this->gm = $gm;
@@ -194,7 +194,7 @@ class AnswerModel
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(q:Question)', '(u:User)')
             ->where('u.qnoow_id = { userId }', 'id(q) = { questionId }', "HAS(q.text_$locale)")
-            ->setParameter('userId', $user['qnoow_id'])
+            ->setParameter('userId', $user->getId())
             ->setParameter('questionId', $question['questionId'])
             ->with('u', 'q')
             ->match('(u)-[ua:ANSWERS]->(a:Answer)-[:IS_ANSWER_OF]->(q)')
@@ -213,7 +213,7 @@ class AnswerModel
         $result = $query->getResultSet();
 
         if ($result->count() < 1) {
-            throw new NotFoundHttpException(sprintf('There is not answer for user "%s" to question "%s"', $user['qnoow_id'], $question['questionId']));
+            throw new NotFoundHttpException(sprintf('There is not answer for user "%s" to question "%s"', $user->getId(), $question['questionId']));
         }
 
         /* @var $row Row */
@@ -261,6 +261,7 @@ class AnswerModel
     /**
      * @param array $data
      * @param bool $userRequired
+     * @throws ValidationException
      */
     public function validate(array $data, $userRequired = true)
     {

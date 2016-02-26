@@ -10,7 +10,7 @@ use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
-use Model\UserModel;
+use Manager\UserManager;
 use Service\TokenGenerator;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -37,7 +37,7 @@ class InvitationModel
     protected $groupM;
 
     /**
-     * @var UserModel
+     * @var UserManager
      */
     protected $um;
 
@@ -48,7 +48,7 @@ class InvitationModel
 
     const MAX_AVAILABLE = 9999999999;
 
-    public function __construct(TokenGenerator $tokenGenerator, GraphManager $gm, GroupModel $groupModel, UserModel $um, $adminDomain)
+    public function __construct(TokenGenerator $tokenGenerator, GraphManager $gm, GroupModel $groupModel, UserManager $um, $adminDomain)
     {
         $this->tokenGenerator = $tokenGenerator;
         $this->gm = $gm;
@@ -512,7 +512,7 @@ class InvitationModel
 
         return array(
             'email' => $data['email'],
-            'username' => $user['username'],
+            'username' => $user->getUsername(),
             'url' => $socialHost . 'invitation/' . (string)$invitation['invitation']['token'],
             'expiresAt' => (integer)$invitation['invitation']['expiresAt'],
         );

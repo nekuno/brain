@@ -8,6 +8,8 @@ use Model\Neo4j\Neo4jException;
 
 //Request::setTrustedProxies(array('127.0.0.1'));
 
+/** @var $app Silex\Application */
+
 $app['auth.controller'] = $app->share(
     function () {
 
@@ -22,31 +24,24 @@ $app['users.controller'] = $app->share(
     }
 );
 
-$app['users.tokens.controller'] = $app->share(
-    function () {
-
-        return new \Controller\User\TokensController();
-    }
-);
-
 $app['users.profile.controller'] = $app->share(
     function () {
 
-        return new \Controller\User\ProfileController();
+        return new \Controller\User\ProfileController;
     }
 );
 
 $app['users.privacy.controller'] = $app->share(
     function () {
 
-        return new \Controller\User\PrivacyController();
+        return new \Controller\User\PrivacyController;
     }
 );
 
 $app['users.data.controller'] = $app->share(
     function () {
 
-        return new \Controller\User\DataController();
+        return new \Controller\User\DataController;
     }
 );
 
@@ -58,28 +53,28 @@ $app['questionnaire.questions.controller'] = $app->share(
 );
 
 $app['users.answers.controller'] = $app->share(
-    function () use ($app) {
+    function () {
 
-        return new \Controller\User\AnswerController($app['users.answers.model']);
+        return new \Controller\User\AnswerController;
     }
 );
 
 $app['users.groups.controller'] = $app->share(
-    function () use ($app) {
+    function () {
 
-        return new \Controller\User\GroupController($app['users.groups.model']);
+        return new \Controller\User\GroupController;
     }
 );
 
 $app['users.threads.controller'] = $app->share(
-    function () use ($app) {
+    function () {
 
-        return new \Controller\User\ThreadController($app['users.threads.manager']);
+        return new \Controller\User\ThreadController;
     }
 );
 
 $app['users.invitations.controller'] = $app->share(
-    function () use ($app) {
+    function () {
 
         return new \Controller\User\InvitationController;
     }
@@ -92,31 +87,9 @@ $app['users.relations.controller'] = $app->share(
     }
 );
 
-$app['enterpriseUsers.controller'] = $app->share(
-    function () use ($app) {
-
-        return new \Controller\EnterpriseUser\EnterpriseUserController($app['enterpriseUsers.model']);
-    }
-);
-
-$app['enterpriseUsers.groups.controller'] = $app->share(
-    function () use ($app) {
-
-        return new \Controller\EnterpriseUser\GroupController($app['users.groups.model'], $app['enterpriseUsers.model']);
-    }
-);
-
-$app['enterpriseUsers.communities.controller'] = $app->share(
-    function () use ($app) {
-
-        return new \Controller\EnterpriseUser\CommunityController($app['enterpriseUsers.model'], $app['enterpriseUsers.communities.model']);
-    }
-);
-
-$app['enterpriseUsers.invitations.controller'] = $app->share(
-    function () use ($app) {
-
-        return new \Controller\EnterpriseUser\InvitationController($app['users.invitations.model'], $app['enterpriseUsers.model']);
+$app['client.controller'] = $app->share(
+    function() {
+        return new Controller\ClientController;
     }
 );
 
@@ -130,9 +103,102 @@ $app['fetch.controller'] = $app->share(
 $app['lookUp.controller'] = $app->share(
     function () use ($app) {
 
-        return new \Controller\User\LookUpController($app['users.lookup.model']);
+        return new \Controller\User\LookUpController;
     }
 );
+
+$app['social.tokens.controller'] = $app->share(
+    function () {
+
+        return new \Controller\Social\TokensController;
+    }
+);
+
+$app['social.users.controller'] = $app->share(
+    function () {
+
+        return new \Controller\Social\UserController;
+    }
+);
+
+$app['social.profile.controller'] = $app->share(
+    function () {
+
+        return new \Controller\Social\ProfileController;
+    }
+);
+
+$app['social.privacy.controller'] = $app->share(
+    function () {
+
+        return new \Controller\Social\PrivacyController;
+    }
+);
+
+$app['social.answers.controller'] = $app->share(
+    function () {
+
+        return new \Controller\Social\AnswerController;
+    }
+);
+
+$app['admin.groups.controller'] = $app->share(
+    function () use ($app) {
+
+        return new \Controller\Admin\GroupController;
+    }
+);
+
+$app['admin.invitations.controller'] = $app->share(
+    function () use ($app) {
+
+        return new \Controller\Admin\InvitationController;
+    }
+);
+
+$app['admin.enterpriseUsers.controller'] = $app->share(
+    function () use ($app) {
+
+        return new \Controller\Admin\EnterpriseUser\EnterpriseUserController;
+    }
+);
+
+$app['admin.enterpriseUsers.groups.controller'] = $app->share(
+    function () use ($app) {
+
+        return new \Controller\Admin\EnterpriseUser\GroupController;
+    }
+);
+
+$app['admin.enterpriseUsers.communities.controller'] = $app->share(
+    function () use ($app) {
+
+        return new \Controller\Admin\EnterpriseUser\CommunityController;
+    }
+);
+
+$app['admin.enterpriseUsers.invitations.controller'] = $app->share(
+    function () use ($app) {
+
+        return new \Controller\Admin\EnterpriseUser\InvitationController;
+    }
+);
+
+
+$app['instant.users.controller'] = $app->share(
+    function () {
+
+        return new \Controller\Instant\UserController;
+    }
+);
+
+$app['instant.relations.controller'] = $app->share(
+    function () {
+
+        return new \Controller\Instant\RelationsController;
+    }
+);
+
 
 /**
  * Middleware for filter some request

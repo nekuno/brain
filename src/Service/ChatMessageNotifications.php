@@ -7,7 +7,7 @@ namespace Service;
 use Model\Entity\EmailNotification;
 use Doctrine\ORM\EntityManager;
 use Model\User\ProfileModel;
-use Model\UserModel;
+use Manager\UserManager;
 use Doctrine\DBAL\Connection;
 use Silex\Translator;
 use Silex\Application;
@@ -41,22 +41,22 @@ class ChatMessageNotifications
     protected $translator;
 
     /**
-     * @var UserModel
+     * @var UserManager
      */
-    protected $userModel;
+    protected $userManager;
 
     /**
      * @var ProfileModel
      */
     protected $profileModel;
 
-    function __construct(EmailNotifications $emailNotifications, EntityManager $entityManagerBrain, Connection $connectionSocial, Translator $translator, UserModel $userModel, ProfileModel $profileModel)
+    function __construct(EmailNotifications $emailNotifications, EntityManager $entityManagerBrain, Connection $connectionSocial, Translator $translator, UserManager $userManager, ProfileModel $profileModel)
     {
         $this->emailNotifications = $emailNotifications;
         $this->entityManagerBrain = $entityManagerBrain;
         $this->connectionSocial = $connectionSocial;
         $this->translator = $translator;
-        $this->userModel = $userModel;
+        $this->userManager = $userManager;
         $this->profileModel = $profileModel;
     }
 
@@ -88,12 +88,8 @@ class ChatMessageNotifications
                 }
             }
 
-            $user = $this->userModel->getById($userId);
+            $user = $this->userManager->getById($userId);
             $profile = $this->profileModel->getById($userId);
-
-            if (!$user) {
-                throw new \Exception('User not found', 404);
-            }
 
             if (!$profile && OutputInterface::VERBOSITY_VERBOSE <= $output->getVerbosity()) {
                 $output->writeln('Profile ' . $userId . ' not found. Using default locale (' . $this->translator->getLocale() . ').');
@@ -206,7 +202,7 @@ class ChatMessageNotifications
     protected function saveInfo(array $user, array $chatMessages, $totalMessages)
     {
         foreach ($chatMessages as $index => $chatMessage) {
-            $chatMessages[$index]['username_from'] = $this->userModel->getById($chatMessage['user_from'])['username'];
+            $chatMessages[$index]['username_from'] = $this->userManager->getById($chatMessage['user_from'])->getUsername();
         }
 
         return array(

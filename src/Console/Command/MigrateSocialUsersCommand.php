@@ -4,7 +4,7 @@ namespace Console\Command;
 
 use Console\ApplicationAwareCommand;
 use Model\Exception\ValidationException;
-use Model\UserModel;
+use Manager\UserManager;
 use Silex\Application;
 use Doctrine\DBAL\Connection;
 use Symfony\Component\Console\Input\InputInterface;
@@ -46,8 +46,8 @@ class MigrateSocialUsersCommand extends ApplicationAwareCommand
     protected function migrateUser(array $user, OutputInterface $output)
     {
 
-        /* @var $um UserModel */
-        $um = $this->app['users.model'];
+        /* @var $um UserManager */
+        $um = $this->app['users.manager'];
 
         $id = (int)$user['id'];
         unset($user['id']);

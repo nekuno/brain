@@ -39,7 +39,8 @@ use Model\User\Thread\UsersThreadManager;
 use Model\User\TokensModel;
 use Model\User\UserFilterModel;
 use Model\User\UserStatsManager;
-use Model\UserModel;
+use Manager\UserManager;
+use Security\UserProvider;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
 use Symfony\Component\Security\Core\Encoder\MessageDigestPasswordEncoder;
@@ -60,10 +61,17 @@ class ModelsServiceProvider implements ServiceProviderInterface
             }
         );
 
-        $app['users.model'] = $app->share(
+        $app['security.users_provider'] = $app['users'] = $app->share(
             function ($app) {
 
-                return new UserModel($app['dispatcher'], $app['neo4j.graph_manager'], $app['security.password_encoder'], $app['fields']['user'], $app['locale.options']['default']);
+                return new UserProvider($app['users.manager']);
+            }
+        );
+
+        $app['users.manager'] = $app->share(
+            function ($app) {
+
+                return new UserManager($app['dispatcher'], $app['neo4j.graph_manager'], $app['security.password_encoder'], $app['fields']['user'], $app['locale.options']['default']);
             }
         );
 
@@ -105,7 +113,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.answers.model'] = $app->share(
             function ($app) {
 
-                return new AnswerModel($app['neo4j.graph_manager'], $app['questionnaire.questions.model'], $app['users.model'], $app['dispatcher']);
+                return new AnswerModel($app['neo4j.graph_manager'], $app['questionnaire.questions.model'], $app['users.manager'], $app['dispatcher']);
             }
         );
 
@@ -203,7 +211,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.ghostuser.manager'] = $app->share(
             function ($app) {
 
-                return new GhostUserManager($app['neo4j.graph_manager'], $app['users.model']);
+                return new GhostUserManager($app['neo4j.graph_manager'], $app['users.manager']);
             }
         );
 
@@ -238,7 +246,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['questionnaire.questions.model'] = $app->share(
             function ($app) {
 
-                return new QuestionModel($app['neo4j.graph_manager'], $app['users.model']);
+                return new QuestionModel($app['neo4j.graph_manager'], $app['users.manager']);
             }
         );
 
@@ -266,14 +274,14 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.groups.model'] = $app->share(
             function ($app) {
 
-                return new GroupModel($app['neo4j.graph_manager'], $app['users.model'], $app['users.filterusers.manager']);
+                return new GroupModel($app['neo4j.graph_manager'], $app['users.manager'], $app['users.filterusers.manager']);
             }
         );
 
         $app['users.threadusers.manager'] = $app->share(
             function ($app) {
 
-                return new UsersThreadManager($app['neo4j.graph_manager'], $app['users.filterusers.manager'], $app['users.model']);
+                return new UsersThreadManager($app['neo4j.graph_manager'], $app['users.filterusers.manager'], $app['users.manager']);
             }
         );
 
@@ -287,7 +295,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.threads.manager'] = $app->share(
             function ($app) {
 
-                return new ThreadManager($app['neo4j.graph_manager'], $app['users.model'], $app['users.threadusers.manager'], $app['users.threadcontent.manager']);
+                return new ThreadManager($app['neo4j.graph_manager'], $app['users.manager'], $app['users.threadusers.manager'], $app['users.threadcontent.manager']);
             }
         );
 
@@ -300,14 +308,14 @@ class ModelsServiceProvider implements ServiceProviderInterface
 
         $app['users.invitations.model'] = $app->share(
             function ($app) {
-                return new InvitationModel($app['tokenGenerator.service'], $app['neo4j.graph_manager'], $app['users.groups.model'], $app['users.model'], $app['admin_domain_plus_post']);
+                return new InvitationModel($app['tokenGenerator.service'], $app['neo4j.graph_manager'], $app['users.groups.model'], $app['users.manager'], $app['admin_domain_plus_post']);
             }
         );
 
         $app['users.relations.model'] = $app->share(
             function ($app) {
 
-                return new RelationsModel($app['neo4j.graph_manager'], $app['dbs']['mysql_social'], $app['users.model']);
+                return new RelationsModel($app['neo4j.graph_manager'], $app['dbs']['mysql_social'], $app['users.manager']);
             }
         );
 
@@ -321,7 +329,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['enterpriseUsers.communities.model'] = $app->share(
             function ($app) {
 
-                return new CommunityModel($app['neo4j.graph_manager'], $app['users.model']);
+                return new CommunityModel($app['neo4j.graph_manager'], $app['users.manager']);
             }
         );
     }

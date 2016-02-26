@@ -2,10 +2,8 @@
 /**
  * @author Manolo Salsas <manolez@gmail.com>
  */
-namespace Controller\EnterpriseUser;
+namespace Controller\Admin\EnterpriseUser;
 
-use Model\User\GroupModel;
-use Model\EnterpriseUser\EnterpriseUserModel;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -16,35 +14,16 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class GroupController
 {
-    /**
-     * @var GroupModel
-     */
-    protected $gm;
-
-    /**
-     * @var EnterpriseUserModel
-     */
-    protected $eum;
-
-    public function __construct(GroupModel $gm, EnterpriseUserModel $eum)
-    {
-        $this->gm = $gm;
-        $this->eum = $eum;
-    }
-
     public function getAllAction(Application $app, $enterpriseUserId)
     {
-
-        $groups = $this->gm->getAllByEnterpriseUserId($enterpriseUserId);
+        $groups = $app['users.groups.model']->getAllByEnterpriseUserId($enterpriseUserId);
 
         return $app->json($groups);
-
     }
 
     public function getAction(Application $app, $id, $enterpriseUserId)
     {
-
-        $group = $this->gm->getByIdAndEnterpriseUserId($id, $enterpriseUserId);
+        $group = $app['users.groups.model']->getByIdAndEnterpriseUserId($id, $enterpriseUserId);
 
         return $app->json($group);
     }
@@ -53,12 +32,12 @@ class GroupController
     {
         $data = $request->request->all();
 
-        if(!$this->eum->exists($enterpriseUserId)) {
+        if(!$app['enterpriseUsers.model']->exists($enterpriseUserId)) {
             throw new NotFoundHttpException(sprintf('There is not enterprise user with id "%s"', $enterpriseUserId));
         }
 
-        $group = $this->gm->create($data);
-        $this->gm->setCreatedByEnterpriseUser($group['id'], $enterpriseUserId);
+        $group = $app['users.groups.model']->create($data);
+        $app['users.groups.model']->setCreatedByEnterpriseUser($group['id'], $enterpriseUserId);
 
         return $app->json($group, 201);
     }
@@ -67,22 +46,22 @@ class GroupController
     {
         $data = $request->request->all();
 
-        if(!$this->eum->exists($enterpriseUserId)) {
+        if(!$app['enterpriseUsers.model']->exists($enterpriseUserId)) {
             throw new NotFoundHttpException(sprintf('There is not enterprise user with id "%s"', $enterpriseUserId));
         }
 
-        $group = $this->gm->update($id, $data);
+        $group = $app['users.groups.model']->update($id, $data);
 
         return $app->json($group);
     }
 
     public function deleteAction(Application $app, $id, $enterpriseUserId)
     {
-        if(!$this->eum->exists($enterpriseUserId)) {
+        if(!$app['enterpriseUsers.model']->exists($enterpriseUserId)) {
             throw new NotFoundHttpException(sprintf('There is not enterprise user with id "%s"', $enterpriseUserId));
         }
 
-        $group = $this->gm->remove($id);
+        $group = $app['users.groups.model']->remove($id);
 
         return $app->json($group);
     }
@@ -91,13 +70,12 @@ class GroupController
     {
         $data = $request->request->all();
 
-        if(!$this->eum->exists($enterpriseUserId)) {
+        if(!$app['enterpriseUsers.model']->exists($enterpriseUserId)) {
             throw new NotFoundHttpException(sprintf('There is not enterprise user with id "%s"', $enterpriseUserId));
         }
 
-        $this->gm->validate($data);
+        $app['users.groups.model']->validate($data);
 
         return $app->json();
     }
-
 }

@@ -5,7 +5,7 @@ namespace Console\Command;
 use Console\ApplicationAwareCommand;
 use Model\Neo4j\Neo4jException;
 use Model\User\Similarity\SimilarityModel;
-use Model\UserModel;
+use Manager\UserManager;
 use Silex\Application;
 use Symfony\Component\Console\Helper\TableHelper;
 use Symfony\Component\Console\Input\InputArgument;
@@ -40,9 +40,9 @@ class UsersCalculateSimilarityCommand extends ApplicationAwareCommand
 
         if (null === $userA || null === $userB) {
             $output->writeln('Calculating for all users, including ghost users.');
-            /* @var $userModel UserModel */
-            $userModel = $this->app['users.model'];
-            $combinations = $userModel->getAllCombinations(true);
+            /* @var $userManager UserManager */
+            $userManager = $this->app['users.manager'];
+            $combinations = $userManager->getAllCombinations(true);
         }
 
         foreach ($combinations AS $users) {

@@ -15,6 +15,7 @@
         "symfony/debug": "~2.3",
         "symfony/finder": "~2.3",
         "symfony/form": "~2.3",
+        "symfony/http-kernel": "^2.8",
         "symfony/monolog-bridge": "~2.3",
         "symfony/process": "~2.3",
         "symfony/security": "~2.3",
@@ -30,9 +31,9 @@
         "fabpot/goutte": "2.0.*@dev",
         "swiftmailer/swiftmailer": "5.2.*@dev",
         "videlalvaro/php-amqplib": "dev-master",
-        "google/apiclient": "dev-master",
+        "google/apiclient": "dev-v1-master",
         "jakeasmith/http_build_url": "0.1.*",
-        "firebase/php-jwt": "^3.0",
+        "cnam/security-jwt-service-provider": "1.*",
         "sorien/silex-pimple-dumper": "~1.0"
     },
     "require-dev": {

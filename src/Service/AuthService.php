@@ -2,8 +2,7 @@
 
 namespace Service;
 
-use Firebase\JWT\JWT;
-use Model\UserModel;
+use Manager\UserManager;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\Security\Core\Encoder\PasswordEncoderInterface;
 
@@ -14,7 +13,7 @@ class AuthService
 {
 
     /**
-     * @var UserModel
+     * @var UserManager
      */
     protected $um;
 
@@ -28,7 +27,7 @@ class AuthService
      */
     protected $secret;
 
-    public function __construct(UserModel $um, PasswordEncoderInterface $encoder, $secret)
+    public function __construct(UserManager $um, PasswordEncoderInterface $encoder, $secret)
     {
         $this->um = $um;
         $this->encoder = $encoder;
@@ -39,26 +38,27 @@ class AuthService
     {
 
         try {
-            $user = $this->um->findBy(array('usernameCanonical' => $this->um->canonicalize($username)));
+            $user = $this->um->findUserBy(array('usernameCanonical' => $this->um->canonicalize($username)));
         } catch (\Exception $e) {
             throw new UnauthorizedHttpException('', 'El nombre de usuario y la contraseña que ingresaste no coinciden con nuestros registros.');
         }
 
-        $encodedPassword = $user['password'];
-        $salt = $user['salt'];
+        $encodedPassword = $user->getPassword();
+        $salt = $user->getSalt();
         $valid = $this->encoder->isPasswordValid($encodedPassword, $password, $salt);
 
         if (!$valid) {
             throw new UnauthorizedHttpException('', 'El nombre de usuario y la contraseña que ingresaste no coinciden con nuestros registros.');
         }
 
-        unset($user['password']);
         $token = array(
             'iss' => 'https://nekuno.com',
-            'user' => $user,
+            'exp' => time() + 86400,
+            'sub' => $user->getUsernameCanonical(),
+            'user' => $user->jsonSerialize(),
         );
 
-        $jwt = JWT::encode($token, $this->secret);
+        $jwt = \JWT::encode($token, $this->secret);
 
         return $jwt;
     }
