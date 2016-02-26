@@ -102,8 +102,7 @@ class LinkProcessorServiceProvider implements ServiceProviderInterface
                     $app['api_consumer.link_processor.processor.youtube'],
                     $app['api_consumer.link_processor.processor.spotify'],
                     $app['api_consumer.link_processor.processor.facebook'],
-                    $app['api_consumer.link_processor.processor.twitter'],
-                    $app['api_consumer.link_processor.url_parser.parser']
+                    $app['api_consumer.link_processor.processor.twitter']
                 );
             }
         );

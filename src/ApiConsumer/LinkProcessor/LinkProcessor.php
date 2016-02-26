@@ -55,11 +55,6 @@ class LinkProcessor
      */
     protected $twitterProcessor;
 
-    /**
-     * @var UrlParser
-     */
-    protected $urlParser;
-
     public function __construct(
         LinkResolver $linkResolver,
         LinkAnalyzer $linkAnalyzer,
@@ -68,8 +63,7 @@ class LinkProcessor
         YoutubeProcessor $youtubeProcessor,
         SpotifyProcessor $spotifyProcessor,
         FacebookProcessor $facebookProcessor,
-        TwitterProcessor $twitterProcessor,
-        UrlParser $urlParser
+        TwitterProcessor $twitterProcessor
     )
     {
 
@@ -81,7 +75,6 @@ class LinkProcessor
         $this->spotifyProcessor = $spotifyProcessor;
         $this->facebookProcessor = $facebookProcessor;
         $this->twitterProcessor = $twitterProcessor;
-        $this->urlParser = $urlParser;
     }
 
     /**
