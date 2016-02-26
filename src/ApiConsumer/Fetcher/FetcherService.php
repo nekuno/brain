@@ -191,7 +191,7 @@ class FetcherService implements LoggerAwareInterface
         if (empty($links)){
             return array();
         } else {
-            $source = $links[0]->getSource();
+            $source = reset($links)->getSource();
         }
 
         $this->dispatcher->dispatch(\AppEvents::PROCESS_START, new ProcessLinksEvent($userId, $source, $links));
@@ -210,7 +210,7 @@ class FetcherService implements LoggerAwareInterface
 
                 $links[$key] = $linkProcessed;
             } catch (\Exception $e) {
-                $this->logger->error(sprintf('Fetcher: Error processing link "%s" from resource "%s". Reason: %s', $link['url'], $source, $e->getMessage()));
+                $this->logger->error(sprintf('Fetcher: Error processing link "%s" from resource "%s". Reason: %s', $link->getFetched(), $source, $e->getMessage()));
                 if ($e instanceof Neo4jException) {
                     $this->logger->error(sprintf('Query: %s' . "\n" . 'Data: %s', $e->getQuery(), print_r($e->getData(), true)));
                 }

@@ -2,6 +2,7 @@
 
 namespace ApiConsumer\Fetcher;
 
+use ApiConsumer\LinkProcessor\LinkAnalyzer;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
 
 abstract class AbstractFacebookFetcher extends BasicPaginationFetcher
@@ -137,7 +138,7 @@ abstract class AbstractFacebookFetcher extends BasicPaginationFetcher
         }
         $link['timestamp'] = $timestamp;
 
-        $link['resource'] = 'facebook';
+        $link['resource'] = $this->resourceOwner->getName();
 
         return $link;
     }

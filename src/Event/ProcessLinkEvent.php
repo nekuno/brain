@@ -3,9 +3,11 @@
 
 namespace Event;
 
+use ApiConsumer\LinkProcessor\PreprocessedLink;
+
 class ProcessLinkEvent extends FetchEvent
 {
-
+    /** @var  PreprocessedLink */
     protected $link;
 
     public function __construct($user, $resourceOwner, $link)

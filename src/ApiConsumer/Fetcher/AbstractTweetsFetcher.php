@@ -74,7 +74,7 @@ abstract class AbstractTweetsFetcher extends BasicPaginationFetcher
             $link['description'] = null;
             $link['resourceItemId'] = array_key_exists('id', $item) ? $item['id'] : null;
             $link['timestamp'] = $timestamp;
-            $link['resource'] = 'twitter';
+            $link['resource'] = $this->resourceOwner->getName();
 
             $preprocessedLink = new PreprocessedLink($link['url']);
             $preprocessedLink->setLink($link);

@@ -101,7 +101,7 @@ class SpotifyFetcher extends BasicPaginationFetcher
                 $link['resourceItemId'] = $item['track']['id'];
                 $link['timestamp'] = $timestamp;
 
-                $link['resource'] = 'spotify';
+                $link['resource'] = $this->resourceOwner->getName();
 
                 $preprocessedLink->setLink($link);
 

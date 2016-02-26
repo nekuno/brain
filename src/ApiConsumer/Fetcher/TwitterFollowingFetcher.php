@@ -50,6 +50,7 @@ class TwitterFollowingFetcher extends BasicPaginationFetcher
     {
         $links = $this->resourceOwner->lookupUsersBy('user_id', $rawFeed);
 
+        $preprocessedLinks = array();
         if ($links == false || empty($links)) {
             foreach ($rawFeed as $id) {
                 $link = array('url' => 'https://twitter.com/intent/user?user_id=' . $id,
@@ -60,7 +61,7 @@ class TwitterFollowingFetcher extends BasicPaginationFetcher
                     'resource' => $this->resourceOwner->getName());
                 $preprocessedLink = new PreprocessedLink($link['url']);
                 $preprocessedLink->setLink($link);
-                $links[] = $preprocessedLink;
+                $preprocessedLinks[] = $preprocessedLink;
             }
         } else {
             foreach ($links as &$link) {
@@ -73,11 +74,11 @@ class TwitterFollowingFetcher extends BasicPaginationFetcher
                 ));
                 $preprocessedLink = new PreprocessedLink($link['url']);
                 $preprocessedLink->setLink($link);
-                $links[] = $preprocessedLink;
+                $preprocessedLinks[] = $preprocessedLink;
             }
         }
 
-        return $links;
+        return $preprocessedLinks;
     }
 
 

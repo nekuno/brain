@@ -23,6 +23,8 @@ class GoogleProfileFetcher extends AbstractFetcher{
         $response = $this->resourceOwner->authorizedApiRequest($this->getUrl(), $this->getQuery(), $this->user);
 
         $preprocessedLink = new PreprocessedLink($response['url']);
+        $link = array('resource' => $this->resourceOwner->getName());
+        $preprocessedLink->setLink($link);
         return array($preprocessedLink);
     }
 

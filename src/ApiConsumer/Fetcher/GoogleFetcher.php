@@ -93,7 +93,7 @@ class GoogleFetcher extends BasicPaginationFetcher
             $link['description'] = array_key_exists('content', $item) ? $item['content'] : null;
             $link['resourceItemId'] = array_key_exists('id', $item) ? $item['id'] : null;
             $link['timestamp'] = $timestamp;
-            $link['resource'] = 'google';
+            $link['resource'] = $this->resourceOwner->getName();
 
             $preprocessedLink = new PreprocessedLink($link['url']);
             $preprocessedLink->setLink($link);
