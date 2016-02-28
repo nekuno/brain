@@ -51,4 +51,14 @@ class UserController
 
         return $app->json($user);
     }
+
+    public function jwtAction(Application $app, $id)
+    {
+
+        $authService = $app['auth.service'];
+        $jwt = $authService->getToken($id);
+
+        return $app->json(array('jwt' => $jwt));
+
+    }
 }
