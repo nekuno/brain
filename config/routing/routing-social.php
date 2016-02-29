@@ -27,3 +27,19 @@ $social->get('/users/{id}/answers/compare/{id2}', 'social.answers.controller:get
 $social->post('/users/{id}/answers/{questionId}', 'social.answers.controller:updateAction');
 
 $app->mount('/social', $social);
+
+$social
+    ->assert('id', '\d+')
+    ->convert(
+        'id',
+        function ($id) {
+            return (int)$id;
+        }
+    )
+    ->assert('id2', '\d+')
+    ->convert(
+        'id2',
+        function ($id) {
+            return (int)$id;
+        }
+    );
