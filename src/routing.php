@@ -2,7 +2,6 @@
 
 use Symfony\Component\HttpFoundation\RequestMatcher;
 
-
 /* @var $app Silex\Application */
 /* @var $controllers \Silex\Controller */
 $controllers = $app['controllers'];
@@ -20,29 +19,11 @@ $app['security.firewalls'] = array(
         'anonymous' => true,
     ),
     'public_get' => array(
-        'pattern' => new RequestMatcher(
-                '(^/profile/metadata$)|(^/users/available/)|(^/client/version$)|(^/lookup)',
-                null, 'GET'
-            ),
+        'pattern' => new RequestMatcher('(^/profile/metadata$)|(^/users/available/)|(^/client/version$)|(^/lookup)', null, 'GET'),
         'anonymous' => true,
     ),
     'public_post' => array(
-        'pattern' => new RequestMatcher(
-                '(^/users$)|(^/invitations/token/validate/)|(^/lookUp/webHook$)|(^/users/validate$)|(^/profile/validate$)',
-                null, array('POST')
-            ),
-        'anonymous' => true,
-    ),
-    'instant' => array(
-        'pattern' => new RequestMatcher('^/instant/', null, null, $app['valid_ips']),
-        'anonymous' => true,
-    ),
-    'admin' => array(
-        'pattern' => new RequestMatcher('^/admin/', null, null, $app['valid_ips']),
-        'anonymous' => true,
-    ),
-    'social' => array(
-        'pattern' => new RequestMatcher('^/social', null, null, $app['valid_ips']),
+        'pattern' => new RequestMatcher('(^/users$)|(^/invitations/token/validate/)|(^/lookUp/webHook$)|(^/users/validate$)|(^/profile/validate$)', null, array('POST')),
         'anonymous' => true,
     ),
     'secured' => array(
@@ -56,10 +37,19 @@ $app['security.firewalls'] = array(
     ),
 );
 
-require __DIR__.'/../config/routing/routing-client.php';
+$app['security.access_rules'] = array(
+    array(new RequestMatcher('^/instant', null, null, $app['valid_ips']), 'IS_AUTHENTICATED_ANONYMOUSLY'),
+    array(new RequestMatcher('^/instant'), 'ROLE_NO_ACCESS'),
+    array(new RequestMatcher('^/admin', null, null, $app['valid_ips']), 'IS_AUTHENTICATED_ANONYMOUSLY'),
+    array(new RequestMatcher('^/admin'), 'ROLE_NO_ACCESS'),
+    array(new RequestMatcher('^/social', null, null, $app['valid_ips']), 'IS_AUTHENTICATED_ANONYMOUSLY'),
+    array(new RequestMatcher('^/social'), 'ROLE_NO_ACCESS'),
+);
+
+require __DIR__ . '/../config/routing/routing-client.php';
 require __DIR__ . '/../config/routing/routing-social.php';
-require __DIR__.'/../config/routing/routing-admin.php';
-require __DIR__.'/../config/routing/routing-instant.php';
+require __DIR__ . '/../config/routing/routing-admin.php';
+require __DIR__ . '/../config/routing/routing-instant.php';
 
 $controllers
     ->assert('id', '\d+')
