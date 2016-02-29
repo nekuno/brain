@@ -3,6 +3,8 @@
 namespace Service;
 
 use Manager\UserManager;
+use Model\User;
+use Silex\Component\Security\Core\Encoder\JWTEncoder;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\Security\Core\Encoder\PasswordEncoderInterface;
 
@@ -23,17 +25,22 @@ class AuthService
     protected $encoder;
 
     /**
-     * @var string
+     * @var JWTEncoder
      */
-    protected $secret;
+    protected $jwtEncoder;
 
-    public function __construct(UserManager $um, PasswordEncoderInterface $encoder, $secret)
+    public function __construct(UserManager $um, PasswordEncoderInterface $encoder, JWTEncoder $jwtEncoder)
     {
         $this->um = $um;
         $this->encoder = $encoder;
-        $this->secret = $secret;
+        $this->jwtEncoder = $jwtEncoder;
     }
 
+    /**
+     * @param $username
+     * @param $password
+     * @return string
+     */
     public function login($username, $password)
     {
 
@@ -51,14 +58,33 @@ class AuthService
             throw new UnauthorizedHttpException('', 'El nombre de usuario y la contraseña que ingresaste no coinciden con nuestros registros.');
         }
 
+        return $this->buildToken($user);
+    }
+
+    /**
+     * @param string $id
+     * @return string
+     */
+    public function getToken($id)
+    {
+        $user = $this->um->getById($id);
+
+        return $this->buildToken($user);
+    }
+
+    /**
+     * @param User $user
+     * @return string
+     */
+    protected function buildToken(User $user)
+    {
         $token = array(
             'iss' => 'https://nekuno.com',
-            'exp' => time() + 86400,
             'sub' => $user->getUsernameCanonical(),
             'user' => $user->jsonSerialize(),
         );
 
-        $jwt = \JWT::encode($token, $this->secret);
+        $jwt = $this->jwtEncoder->encode($token);
 
         return $jwt;
     }
