@@ -71,13 +71,6 @@ $controllers
             return (int)$id;
         }
     )
-    ->assert('id2', '\d+')
-    ->convert(
-        'id2',
-        function ($id) {
-            return (int)$id;
-        }
-    )
     ->assert('userId', '\d+')
     ->convert(
         'userId',

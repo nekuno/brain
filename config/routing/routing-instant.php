@@ -13,3 +13,26 @@ $instant->get('/users/{id}/contact/to', 'instant.relations.controller:contactToA
 $instant->get('/users/{from}/contact/{to}', 'instant.relations.controller:contactAction');
 
 $app->mount('/instant', $instant);
+
+$instant
+    ->assert('id', '\d+')
+    ->convert(
+        'id',
+        function ($id) {
+            return (int)$id;
+        }
+    )
+    ->assert('from', '\d+')
+    ->convert(
+        'from',
+        function ($from) {
+            return (int)$from;
+        }
+    )
+    ->assert('to', '\d+')
+    ->convert(
+        'to',
+        function ($to) {
+            return (int)$to;
+        }
+    );

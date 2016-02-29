@@ -46,3 +46,12 @@ $admin->put('/enterpriseUsers/{enterpriseUserId}/invitations/{id}', 'admin.enter
 $admin->post('/enterpriseUsers/{enterpriseUserId}/invitations/{id}', 'admin.enterpriseUsers.invitations.controller:validateAction');
 
 $app->mount('/admin', $admin);
+
+$admin
+    ->assert('id', '\d+')
+    ->convert(
+        'id',
+        function ($id) {
+            return (int)$id;
+        }
+    );
