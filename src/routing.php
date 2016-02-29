@@ -26,6 +26,18 @@ $app['security.firewalls'] = array(
         'pattern' => new RequestMatcher('(^/users$)|(^/invitations/token/validate/)|(^/lookUp/webHook$)|(^/users/validate$)|(^/profile/validate$)', null, array('POST')),
         'anonymous' => true,
     ),
+    'instant' => array(
+        'pattern' => new RequestMatcher('^/instant/', null, null, $app['valid_ips']),
+        'anonymous' => true,
+    ),
+    'admin' => array(
+        'pattern' => new RequestMatcher('^/admin/', null, null, $app['valid_ips']),
+        'anonymous' => true,
+    ),
+    'social' => array(
+        'pattern' => new RequestMatcher('^/social', null, null, $app['valid_ips']),
+        'anonymous' => true,
+    ),
     'secured' => array(
         'pattern' => '^.*$',
         'users' => $app['security.users_provider'],
