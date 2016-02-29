@@ -54,7 +54,7 @@ $app->register(new ModelsServiceProvider());
 $app->register(new Silex\Provider\SecurityServiceProvider());
 $app['security.jwt'] = array(
     'secret_key' => $app['secret'],
-    'life_time' => 86400,
+    'life_time' => $app['life_time'],
     'options' => array(
         'username_claim' => 'sub', // default name, option specifying claim containing username
         'header_name' => 'Authorization', // default null, option for usage normal oauth2 header

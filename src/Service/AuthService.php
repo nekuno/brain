@@ -4,6 +4,7 @@ namespace Service;
 
 use Manager\UserManager;
 use Model\User;
+use Silex\Component\Security\Core\Encoder\JWTEncoder;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\Security\Core\Encoder\PasswordEncoderInterface;
 
@@ -24,15 +25,15 @@ class AuthService
     protected $encoder;
 
     /**
-     * @var string
+     * @var JWTEncoder
      */
-    protected $secret;
+    protected $jwtEncoder;
 
-    public function __construct(UserManager $um, PasswordEncoderInterface $encoder, $secret)
+    public function __construct(UserManager $um, PasswordEncoderInterface $encoder, JWTEncoder $jwtEncoder)
     {
         $this->um = $um;
         $this->encoder = $encoder;
-        $this->secret = $secret;
+        $this->jwtEncoder = $jwtEncoder;
     }
 
     /**
@@ -79,12 +80,11 @@ class AuthService
     {
         $token = array(
             'iss' => 'https://nekuno.com',
-            'exp' => time() + 5184000, // 60 days
             'sub' => $user->getUsernameCanonical(),
             'user' => $user->jsonSerialize(),
         );
 
-        $jwt = \JWT::encode($token, $this->secret);
+        $jwt = $this->jwtEncoder->encode($token);
 
         return $jwt;
     }
