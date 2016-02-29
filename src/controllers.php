@@ -87,6 +87,12 @@ $app['users.relations.controller'] = $app->share(
     }
 );
 
+$app['users.tokens.controller'] = $app->share(
+    function() {
+        return new \Controller\User\TokensController;
+    }
+);
+
 $app['client.controller'] = $app->share(
     function() {
         return new Controller\ClientController;

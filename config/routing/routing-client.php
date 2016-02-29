@@ -131,6 +131,12 @@ $app->get('/invitations/count', 'users.invitations.controller:countByUserAction'
 $app->post('/invitations/{id}/send', 'users.invitations.controller:sendAction');
 
 /**
+ * Tokens routes
+ */
+
+$app->post('/tokens/{resourceOwner}', 'users.tokens.controller:postAction');
+
+/**
  * Client routes
  */
 $app->get('/client/version', 'client.controller:versionAction');
