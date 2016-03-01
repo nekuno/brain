@@ -5,15 +5,25 @@
 namespace Tests\API;
 
 use Everyman\Neo4j\Cypher\Query;
+use Model\User;
+use Silex\Application;
 use Silex\WebTestCase;
 use Symfony\Component\HttpFoundation\Response;
 
 abstract class APITest extends WebTestCase
 {
-    protected function getResponseByRoute($route, $method = 'GET', $data = array())
+    protected $app;
+
+    protected function getResponseByRoute($route, $method = 'GET', $data = array(), $userId = null)
     {
+        $headers = array('CONTENT_TYPE' => 'application/json');
+        if ($userId) {
+            $headers += $this->tryToGetJwtByUserId($userId);
+        }
+
         $client = static::createClient();
-        $client->request($method, $route, array(), array(), array('CONTENT_TYPE' => 'application/json'), json_encode($data));
+        $client->request($method, $route, array(), array(), $headers, json_encode($data));
+
         return $client->getResponse();
     }
 
@@ -62,17 +72,33 @@ abstract class APITest extends WebTestCase
         return $this->getResponseByRoute('/users', 'POST', $userData);
     }
 
+    protected function loginUserA()
+    {
+        $userData = $this->getUserAFixtures();
+        return $this->getResponseByRoute('/login', 'OPTIONS', $userData);
+    }
+
     protected function getUserA()
     {
-        return $this->getResponseByRoute('/users/1');
+        return $this->getResponseByRoute('/users/1', 'GET', array(), 1);
     }
 
     protected function getUserAFixtures()
     {
         return array(
-            'id' => 1,
             'username' => 'JohnDoe',
             'email' => 'nekuno-johndoe@gmail.com',
+            'plainPassword' => 'test'
         );
+    }
+
+    private function tryToGetJwtByUserId($userId)
+    {
+        try {
+            $jwt = $this->app['auth.service']->getToken($userId);
+            return array('HTTP_PHP_AUTH_DIGEST' => 'Bearer ' . $jwt);
+        } catch (\Exception $e) {
+            return array();
+        }
     }
 }

@@ -8,15 +8,16 @@ class UsersTest extends APITest
 {
     public function testUsers()
     {
-        $this->assertGetNonExistentUserResponse();
+        $this->assertGetUserWithotCredentialsResponse();
         $this->assertCreateUserFormat();
+        $this->assertLoginUserFormat();
         $this->assertGetUserFormat();
     }
 
-    protected function assertGetNonExistentUserResponse()
+    protected function assertGetUserWithotCredentialsResponse()
     {
         $response = $this->getUserA();
-        $this->assertStatusCode($response, 404, "Get deleted UserA");
+        $this->assertStatusCode($response, 401, "Get User without credentials");
     }
 
     protected function assertCreateUserFormat()
@@ -24,6 +25,12 @@ class UsersTest extends APITest
         $response = $this->createUserA();
         $formattedResponse = $this->assertJsonResponse($response, 201, "Create UserA");
         $this->assertUserFormat($formattedResponse, "Bad User response on create a user");
+    }
+
+    protected function assertLoginUserFormat()
+    {
+        $response = $this->loginUserA();
+        $this->assertStatusCode($response, 200, "Login UserA");
     }
 
     protected function assertGetUserFormat()
