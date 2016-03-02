@@ -9,6 +9,7 @@ use Model\User;
 use Silex\Application;
 use Silex\WebTestCase;
 use Symfony\Component\HttpFoundation\Response;
+use Service\AuthService;
 
 abstract class APITest extends WebTestCase
 {
@@ -66,10 +67,34 @@ abstract class APITest extends WebTestCase
         $this->assertEquals($statusCode, $response->getStatusCode(), $context . " response - Status Code is " . $response->getStatusCode() . ", expected " . $statusCode);
     }
 
+    protected function validateUserA()
+    {
+        $userData = $this->getUserAFixtures();
+        return $this->getResponseByRoute('/users/validate', 'POST', $userData);
+    }
+
     protected function createUserA()
     {
         $userData = $this->getUserAFixtures();
         return $this->getResponseByRoute('/users', 'POST', $userData);
+    }
+
+    protected function createUserB()
+    {
+        $userData = $this->getUserBFixtures();
+        return $this->getResponseByRoute('/users', 'POST', $userData);
+    }
+
+    protected function editOwnUser()
+    {
+        $userData = $this->getEditedUserAFixtures();
+        return $this->getResponseByRoute('/users', 'PUT', $userData, 1);
+    }
+
+    protected function resetOwnUser()
+    {
+        $userData = $this->getUserAFixtures();
+        return $this->getResponseByRoute('/users', 'PUT', $userData, 1);
     }
 
     protected function loginUserA()
@@ -78,9 +103,14 @@ abstract class APITest extends WebTestCase
         return $this->getResponseByRoute('/login', 'OPTIONS', $userData);
     }
 
-    protected function getUserA()
+    protected function getOwnUser()
     {
-        return $this->getResponseByRoute('/users/1', 'GET', array(), 1);
+        return $this->getResponseByRoute('/users', 'GET', array(), 1);
+    }
+
+    protected function getUserB()
+    {
+        return $this->getResponseByRoute('/users/2', 'GET', array(), 1);
     }
 
     protected function getUserAFixtures()
@@ -92,10 +122,30 @@ abstract class APITest extends WebTestCase
         );
     }
 
+    protected function getUserBFixtures()
+    {
+        return array(
+            'username' => 'JaneDoe',
+            'email' => 'nekuno-janedoe@gmail.com',
+            'plainPassword' => 'test'
+        );
+    }
+
+    protected function getEditedUserAFixtures()
+    {
+        return array(
+            'username' => 'JohnDoe',
+            'email' => 'nekuno-johndoe_updated@gmail.com',
+            'plainPassword' => 'test_updated'
+        );
+    }
+
     private function tryToGetJwtByUserId($userId)
     {
         try {
-            $jwt = $this->app['auth.service']->getToken($userId);
+            /** @var AuthService $authService */
+            $authService = $this->app['auth.service'];
+            $jwt = $authService->getToken($userId);
             return array('HTTP_PHP_AUTH_DIGEST' => 'Bearer ' . $jwt);
         } catch (\Exception $e) {
             return array();
