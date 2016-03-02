@@ -15,19 +15,6 @@ abstract class APITest extends WebTestCase
 {
     protected $app;
 
-    protected function getResponseByRoute($route, $method = 'GET', $data = array(), $userId = null)
-    {
-        $headers = array('CONTENT_TYPE' => 'application/json');
-        if ($userId) {
-            $headers += $this->tryToGetJwtByUserId($userId);
-        }
-
-        $client = static::createClient();
-        $client->request($method, $route, array(), array(), $headers, json_encode($data));
-
-        return $client->getResponse();
-    }
-
     public function createApplication()
     {
         $app = require __DIR__.'/../../app.php';
@@ -49,6 +36,19 @@ abstract class APITest extends WebTestCase
         $query->getResultSet();
     }
 
+    protected function getResponseByRoute($route, $method = 'GET', $data = array(), $userId = null)
+    {
+        $headers = array('CONTENT_TYPE' => 'application/json');
+        if ($userId) {
+            $headers += $this->tryToGetJwtByUserId($userId);
+        }
+
+        $client = static::createClient();
+        $client->request($method, $route, array(), array(), $headers, json_encode($data));
+
+        return $client->getResponse();
+    }
+
     protected function assertJsonResponse(Response $response, $statusCode = 200, $context = "Undefined")
     {
         $this->assertStatusCode($response, $statusCode, $context);
@@ -65,84 +65,6 @@ abstract class APITest extends WebTestCase
     protected function assertStatusCode(Response $response, $statusCode = 200, $context = "Undefined")
     {
         $this->assertEquals($statusCode, $response->getStatusCode(), $context . " response - Status Code is " . $response->getStatusCode() . ", expected " . $statusCode);
-    }
-
-    protected function getUserAvailable()
-    {
-        return $this->getResponseByRoute('/users/available/JohnDoe');
-    }
-
-    protected function validateUserA()
-    {
-        $userData = $this->getUserAFixtures();
-        return $this->getResponseByRoute('/users/validate', 'POST', $userData);
-    }
-
-    protected function createUserA()
-    {
-        $userData = $this->getUserAFixtures();
-        return $this->getResponseByRoute('/users', 'POST', $userData);
-    }
-
-    protected function createUserB()
-    {
-        $userData = $this->getUserBFixtures();
-        return $this->getResponseByRoute('/users', 'POST', $userData);
-    }
-
-    protected function editOwnUser()
-    {
-        $userData = $this->getEditedUserAFixtures();
-        return $this->getResponseByRoute('/users', 'PUT', $userData, 1);
-    }
-
-    protected function resetOwnUser()
-    {
-        $userData = $this->getUserAFixtures();
-        return $this->getResponseByRoute('/users', 'PUT', $userData, 1);
-    }
-
-    protected function loginUserA()
-    {
-        $userData = $this->getUserAFixtures();
-        return $this->getResponseByRoute('/login', 'OPTIONS', $userData);
-    }
-
-    protected function getOwnUser()
-    {
-        return $this->getResponseByRoute('/users', 'GET', array(), 1);
-    }
-
-    protected function getUserB()
-    {
-        return $this->getResponseByRoute('/users/2', 'GET', array(), 1);
-    }
-
-    protected function getUserAFixtures()
-    {
-        return array(
-            'username' => 'JohnDoe',
-            'email' => 'nekuno-johndoe@gmail.com',
-            'plainPassword' => 'test'
-        );
-    }
-
-    protected function getUserBFixtures()
-    {
-        return array(
-            'username' => 'JaneDoe',
-            'email' => 'nekuno-janedoe@gmail.com',
-            'plainPassword' => 'test'
-        );
-    }
-
-    protected function getEditedUserAFixtures()
-    {
-        return array(
-            'username' => 'JohnDoe',
-            'email' => 'nekuno-johndoe_updated@gmail.com',
-            'plainPassword' => 'test_updated'
-        );
     }
 
     private function tryToGetJwtByUserId($userId)

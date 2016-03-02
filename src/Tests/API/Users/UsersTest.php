@@ -4,7 +4,7 @@
  */
 namespace Tests\API;
 
-class UsersTest extends APITest
+class UsersTest extends UsersAPITest
 {
     public function testUsers()
     {
@@ -21,42 +21,46 @@ class UsersTest extends APITest
 
     protected function assertGetUserWithoutCredentialsResponse()
     {
-        $response = $this->getUserB();
+        $response = $this->getOtherUser(2);
         $this->assertStatusCode($response, 401, "Get User without credentials");
     }
 
     protected function assertGetUnusedUsernameAvailable()
     {
-        $response = $this->getUserAvailable();
+        $response = $this->getUserAvailable('JohnDoe');
         $this->assertStatusCode($response, 200, "Bad response on get unused available username JohnDoe");
     }
 
     protected function assertValidateUsersFormat()
     {
-        $response = $this->validateUserA();
+        $userData = $this->getUserAFixtures();
+        $response = $this->validateUserA($userData);
         $this->assertStatusCode($response, 200, "Bad response on validate user A");
     }
 
     protected function assertCreateUsersFormat()
     {
-        $response = $this->createUserA();
+        $userData = $this->getUserAFixtures();
+        $response = $this->createUser($userData);
         $formattedResponse = $this->assertJsonResponse($response, 201, "Create UserA");
         $this->assertUserAFormat($formattedResponse, "Bad User response on create user A");
 
-        $response = $this->createUserB();
+        $userData = $this->getUserBFixtures();
+        $response = $this->createUser($userData);
         $formattedResponse = $this->assertJsonResponse($response, 201, "Create UserB");
         $this->assertUserBFormat($formattedResponse, "Bad User response on create user B");
     }
 
     protected function assertGetExistingUsernameAvailable()
     {
-        $response = $this->getUserAvailable();
+        $response = $this->getUserAvailable('JohnDoe');
         $this->assertStatusCode($response, 404, "Bad response on get existing available username JohnDoe");
     }
 
     protected function assertLoginUserFormat()
     {
-        $response = $this->loginUserA();
+        $userData = $this->getUserAFixtures();
+        $response = $this->loginUserA($userData);
         $this->assertStatusCode($response, 200, "Login UserA");
     }
 
@@ -69,18 +73,20 @@ class UsersTest extends APITest
 
     protected function assertGetOtherUserFormat()
     {
-        $response = $this->getUserB();
+        $response = $this->getOtherUser(2);
         $formattedResponse = $this->assertJsonResponse($response, 200, "Get User B");
         $this->assertUserBFormat($formattedResponse, "Bad user B response");
     }
 
     protected function assertEditOwnUserFormat()
     {
-        $response = $this->editOwnUser();
+        $userData = $this->getEditedUserAFixtures();
+        $response = $this->editOwnUser($userData);
         $formattedResponse = $this->assertJsonResponse($response, 200, "Edit UserA");
         $this->assertEditedUserAFormat($formattedResponse, "Bad User response on edit user A");
 
-        $response = $this->resetOwnUser();
+        $userData = $this->getUserAFixtures();
+        $response = $this->editOwnUser($userData);
         $formattedResponse = $this->assertJsonResponse($response, 200, "Edit UserA");
         $this->assertUserAFormat($formattedResponse, "Bad User response on edit user A");
     }
@@ -113,5 +119,32 @@ class UsersTest extends APITest
         $this->assertEquals(1, $user['qnoow_id'], "qnoow_id is not 1");
         $this->assertEquals('JohnDoe', $user['username'], "username is not JohnDoe");
         $this->assertEquals('nekuno-johndoe_updated@gmail.com', $user['email'], "email is not nekuno-johndoe_updated@gmail.com");
+    }
+
+    private function getUserAFixtures()
+    {
+        return array(
+            'username' => 'JohnDoe',
+            'email' => 'nekuno-johndoe@gmail.com',
+            'plainPassword' => 'test'
+        );
+    }
+
+    private function getUserBFixtures()
+    {
+        return array(
+            'username' => 'JaneDoe',
+            'email' => 'nekuno-janedoe@gmail.com',
+            'plainPassword' => 'test'
+        );
+    }
+
+    private function getEditedUserAFixtures()
+    {
+        return array(
+            'username' => 'JohnDoe',
+            'email' => 'nekuno-johndoe_updated@gmail.com',
+            'plainPassword' => 'test_updated'
+        );
     }
 }
