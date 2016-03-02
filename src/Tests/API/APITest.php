@@ -67,6 +67,11 @@ abstract class APITest extends WebTestCase
         $this->assertEquals($statusCode, $response->getStatusCode(), $context . " response - Status Code is " . $response->getStatusCode() . ", expected " . $statusCode);
     }
 
+    protected function getUserAvailable()
+    {
+        return $this->getResponseByRoute('/users/available/JohnDoe');
+    }
+
     protected function validateUserA()
     {
         $userData = $this->getUserAFixtures();
