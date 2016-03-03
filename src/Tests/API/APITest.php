@@ -20,9 +20,9 @@ abstract class APITest extends WebTestCase
 
     public function createApplication()
     {
-        $app = require __DIR__.'/../../app.php';
-        require __DIR__.'/../../controllers.php';
-        require __DIR__.'/../../routing.php';
+        $app = require __DIR__ . '/../../app.php';
+        require __DIR__ . '/../../controllers.php';
+        require __DIR__ . '/../../routing.php';
         $app['debug'] = true;
         unset($app['exception_handler']);
         $app['session.test'] = true;
