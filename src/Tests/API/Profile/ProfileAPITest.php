@@ -37,4 +37,19 @@ abstract class ProfileAPITest extends APITest
     {
         return $this->getResponseByRoute('/profile', 'DELETE', array(), $loggedInUserId);
     }
+
+    protected function getProfileMetadata($loggedInUserId = 1)
+    {
+        return $this->getResponseByRoute('/profile/metadata', 'GET', array(), $loggedInUserId);
+    }
+
+    protected function getProfileFilters($loggedInUserId = 1)
+    {
+        return $this->getResponseByRoute('/profile/filters', 'GET', array(), $loggedInUserId);
+    }
+
+    protected function getProfileTags($type, $loggedInUserId = 1)
+    {
+        return $this->getResponseByRoute('/profile/tags/' . $type, 'GET', array(), $loggedInUserId);
+    }
 }

@@ -6,7 +6,6 @@ namespace Tests\API\Profile;
 
 class ProfileTest extends ProfileAPITest
 {
-
     public function testProfile()
     {
         $this->assertProfileOptionsCommandDisplay();
@@ -23,6 +22,9 @@ class ProfileTest extends ProfileAPITest
         $this->assertValidationErrorsResponse();
         $this->assertCreateComplexProfileResponse();
         $this->assertEditComplexProfileResponse();
+        $this->assetsGetProfileMetadataResponse();
+        $this->assetsGetProfileFiltersResponse();
+        $this->assetsGetProfileTagsResponse();
     }
 
     protected function assertProfileOptionsCommandDisplay()
@@ -147,6 +149,35 @@ class ProfileTest extends ProfileAPITest
         $response = $this->editProfile($profileData);
         $formattedResponse = $this->assertJsonResponse($response, 200, "Edit Complex ProfileA");
         $this->assertEditedComplexProfileFormat($formattedResponse, "Bad complex profile response on edit profile A");
+    }
+
+    protected function assetsGetProfileMetadataResponse()
+    {
+        $response = $this->getProfileMetadata();
+        $formattedResponse = $this->assertJsonResponse($response, 200, "Get Profile metadata");
+        $this->assertGetProfileMetadataFormat($formattedResponse, "Bad response on get profile metadata");
+    }
+
+    protected function assetsGetProfileFiltersResponse()
+    {
+        $response = $this->getProfileFilters();
+        $formattedResponse = $this->assertJsonResponse($response, 200, "Get Profile filters");
+        $this->assertGetProfileFiltersFormat($formattedResponse, "Bad response on get profile filters");
+    }
+
+    protected function assetsGetProfileTagsResponse()
+    {
+        $response = $this->getProfileTags('allergy');
+        $formattedResponse = $this->assertJsonResponse($response, 200, "Get Profile tags for allergy type");
+        $this->assertArrayHasKey('items', $formattedResponse, "Profile tag has not items key");
+        $this->assertArrayHasKey(0, $formattedResponse['items'], "Profile tag items has not 0 key");
+        $this->assertGetProfileTagFormat($formattedResponse['items'][0], 'pollen', "Bad response on get profile tags for allergy type");
+
+        $response = $this->getProfileTags('profession');
+        $formattedResponse = $this->assertJsonResponse($response, 200, "Get Profile tags for profession type");
+        $this->assertArrayHasKey('items', $formattedResponse, "Profile tag has not items key");
+        $this->assertArrayHasKey(0, $formattedResponse['items'], "Profile tag items has not 0 key");
+        $this->assertGetProfileTagFormat($formattedResponse['items'][0], 'programmer', "Bad response on get profile tags for profession type");
     }
 
     protected function assertProfileFormat($profile)
@@ -315,6 +346,30 @@ class ProfileTest extends ProfileAPITest
         $this->assertRegExp('/^(German)|(Japanese)$/', $profile['language'][1]['tag'], "language[1]['tag'] is not German or Japanese");
         $this->assertRegExp('/^(professional_working)|(native)$/', $profile['language'][1]['detail'], "language[1]['detail'] is not professional_working or native");
         $this->assertEquals('writer', $profile['profession'][0], "profession[0] detail is not writer");
+    }
+
+    protected function assertGetProfileMetadataFormat($metadata)
+    {
+        $this->assertArrayHasKey('birthday', $metadata, "Metadata has not birthday key");
+        $this->assertArrayHasKey('location', $metadata, "Metadata has not location key");
+        $this->assertArrayHasKey('gender', $metadata, "Metadata has not gender key");
+        $this->assertArrayHasKey('orientation', $metadata, "Metadata has not orientation key");
+        $this->assertArrayHasKey('interfaceLanguage', $metadata, "Metadata has not interfaceLanguage key");
+    }
+
+    protected function assertGetProfileFiltersFormat($metadata)
+    {
+        foreach ($metadata as $value) {
+            $this->assertArrayHasKey('label', $value, "Filters has not label key");
+            $this->assertArrayNotHasKey('labelFilter', $value, "Filters has labelFilter key");
+            $this->assertArrayNotHasKey('filterable', $value, "Filters has filterable key");
+        }
+   }
+
+    protected function assertGetProfileTagFormat($tag, $name)
+    {
+        $this->assertArrayHasKey('name', $tag, "Tag has not label name");
+        $this->assertEquals($name, $tag['name'], $tag['name'] . " is not " . $name);
     }
 
     protected function assertBirthdayValidationErrorFormat($exception)
