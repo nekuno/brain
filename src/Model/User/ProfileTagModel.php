@@ -28,7 +28,7 @@ class ProfileTagModel
      * @throws \Exception
      * @return array
      */
-    public function getProfileTags($type, $startingWith='', $limit=0)
+    public function getProfileTags($type, $startingWith = '', $limit = 0)
     {
         $response = array();
 
@@ -36,7 +36,7 @@ class ProfileTagModel
 
         $startingWithQuery = '';
         if ($startingWith != '') {
-            $params['tag'] = '(?i)'.$startingWith.'.*';
+            $params['tag'] = '(?i)' . $startingWith . '.*';
             $startingWithQuery = 'WHERE tag.name =~ {tag}';
         }
 
@@ -48,7 +48,7 @@ class ProfileTagModel
 
         $query = "
             MATCH
-            (tag:ProfileTag:".ucfirst($type).")
+            (tag:ProfileTag:" . ucfirst($type) . ")
         ";
         $query .= $startingWithQuery;
         $query .= "
