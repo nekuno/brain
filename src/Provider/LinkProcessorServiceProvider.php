@@ -10,6 +10,7 @@ use ApiConsumer\LinkProcessor\MetadataParser\BasicMetadataParser;
 use ApiConsumer\LinkProcessor\MetadataParser\FacebookMetadataParser;
 use ApiConsumer\LinkProcessor\Processor\FacebookProcessor;
 use ApiConsumer\LinkProcessor\Processor\TwitterProcessor;
+use ApiConsumer\LinkProcessor\UrlParser\FacebookUrlParser;
 use ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser;
 use ApiConsumer\LinkProcessor\UrlParser\UrlParser;
 use ApiConsumer\LinkProcessor\UrlParser\YoutubeUrlParser;
@@ -62,7 +63,7 @@ class LinkProcessorServiceProvider implements ServiceProviderInterface
 
         $app['api_consumer.link_processor.processor.facebook'] = $app->share(
             function ($app) {
-                return new FacebookProcessor($app['userAggregator.service'], $app['api_consumer.link_processor.processor.scrapper'], $app['api_consumer.resource_owner.facebook'], $app['api_consumer.link_processor.url_parser.parser']);
+                return new FacebookProcessor($app['userAggregator.service'], $app['api_consumer.link_processor.processor.scrapper'], $app['api_consumer.resource_owner.facebook'], new FacebookUrlParser());
             }
         );
 
