@@ -209,6 +209,12 @@ class LinkModel
             return $saved;
         }
 
+        $processed = isset($data['processed']) ? $data['processed'] : 1;
+        if ($processed != 1) {
+            $data['title'] = isset($data['title']) ? $data['title'] : '';
+            $data['description'] = isset($data['description']) ? $data['description'] : '';
+        }
+
         $additionalLabels = '';
         if (isset($data['additionalLabels'])) {
             $additionalLabels = ':' . implode(':', $data['additionalLabels']);
@@ -222,7 +228,7 @@ class LinkModel
                 'l.title = { title }',
                 'l.description = { description }',
                 'l.language = { language }',
-                'l.processed = 1',
+                'l.processed = { processed }',
                 'l.created =  timestamp()'
             );
 
@@ -244,6 +250,7 @@ class LinkModel
                 'url' => $data['url'],
                 'language' => isset($data['language']) ? $data['language'] : null,
                 'thumbnail' => isset($data['thumbnail']) ? $data['thumbnail'] : null,
+                'processed' => (integer)$processed,
             )
         );
 
@@ -286,8 +293,13 @@ class LinkModel
 
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match('(l:Link)')
-            ->where('l.url = { tempId }')
+        $qb->match('(l:Link)');
+
+        $conditions = array('l.url = { tempId }');
+        if (!$processed) {
+            $conditions[] = 'l.processed = 0';
+        }
+        $qb->where($conditions)
             ->set(
                 'l.url = { url }',
                 'l.title = { title }',
@@ -531,7 +543,7 @@ class LinkModel
         $result = $query->getResultSet();
 
         //If user had no links to set popularity, all done
-        if ($result->count() == 0){
+        if ($result->count() == 0) {
             return true;
         }
 

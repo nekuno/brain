@@ -101,6 +101,7 @@ class LinkProcessor
             if (!$this->isProcessable($preprocessedLink)) {
                 $link = $preprocessedLink->getLink();
                 $link['processed'] = 0;
+                $link['url'] = $this->cleanURL($preprocessedLink->getFetched());
                 return $link;
             }
 

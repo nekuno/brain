@@ -92,8 +92,8 @@ class LinksProcessNewCommand extends ApplicationAwareCommand
             } else {
                 try {
                     $addedLink = $linksModel->addLink($processedLink);
-                    $rateModel->userRateLink($userId, $addedLink, RateModel::LIKE);
-
+                    $processedLink['id'] = $addedLink['id'];
+                    $rateModel->userRateLink($userId, $processedLink, RateModel::LIKE);
                     if (isset($processedLink['tags'])) {
                         foreach ($processedLink['tags'] as $tag) {
                             $linksModel->createTag($tag);
