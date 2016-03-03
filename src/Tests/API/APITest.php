@@ -35,7 +35,7 @@ abstract class APITest extends WebTestCase
         parent::setUp();
         $app = $this->app;
         // Clean the database
-        $query = new Query($app['neo4j.client'], 'MATCH n-[r]-m DELETE n, r, m');
+        $query = new Query($app['neo4j.client'], 'MATCH (n) OPTIONAL MATCH n-[r]-m DELETE r, n, m;');
         $query->getResultSet();
     }
 
@@ -87,6 +87,11 @@ abstract class APITest extends WebTestCase
         $commandTester->execute(array('command' => $command->getName()));
 
         return $commandTester->getDisplay();
+    }
+
+    protected function runProfileOptionsCommand()
+    {
+        return $this->runCommand('neo4j:profile-options');
     }
 
     protected function loginUser($userData)

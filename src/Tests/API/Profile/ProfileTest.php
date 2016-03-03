@@ -100,7 +100,7 @@ class ProfileTest extends ProfileAPITest
     protected function assertGetDeletedProfileResponse()
     {
         $response = $this->deleteProfile();
-        $formattedResponse = $this->assertJsonResponse($response, 200, "Edit Profile");
+        $formattedResponse = $this->assertJsonResponse($response, 200, "Delete Profile");
         $this->assertProfileFormat($formattedResponse, "Bad Profile response on delete profile A");
 
         $response = $this->getOwnProfile();
@@ -615,10 +615,5 @@ class ProfileTest extends ProfileAPITest
             "orientation" => "heterosexual",
             "interfaceLanguage" => "none-existent"
         );
-    }
-
-    private function runProfileOptionsCommand()
-    {
-        return $this->runCommand('neo4j:profile-options');
     }
 }
