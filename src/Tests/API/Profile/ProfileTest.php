@@ -21,7 +21,8 @@ class ProfileTest extends ProfileAPITest
         $this->assertEditOwnProfileResponse();
         $this->assertGetDeletedProfileResponse();
         $this->assertValidationErrorsResponse();
-        $this->assertCreateComplexProfilesResponse();
+        $this->assertCreateComplexProfileResponse();
+        $this->assertEditComplexProfileResponse();
     }
 
     protected function assertProfileOptionsCommandDisplay()
@@ -132,12 +133,20 @@ class ProfileTest extends ProfileAPITest
         $this->assertInterfaceLanguageValidationErrorFormat($formattedResponse);
     }
 
-    protected function assertCreateComplexProfilesResponse()
+    protected function assertCreateComplexProfileResponse()
     {
         $profileData = $this->getComplexProfileFixtures();
         $response = $this->createProfile($profileData);
         $formattedResponse = $this->assertJsonResponse($response, 201, "Create Complex ProfileA");
         $this->assertComplexProfileFormat($formattedResponse, "Bad complex profile response on create profile A");
+    }
+
+    protected function assertEditComplexProfileResponse()
+    {
+        $profileData = $this->getEditedComplexProfileFixtures();
+        $response = $this->editProfile($profileData);
+        $formattedResponse = $this->assertJsonResponse($response, 200, "Edit Complex ProfileA");
+        $this->assertEditedComplexProfileFormat($formattedResponse, "Bad complex profile response on edit profile A");
     }
 
     protected function assertProfileFormat($profile)
@@ -247,8 +256,65 @@ class ProfileTest extends ProfileAPITest
         $this->assertRegExp('/^(English)|(French)$/', $profile['language'][1]['tag'], "language[1]['tag'] is not English or French");
         $this->assertRegExp('/^(full_professional)|(elementary)$/', $profile['language'][1]['detail'], "language[1]['detail'] is not full_professional or elementary");
         $this->assertEquals('bit', $profile['education'][0], "education[0] detail is not bit");
-        $this->assertEquals('programming', $profile['profession'][0], "profession[0] detail is not programming");
+        $this->assertEquals('programmer', $profile['profession'][0], "profession[0] detail is not programmer");
         $this->assertEquals('pollen', $profile['allergy'][0], "allergy[0] detail is not pollen");
+    }
+
+    protected function assertEditedComplexProfileFormat($profile)
+    {
+        $this->assertArrayHasKey('birthday', $profile, "Profile has not birthday key");
+        $this->assertArrayHasKey('location', $profile, "Profile has not location key");
+        $this->assertArrayHasKey('locality', $profile['location'], "Profile has not location key");
+        $this->assertArrayHasKey('address', $profile['location'], "Profile has not location key");
+        $this->assertArrayHasKey('country', $profile['location'], "Profile has not location key");
+        $this->assertArrayHasKey('longitude', $profile['location'], "Profile has not location key");
+        $this->assertArrayHasKey('latitude', $profile['location'], "Profile has not location key");
+        $this->assertArrayHasKey('zodiacSign', $profile, "Profile has not zodiacSign key");
+        $this->assertArrayHasKey('gender', $profile, "Profile has not gender key");
+        $this->assertArrayHasKey('orientation', $profile, "Profile has not orientation key");
+        $this->assertArrayHasKey('interfaceLanguage', $profile, "Profile has not interfaceLanguage key");
+        $this->assertArrayHasKey('religion', $profile, "Profile has not religion key");
+        $this->assertArrayHasKey('choice', $profile['religion'], "Profile has not religion choice key");
+        $this->assertArrayHasKey('detail', $profile['religion'], "Profile has not religion detail key");
+        $this->assertArrayHasKey('sons', $profile, "Profile has not sons key");
+        $this->assertArrayHasKey('choice', $profile['sons'], "Profile has not sons choice key");
+        $this->assertArrayHasKey('detail', $profile['sons'], "Profile has not sons detail key");
+        $this->assertArrayHasKey('civilStatus', $profile, "Profile has not civilStatus key");
+        $this->assertArrayHasKey('hairColor', $profile, "Profile has not hairColor key");
+        $this->assertArrayHasKey('relationshipInterest', $profile, "Profile has not relationshipInterest key");
+        $this->assertArrayHasKey('language', $profile, "Profile has not language key");
+        $this->assertArrayHasKey(0, $profile['language'], "Profile has not language[0] key");
+        $this->assertArrayHasKey(1, $profile['language'], "Profile has not language[1] key");
+        $this->assertArrayHasKey('tag', $profile['language'][0], "Profile has not language[0]['tag'] key");
+        $this->assertArrayHasKey('detail', $profile['language'][0], "Profile has not language[0]['detail'] key");
+        $this->assertArrayHasKey('tag', $profile['language'][1], "Profile has not language[1]['tag'] key");
+        $this->assertArrayHasKey('detail', $profile['language'][1], "Profile has not language[1]['detail'] key");
+        $this->assertArrayNotHasKey('education', $profile, "Profile has education key");
+        $this->assertArrayHasKey('profession', $profile, "Profile has not profession key");
+        $this->assertArrayHasKey(0, $profile['profession'], "Profile has not profession[0] key");
+        $this->assertArrayNotHasKey('allergy', $profile, "Profile has allergy key");
+        $this->assertEquals('1980-01-01', $profile['birthday'], "birthday is not 1980-01-01");
+        $this->assertEquals('Madrid', $profile['location']['locality'], "locality is not Madrid");
+        $this->assertEquals('Madrid', $profile['location']['address'], "address is not Madrid");
+        $this->assertEquals('Spain', $profile['location']['country'], "country is not Spain");
+        $this->assertEquals(-3.7037902, $profile['location']['longitude'], "longitude is not -3.7037902");
+        $this->assertEquals(40.4167754, $profile['location']['latitude'], "latitude is not 40.4167754");
+        $this->assertEquals('capricorn', $profile['zodiacSign'], "zodiacSign is not capricorn");
+        $this->assertEquals('male', $profile['gender'], "gender is not male");
+        $this->assertEquals('heterosexual', $profile['orientation'], "orientation is not heterosexual");
+        $this->assertEquals('es', $profile['interfaceLanguage'], "interfaceLanguage is not es");
+        $this->assertEquals('agnosticism', $profile['religion']['choice'], "religion choice is not agnosticism");
+        $this->assertEquals('important', $profile['religion']['detail'], "religion detail is not important");
+        $this->assertEquals('yes', $profile['sons']['choice'], "sons choice is not yes");
+        $this->assertEquals('want', $profile['sons']['detail'], "sons detail is not want");
+        $this->assertEquals('married', $profile['civilStatus'], "civilStatus is not married");
+        $this->assertEquals('black', $profile['hairColor'], "hairColor is not black");
+        $this->assertEquals('friendship', $profile['relationshipInterest'], "relationshipInterest is not friendship");
+        $this->assertRegExp('/^(German)|(Japanese)$/', $profile['language'][0]['tag'], "language[0]['tag'] is not German or Japanese");
+        $this->assertRegExp('/^(professional_working)|(native)$/', $profile['language'][0]['detail'], "language[0]['detail'] is not professional_working or native");
+        $this->assertRegExp('/^(German)|(Japanese)$/', $profile['language'][1]['tag'], "language[1]['tag'] is not German or Japanese");
+        $this->assertRegExp('/^(professional_working)|(native)$/', $profile['language'][1]['detail'], "language[1]['detail'] is not professional_working or native");
+        $this->assertEquals('writer', $profile['profession'][0], "profession[0] detail is not writer");
     }
 
     protected function assertBirthdayValidationErrorFormat($exception)
@@ -360,11 +426,54 @@ class ProfileTest extends ProfileAPITest
                 "bit"
             ),
             "profession" => array(
-                "programming"
+                "programmer"
             ),
             "allergy" => array(
                 "pollen"
             )
+        );
+    }
+
+    private function getEditedComplexProfileFixtures()
+    {
+        return array(
+            "birthday" => "1980-01-01",
+            "location" => array(
+                "locality" => "Madrid",
+                "address" => "Madrid",
+                "country" => "Spain",
+                "longitude" => -3.7037902,
+                "latitude" => 40.4167754
+            ),
+            "religion" => array(
+                "choice" => "agnosticism",
+                "detail" => "important"
+            ),
+            "sons" => array(
+                "choice" => "yes",
+                "detail" => "want"
+            ),
+            "interfaceLanguage" => "es",
+            "gender" => "male",
+            "civilStatus" => "married",
+            "hairColor" => "black",
+            "relationshipInterest" => "friendship",
+            "orientation" => "heterosexual",
+            "language" => array(
+                array(
+                    "tag" => "German",
+                    "choice" => "professional_working"
+                ),
+                array(
+                    "tag" => "Japanese",
+                    "choice" => "native"
+                )
+            ),
+            "education" => null,
+            "profession" => array(
+                "writer"
+            ),
+            "allergy" => null,
         );
     }
 
