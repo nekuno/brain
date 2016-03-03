@@ -67,6 +67,55 @@ abstract class APITest extends WebTestCase
         $this->assertEquals($statusCode, $response->getStatusCode(), $context . " response - Status Code is " . $response->getStatusCode() . ", expected " . $statusCode);
     }
 
+    protected function assertValidationErrorFormat($exception)
+    {
+        $this->assertArrayHasKey('error', $exception, "Validation exception has not error key");
+        $this->assertArrayHasKey('validationErrors', $exception, "Validation exception has not validationErrors key");
+        $this->assertEquals('Validation error', $exception['error'], "error key is not Validation error");
+    }
+
+    protected function loginUser($userData)
+    {
+        return $this->getResponseByRoute('/login', 'OPTIONS', $userData);
+    }
+
+    protected function createUser($userData)
+    {
+        return $this->getResponseByRoute('/users', 'POST', $userData);
+    }
+
+    protected function createAndLoginUserA()
+    {
+        $userData = $this->getUserAFixtures();
+        $this->createUser($userData);
+        $this->loginUser($userData);
+    }
+
+    protected function createAndLoginUserB()
+    {
+        $userData = $this->getUserBFixtures();
+        $this->createUser($userData);
+        $this->loginUser($userData);
+    }
+
+    protected function getUserAFixtures()
+    {
+        return array(
+            'username' => 'JohnDoe',
+            'email' => 'nekuno-johndoe@gmail.com',
+            'plainPassword' => 'test'
+        );
+    }
+
+    protected function getUserBFixtures()
+    {
+        return array(
+            'username' => 'JaneDoe',
+            'email' => 'nekuno-janedoe@gmail.com',
+            'plainPassword' => 'test'
+        );
+    }
+
     private function tryToGetJwtByUserId($userId)
     {
         try {

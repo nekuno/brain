@@ -2,7 +2,9 @@
 /**
  * @author Manolo Salsas <manolez@gmail.com>
  */
-namespace Tests\API;
+namespace Tests\API\Users;
+
+use Tests\API\APITest;
 
 abstract class UsersAPITest extends APITest
 {
@@ -16,28 +18,18 @@ abstract class UsersAPITest extends APITest
         return $this->getResponseByRoute('/users/validate', 'POST', $userData);
     }
 
-    protected function createUser($userData)
+    protected function editOwnUser($userData, $loggedInUser = 1)
     {
-        return $this->getResponseByRoute('/users', 'POST', $userData);
+        return $this->getResponseByRoute('/users', 'PUT', $userData, $loggedInUser);
     }
 
-    protected function editOwnUser($userData)
+    protected function getOwnUser($loggedInUser = 1)
     {
-        return $this->getResponseByRoute('/users', 'PUT', $userData, 1);
+        return $this->getResponseByRoute('/users', 'GET', array(), $loggedInUser);
     }
 
-    protected function loginUserA($userData)
+    protected function getOtherUser($userId, $loggedInUser = 1)
     {
-        return $this->getResponseByRoute('/login', 'OPTIONS', $userData);
-    }
-
-    protected function getOwnUser()
-    {
-        return $this->getResponseByRoute('/users', 'GET', array(), 1);
-    }
-
-    protected function getOtherUser($userId)
-    {
-        return $this->getResponseByRoute('/users/' . $userId, 'GET', array(), 1);
+        return $this->getResponseByRoute('/users/' . $userId, 'GET', array(), $loggedInUser);
     }
 }

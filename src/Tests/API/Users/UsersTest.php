@@ -2,7 +2,7 @@
 /**
  * @author Manolo Salsas <manolez@gmail.com>
  */
-namespace Tests\API;
+namespace Tests\API\Users;
 
 class UsersTest extends UsersAPITest
 {
@@ -60,7 +60,7 @@ class UsersTest extends UsersAPITest
     protected function assertLoginUserFormat()
     {
         $userData = $this->getUserAFixtures();
-        $response = $this->loginUserA($userData);
+        $response = $this->loginUser($userData);
         $this->assertStatusCode($response, 200, "Login UserA");
     }
 
@@ -119,24 +119,6 @@ class UsersTest extends UsersAPITest
         $this->assertEquals(1, $user['qnoow_id'], "qnoow_id is not 1");
         $this->assertEquals('JohnDoe', $user['username'], "username is not JohnDoe");
         $this->assertEquals('nekuno-johndoe_updated@gmail.com', $user['email'], "email is not nekuno-johndoe_updated@gmail.com");
-    }
-
-    private function getUserAFixtures()
-    {
-        return array(
-            'username' => 'JohnDoe',
-            'email' => 'nekuno-johndoe@gmail.com',
-            'plainPassword' => 'test'
-        );
-    }
-
-    private function getUserBFixtures()
-    {
-        return array(
-            'username' => 'JaneDoe',
-            'email' => 'nekuno-janedoe@gmail.com',
-            'plainPassword' => 'test'
-        );
     }
 
     private function getEditedUserAFixtures()
