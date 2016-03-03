@@ -4,10 +4,6 @@
  */
 namespace Tests\API\Profile;
 
-use Console\Command\Neo4jProfileOptionsCommand;
-use Symfony\Component\Console\Application;
-use Symfony\Component\Console\Tester\CommandTester;
-
 class ProfileTest extends ProfileAPITest
 {
 
@@ -340,13 +336,6 @@ class ProfileTest extends ProfileAPITest
 
     private function runProfileOptionsCommand()
     {
-        $application = new Application();
-        $application->add(new Neo4jProfileOptionsCommand($this->app));
-
-        $command = $application->find('neo4j:profile-options');
-        $commandTester = new CommandTester($command);
-        $commandTester->execute(array('command' => $command->getName()));
-
-        return $commandTester->getDisplay();
+        return $this->runCommand('neo4j:profile-options');
     }
 }

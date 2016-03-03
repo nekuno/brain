@@ -4,12 +4,15 @@
  */
 namespace Tests\API;
 
+use Console\Command\Neo4jProfileOptionsCommand;
 use Everyman\Neo4j\Cypher\Query;
 use Model\User;
 use Silex\Application;
 use Silex\WebTestCase;
+use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\HttpFoundation\Response;
 use Service\AuthService;
+use Symfony\Component\Console\Application as ConsoleApplication;
 
 abstract class APITest extends WebTestCase
 {
@@ -72,6 +75,18 @@ abstract class APITest extends WebTestCase
         $this->assertArrayHasKey('error', $exception, "Validation exception has not error key");
         $this->assertArrayHasKey('validationErrors', $exception, "Validation exception has not validationErrors key");
         $this->assertEquals('Validation error', $exception['error'], "error key is not Validation error");
+    }
+
+    protected function runCommand($commandString)
+    {
+        $application = new ConsoleApplication();
+        $application->add(new Neo4jProfileOptionsCommand($this->app));
+
+        $command = $application->find($commandString);
+        $commandTester = new CommandTester($command);
+        $commandTester->execute(array('command' => $command->getName()));
+
+        return $commandTester->getDisplay();
     }
 
     protected function loginUser($userData)
