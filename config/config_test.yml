@@ -1,6 +1,9 @@
 imports:
     - { resource: config_dev.yml }
 
+locale.options:
+    default: en
+
 dbs.options:
     mysql_social:
         driver: pdo_sqlite
