@@ -7,6 +7,7 @@ use ApiConsumer\LinkProcessor\PreprocessedLink;
 use Console\ApplicationAwareCommand;
 use Model\LinkModel;
 use Model\User\RateModel;
+use Model\User\TokensModel;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -22,6 +23,7 @@ class LinksProcessNewCommand extends ApplicationAwareCommand
             ->setDescription('Process new links into the database')
             ->addArgument('url', InputArgument::OPTIONAL, 'Url to be processed', null)
             ->addOption('userId', null, InputOption::VALUE_REQUIRED, 'User to like the link', null)
+            ->addOption('resource', null, InputOption::VALUE_REQUIRED, 'Resource from which it was fetched', null)
             ->addOption('csv', null, InputOption::VALUE_REQUIRED, 'Process urls from a CSV file', null);
     }
 
@@ -36,6 +38,7 @@ class LinksProcessNewCommand extends ApplicationAwareCommand
         $url = $input->getArgument('url');
         $csv = $input->getOption('csv');
         $userId = $input->getOption('userId');
+        $resource = $input->getOption('resource');
 
         if (!$csv && !$url) {
             $output->writeln('Please insert an URL to be processed or select csv file to read from');
@@ -59,7 +62,17 @@ class LinksProcessNewCommand extends ApplicationAwareCommand
             try {
 
                 $preprocessedLink = new PreprocessedLink($url);
+                $preprocessedLink->setSource($resource);
 
+                if ($userId && $resource)
+                {
+                    /* @var TokensModel $tokensModel */
+                    $tokensModel = $this->app['users.tokens.model'];
+                    $tokens = $tokensModel->getByUserOrResource($userId, $resource);
+                    if (count($tokens) !== 0){
+                        $preprocessedLink->setToken($tokens[0]);
+                    }
+                }
                 /* @var LinkProcessor $processor */
                 $processor = $this->app['api_consumer.link_processor'];
                 $processedLink = $processor->process($preprocessedLink);
