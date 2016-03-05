@@ -87,8 +87,12 @@ class LinkProcessor
         $processings = 0;
 
         do {
+            $preprocessedLink->setCanonical(null);
+
             if (!$reprocess && $this->isLinkProcessed($preprocessedLink)) {
-                return $preprocessedLink->getLink();
+                $link = $preprocessedLink->getLink();
+                $link['url'] = $preprocessedLink->getFetched();
+                return $link;
             }
 
             //sets canonical url

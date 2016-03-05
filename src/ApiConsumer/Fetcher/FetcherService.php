@@ -203,7 +203,7 @@ class FetcherService implements LoggerAwareInterface
 
                 $linkProcessed = $this->linkProcessor->process($link);
 
-                $linkCreated = $this->linkModel->addLink($linkProcessed);
+                $linkCreated = $this->linkModel->addOrUpdateLink($linkProcessed);
 
                 $linkProcessed['id'] = $linkCreated['id'];
                 $this->rateModel->userRateLink($userId, $linkProcessed, RateModel::LIKE, false);

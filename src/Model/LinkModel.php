@@ -195,6 +195,31 @@ class LinkModel
     /**
      * @param array $data
      * @return array
+     */
+    public function addOrUpdateLink(array $data)
+    {
+        if (!isset($data['url'])) {
+            return array();
+        }
+
+        $link = $this->findLinkByUrl($data['url']);
+
+        if (!$link) {
+            return $this->addLink($data);
+        }
+
+        if (isset($link['processed']) || !$link['processed'] == 1) {
+            $data['tempId'] = $data['url'];
+            $newProcessed = isset($data['processed'])? $data['processed'] : true;
+            return $this->updateLink($data, $newProcessed);
+        }
+
+        return array();
+    }
+
+    /**
+     * @param array $data
+     * @return array
      * @throws \Exception
      */
     public function addLink(array $data)

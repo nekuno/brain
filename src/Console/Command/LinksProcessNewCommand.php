@@ -104,7 +104,7 @@ class LinksProcessNewCommand extends ApplicationAwareCommand
                 $output->writeln(sprintf('Link with url %s was not saved in the database', $processedLink['url']));
             } else {
                 try {
-                    $addedLink = $linksModel->addLink($processedLink);
+                    $addedLink = $linksModel->addOrUpdateLink($processedLink);
                     $processedLink['id'] = $addedLink['id'];
                     $rateModel->userRateLink($userId, $processedLink, RateModel::LIKE);
                     if (isset($processedLink['tags'])) {
