@@ -94,36 +94,32 @@ class FacebookProcessor extends AbstractProcessor
      */
     protected function processProfile($preprocessedLink)
     {
-        if (isset($preprocessedLink->getLink()['pageId'])) {
-            $id = $preprocessedLink->getLink()['pageId'];
-            $query = array(
-                'fields' => 'name,description,picture'
-            );
+        //TODO: When Facebook App Token is implemented, include option to request public if source != facebook
+        if ($preprocessedLink->getSource() == TokensModel::FACEBOOK
+            && (isset($preprocessedLink->getLink()['pageId']) || isset($preprocessedLink->getLink()['resourceItemId']))
+        ) {
 
-            if ($preprocessedLink->getSource() == TokensModel::FACEBOOK) {
-                $response = $this->resourceOwner->authorizedHTTPRequest($id, $query, $preprocessedLink->getToken());
+            if (isset($preprocessedLink->getLink()['resourceItemId'])) {
+                $id = $preprocessedLink->getLink()['resourceItemId'];
+                $query = array(
+                    'fields' => 'name,picture'
+                );
             } else {
-                $response = $this->resourceOwner->authorizedAPIRequest($id, $query);
+                $id = $preprocessedLink->getLink()['pageId'];
+                $query = array(
+                    'fields' => 'name,description,picture'
+                );
             }
 
-            $thumbnail = $this->getPicture($id);
+            $response = $this->resourceOwner->authorizedHTTPRequest($id, $query, $preprocessedLink->getToken());
+
+            $thumbnail = $this->resourceOwner->getPicture($id);
             $link = array(
-                'description' => isset($response['description']) ? $response['description'] : '',
-                'title' => isset($response['name']) ? $response['name'] : $this->buildTitleFromDescription($response['description']),
+                'description' => isset($response['description']) ? $response['description'] : $this->buildDescriptionFromTitle($response),
+                'title' => isset($response['name']) ? $response['name'] : $this->buildTitleFromDescription($response),
                 'thumbnail' => $thumbnail ?: (isset($response['picture']) ? $response['picture'] : null),
             );
 
-        } else if (isset($preprocessedLink->getLink()['resourceItemId'])) {
-
-            $id = $preprocessedLink->getLink()['resourceItemId'];
-
-            $response = $this->resourceOwner->authorizedAPIRequest($id);
-
-            $link = array(
-                'description' => isset($response['name']) ? $response['name'] . 'on Facebook' : '',
-                'title' => isset($response['name']) ? $response['name'] : $this->buildTitleFromDescription($response['description']),
-                'thumbnail' => $this->getPicture($id),
-            );
         } else {
             $link = array
             (
@@ -160,25 +156,19 @@ class FacebookProcessor extends AbstractProcessor
 
     }
 
-    private function getPicture($id)
+    private function buildTitleFromDescription(array $response)
     {
-        $url = $id . '/picture';
-        $query = array(
-            'type' => 'large',
-        );
-
-        $response = $this->resourceOwner->authorizedAPIRequest($url, $query);
-
-        if (isset($response['data']) && isset($response['data']['url'])) {
-            return $response['data']['url'];
+        if (!isset($response['description'])){
+            return null;
         }
+        $description = $response['description'];
 
-        return null;
+        return strlen($description) >= 25 ? substr($description, 0, 22) . '...' : $description;
     }
 
-    private function buildTitleFromDescription($description)
+    private function buildDescriptionFromTitle(array $response)
     {
-        return strlen($description) >= 25 ? substr($description, 0, 22) . '...' : $description;
+        return isset($response['name'])? $response['name'] : null;
     }
 
 }
