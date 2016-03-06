@@ -38,4 +38,8 @@ class FacebookUrlParser extends UrlParser
 
         return false;
     }
+
+    public function isStatusId($id){
+        return strpos($id, '_') !== false;
+    }
 }

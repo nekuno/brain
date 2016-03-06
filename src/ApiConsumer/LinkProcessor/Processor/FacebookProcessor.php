@@ -8,6 +8,11 @@ use Http\OAuth\ResourceOwner\FacebookResourceOwner;
 use Model\User\TokensModel;
 use Service\UserAggregator;
 
+/**
+ * Class FacebookProcessor
+ * @package ApiConsumer\LinkProcessor\Processor
+ * @method FacebookUrlParser getParser
+ */
 class FacebookProcessor extends AbstractProcessor
 {
     const FACEBOOK_VIDEO = 'video';
@@ -99,21 +104,23 @@ class FacebookProcessor extends AbstractProcessor
             && (isset($preprocessedLink->getLink()['pageId']) || isset($preprocessedLink->getLink()['resourceItemId']))
         ) {
 
-            if (isset($preprocessedLink->getLink()['resourceItemId'])) {
-                $id = $preprocessedLink->getLink()['resourceItemId'];
-                $query = array(
-                    'fields' => 'name,picture'
-                );
-            } else {
+            if (isset($preprocessedLink->getLink()['pageId'])) {
                 $id = $preprocessedLink->getLink()['pageId'];
-                $query = array(
-                    'fields' => 'name,description,picture'
-                );
+                $fields = array('name', 'description', 'picture');
+            } else {
+                $id = $preprocessedLink->getLink()['resourceItemId'];
+                $fields = array('name', 'picture');
+
+                if ($this->getParser()->isStatusId($id)){
+                    $fields[] = 'description';
+                }
             }
+
+            $query = array('fields' => implode(',', $fields));
 
             $response = $this->resourceOwner->authorizedHTTPRequest($id, $query, $preprocessedLink->getToken());
 
-            $thumbnail = $this->resourceOwner->getPicture($id);
+            $thumbnail = $this->resourceOwner->getPicture($id, $preprocessedLink->getToken());
             $link = array(
                 'description' => isset($response['description']) ? $response['description'] : $this->buildDescriptionFromTitle($response),
                 'title' => isset($response['name']) ? $response['name'] : $this->buildTitleFromDescription($response),
