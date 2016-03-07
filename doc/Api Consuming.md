@@ -25,6 +25,7 @@ Processing:
     
     -Resolver el enlace es, principalmente, seguir las redirecciones hasta la URL final. Esta URL es la "canónica".
     -Si ha habido excepciones, o respuestas 4xx o 5xx, el enlace se devuelve con el valor processed = 0. No aparecerá a usuarios.
+        -Los enlaces con processed = 0 en ningún momento sobreescribirán un enlace que tenga processed = 1, en caso de actualizarse.
     
     -La URL se "limpia" de acuerdo al tipo de URL que sea: eliminar '/' final, o parámetros extra en vídeos de YouTube...
     -Se vuelve a comprobar si ya está en la base de datos.
