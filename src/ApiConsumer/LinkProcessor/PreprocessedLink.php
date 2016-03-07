@@ -185,6 +185,16 @@ class PreprocessedLink
         $this->link = $link;
     }
 
+    public function addToLink($array)
+    {
+        foreach ($array as $key=>$value)
+        {
+            $this->link[$key] = $value;
+        }
+
+        return $this->getLink();
+    }
+
     /**
      * TODO: Refactor to Link object whenever available
      * @param $label

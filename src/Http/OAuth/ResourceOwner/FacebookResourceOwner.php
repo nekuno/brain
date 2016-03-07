@@ -3,6 +3,8 @@
 namespace Http\OAuth\ResourceOwner;
 
 use ApiConsumer\Event\OAuthTokenEvent;
+use ApiConsumer\LinkProcessor\UrlParser\FacebookUrlParser;
+use Event\ExceptionEvent;
 use GuzzleHttp\Exception\RequestException;
 use Model\User\TokensModel;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -11,6 +13,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  * Class FacebookResourceOwner
  *
  * @package ApiConsumer\ResourceOwner
+ * @method FacebookUrlParser getParser
  */
 class FacebookResourceOwner extends Oauth2GenericResourceOwner
 {
@@ -115,5 +118,32 @@ class FacebookResourceOwner extends Oauth2GenericResourceOwner
 
         $resolver->setDefined('redirect_uri');
     }
+
+    public function getPicture($id, $token, $size = 'large')
+    {
+        if ($this->getParser()->isStatusId($id)){
+            return null;
+        }
+
+        $url = $id . '/picture';
+        $query = array(
+            'type' => $size,
+        );
+
+        $request = $this->getAuthorizedRequest($this->options['base_url'] . $url, $query, $token);
+
+        try {
+            $response = $this->httpClient->send($request);
+        } catch (RequestException $e) {
+            var_dump($e->getMessage());
+            $this->dispatcher->dispatch(\AppEvents::EXCEPTION_ERROR, new ExceptionEvent($e, 'Error getting facebook image by API'));
+            throw $e;
+        }
+
+        $imageUrl = $response->getEffectiveUrl();
+
+        return $imageUrl==$url? null : $imageUrl;
+    }
+
 
 }

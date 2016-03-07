@@ -34,7 +34,7 @@ class TwitterProcessor extends AbstractProcessor
     public function process(PreprocessedLink $preprocessedLink)
     {
         if ($this->parser->getUrlType($preprocessedLink->getFetched()) === TwitterUrlParser::TWITTER_IMAGE) {
-            $preprocessedLink->addAdditionalLabel('Image');
+            //$preprocessedLink->addAdditionalLabel('Image');
             $link = array_merge($preprocessedLink->getLink(), $this->scraperProcessor->process($preprocessedLink));
             return $link;
         } else {
