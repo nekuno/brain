@@ -202,6 +202,9 @@ class LinkModel
             return array();
         }
 
+        $data['title'] = isset($data['title']) ? $data['title'] : '';
+        $data['description'] = isset($data['description']) ? $data['description'] : '';
+
         $link = $this->findLinkByUrl($data['url']);
 
         if (!$link) {
@@ -235,10 +238,6 @@ class LinkModel
         }
 
         $processed = isset($data['processed']) ? $data['processed'] : 1;
-        if ($processed != 1) {
-            $data['title'] = isset($data['title']) ? $data['title'] : '';
-            $data['description'] = isset($data['description']) ? $data['description'] : '';
-        }
 
         $additionalLabels = '';
         if (isset($data['additionalLabels'])) {
