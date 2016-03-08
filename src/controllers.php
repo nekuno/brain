@@ -148,6 +148,13 @@ $app['social.answers.controller'] = $app->share(
     }
 );
 
+$app['social.groups.controller'] = $app->share(
+    function () {
+
+        return new \Controller\Social\GroupController;
+    }
+);
+
 $app['admin.groups.controller'] = $app->share(
     function () use ($app) {
 
