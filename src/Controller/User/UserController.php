@@ -300,7 +300,7 @@ class UserController
         /* @var $paginator \Paginator\Paginator */
         $paginator = $app['paginator'];
 
-        $filters = array('id' => (int)$user->getId(), 'id2' => (int)$otherUserId, 'showOnlyCommon' => (int)$showOnlyCommon);
+        $filters = array('id' => $otherUserId, 'id2' => $user->getId(), 'showOnlyCommon' => (int)$showOnlyCommon);
 
         if ($tag) {
             $filters['tag'] = urldecode($tag);
