@@ -140,6 +140,10 @@ class LinkProcessor
             $link['url'] = $preprocessedLink->getCanonical();
         }
 
+        if (isset($link['thumbnail'])){
+            $link['thumbnail'] = $this->sanitizeImage($link['thumbnail']);
+        }
+
         return $link;
     }
 
@@ -238,6 +242,31 @@ class LinkProcessor
         }
 
         return $processor;
+    }
+
+    private function sanitizeImage($url)
+    {
+        $url = $this->cleanURL($url);
+        $processorName = $this->analyzer->getProcessorName($url);
+        switch ($processorName) {
+            case LinkAnalyzer::YOUTUBE:
+                $isCorrectResponse = $this->youtubeProcessor->isCorrectResponse($url);
+                break;
+            case LinkAnalyzer::SPOTIFY:
+                $isCorrectResponse = $this->spotifyProcessor->isCorrectResponse($url);
+                break;
+            case LinkAnalyzer::FACEBOOK:
+                $isCorrectResponse = $this->facebookProcessor->isCorrectResponse($url);
+                break;
+            case LinkAnalyzer::TWITTER:
+                $isCorrectResponse = $this->twitterProcessor->isCorrectResponse($url);
+                break;
+            case LinkAnalyzer::SCRAPPER:
+            default:
+            $isCorrectResponse = $this->scrapperProcessor->isCorrectResponse($url);
+                break;
+        }
+        return $isCorrectResponse ? $url : null;
     }
 
 }

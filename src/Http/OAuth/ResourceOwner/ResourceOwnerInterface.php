@@ -3,6 +3,7 @@
 namespace Http\OAuth\ResourceOwner;
 
 use ApiConsumer\LinkProcessor\UrlParser\UrlParser;
+use GuzzleHttp\Client;
 
 interface ResourceOwnerInterface
 {
@@ -43,4 +44,9 @@ interface ResourceOwnerInterface
      * @return UrlParser
      */
     public function getParser();
+
+    /**
+     * @return Client
+     */
+    public function getClient();
 }

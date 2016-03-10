@@ -27,7 +27,7 @@ class FacebookMetadataParser implements MetadataParserInterface
         $facebookMetadata['title'] = $this->getOgTitleText($crawler);
         $facebookMetadata['description'] = $this->getOgDescriptionText($crawler);
         $facebookMetadata['language'] = $this->getLanguage($crawler);
-        $facebookMetadata['image'] = $this->getOgImage($crawler);
+        $facebookMetadata['thumbnail'] = $this->getOgImage($crawler);
 
         return $facebookMetadata;
     }
