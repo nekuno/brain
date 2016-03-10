@@ -74,11 +74,13 @@ class TwitterResourceOwner extends Oauth1GenericResourceOwner
             'title' => isset($user['name']) ? $user['name'] : $user['url'],
             'description' => isset($user['description']) ? $user['description'] : $user['name'],
             'url' => isset($user['screen_name']) ? 'https://twitter.com/' . $user['screen_name'] : null,
-            'thumbnail' => isset($user['profile_image_url']) ? $user['profile_image_url'] : null,
+            'thumbnail' => isset($user['profile_image_url']) ? str_replace('_normal', '', $user['profile_image_url']) : null,
             'additionalLabels' => array('Creator'),
             'resource' => TokensModel::TWITTER,
             'timestamp' => 1000 * time(),
         );
+
+
 
         return $profile;
     }

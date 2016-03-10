@@ -98,7 +98,7 @@ class ScraperProcessor implements ProcessorInterface
         $this->overrideAttribute('title', $link, $scrapedData);
         $this->overrideAttribute('description', $link, $scrapedData);
         $this->overrideAttribute('language', $link, $scrapedData);
-        $this->overrideAttribute('image', $link, $scrapedData);
+        $this->overrideAttribute('thumbnail', $link, $scrapedData);
 
         if (array_key_exists('tags', $scrapedData)) {
             if (!array_key_exists('tags', $link)) {
@@ -135,5 +135,15 @@ class ScraperProcessor implements ProcessorInterface
     public function getParser()
     {
         return $this->parser;
+    }
+
+    public function isCorrectResponse($url)
+    {
+        $response = $this->client->getClient()->head($url);
+        if (200 <= $response->getStatusCode() && $response->getStatusCode() < 300 && strpos($response->getHeader('Content-Type'), 'image') !== false ){
+            return true;
+        }
+
+        return false;
     }
 }
