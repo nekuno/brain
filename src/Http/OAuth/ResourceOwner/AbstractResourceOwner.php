@@ -116,6 +116,10 @@ abstract class AbstractResourceOwner implements ResourceOwnerInterface
         return $this->urlParser;
     }
 
+    public function getClient()
+    {
+        return $this->httpClient;
+    }
     /**
      * Performs an authorized HTTP request
      *
