@@ -77,12 +77,14 @@ class LinksProcessDatabaseCommand extends ApplicationAwareCommand
             } catch (\Exception $e) {
                 $output->writeln(sprintf('Error: %s', $e->getMessage()));
                 $output->writeln(sprintf('Error: Link %s not processed', $preprocessedLink->getFetched()));
-                $linksModel->updateLink($preprocessedLink->getLink(), true);
+                $processedLink = $preprocessedLink->getLink();
+                $processedLink['url'] = $preprocessedLink->getFetched();
+                $processedLink['processed'] = 0;
                 continue;
             }
 
             try {
-                $linksModel->updateLink($processedLink, $processed);
+                $linksModel->addOrUpdateLink($processedLink);
 
                 if (isset($processedLink['tags'])) {
                     foreach ($processedLink['tags'] as $tag) {
