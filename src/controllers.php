@@ -141,6 +141,13 @@ $app['social.privacy.controller'] = $app->share(
     }
 );
 
+$app['social.questions.controller'] = $app->share(
+    function () {
+
+        return new Controller\Social\QuestionController;
+    }
+);
+
 $app['social.answers.controller'] = $app->share(
     function () {
 
@@ -152,6 +159,20 @@ $app['social.groups.controller'] = $app->share(
     function () {
 
         return new \Controller\Social\GroupController;
+    }
+);
+
+$app['social.invitations.controller'] = $app->share(
+    function () {
+
+        return new \Controller\Social\InvitationController;
+    }
+);
+
+$app['social.lookUp.controller'] = $app->share(
+    function () use ($app) {
+
+        return new \Controller\Social\LookUpController;
     }
 );
 

@@ -8,6 +8,7 @@ use Model\User;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Model\User\UserStatsManager;
 
 /**
  * Class UserController
@@ -15,6 +16,23 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class UserController
 {
+    /**
+     * @param Application $app
+     * @param integer $id
+     * @return JsonResponse
+     */
+    public function getAction(Application $app, $id)
+    {
+        /* @var $model UserManager */
+        $model = $app['users.manager'];
+        $userArray = $model->getById($id)->jsonSerialize();
+        /* @var $groupModel GroupModel */
+        $groupModel = $app['users.groups.model'];
+        $userArray['groups'] = $groupModel->getByUser($id);
+
+        return $app->json($userArray);
+    }
+
     /**
      * @param Application $app
      * @param Request $request
@@ -60,5 +78,21 @@ class UserController
 
         return $app->json(array('jwt' => $jwt));
 
+    }
+
+    /**
+     * @param Application $app
+     * @param integer $id
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @throws \Exception
+     */
+    public function statsAction(Application $app, $id)
+    {
+        /* @var $manager UserStatsManager */
+        $manager = $app['users.stats.manager'];
+
+        $stats = $manager->getStats($id);
+
+        return $app->json($stats->toArray());
     }
 }
