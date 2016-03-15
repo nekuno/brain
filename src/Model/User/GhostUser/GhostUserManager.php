@@ -14,6 +14,7 @@ use Everyman\Neo4j\Query\Row;
 use Model\Neo4j\GraphManager;
 use Model\User\SocialNetwork\SocialProfile;
 use Manager\UserManager;
+use Model\User;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class GhostUserManager
@@ -123,12 +124,14 @@ class GhostUserManager
     {
         $user = $this->userManager->getBySocialProfile($profile);
 
-        try {
-            $ghostUser = $this->getById($user->getId());
-        } catch (NotFoundHttpException $e) {
-            return false;
+        if ($user instanceof User) {
+            try {
+                return $this->getById($user->getId());
+            } catch (NotFoundHttpException $e) {
+                return false;
+            }
         }
 
-        return $ghostUser;
+        return false;
     }
 }
