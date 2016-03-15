@@ -26,7 +26,12 @@ $social->get('/privacy/metadata', 'users.privacy.controller:getMetadataAction');
 $social->get('/users/{id}/answers/compare/{id2}', 'social.answers.controller:getUserAnswersCompareAction');
 $social->post('/users/{id}/answers/{questionId}', 'social.answers.controller:updateAction');
 
+$social->post('users/{id}/invitations/consume/{token}', 'social.invitations.controller:consumeAction');
+
 $social->get('/groups/{id}', 'social.groups.controller:getAction');
+
+$social->get('/lookUp', 'social.lookUp.controller:getAction');
+$social->post('lookUp/users/{id}', 'social.lookUp.controller:setAction');
 
 $app->mount('/social', $social);
 

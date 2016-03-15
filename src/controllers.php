@@ -155,6 +155,20 @@ $app['social.groups.controller'] = $app->share(
     }
 );
 
+$app['social.invitations.controller'] = $app->share(
+    function () {
+
+        return new \Controller\Social\InvitationController;
+    }
+);
+
+$app['social.lookUp.controller'] = $app->share(
+    function () use ($app) {
+
+        return new \Controller\Social\LookUpController;
+    }
+);
+
 $app['admin.groups.controller'] = $app->share(
     function () use ($app) {
 
