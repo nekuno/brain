@@ -8,6 +8,7 @@ use Model\User;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Model\User\UserStatsManager;
 
 /**
  * Class UserController
@@ -77,5 +78,21 @@ class UserController
 
         return $app->json(array('jwt' => $jwt));
 
+    }
+
+    /**
+     * @param Application $app
+     * @param integer $id
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @throws \Exception
+     */
+    public function statsAction(Application $app, $id)
+    {
+        /* @var $manager UserStatsManager */
+        $manager = $app['users.stats.manager'];
+
+        $stats = $manager->getStats($id);
+
+        return $app->json($stats->toArray());
     }
 }
