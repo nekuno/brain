@@ -77,29 +77,16 @@ class UserController
         /* @var $model UserManager */
         $model = $app['users.manager'];
         $userArray = $model->getById($id)->jsonSerialize();
-        /* @var $groupModel GroupModel */
-        $groupModel = $app['users.groups.model'];
-        $userArray['groups'] = $groupModel->getByUser($id);
 
-        return $app->json($userArray);
-    }
-
-    /**
-     * @param Application $app
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function findAction(Application $app, Request $request)
-    {
-        /* @var $model UserManager */
-        $model = $app['users.manager'];
-        $criteria = $request->query->all();
-        $user = isset($criteria['id']) ? $model->getById($criteria['id']) : $model->findUserBy($criteria);
-        $userArray = $user->jsonSerialize();
-
-        /* @var $groupModel GroupModel */
-        $groupModel = $app['users.groups.model'];
-        $userArray['groups'] = $groupModel->getByUser($user->getId());
+        if (empty($userArray)) {
+            return $app->json([], 404);
+        }
+        unset($userArray['password']);
+        unset($userArray['salt']);
+        unset($userArray['facebookID']);
+        unset($userArray['googleID']);
+        unset($userArray['twitterID']);
+        unset($userArray['spotifyID']);
 
         return $app->json($userArray);
     }
