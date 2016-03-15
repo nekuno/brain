@@ -6,11 +6,9 @@
 
 $social = $app['controllers_factory'];
 
-$social->get('/users/{id}', 'social.users.controller:getAction');
 $social->get('/users/find', 'social.users.controller:findAction');
 $social->put('/users/{id}', 'social.users.controller:putAction');
 $social->get('/users/jwt/{id}', 'social.users.controller:jwtAction');
-$social->get('/users/{id}/stats', 'social.users.controller:statsAction');
 
 $social->get('/profile/{id}', 'social.profile.controller:getAction')->value('id', null);
 $social->post('/profile/{id}', 'social.profile.controller:postAction');
@@ -25,17 +23,10 @@ $social->delete('/users/{id}/tokens/{resourceOwner}', 'social.tokens.controller:
 $social->get('/users/{id}/privacy', 'social.privacy.controller:getAction')->value('id', null);
 $social->get('/privacy/metadata', 'users.privacy.controller:getMetadataAction');
 
-$social->get('/users/{id}/questions/next', 'social.questions.controller:getNextQuestionAction');
-
 $social->get('/users/{id}/answers/compare/{id2}', 'social.answers.controller:getUserAnswersCompareAction');
 $social->post('/users/{id}/answers/{questionId}', 'social.answers.controller:updateAction');
 
-$social->post('users/{id}/invitations/consume/{token}', 'social.invitations.controller:consumeAction');
-
 $social->get('/groups/{id}', 'social.groups.controller:getAction');
-
-$social->get('/lookUp', 'social.lookUp.controller:getAction');
-$social->post('lookUp/users/{id}', 'social.lookUp.controller:setAction');
 
 $app->mount('/social', $social);
 
