@@ -81,12 +81,6 @@ class UserController
         if (empty($userArray)) {
             return $app->json([], 404);
         }
-        unset($userArray['password']);
-        unset($userArray['salt']);
-        unset($userArray['facebookID']);
-        unset($userArray['googleID']);
-        unset($userArray['twitterID']);
-        unset($userArray['spotifyID']);
 
         return $app->json($userArray);
     }
