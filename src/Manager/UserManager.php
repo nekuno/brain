@@ -540,7 +540,7 @@ class UserManager implements PaginatedInterface
             }
         }
 
-        return false;
+        return null;
     }
 
     /**
