@@ -82,6 +82,9 @@ class UserController
             return $app->json([], 404);
         }
 
+        unset($userArray['password']);
+        unset($userArray['salt']);
+
         return $app->json($userArray);
     }
 

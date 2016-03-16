@@ -6,6 +6,7 @@
 
 $social = $app['controllers_factory'];
 
+$social->get('/users/{id}', 'social.users.controller:getAction');
 $social->get('/users/find', 'social.users.controller:findAction');
 $social->put('/users/{id}', 'social.users.controller:putAction');
 $social->get('/users/jwt/{id}', 'social.users.controller:jwtAction');
