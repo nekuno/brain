@@ -196,22 +196,23 @@ class PrivacyModel
                             if (!in_array($fieldValueName, array_keys($choices))) {
                                 $fieldErrors[] = sprintf('Option with value "%s" is not valid, possible values are "%s"', $fieldValueName, implode("', '", array_keys($choices)));
                             }
-                            if ($choices[$fieldValueName]['value_required'] && !is_int($fieldValue)) {
+                            $valueRequired = isset($choices[$fieldValueName]['value_required']) ? $choices[$fieldValueName]['value_required'] : null;
+                            if ($valueRequired && !is_int($fieldValue)) {
                                 $fieldErrors[] = sprintf('Integer value required for "%s"', $fieldValueName);
                             }
                             $minValue = isset($choices[$fieldValueName]['min_value']) ? $choices[$fieldValueName]['min_value'] : null;
-                            if ($choices[$fieldValueName]['value_required']
+                            if ($valueRequired
                                 && !is_null($minValue)
                                 && $fieldValue < $minValue) {
                                 $fieldErrors[] = sprintf('Value "%s" for "%s" must be equal or greater than "%s"', $fieldValue, $fieldValueName, $minValue);
                             }
                             $maxValue = isset($choices[$fieldValueName]['max_value']) ? $choices[$fieldValueName]['max_value'] : null;
-                            if ($choices[$fieldValueName]['value_required']
+                            if ($valueRequired
                                 && !is_null($maxValue)
                                 && $fieldValue > $maxValue) {
                                 $fieldErrors[] = sprintf('Value "%s" for "%s" must be equal or lesser than "%s"', $fieldValue, $fieldValueName, $maxValue);
                             }
-                            if (!$choices[$fieldValueName]['value_required'] && $fieldValue) {
+                            if (!$valueRequired && $fieldValue) {
                                 $fieldErrors[] = sprintf('"%s" option can`t have a value', $fieldValueName);
                             }
                             break;

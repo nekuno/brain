@@ -81,12 +81,9 @@ class UserController
         if (empty($userArray)) {
             return $app->json([], 404);
         }
+
         unset($userArray['password']);
         unset($userArray['salt']);
-        unset($userArray['facebookID']);
-        unset($userArray['googleID']);
-        unset($userArray['twitterID']);
-        unset($userArray['spotifyID']);
 
         return $app->json($userArray);
     }
@@ -284,7 +281,7 @@ class UserController
         /* @var $paginator \Paginator\Paginator */
         $paginator = $app['paginator'];
 
-        $filters = array('id' => (int)$user->getId(), 'id2' => (int)$otherUserId, 'showOnlyCommon' => (int)$showOnlyCommon);
+        $filters = array('id' => $otherUserId, 'id2' => $user->getId(), 'showOnlyCommon' => (int)$showOnlyCommon);
 
         if ($tag) {
             $filters['tag'] = urldecode($tag);

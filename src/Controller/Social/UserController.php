@@ -17,6 +17,27 @@ class UserController
 {
     /**
      * @param Application $app
+     * @param int $id
+     * @return JsonResponse
+     */
+    public function getAction(Application $app, $id)
+    {
+        /* @var $model UserManager */
+        $model = $app['users.manager'];
+        $userArray = $model->getById($id)->jsonSerialize();
+
+        if (empty($userArray)) {
+            return $app->json([], 404);
+        }
+        /* @var $groupModel GroupModel */
+        $groupModel = $app['users.groups.model'];
+        $userArray['groups'] = $groupModel->getByUser($id);
+
+        return $app->json($userArray);
+    }
+
+    /**
+     * @param Application $app
      * @param Request $request
      * @return JsonResponse
      */

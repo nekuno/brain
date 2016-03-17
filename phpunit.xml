@@ -10,7 +10,7 @@
         >
     <testsuites>
         <testsuite name="Test">
-            <directory>src/Tests</directory>
+            <directory>src/Tests/API</directory>
         </testsuite>
     </testsuites>
 

@@ -144,6 +144,7 @@ class Fixtures
         $this->loadAnswers();
         $this->loadPrivacy();
         $this->calculateStatus();
+        $this->calculateRegisterQuestions();
     }
 
     protected function clean()
@@ -557,6 +558,15 @@ Donec eget elementum turpis. Sed auctor dui purus, vitae luctus leo posuere et. 
 Maecenas ac sem a quam aliquam scelerisque eu ut ligula. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Morbi eu enim sed libero rhoncus vulputate. Etiam posuere, ex ut rutrum aliquet, leo augue semper sapien, ac porta nulla nisi vitae orci. Nulla in purus commodo, bibendum erat convallis, vulputate mi. Donec ante justo, ullamcorper id urna ultrices, tristique ullamcorper dolor. Vestibulum magna eros, volutpat vitae porta eget, condimentum in orci. Sed elementum molestie orci. Nulla at massa egestas, dapibus eros ut, elementum risus. Nam eleifend mollis odio, a luctus libero condimentum in. Pellentesque fringilla, metus eget porttitor rutrum, lectus ipsum suscipit orci, non eleifend dolor nulla ut augue. Integer id velit congue, lobortis libero nec, tempus tortor. Nullam vestibulum finibus ex quis fermentum.
 
 Duis venenatis porta arcu sed luctus. Quisque eu mi sit amet tellus porttitor vulputate eget eu lectus. Nam dolor leo, congue sed scelerisque in, gravida sed tellus. Pellentesque ultricies congue enim, sit amet suscipit elit sagittis nec. Quisque porttitor, ipsum sed molestie vulputate, lacus orci feugiat nunc, non dapibus mi velit non mauris. Maecenas dolor diam, commodo ut sollicitudin eget, vestibulum ac dui. Sed eget odio pulvinar, aliquet lectus luctus, pulvinar urna. Nullam sed rhoncus nunc. Duis convallis interdum odio, eu blandit ipsum. Duis sollicitudin et erat a posuere. Nullam varius aliquam sapien, et consequat erat sagittis quis. Vivamus varius, sem at finibus efficitur, nisl tortor lacinia massa, non molestie felis ante id nisl. Quisque feugiat suscipit metus congue accumsan.';
+    }
+
+    private function calculateRegisterQuestions()
+    {
+        $this->logger->notice('Calculating uncorrelated questions');
+        $result = $this->qm->getUncorrelatedQuestions();
+        $this->qm->setDivisiveQuestions($result['questions']);
+        $this->logger->notice(sprintf('Obtained and saved %d questions', count($result['questions'])));
+
     }
 
 }

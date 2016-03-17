@@ -107,7 +107,7 @@ $app['fetch.controller'] = $app->share(
 );
 
 $app['lookUp.controller'] = $app->share(
-    function () use ($app) {
+    function () {
 
         return new \Controller\User\LookUpController;
     }
@@ -148,6 +148,13 @@ $app['social.answers.controller'] = $app->share(
     }
 );
 
+$app['social.lookUp.controller'] = $app->share(
+    function () {
+
+        return new \Controller\Social\LookUpController;
+    }
+);
+
 $app['social.groups.controller'] = $app->share(
     function () {
 
@@ -156,42 +163,42 @@ $app['social.groups.controller'] = $app->share(
 );
 
 $app['admin.groups.controller'] = $app->share(
-    function () use ($app) {
+    function () {
 
         return new \Controller\Admin\GroupController;
     }
 );
 
 $app['admin.invitations.controller'] = $app->share(
-    function () use ($app) {
+    function () {
 
         return new \Controller\Admin\InvitationController;
     }
 );
 
 $app['admin.enterpriseUsers.controller'] = $app->share(
-    function () use ($app) {
+    function () {
 
         return new \Controller\Admin\EnterpriseUser\EnterpriseUserController;
     }
 );
 
 $app['admin.enterpriseUsers.groups.controller'] = $app->share(
-    function () use ($app) {
+    function () {
 
         return new \Controller\Admin\EnterpriseUser\GroupController;
     }
 );
 
 $app['admin.enterpriseUsers.communities.controller'] = $app->share(
-    function () use ($app) {
+    function () {
 
         return new \Controller\Admin\EnterpriseUser\CommunityController;
     }
 );
 
 $app['admin.enterpriseUsers.invitations.controller'] = $app->share(
-    function () use ($app) {
+    function () {
 
         return new \Controller\Admin\EnterpriseUser\InvitationController;
     }

@@ -6,6 +6,7 @@
 
 $social = $app['controllers_factory'];
 
+$social->get('/users/{id}', 'social.users.controller:getAction');
 $social->get('/users/find', 'social.users.controller:findAction');
 $social->put('/users/{id}', 'social.users.controller:putAction');
 $social->get('/users/jwt/{id}', 'social.users.controller:jwtAction');
@@ -25,6 +26,9 @@ $social->get('/privacy/metadata', 'users.privacy.controller:getMetadataAction');
 
 $social->get('/users/{id}/answers/compare/{id2}', 'social.answers.controller:getUserAnswersCompareAction');
 $social->post('/users/{id}/answers/{questionId}', 'social.answers.controller:updateAction');
+
+$social->get('/lookUp', 'social.lookUp.controller:getAction');
+$social->post('lookUp/users/{id}', 'social.lookUp.controller:setAction');
 
 $social->get('/groups/{id}', 'social.groups.controller:getAction');
 

@@ -128,7 +128,7 @@ class GhostUserManager
             try {
                 return $this->getById($user->getId());
             } catch (NotFoundHttpException $e) {
-                return false;
+                return null;
             }
         }
 
