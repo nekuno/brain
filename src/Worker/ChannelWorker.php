@@ -115,8 +115,7 @@ class ChannelWorker extends LoggerAwareWorker implements RabbitMQConsumerInterfa
 
                     do{
                         $until = $minDate;
-                        $this->getOldTweets->execute($username, GetOldTweets::MAX_TWEETS, $until);
-                        $tweets = $this->getOldTweets->loadTweets();
+                        $tweets = $this->getOldTweets->fetchTweets($username, GetOldTweets::MAX_TWEETS, $until);
                         if (!empty($tweets)){
                             $links = array_merge($links, $this->getOldTweets->getLinksFromTweets($tweets));
                             $minDate = $this->getOldTweets->getMinDate($tweets);

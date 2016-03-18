@@ -3,72 +3,42 @@
 
 namespace ApiConsumer\Fetcher\GetOldTweets;
 
-
 use ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser;
+use Manager\TweetManager;
+use Model\TweetCriteria;
 use Model\User\TokensModel;
-use Service\AMQPManager;
 
 class GetOldTweets
 {
     const MAX_TWEETS = 1000;
 
-    protected $path;
     protected $parser;
-    protected $AMQPManager;
+    protected $tweetManager;
 
-    public function __construct(TwitterUrlParser $parser, AMQPManager $AMQPManager)
+    public function __construct(TwitterUrlParser $parser, TweetManager $tweetManager)
     {
-        $this->path = __DIR__ . '/got.jar';
         $this->parser = $parser;
-        $this->AMQPManager = $AMQPManager;
+        $this->tweetManager = $tweetManager;
     }
 
-
-    public function execute($username, $maxtweets = GetOldTweets::MAX_TWEETS, $since = null, $until = null, $querysearch = null)
+    /**
+     * @param $username
+     * @param int $maxtweets
+     * @param null $since
+     * @param null $until
+     * @param null $querysearch
+     * @return \Model\Tweet[]
+     */
+    public function fetchTweets($username, $maxtweets = GetOldTweets::MAX_TWEETS, $since = null, $until = null, $querysearch = null)
     {
-        $options = [];
+        $criteria = new TweetCriteria();
+        $criteria->setUsername($username);
+        $criteria->setMaxTweets($maxtweets);
+        $criteria->setSince($since);
+        $criteria->setUntil($until);
+        $criteria->setQuerySearch($querysearch);
 
-        if ($username) {
-            $options[] = ' username=' . $username;
-        }
-        if ($maxtweets) {
-            $options[] = ' maxtweets=' . $maxtweets;
-        }
-        if ($since) {
-            $options[] = ' since=' . $since;
-        }
-        if ($until) {
-            $options[] = ' until=' . $until;
-        }
-        if ($querysearch) {
-            $options[] = ' querysearch="' . $querysearch . '"';
-        }
-
-        exec('java -jar ' . $this->path . implode(' ', $options));
-
-    }
-
-    public function loadTweets()
-    {
-        $tweets = array();
-        $first = true;
-
-        if (($handle = fopen($this->getOutputFilePath(), 'r')) !== false) {
-
-            while (($data = fgetcsv($handle, 0, ';')) !== false) {
-
-                if ($first) {
-                    $first = false;
-                    continue;
-                }
-
-                $tweets[] = array('text' => $data[4], 'date' => (new \DateTime($data[1]))->getTimestamp());
-
-            }
-            fclose($handle);
-        }
-
-        return $tweets;
+        return $this->tweetManager->getTweets($criteria);
     }
 
     /**
@@ -116,10 +86,5 @@ class GetOldTweets
     public function getDate(array $tweet)
     {
         return $tweet['date'];
-    }
-
-    private function getOutputFilePath()
-    {
-        return 'output_got.csv';
     }
 }
