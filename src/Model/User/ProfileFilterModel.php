@@ -10,74 +10,50 @@ use Everyman\Neo4j\Query\Row;
 
 class ProfileFilterModel extends FilterModel
 {
-    /**
-     * Returns the metadata for editing the profile
-     * @param null $locale Locale of the metadata
-     * @param bool $filter Filter non public attributes
-     * @return array
-     */
-    public function getMetadata($locale = null, $filter = true)
+
+    protected function modifyPublicFieldByType($publicField, $name, $values, $locale)
     {
-        $locale = $this->getLocale($locale);
+        $publicField = parent::modifyPublicFieldByType($publicField, $name, $values, $locale);
+
         $choiceOptions = $this->getChoiceOptions($locale);
 
-        $publicMetadata = array();
-        foreach ($this->metadata as $name => $values) {
-            $publicField = $values;
-            $publicField['label'] = $values['label'][$locale];
-
-            if ($values['type'] === 'choice') {
-                $publicField['choices'] = array();
-                if (isset($choiceOptions[$name])) {
-                    $publicField['choices'] = $choiceOptions[$name];
-                }
-            } elseif ($values['type'] === 'double_choice') {
-                $publicField['choices'] = array();
-                if (isset($choiceOptions[$name])) {
-                    $publicField['choices'] = $choiceOptions[$name];
-                    if (isset($values['doubleChoices'])) {
-                        foreach ($values['doubleChoices'] as $choice => $doubleChoices) {
-                            foreach ($doubleChoices as $doubleChoice => $doubleChoiceValues) {
-                                $publicField['doubleChoices'][$choice][$doubleChoice] = $doubleChoiceValues[$locale];
-                            }
+        if ($values['type'] === 'choice') {
+            $publicField['choices'] = array();
+            if (isset($choiceOptions[$name])) {
+                $publicField['choices'] = $choiceOptions[$name];
+            }
+        } elseif ($values['type'] === 'double_choice') {
+            $publicField['choices'] = array();
+            if (isset($choiceOptions[$name])) {
+                $publicField['choices'] = $choiceOptions[$name];
+                if (isset($values['doubleChoices'])) {
+                    foreach ($values['doubleChoices'] as $choice => $doubleChoices) {
+                        foreach ($doubleChoices as $doubleChoice => $doubleChoiceValues) {
+                            $publicField['doubleChoices'][$choice][$doubleChoice] = $doubleChoiceValues[$locale];
                         }
                     }
                 }
-            } elseif ($values['type'] === 'multiple_choices') {
-                $publicField['choices'] = array();
-                if (isset($choiceOptions[$name])) {
-                    $publicField['choices'] = $choiceOptions[$name];
-                }
-                if (isset($values['max_choices'])) {
-                    $publicField['max_choices'] = $values['max_choices'];
-                }
-            } elseif ($values['type'] === 'tags_and_choice') {
-                $publicField['choices'] = array();
-                if (isset($values['choices'])) {
-                    foreach ($values['choices'] as $choice => $description) {
-                        $publicField['choices'][$choice] = $description[$locale];
-                    }
-                }
-                $publicField['top'] = $this->getTopProfileTags($name);
-            } elseif ($values['type'] === 'tags') {
-                $publicField['top'] = $this->getTopProfileTags($name);
             }
-
-            $publicMetadata[$name] = $publicField;
-        }
-
-        if ($filter) {
-            foreach ($publicMetadata as &$item) {
-                if (isset($item['labelFilter'])) {
-                    unset($item['labelFilter']);
-                }
-                if (isset($item['filterable'])) {
-                    unset($item['filterable']);
+        } elseif ($values['type'] === 'multiple_choices') {
+            $publicField['choices'] = array();
+            if (isset($choiceOptions[$name])) {
+                $publicField['choices'] = $choiceOptions[$name];
+            }
+            if (isset($values['max_choices'])) {
+                $publicField['max_choices'] = $values['max_choices'];
+            }
+        } elseif ($values['type'] === 'tags_and_choice') {
+            $publicField['choices'] = array();
+            if (isset($values['choices'])) {
+                foreach ($values['choices'] as $choice => $description) {
+                    $publicField['choices'][$choice] = $description[$locale];
                 }
             }
+            $publicField['top'] = $this->getTopProfileTags($name);
+        } elseif ($values['type'] === 'tags') {
+            $publicField['top'] = $this->getTopProfileTags($name);
         }
 
-        return $publicMetadata;
     }
 
     /**

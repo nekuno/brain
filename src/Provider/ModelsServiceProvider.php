@@ -9,6 +9,7 @@ use Model\User\Affinity\AffinityModel;
 use Model\User\AnswerModel;
 use Model\EnterpriseUser\CommunityModel;
 use Model\User\ContentComparePaginatedModel;
+use Model\User\ContentFilterModel;
 use Model\User\ContentPaginatedModel;
 use Model\User\ContentTagModel;
 use Model\User\Filters\FilterContentManager;
@@ -104,6 +105,13 @@ class ModelsServiceProvider implements ServiceProviderInterface
             }
         );
 
+        $app['users.contentFilter.model'] = $app->share(
+            function ($app) {
+
+                return new ContentFilterModel($app['neo4j.graph_manager'], $app['fields']['content'], $app['locale.options']['default']);
+            }
+        );
+
         $app['users.privacy.model'] = $app->share(
             function ($app) {
 
@@ -191,7 +199,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.recommendation.users.model'] = $app->share(
             function ($app) {
 
-                return new UserRecommendationPaginatedModel($app['neo4j.graph_manager'], $app['users.profile.model'], $app['users.userFilter.model']);
+                return new UserRecommendationPaginatedModel($app['neo4j.graph_manager'], $app['users.profileFilter.model'], $app['users.userFilter.model']);
             }
         );
 
@@ -268,14 +276,14 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.filterusers.manager'] = $app->share(
             function ($app) {
 
-                return new FilterUsersManager($app['fields']['user'], $app['neo4j.graph_manager'], $app['users.profile.model'], $app['users.userFilter.model']);
+                return new FilterUsersManager($app['fields']['user'], $app['neo4j.graph_manager'], $app['users.profileFilter.model'], $app['users.userFilter.model']);
             }
         );
 
         $app['users.filtercontent.manager'] = $app->share(
             function ($app) {
 
-                return new FilterContentManager($app['neo4j.graph_manager']);
+                return new FilterContentManager($app['neo4j.graph_manager'], $app['users.contentFilter.model']);
             }
         );
 

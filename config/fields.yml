@@ -405,3 +405,14 @@ user:
         label:
             en: 'Minimum similarity (%)'
             es: 'Similaridad mínima (%)'
+content:
+    type:
+        type: type
+        label:
+            en: 'Type'
+            es: 'Tipo'
+    tags:
+        type: tags
+        label:
+            en: 'Tags'
+            es: 'Etiquetas'

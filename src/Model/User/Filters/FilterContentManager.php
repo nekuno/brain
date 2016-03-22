@@ -8,6 +8,7 @@ namespace Model\User\Filters;
 
 use Everyman\Neo4j\Node;
 use Model\Neo4j\GraphManager;
+use Model\User\ContentFilterModel;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class FilterContentManager
@@ -18,9 +19,15 @@ class FilterContentManager
      */
     protected $graphManager;
 
-    public function __construct(GraphManager $graphManager)
+    /**
+     * @var ContentFilterModel
+     */
+    protected $contentFilterModel;
+
+    public function __construct(GraphManager $graphManager, ContentFilterModel $contentFilterModel)
     {
         $this->graphManager = $graphManager;
+        $this->contentFilterModel = $contentFilterModel;
     }
 
     public function getFilterContentByThreadId($id)
@@ -50,6 +57,8 @@ class FilterContentManager
 
     public function updateFilterContentByThreadId($id, $filtersArray)
     {
+        $this->validate($filtersArray);
+
         $filters = $this->buildFiltersContent();
 
         $filterId = $this->getFilterContentIdByThreadId($id);
@@ -68,6 +77,11 @@ class FilterContentManager
         $this->updateFiltersContent($filters);
 
         return $filters;
+    }
+
+    protected function validate($filtersArray)
+    {
+
     }
 
     /**
