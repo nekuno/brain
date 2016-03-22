@@ -56,36 +56,6 @@ class ProfileFilterModel extends FilterModel
 
     }
 
-    /**
-     * Returns the metadata for creating search filters
-     * @param null $locale
-     * @return array
-     */
-    public function getFilters($locale = null)
-    {
-
-        $locale = $this->getLocale($locale);
-        $metadata = $this->getMetadata($locale, false);
-        $labels = array();
-        foreach ($metadata as $key => &$item) {
-            if (isset($item['labelFilter'])) {
-                $item['label'] = $item['labelFilter'][$locale];
-                unset($item['labelFilter']);
-            }
-            if (isset($item['filterable']) && $item['filterable'] === false) {
-                unset($metadata[$key]);
-            } else {
-                $labels[] = $item['label'];
-            }
-        }
-
-        if (!empty($labels)) {
-            array_multisort($labels, SORT_ASC, $metadata);
-        }
-
-        return $metadata;
-    }
-
     protected function getChoiceOptions($locale)
     {
         $translationField = 'name_' . $locale;

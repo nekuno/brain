@@ -5,7 +5,6 @@ namespace Controller\User;
 use Model\User\ContentPaginatedModel;
 use Model\User\GroupModel;
 use Model\User\ProfileFilterModel;
-use Model\User\ProfileModel;
 use Model\User\RateModel;
 use Model\User\UserStatsManager;
 use Manager\UserManager;
@@ -502,14 +501,9 @@ class UserController
         $profileFilterModel = $app['users.profileFilter.model'];
         $filters['profileFilters'] = $profileFilterModel->getFilters($locale);
 
-        //user-dependent filters
-        $dynamicFilters = array();
-        /* @var $groupModel GroupModel */
-        $groupModel = $app['users.groups.model'];
-        $dynamicFilters['groups'] = $groupModel->getByUser($user->getId());
-        /* @var $userManager UserManager */
-        $userManager = $app['users.manager'];
-        $filters['userFilters'] = $userManager->getFilters($locale, $dynamicFilters);
+        /* @var $userFilterModel User\UserFilterModel */
+        $userFilterModel = $app['users.userFilter.model'];
+        $filters['userFilters'] = $userFilterModel->getFilters($locale, $user);
 
         return $app->json($filters, 200);
     }

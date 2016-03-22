@@ -282,7 +282,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         $conditions = array();
         $matches = array();
 
-        foreach ($this->userFilterModel->getFilters() as $name => $filter) {
+        foreach ($this->userFilterModel->getMetadata() as $name => $filter) {
             if (isset($filters[$name]) && !empty($filters[$name])) {
                 $value = $filters[$name];
                 switch ($name) {

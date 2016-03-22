@@ -45,22 +45,16 @@ class UserManager implements PaginatedInterface
     protected $encoder;
 
     /**
-     * @var array
+     * @var User\UserFilterModel
      */
-    protected $metadata;
+    protected $userFilterModel;
 
-    /**
-     * @var string
-     */
-    protected $defaultLocale;
-
-    public function __construct(EventDispatcher $dispatcher, GraphManager $gm, PasswordEncoderInterface $encoder, array $metadata, $defaultLocale)
+    public function __construct(EventDispatcher $dispatcher, GraphManager $gm, PasswordEncoderInterface $encoder, User\UserFilterModel $userFilterModel)
     {
         $this->dispatcher = $dispatcher;
         $this->gm = $gm;
         $this->encoder = $encoder;
-        $this->metadata = $metadata;
-        $this->defaultLocale = $defaultLocale;
+        $this->userFilterModel = $userFilterModel;
     }
 
     /**
@@ -695,40 +689,6 @@ class UserManager implements PaginatedInterface
     }
 
     /**
-     * @param null $locale
-     * @param array $dynamicFilters User-dependent filters, not set in this model
-     * @param bool $filter Filter non-public attributes
-     * @return array
-     */
-    public function getFilters($locale = null, $dynamicFilters = array(), $filter = true)
-    {
-        $locale = $this->getLocale($locale);
-        $metadata = $this->getFiltersMetadata($locale, $dynamicFilters, $filter);
-
-        foreach ($dynamicFilters['groups'] as $group) {
-            $metadata['groups']['choices'][$group['id']] = $group['name'];
-        }
-
-        foreach ($metadata as $key => &$item) {
-            if (isset($item['labelFilter'])) {
-                $item['label'] = $item['labelFilter'][$locale];
-                unset($item['labelFilter']);
-            }
-            if (isset($item['filterable']) && $item['filterable'] === false) {
-                unset($metadata[$key]);
-            }
-        }
-
-        //check user-dependent choices existence for not showing up to user
-
-        if ($dynamicChoices['groups'] = null || $dynamicFilters['groups'] == array()) {
-            unset($metadata['groups']);
-        }
-
-        return $metadata;
-    }
-
-    /**
      * @inheritdoc
      */
     public function validateFilters(array $filters)
@@ -1062,60 +1022,6 @@ class UserManager implements PaginatedInterface
     }
 
     /**
-     * @param null $locale
-     * @param array $dynamicChoices user-dependent choices (cannot be set from this model)
-     * @param bool $filter
-     * @return array
-     */
-    protected function getFiltersMetadata($locale = null, array $dynamicChoices = array(), $filter = true)
-    {
-
-        $locale = $this->getLocale($locale);
-
-        $publicMetadata = $dynamicChoices;
-        $choiceOptions = $this->getChoiceOptions();
-
-        foreach ($this->metadata as $name => $values) {
-            $publicField = $values;
-            $publicField['label'] = $values['label'][$locale];
-
-            if ($values['type'] === 'choice') {
-                $publicField['choices'] = array();
-                if (isset($choiceOptions[$name])) {
-                    $publicField['choices'] = $choiceOptions[$name];
-                }
-            } elseif ($values['type'] === 'tags') {
-                $publicField['top'] = $this->getTopUserTags($name);
-            }
-
-            $publicMetadata[$name] = $publicField;
-        }
-
-        if ($filter) {
-            foreach ($publicMetadata as &$item) {
-                if (isset($item['labelFilter'])) {
-                    unset($item['labelFilter']);
-                }
-                if (isset($item['filterable'])) {
-                    unset($item['filterable']);
-                }
-            }
-        }
-
-        return $publicMetadata;
-    }
-
-    protected function getLocale($locale)
-    {
-
-        if (!$locale || !in_array($locale, array('en', 'es'))) {
-            $locale = $this->defaultLocale;
-        }
-
-        return $locale;
-    }
-
-    /**
      * @param $resultSet
      * @return array
      */
@@ -1128,23 +1034,6 @@ class UserManager implements PaginatedInterface
 
         return $users;
 
-    }
-
-    /** Returns statically defined options
-     * @return array
-     */
-    protected function getChoiceOptions()
-    {
-        return array();
-    }
-
-    /** Returns User tags to use when created user tags
-     * @param $type
-     * @return array
-     */
-    protected function getTopUserTags($type)
-    {
-        return array();
     }
 
     protected function setDefaults(array &$user)

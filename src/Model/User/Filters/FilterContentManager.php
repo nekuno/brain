@@ -7,6 +7,7 @@ namespace Model\User\Filters;
 
 
 use Everyman\Neo4j\Node;
+use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
 use Model\User\ContentFilterModel;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -79,9 +80,39 @@ class FilterContentManager
         return $filters;
     }
 
-    protected function validate($filtersArray)
+    protected function validate(array $data)
     {
+        $errors = array();
+        $metadata = $this->contentFilterModel->getMetadata();
 
+        foreach ($metadata as $fieldName => $fieldData) {
+
+            $fieldErrors = array();
+
+            if (isset($data[$fieldName])) {
+
+                $fieldValue = $data[$fieldName];
+
+                if (isset($fieldData['type'])) {
+                    switch ($fieldData['type']) {
+
+                    }
+                }
+            } else {
+
+                if (isset($fieldData['required']) && $fieldData['required'] === true) {
+                    $fieldErrors[] = 'It\'s required.';
+                }
+            }
+
+            if (count($fieldErrors) > 0) {
+                $errors[$fieldName] = $fieldErrors;
+            }
+        }
+
+        if (count($errors) > 0) {
+            throw new ValidationException($errors);
+        }
     }
 
     /**
