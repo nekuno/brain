@@ -108,7 +108,7 @@ class ProfileController
         $locale = $request->query->get('locale');
 
         /* @var $model ProfileModel */
-        $model = $app['users.profile.model'];
+        $model = $app['users.profileFilter.model'];
         $metadata = $model->getMetadata($locale);
 
         return $app->json($metadata);
@@ -124,7 +124,7 @@ class ProfileController
         $locale = $request->query->get('locale');
 
         /* @var $model ProfileModel */
-        $model = $app['users.profile.model'];
+        $model = $app['users.profileFilter.model'];
         $filters = $model->getFilters($locale);
 
         return $app->json($filters);

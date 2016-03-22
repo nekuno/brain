@@ -4,7 +4,7 @@ namespace Model\User\Recommendation;
 
 use Model\Neo4j\GraphManager;
 use Model\User\GhostUser\GhostUserManager;
-use Model\User\ProfileModel;
+use Model\User\ProfileFilterModel;
 use Model\User\UserFilterModel;
 use Paginator\PaginatedInterface;
 
@@ -14,16 +14,16 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
     protected $gm;
 
     /**
-     * @var ProfileModel
+     * @var ProfileFilterModel
      */
-    protected $profileModel;
+    protected $profileFilterModel;
 
     protected $userFilterModel;
 
-    public function __construct(GraphManager $gm, ProfileModel $profileModel, UserFilterModel $userFilterModel)
+    public function __construct(GraphManager $gm, ProfileFilterModel $profileFilterModel, UserFilterModel $userFilterModel)
     {
         $this->gm = $gm;
-        $this->profileModel = $profileModel;
+        $this->profileFilterModel = $profileFilterModel;
         $this->userFilterModel = $userFilterModel;
     }
 
@@ -218,7 +218,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         $conditions = array();
         $matches = array();
 
-        foreach ($this->profileModel->getFilters() as $name => $filter) {
+        foreach ($this->profileFilterModel->getFilters() as $name => $filter) {
             if (isset($filters[$name])) {
                 $value = $filters[$name];
                 switch ($filter['type']) {

@@ -10,7 +10,7 @@ use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Everyman\Neo4j\Relationship;
 use Model\Neo4j\GraphManager;
-use Model\User\ProfileModel;
+use Model\User\ProfileFilterModel;
 use Model\User\UserFilterModel;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -24,20 +24,20 @@ class FilterUsersManager
     protected $graphManager;
 
     /**
-     * @var ProfileModel
+     * @var ProfileFilterModel
      */
-    protected $profileModel;
+    protected $profileFilterModel;
 
     /**
      * @var UserFilterModel
      */
     protected $userFilterModel;
 
-    public function __construct(array $fields, GraphManager $graphManager, ProfileModel $profileModel, UserFilterModel $userFilterModel)
+    public function __construct(array $fields, GraphManager $graphManager, ProfileFilterModel $profileFilterModel, UserFilterModel $userFilterModel)
     {
         $this->fields = $fields;
         $this->graphManager = $graphManager;
-        $this->profileModel = $profileModel;
+        $this->profileFilterModel = $profileFilterModel;
         $this->userFilterModel = $userFilterModel;
     }
 
@@ -191,7 +191,7 @@ class FilterUsersManager
 
     private function saveProfileFilters($profileFilters, $id)
     {
-        $metadata = $this->profileModel->getMetadata();
+        $metadata = $this->profileFilterModel->getMetadata();
 
         $qb = $this->graphManager->createQueryBuilder();
         $qb->match('(filter:FilterUsers)')
@@ -218,7 +218,7 @@ class FilterUsersManager
                         $value = $profileFilters[$fieldName];
                         //We do not support only one of these
 
-                        $age = $this->profileModel->getAgeRangeFromBirthdayRange($value);
+                        $age = $this->profileFilterModel->getAgeRangeFromBirthdayRange($value);
 
                         $qb->set('filter.age_min = ' . $age['min']);
                         $qb->set('filter.age_max = ' . $age['max']);
@@ -397,7 +397,7 @@ class FilterUsersManager
         $profileFilters = $this->buildProfileOptions($options, $filterNode);
 
         $profileFilters += array(
-            'birthday' => $this->profileModel->getBirthdayRangeFromAgeRange(
+            'birthday' => $this->profileFilterModel->getBirthdayRangeFromAgeRange(
                 $filterNode->getProperty('age_min'),
                 $filterNode->getProperty('age_max')
             ),
@@ -457,7 +457,7 @@ class FilterUsersManager
             /* @var Label $label */
             foreach ($labels as $label) {
                 if ($label->getName() && $label->getName() != 'ProfileOption') {
-                    $typeName = $this->profileModel->labelToType($label->getName());
+                    $typeName = $this->profileFilterModel->labelToType($label->getName());
                     $optionsResult[$typeName] = empty($optionsResult[$typeName]) ? array($option->getProperty('id')) :
                         array_merge($optionsResult[$typeName], array($option->getProperty('id')));
                     $detail = $relationship->getProperty('detail');

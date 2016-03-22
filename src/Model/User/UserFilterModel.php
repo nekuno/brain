@@ -4,20 +4,9 @@
  */
 namespace Model\User;
 
-use Model\Neo4j\GraphManager;
 
-class UserFilterModel
+class UserFilterModel extends FilterModel
 {
-    protected $client;
-    protected $metadata;
-    protected $defaultLocale;
-
-    public function __construct(GraphManager $gm, array $metadata, $defaultLocale)
-    {
-        $this->gm = $gm;
-        $this->metadata = $metadata;
-        $this->defaultLocale = $defaultLocale;
-    }
 
     /**
      * Returns the metadata for filtering users
@@ -80,13 +69,4 @@ class UserFilterModel
         return $metadata;
     }
 
-    protected function getLocale($locale)
-    {
-
-        if (!$locale || !in_array($locale, array('en', 'es'))) {
-            $locale = $this->defaultLocale;
-        }
-
-        return $locale;
-    }
 }

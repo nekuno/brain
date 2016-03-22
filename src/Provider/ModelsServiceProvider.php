@@ -20,6 +20,7 @@ use Model\User\LookUpModel;
 use Model\User\Matching\MatchingModel;
 use Model\User\OldQuestionComparePaginatedModel;
 use Model\User\PrivacyModel;
+use Model\User\ProfileFilterModel;
 use Model\User\ProfileModel;
 use Model\User\ProfileTagModel;
 use Model\User\QuestionComparePaginatedModel;
@@ -85,7 +86,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.profile.model'] = $app->share(
             function ($app) {
 
-                return new ProfileModel($app['neo4j.graph_manager'], $app['fields']['profile'], $app['locale.options']['default']);
+                return new ProfileModel($app['neo4j.graph_manager'], $app['users.profileFilter.model']);
             }
         );
 
@@ -93,6 +94,13 @@ class ModelsServiceProvider implements ServiceProviderInterface
             function ($app) {
 
                 return new UserFilterModel($app['neo4j.graph_manager'], $app['fields']['user'], $app['locale.options']['default']);
+            }
+        );
+
+        $app['users.profileFilter.model'] = $app->share(
+            function ($app) {
+
+                return new ProfileFilterModel($app['neo4j.graph_manager'], $app['fields']['profile'], $app['locale.options']['default']);
             }
         );
 
