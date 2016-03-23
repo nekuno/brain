@@ -244,7 +244,7 @@ class ThreadManager
      */
     public function create($userId, $data)
     {
-        $this->validator->validateEditThreads(
+        $this->validator->validateEditThread(
             array_merge(
                 array('userId' => (integer)$userId),
                 $data
@@ -283,7 +283,7 @@ class ThreadManager
     public function update($threadId, $data)
     {
 
-        $this->validator->validateEditThreads($data, $this->getChoices());
+        $this->validator->validateEditThread($data, $this->getChoices());
 
         $name = isset($data['name']) ? $data['name'] : null;
         $category = isset($data['category']) ? $data['category'] : null;

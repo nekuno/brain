@@ -31,9 +31,14 @@ class Validator
         $this->userManager = $userManager;
     }
 
-    public function validateEditThreads(array $data, array $choices) {
+    public function validateEditThread(array $data, array $choices = array()) {
         return $this->validate($data, $this->metadata['threads'], $choices);
     }
+
+    public function validateEditFilterContent(array $data, array $choices = array()) {
+        return $this->validate($data, $this->metadata['filters']['content'], $choices);
+    }
+
 
     protected function validate($data, $metadata, $choices)
     {
@@ -118,6 +123,8 @@ class Validator
                         } elseif ($dataValue['detail'] && !in_array($dataValue['detail'], array_keys($doubleChoices[$dataValue['choice']]))) {
                             $fieldErrors[] = sprintf('Detail with value "%s" is not valid, possible values are "%s"', $dataValue['detail'], implode("', '", array_keys($doubleChoices)));
                         }
+                        break;
+                    case 'tags':
                         break;
                     case 'tags_and_choice':
                         if (!is_array($dataValue)){

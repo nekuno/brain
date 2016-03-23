@@ -7,9 +7,9 @@ namespace Model\User\Filters;
 
 
 use Everyman\Neo4j\Node;
-use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
 use Model\User\ContentFilterModel;
+use Service\Validator;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class FilterContentManager
@@ -25,10 +25,16 @@ class FilterContentManager
      */
     protected $contentFilterModel;
 
-    public function __construct(GraphManager $graphManager, ContentFilterModel $contentFilterModel)
+    /**
+     * @var Validator
+     */
+    protected $validator;
+
+    public function __construct(GraphManager $graphManager, ContentFilterModel $contentFilterModel, Validator $validator)
     {
         $this->graphManager = $graphManager;
         $this->contentFilterModel = $contentFilterModel;
+        $this->validator = $validator;
     }
 
     public function getFilterContentByThreadId($id)
@@ -82,37 +88,15 @@ class FilterContentManager
 
     protected function validate(array $data)
     {
-        $errors = array();
-        $metadata = $this->contentFilterModel->getMetadata();
+        $this->validator->validateEditFilterContent($data, $this->getChoices());
+    }
 
-        foreach ($metadata as $fieldName => $fieldData) {
-
-            $fieldErrors = array();
-
-            if (isset($data[$fieldName])) {
-
-                $fieldValue = $data[$fieldName];
-
-                if (isset($fieldData['type'])) {
-                    switch ($fieldData['type']) {
-
-                    }
-                }
-            } else {
-
-                if (isset($fieldData['required']) && $fieldData['required'] === true) {
-                    $fieldErrors[] = 'It\'s required.';
-                }
-            }
-
-            if (count($fieldErrors) > 0) {
-                $errors[$fieldName] = $fieldErrors;
-            }
-        }
-
-        if (count($errors) > 0) {
-            throw new ValidationException($errors);
-        }
+    protected function getChoices(){
+        return array(
+            'type' => array(
+                'Link', 'Audio', 'Video', 'Image', 'Creator'
+            )
+        );
     }
 
     /**

@@ -108,7 +108,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.contentFilter.model'] = $app->share(
             function ($app) {
 
-                return new ContentFilterModel($app['neo4j.graph_manager'], $app['fields']['content'], $app['locale.options']['default']);
+                return new ContentFilterModel($app['neo4j.graph_manager'], $app['fields']['filters']['content'], $app['locale.options']['default']);
             }
         );
 
@@ -283,7 +283,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.filtercontent.manager'] = $app->share(
             function ($app) {
 
-                return new FilterContentManager($app['neo4j.graph_manager'], $app['users.contentFilter.model']);
+                return new FilterContentManager($app['neo4j.graph_manager'], $app['users.contentFilter.model'], $app['validator.service']);
             }
         );
 
@@ -311,7 +311,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.threads.manager'] = $app->share(
             function ($app) {
 
-                return new ThreadManager($app['neo4j.graph_manager'], $app['users.manager'], $app['users.threadusers.manager'], $app['users.threadcontent.manager']);
+                return new ThreadManager($app['neo4j.graph_manager'], $app['users.manager'], $app['users.threadusers.manager'], $app['users.threadcontent.manager'], $app['validator.service']);
             }
         );
 

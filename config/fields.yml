@@ -425,3 +425,15 @@ threads:
     category:
         type: choice
         required: true
+filters:
+    content:
+        type:
+            type: choice
+            label:
+                en: 'Type'
+                es: 'Tipo'
+        tags:
+            type: tags
+            label:
+                en: 'Tags'
+                es: 'Etiquetas'
