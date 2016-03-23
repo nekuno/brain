@@ -407,7 +407,7 @@ user:
             es: 'Similaridad mínima (%)'
 content:
     type:
-        type: type
+        type: choice
         label:
             en: 'Type'
             es: 'Tipo'
@@ -416,3 +416,12 @@ content:
         label:
             en: 'Tags'
             es: 'Etiquetas'
+threads:
+    name:
+        type: textarea
+        min: 1
+        max: 100
+        required: true
+    category:
+        type: choice
+        required: true

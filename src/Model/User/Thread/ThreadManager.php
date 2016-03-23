@@ -5,9 +5,9 @@ namespace Model\User\Thread;
 use Everyman\Neo4j\Label;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
-use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
 use Manager\UserManager;
+use Service\Validator;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class ThreadManager
@@ -27,6 +27,8 @@ class ThreadManager
     protected $usersThreadManager;
     /** @var  ContentThreadManager */
     protected $contentThreadManager;
+    /** @var Validator */
+    protected $validator;
 
     /**
      * ThreadManager constructor.
@@ -35,12 +37,13 @@ class ThreadManager
      * @param UsersThreadManager $um
      * @param ContentThreadManager $cm
      */
-    public function __construct(GraphManager $graphManager, UserManager $userManager, UsersThreadManager $um, ContentThreadManager $cm)
+    public function __construct(GraphManager $graphManager, UserManager $userManager, UsersThreadManager $um, ContentThreadManager $cm, Validator $validator)
     {
         $this->graphManager = $graphManager;
         $this->userManager = $userManager;
         $this->usersThreadManager = $um;
         $this->contentThreadManager = $cm;
+        $this->validator = $validator;
     }
 
     /**
@@ -241,15 +244,15 @@ class ThreadManager
      */
     public function create($userId, $data)
     {
-
-        $name = isset($data['name']) ? $data['name'] : null;
-        $category = isset($data['category']) ? $data['category'] : null;
-        $this->validate(
+        $this->validator->validateEditThreads(
             array_merge(
                 array('userId' => (integer)$userId),
                 $data
-            )
+            ), $this->getChoices()
         );
+
+        $name = isset($data['name']) ? $data['name'] : null;
+        $category = isset($data['category']) ? $data['category'] : null;
 
         $qb = $this->graphManager->createQueryBuilder();
 
@@ -280,6 +283,8 @@ class ThreadManager
     public function update($threadId, $data)
     {
 
+        $this->validator->validateEditThreads($data, $this->getChoices());
+
         $name = isset($data['name']) ? $data['name'] : null;
         $category = isset($data['category']) ? $data['category'] : null;
 
@@ -308,51 +313,6 @@ class ThreadManager
         $thread = $this->buildThread($threadNode);
 
         return $this->updateFromFilters($thread, $data);
-
-    }
-
-    public function validate($data)
-    {
-        $errors = array();
-        $metadata = $this->getMetadata();
-        foreach ($metadata as $fieldName => $fieldData) {
-
-            $fieldErrors = array();
-            if (isset($data[$fieldName])) {
-
-                switch ($fieldData['type']) {
-                    case 'choice':
-                        if (!in_array($data[$fieldName], $this->getChoices($fieldName))) {
-                            $fieldErrors[] = 'Choice not supported.';
-                        }
-                        break;
-                    default:
-                        break;
-                }
-            } else {
-                if ($fieldData['required'] === true) {
-                    $fieldErrors[] = 'It\'s required.';
-                }
-            }
-
-            if (count($fieldErrors) > 0) {
-                $errors[$fieldName] = $fieldErrors;
-            }
-        }
-
-        if (isset($data['userId'])) {
-            try {
-                $this->userManager->getById((integer)$data['userId'], true);
-            } catch (NotFoundHttpException $e) {
-                $errors['userId'] = array($e->getMessage());
-            }
-        } else {
-            $errors['userId'] = array('User identification not supplied');
-        }
-
-        if (count($errors) > 0) {
-            throw new ValidationException($errors);
-        }
 
     }
 
@@ -486,33 +446,14 @@ class ThreadManager
         return $this->getById($thread->getId());
     }
 
-    private function getMetadata()
+    private function getChoices()
     {
-        $metadata = array(
-            'name' => array(
-                'type' => 'string',
-                'required' => true,
-            ),
+        return array(
             'category' => array(
-                'type' => 'choice',
-                'required' => true
+                ThreadManager::LABEL_THREAD_USERS,
+                ThreadManager::LABEL_THREAD_CONTENT
             )
         );
-
-        return $metadata;
-    }
-
-    private function getChoices($fieldName)
-    {
-        switch ($fieldName) {
-            case 'category':
-                return array(
-                    ThreadManager::LABEL_THREAD_USERS,
-                    ThreadManager::LABEL_THREAD_CONTENT,
-                );
-            default:
-                return array();
-        }
     }
 
     private function deleteCachedResults(Thread $thread)
