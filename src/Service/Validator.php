@@ -31,17 +31,23 @@ class Validator
         $this->userManager = $userManager;
     }
 
-    public function validateEditThread(array $data, array $choices = array()) {
+    public function validateEditThread(array $data, array $choices = array())
+    {
         return $this->validate($data, $this->metadata['threads'], $choices);
     }
 
-    public function validateEditFilterContent(array $data, array $choices = array()) {
+    public function validateEditFilterContent(array $data, array $choices = array())
+    {
         return $this->validate($data, $this->metadata['filters']['content'], $choices);
     }
 
-    public function validateEditFilterUsers($data, $choices=array())
+    public function validateEditFilterUsers($data, $choices = array())
     {
         return $this->validate($data, $this->metadata['filters']['user'], $choices);
+    }
+    public function validateEditFilterProfile($data, $choices = array())
+    {
+        return $this->validate($data, $this->metadata['filters']['profile'], $choices);
     }
 
     protected function validate($data, $metadata, $choices)
@@ -132,7 +138,7 @@ class Validator
                     case 'tags':
                         break;
                     case 'tags_and_choice':
-                        if (!is_array($dataValue)){
+                        if (!is_array($dataValue)) {
                             $fieldErrors[] = 'Tags and choice value must be an array';
                         }
                         $choices = $fieldData['choices'];
@@ -149,14 +155,14 @@ class Validator
                         }
                         break;
                     case 'multiple_choices':
-                        if (!is_array($dataValue)){
+                        if (!is_array($dataValue)) {
                             $fieldErrors[] = 'Multiple choices value must be an array';
                         }
                         $choices = $fieldData['choices'];
                         if (count($dataValue) > $fieldData['max_choices']) {
                             $fieldErrors[] = sprintf('Option length "%s" is too long. "%s" is the maximum', count($dataValue), $fieldData['max_choices']);
                         }
-                        foreach($dataValue as $value) {
+                        foreach ($dataValue as $value) {
                             if (!in_array($value, array_keys($choices))) {
                                 $fieldErrors[] = sprintf('Option with value "%s" is not valid, possible values are "%s"', $value, implode("', '", array_keys($choices)));
                             }

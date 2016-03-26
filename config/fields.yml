@@ -457,3 +457,5 @@ filters:
             label:
                 en: 'Minimum similarity (%)'
                 es: 'Similaridad mínima (%)'
+    profile:
+

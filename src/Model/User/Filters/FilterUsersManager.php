@@ -134,7 +134,6 @@ class FilterUsersManager
         $userFilters = $filters->getUserFilters();
         $profileFilters = $filters->getProfileFilters();
 
-        $this->validator->validateEditFilterUsers($userFilters);
         if (!empty($userFilters)) {
             $this->saveUserFilters($userFilters, $filters->getId());
         }
@@ -194,6 +193,8 @@ class FilterUsersManager
 
     private function saveProfileFilters($profileFilters, $id)
     {
+        $this->validator->validateEditFilterProfile($profileFilters);
+
         $metadata = $this->profileFilterModel->getMetadata();
 
         $qb = $this->graphManager->createQueryBuilder();
@@ -319,9 +320,9 @@ class FilterUsersManager
 
     }
 
-    //TODO: UserFilters use metadata
     private function saveUserFilters($userFilters, $id)
     {
+        $this->validator->validateEditFilterUsers($userFilters);
 
         $qb = $this->graphManager->createQueryBuilder();
         $qb->match('(filter:FilterUsers)')
