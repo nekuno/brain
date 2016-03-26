@@ -12,12 +12,11 @@ use Everyman\Neo4j\Relationship;
 use Model\Neo4j\GraphManager;
 use Model\User\ProfileFilterModel;
 use Model\User\UserFilterModel;
+use Service\Validator;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class FilterUsersManager
 {
-    protected $fields;
-
     /**
      * @var GraphManager
      */
@@ -33,12 +32,17 @@ class FilterUsersManager
      */
     protected $userFilterModel;
 
-    public function __construct(array $fields, GraphManager $graphManager, ProfileFilterModel $profileFilterModel, UserFilterModel $userFilterModel)
+    /**
+     * @var Validator
+     */
+    protected $validator;
+
+    public function __construct(GraphManager $graphManager, ProfileFilterModel $profileFilterModel, UserFilterModel $userFilterModel, Validator $validator)
     {
-        $this->fields = $fields;
         $this->graphManager = $graphManager;
         $this->profileFilterModel = $profileFilterModel;
         $this->userFilterModel = $userFilterModel;
+        $this->validator = $validator;
     }
 
     public function getFilterUsersByThreadId($id)
@@ -130,8 +134,7 @@ class FilterUsersManager
         $userFilters = $filters->getUserFilters();
         $profileFilters = $filters->getProfileFilters();
 
-        //TODO: Validate filters
-
+        $this->validator->validateEditFilterUsers($userFilters);
         if (!empty($userFilters)) {
             $this->saveUserFilters($userFilters, $filters->getId());
         }
@@ -148,7 +151,7 @@ class FilterUsersManager
      */
     protected function buildFiltersUsers()
     {
-        return new FilterUsers($this->fields);
+        return new FilterUsers($this->userFilterModel->getMetadata());
     }
 
     protected function getFilterUsersIdByThreadId($id)
@@ -335,7 +338,7 @@ class FilterUsersManager
         }
 
         foreach ($metadata as $name => $value){
-            if ($value['type'] == 'single_integer'){
+            if ($value['type'] == 'integer'){
                 $qb->set("filter.$name = null");
             }
         }
@@ -348,7 +351,7 @@ class FilterUsersManager
             $field = $metadata[$name];
 
             switch ($field['type']) {
-                case 'single_integer':
+                case 'integer':
                     $qb->set("filter.$name= { $name }");
                     $qb->setParameter($name, $value);
                     break;

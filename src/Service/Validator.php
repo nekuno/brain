@@ -39,6 +39,10 @@ class Validator
         return $this->validate($data, $this->metadata['filters']['content'], $choices);
     }
 
+    public function validateEditFilterUsers($data, $choices=array())
+    {
+        return $this->validate($data, $this->metadata['filters']['user'], $choices);
+    }
 
     protected function validate($data, $metadata, $choices)
     {

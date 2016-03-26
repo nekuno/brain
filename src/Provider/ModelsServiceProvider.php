@@ -94,7 +94,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.userFilter.model'] = $app->share(
             function ($app) {
 
-                return new UserFilterModel($app['neo4j.graph_manager'], $app['fields']['user'], $app['locale.options']['default'], $app['users.groups.model']);
+                return new UserFilterModel($app['neo4j.graph_manager'], $app['fields']['filters']['user'], $app['locale.options']['default'], $app['users.groups.model']);
             }
         );
 
@@ -276,7 +276,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.filterusers.manager'] = $app->share(
             function ($app) {
 
-                return new FilterUsersManager($app['fields']['user'], $app['neo4j.graph_manager'], $app['users.profileFilter.model'], $app['users.userFilter.model']);
+                return new FilterUsersManager($app['neo4j.graph_manager'], $app['users.profileFilter.model'], $app['users.userFilter.model'], $app['validator.service']);
             }
         );
 
