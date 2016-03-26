@@ -43,6 +43,7 @@ class Validator
     protected function validate($data, $metadata, $choices)
     {
         $errors = array();
+        //TODO: Build $choices as a merge of argument and choices from each metadata
         foreach ($metadata as $fieldName => $fieldData) {
 
             $fieldErrors = array();
