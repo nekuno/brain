@@ -73,7 +73,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.manager'] = $app->share(
             function ($app) {
 
-                return new UserManager($app['dispatcher'], $app['neo4j.graph_manager'], $app['security.password_encoder'], $app['users.userFilter.model']);
+                return new UserManager($app['dispatcher'], $app['neo4j.graph_manager'], $app['security.password_encoder']);
             }
         );
 
@@ -94,7 +94,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.userFilter.model'] = $app->share(
             function ($app) {
 
-                return new UserFilterModel($app['neo4j.graph_manager'], $app['fields']['filters']['user'], $app['locale.options']['default'], $app['users.groups.model']);
+                return new UserFilterModel($app['neo4j.graph_manager'], $app['fields']['filters']['user'], $app['locale.options']['default']);
             }
         );
 

@@ -44,17 +44,12 @@ class UserManager implements PaginatedInterface
      */
     protected $encoder;
 
-    /**
-     * @var User\UserFilterModel
-     */
-    protected $userFilterModel;
 
-    public function __construct(EventDispatcher $dispatcher, GraphManager $gm, PasswordEncoderInterface $encoder, User\UserFilterModel $userFilterModel)
+    public function __construct(EventDispatcher $dispatcher, GraphManager $gm, PasswordEncoderInterface $encoder)
     {
         $this->dispatcher = $dispatcher;
         $this->gm = $gm;
         $this->encoder = $encoder;
-        $this->userFilterModel = $userFilterModel;
     }
 
     /**

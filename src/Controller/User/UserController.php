@@ -503,7 +503,24 @@ class UserController
 
         /* @var $userFilterModel User\UserFilterModel */
         $userFilterModel = $app['users.userFilter.model'];
-        $filters['userFilters'] = $userFilterModel->getFilters($locale, $user);
+        $userFilters = $userFilterModel->getFilters($locale);
+
+        //user-dependent filters
+
+        /* @var $groupModel User\GroupModel */
+        $groupModel = $app['users.groups.model'];
+        $groups = $groupModel->getByUser($user->getId());
+
+        $userFilters['groups'] = array('choices'=>array());
+        foreach ($groups as $group) {
+            $userFilters['groups']['choices'][$group['id']] = $group['name'];
+        }
+
+        if ($groups = null || $groups == array()) {
+            unset($userFilters['groups']);
+        }
+
+        $filters['userFilters'] = $userFilters;
 
         return $app->json($filters, 200);
     }

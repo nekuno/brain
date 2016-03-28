@@ -2,6 +2,7 @@
 
 namespace Controller\User;
 
+use Model\User\ProfileFilterModel;
 use Model\User\ProfileModel;
 use Model\User\ProfileTagModel;
 use Model\User;
@@ -107,7 +108,7 @@ class ProfileController
     {
         $locale = $request->query->get('locale');
 
-        /* @var $model ProfileModel */
+        /* @var $model ProfileFilterModel */
         $model = $app['users.profileFilter.model'];
         $metadata = $model->getMetadata($locale);
 
@@ -123,7 +124,7 @@ class ProfileController
     {
         $locale = $request->query->get('locale');
 
-        /* @var $model ProfileModel */
+        /* @var $model ProfileFilterModel */
         $model = $app['users.profileFilter.model'];
         $filters = $model->getFilters($locale);
 
