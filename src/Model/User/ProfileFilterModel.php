@@ -54,6 +54,7 @@ class ProfileFilterModel extends FilterModel
             $publicField['top'] = $this->getTopProfileTags($name);
         }
 
+        return $publicField;
     }
 
     protected function getChoiceOptions($locale)
