@@ -12,6 +12,8 @@ Los métodos validate tienen dos argumentos:
 Para todos los tipos:
 
     required: Si es true comprueba si los datos lo incluyen
+    label: Nombre del campo, en varios idiomas
+    labelFilter: Nombre a mostrar en los filtros donde se use este campo, en varios idiomas.
 
 text/textarea:
 

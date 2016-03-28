@@ -24,7 +24,7 @@ privacy:
         label:
             en: 'Who can send me messages'
             es: 'Quién puede enviarme mensajes'
-profile:
+profile: &profile
     description:
         type: textarea
         min: 0
@@ -438,4 +438,11 @@ filters:
                 en: 'Minimum similarity (%)'
                 es: 'Similaridad mínima (%)'
     profile:
+        <<: *profile
+        age:
+          type: integer
+          min: 14
+          label:
+              en: 'Age'
+              es: 'Edad'
 
