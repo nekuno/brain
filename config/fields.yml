@@ -385,26 +385,6 @@ profile:
         label:
             en: 'Location'
             es: 'Ubicación'
-user:
-    groups:
-        type: choice
-        label:
-            en: 'Groups'
-            es: 'Grupos'
-    compatibility:
-        type: integer
-        min: 50
-        max: 100
-        label:
-            en: 'Minimum compatibility (%)'
-            es: 'Compatibilidad mínima (%)'
-    similarity:
-        type: integer
-        min: 50
-        max: 100
-        label:
-            en: 'Minimum similarity (%)'
-            es: 'Similaridad mínima (%)'
 content:
     type:
         type: choice
