@@ -125,6 +125,18 @@ class FilterUsersManager
         return $filter;
     }
 
+    public function validateFilterUsers(array $filters)
+    {
+        if (isset($filters['profileFilters'])){
+            $this->validator->validateEditFilterProfile($filters['profileFilters'], $this->profileFilterModel->getChoiceOptionIds());
+        }
+
+        if (isset($filters['userFilters'])){
+            $this->validator->validateEditFilterUsers($filters['userFilters']);
+        }
+
+    }
+
     /**
      * @param FilterUsers $filters
      * @return bool
@@ -150,7 +162,7 @@ class FilterUsersManager
      */
     protected function buildFiltersUsers()
     {
-        return new FilterUsers($this->userFilterModel->getMetadata());
+        return new FilterUsers();
     }
 
     protected function getFilterUsersIdByThreadId($id)

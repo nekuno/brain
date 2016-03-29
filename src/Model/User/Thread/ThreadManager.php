@@ -7,6 +7,7 @@ use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Neo4j\GraphManager;
 use Manager\UserManager;
+use Model\User\Filters\FilterUsers;
 use Service\Validator;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -244,8 +245,7 @@ class ThreadManager
      */
     public function create($userId, $data)
     {
-        $this->validator->validateUserId($userId);
-        $this->validator->validateEditThread($data, $this->getChoices());
+        $this->validateEditThread($data, $userId);
 
         $name = isset($data['name']) ? $data['name'] : null;
         $category = isset($data['category']) ? $data['category'] : null;
@@ -278,7 +278,7 @@ class ThreadManager
 
     public function update($threadId, $data)
     {
-        $this->validator->validateEditThread($data, $this->getChoices());
+        $this->validateEditThread($data);
 
         $name = isset($data['name']) ? $data['name'] : null;
         $category = isset($data['category']) ? $data['category'] : null;
@@ -390,6 +390,20 @@ class ThreadManager
         }
 
         return $result->current()->offsetGet('amount');
+    }
+
+    private function validateEditThread($data, $userId = null)
+    {
+        if ($userId){
+            $this->validator->validateUserId($userId);
+        }
+
+        $this->validator->validateEditThread($data, $this->getChoices());
+
+        if (isset($data['filters'])){
+            $this->usersThreadManager->getFilterUsersManager()->validateFilterUsers($data['filters']);
+        }
+
     }
 
     /**

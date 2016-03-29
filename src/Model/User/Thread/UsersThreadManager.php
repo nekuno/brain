@@ -29,6 +29,10 @@ class UsersThreadManager
         $this->filterUsersManager = $filterUsersManager;
     }
 
+    public function getFilterUsersManager(){
+        return $this->filterUsersManager;
+    }
+
     /**
      * @param $id
      * @param $name

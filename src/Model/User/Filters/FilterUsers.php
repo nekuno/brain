@@ -9,20 +9,9 @@ namespace Model\User\Filters;
 class FilterUsers implements \JsonSerializable
 {
 
-    protected $metadata = array();
-
     protected $profileFilters = array();
     protected $usersFilters = array();
     protected $id;
-
-    /**
-     * Filters constructor.
-     * @param $metadata
-     */
-    public function __construct($metadata)
-    {
-        $this->metadata = $metadata;
-    }
 
     public function getProfileFilters()
     {
