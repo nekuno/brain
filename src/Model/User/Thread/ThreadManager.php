@@ -218,13 +218,13 @@ class ThreadManager
      */
     public function createBatchForUser($userId, array $threadsData)
     {
-        $returnThreads=array();
+        $returnThreads = array();
 
         $existingThreads = $this->getByUser($userId);
 
-        foreach ($threadsData as $threadData){
-            foreach ($existingThreads as $existingThread){
-                if ($threadData['name'] == $existingThread->getName()){
+        foreach ($threadsData as $threadData) {
+            foreach ($existingThreads as $existingThread) {
+                if ($threadData['name'] == $existingThread->getName()) {
                     continue 2;
                 }
             }
@@ -244,12 +244,8 @@ class ThreadManager
      */
     public function create($userId, $data)
     {
-        $this->validator->validateEditThread(
-            array_merge(
-                array('userId' => (integer)$userId),
-                $data
-            ), $this->getChoices()
-        );
+        $this->validator->validateUserId($userId);
+        $this->validator->validateEditThread($data, $this->getChoices());
 
         $name = isset($data['name']) ? $data['name'] : null;
         $category = isset($data['category']) ? $data['category'] : null;
@@ -282,7 +278,6 @@ class ThreadManager
 
     public function update($threadId, $data)
     {
-
         $this->validator->validateEditThread($data, $this->getChoices());
 
         $name = isset($data['name']) ? $data['name'] : null;
@@ -326,7 +321,6 @@ class ThreadManager
      */
     public function cacheResults(Thread $thread, array $items, $total)
     {
-
         $this->deleteCachedResults($thread);
 
         $parameters = array(
@@ -380,7 +374,6 @@ class ThreadManager
 
     public function deleteById($id)
     {
-
         $thread = $this->getById($id);
 
         $qb = $this->graphManager->createQueryBuilder();
@@ -428,7 +421,6 @@ class ThreadManager
 
     private function updateFromFilters(Thread $thread, $data)
     {
-
         $filters = isset($data['filters']) ? $data['filters'] : array();
         switch (get_class($thread)) {
             case 'Model\User\Thread\ContentThread':

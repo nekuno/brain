@@ -214,7 +214,7 @@ class FilterUsersManager
                     }
                     $qb->with('filter');
                     break;
-                case 'birthday':
+                case 'birthday_range':
 
                     $qb->remove("filter.age_min", "filter.age_max");
 

@@ -2,6 +2,8 @@
 
 Validator es el servicio para validar cualquier array de datos. Para ello lee el archivo fields.yml y valida a partir de esas reglas.
 
+El método validateUserId es distinto del resto de validación. Sólo comprueba que el usuario exista y, si no, emite una ValidationException.
+
 Los métodos validate tienen dos argumentos:
 
     data: Array con los datos a validar
@@ -37,6 +39,13 @@ date:
 birthday:
 
     //TODO: Hacer min - max en tipo date y eliminar este tipo especial de profile
+
+birthday_range:
+    
+Si hay mínimo y máximo, comprueba que el mínimo sea menor que el máximo
+    
+    min: Valor mínimo de cualquiera del input (mínimo o máximo)
+    max: Valor máximo de cualquiera del input (mínimo o máximo)
 
 boolean:
 
@@ -92,9 +101,3 @@ Si los datos incluyen la key 'userId' se comprueba que el usuario exista
 En caso de haber algún error se lanza una ValidationException con dichos errores para ser tratada.
 
 En caso contrario devuelve true
-
-
-    
-    
-        
-

@@ -439,10 +439,40 @@ filters:
                 es: 'Similaridad mínima (%)'
     profile:
         <<: *profile
-        age:
-          type: integer
-          min: 14
-          label:
-              en: 'Age'
-              es: 'Edad'
+
+        birthday:
+            type: birthday_range
+            label:
+                en: 'Birthday'
+                es: 'Cumpleaños'
+            labelFilter:
+                en: 'Age'
+                es: 'Edad'
+        gender:
+            type: choice
+            label:
+                en: 'Want to be found in searches by gender'
+                es: 'Quiero salir en búsquedas por género'
+            labelFilter:
+                en: 'Gender'
+                es: 'Género'
+        orientation:
+            type: choice
+            label:
+                en: 'Orientation'
+                es: 'Orientación'
+        interfaceLanguage:
+            type: choice
+            label:
+                en: 'What interface language do you prefer?'
+                es: '¿Qué lenguaje de interfaz prefieres?'
+            labelFilter:
+                en: 'Language'
+                es: 'Idioma'
+        location:
+            type: location
+            label:
+                en: 'Location'
+                es: 'Ubicación'
+
 

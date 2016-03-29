@@ -31,6 +31,25 @@ class Validator
         $this->userManager = $userManager;
     }
 
+    public function validateUserId($userId)
+    {
+        $errors = array();
+
+        if (empty($userId)) {
+            $errors['userId'] = array('User identification not supplied');
+        }
+
+        try {
+            $this->userManager->getById((integer)$userId, true);
+        } catch (NotFoundHttpException $e) {
+            $errors['userId'] = array($e->getMessage());
+        }
+
+        if (count($errors) > 0) {
+            throw new ValidationException($errors);
+        }
+    }
+
     public function validateEditThread(array $data, array $choices = array())
     {
         return $this->validate($data, $this->metadata['threads'], $choices);
@@ -45,6 +64,7 @@ class Validator
     {
         return $this->validate($data, $this->metadata['filters']['user'], $choices);
     }
+
     public function validateEditFilterProfile($data, $choices = array())
     {
         return $this->validate($data, $this->metadata['filters']['profile'], $choices);
@@ -111,6 +131,42 @@ class Validator
                         }
                         break;
 
+                    case 'birthday_range':
+                        if (isset($dataValue['min'])) {
+                            $dateMin = \DateTime::createFromFormat('Y-m-d', $dataValue['min']);
+                            if (isset($fieldData['min'])) {
+                                if ($dateMin < \DateTime::createFromFormat('Y-m-d', $fieldData['min'])) {
+                                    $fieldErrors[] = 'Must be greater than ' . $fieldData['min'];
+                                }
+                            }
+                            if (isset($fieldData['max'])) {
+                                if ($dateMin < \DateTime::createFromFormat('Y-m-d', $fieldData['max'])) {
+                                    $fieldErrors[] = 'Must be less than ' . $fieldData['max'];
+                                }
+                            }
+                        }
+
+                        if (isset($dataValue['max'])) {
+                            $dateMax = \DateTime::createFromFormat('Y-m-d', $dataValue['max']);
+                            if (isset($fieldData['min'])) {
+                                if ($dateMax < \DateTime::createFromFormat('Y-m-d', $fieldData['min'])) {
+                                    $fieldErrors[] = 'Must be greater than ' . $fieldData['min'];
+                                }
+                            }
+                            if (isset($fieldData['max'])) {
+                                if ($dateMax < \DateTime::createFromFormat('Y-m-d', $fieldData['max'])) {
+                                    $fieldErrors[] = 'Must be less than ' . $fieldData['max'];
+                                }
+                            }
+                        }
+
+                        if (isset($dataValue['min']) && isset($dataValue['max'])) {
+                            if (\DateTime::createFromFormat('Y-m-d', $dataValue['min']) > \DateTime::createFromFormat('Y-m-d', $dataValue['max'])) {
+                                $fieldErrors[] = 'Minimum value must be inferior or equal to maximum value';
+                            }
+                        }
+
+                        break;
                     case 'boolean':
                         if ($dataValue !== true && $dataValue !== false) {
                             $fieldErrors[] = 'Must be a boolean.';
@@ -196,7 +252,7 @@ class Validator
                         break;
                 }
             } else {
-                if ($fieldData['required'] === true) {
+                if (isset($fieldData['required']) && $fieldData['required'] === true) {
                     $fieldErrors[] = 'It\'s required.';
                 }
             }
@@ -204,16 +260,6 @@ class Validator
             if (count($fieldErrors) > 0) {
                 $errors[$fieldName] = $fieldErrors;
             }
-        }
-
-        if (isset($data['userId'])) {
-            try {
-                $this->userManager->getById((integer)$data['userId'], true);
-            } catch (NotFoundHttpException $e) {
-                $errors['userId'] = array($e->getMessage());
-            }
-        } else {
-            $errors['userId'] = array('User identification not supplied');
         }
 
         if (count($errors) > 0) {
