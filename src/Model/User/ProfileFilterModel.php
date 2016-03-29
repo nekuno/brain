@@ -57,7 +57,13 @@ class ProfileFilterModel extends FilterModel
         return $publicField;
     }
 
-    protected function getChoiceOptions($locale)
+    /**
+     * Output  choice options according to user language
+     * @param $locale
+     * @return array
+     * @throws \Model\Neo4j\Neo4jException
+     */
+    public function getChoiceOptions($locale)
     {
         $translationField = 'name_' . $locale;
 
@@ -82,6 +88,33 @@ class ProfileFilterModel extends FilterModel
         return $choiceOptions;
     }
 
+    /**
+     * Output choice options independently of locale
+     * @return array
+     * @throws \Model\Neo4j\Neo4jException
+     */
+    public function getChoiceOptionIds()
+    {
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(option:ProfileOption)')
+            ->returns("head(filter(x IN labels(option) WHERE x <> 'ProfileOption')) AS labelName, option.id AS id")
+            ->orderBy('labelName');
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        $choiceOptions = array();
+        /** @var Row $row */
+        foreach ($result as $row) {
+            $typeName = $this->labelToType($row->offsetGet('labelName'));
+            $optionId = $row->offsetGet('id');
+
+            $choiceOptions[$typeName][] = $optionId;
+        }
+
+        return $choiceOptions;
+    }
+
     public function labelToType($labelName)
     {
 
@@ -101,7 +134,7 @@ class ProfileFilterModel extends FilterModel
         return array('min' => $max, 'max' => $min);
     }
 
-    private function getYearsFromDate($birthday)
+    public function getYearsFromDate($birthday)
     {
         $minDate = new \DateTime($birthday);
         $minInterval = $minDate->diff(new \DateTime());

@@ -193,7 +193,8 @@ class FilterUsersManager
 
     private function saveProfileFilters($profileFilters, $id)
     {
-        $this->validator->validateEditFilterProfile($profileFilters);
+        $profileOptions = $this->profileFilterModel->getChoiceOptionIds();
+        $this->validator->validateEditFilterProfile($profileFilters, $profileOptions);
 
         $metadata = $this->profileFilterModel->getMetadata();
 
@@ -280,8 +281,19 @@ class FilterUsersManager
                     $qb->with('filter');
                     break;
                 case 'choice':
+                    $profileLabelName = $this->profileFilterModel->typeToLabel($fieldName);
+                    $qb->optionalMatch("(filter)-[old_po_rel:FILTERS_BY]->(:$profileLabelName)")
+                        ->delete("old_po_rel");
+
+                    if (isset($profileFilters[$fieldName])) {
+                        $value = $profileFilters[$fieldName];
+                        $qb->merge(" (option$fieldName$value:$profileLabelName{id:'$value'})");
+                        $qb->merge(" (filter)-[:FILTERS_BY]->(option$fieldName$value)");
+                    }
+                    $qb->with('filter');
+                    break;
                 case 'double_choice':
-                    $profileLabelName = ucfirst($fieldName);
+                    $profileLabelName = $this->profileFilterModel->typeToLabel($fieldName);
                     $qb->optionalMatch("(filter)-[old_po_rel:FILTERS_BY]->(:$profileLabelName)")
                         ->delete("old_po_rel");
 
@@ -338,8 +350,8 @@ class FilterUsersManager
             unset($userFilters['groups']);
         }
 
-        foreach ($metadata as $name => $value){
-            if ($value['type'] == 'integer'){
+        foreach ($metadata as $name => $value) {
+            if ($value['type'] == 'integer') {
                 $qb->set("filter.$name = null");
             }
         }

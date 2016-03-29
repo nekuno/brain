@@ -409,31 +409,6 @@ class ProfileModel
         return $tagsResult;
     }
 
-    protected function getChoiceOptions($locale)
-    {
-        $translationField = 'name_' . $locale;
-
-        $qb = $this->gm->createQueryBuilder();
-        $qb->match('(option:ProfileOption)')
-            ->returns("head(filter(x IN labels(option) WHERE x <> 'ProfileOption')) AS labelName, option.id AS id, option." . $translationField . " AS name")
-            ->orderBy('labelName');
-
-        $query = $qb->getQuery();
-        $result = $query->getResultSet();
-
-        $choiceOptions = array();
-        /** @var Row $row */
-        foreach ($result as $row) {
-            $typeName = $this->profileFilterModel->labelToType($row->offsetGet('labelName'));
-            $optionId = $row->offsetGet('id');
-            $optionName = $row->offsetGet('name');
-
-            $choiceOptions[$typeName][$optionId] = $optionName;
-        }
-
-        return $choiceOptions;
-    }
-
     protected function getUserAndProfileNodesById($id)
     {
         $qb = $this->gm->createQueryBuilder();

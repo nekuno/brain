@@ -174,8 +174,8 @@ class Validator
                         break;
 
                     case 'choice':
-                        if (!in_array($dataValue, array_keys($choices[$fieldName]))) {
-                            $fieldErrors[] = sprintf('Option with value "%s" is not valid, possible values are "%s"', $dataValue, implode("', '", array_keys($choices)));
+                        if (!in_array($dataValue, $choices[$fieldName])) {
+                            $fieldErrors[] = sprintf('Option with value "%s" is not valid, possible values are "%s"', $dataValue, implode("', '", $choices[$fieldName]));
                         }
                         break;
 
