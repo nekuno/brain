@@ -3,25 +3,40 @@
 namespace Model\User;
 
 use Everyman\Neo4j\Node;
+use Model\LinkModel;
 use Paginator\PaginatedInterface;
 use Model\Neo4j\GraphManager;
+use Service\Validator;
 
 class ContentComparePaginatedModel implements PaginatedInterface
 {
     /**
-     * @var array
+     * @var GraphManager
      */
-    private static $validTypes = array('Audio', 'Video', 'Image');
+    protected $gm;
 
-    public function __construct(GraphManager $gm, TokensModel $tokensModel)
+    /**
+     * @var TokensModel
+     */
+    protected $tokensModel;
+
+    /**
+     * @var LinkModel
+     */
+    protected $linkModel;
+
+    /**
+     * @var Validator
+     */
+    protected $validator;
+
+    //TODO: Try to unify this with ContentCompareModel, maybe using from a superclass
+    public function __construct(GraphManager $gm, TokensModel $tokensModel, LinkModel $linkModel, Validator $validator)
     {
         $this->gm = $gm;
         $this->tokensModel = $tokensModel;
-    }
-
-    public function getValidTypes()
-    {
-        return self::$validTypes;
+        $this->linkModel = $linkModel;
+        $this->validator = $validator;
     }
 
     /**
@@ -31,17 +46,10 @@ class ContentComparePaginatedModel implements PaginatedInterface
      */
     public function validateFilters(array $filters)
     {
-        $hasIds = isset($filters['id']) && isset($filters['id2']);
+        $userId = isset($filters['id'])? $filters['id'] : null;
+        $this->validator->validateUserId($userId);
 
-        if (isset($filters['type'])) {
-            $hasValidType = in_array($filters['type'], $this->getValidTypes());
-        } else {
-            $hasValidType = true;
-        }
-
-        $isValid = $hasIds && $hasValidType;
-
-        return $isValid;
+        return $this->validator->validateRecommendateContent($filters, $this->getChoices());
     }
 
     /**
@@ -123,6 +131,7 @@ class ContentComparePaginatedModel implements PaginatedInterface
 
         $result = $query->getResultSet();
 
+        //TODO: Build with linkModel
         foreach ($result as $row) {
             $content = array();
 
@@ -270,5 +279,10 @@ class ContentComparePaginatedModel implements PaginatedInterface
         $conditions[] = $socialNetworkQuery;
 
         return $conditions;
+    }
+
+    protected function getChoices()
+    {
+        return array('type' => $this->linkModel->getValidTypes());
     }
 }

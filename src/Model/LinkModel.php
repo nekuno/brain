@@ -868,32 +868,6 @@ class LinkModel
     }
 
     /**
-     * @param $url
-     * @return boolean
-     */
-    private function isAlreadySaved($url)
-    {
-        $qb = $this->gm->createQueryBuilder();
-
-        $qb->match('(l:Link)')
-            ->where('l.url = { url }')
-            ->returns('l')
-            ->limit(1);
-
-        $qb->setParameter('url', $url);
-
-        $query = $qb->getQuery();
-
-        $result = $query->getResultSet();
-
-        if ($result->count() > 0) {
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
      * @param $node Node
      * @return array
      */
@@ -911,6 +885,10 @@ class LinkModel
         }
 
         return $link;
+    }
+
+    public function getValidTypes() {
+        return array('Audio', 'Video', 'Image', 'Link', 'Creator');
     }
 
     private function addSynonymousLink($id, $synonymousLinks)

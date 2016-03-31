@@ -157,14 +157,14 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.content.model'] = $app->share(
             function ($app) {
 
-                return new ContentPaginatedModel($app['neo4j.graph_manager'], $app['users.tokens.model']);
+                return new ContentPaginatedModel($app['neo4j.graph_manager'], $app['users.tokens.model'], $app['links.model'], $app['validator.service']);
             }
         );
 
         $app['users.content.compare.model'] = $app->share(
             function ($app) {
 
-                return new ContentComparePaginatedModel($app['neo4j.graph_manager'], $app['users.tokens.model']);
+                return new ContentComparePaginatedModel($app['neo4j.graph_manager'], $app['users.tokens.model'], $app['links.model'], $app['validator.service']);
             }
         );
 
@@ -213,7 +213,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.recommendation.content.model'] = $app->share(
             function ($app) {
 
-                return new ContentRecommendationPaginatedModel($app['neo4j.graph_manager'], $app['users.affinity.model'], $app['links.model']);
+                return new ContentRecommendationPaginatedModel($app['neo4j.graph_manager'], $app['users.affinity.model'], $app['links.model'], $app['validator.service']);
             }
         );
 

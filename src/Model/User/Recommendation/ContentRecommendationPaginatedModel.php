@@ -14,11 +14,6 @@ use Service\Validator;
 class ContentRecommendationPaginatedModel implements PaginatedInterface
 {
     /**
-     * @var array
-     */
-    private static $validTypes = array('Audio', 'Video', 'Image', 'Link', 'Creator');
-
-    /**
      * @var GraphManager
      */
     protected $gm;
@@ -42,6 +37,7 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
      * @param GraphManager $gm
      * @param AffinityModel $am
      * @param LinkModel $lm
+     * @param Validator $validator
      */
     public function __construct(GraphManager $gm, AffinityModel $am, LinkModel $lm, Validator $validator)
     {
@@ -49,11 +45,6 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
         $this->am = $am;
         $this->lm = $lm;
         $this->validator = $validator;
-    }
-
-    public function getChoices()
-    {
-        return array('type' => self::$validTypes);
     }
 
     /**
@@ -414,5 +405,10 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
         $content['match'] = $affinity['affinity'];
 
         return $content;
+    }
+
+    protected function getChoices()
+    {
+        return array('type' => $this->lm->getValidTypes());
     }
 } 
