@@ -70,6 +70,11 @@ class Validator
         return $this->validate($data, $this->metadata['filters']['profile'], $choices);
     }
 
+    public function validateRecommendateContent($data, $choices = array())
+    {
+        return $this->validate($data, $this->metadata['filters']['content'], $choices);
+    }
+
     protected function validate($data, $metadata, $choices)
     {
         $errors = array();

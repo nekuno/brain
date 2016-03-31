@@ -9,13 +9,14 @@ use Model\LinkModel;
 use Model\User\Affinity\AffinityModel;
 use Paginator\PaginatedInterface;
 use Model\Neo4j\GraphManager;
+use Service\Validator;
 
 class ContentRecommendationPaginatedModel implements PaginatedInterface
 {
     /**
      * @var array
      */
-    private static $validTypes = array('Audio', 'Video', 'Image', 'Link');
+    private static $validTypes = array('Audio', 'Video', 'Image', 'Link', 'Creator');
 
     /**
      * @var GraphManager
@@ -33,20 +34,26 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
     protected $lm;
 
     /**
+     * @var Validator
+     */
+    protected $validator;
+
+    /**
      * @param GraphManager $gm
      * @param AffinityModel $am
      * @param LinkModel $lm
      */
-    public function __construct(GraphManager $gm, AffinityModel $am, LinkModel $lm)
+    public function __construct(GraphManager $gm, AffinityModel $am, LinkModel $lm, Validator $validator)
     {
         $this->gm = $gm;
         $this->am = $am;
         $this->lm = $lm;
+        $this->validator = $validator;
     }
 
-    public function getValidTypes()
+    public function getChoices()
     {
-        return self::$validTypes;
+        return array('type' => self::$validTypes);
     }
 
     /**
@@ -56,17 +63,10 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
      */
     public function validateFilters(array $filters)
     {
-        $hasId = isset($filters['id']);
+        $userId = isset($filters['id'])? $filters['id'] : null;
+        $this->validator->validateUserId($userId);
 
-        if (isset($filters['type'])) {
-            $hasValidType = in_array($filters['type'], $this->getValidTypes());
-        } else {
-            $hasValidType = true;
-        }
-
-        $isValid = $hasId && $hasValidType;
-
-        return $isValid;
+        return $this->validator->validateRecommendateContent($filters, $this->getChoices());
     }
 
     /**

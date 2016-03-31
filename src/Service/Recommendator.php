@@ -31,6 +31,8 @@ class Recommendator
     protected $userRecommendationPaginatedModel;
     /** @var  $contentRecommendationPaginatedModel ContentRecommendationPaginatedModel */
     protected $contentRecommendationPaginatedModel;
+
+    //TODO: Check if user can be passed as argument and remove this dependency
     /** @var  $userManager UserManager */
     protected $userManager;
 
