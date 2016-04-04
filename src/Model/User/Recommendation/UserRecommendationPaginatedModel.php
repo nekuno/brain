@@ -250,18 +250,30 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                         $conditions[] = "p.$name = true";
                         break;
                     case 'choice':
-                        $profileLabelName = ucfirst($name);
+                        $profileLabelName = $this->profileFilterModel->typeToLabel($name);
                         $value = implode("', '", $value);
                         $matches[] = "(p)<-[:OPTION_OF]-(option$name:$profileLabelName) WHERE option$name.id IN ['$value']";
                         break;
                     case 'double_choice':
-                        $profileLabelName = ucfirst($name);
+                        $profileLabelName = $this->profileFilterModel->typeToLabel($name);
                         $value = implode("', '", $value);
                         $matches[] = "(p)<-[:OPTION_OF]-(option$name:$profileLabelName) WHERE option$name.id IN ['$value']";
                         break;
                     case 'tags':
-                        $tagLabelName = ucfirst($name);
+                        $tagLabelName = $this->profileFilterModel->typeToLabel($name);
                         $matches[] = "(p)<-[:TAGGED]-(tag$name:$tagLabelName) WHERE tag$name.name = '$value'";
+                        break;
+                    case 'tags_and_choice':
+                        foreach ($value as $index => $dataValue) {
+                            $tagValue = $name === 'language' ?
+                                $this->profileFilterModel->getLanguageFromTag($value['tag']) :
+                                $value['tag'];
+                            $choice = !is_null($dataValue['choice']) ? $dataValue['choice'] : '';
+                            $tagLabel = 'tag_' . $index;
+                            $matches[] = "(p)<-[rel$tagLabel:TAGGED]-($tagLabel:ProfileTag:" . $this->profileFilterModel->typeToLabel($name) . ")" .
+                                " WHERE ($tagLabel.name = '$tagValue' AND rel$tagLabel.detail = '$choice')";
+                        }
+
                         break;
                 }
             }
@@ -294,11 +306,11 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                         $matches[] = "(anyUser)-[:BELONGS_TO]->(group:Group) WHERE id(group) IN $jsonValues";
                         break;
                     case 'compatibility':
-                        $valuePerOne = intval($value)/100;
+                        $valuePerOne = intval($value) / 100;
                         $conditions[] = "($valuePerOne <= matching_questions)";
                         break;
                     case 'similarity':
-                        $valuePerOne = intval($value)/100;
+                        $valuePerOne = intval($value) / 100;
                         $conditions[] = "($valuePerOne <= similarity)";
                         break;
                 }

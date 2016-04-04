@@ -93,7 +93,6 @@ profile: &profile
 
     language:
         type: tags_and_choice
-        filterable: false
         label:
             en: 'Languages'
             es: 'Idiomas'

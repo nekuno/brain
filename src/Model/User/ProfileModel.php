@@ -550,7 +550,7 @@ class ProfileModel
                             $savedTags = array();
                             foreach ($fieldValue as $index => $value) {
                                 $tagValue = $fieldName === 'language' ?
-                                    $this->translateTypicalLanguage($this->formatLanguage($value['tag'])) :
+                                    $this->profileFilterModel->getLanguageFromTag($value['tag']) :
                                     $value['tag'];
                                 if (in_array($tagValue, $savedTags)) {
                                     continue;
@@ -709,56 +709,6 @@ class ProfileModel
         }
 
         return $sign;
-    }
-
-    protected function formatLanguage($typeName)
-    {
-        $firstCharacter = mb_strtoupper(mb_substr($typeName, 0, 1, 'UTF-8'), 'UTF-8');
-        $restString = mb_strtolower(mb_substr($typeName, 1, null, 'UTF-8'), 'UTF-8');
-
-        return $firstCharacter . $restString;
-    }
-
-    protected function translateTypicalLanguage($language)
-    {
-        switch ($language) {
-            case 'Español':
-                return 'Spanish';
-            case 'Castellano':
-                return 'Spanish';
-            case 'Inglés':
-                return 'English';
-            case 'Ingles':
-                return 'English';
-            case 'Francés':
-                return 'French';
-            case 'Frances':
-                return 'French';
-            case 'Alemán':
-                return 'German';
-            case 'Aleman':
-                return 'German';
-            case 'Portugués':
-                return 'Portuguese';
-            case 'Portugues':
-                return 'Portuguese';
-            case 'Italiano':
-                return 'Italian';
-            case 'Chino':
-                return 'Chinese';
-            case 'Japonés':
-                return 'Japanese';
-            case 'Japones':
-                return 'Japanese';
-            case 'Ruso':
-                return 'Russian';
-            case 'Árabe':
-                return 'Arabic';
-            case 'Arabe':
-                return 'Arabic';
-            default:
-                return $language;
-        }
     }
 
     protected function translateLanguageToLocale($language, $locale)
