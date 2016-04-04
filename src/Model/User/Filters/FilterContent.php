@@ -16,9 +16,9 @@ class FilterContent implements \JsonSerializable
 
     /**
      * FilterContent constructor.
-     * @param string $type
+     * @param array $type
      */
-    public function __construct($type = 'Link')
+    public function __construct($type = array('Link'))
     {
         $this->type = $type;
     }

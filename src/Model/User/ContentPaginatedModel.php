@@ -72,14 +72,11 @@ class ContentPaginatedModel implements PaginatedInterface
 
         $response = array();
 
-        $linkType = 'Link';
-        if (isset($filters['type'])) {
-            $linkType = $filters['type'];
-        }
+        $linkLabels = $this->linkModel->buildOptionalTypesLabel($filters);
 
         $qb->match("(u:User)")
             ->where("u.qnoow_id = { userId }")
-            ->match("(u)-[r:LIKES]->(content:" . $linkType . ")");
+            ->match("(u)-[r:LIKES]->(content:" . $linkLabels . ")");
 
         $conditions = $this->buildConditions($socialNetworks);
 
@@ -177,14 +174,11 @@ class ContentPaginatedModel implements PaginatedInterface
             $socialNetworks[] = $token['resourceOwner'];
         }
 
-        $linkType = 'Link';
-        if (isset($filters['type'])) {
-            $linkType = $filters['type'];
-        }
+        $linkLabels = $this->linkModel->buildOptionalTypesLabel($filters);
 
         $qb->match("(u:User)")
             ->where("u.qnoow_id = { userId }")
-            ->match("(u)-[r:LIKES]->(content:" . $linkType . ")");
+            ->match("(u)-[r:LIKES]->(content:" . $linkLabels . ")");
 
         $conditions = $this->buildConditions($socialNetworks);
 

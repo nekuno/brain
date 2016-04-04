@@ -67,7 +67,7 @@ class UserManager implements PaginatedInterface
 
     /**
      * @param bool $includeGhosts
-     * @return array
+     * @return User[]
      * @throws Neo4jException
      */
     public function getAll($includeGhosts = false)

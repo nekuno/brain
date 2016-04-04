@@ -75,7 +75,7 @@ class Validator
         return $this->validate($data, $this->metadata['filters']['content'], $choices);
     }
 
-    protected function validate($data, $metadata, $choices)
+    protected function validate($data, $metadata, $dataChoices = array())
     {
         $errors = array();
         //TODO: Build $choices as a merge of argument and choices from each metadata
@@ -85,6 +85,7 @@ class Validator
             if (isset($data[$fieldName])) {
 
                 $dataValue = $data[$fieldName];
+                $choices = array_merge($dataChoices, isset($fieldData['choices']) ? $fieldData['choices'] : array());
 
                 switch ($fieldData['type']) {
                     case 'text':
@@ -185,9 +186,9 @@ class Validator
                         break;
 
                     case 'double_choice':
-                        $choices = $fieldData['choices'] + array('' => '');
-                        if (!in_array($dataValue['choice'], array_keys($choices))) {
-                            $fieldErrors[] = sprintf('Option with value "%s" is not valid, possible values are "%s"', $dataValue['choice'], implode("', '", array_keys($choices)));
+                        $choices = $choices[$fieldName] + array('' => '');
+                        if (!in_array($dataValue['choice'], $choices)) {
+                            $fieldErrors[] = sprintf('Option with value "%s" is not valid, possible values are "%s"', $dataValue['choice'], implode("', '", $choices));
                         }
                         $doubleChoices = $fieldData['doubleChoices'] + array('' => '');
                         if (!isset($doubleChoices[$dataValue['choice']]) || $dataValue['detail'] && !isset($doubleChoices[$dataValue['choice']][$dataValue['detail']])) {
@@ -202,7 +203,6 @@ class Validator
                         if (!is_array($dataValue)) {
                             $fieldErrors[] = 'Tags and choice value must be an array';
                         }
-                        $choices = $fieldData['choices'];
                         if (count($dataValue) > self::MAX_TAGS_AND_CHOICE_LENGTH) {
                             $fieldErrors[] = sprintf('Tags and choice length "%s" is too long. "%s" is the maximum', count($dataValue), self::MAX_TAGS_AND_CHOICE_LENGTH);
                         }
@@ -210,7 +210,7 @@ class Validator
                             if (!isset($tagAndChoice['tag']) || !array_key_exists('choice', $tagAndChoice)) {
                                 $fieldErrors[] = sprintf('Tag and choice must be defined for tags and choice type');
                             }
-                            if (isset($tagAndChoice['choice']) && !in_array($tagAndChoice['choice'], array_keys($choices))) {
+                            if (isset($tagAndChoice['choice']) && !in_array($tagAndChoice['choice'], array_keys($choices[$fieldName]))) {
                                 $fieldErrors[] = sprintf('Option with value "%s" is not valid, possible values are "%s"', $tagAndChoice['choice'], implode("', '", array_keys($choices)));
                             }
                         }
@@ -219,12 +219,11 @@ class Validator
                         if (!is_array($dataValue)) {
                             $fieldErrors[] = 'Multiple choices value must be an array';
                         }
-                        $choices = $fieldData['choices'];
                         if (count($dataValue) > $fieldData['max_choices']) {
                             $fieldErrors[] = sprintf('Option length "%s" is too long. "%s" is the maximum', count($dataValue), $fieldData['max_choices']);
                         }
                         foreach ($dataValue as $value) {
-                            if (!in_array($value, array_keys($choices))) {
+                            if (!in_array($value, $choices[$fieldName])) {
                                 $fieldErrors[] = sprintf('Option with value "%s" is not valid, possible values are "%s"', $value, implode("', '", array_keys($choices)));
                             }
                         }

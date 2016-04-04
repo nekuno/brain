@@ -408,7 +408,8 @@ threads:
 filters:
     content:
         type:
-            type: choice
+            type: multiple_choices
+            max_choices: 5
             label:
                 en: 'Type'
                 es: 'Tipo'

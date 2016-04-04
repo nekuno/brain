@@ -84,14 +84,11 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
             'limit' => (integer)$limit
         );
 
-        $linkType = 'Link';
-        if (isset($filters['type'])) {
-            $linkType = $filters['type'];
-        }
+        $linkLabels = $this->lm->buildOptionalTypesLabel($filters);
 
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match('(user:User {qnoow_id: { userId }})-[affinity:AFFINITY]->(content:' . $linkType . ')')
+        $qb->match('(user:User {qnoow_id: { userId }})-[affinity:AFFINITY]->(content:' . $linkLabels . ')')
             ->where('NOT (user)-[:LIKES|:DISLIKES]->(content) AND affinity.affinity > 0 AND content.processed = 1');
 
         if (isset($filters['tag'])) {
@@ -166,10 +163,7 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
             return array();
         }
 
-        $linkType = 'Link';
-        if (isset($filters['type'])) {
-            $linkType = $filters['type'];
-        }
+        $linkLabels = $this->lm->buildOptionalTypesLabel($filters);
 
         $pageSizeMultiplier = 1; //small may make queries slow, big may skip results
         if (isset($filters['tag'])) {
@@ -200,12 +194,12 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
             $qb = $this->gm->createQueryBuilder();
             $qb->match('(user:User {qnoow_id: { userId }})');
             if (isset($filters['tag'])){
-                $qb->match('(content:' . $linkType . ')-[:TAGGED]->(filterTag:Tag)')
+                $qb->match('(content:' . $linkLabels . ')-[:TAGGED]->(filterTag:Tag)')
                     ->where('filterTag.name = { tag }', 'content.processed = 1');
 
                 $params['tag'] = $filters['tag'];
             } else {
-                $qb->match('(content:' . $linkType . '{processed: 1})');
+                $qb->match('(content:' . $linkLabels . '{processed: 1})');
             }
 
             $qb->with('user', 'content')
@@ -268,20 +262,17 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
             'userId' => (integer)$id,
         );
 
-        $linkType = 'Link';
-        if (isset($filters['type'])) {
-            $linkType = $filters['type'];
-        }
+        $linkLabels = $this->lm->buildOptionalTypesLabel($filters);
 
         $qb = $this->gm->createQueryBuilder();
 
         if (isset($filters['tag'])) {
-            $qb->match('(content:' . $linkType . '{processed: 1})-[:TAGGED]->(filterTag:Tag)')
+            $qb->match('(content:' . $linkLabels . '{processed: 1})-[:TAGGED]->(filterTag:Tag)')
                 ->where('filterTag.name = { tag }');
 
             $params['tag'] = $filters['tag'];
         } else {
-            $qb->match('(content:' . $linkType . '{processed: 1})');
+            $qb->match('(content:' . $linkLabels . '{processed: 1})');
         }
 
         $qb->with('content');

@@ -113,7 +113,10 @@ class Recommendator
                     $filters['tag'] = urldecode($threadFilters->getTag());
                 }
 
-                $filters['type'] = urldecode($threadFilters->getType());
+                foreach($threadFilters->getType() as $type){
+                    $filters['type'][] = urldecode($type);
+                }
+
 
                 if ($request->get('foreign')) {
                     $filters['foreign'] = urldecode($request->get('foreign'));

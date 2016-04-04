@@ -86,29 +86,15 @@ class FilterContentManager
         return $filters;
     }
 
-    protected function validate(array $data)
-    {
-        $this->validator->validateEditFilterContent($data, $this->getChoices());
-    }
-
-    protected function getChoices(){
-        return array(
-            'type' => array(
-                'Link', 'Audio', 'Video', 'Image', 'Creator'
-            )
-        );
-    }
-
     /**
      * @param FilterContent $filters
      * @return bool
      */
-    protected function updateFiltersContent(FilterContent $filters)
+    public function updateFiltersContent(FilterContent $filters)
     {
-
         $type = $filters->getType();
         $tag = $filters->getTag();
-        
+
         if ($tag){
             $this->saveTag($filters->getId(), $tag );
         }
@@ -118,6 +104,20 @@ class FilterContentManager
         }
 
         return true;
+    }
+
+    protected function validate(array $data)
+    {
+        $this->validator->validateEditFilterContent($data, $this->getChoices());
+    }
+
+    //TODO: LinkModel->getValidTypes() is the same
+    protected function getChoices(){
+        return array(
+            'type' => array(
+                'Link', 'Audio', 'Video', 'Image', 'Creator'
+            )
+        );
     }
 
     /**
@@ -135,6 +135,7 @@ class FilterContentManager
     protected function getFilterContentById($id)
     {
         $filter = $this->buildFiltersContent();
+        $filter->setId($id);
         $filter->setTag($this->getTag($id));
         $filter->setType($this->getType($id));
         return $filter;
@@ -189,7 +190,7 @@ class FilterContentManager
 
     /**
      * @param $id
-     * @return mixed|null
+     * @return array
      * @throws \Model\Neo4j\Neo4jException
      */
     private function getType($id)
@@ -204,8 +205,17 @@ class FilterContentManager
         if ($result->count() < 1) {
             throw new NotFoundHttpException('Filter with id ' . $id . ' not found');
         }
-        
-        return $result->current()->offsetGet('type');
+
+        $type= $result->current()->offsetGet('type');
+
+        //TODO: Unnedeed if database is consistent for sure.
+        try{
+            $type = \GuzzleHttp\json_decode($type);
+        } catch (\Exception $e){
+
+        }
+
+        return $type;
     }
 
     private function saveType($id, $type)
@@ -219,7 +229,7 @@ class FilterContentManager
             ->returns('filter');
         $qb->setParameters(array(
             'id' => (integer)$id,
-            'type' => $type,
+            'type' => json_encode($type),
         ));
         $result = $qb->getQuery()->getResultSet();
 

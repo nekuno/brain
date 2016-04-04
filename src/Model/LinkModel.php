@@ -136,14 +136,12 @@ class LinkModel
      */
     public function findAllLinks($filters = array())
     {
-
-        $type = isset($filters['type']) ? $filters['type'] : 'Link';
-
+        $linkLabels = $this->buildOptionalTypesLabel($filters);
         //todo: add tag filters, probably with an inter-model buildParamsFromFilters
 
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match("(l:$type)")
+        $qb->match("(l:$linkLabels)")
             ->returns('l AS link');
         $query = $qb->getQuery();
         $result = $query->getResultSet();
@@ -164,17 +162,17 @@ class LinkModel
      */
     public function countAllLinks($filters = array())
     {
-        $type = isset($filters['type']) ? $filters['type'] : 'Link';
+        $linkLabels = $this->buildOptionalTypesLabel($filters);
 
         $qb = $this->gm->createQueryBuilder();
 
         $qb->match('(user:User {qnoow_id: { userId }})');
         $qb->setParameter('userId', (integer)$filters['id']);
         if (isset($filters['tag'])) {
-            $qb->match("(:Tag{name: { tag } })-[:TAGGED]-(l:$type)");
+            $qb->match("(:Tag{name: { tag } })-[:TAGGED]-(l:$linkLabels)");
             $qb->setParameter('tag', $filters['tag']);
         } else {
-            $qb->match("(l:$type)");
+            $qb->match("(l:$linkLabels)");
         }
 
         //TODO: Cache this at periodic calculations
@@ -589,10 +587,12 @@ class LinkModel
      */
     public function getPredictedContentForAUser($userId, $limitContent = 40, $limitUsers = 20, array $filters = array())
     {
-        $linkType = 'Link';
+        $linkTypes = array('Link');
         if (isset($filters['type'])) {
-            $linkType = $filters['type'];
+            $linkTypes = $filters['type'];
         }
+
+        $linkLabels = implode('|:', $linkTypes);
 
         $params = array(
             'userId' => (integer)$userId,
@@ -618,7 +618,7 @@ class LinkModel
                 ->orderby('m DESC')
                 ->limit('{limitUsers}');
 
-            $qb->match('(users)-[:LIKES]->(l:' . $linkType . ')');
+            $qb->match('(users)-[:LIKES]->(l:' . $linkLabels . ')');
 
             $qb->with('u', 'avg(m) as average', 'count(m) as amount', 'l')
                 ->where('amount >= 2');
@@ -889,6 +889,15 @@ class LinkModel
 
     public function getValidTypes() {
         return array('Audio', 'Video', 'Image', 'Link', 'Creator');
+    }
+
+    public function buildOptionalTypesLabel($filters){
+        $linkTypes = array('Link');
+        if (isset($filters['type'])) {
+            $linkTypes = $filters['type'];
+        }
+
+        return implode('|:', $linkTypes);
     }
 
     private function addSynonymousLink($id, $synonymousLinks)
