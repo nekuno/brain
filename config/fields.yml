@@ -132,7 +132,6 @@ profile: &profile
             en: 'Descriptive gender'
             es: 'Género descriptivo'
         max_choices: 5
-        filterable: false
     hairColor:
         type: choice
         label:
@@ -470,7 +469,7 @@ filters:
                 en: 'Language'
                 es: 'Idioma'
         location:
-            type: location
+            type: location_distance
             label:
                 en: 'Location'
                 es: 'Ubicación'

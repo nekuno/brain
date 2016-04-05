@@ -239,6 +239,10 @@ class ProfileModel
                             }
                             break;
                         case 'multiple_choices':
+                            if (!is_array($fieldValue)){
+                                $fieldErrors[] = sprintf('Multiple choices option must be an array');
+                                continue;
+                            }
                             $choices = $fieldData['choices'];
                             if (count($fieldValue) > $fieldData['max_choices']) {
                                 $fieldErrors[] = sprintf('Option length "%s" is too long. "%s" is the maximum', count($fieldValue), $fieldData['max_choices']);
@@ -445,7 +449,6 @@ class ProfileModel
             ->where('u.qnoow_id = { id }')
             ->setParameter('id', (int)$id)
             ->with('profile');
-
         foreach ($data as $fieldName => $fieldValue) {
             if (isset($metadata[$fieldName])) {
 
@@ -595,6 +598,7 @@ class ProfileModel
                         $qbMultipleChoices->returns('profile');
 
                         $query = $qbMultipleChoices->getQuery();
+                        //var_dump($query->getExecutableQuery());
                         $query->getResultSet();
                         break;
                     case 'tags':

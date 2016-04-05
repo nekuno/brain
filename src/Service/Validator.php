@@ -218,42 +218,39 @@ class Validator
                     case 'multiple_choices':
                         if (!is_array($dataValue)) {
                             $fieldErrors[] = 'Multiple choices value must be an array';
+                            continue;
                         }
+
                         if (count($dataValue) > $fieldData['max_choices']) {
                             $fieldErrors[] = sprintf('Option length "%s" is too long. "%s" is the maximum', count($dataValue), $fieldData['max_choices']);
                         }
                         foreach ($dataValue as $value) {
-                            if (!in_array($value, $choices[$fieldName])) {
-                                $fieldErrors[] = sprintf('Option with value "%s" is not valid, possible values are "%s"', $value, implode("', '", array_keys($choices)));
+                            if (!in_array($value, array_keys($choices[$fieldName]))) {
+                                $fieldErrors[] = sprintf('Option with value "%s" is not valid, possible values are "%s"', $value, implode("', '", array_keys($choices[$fieldName])));
                             }
                         }
                         break;
                     case 'location':
-                        if (!is_array($dataValue)) {
-                            $fieldErrors[] = sprintf('The value "%s" is not valid, it should be an array with "latitude" and "longitude" keys', $dataValue);
-                        } else {
-                            if (!isset($dataValue['address']) || !$dataValue['address'] || !is_string($dataValue['address'])) {
-                                $fieldErrors[] = 'Address required';
-                            } else {
-                                if (!isset($dataValue['latitude']) || !preg_match("/^-?([1-8]?[0-9]|[1-9]0)\.{1}\d+$/", $dataValue['latitude'])) {
-                                    $fieldErrors[] = 'Latitude not valid';
-                                } elseif (!is_float($dataValue['latitude'])) {
-                                    $fieldErrors[] = 'Latitude must be float';
-                                }
-                                if (!isset($dataValue['longitude']) || !preg_match("/^-?([1]?[0-7][1-9]|[1]?[1-8][0]|[1-9]?[0-9])\.{1}\d+$/", $dataValue['longitude'])) {
-                                    $fieldErrors[] = 'Longitude not valid';
-                                } elseif (!is_float($dataValue['longitude'])) {
-                                    $fieldErrors[] = 'Longitude must be float';
-                                }
-                                if (!isset($dataValue['locality']) || !$dataValue['locality'] || !is_string($dataValue['locality'])) {
-                                    $fieldErrors[] = 'Locality required';
-                                }
-                                if (!isset($dataValue['country']) || !$dataValue['country'] || !is_string($dataValue['country'])) {
-                                    $fieldErrors[] = 'Country required';
-                                }
-                            }
+                        foreach ($this->validateLocation($dataValue) as $error){
+                            $fieldErrors[] = $error;
                         }
+
                         break;
+                    case 'location_distance':
+                        if (!is_array($dataValue)) {
+                            $fieldErrors[] = 'The location distance value must be an array';
+                            continue;
+                        }
+                        if (!isset($dataValue['distance'])) {
+                            $fieldErrors[] = 'Distance required';
+                        }
+                        if (!isset($dataValue['location'])) {
+                            $fieldErrors[] = 'Location required';
+                        }
+
+                        foreach ($this->validateLocation($dataValue['location']) as $error){
+                            $fieldErrors[] = $error;
+                        }
                 }
             } else {
                 if (isset($fieldData['required']) && $fieldData['required'] === true) {
@@ -271,6 +268,36 @@ class Validator
         }
 
         return true;
+    }
+
+    private function validateLocation($dataValue){
+        $fieldErrors = array();
+        if (!is_array($dataValue)) {
+            $fieldErrors[] = sprintf('The value "%s" is not valid, it should be an array with "latitude" and "longitude" keys', $dataValue);
+        } else {
+            if (!isset($dataValue['address']) || !$dataValue['address'] || !is_string($dataValue['address'])) {
+                $fieldErrors[] = 'Address required';
+            } else {
+                if (!isset($dataValue['latitude']) || !preg_match("/^-?([1-8]?[0-9]|[1-9]0)\.{1}\d+$/", $dataValue['latitude'])) {
+                    $fieldErrors[] = 'Latitude not valid';
+                } elseif (!is_float($dataValue['latitude'])) {
+                    $fieldErrors[] = 'Latitude must be float';
+                }
+                if (!isset($dataValue['longitude']) || !preg_match("/^-?([1]?[0-7][1-9]|[1]?[1-8][0]|[1-9]?[0-9])\.{1}\d+$/", $dataValue['longitude'])) {
+                    $fieldErrors[] = 'Longitude not valid';
+                } elseif (!is_float($dataValue['longitude'])) {
+                    $fieldErrors[] = 'Longitude must be float';
+                }
+                if (!isset($dataValue['locality']) || !$dataValue['locality'] || !is_string($dataValue['locality'])) {
+                    $fieldErrors[] = 'Locality required';
+                }
+                if (!isset($dataValue['country']) || !$dataValue['country'] || !is_string($dataValue['country'])) {
+                    $fieldErrors[] = 'Country required';
+                }
+            }
+        }
+
+        return $fieldErrors;
     }
 
 }

@@ -153,12 +153,12 @@ class ThreadManager
                                 'location' => array(
                                     'latitude' => 40.4167754,
                                     'longitude' => -3.7037901999999576,
-                                    'address' => 'Madrid, Madrid, Spain'
+                                    'address' => 'Madrid, Madrid, Spain',
+                                    'locality' => 'Madrid',
+                                    'country' => 'Spain'
                                 )
                             ),
-                            'gender' => array(
-                                'female'
-                            )
+                            'gender' => 'female',
                         ),
                         'order' => 'content',
                     )
@@ -167,21 +167,21 @@ class ThreadManager
                     'name' => 'Música',
                     'category' => ThreadManager::LABEL_THREAD_CONTENT,
                     'filters' => array(
-                        'type' => 'Audio'
+                        'type' => array('Audio')
                     )
                 ),
                 array(
                     'name' => 'Vídeos',
                     'category' => ThreadManager::LABEL_THREAD_CONTENT,
                     'filters' => array(
-                        'type' => 'Video'
+                        'type' => array('Video')
                     )
                 ),
                 array(
                     'name' => 'Imágenes',
                     'category' => ThreadManager::LABEL_THREAD_CONTENT,
                     'filters' => array(
-                        'type' => 'Image'
+                        'type' => array('Image')
                     )
                 ),
                 array(

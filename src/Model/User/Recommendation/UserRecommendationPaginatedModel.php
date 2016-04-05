@@ -273,7 +273,13 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                             $matches[] = "(p)<-[rel$tagLabel:TAGGED]-($tagLabel:ProfileTag:" . $this->profileFilterModel->typeToLabel($name) . ")" .
                                 " WHERE ($tagLabel.name = '$tagValue' AND rel$tagLabel.detail = '$choice')";
                         }
-
+                        break;
+                    case 'multiple_choices':
+                        $valueChoices = $value['choices'];
+                        foreach ($valueChoices as $index => $dataValue) {
+                            $optionLabel = 'option_' . $index;
+                            $matches[] = "($optionLabel:" . $this->profileFilterModel->typeToLabel($name) . ' {id: { ' . $index . ' }})';
+                        }
                         break;
                 }
             }
