@@ -60,9 +60,9 @@ class UsersThreadsCreateCommand extends ApplicationAwareCommand
         /* @var $recommendator Recommendator */
         $recommendator = $this->app['recommendator.service'];
 
-        $threads = $threadManager->getDefaultThreads($scenario);
-
         foreach ($users as $user) {
+
+            $threads = $threadManager->getDefaultThreads($user, $scenario);
 
             /* @var $user User */
             $createdThreads = $threadManager->createBatchForUser($user->getId(), $threads);

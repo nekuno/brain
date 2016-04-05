@@ -70,7 +70,9 @@ class Recommendator
                     $filters['tag'] = urldecode($threadFilters->getTag());
                 }
 
-                $filters['type'] = urldecode($threadFilters->getType());
+                foreach($threadFilters->getType() as $type){
+                    $filters['type'][] = urldecode($type);
+                }
 
                 return $this->getContentRecommendation($filters);
 
@@ -186,7 +188,7 @@ class Recommendator
         //TODO: Validate
 
         $tag = $request->get('tag', null);
-        $type = $request->get('type', null);
+        $type = $request->get('type', array());
         $foreign = $request->get('foreign', null);
 
         $filters = array('id' => $id);
@@ -195,8 +197,8 @@ class Recommendator
             $filters['tag'] = urldecode($tag);
         }
 
-        if ($type) {
-            $filters['type'] = urldecode($type);
+        foreach($type as $type){
+            $filters['type'][] = urldecode($type);
         }
 
         if ($foreign) {

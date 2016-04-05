@@ -7,7 +7,8 @@ use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Neo4j\GraphManager;
 use Manager\UserManager;
-use Model\User\Filters\FilterUsers;
+use Model\User;
+use Model\User\ProfileModel;
 use Service\Validator;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -28,6 +29,8 @@ class ThreadManager
     protected $usersThreadManager;
     /** @var  ContentThreadManager */
     protected $contentThreadManager;
+    /** @var ProfileModel */
+    protected $profileModel;
     /** @var Validator */
     protected $validator;
 
@@ -37,13 +40,17 @@ class ThreadManager
      * @param UserManager $userManager
      * @param UsersThreadManager $um
      * @param ContentThreadManager $cm
+     * @param ProfileModel $profileModel
+     * @param Validator $validator
      */
-    public function __construct(GraphManager $graphManager, UserManager $userManager, UsersThreadManager $um, ContentThreadManager $cm, Validator $validator)
+    public function __construct(GraphManager $graphManager, UserManager $userManager, UsersThreadManager $um,
+                                ContentThreadManager $cm, ProfileModel $profileModel, Validator $validator)
     {
         $this->graphManager = $graphManager;
         $this->userManager = $userManager;
         $this->usersThreadManager = $um;
         $this->contentThreadManager = $cm;
+        $this->profileModel = $profileModel;
         $this->validator = $validator;
     }
 
@@ -135,71 +142,70 @@ class ThreadManager
         return $thread;
     }
 
-    public function getDefaultThreads($scenario = ThreadManager::SCENARIO_DEFAULT)
+    public function getDefaultThreads(User $user, $scenario = ThreadManager::SCENARIO_DEFAULT)
     {
+        $profile = $this->profileModel->getById($user->getId());
+
+        $location = $profile['location'];
+
+        $birthday = new \Datetime($profile['birthday']);
+        $ageRangeMax = new \DateInterval('P5Y');
+        $ageRangeMin = new \DateInterval('P5Y');
+        $ageRangeMin->invert = 1;
+
+        $genderDesired = $this->getDesiredFromProfile($profile);
+        $nounDesired = $genderDesired == 'female'? 'Chicas' : 'Chicos';
+
         $threads = array(
             'default' => array(
                 array(
-                    'name' => 'Chicas de Madrid',
+                    'name' => $nounDesired. ' de '.$location['locality'],
                     'category' => ThreadManager::LABEL_THREAD_USERS,
                     'filters' => array(
                         'profileFilters' => array(
                             'birthday' => array(
-                                'min' => $this->YearsToBirthday(32),
-                                'max' => $this->YearsToBirthday(22),
+                                'min' => $birthday->add($ageRangeMin)->format('Y-m-d'),
+                                'max' => $birthday->add($ageRangeMax)->format('Y-m-d'),
                             ),
                             'location' => array(
                                 'distance' => 10,
-                                'location' => array(
-                                    'latitude' => 40.4167754,
-                                    'longitude' => -3.7037901999999576,
-                                    'address' => 'Madrid, Madrid, Spain',
-                                    'locality' => 'Madrid',
-                                    'country' => 'Spain'
-                                )
+                                'location' => $location
                             ),
-                            'gender' => 'female',
+                            'gender' => $genderDesired,
                         ),
                         'order' => 'content',
                     )
                 ),
                 array(
-                    'name' => 'Música',
+                    'name' => 'Spotify a medida',
                     'category' => ThreadManager::LABEL_THREAD_CONTENT,
                     'filters' => array(
                         'type' => array('Audio')
                     )
                 ),
                 array(
-                    'name' => 'Vídeos',
+                    'name' => 'Vídeos de YouTube',
                     'category' => ThreadManager::LABEL_THREAD_CONTENT,
                     'filters' => array(
                         'type' => array('Video')
                     )
                 ),
                 array(
-                    'name' => 'Imágenes',
+                    'name' => 'GIF adictivos',
                     'category' => ThreadManager::LABEL_THREAD_CONTENT,
                     'filters' => array(
                         'type' => array('Image')
                     )
                 ),
                 array(
-                    'name' => 'Contenidos de Madrid',
+                    'name' => 'Lo mejor de '.$location['locality'],
                     'category' => ThreadManager::LABEL_THREAD_CONTENT,
                     'filters' => array(
-                        'tag' => 'madrid'
+                        'tag' => $location['locality'],
                     )
                 ),
                 array(
-                    'name' => 'Noticias',
-                    'category' => ThreadManager::LABEL_THREAD_CONTENT,
-                    'filters' => array(
-                        'tag' => 'noticias'
-                    )
-                ),
-                array(
-                    'name' => 'Los mejores contenidos para ti',
+                    'name' => 'Canales de Twitter increíbles',
                     'category' => ThreadManager::LABEL_THREAD_CONTENT,
                 ),
             )
@@ -483,6 +489,23 @@ class ThreadManager
         $birthday = $now->modify('-' . $years . ' years')->format('Y-m-d');
 
         return $birthday;
+    }
+
+    private function getDesiredFromProfile(array $profile)
+    {
+        if(!isset($profile['orientation'])){
+            return null;
+        }
+
+        if ($profile['orientation'] == 'heterosexual'){
+            return $profile['gender'] === 'male' ? 'female' : 'male';
+        }
+
+        if ($profile['orientation'] == 'homosexual'){
+            return $profile['gender'] === 'male' ? 'male' : 'female';
+        }
+
+        return null;
     }
 }
 
