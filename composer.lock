@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "9a5c6f16b1fada820fae6e18dcd45138",
-    "content-hash": "36795797b38181a7ed19dd8ff5c34ea6",
+    "hash": "f9c4b84c4969309332a98d6a51c39a26",
+    "content-hash": "dcb5eca3da136ff120c7bb4308aae364",
     "packages": [
         {
             "name": "cnam/security-jwt-service-provider",
@@ -722,7 +722,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/jadell/neo4jphp/zipball/72b0911cc09eecf85ff712a5e78d5345bc8e2c5e",
+                "url": "https://api.github.com/repos/jadell/neo4jphp/zipball/6021d88dfa7082cefab5caf5d8834c889fd28138",
                 "reference": "72b0911cc09eecf85ff712a5e78d5345bc8e2c5e",
                 "shasum": ""
             },
@@ -3784,7 +3784,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/php-amqplib/php-amqplib/zipball/45b99c199e5b3b87afcc5f7a91f31bd8d6d6e214",
+                "url": "https://api.github.com/repos/php-amqplib/php-amqplib/zipball/f36597e303099516732459e1bbc77f8bc6ed658c",
                 "reference": "45b99c199e5b3b87afcc5f7a91f31bd8d6d6e214",
                 "shasum": ""
             },
@@ -3843,6 +3843,37 @@
             ],
             "abandoned": "php-amqplib/php-amqplib",
             "time": "2016-02-21 16:10:31"
+        },
+        {
+            "name": "yawmoght/getoldtweets-php",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/yawmoght/GetOldTweets-PHP.git",
+                "reference": "d032984968780691c1efda485bee1d3ac56816bc"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/yawmoght/GetOldTweets-PHP/zipball/d032984968780691c1efda485bee1d3ac56816bc",
+                "reference": "d032984968780691c1efda485bee1d3ac56816bc",
+                "shasum": ""
+            },
+            "require": {
+                "guzzlehttp/guzzle": "~4.0",
+                "php": ">=5.3.3",
+                "symfony/css-selector": "~2.1",
+                "symfony/dom-crawler": "~2.1"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "~3.7"
+            },
+            "type": "library",
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Port of Jefferson-Henrique/GedOldTweets-java to PHP",
+            "time": "2016-03-21 09:23:49"
         }
     ],
     "packages-dev": [
@@ -4268,7 +4299,8 @@
         "fabpot/goutte": 20,
         "swiftmailer/swiftmailer": 20,
         "videlalvaro/php-amqplib": 20,
-        "google/apiclient": 20
+        "google/apiclient": 20,
+        "yawmoght/getoldtweets-php": 20
     },
     "prefer-stable": false,
     "prefer-lowest": false,
