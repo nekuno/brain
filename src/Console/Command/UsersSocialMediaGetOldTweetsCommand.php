@@ -36,9 +36,7 @@ class UsersSocialMediaGetOldTweetsCommand extends ApplicationAwareCommand
         /** @var GetOldTweets $getoldtweets */
         $getoldtweets = $this->app['get_old_tweets'];
 
-        $getoldtweets->execute($username, $maxtweets, $since, $until, $querysearch);
-
-        $tweets = $getoldtweets->loadTweets();
+        $tweets = $getoldtweets->fetchTweets($username, $maxtweets, $since, $until, $querysearch);
 
         $output->writeln(count($tweets).' tweets loaded');
 
@@ -47,8 +45,8 @@ class UsersSocialMediaGetOldTweetsCommand extends ApplicationAwareCommand
             {
                 $output->writeln('-------------------');
                 $output->writeln('Tweet in position '.$position);
-                $output->writeln('Text: '.$tweet['text']);
-                $output->writeln('Date: '.$tweet['date']);
+                $output->writeln('Text: '.$tweet->getText());
+                $output->writeln('Date: '.$tweet->getDate()->format('YYYY-MM-DD'));
             }
             $output->writeln('-------------------');
         }

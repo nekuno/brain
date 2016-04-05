@@ -9,6 +9,7 @@ use ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser;
 use ApiConsumer\Registry\Registry;
 use Http\OAuth\Factory\ResourceOwnerFactory;
 use Igorw\Silex\ConfigServiceProvider;
+use Manager\TweetManager;
 use Psr\Log\LoggerAwareInterface;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
@@ -120,9 +121,17 @@ class ApiConsumerServiceProvider implements ServiceProviderInterface
             }
         );
 
+        $app['tweet_manager'] = $app->share(
+            function ($app) {
+                $tweetManager = new TweetManager($app['guzzle.client']);
+
+                return $tweetManager;
+            }
+        );
+
         $app['get_old_tweets'] = $app->share(
             function ($app) {
-                $getoldtweets = new GetOldTweets(new TwitterUrlParser(), $app['amqpManager.service']);
+                $getoldtweets = new GetOldTweets(new TwitterUrlParser(), $app['tweet_manager']);
 
                 return $getoldtweets;
             }
