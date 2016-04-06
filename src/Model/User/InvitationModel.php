@@ -466,9 +466,10 @@ class InvitationModel
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(inv:Invitation)', '(u:User)')
             ->where('inv.token = { token } AND coalesce(inv.available, 0) > 0 AND u.qnoow_id = { userId }')
+            ->optionalMatch('(inv)-[:HAS_GROUP]->(g:Group)')
             ->createUnique('(u)-[r:CONSUMED_INVITATION]->(inv)')
             ->set('inv.available = inv.available - 1', 'inv.consumed = inv.consumed + 1')
-            ->returns('inv AS invitation')
+            ->returns('inv AS invitation, g as group')
             ->setParameters(
                 array(
                     'token' => (string)$token,

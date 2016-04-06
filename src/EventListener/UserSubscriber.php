@@ -28,9 +28,9 @@ class UserSubscriber implements EventSubscriberInterface
     public function onUserCreated(UserEvent $event)
     {
         $user = $event->getUser();
-        $threads = $this->threadManager->getDefaultThreads($user);
+        //$threads = $this->threadManager->getDefaultThreads($user);
 
-        $createdThreads = $this->threadManager->createBatchForUser($user->getId(), $threads);
+        //$createdThreads = $this->threadManager->createBatchForUser($user->getId(), $threads);
             // TODO: Enqueue thread recommendation
     }
 }
