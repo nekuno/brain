@@ -8,6 +8,7 @@ use Everyman\Neo4j\Query\Row;
 use Model\Neo4j\GraphManager;
 use Manager\UserManager;
 use Model\User;
+use Model\User\GroupModel;
 use Model\User\ProfileModel;
 use Service\Validator;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -31,6 +32,8 @@ class ThreadManager
     protected $contentThreadManager;
     /** @var ProfileModel */
     protected $profileModel;
+    /** @var  GroupModel */
+    protected $groupModel;
     /** @var Validator */
     protected $validator;
 
@@ -41,16 +44,19 @@ class ThreadManager
      * @param UsersThreadManager $um
      * @param ContentThreadManager $cm
      * @param ProfileModel $profileModel
+     * @param GroupModel $groupModel
      * @param Validator $validator
      */
     public function __construct(GraphManager $graphManager, UserManager $userManager, UsersThreadManager $um,
-                                ContentThreadManager $cm, ProfileModel $profileModel, Validator $validator)
+                                ContentThreadManager $cm, ProfileModel $profileModel, GroupModel $groupModel,
+                                Validator $validator)
     {
         $this->graphManager = $graphManager;
         $this->userManager = $userManager;
         $this->usersThreadManager = $um;
         $this->contentThreadManager = $cm;
         $this->profileModel = $profileModel;
+        $this->groupModel = $groupModel;
         $this->validator = $validator;
     }
 
@@ -138,6 +144,15 @@ class ThreadManager
 
         $thread->setCached($cached);
         $thread->setTotalResults($threadNode->getProperty('totalResults'));
+        $thread->setCreatedAt($threadNode->getProperty('createdAt'));
+        $thread->setUpdatedAt($threadNode->getProperty('updatedAt'));
+
+        /* @var $label Label */
+        foreach ($threadNode->getLabels() as $label){
+            if ($label->getName() == 'ThreadDefault'){
+                $thread->setDefault(true);
+            }
+        }
 
         return $thread;
     }
@@ -168,48 +183,67 @@ class ThreadManager
                                 'max' => $birthday->add($ageRangeMax)->format('Y-m-d'),
                             ),
                             'location' => array(
-                                'distance' => 10,
+                                'distance' => 50,
                                 'location' => $location
                             ),
                             'gender' => $genderDesired,
                         ),
                         'order' => 'content',
-                    )
+                    ),
+                    'default' => true,
                 ),
                 array(
                     'name' => 'Spotify a medida',
                     'category' => ThreadManager::LABEL_THREAD_CONTENT,
                     'filters' => array(
                         'type' => array('Audio')
-                    )
+                    ),
+                    'default' => true,
                 ),
                 array(
                     'name' => 'Vídeos de YouTube',
                     'category' => ThreadManager::LABEL_THREAD_CONTENT,
                     'filters' => array(
                         'type' => array('Video')
-                    )
+                    ),
+                    'default' => true,
                 ),
                 array(
                     'name' => 'GIF adictivos',
                     'category' => ThreadManager::LABEL_THREAD_CONTENT,
                     'filters' => array(
                         'type' => array('Image')
-                    )
+                    ),
+                    'default' => true,
                 ),
                 array(
                     'name' => 'Lo mejor de '.$location['locality'],
                     'category' => ThreadManager::LABEL_THREAD_CONTENT,
                     'filters' => array(
                         'tag' => $location['locality'],
-                    )
+                    ),
+                    'default' => true,
                 ),
                 array(
                     'name' => 'Canales de Twitter increíbles',
                     'category' => ThreadManager::LABEL_THREAD_CONTENT,
-                ),
+                    'default' => true,
+                )
             )
         );
+
+        foreach ($this->groupModel->getAllByUserId($user->getId()) as $group){
+            $threads['default'][] = array(
+                'name' => 'Gente de '.$group['name'],
+                'category' => ThreadManager::LABEL_THREAD_USERS,
+                'filters' => array(
+                    'userFilters' => array(
+                        'groups' => $group['id'],
+                    )
+                ),
+                'default' => true,
+            );
+        }
 
         if (!isset($threads[$scenario])) {
             return null;
@@ -260,8 +294,13 @@ class ThreadManager
 
         $qb->match('(u:User{qnoow_id:{userId}})')
             ->create('(thread:' . ThreadManager::LABEL_THREAD . ':' . $category . ')')
-            ->set('thread.name = {name}')
+            ->set('thread.name = {name}',
+                'thread.createdAt = timestamp()',
+                'thread.updatedAt = timestamp()')
             ->create('(u)-[:HAS_THREAD]->(thread)');
+        if (isset($data['default']) && $data['default'] === true){
+            $qb->set('thread :ThreadDefault');
+        }
         $qb->returns('id(thread) as id');
         $qb->setParameters(
             array(
@@ -295,7 +334,8 @@ class ThreadManager
             ->where('id(thread) = {id}')
             ->remove('thread:' . $this::LABEL_THREAD_USERS . ':' . $this::LABEL_THREAD_CONTENT)
             ->set('thread:' . $category)
-            ->set('thread.name = {name}');
+            ->set('thread.name = {name}',
+                'thread.updatedAt = timestamp()');
         $qb->returns('thread');
         $qb->setParameters(
             array(

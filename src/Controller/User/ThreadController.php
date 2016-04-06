@@ -108,6 +108,16 @@ class ThreadController
         return $app->json($thread, 201);
     }
 
+    public function createDefaultAction(Application $app, User $user)
+    {
+        $threadManager = $app['users.threads.manager'];
+
+        $threads = $threadManager->getDefaultThreads($user);
+        $createdThreads = $threadManager->createBatchForUser($user->getId(), $threads);
+
+        return $app->json($createdThreads, 201);
+    }
+
     /**
      * @param Application $app
      * @param Request $request

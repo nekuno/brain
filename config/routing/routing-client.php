@@ -106,6 +106,7 @@ $app->post('lookUp/users/{id}', 'lookUp.controller:setAction');
 $app->post('/lookUp/webHook', 'lookUp.controller:setFromWebHookAction')->bind('setLookUpFromWebHook');
 
 /** Thread routes */
+$app->post('/threads/default', 'users.threads.controller:createDefaultAction');
 $app->get('/threads/{id}/recommendation', 'users.threads.controller:getRecommendationAction');
 $app->put('/threads/{id}', 'users.threads.controller:putAction');
 $app->delete('/threads/{id}', 'users.threads.controller:deleteAction');

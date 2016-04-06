@@ -16,17 +16,21 @@ class Thread implements \JsonSerializable
 
     protected $name;
 
+    protected $default;
+
+    protected $createdAt;
+
+    protected $updatedAt;
+
     protected $cached;
 
     protected $totalResults;
-
 
     function __construct($id, $name)
     {
         $this->id = $id;
         $this->name = $name;
     }
-
 
     /**
      * @return mixed
@@ -93,6 +97,54 @@ class Thread implements \JsonSerializable
     }
 
     /**
+     * @return mixed
+     */
+    public function getDefault()
+    {
+        return $this->default;
+    }
+
+    /**
+     * @param mixed $default
+     */
+    public function setDefault($default)
+    {
+        $this->default = $default;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getCreatedAt()
+    {
+        return $this->createdAt;
+    }
+
+    /**
+     * @param mixed $createdAt
+     */
+    public function setCreatedAt($createdAt)
+    {
+        $this->createdAt = $createdAt;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getUpdatedAt()
+    {
+        return $this->updatedAt;
+    }
+
+    /**
+     * @param mixed $updatedAt
+     */
+    public function setUpdatedAt($updatedAt)
+    {
+        $this->updatedAt = $updatedAt;
+    }
+
+    /**
      * Specify data which should be serialized to JSON
      * @link http://php.net/manual/en/jsonserializable.jsonserialize.php
      * @return mixed data which can be serialized by <b>json_encode</b>,
@@ -104,10 +156,12 @@ class Thread implements \JsonSerializable
         return array(
             'id' => $this->getId(),
             'name' => $this->getName(),
+            'default' => $this->getDefault(),
+            'createdAt' => $this->getCreatedAt(),
+            'updatedAt' => $this->getUpdatedAt(),
             'cached' => $this->getCached(),
             'totalResults' => $this->getTotalResults(),
         );
     }
-
 
 }

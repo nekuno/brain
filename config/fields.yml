@@ -403,6 +403,8 @@ threads:
     category:
         type: choice
         required: true
+    default:
+        type: boolean
 filters:
     content:
         type:
