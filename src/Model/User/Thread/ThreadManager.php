@@ -277,7 +277,7 @@ class ThreadManager
     }
 
     /**
-     * Creates an appropriate neo4j node from a set of filters
+     * Creates an appropriate neo4j node and links a filter node to it
      * @param $userId
      * @param $data
      * @return Thread|null
@@ -321,6 +321,14 @@ class ThreadManager
         return $this->updateFromFilters($thread, $data);
     }
 
+    /**
+     * Replaces thread data with $data
+     * @param $threadId
+     * @param $data
+     * @return Thread|null
+     * @throws \Exception
+     * @throws \Model\Neo4j\Neo4jException
+     */
     public function update($threadId, $data)
     {
         $this->validateEditThread($data);
@@ -332,7 +340,7 @@ class ThreadManager
 
         $qb->match('(thread:Thread)')
             ->where('id(thread) = {id}')
-            ->remove('thread:' . $this::LABEL_THREAD_USERS . ':' . $this::LABEL_THREAD_CONTENT)
+            ->remove('thread:' . $this::LABEL_THREAD_USERS . ':' . $this::LABEL_THREAD_CONTENT . ':ThreadDefault')
             ->set('thread:' . $category)
             ->set('thread.name = {name}',
                 'thread.updatedAt = timestamp()');
