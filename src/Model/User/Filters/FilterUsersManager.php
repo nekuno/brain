@@ -125,16 +125,15 @@ class FilterUsersManager
         return $filter;
     }
 
-    public function validateFilterUsers(array $filters)
+    public function validateFilterUsers(array $filters, $userId = null)
     {
         if (isset($filters['profileFilters'])){
             $this->validator->validateEditFilterProfile($filters['profileFilters'], $this->profileFilterModel->getChoiceOptionIds());
         }
 
         if (isset($filters['userFilters'])){
-            $this->validator->validateEditFilterUsers($filters['userFilters']);
+            $this->validator->validateEditFilterUsers($filters['userFilters'], $this->userFilterModel->getChoiceOptionIds($userId));
         }
-
     }
 
     /**
@@ -346,8 +345,7 @@ class FilterUsersManager
 
     private function saveUserFilters($userFilters, $id)
     {
-        $this->validator->validateEditFilterUsers($userFilters);
-
+        var_dump($userFilters);
         $qb = $this->graphManager->createQueryBuilder();
         $qb->match('(filter:FilterUsers)')
             ->where('id(filter) = {id}');

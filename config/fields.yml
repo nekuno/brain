@@ -420,7 +420,7 @@ filters:
                 es: 'Etiquetas'
     user:
         groups:
-            type: choice
+            type: multiple_choice
             label:
                 en: 'Groups'
                 es: 'Grupos'

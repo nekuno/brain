@@ -238,7 +238,7 @@ class ThreadManager
                 'category' => ThreadManager::LABEL_THREAD_USERS,
                 'filters' => array(
                     'userFilters' => array(
-                        'groups' => $group['id'],
+                        'groups' => array($group['id']),
                     )
                 ),
                 'default' => true,
@@ -447,7 +447,7 @@ class ThreadManager
         $this->validator->validateEditThread($data, $this->getChoices());
 
         if (isset($data['filters'])){
-            $this->usersThreadManager->getFilterUsersManager()->validateFilterUsers($data['filters']);
+            $this->usersThreadManager->getFilterUsersManager()->validateFilterUsers($data['filters'], $userId);
         }
 
     }
