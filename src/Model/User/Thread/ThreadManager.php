@@ -171,8 +171,46 @@ class ThreadManager
         $genderDesired = $this->getDesiredFromProfile($profile);
         $nounDesired = $genderDesired == 'female'? 'Chicas' : 'Chicos';
 
+        //specific order to be created from bottom to top
         $threads = array(
             'default' => array(
+                array(
+                    'name' => 'Canales de Twitter increíbles',
+                    'category' => ThreadManager::LABEL_THREAD_CONTENT,
+                    'default' => true,
+                ),
+                array(
+                    'name' => 'Lo mejor de '.$location['locality'],
+                    'category' => ThreadManager::LABEL_THREAD_CONTENT,
+                    'filters' => array(
+                        'tag' => $location['locality'],
+                    ),
+                    'default' => true,
+                ),
+                array(
+                    'name' => 'Vídeos de YouTube',
+                    'category' => ThreadManager::LABEL_THREAD_CONTENT,
+                    'filters' => array(
+                        'type' => array('Video')
+                    ),
+                    'default' => true,
+                ),
+                array(
+                    'name' => 'Spotify a medida',
+                    'category' => ThreadManager::LABEL_THREAD_CONTENT,
+                    'filters' => array(
+                        'type' => array('Audio')
+                    ),
+                    'default' => true,
+                ),
+                array(
+                    'name' => 'GIF adictivos',
+                    'category' => ThreadManager::LABEL_THREAD_CONTENT,
+                    'filters' => array(
+                        'type' => array('Image')
+                    ),
+                    'default' => true,
+                ),
                 array(
                     'name' => $nounDesired. ' de '.$location['locality'],
                     'category' => ThreadManager::LABEL_THREAD_USERS,
@@ -192,43 +230,6 @@ class ThreadManager
                     ),
                     'default' => true,
                 ),
-                array(
-                    'name' => 'Spotify a medida',
-                    'category' => ThreadManager::LABEL_THREAD_CONTENT,
-                    'filters' => array(
-                        'type' => array('Audio')
-                    ),
-                    'default' => true,
-                ),
-                array(
-                    'name' => 'Vídeos de YouTube',
-                    'category' => ThreadManager::LABEL_THREAD_CONTENT,
-                    'filters' => array(
-                        'type' => array('Video')
-                    ),
-                    'default' => true,
-                ),
-                array(
-                    'name' => 'GIF adictivos',
-                    'category' => ThreadManager::LABEL_THREAD_CONTENT,
-                    'filters' => array(
-                        'type' => array('Image')
-                    ),
-                    'default' => true,
-                ),
-                array(
-                    'name' => 'Lo mejor de '.$location['locality'],
-                    'category' => ThreadManager::LABEL_THREAD_CONTENT,
-                    'filters' => array(
-                        'tag' => $location['locality'],
-                    ),
-                    'default' => true,
-                ),
-                array(
-                    'name' => 'Canales de Twitter increíbles',
-                    'category' => ThreadManager::LABEL_THREAD_CONTENT,
-                    'default' => true,
-                )
             )
         );
 

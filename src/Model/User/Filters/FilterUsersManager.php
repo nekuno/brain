@@ -345,7 +345,6 @@ class FilterUsersManager
 
     private function saveUserFilters($userFilters, $id)
     {
-        var_dump($userFilters);
         $qb = $this->graphManager->createQueryBuilder();
         $qb->match('(filter:FilterUsers)')
             ->where('id(filter) = {id}');
