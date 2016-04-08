@@ -5,6 +5,7 @@ namespace Model;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Neo4j\GraphManager;
+use Symfony\Component\Translation\Translator;
 
 /**
  * Class LinkModel
@@ -19,10 +20,15 @@ class LinkModel
      */
     protected $gm;
 
-    public function __construct(GraphManager $gm)
-    {
+    /**
+     * @var Translator
+     */
+    protected $translator;
 
+    public function __construct(GraphManager $gm, Translator $translator)
+    {
         $this->gm = $gm;
+        $this->translator = $translator;
     }
 
     /**
@@ -887,8 +893,17 @@ class LinkModel
         return $link;
     }
 
-    public function getValidTypes() {
-        return array('Audio', 'Video', 'Image', 'Link', 'Creator');
+    public function getValidTypes($locale = 'en')
+    {
+        $this->translator->setLocale($locale);
+
+        $types = array();
+        $keyTypes = array('audio', 'video', 'image', 'link', 'creator');
+
+        foreach ( $keyTypes as $type){
+            $types[$type] = $this->translator->trans('types.'.$type);
+        };
+        return $types;
     }
 
     public function buildOptionalTypesLabel($filters){

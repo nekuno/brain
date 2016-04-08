@@ -30,3 +30,9 @@ notifications:
 followers:
   invitation_slogan: 'Find out if you are %compatible_or_similar% with %username%!'
   group_name: 'Followers of %username%'
+types:
+  audio: 'Audio'
+  video: 'Video'
+  image: 'Image'
+  creator: 'Creator'
+  link: 'Link'

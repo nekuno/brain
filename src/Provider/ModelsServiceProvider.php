@@ -108,7 +108,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.contentFilter.model'] = $app->share(
             function ($app) {
 
-                return new ContentFilterModel($app['neo4j.graph_manager'], $app['fields']['filters']['content'], $app['locale.options']['default']);
+                return new ContentFilterModel($app['neo4j.graph_manager'], $app['links.model'], $app['fields']['filters']['content'], $app['locale.options']['default']);
             }
         );
 
@@ -269,7 +269,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['links.model'] = $app->share(
             function ($app) {
 
-                return new LinkModel($app['neo4j.graph_manager']);
+                return new LinkModel($app['neo4j.graph_manager'], $app['translator']);
             }
         );
 

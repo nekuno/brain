@@ -497,16 +497,18 @@ class UserController
     {
         $locale = $request->query->get('locale');
         $filters = array();
+
         /* @var $profileFilterModel ProfileFilterModel */
         $profileFilterModel = $app['users.profileFilter.model'];
         $filters['profileFilters'] = $profileFilterModel->getFilters($locale);
+
+        //user-dependent filters
 
         /* @var $userFilterModel User\UserFilterModel */
         $userFilterModel = $app['users.userFilter.model'];
         $userFilters = $userFilterModel->getFilters($locale);
 
-        //user-dependent filters
-
+        //TODO: Move this logic to userFilter during/after QS-982 (remove filter logic from GroupModel)
         /* @var $groupModel User\GroupModel */
         $groupModel = $app['users.groups.model'];
         $groups = $groupModel->getByUser($user->getId());
@@ -521,6 +523,12 @@ class UserController
         }
 
         $filters['userFilters'] = $userFilters;
+
+        // content filters
+
+        /* @var $contentFilterModel User\ContentFilterModel */
+        $contentFilterModel = $app['users.contentFilter.model'];
+        $filters['contentFilters'] = $contentFilterModel->getFilters($locale);
 
         return $app->json($filters, 200);
     }
