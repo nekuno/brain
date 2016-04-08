@@ -112,4 +112,9 @@ final class AppEvents
      * Fired when privacy is updated
      */
     const PRIVACY_UPDATED = 'privacy.updated';
+
+    /**
+     * Fired when a user is added to a group
+     */
+    const GROUP_ADDED = 'group.added';
 }

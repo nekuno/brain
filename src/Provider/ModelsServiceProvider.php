@@ -290,7 +290,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.groups.model'] = $app->share(
             function ($app) {
 
-                return new GroupModel($app['neo4j.graph_manager'], $app['users.manager'], $app['users.filterusers.manager']);
+                return new GroupModel($app['neo4j.graph_manager'], $app['dispatcher'], $app['users.manager'], $app['users.filterusers.manager']);
             }
         );
 

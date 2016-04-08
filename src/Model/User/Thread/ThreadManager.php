@@ -233,19 +233,6 @@ class ThreadManager
             )
         );
 
-        foreach ($this->groupModel->getAllByUserId($user->getId()) as $group){
-            $threads['default'][] = array(
-                'name' => 'Gente de '.$group['name'],
-                'category' => ThreadManager::LABEL_THREAD_USERS,
-                'filters' => array(
-                    'userFilters' => array(
-                        'groups' => array($group['id']),
-                    )
-                ),
-                'default' => true,
-            );
-        }
-
         if (!isset($threads[$scenario])) {
             return null;
         }
@@ -445,6 +432,21 @@ class ThreadManager
         }
 
         return $result->current()->offsetGet('amount');
+    }
+
+
+    public function getGroupThreadData($group)
+    {
+        return array(
+            'name' => 'Gente de ' . $group['name'],
+            'category' => ThreadManager::LABEL_THREAD_USERS,
+            'filters' => array(
+                'userFilters' => array(
+                    'groups' => array($group['id']),
+                )
+            ),
+            'default' => true,
+        );
     }
 
     private function validateEditThread($data, $userId = null)
