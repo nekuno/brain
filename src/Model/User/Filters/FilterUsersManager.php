@@ -322,9 +322,10 @@ class FilterUsersManager
                     $qb->optionalMatch("(filter)-[old_tag_rel:FILTERS_BY]->(:$tagLabelName)")
                         ->delete("old_tag_rel");
                     if (isset($profileFilters[$fieldName])) {
-                        $value = $profileFilters[$fieldName];
-                        $qb->merge("(tag$fieldName:$tagLabelName{name:'$value'})");
-                        $qb->merge("(filter)-[:FILTERS_BY]->(tag$fieldName)");
+                        foreach ($profileFilters[$fieldName] as $value){
+                            $qb->merge("(tag$fieldName$value:$tagLabelName{name:'$value'})");
+                            $qb->merge("(filter)-[:FILTERS_BY]->(tag$fieldName$value)");
+                        }
                     }
                     $qb->with('filter');
                     break;
