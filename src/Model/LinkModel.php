@@ -898,10 +898,10 @@ class LinkModel
         $this->translator->setLocale($locale);
 
         $types = array();
-        $keyTypes = array('audio', 'video', 'image', 'link', 'creator');
+        $keyTypes = array('Audio', 'Video', 'Image', 'Link', 'Creator');
 
         foreach ( $keyTypes as $type){
-            $types[$type] = $this->translator->trans('types.'.$type);
+            $types[$type] = $this->translator->trans('types.'.lcfirst($type));
         };
         return $types;
     }
