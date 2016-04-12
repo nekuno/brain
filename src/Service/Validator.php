@@ -246,6 +246,7 @@ class Validator
                         }
                         if (!isset($dataValue['location'])) {
                             $fieldErrors[] = 'Location required';
+                            continue;
                         }
 
                         foreach ($this->validateLocation($dataValue['location']) as $error){
