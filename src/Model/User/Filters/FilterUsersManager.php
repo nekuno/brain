@@ -310,10 +310,10 @@ class FilterUsersManager
 
                     if (isset($profileFilters[$fieldName])) {
                         $value = $profileFilters[$fieldName];
-                        foreach ($value as $singleValue) {
-                            $qb->merge(" (option$fieldName$singleValue:$profileLabelName{id:'$singleValue'})");
-                            $qb->merge(" (filter)-[:FILTERS_BY]->(option$fieldName$singleValue)");
-                        }
+                        $choice = $value['choice'];
+                        $detail = $value['detail'];
+                            $qb->merge(" (option$fieldName:$profileLabelName{id:'$choice'})");
+                            $qb->merge(" (filter)-[:FILTERS_BY{detail: '$detail'}]->(option$fieldName)");
                     }
                     $qb->with('filter');
                     break;
