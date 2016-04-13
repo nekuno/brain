@@ -633,7 +633,6 @@ class LinkModel
                 ->skip('{internalOffset}')
                 ->limit('{internalLimit}');
 
-
             $conditions = array('l.processed = 1', 'NOT (u)-[:LIKES]-(l)', 'NOT (u)-[:DISLIKES]-(l)');
             if (!(isset($filters['affinity']) && $filters['affinity'] == true)) {
                 $conditions[] = '(NOT (u)-[:AFFINITY]-(l))';
@@ -641,11 +640,10 @@ class LinkModel
             $qb->where($conditions);
             if (isset($filters['tag'])) {
                 $qb->match('(l)-[:TAGGED]->(filterTag:Tag)')
-                    ->where('filterTag.name = { tag }');
+                    ->where('filterTag.name IN { filterTags } ');
 
-                $params['tag'] = $filters['tag'];
+                $params['filterTags'] = $filters['tag'];
             }
-
 
             $qb->with('l', 'average');
             $qb->optionalMatch('(l)-[:TAGGED]->(tag:Tag)')

@@ -83,8 +83,10 @@ class ContentPaginatedModel implements PaginatedInterface
         $qb->where($conditions);
 
         if (isset($filters['tag'])) {
-            $qb->match("(content)-[:TAGGED]->(filterTag:Tag)")
-                ->where("filterTag.name = { tag }");
+            $qb->match('(content)-[:TAGGED]->(filterTag:Tag)')
+                ->where('filterTag.name IN { filterTags } ');
+
+            $params['filterTags'] = $filters['tag'];
         }
 
         $qb->optionalMatch("(content)-[:TAGGED]->(tag:Tag)")
@@ -185,8 +187,10 @@ class ContentPaginatedModel implements PaginatedInterface
         $qb->where($conditions);
 
         if (isset($filters['tag'])) {
-            $qb->match("(content)-[:TAGGED]->(filterTag:Tag)")
-                ->where("filterTag.name = { tag }");
+            $qb->match('(content)-[:TAGGED]->(filterTag:Tag)')
+                ->where('filterTag.name IN { filterTags } ');
+
+            $params['filterTags'] = $filters['tag'];
         }
 
         $qb->returns("count(r) as total")

@@ -179,13 +179,16 @@ class FilterContentManager
             throw new NotFoundHttpException('Filter with id ' . $id . ' not found');
         }
 
-        /** @var Node $tagNode */
-        $tagNode = $result->current()->offsetGet('tag');
-        if ($tagNode) {
-            return $tagNode->getProperty('name');
+        $tags = array();
+        foreach ($result as $row){
+            /** @var Node $tagNode */
+            $tagNode = $row->offsetGet('tag');
+            if ($tagNode) {
+                $tags[] = $tagNode->getProperty('name');
+            }
         }
 
-        return null;
+        return $tags;
     }
 
     /**
@@ -252,13 +255,17 @@ class FilterContentManager
             ->where('id(filter) = {id}')
             ->optionalMatch('(filter)-[old_tag_rel:FILTERS_BY]->(:Tag)')
             ->delete('old_tag_rel')
-            ->with('filter')
-            ->merge('(tag:Tag{name: {tagname} })')
-            ->merge('(filter)-[:FILTERS_BY]->(tag)')
-            ->returns('filter');
+            ->with('filter');
+        foreach ($tag as $singleTag) {
+            $trimmedName = preg_replace('/\s+/', '', $singleTag);
+            $qb->merge("(tag$trimmedName:Tag{name: '{$singleTag}' })")
+                ->merge("(filter)-[:FILTERS_BY]->(tag$trimmedName)");
+            $qb->setParameter($singleTag, $singleTag);
+        }
+
+            $qb->returns('filter');
         $qb->setParameters(array(
-            'id' => (integer)$id,
-            'tagname' => $tag,
+            'id' => (integer)$id
         ));
         $result = $qb->getQuery()->getResultSet();
 

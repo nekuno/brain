@@ -237,7 +237,9 @@ class UserController
         }
 
         if ($tag) {
-            $filters['tag'] = urldecode($tag);
+            foreach ($tag as $singleTag){
+                $filters['tag'][] = urldecode($singleTag);
+            }
         }
 
         if ($type) {
@@ -286,7 +288,9 @@ class UserController
         $filters = array('id' => $otherUserId, 'id2' => $user->getId(), 'showOnlyCommon' => (int)$showOnlyCommon);
 
         if ($tag) {
-            $filters['tag'] = urldecode($tag);
+            foreach ($tag as $singleTag){
+                $filters['tag'][] = urldecode($singleTag);
+            }
         }
 
         if ($type) {

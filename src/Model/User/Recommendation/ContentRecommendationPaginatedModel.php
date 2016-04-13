@@ -70,7 +70,6 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
      */
     public function slice(array $filters, $offset, $limit)
     {
-
         if ((integer)$limit == 0) {
             return array();
         }
@@ -93,9 +92,9 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
 
         if (isset($filters['tag'])) {
             $qb->match('(content)-[:TAGGED]->(filterTag:Tag)')
-                ->where('filterTag.name = { tag }');
+                ->where('filterTag.name IN { filterTags } ');
 
-            $params['tag'] = $filters['tag'];
+            $params['filterTags'] = $filters['tag'];
         }
 
         $qb->optionalMatch("(content)-[:SYNONYMOUS]->(synonymousLink:Link)")
@@ -194,10 +193,9 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
             $qb = $this->gm->createQueryBuilder();
             $qb->match('(user:User {qnoow_id: { userId }})');
             if (isset($filters['tag'])){
-                $qb->match('(content:' . $linkLabels . ')-[:TAGGED]->(filterTag:Tag)')
-                    ->where('filterTag.name = { tag }', 'content.processed = 1');
-
-                $params['tag'] = $filters['tag'];
+                $qb->match('(content:' . $linkLabels . '{processed: 1})-[:TAGGED]->(filterTag:Tag)')
+                    ->where('filterTag.name IN { filterTags } ');
+                $params['filterTags'] = $filters['tag'];
             } else {
                 $qb->match('(content:' . $linkLabels . '{processed: 1})');
             }
@@ -268,9 +266,8 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
 
         if (isset($filters['tag'])) {
             $qb->match('(content:' . $linkLabels . '{processed: 1})-[:TAGGED]->(filterTag:Tag)')
-                ->where('filterTag.name = { tag }');
-
-            $params['tag'] = $filters['tag'];
+                ->where('filterTag.name IN { filterTags } ');
+            $params['filterTags'] = $filters['tag'];
         } else {
             $qb->match('(content:' . $linkLabels . '{processed: 1})');
         }

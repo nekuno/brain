@@ -95,8 +95,11 @@ class ContentComparePaginatedModel implements PaginatedInterface
         $qb->where($conditions);
 
         if (isset($filters['tag'])) {
-            $qb->match("(content)-[:TAGGED]->(filterTag:Tag)")
-                ->where("filterTag.name = { tag }");
+            $names = json_encode($filters['tag']);
+            $qb->match('(content)-[:TAGGED]->(filterTag:Tag)')
+                ->where('filterTag.name IN { filterTags } ');
+
+            $params['filterTags'] = $names;
         }
         if ($showOnlyCommon) {
             $qb->match("(u2)-[r2:LIKES]->(content)");
@@ -234,10 +237,10 @@ class ContentComparePaginatedModel implements PaginatedInterface
         }
 
         if (isset($filters['tag'])) {
-            $qb->match("(content)-[:TAGGED]->(filterTag:Tag)")
-                ->where("filterTag.name = { tag }");
+            $qb->match('(content)-[:TAGGED]->(filterTag:Tag)')
+                ->where('filterTag.name IN { filterTags } ');
 
-            $params['tag'] = $filters['tag'];
+            $params['filterTags'] = $filters['tag'];
         }
 
         $qb->returns("count(r) as total")

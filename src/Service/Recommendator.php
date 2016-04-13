@@ -112,7 +112,9 @@ class Recommendator
                 $threadFilters = $thread->getFilterContent();
 
                 if ($threadFilters->getTag()) {
-                    $filters['tag'] = urldecode($threadFilters->getTag());
+                    foreach ($threadFilters->getTag() as $singleTag){
+                        $filters['tag'][] = urldecode($singleTag);
+                    }
                 }
 
                 foreach($threadFilters->getType() as $type){
@@ -187,18 +189,18 @@ class Recommendator
 
         //TODO: Validate
 
-        $tag = $request->get('tag', null);
+        $tag = $request->get('tag', array());
         $type = $request->get('type', array());
         $foreign = $request->get('foreign', null);
 
         $filters = array('id' => $id);
 
-        if ($tag) {
-            $filters['tag'] = urldecode($tag);
+        foreach ($tag as $singleTag) {
+            $filters['tag'][] = urldecode($singleTag);
         }
 
-        foreach($type as $type){
-            $filters['type'][] = urldecode($type);
+        foreach ($type as $singleType) {
+            $filters['type'][] = urldecode($singleType);
         }
 
         if ($foreign) {
