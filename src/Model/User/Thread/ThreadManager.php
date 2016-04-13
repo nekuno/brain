@@ -183,7 +183,7 @@ class ThreadManager
                     'name' => 'Lo mejor de '.$location['locality'],
                     'category' => ThreadManager::LABEL_THREAD_CONTENT,
                     'filters' => array(
-                        'tag' => $location['locality'],
+                        'tag' => array($location['locality']),
                     ),
                     'default' => true,
                 ),
