@@ -241,7 +241,9 @@ class UserController
         }
 
         if ($type) {
-            $filters['type'] = urldecode($type);
+            foreach ($type as $singleType){
+                $filters['type'][] = urldecode($singleType);
+            }
         }
 
         /* @var $model ContentPaginatedModel */
@@ -288,7 +290,9 @@ class UserController
         }
 
         if ($type) {
-            $filters['type'] = urldecode($type);
+            foreach ($type as $singleType){
+                $filters['type'][] = urldecode($singleType);
+            }
         }
 
         /* @var $model \Model\User\ContentComparePaginatedModel */
