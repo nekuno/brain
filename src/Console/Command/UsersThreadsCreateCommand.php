@@ -77,9 +77,10 @@ class UsersThreadsCreateCommand extends ApplicationAwareCommand
 
             if ($clear) {
                 $existingThreads = $threadManager->getByUser($user->getId());
-                var_dump(count($existingThreads));
                 foreach ($existingThreads as $existingThread){
-                    $threadManager->deleteById($existingThread->getId());
+                    if ($existingThread->getDefault() == true){
+                        $threadManager->deleteById($existingThread->getId());
+                    }
                 }
                 $output->writeln(sprintf('Deleted threads for user %d', $user->getId()));
             }
