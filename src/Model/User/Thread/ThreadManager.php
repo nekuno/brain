@@ -157,9 +157,18 @@ class ThreadManager
         return $thread;
     }
 
+    /**
+     * @param User $user
+     * @param string $scenario
+     * @return array
+     */
     public function getDefaultThreads(User $user, $scenario = ThreadManager::SCENARIO_DEFAULT)
     {
-        $profile = $this->profileModel->getById($user->getId());
+        try{
+            $profile = $this->profileModel->getById($user->getId());
+        } catch (NotFoundHttpException $e){
+            return array();
+        }
 
         $location = $profile['location'];
 
@@ -234,7 +243,7 @@ class ThreadManager
         );
 
         if (!isset($threads[$scenario])) {
-            return null;
+            return array();
         }
 
         return $threads[$scenario];
