@@ -312,6 +312,9 @@ class ProfileModel
         $location = $row->offsetGet('location');
         if ($location && count($location->getProperties()) > 0) {
             $profile['location'] = $location->getProperties();
+            if ($profile['location']['locality'] === 'N/A'){
+                $profile['location']['locality'] = $profile['location']['address'];
+            }
         }
 
         $profile += $this->buildOptions($row);
