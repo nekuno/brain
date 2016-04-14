@@ -521,7 +521,7 @@ class UserController
         $groupModel = $app['users.groups.model'];
         $groups = $groupModel->getByUser($user->getId());
 
-        $userFilters['groups'] = array('choices'=>array(), 'label' => $userFilters['groups']['label']);
+        $userFilters['groups']['choices'] = array();
         foreach ($groups as $group) {
             $userFilters['groups']['choices'][$group['id']] = $group['name'];
         }
