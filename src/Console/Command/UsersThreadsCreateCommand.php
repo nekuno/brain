@@ -4,6 +4,7 @@ namespace Console\Command;
 
 use Console\ApplicationAwareCommand;
 use Model\User;
+use Model\User\GroupModel;
 use Model\User\Thread\ThreadManager;
 use Manager\UserManager;
 use Service\Recommendator;
@@ -16,18 +17,18 @@ class UsersThreadsCreateCommand extends ApplicationAwareCommand
 {
     protected function configure()
     {
-
         $this->setName('users:threads:create')
             ->setDescription('Creates threads for users')
             ->addArgument('scenario', InputArgument::REQUIRED, sprintf('Set of threads to add. Options available: "%s"', implode('", "', ThreadManager::$scenarios)))
+            ->addOption('clear', null, InputOption::VALUE_NONE, 'Delete existing threads before creating new ones', null)
             ->addOption('all', null, InputOption::VALUE_NONE, 'Create them to all users', null)
             ->addOption('userId', null, InputOption::VALUE_REQUIRED, 'Id of thread owner', null);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-
         $scenario = $input->getArgument('scenario');
+        $clear = $input->getOption('clear');
         $all = $input->getOption('all');
         $userId = $input->getOption('userId');
 
@@ -55,17 +56,37 @@ class UsersThreadsCreateCommand extends ApplicationAwareCommand
             }
         }
 
+        $output->writeln(sprintf('Starting process for %d users', count($users)));
+
         /* @var $threadManager ThreadManager */
         $threadManager = $this->app['users.threads.manager'];
         /* @var $recommendator Recommendator */
         $recommendator = $this->app['recommendator.service'];
+        /* @var $groupModel GroupModel */
+        $groupModel = $this->app['users.groups.model'];
 
         foreach ($users as $user) {
 
+            $output->writeln('-----------------------------------------------------------------------');
             $threads = $threadManager->getDefaultThreads($user, $scenario);
+
+            $groups = $groupModel->getAllByUserId($user->getId());
+            foreach ($groups as $group){
+                $threads[] = $threadManager->getGroupThreadData($group);
+            }
+
+            if ($clear) {
+                $existingThreads = $threadManager->getByUser($user->getId());
+                var_dump(count($existingThreads));
+                foreach ($existingThreads as $existingThread){
+                    $threadManager->deleteById($existingThread->getId());
+                }
+                $output->writeln(sprintf('Deleted threads for user %d', $user->getId()));
+            }
 
             /* @var $user User */
             $createdThreads = $threadManager->createBatchForUser($user->getId(), $threads);
+            $output->writeln('Added threads for scenario ' . $scenario . ' and user with id ' . $user->getId());
             foreach ($createdThreads as $createdThread) {
 
                 $result = $recommendator->getRecommendationFromThread($createdThread);
@@ -75,11 +96,8 @@ class UsersThreadsCreateCommand extends ApplicationAwareCommand
                     array_slice($result['items'], 0, 5),
                     $result['pagination']['total']
                 );
-
             }
-            $output->writeln('Added threads for scenario ' . $scenario . ' and user with id ' . $user->getId());
+            $output->writeln(sprintf('Cached results from threads for user %d', $user->getId()));
         }
-
     }
-
 }

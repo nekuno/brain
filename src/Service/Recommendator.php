@@ -67,7 +67,9 @@ class Recommendator
                 $filters = array('id' => $user->getId());
 
                 if ($threadFilters->getTag()) {
-                    $filters['tag'] = urldecode($threadFilters->getTag());
+                    foreach ($threadFilters->getTag() as $singleTag){
+                        $filters['tag'][] = urldecode($singleTag);
+                    }
                 }
 
                 foreach($threadFilters->getType() as $type){
