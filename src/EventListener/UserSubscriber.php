@@ -41,6 +41,6 @@ class UserSubscriber implements EventSubscriberInterface
         $user = $groupEvent->getUser();
         $group = $groupEvent->getGroup();
 
-        $this->threadManager->create($user->getId(), $this->threadManager->getGroupThreadData($group));
+        $this->threadManager->create($user->getId(), $this->threadManager->getGroupThreadData($group, $user->getId()));
     }
 }

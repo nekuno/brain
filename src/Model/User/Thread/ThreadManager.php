@@ -12,6 +12,7 @@ use Model\User\GroupModel;
 use Model\User\ProfileModel;
 use Service\Validator;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\Translation\Translator;
 
 class ThreadManager
 {
@@ -45,11 +46,12 @@ class ThreadManager
      * @param ContentThreadManager $cm
      * @param ProfileModel $profileModel
      * @param GroupModel $groupModel
+     * @param Translator $translator
      * @param Validator $validator
      */
     public function __construct(GraphManager $graphManager, UserManager $userManager, UsersThreadManager $um,
                                 ContentThreadManager $cm, ProfileModel $profileModel, GroupModel $groupModel,
-                                Validator $validator)
+                                Translator $translator, Validator $validator)
     {
         $this->graphManager = $graphManager;
         $this->userManager = $userManager;
@@ -57,6 +59,7 @@ class ThreadManager
         $this->contentThreadManager = $cm;
         $this->profileModel = $profileModel;
         $this->groupModel = $groupModel;
+        $this->translator = $translator;
         $this->validator = $validator;
     }
 
@@ -184,6 +187,8 @@ class ThreadManager
             $profile['birthday'] = '1970-01-01';
         }
 
+        $this->translator->setLocale($profile['interfaceLanguage']);
+
         $location = $profile['location'];
 
         $birthday = new \Datetime($profile['birthday']);
@@ -192,18 +197,18 @@ class ThreadManager
         $ageRangeMin->invert = 1;
 
         $genderDesired = $this->getDesiredFromProfile($profile);
-        $nounDesired = $genderDesired == 'female'? 'Chicas' : 'Chicos';
+        $nounDesired = $this->translator->trans('threads.default.' . $genderDesired);
 
         //specific order to be created from bottom to top
         $threads = array(
             'default' => array(
                 array(
-                    'name' => 'Canales de Twitter increíbles',
+                    'name' => $this->translator->trans('threads.default.twitter_channels'),
                     'category' => ThreadManager::LABEL_THREAD_CONTENT,
                     'default' => true,
                 ),
                 array(
-                    'name' => 'Lo mejor de '.$location['locality'],
+                    'name' => str_replace('%location%', $location['locality'], $this->translator->trans('threads.default.best_of_location')),
                     'category' => ThreadManager::LABEL_THREAD_CONTENT,
                     'filters' => array(
                         'tag' => array($location['locality']),
@@ -211,7 +216,7 @@ class ThreadManager
                     'default' => true,
                 ),
                 array(
-                    'name' => 'Vídeos de YouTube',
+                    'name' => $this->translator->trans('threads.default.youtube_videos'),
                     'category' => ThreadManager::LABEL_THREAD_CONTENT,
                     'filters' => array(
                         'type' => array('Video')
@@ -219,7 +224,7 @@ class ThreadManager
                     'default' => true,
                 ),
                 array(
-                    'name' => 'Spotify a medida',
+                    'name' => $this->translator->trans('threads.default.spotify_music'),
                     'category' => ThreadManager::LABEL_THREAD_CONTENT,
                     'filters' => array(
                         'type' => array('Audio')
@@ -227,7 +232,7 @@ class ThreadManager
                     'default' => true,
                 ),
                 array(
-                    'name' => 'GIF adictivos',
+                    'name' => $this->translator->trans('threads.default.images'),
                     'category' => ThreadManager::LABEL_THREAD_CONTENT,
                     'filters' => array(
                         'type' => array('Image')
@@ -235,7 +240,8 @@ class ThreadManager
                     'default' => true,
                 ),
                 array(
-                    'name' => $nounDesired. ' de '.$location['locality'],
+                    'name' => str_replace(array('%desired%', '%location%'), array($nounDesired, $location['locality']),
+                        $this->translator->trans('threads.default.desired_from_location')),
                     'category' => ThreadManager::LABEL_THREAD_USERS,
                     'filters' => array(
                         'profileFilters' => array(
@@ -458,10 +464,18 @@ class ThreadManager
     }
 
 
-    public function getGroupThreadData($group)
+    public function getGroupThreadData($group, $userId)
     {
+        try{
+            $profile = $this->profileModel->getById($userId);
+        } catch (NotFoundHttpException $e){
+            return array();
+        }
+
+        $locale = isset($profile['interfaceLanguage']) ? $profile['interfaceLanguage'] : 'es';
+        $this->translator->setLocale($locale);
         return array(
-            'name' => 'Gente de ' . $group['name'],
+            'name' => str_replace('%group%', $group['name'], $this->translator->trans('threads.default.people_from_group')),
             'category' => ThreadManager::LABEL_THREAD_USERS,
             'filters' => array(
                 'userFilters' => array(

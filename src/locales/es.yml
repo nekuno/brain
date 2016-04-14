@@ -36,3 +36,14 @@ types:
   image: 'Imagen'
   creator: 'Creador'
   link: 'Enlace'
+threads:
+  default:
+    twitter_channels: 'Canales de Twitter Increíbles'
+    best_of_location: 'Lo mejor de %location%'
+    youtube_videos: 'Vídeos de YouTube'
+    spotify_music: 'Spotify a medida'
+    images: 'GIF adictivos'
+    desired_from_location: '%desired% de %location%'
+    people_from_group: 'Gente de %group%'
+    male: 'Chicos'
+    female: 'Chicas'

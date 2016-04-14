@@ -72,7 +72,7 @@ class UsersThreadsCreateCommand extends ApplicationAwareCommand
 
             $groups = $groupModel->getAllByUserId($user->getId());
             foreach ($groups as $group){
-                $threads[] = $threadManager->getGroupThreadData($group);
+                $threads[] = $threadManager->getGroupThreadData($group, $user->getId());
             }
 
             if ($clear) {

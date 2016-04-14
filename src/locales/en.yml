@@ -36,3 +36,14 @@ types:
   image: 'Image'
   creator: 'Creator'
   link: 'Link'
+threads:
+  default:
+    twitter_channels: 'Amazing Twitter channels'
+    best_of_location: 'Best from %location%'
+    youtube_videos: 'YouTube videos'
+    spotify_music: 'Spotify for you'
+    images: 'Addictive GIF'
+    desired_from_location: '%desired% from %location%'
+    people_from_group: 'People from %group%'
+    male: 'Men'
+    female: 'Women'
