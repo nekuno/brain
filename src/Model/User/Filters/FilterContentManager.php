@@ -256,11 +256,9 @@ class FilterContentManager
             ->optionalMatch('(filter)-[old_tag_rel:FILTERS_BY]->(:Tag)')
             ->delete('old_tag_rel')
             ->with('filter');
-        foreach ($tag as $singleTag) {
-            $trimmedName = preg_replace('/\s+/', '', $singleTag);
-            $trimmedName = str_replace(',', '', $trimmedName);
-            $qb->merge("(tag$trimmedName:Tag{name: '{$singleTag}' })")
-                ->merge("(filter)-[:FILTERS_BY]->(tag$trimmedName)");
+        foreach ($tag as $key => $singleTag) {
+            $qb->merge("(tag$key:Tag{name: '{$singleTag}' })")
+                ->merge("(filter)-[:FILTERS_BY]->(tag$key)");
             $qb->setParameter($singleTag, $singleTag);
         }
 
