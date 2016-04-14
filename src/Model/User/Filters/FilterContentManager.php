@@ -258,6 +258,7 @@ class FilterContentManager
             ->with('filter');
         foreach ($tag as $singleTag) {
             $trimmedName = preg_replace('/\s+/', '', $singleTag);
+            $trimmedName = str_replace(',', '', $trimmedName);
             $qb->merge("(tag$trimmedName:Tag{name: '{$singleTag}' })")
                 ->merge("(filter)-[:FILTERS_BY]->(tag$trimmedName)");
             $qb->setParameter($singleTag, $singleTag);
