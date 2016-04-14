@@ -170,6 +170,20 @@ class ThreadManager
             return array();
         }
 
+        if (!isset($profile['location'])){
+            $profile['location'] = array(
+                'latitude' => 40.4167754,
+                'longitude' => -3.7037902,
+                'address' => 'Madrid',
+                'locality' => 'Madrid',
+                'country' => 'Spain'
+            );
+        }
+
+        if (!isset($profile['birthday'])){
+            $profile['birthday'] = '1970-01-01';
+        }
+
         $location = $profile['location'];
 
         $birthday = new \Datetime($profile['birthday']);
@@ -553,8 +567,8 @@ class ThreadManager
 
     private function getDesiredFromProfile(array $profile)
     {
-        if(!isset($profile['orientation'])){
-            return null;
+        if(!isset($profile['orientation']) || !isset($profile['gender'])){
+            return 'female';
         }
 
         if ($profile['orientation'] == 'heterosexual'){
