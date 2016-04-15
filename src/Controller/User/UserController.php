@@ -224,8 +224,8 @@ class UserController
     public function getUserContentAction(Request $request, Application $app, User $user)
     {
         $commonWithId = $request->get('commonWithId', null);
-        $tag = $request->get('tag', null);
-        $type = $request->get('type', null);
+        $tag = $request->get('tag', array());
+        $type = $request->get('type', array());
 
         /* @var $paginator \Paginator\Paginator */
         $paginator = $app['paginator'];
@@ -236,14 +236,14 @@ class UserController
             $filters['commonWithId'] = (int)$commonWithId;
         }
 
-        if ($tag) {
-            foreach ($tag as $singleTag){
+        foreach ($tag as $singleTag) {
+            if (!empty($singleTag)) {
                 $filters['tag'][] = urldecode($singleTag);
             }
         }
 
-        if ($type) {
-            foreach ($type as $singleType){
+        foreach ($type as $singleType) {
+            if (!empty($singleType)) {
                 $filters['type'][] = urldecode($singleType);
             }
         }
@@ -274,8 +274,8 @@ class UserController
     public function getUserContentCompareAction(Request $request, Application $app, User $user)
     {
         $otherUserId = $request->get('id');
-        $tag = $request->get('tag', null);
-        $type = $request->get('type', null);
+        $tag = $request->get('tag', array());
+        $type = $request->get('type', array());
         $showOnlyCommon = $request->get('showOnlyCommon', 0);
 
         if (null === $otherUserId) {
@@ -287,14 +287,14 @@ class UserController
 
         $filters = array('id' => $otherUserId, 'id2' => $user->getId(), 'showOnlyCommon' => (int)$showOnlyCommon);
 
-        if ($tag) {
-            foreach ($tag as $singleTag){
+        foreach ($tag as $singleTag) {
+            if (!empty($singleTag)) {
                 $filters['tag'][] = urldecode($singleTag);
             }
         }
 
-        if ($type) {
-            foreach ($type as $singleType){
+        foreach ($type as $singleType) {
+            if (!empty($singleType)) {
                 $filters['type'][] = urldecode($singleType);
             }
         }
