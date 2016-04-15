@@ -187,7 +187,9 @@ class ThreadManager
             $profile['birthday'] = '1970-01-01';
         }
 
-        $this->translator->setLocale($profile['interfaceLanguage']);
+        $locale = isset($profile['interfaceLanguage']) ? $profile['interfaceLanguage'] : 'es';
+
+        $this->translator->setLocale($locale);
 
         $location = $profile['location'];
 
