@@ -47,3 +47,4 @@ threads:
     people_from_group: 'People from %group%'
     male: 'Men'
     female: 'Women'
+    people: 'People'

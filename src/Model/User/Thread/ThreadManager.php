@@ -253,7 +253,7 @@ class ThreadManager
                                 'distance' => 50,
                                 'location' => $location
                             ),
-                            'gender' => $genderDesired,
+                            'gender' => $genderDesired !== 'people' ? $genderDesired : null,
                         ),
                         'order' => 'content',
                     ),
@@ -593,7 +593,11 @@ class ThreadManager
             return $profile['gender'] === 'male' ? 'male' : 'female';
         }
 
-        return null;
+        if ($profile['orientation'] == 'bisexual'){
+            return 'people';
+        }
+
+        return 'people';
     }
 }
 
