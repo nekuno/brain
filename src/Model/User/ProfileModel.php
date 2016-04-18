@@ -138,7 +138,7 @@ class ProfileModel
     public function validate(array $data)
     {
         $errors = array();
-        $metadata = $this->profileFilterModel->getMetadata();
+        $metadata = $this->profileFilterModel->getProfileMetadata();
 
         foreach ($metadata as $fieldName => $fieldData) {
 
@@ -443,7 +443,7 @@ class ProfileModel
 
     protected function saveProfileData($id, array $data)
     {
-        $metadata = $this->profileFilterModel->getMetadata();
+        $metadata = $this->profileFilterModel->getProfileMetadata();
         $options = $this->getProfileNodeOptions($id);
         $tags = $this->getProfileNodeTags($id);
 

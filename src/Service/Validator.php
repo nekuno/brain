@@ -118,6 +118,40 @@ class Validator
                         }
                         break;
 
+                    case 'integer_range':
+                        if (!is_array($dataValue)){
+                            $fieldErrors[] = 'Must be an array';
+                            continue;
+                        }
+                        if(!isset($dataValue['max'])){
+                            $fieldErrors[] = 'There must be a max value';
+                            continue;
+                        }
+                        if (!is_int($dataValue['max'])){
+                            $fieldErrors[] = 'Maximum value must be an integer';
+                        }
+                        if(!isset($dataValue['min'])){
+                            $fieldErrors[] = 'There must be a min value';
+                            continue;
+                        }
+                        if (!is_int($dataValue['min'])){
+                            $fieldErrors[] = 'Minimum value must be an integer';
+                        }
+                        if (isset($fieldData['min'])) {
+                            if ($dataValue['min'] < $fieldData['min']) {
+                                $fieldErrors[] = 'Minimum value must be greater than ' . $fieldData['min'];
+                            }
+                        }
+                        if (isset($fieldData['max'])) {
+                            if ($dataValue['max'] > $fieldData['max']) {
+                                $fieldErrors[] = 'Maximum value must be greater than ' . $fieldData['max'];
+                            }
+                        }
+                        if ($dataValue['min'] > $dataValue['max']){
+                            $fieldErrors[] = 'Minimum value must be smaller or equal than maximum value';
+                        }
+                    break;
+
                     case 'date':
                         $date = \DateTime::createFromFormat('Y-m-d', $dataValue);
                         if (!($date && $date->format('Y-m-d') == $dataValue)) {
@@ -224,9 +258,9 @@ class Validator
                         if (count($dataValue) > $fieldData['max_choices']) {
                             $fieldErrors[] = sprintf('Option length "%s" is too long. "%s" is the maximum', count($dataValue), $fieldData['max_choices']);
                         }
-                        foreach ($dataValue as $value) {
-                            if (!in_array($value, array_keys($choices[$fieldName]))) {
-                                $fieldErrors[] = sprintf('Option with value "%s" is not valid, possible values are "%s"', $value, implode("', '", array_keys($choices[$fieldName])));
+                        foreach ($dataValue as $dataValue) {
+                            if (!in_array($dataValue, array_keys($choices[$fieldName]))) {
+                                $fieldErrors[] = sprintf('Option with value "%s" is not valid, possible values are "%s"', $dataValue, implode("', '", array_keys($choices[$fieldName])));
                             }
                         }
                         break;

@@ -226,7 +226,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                     case 'textarea':
                         $conditions[] = "p.$name =~ '(?i).*$value.*'";
                         break;
-                    case 'integer':
+                    case 'integer_range':
                         $min = (integer)$value['min'];
                         $max = (integer)$value['max'];
                         $conditions[] = "($min <= p.$name AND p.$name <= $max)";

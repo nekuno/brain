@@ -7,9 +7,17 @@ namespace Model\User;
 
 
 use Everyman\Neo4j\Query\Row;
+use Model\Neo4j\GraphManager;
 
 class ProfileFilterModel extends FilterModel
 {
+    protected $profileMetadata;
+
+    public function __construct(GraphManager $gm, array $metadata, array $profileMetadata, $defaultLocale)
+    {
+        parent::__construct($gm, $metadata, $defaultLocale);
+        $this->profileMetadata = $profileMetadata;
+    }
 
     protected function modifyPublicFieldByType($publicField, $name, $values, $locale)
     {
@@ -113,6 +121,34 @@ class ProfileFilterModel extends FilterModel
         }
 
         return $choiceOptions;
+    }
+
+    //TODO: Most is from FilterModel, Refactor with QS-979
+    //For use with ProfileModel for validation and creation
+    public function getProfileMetadata($locale = null)
+    {
+        $locale = $this->getLocale($locale);
+
+        $publicMetadata = array();
+        foreach ($this->profileMetadata as $name => $values) {
+            $publicField = $values;
+            $publicField['label'] = $values['label'][$locale];
+
+            $publicField = $this->modifyPublicFieldByType($publicField, $name, $values, $locale);
+
+            $publicMetadata[$name] = $publicField;
+        }
+
+        foreach ($publicMetadata as &$item) {
+            if (isset($item['labelFilter'])) {
+                unset($item['labelFilter']);
+            }
+            if (isset($item['filterable'])) {
+                unset($item['filterable']);
+            }
+        }
+
+        return $publicMetadata;
     }
 
     public function labelToType($labelName)

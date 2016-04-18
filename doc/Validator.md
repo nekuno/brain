@@ -32,6 +32,17 @@ Comprueba tipo (entero)
     min: Valor mínimo del entero
     max: Valor máximo del entero
     
+integer_range:
+
+Comprueba tipo (array)
+
+Comprueba existencia keys min y max y que su tipo (entero)
+
+Comprueba que el mínimo no sea superior al máximo
+
+    min: Valor mínimo del mínimo y del máximo
+    max: Valor máximo del mínimo y del máximo
+    
 date:
 
     Comprueba formato Y-m-d

@@ -242,7 +242,7 @@ class FilterUsersManager
                     }
                     $qb->with('filter');
                     break;
-                case 'integer':
+                case 'integer_range':
 
                     $fieldNameMin = $fieldName . '_min';
                     $fieldNameMax = $fieldName . '_max';
@@ -361,7 +361,7 @@ class FilterUsersManager
         }
 
         foreach ($metadata as $name => $value) {
-            if ($value['type'] == 'integer') {
+            if ($value['type'] == 'integer_range') {
                 $qb->set("filter.$name = null");
             }
         }
@@ -374,7 +374,7 @@ class FilterUsersManager
             $field = $metadata[$name];
 
             switch ($field['type']) {
-                case 'integer':
+                case 'integer_range':
                     $qb->set("filter.$name= { $name }");
                     $qb->setParameter($name, $value);
                     break;

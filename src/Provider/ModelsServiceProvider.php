@@ -101,7 +101,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.profileFilter.model'] = $app->share(
             function ($app) {
 
-                return new ProfileFilterModel($app['neo4j.graph_manager'], $app['fields']['profile'], $app['locale.options']['default']);
+                return new ProfileFilterModel($app['neo4j.graph_manager'], $app['fields']['filters']['profile'], $app['fields']['profile'], $app['locale.options']['default']);
             }
         );
 
