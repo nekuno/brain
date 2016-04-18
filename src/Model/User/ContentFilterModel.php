@@ -37,6 +37,8 @@ class ContentFilterModel extends FilterModel
             if (isset($values['max_choices'])) {
                 $publicField['max_choices'] = $values['max_choices'];
             }
+        } elseif ($values['type'] === 'tags') {
+            $publicField['top'] = $this->getTopContentTags($name);
         }
 
         return $publicField;
@@ -47,6 +49,10 @@ class ContentFilterModel extends FilterModel
         return array(
             'type' => $this->linkModel->getValidTypes($locale)
         );
+    }
+
+    protected function getTopContentTags($name){
+        return array();
     }
 
 }
