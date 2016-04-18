@@ -276,6 +276,17 @@ class QueryBuilder
         return $this->add('with', implode(', ', $withs));
     }
 
+    public function unwind($unwind = null)
+    {
+        if (empty($unwind)){
+            return $this;
+        }
+
+        $unwinds = is_array($unwind) ? $unwind : func_get_args();
+
+        return $this->add('unwind', implode(', ', $unwinds));
+    }
+
     /**
      * @param mixed $orderBy
      * @return QueryBuilder
@@ -318,6 +329,38 @@ class QueryBuilder
         }
 
         return $this->add('skip', $skip);
+    }
+
+    /**
+     * Equivalent to MATCH (a) WHERE a:Type1 OR a:Type 2, but faster
+     * See https://github.com/neo4j/neo4j/issues/5002
+     * @param array $types
+     * @param string $name
+     * @param array $withs
+     */
+    public function filterContentByType(array $types, $name = 'content', $withs = array())
+    {
+        if (!empty($types)) {
+            $this->with(array_merge($withs, array("collect(id($name)) as ids")));
+
+            $counter = 0;
+            $lastCounter = -1;
+            foreach ($types as $type) {
+                $this->optionalMatch("($name$counter:$type)")
+                    ->where("id($name$counter) IN ids");
+                if ($counter == 0) {
+                    $with = array_merge($withs, array("collect(distinct $name$counter) AS collect$name$counter", 'ids'));
+                } else {
+                    $with = array_merge($withs, array("collect(distinct $name$counter) + collect$name$lastCounter AS collect$name$counter", 'ids'));
+                }
+                $this->with($with);
+                $lastCounter = $counter;
+                $counter++;
+            }
+            $this->unwind("collect$name$lastCounter AS $name");
+        }
+
+        $this->with(array_merge($withs, array($name)));
     }
 
     /**

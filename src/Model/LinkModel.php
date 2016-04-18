@@ -142,13 +142,14 @@ class LinkModel
      */
     public function findAllLinks($filters = array())
     {
-        $linkLabels = $this->buildOptionalTypesLabel($filters);
         //todo: add tag filters, probably with an inter-model buildParamsFromFilters
+        $types = isset($filters['type']) ? $filters['type'] : array();
 
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match("(l:$linkLabels)")
+        $qb->match("(l:Link)")
             ->returns('l AS link');
+        $qb->filterContentByType($types, 'l');
         $query = $qb->getQuery();
         $result = $query->getResultSet();
 
@@ -168,18 +169,19 @@ class LinkModel
      */
     public function countAllLinks($filters = array())
     {
-        $linkLabels = $this->buildOptionalTypesLabel($filters);
-
+        $types = isset($filters['type']) ? $filters['type'] : array();
         $qb = $this->gm->createQueryBuilder();
 
         $qb->match('(user:User {qnoow_id: { userId }})');
         $qb->setParameter('userId', (integer)$filters['id']);
         if (isset($filters['tag'])) {
-            $qb->match("(:Tag{name: { tag } })-[:TAGGED]-(l:$linkLabels)");
+            $qb->match("(:Tag{name: { tag } })-[:TAGGED]-(l:Link)");
             $qb->setParameter('tag', $filters['tag']);
         } else {
-            $qb->match("(l:$linkLabels)");
+            $qb->match("(l:Link)");
         }
+
+        $qb->filterContentByType($types, 'l');
 
         //TODO: Cache this at periodic calculations
 //        $qb->with('user', 'l')
@@ -593,12 +595,7 @@ class LinkModel
      */
     public function getPredictedContentForAUser($userId, $limitContent = 40, $limitUsers = 20, array $filters = array())
     {
-        $linkTypes = array('Link');
-        if (isset($filters['type'])) {
-            $linkTypes = $filters['type'];
-        }
-
-        $linkLabels = implode('|:', $linkTypes);
+        $types = isset($filters['type']) ? $filters['type'] : array();
 
         $params = array(
             'userId' => (integer)$userId,
@@ -624,7 +621,8 @@ class LinkModel
                 ->orderby('m DESC')
                 ->limit('{limitUsers}');
 
-            $qb->match('(users)-[:LIKES]->(l:' . $linkLabels . ')');
+            $qb->match('(users)-[:LIKES]->(l:Link)');
+            $qb->filterContentByType($types, 'l', array('m', 'u'));
 
             $qb->with('u', 'avg(m) as average', 'count(m) as amount', 'l')
                 ->where('amount >= 2');

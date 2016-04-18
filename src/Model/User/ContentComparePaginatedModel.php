@@ -65,6 +65,8 @@ class ContentComparePaginatedModel implements PaginatedInterface
         $response = array();
         $id = $filters['id'];
         $id2 = $filters['id2'];
+        $types = isset($filters['type']) ? $filters['type'] : array();
+
         $qb = $this->gm->createQueryBuilder();
 
         $showOnlyCommon = false;
@@ -84,11 +86,10 @@ class ContentComparePaginatedModel implements PaginatedInterface
             $socialNetworks2[] = $token['resourceOwner'];
         }
 
-        $linkLabels = $this->linkModel->buildOptionalTypesLabel($filters);
-
         $qb->match("(u:User), (u2:User)")
             ->where("u.qnoow_id = { userId }","u2.qnoow_id = { userId2 }")
-            ->match("(u)-[r:LIKES]->(content:" . $linkLabels . ")");
+            ->match("(u)-[r:LIKES]->(content:Link)");
+        $qb->filterContentByType($types, 'content', array('u2', 'r'));
 
         $conditions = $this->buildConditions('r', $socialNetworks1);
 
@@ -198,6 +199,8 @@ class ContentComparePaginatedModel implements PaginatedInterface
     {
         $id = $filters['id'];
         $id2 = isset($filters['id2']) ? (integer)$filters['id2'] : null;
+        $types = isset($filters['type']) ? $filters['type'] : array();
+
         $count = 0;
         $qb = $this->gm->createQueryBuilder();
 
@@ -218,11 +221,10 @@ class ContentComparePaginatedModel implements PaginatedInterface
             $showOnlyCommon = $filters['showOnlyCommon'];
         }
 
-        $linkLabels = $this->linkModel->buildOptionalTypesLabel($filters);
-
         $qb->match("(u:User)","(u2:User)")
             ->where("u.qnoow_id = { userId }", "u2.qnoow_id = { userId2 }")
-            ->match("(u)-[r:LIKES]->(content:" . $linkLabels . ")");
+            ->match("(u)-[r:LIKES]->(content:Link)");
+        $qb->filterContentByType($types, 'content', array('u2', 'r'));
 
         $conditions = $this->buildConditions('r', $socialNetworks1);
 

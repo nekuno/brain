@@ -63,6 +63,7 @@ class ContentPaginatedModel implements PaginatedInterface
     {
         $qb = $this->gm->createQueryBuilder();
         $id = $filters['id'];
+        $types = isset($filters['type']) ? $filters['type'] : array();
 
         $tokens = $this->tokensModel->getByUserOrResource($id);
         $socialNetworks = array();
@@ -72,11 +73,10 @@ class ContentPaginatedModel implements PaginatedInterface
 
         $response = array();
 
-        $linkLabels = $this->linkModel->buildOptionalTypesLabel($filters);
-
         $qb->match("(u:User)")
             ->where("u.qnoow_id = { userId }")
-            ->match("(u)-[r:LIKES]->(content:" . $linkLabels . ")");
+            ->match("(u)-[r:LIKES]->(content:Link)");
+        $qb->filterContentByType($types, 'content', array('u', 'r'));
 
         $conditions = $this->buildConditions($socialNetworks);
 
@@ -167,6 +167,8 @@ class ContentPaginatedModel implements PaginatedInterface
     public function countTotal(array $filters)
     {
         $id = $filters['id'];
+        $types = isset($filters['type']) ? $filters['type'] : array();
+
         $qb = $this->gm->createQueryBuilder();
         $count = 0;
 
@@ -176,11 +178,11 @@ class ContentPaginatedModel implements PaginatedInterface
             $socialNetworks[] = $token['resourceOwner'];
         }
 
-        $linkLabels = $this->linkModel->buildOptionalTypesLabel($filters);
-
         $qb->match("(u:User)")
             ->where("u.qnoow_id = { userId }")
-            ->match("(u)-[r:LIKES]->(content:" . $linkLabels . ")");
+            ->match("(u)-[r:LIKES]->(content:Link)");
+
+        $qb->filterContentByType($types,'content', array('r'));
 
         $conditions = $this->buildConditions($socialNetworks);
 
