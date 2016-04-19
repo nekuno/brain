@@ -250,6 +250,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                         $conditions[] = "p.$name = true";
                         break;
                     case 'choice':
+                    case 'multiple_choices':
                         $profileLabelName = $this->profileFilterModel->typeToLabel($name);
                         $value = implode("', '", $value);
                         $matches[] = "(p)<-[:OPTION_OF]-(option$name:$profileLabelName) WHERE option$name.id IN ['$value']";
@@ -274,12 +275,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                                 " WHERE ($tagLabel.name = '$tagValue' AND rel$tagLabel.detail = '$choice')";
                         }
                         break;
-                    case 'multiple_choices':
-                        $valueChoices = $value['choices'];
-                        foreach ($valueChoices as $index => $dataValue) {
-                            $optionLabel = 'option_' . $index;
-                            $matches[] = "($optionLabel:" . $this->profileFilterModel->typeToLabel($name) . ' {id: { ' . $index . ' }})';
-                        }
+                    default:
                         break;
                 }
             }

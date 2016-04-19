@@ -317,6 +317,19 @@ class FilterUsersManager
                     }
                     $qb->with('filter');
                     break;
+                case 'multiple_choices':
+                    $profileLabelName = $this->profileFilterModel->typeToLabel($fieldName);
+                    $qb->optionalMatch("(filter)-[old_po_rel:FILTERS_BY]->(:$profileLabelName)")
+                        ->delete("old_po_rel");
+
+                    if (isset($profileFilters[$fieldName])) {
+                        foreach ($profileFilters[$fieldName] as $value){
+                            $qb->merge(" (option$fieldName$value:$profileLabelName{id:'$value'})");
+                            $qb->merge(" (filter)-[:FILTERS_BY]->(option$fieldName$value)");
+                        }
+                    }
+                    $qb->with('filter');
+                    break;
                 case 'tags':
                     $tagLabelName = ucfirst($fieldName);
                     $qb->optionalMatch("(filter)-[old_tag_rel:FILTERS_BY]->(:$tagLabelName)")
