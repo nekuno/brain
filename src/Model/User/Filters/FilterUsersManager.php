@@ -373,30 +373,31 @@ class FilterUsersManager
             unset($userFilters['groups']);
         }
 
-        foreach ($metadata as $name => $value) {
+        foreach ($metadata as $fieldName => $value) {
             if ($value['type'] == 'integer_range') {
-                $qb->set("filter.$name = null");
-            }
-        }
+                $fieldNameMin = $fieldName . '_min';
+                $fieldNameMax = $fieldName . '_max';
+                $qb->remove("filter.$fieldNameMin", "filter.$fieldNameMax");
 
-        foreach ($userFilters as $name => $value) {
-            if (!isset($metadata[$name])) {
-                throw new \Exception(sprintf('Metadata with name %s does not exist', $name));
-            }
+                if (isset($profileFilters[$fieldName])) {
+                    $value = $profileFilters[$fieldName];
+                    //We do not support only one of these
+                    $min = isset($value['min']) ? (integer)$value['min'] : $metadata[$fieldName]['min'];
+                    $max = isset($value['max']) ? (integer)$value['max'] : $metadata[$fieldName]['max'];
+                    if ($min) {
+                        $qb->set('filter.' . $fieldNameMin . ' = ' . $min);
+                    }
+                    if ($max) {
+                        $qb->set('filter.' . $fieldNameMax . ' = ' . $max);
+                    }
 
-            $field = $metadata[$name];
-
-            switch ($field['type']) {
-                case 'integer_range':
-                    $qb->set("filter.$name= { $name }");
-                    $qb->setParameter($name, $value);
-                    break;
-                default:
-                    break;
+                }
+                $qb->with('filter');
             }
         }
 
         $qb->setParameter('id', (integer)$id);
+        $qb->returns('filter');
         $result = $qb->getQuery()->getResultSet();
 
         if ($result->count() == 0) {
