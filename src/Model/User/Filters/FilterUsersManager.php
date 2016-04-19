@@ -342,6 +342,24 @@ class FilterUsersManager
                     }
                     $qb->with('filter');
                     break;
+                case 'tags_and_choice':
+                    $tagLabelName = ucfirst($fieldName);
+                    $qb->optionalMatch("(filter)-[old_tag_rel:FILTERS_BY]->(:$tagLabelName)")
+                        ->delete("old_tag_rel");
+
+                    if (isset($profileFilters[$fieldName])) {
+                        foreach ($profileFilters[$fieldName] as $value){
+                            $tag = $fieldName === 'language' ?
+                                $this->profileFilterModel->getLanguageFromTag($value['tag']) :
+                                $value['tag'];
+                            $choice = $value['choice'];
+
+                            $qb->merge("(tag$fieldName$tag:$tagLabelName{name:'$tag'})");
+                            $qb->merge("(filter)-[:FILTERS_BY{detail:'$choice'}]->(tag$fieldName$tag)");
+                        }
+                    }
+                    $qb->with('filter');
+                    break;
             }
         }
 
@@ -415,6 +433,7 @@ class FilterUsersManager
      */
     private function getProfileFilters($id)
     {
+        //TODO: Refactor this into metadata
         $qb = $this->graphManager->createQueryBuilder();
         $qb->match('(filter:FilterUsers)')
             ->where('id(filter) = {id}')
@@ -547,6 +566,8 @@ class FilterUsersManager
         foreach ($row->offsetGet('groups') as $group) {
             $userFilters['groups'][] = $group;
         }
+        //TODO: Similarity & compatibility are single_integer, not integer_range. We must change that.
+
         if ($row->offsetGet('similarity')) {
             $userFilters['similarity'] = $row->offsetGet('similarity');
         }

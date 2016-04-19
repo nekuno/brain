@@ -234,8 +234,8 @@ profile: &profile
             en: 'What interface language do you prefer?'
             es: '¿Qué lenguaje de interfaz prefieres?'
         labelFilter:
-            en: 'Language'
-            es: 'Idioma'
+            en: 'Interface language'
+            es: 'Idioma de interfaz'
     religion:
         type: double_choice
         label:

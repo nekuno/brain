@@ -244,7 +244,7 @@ class Validator
                             if (!isset($tagAndChoice['tag']) || !array_key_exists('choice', $tagAndChoice)) {
                                 $fieldErrors[] = sprintf('Tag and choice must be defined for tags and choice type');
                             }
-                            if (isset($tagAndChoice['choice']) && !in_array($tagAndChoice['choice'], array_keys($choices[$fieldName]))) {
+                            if (isset($tagAndChoice['choice']) && isset($choices[$fieldName]) && !in_array($tagAndChoice['choice'], array_keys($choices[$fieldName]))) {
                                 $fieldErrors[] = sprintf('Option with value "%s" is not valid, possible values are "%s"', $tagAndChoice['choice'], implode("', '", array_keys($choices)));
                             }
                         }

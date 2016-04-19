@@ -265,13 +265,14 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                         $matches[] = "(p)<-[:TAGGED]-(tag$name:$tagLabelName) WHERE tag$name.name = '$value'";
                         break;
                     case 'tags_and_choice':
+                        $tagLabelName = $this->profileFilterModel->typeToLabel($name);
                         foreach ($value as $index => $dataValue) {
                             $tagValue = $name === 'language' ?
-                                $this->profileFilterModel->getLanguageFromTag($value['tag']) :
-                                $value['tag'];
+                                $this->profileFilterModel->getLanguageFromTag($dataValue['tag']) :
+                                $dataValue['tag'];
                             $choice = !is_null($dataValue['choice']) ? $dataValue['choice'] : '';
                             $tagLabel = 'tag_' . $index;
-                            $matches[] = "(p)<-[rel$tagLabel:TAGGED]-($tagLabel:ProfileTag:" . $this->profileFilterModel->typeToLabel($name) . ")" .
+                            $matches[] = "(p)<-[rel$tagLabel:TAGGED]-($tagLabel:ProfileTag:$tagLabelName)" .
                                 " WHERE ($tagLabel.name = '$tagValue' AND rel$tagLabel.detail = '$choice')";
                         }
                         break;
