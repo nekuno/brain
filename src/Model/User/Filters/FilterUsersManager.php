@@ -354,7 +354,7 @@ class FilterUsersManager
                                 $value['tag'];
                             $choice = $value['choice'];
 
-                            $qb->merge("(tag$fieldName$tag:$tagLabelName{name:'$tag'})");
+                            $qb->merge("(tag$fieldName$tag:$tagLabelName:ProfileTag{name:'$tag'})");
                             $qb->merge("(filter)-[:FILTERS_BY{detail:'$choice'}]->(tag$fieldName$tag)");
                         }
                     }
@@ -438,8 +438,9 @@ class FilterUsersManager
         $qb->match('(filter:FilterUsers)')
             ->where('id(filter) = {id}')
             ->optionalMatch('(filter)-[:FILTERS_BY]->(po:ProfileOption)')
+            ->optionalMatch('(filter)-[:FILTERS_BY]->(pt:ProfileTag)')
             ->optionalMatch('(filter)-[loc_rel:FILTERS_BY]->(loc:Location)')
-            ->returns('filter, collect(distinct po) as options, loc, loc_rel');
+            ->returns('filter, collect(distinct po) as options, collect(distinct pt) as tags, loc, loc_rel');
         $qb->setParameter('id', (integer)$id);
         $result = $qb->getQuery()->getResultSet();
 
@@ -452,8 +453,10 @@ class FilterUsersManager
         /** @var Node $filterNode */
         $filterNode = $row->offsetGet('filter');
         $options = $row->offsetGet('options');
+        $tags = $row->offsetGet('tags');
 
         $profileFilters = $this->buildProfileOptions($options, $filterNode);
+        $profileFilters += $this->buildTags($tags, $filterNode);
 
         $profileFilters += array(
             'birthday' => $this->profileFilterModel->getBirthdayRangeFromAgeRange(
@@ -503,16 +506,7 @@ class FilterUsersManager
         /* @var Node $option */
         foreach ($options as $option) {
             $labels = $option->getLabels();
-            /* @var Relationship $relationship */
-            //TODO: Can get slow (increments with filter amount), change to cypher specifying id from beginning
-            $relationships = $option->getRelationships('FILTERS_BY', Relationship::DirectionIn);
-            foreach ($relationships as $relationship) {
-                if ($relationship->getStartNode()->getId() === $option->getId() &&
-                    $relationship->getEndNode()->getId() === $filterNode->getId()
-                ) {
-                    break;
-                }
-            }
+            $relationship = $this->getFilterRelationshipFromNode($option, $filterNode->getId());
             /* @var Label $label */
             foreach ($labels as $label) {
                 if ($label->getName() && $label->getName() != 'ProfileOption') {
@@ -531,7 +525,65 @@ class FilterUsersManager
 
         return $optionsResult;
     }
+    /**
+     * Quite similar to ProfileModel->buildTagOptions
+     * @param \ArrayAccess $tags
+     * @param Node $filterNode
+     * @return array
+     */
+    protected function buildTags(\ArrayAccess $tags, Node $filterNode)
+    {
+        $tagsResult = array();
+        /* @var Node $tag */
+        foreach ($tags as $tag) {
+            $labels = $tag->getLabels();
+            $relationship = $this->getFilterRelationshipFromNode($tag, $filterNode->getId());
+            /* @var Label $label */
+            foreach ($labels as $label) {
+                if ($label->getName() && $label->getName() != 'ProfileTag') {
+                    $typeName = $this->profileFilterModel->labelToType($label->getName());
+                    $tagResult = $tag->getProperty('name');
+                    $detail = $relationship->getProperty('detail');
+                    if (!is_null($detail)) {
+                        $tagResult = array();
+                        $tagResult['tag'] = $tag->getProperty('name');
+                        $tagResult['choice'] = $detail;
+                    }
+                    if ($typeName === 'language') {
+                        if (is_null($detail)) {
+                            $tagResult = array();
+                            $tagResult['tag'] = $tag->getProperty('name');
+                            $tagResult['choice'] = '';
+                        }
+                    }
+                    $tagsResult[$typeName][] = $tagResult;
+                }
+            }
+        }
+        return $tagsResult;
+    }
 
+    //TODO: Refactor to GraphManager? Used in ProfileModel too
+    //TODO: Can get slow (increments with filter amount), change to cypher specifying id from beginning
+    /**
+     * @param Node $node
+     * @param $sourceId
+     * @return Relationship|null
+     */
+    private function getFilterRelationshipFromNode(Node $node, $sourceId)
+    {
+        /* @var $relationships Relationship[] */
+        $relationships = $node->getRelationships('FILTERS_BY', Relationship::DirectionIn);
+        foreach ($relationships as $relationship) {
+            if ($relationship->getEndNode()->getId() === $node->getId() &&
+                $relationship->getStartNode()->getId() === $sourceId
+            ) {
+               return $relationship;
+            }
+        }
+
+        return null;
+    }
     /**
      * Creates array ready to use as userFilter from neo4j
      * @param $id
