@@ -266,7 +266,7 @@ class FilterUsersManager
                 case 'date':
 
                     break;
-                case 'location':
+                case 'location_distance':
                     //If Location node is shared, this fails (can't delete node with relationships)
                     $qb->optionalMatch('(filter)-[old_loc_rel:FILTERS_BY]->(old_loc_node:Location)')
                         ->delete('old_loc_rel', 'old_loc_node');
@@ -276,10 +276,16 @@ class FilterUsersManager
                         $distance = (int)$value['distance'];
                         $latitude = (float)$value['location']['latitude'];
                         $longitude = (float)$value['location']['longitude'];
+                        $address = $value['location']['address'];
+                        $locality = $value['location']['locality'];
+                        $country = $value['location']['country'];
                         $qb->merge("(filter)-[loc_rel:FILTERS_BY{distance:$distance }]->(location:Location)");
                         $qb->set("loc_rel.distance = $distance");
                         $qb->set("location.latitude = $latitude");
                         $qb->set("location.longitude = $longitude");
+                        $qb->set("location.address = '$address'");
+                        $qb->set("location.locality = '$locality'");
+                        $qb->set("location.country = '$country'");
                     }
                     $qb->with('filter');
                     break;
@@ -486,6 +492,8 @@ class FilterUsersManager
                         'latitude' => $location->getProperty('latitude'),
                         'longitude' => $location->getProperty('longitude'),
                         'address' => $location->getProperty('address'),
+                        'locality' => $location->getProperty('locality'),
+                        'country' => $location->getProperty('country'),
                     )
                 )
             );
