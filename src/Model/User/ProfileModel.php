@@ -406,7 +406,7 @@ class ProfileModel
                             $tagResult['tag'] = $tag->getProperty('name');
                             $tagResult['detail'] = '';
                         }
-                        $tagResult['tag'] = $this->translateLanguageToLocale($tagResult['tag'], $locale);
+                        $tagResult['tag'] = $this->profileFilterModel->translateLanguageToLocale($tagResult['tag'], $locale);
                     }
                     $tagsResult[$typeName][] = $tagResult;
                 }
@@ -716,38 +716,5 @@ class ProfileModel
         }
 
         return $sign;
-    }
-
-    protected function translateLanguageToLocale($language, $locale)
-    {
-        if ($locale === 'en') {
-            return $language;
-        }
-        if ($locale === 'es') {
-            switch ($language) {
-                case 'Spanish':
-                    return 'Español';
-                case 'English':
-                    return 'Inglés';
-                case 'French':
-                    return 'Francés';
-                case 'German':
-                    return 'Alemán';
-                case 'Portuguese':
-                    return 'Portugués';
-                case 'Italian':
-                    return 'Italiano';
-                case 'Chinese':
-                    return 'Chino';
-                case 'Japanese':
-                    return 'Japonés';
-                case 'Russian':
-                    return 'Ruso';
-                case 'Arabic':
-                    return 'Árabe';
-            }
-        }
-
-        return $language;
     }
 }
