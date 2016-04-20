@@ -304,8 +304,8 @@ class FilterUsersManager
 
                     if (isset($profileFilters[$fieldName])) {
                         $value = $profileFilters[$fieldName];
-                        $qb->merge(" (option$fieldName$value:$profileLabelName{id:'$value'})");
-                        $qb->merge(" (filter)-[:FILTERS_BY]->(option$fieldName$value)");
+                        $qb->merge(" (option$fieldName:$profileLabelName{id:'$value'})");
+                        $qb->merge(" (filter)-[:FILTERS_BY]->(option$fieldName)");
                     }
                     $qb->with('filter');
                     break;
@@ -329,9 +329,11 @@ class FilterUsersManager
                         ->delete("old_po_rel");
 
                     if (isset($profileFilters[$fieldName])) {
+                        $counter=0;
                         foreach ($profileFilters[$fieldName] as $value){
-                            $qb->merge(" (option$fieldName$value:$profileLabelName{id:'$value'})");
-                            $qb->merge(" (filter)-[:FILTERS_BY]->(option$fieldName$value)");
+                            $qb->merge(" (option$fieldName$counter:$profileLabelName{id:'$value'})");
+                            $qb->merge(" (filter)-[:FILTERS_BY]->(option$fieldName$counter)");
+                            $counter++;
                         }
                     }
                     $qb->with('filter');
