@@ -24,12 +24,12 @@ privacy:
         label:
             en: 'Who can send me messages'
             es: 'Quién puede enviarme mensajes'
-profile: &profile
+profile:
     description:
         type: textarea
         min: 0
         max: 20000
-        label:
+        label: &description.label
             en: 'About me'
             es: 'Sobre mí'
     birthday:
@@ -38,38 +38,35 @@ profile: &profile
         label:
             en: 'Birthday'
             es: 'Cumpleaños'
-        labelFilter:
-            en: 'Age'
-            es: 'Edad'
     zodiacSign:
         type: choice
         editable: false
-        label:
+        label: &zodiacSign.label
             en: 'Zodiac sign'
             es: 'Signo del zodíaco'
-        labelFilter:
+        labelFilter: &zodiacSign.labelFilter
             en: 'Zodiac'
             es: 'Zodiaco'
     height:
         type: integer
         min: 50
         max: 300
-        label:
+        label: &height.label
             en: 'Height (cm)'
             es: 'Altura (cm)'
     allergy:
         type: tags
         min: 0
         max: 255
-        label:
+        label: &allergy.label
             en: 'Allergy'
             es: 'Alergia'
     sons:
         type: double_choice
-        label:
+        label: &sons.label
             en: 'Sons'
             es: 'Hijos'
-        doubleChoices:
+        doubleChoices: &sons.doubleChoices
             yes:
                 might_want:
                     en: "and might want more"
@@ -93,13 +90,13 @@ profile: &profile
 
     language:
         type: tags_and_choice
-        label:
+        label: &language.label
             en: 'Languages'
             es: 'Idiomas'
-        choiceLabel:
+        choiceLabel: &language.choiceLabel
             en: 'Level'
             es: 'Nivel'
-        choices:
+        choices: &language.choices
             elementary:
                 en: 'Elementary proficiency'
                 es: 'Competencia básica'
@@ -122,47 +119,43 @@ profile: &profile
         label:
             en: 'Want to be found in searches by gender'
             es: 'Quiero salir en búsquedas por género'
-        labelFilter:
-            en: 'Gender'
-            es: 'Género'
     descriptiveGender:
         type: multiple_choices
-        required: false
-        label:
+        label: &descriptiveGender.label
             en: 'Descriptive gender'
             es: 'Género descriptivo'
         max_choices: 5
     hairColor:
         type: choice
-        label:
+        label: &hairColor.label
             en: 'Hair color'
             es: 'Color de pelo'
     ethnicGroup:
         type: choice
-        label:
+        label: &ehtnicGroup.label
             en: 'Ethnic group'
             es: 'Grupo Étnico'
     complexion:
         type: choice
-        label:
+        label: &complexion.label
             en: 'Complexion'
             es: 'Complexión'
     eyeColor:
         type: choice
-        label:
+        label: &eyeColor.label
             en: 'Eyes color'
             es: 'Color ojos'
     civilStatus:
         type: choice
-        label:
+        label: &civilStatus.label
             en: 'Civil status'
             es: 'Estado civil'
-    nationality:
+    nationality: &nationality.label
         type: choice
         label:
             en: 'Nationality'
             es: 'Nacionalidad'
-    income:
+    income: &income.label
         type: choice
         label:
             en: 'Income'
@@ -172,41 +165,26 @@ profile: &profile
         label:
             en: 'Do you have pets?'
             es: '¿Tienes mascotas?'
-        labelFilter:
-            en: 'Pets'
-            es: 'Mascotas'
     smoke:
         type: choice
         label:
             en: 'Do you smoke?'
             es: '¿Fumas?'
-        labelFilter:
-            en: 'Smoker'
-            es: 'Fumador/a'
     alcohol:
         type: choice
         label:
             en: 'Do you drink alcohol?'
             es: '¿Bebes Alcohol?'
-        labelFilter:
-            en: 'Alcohol'
-            es: 'Alcohol'
     drugs:
         type: choice
         label:
             en: 'Do you take drugs?'
             es: '¿Tomas drogas?'
-        labelFilter:
-            en: 'Drugs'
-            es: 'Drogas'
     diet:
         type: choice
         label:
             en: 'Are you on a special diet?'
             es: '¿Sigues alguna dieta especial?'
-        labelFilter:
-            en: 'Diet'
-            es: 'Dieta'
     orientation:
         type: choice
         required: true
@@ -224,24 +202,18 @@ profile: &profile
         label:
             en: 'What are your interests on relations?'
             es: '¿Qué te interesa de las relaciones?'
-        labelFilter:
-            en: 'Kind of relation he/she is looking for'
-            es: 'Tipo de relación que busca'
     interfaceLanguage:
         type: choice
         required: true
         label:
             en: 'What interface language do you prefer?'
             es: '¿Qué lenguaje de interfaz prefieres?'
-        labelFilter:
-            en: 'Interface language'
-            es: 'Idioma de interfaz'
     religion:
         type: double_choice
-        label:
+        label: &religion.label
             en: 'Religion'
             es: 'Religión'
-        doubleChoices:
+        doubleChoices: &religion.doubleChoices
             agnosticism:
                 important:
                     en: "and it's important"
@@ -354,33 +326,33 @@ profile: &profile
                     es: "y me río de ello"
     allergy:
         type: tags
-        label:
+        label: &allergy.label
             en: 'Have you any allergy?'
             es: '¿Tienes alguna alergia?'
     handicap:
         type: tags
-        label:
+        label: &handicap.label
             en: 'Have you any handicap?'
             es: '¿Tienes alguna discapacidad?'
     ideology:
         type: tags
-        label:
+        label: &ideology.label
             en: 'Ideology'
             es: 'Ideología'
     profession:
         type: tags
-        label:
+        label: &profession.label
             en: 'Skills'
             es: 'Habilidades profesionales'
     education:
         type: tags
-        label:
+        label: &orientation.label
             en: 'Education'
             es: 'Educación'
     location:
         type: location
         required: true
-        label:
+        label: &location.label
             en: 'Location'
             es: 'Ubicación'
 content:
@@ -439,48 +411,134 @@ filters:
                 en: 'Minimum similarity (%)'
                 es: 'Similaridad mínima (%)'
     profile:
-        <<: *profile
-
-        birthday:
-            type: birthday_range
-            label:
-                en: 'Birthday'
-                es: 'Cumpleaños'
-            labelFilter:
-                en: 'Age'
-                es: 'Edad'
-        gender:
-            type: choice
-            label:
-                en: 'Want to be found in searches by gender'
-                es: 'Quiero salir en búsquedas por género'
-            labelFilter:
-                en: 'Gender'
-                es: 'Género'
-        orientation:
-            type: choice
-            label:
-                en: 'Orientation'
-                es: 'Orientación'
-        interfaceLanguage:
-            type: choice
-            label:
-                en: 'What interface language do you prefer?'
-                es: '¿Qué lenguaje de interfaz prefieres?'
-            labelFilter:
-                en: 'Language'
-                es: 'Idioma'
-        location:
-            type: location_distance
-            label:
-                en: 'Location'
-                es: 'Ubicación'
-        height:
-            type: integer_range
-            min: 50
-            max: 300
-            label:
-                en: 'Height (cm)'
-                es: 'Altura (cm)'
-
-
+        description:
+                type: textarea
+                min: 0
+                max: 20000
+                label:
+                    en: 'About me'
+                    es: 'Sobre mí'
+            birthday:
+                type: birthday
+                label:
+                    en: 'Age'
+                    es: 'Edad'
+            zodiacSign:
+                type: multiple_choices
+                label:
+                    en: 'Zodiac'
+                    es: 'Zodiaco'
+            height:
+                type: integer_range
+                min: 50
+                max: 300
+                label: *height.label
+            allergy:
+                type: tags
+                min: 0
+                max: 255
+                label: *allergy.label
+            sons:
+                type: double_choice
+                label: *sons.label
+                doubleChoices: *sons.doubleChoices
+            language:
+                type: tags_and_choice
+                label: &language.label
+                choiceLabel: &language.choiceLabel
+                choices: &language.choices
+            gender:
+                type: multiple_choices
+                label:
+                    en: 'Gender'
+                    es: 'Género'
+            descriptiveGender:
+                type: multiple_choices
+                label: *descriptiveGender.label
+                    en: 'Descriptive gender'
+                    es: 'Género descriptivo'
+            hairColor:
+                type: multiple_choices
+                label: &hairColor.label
+            ethnicGroup:
+                type: multiple_choices
+                label: &ethnicGroup.label
+            complexion:
+                type: multiple_choices
+                label: &complexion.label
+            eyeColor:
+                type: multiple_choices
+                label: &eyeColor.label
+            civilStatus:
+                type: multiple_choices
+                label: &civilStatus.label
+            nationality:
+                type: multiple_choices
+                label: &nationality.label
+            income:
+                type: multiple_choices
+                label: &income.label
+            pets:
+                type: multiple_choices
+                label:
+                    en: 'Pets'
+                    es: 'Mascotas'
+            smoke:
+                type: multiple_choices
+                label:
+                    en: 'Smoker'
+                    es: 'Fumador/a'
+            alcohol:
+                type: multiple_choices
+                label:
+                    en: 'Alcohol'
+                    es: 'Alcohol'
+            drugs:
+                type: multiple_choices
+                label:
+                    en: 'Drugs'
+                    es: 'Drogas'
+            diet:
+                type: multiple_choices
+                label:
+                    en: 'Diet'
+                    es: 'Dieta'
+            orientation:
+                type: multiple_choices
+                label:
+                    en: 'Orientation'
+                    es: 'Orientación'
+            relationshipInterest:
+                type: multiple_choices
+                label:
+                    en: 'Kind of relation he/she is looking for'
+                    es: 'Tipo de relación que busca'
+            interfaceLanguage:
+                type: multiple_choices
+                label:
+                    en: 'Interface language'
+                    es: 'Idioma de interfaz'
+            religion:
+                type: double_choice
+                label: *religion.label
+                    en: 'Religion'
+                    es: 'Religión'
+                doubleChoices: *religion.doubleChoices
+            allergy:
+                type: tags
+                label: *allergy.label
+            handicap:
+                type: tags
+                label: *handicap.label
+            ideology:
+                type: tags
+                label: *ideology.label
+            profession:
+                type: tags
+                label: *profession.label
+            education:
+                type: tags
+                label: *education.label
+            location:
+                type: location_distance
+                label: *location.label
