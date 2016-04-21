@@ -132,7 +132,7 @@ profile:
             es: 'Color de pelo'
     ethnicGroup:
         type: choice
-        label: &ehtnicGroup.label
+        label: &ethnicGroup.label
             en: 'Ethnic group'
             es: 'Grupo Étnico'
     complexion:
@@ -346,7 +346,7 @@ profile:
             es: 'Habilidades profesionales'
     education:
         type: tags
-        label: &orientation.label
+        label: &education.label
             en: 'Education'
             es: 'Educación'
     location:
@@ -412,133 +412,129 @@ filters:
                 es: 'Similaridad mínima (%)'
     profile:
         description:
-                type: textarea
-                min: 0
-                max: 20000
-                label:
-                    en: 'About me'
-                    es: 'Sobre mí'
-            birthday:
-                type: birthday
-                label:
-                    en: 'Age'
-                    es: 'Edad'
-            zodiacSign:
-                type: multiple_choices
-                label:
-                    en: 'Zodiac'
-                    es: 'Zodiaco'
-            height:
-                type: integer_range
-                min: 50
-                max: 300
-                label: *height.label
-            allergy:
-                type: tags
-                min: 0
-                max: 255
-                label: *allergy.label
-            sons:
-                type: double_choice
-                label: *sons.label
-                doubleChoices: *sons.doubleChoices
-            language:
-                type: tags_and_choice
-                label: &language.label
-                choiceLabel: &language.choiceLabel
-                choices: &language.choices
-            gender:
-                type: multiple_choices
-                label:
-                    en: 'Gender'
-                    es: 'Género'
-            descriptiveGender:
-                type: multiple_choices
-                label: *descriptiveGender.label
-                    en: 'Descriptive gender'
-                    es: 'Género descriptivo'
-            hairColor:
-                type: multiple_choices
-                label: &hairColor.label
-            ethnicGroup:
-                type: multiple_choices
-                label: &ethnicGroup.label
-            complexion:
-                type: multiple_choices
-                label: &complexion.label
-            eyeColor:
-                type: multiple_choices
-                label: &eyeColor.label
-            civilStatus:
-                type: multiple_choices
-                label: &civilStatus.label
-            nationality:
-                type: multiple_choices
-                label: &nationality.label
-            income:
-                type: multiple_choices
-                label: &income.label
-            pets:
-                type: multiple_choices
-                label:
-                    en: 'Pets'
-                    es: 'Mascotas'
-            smoke:
-                type: multiple_choices
-                label:
-                    en: 'Smoker'
-                    es: 'Fumador/a'
-            alcohol:
-                type: multiple_choices
-                label:
-                    en: 'Alcohol'
-                    es: 'Alcohol'
-            drugs:
-                type: multiple_choices
-                label:
-                    en: 'Drugs'
-                    es: 'Drogas'
-            diet:
-                type: multiple_choices
-                label:
-                    en: 'Diet'
-                    es: 'Dieta'
-            orientation:
-                type: multiple_choices
-                label:
-                    en: 'Orientation'
-                    es: 'Orientación'
-            relationshipInterest:
-                type: multiple_choices
-                label:
-                    en: 'Kind of relation he/she is looking for'
-                    es: 'Tipo de relación que busca'
-            interfaceLanguage:
-                type: multiple_choices
-                label:
-                    en: 'Interface language'
-                    es: 'Idioma de interfaz'
-            religion:
-                type: double_choice
-                label: *religion.label
-                    en: 'Religion'
-                    es: 'Religión'
-                doubleChoices: *religion.doubleChoices
-            allergy:
-                type: tags
-                label: *allergy.label
-            handicap:
-                type: tags
-                label: *handicap.label
-            ideology:
-                type: tags
-                label: *ideology.label
-            profession:
-                type: tags
-                label: *profession.label
-            education:
-                type: tags
-                label: *education.label
-            location:
-                type: location_distance
-                label: *location.label
+            type: textarea
+            min: 0
+            max: 20000
+            label:
+                en: 'About me'
+                es: 'Sobre mí'
+        birthday:
+            type: birthday
+            label:
+                en: 'Age'
+                es: 'Edad'
+        zodiacSign:
+            type: multiple_choices
+            label:
+                en: 'Zodiac'
+                es: 'Zodiaco'
+        height:
+            type: integer_range
+            min: 50
+            max: 300
+            label: *height.label
+        allergy:
+            type: tags
+            min: 0
+            max: 255
+            label: *allergy.label
+        sons:
+            type: double_choice
+            label: *sons.label
+            doubleChoices: *sons.doubleChoices
+        language:
+            type: tags_and_choice
+            label: &language.label
+            choiceLabel: &language.choiceLabel
+            choices: &language.choices
+        gender:
+            type: multiple_choices
+            label:
+                en: 'Gender'
+                es: 'Género'
+        descriptiveGender:
+            type: multiple_choices
+            label: *descriptiveGender.label
+        hairColor:
+            type: multiple_choices
+            label: *hairColor.label
+        ethnicGroup:
+            type: multiple_choices
+            label: *ethnicGroup.label
+        complexion:
+            type: multiple_choices
+            label: *complexion.label
+        eyeColor:
+            type: multiple_choices
+            label: *eyeColor.label
+        civilStatus:
+            type: multiple_choices
+            label: *civilStatus.label
+        nationality:
+            type: multiple_choices
+            label: *nationality.label
+        income:
+            type: multiple_choices
+            label: *income.label
+        pets:
+            type: multiple_choices
+            label:
+                en: 'Pets'
+                es: 'Mascotas'
+        smoke:
+            type: multiple_choices
+            label:
+                en: 'Smoker'
+                es: 'Fumador/a'
+        alcohol:
+            type: multiple_choices
+            label:
+                en: 'Alcohol'
+                es: 'Alcohol'
+        drugs:
+            type: multiple_choices
+            label:
+                en: 'Drugs'
+                es: 'Drogas'
+        diet:
+            type: multiple_choices
+            label:
+                en: 'Diet'
+                es: 'Dieta'
+        orientation:
+            type: multiple_choices
+            label:
+                en: 'Orientation'
+                es: 'Orientación'
+        relationshipInterest:
+            type: multiple_choices
+            label:
+                en: 'Kind of relation he/she is looking for'
+                es: 'Tipo de relación que busca'
+        interfaceLanguage:
+            type: multiple_choices
+            label:
+                en: 'Interface language'
+                es: 'Idioma de interfaz'
+        religion:
+            type: double_choice
+            label: *religion.label
+            doubleChoices: *religion.doubleChoices
+        allergy:
+            type: tags
+            label: *allergy.label
+        handicap:
+            type: tags
+            label: *handicap.label
+        ideology:
+            type: tags
+            label: *ideology.label
+        profession:
+            type: tags
+            label: *profession.label
+        education:
+            type: tags
+            label: *education.label
+        location:
+            type: location_distance
+            label: *location.label
