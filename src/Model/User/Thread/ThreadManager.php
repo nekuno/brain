@@ -246,7 +246,7 @@ class ThreadManager
                         $this->translator->trans('threads.default.desired_from_location')),
                     'category' => ThreadManager::LABEL_THREAD_USERS,
                     'filters' => array(
-                        'profileFilters' => array(
+                        'userFilters' => array(
                             'birthday' => array(
                                 'min' => $birthday->add($ageRangeMin)->format('Y-m-d'),
                                 'max' => $birthday->add($ageRangeMax)->format('Y-m-d'),
@@ -255,7 +255,7 @@ class ThreadManager
                                 'distance' => 50,
                                 'location' => $location
                             ),
-                            'gender' => $genderDesired !== 'people' ? $genderDesired : null,
+                            'gender' => array($genderDesired !== 'people' ? $genderDesired : null),
                         ),
                         'order' => 'content',
                     ),

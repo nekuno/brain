@@ -1,6 +1,6 @@
 **Validator**
 
-Validator es el servicio para validar cualquier array de datos. Para ello lee el archivo fields.yml y valida a partir de esas reglas.
+Validator es el servicio para validar cualquier array de datos. Para ello lee el archivo fields.yml (a través de los metadataModel, WIP) y valida a partir de esas reglas.
 
 El método validateUserId es distinto del resto de validación. Sólo comprueba que el usuario exista y, si no, emite una ValidationException.
 

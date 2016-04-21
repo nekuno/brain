@@ -8,12 +8,12 @@ namespace Service;
 
 use Manager\UserManager;
 use Model\Exception\ValidationException;
+use Model\User\ProfileFilterModel;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class Validator
 {
     const MAX_TAGS_AND_CHOICE_LENGTH = 15;
-
 
     /**
      * @var array
@@ -21,13 +21,19 @@ class Validator
     protected $metadata;
 
     /**
+     * @var ProfileFilterModel
+     */
+    protected $profileFilterModel;
+
+    /**
      * @var UserManager
      */
     protected $userManager;
 
-    public function __construct(UserManager $userManager, $metadata)
+    public function __construct(UserManager $userManager, ProfileFilterModel $profileFilterModel, $metadata)
     {
         $this->metadata = $metadata;
+        $this->profileFilterModel = $profileFilterModel;
         $this->userManager = $userManager;
     }
 
@@ -67,7 +73,7 @@ class Validator
 
     public function validateEditFilterProfile($data, $choices = array())
     {
-        return $this->validate($data, $this->metadata['filters']['profile'], $choices);
+        return $this->validate($data, $this->profileFilterModel->getMetadata(), $choices);
     }
 
     public function validateRecommendateContent($data, $choices = array())

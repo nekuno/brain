@@ -508,7 +508,7 @@ class UserController
 
         /* @var $profileFilterModel ProfileFilterModel */
         $profileFilterModel = $app['users.profileFilter.model'];
-        $filters['profileFilters'] = $profileFilterModel->getFilters($locale);
+        $filters['userFilters'] = $profileFilterModel->getFilters($locale);
 
         //user-dependent filters
 
@@ -530,7 +530,7 @@ class UserController
             unset($userFilters['groups']);
         }
 
-        $filters['userFilters'] = $userFilters;
+        $filters['userFilters'] += $userFilters;
 
         // content filters
 

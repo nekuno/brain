@@ -79,12 +79,14 @@ class FilterUsersManager
         $filterId = $this->getFilterUsersIdByThreadId($id);
         $filters->setId($filterId);
 
-        if (isset($filtersArray['profileFilters'])) {
-            $filters->setProfileFilters($filtersArray['profileFilters']);
+        $splitFilters = $this->splitFilters($filtersArray);
+
+        if (isset($splitFilters['profileFilters']) && !empty($splitFilters['profileFilters'])) {
+            $filters->setProfileFilters($splitFilters['profileFilters']);
         }
 
-        if (isset($filtersArray['userFilters'])) {
-            $filters->setUsersFilters($filtersArray['userFilters']);
+        if (isset($splitFilters['userFilters']) && !empty($splitFilters['userFilters'])) {
+            $filters->setUsersFilters($splitFilters['userFilters']);
         }
 
         $this->updateFiltersUsers($filters);
@@ -200,6 +202,20 @@ class FilterUsersManager
 
         return $result->current()->offsetGet('filterId');
 
+    }
+
+    protected function splitFilters($filters)
+    {
+        $filters['profileFilters'] = array();
+        $profileMetadata = $this->profileFilterModel->getProfileMetadata();
+        foreach ($profileMetadata as $fieldName => $fieldData){
+            if (isset($filters['userFilters'][$fieldName])){
+                $filters['profileFilters'][$fieldName] = $filters['userFilters'][$fieldName];
+                unset($filters['userFilters'][$fieldName]);
+            }
+        }
+
+        return $filters;
     }
 
     private function saveProfileFilters($profileFilters, $id)

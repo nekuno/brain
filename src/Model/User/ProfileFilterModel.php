@@ -25,41 +25,47 @@ class ProfileFilterModel extends FilterModel
 
         $choiceOptions = $this->getChoiceOptions($locale);
 
-        if ($values['type'] === 'choice') {
-            $publicField['choices'] = array();
-            if (isset($choiceOptions[$name])) {
-                $publicField['choices'] = $choiceOptions[$name];
-            }
-        } elseif ($values['type'] === 'double_choice') {
-            $publicField['choices'] = array();
-            if (isset($choiceOptions[$name])) {
-                $publicField['choices'] = $choiceOptions[$name];
-                if (isset($values['doubleChoices'])) {
-                    foreach ($values['doubleChoices'] as $choice => $doubleChoices) {
-                        foreach ($doubleChoices as $doubleChoice => $doubleChoiceValues) {
-                            $publicField['doubleChoices'][$choice][$doubleChoice] = $doubleChoiceValues[$locale];
+        switch($values['type']){
+            case 'choice':
+                $publicField['choices'] = array();
+                if (isset($choiceOptions[$name])) {
+                    $publicField['choices'] = $choiceOptions[$name];
+                }
+                break;
+            case 'double_choice':
+                $publicField['choices'] = array();
+                if (isset($choiceOptions[$name])) {
+                    $publicField['choices'] = $choiceOptions[$name];
+                    if (isset($values['doubleChoices'])) {
+                        foreach ($values['doubleChoices'] as $choice => $doubleChoices) {
+                            foreach ($doubleChoices as $doubleChoice => $doubleChoiceValues) {
+                                $publicField['doubleChoices'][$choice][$doubleChoice] = $doubleChoiceValues[$locale];
+                            }
                         }
                     }
                 }
-            }
-        } elseif ($values['type'] === 'multiple_choices') {
-            $publicField['choices'] = array();
-            if (isset($choiceOptions[$name])) {
-                $publicField['choices'] = $choiceOptions[$name];
-            }
-            if (isset($values['max_choices'])) {
-                $publicField['max_choices'] = $values['max_choices'];
-            }
-        } elseif ($values['type'] === 'tags_and_choice') {
-            $publicField['choices'] = array();
-            if (isset($values['choices'])) {
-                foreach ($values['choices'] as $choice => $description) {
-                    $publicField['choices'][$choice] = $description[$locale];
+            break;
+            case 'multiple_choices':
+                $publicField['choices'] = array();
+                if (isset($choiceOptions[$name])) {
+                    $publicField['choices'] = $choiceOptions[$name];
                 }
-            }
-            $publicField['top'] = $this->getTopProfileTags($name);
-        } elseif ($values['type'] === 'tags') {
-            $publicField['top'] = $this->getTopProfileTags($name);
+                $publicField['max_choices'] = isset($values['max_choices']) ? $values['max_choices'] : 999;
+                break;
+            case 'tags_and_choice':
+                $publicField['choices'] = array();
+                if (isset($values['choices'])) {
+                    foreach ($values['choices'] as $choice => $description) {
+                        $publicField['choices'][$choice] = $description[$locale];
+                    }
+                }
+                $publicField['top'] = $this->getTopProfileTags($name);
+                break;
+            case 'tags':
+                $publicField['top'] = $this->getTopProfileTags($name);
+                break;
+            default:
+                break;
         }
 
         return $publicField;
