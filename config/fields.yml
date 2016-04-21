@@ -419,7 +419,7 @@ filters:
                 en: 'About me'
                 es: 'Sobre mí'
         birthday:
-            type: birthday
+            type: birthday_range
             label:
                 en: 'Age'
                 es: 'Edad'

@@ -49,10 +49,14 @@ date:
 
 birthday:
 
+Comprueba tipo (string)
+
     //TODO: Hacer min - max en tipo date y eliminar este tipo especial de profile
 
 birthday_range:
     
+Comprueba tipo (array)
+
 Si hay mínimo y máximo, comprueba que el mínimo sea menor que el máximo
     
     min: Valor mínimo de cualquiera del input (mínimo o máximo)

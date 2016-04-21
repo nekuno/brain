@@ -144,7 +144,7 @@ class Validator
                         }
                         if (isset($fieldData['max'])) {
                             if ($dataValue['max'] > $fieldData['max']) {
-                                $fieldErrors[] = 'Maximum value must be greater than ' . $fieldData['max'];
+                                $fieldErrors[] = 'Maximum value must be less than ' . $fieldData['max'];
                             }
                         }
                         if ($dataValue['min'] > $dataValue['max']){
@@ -160,6 +160,10 @@ class Validator
                         break;
 
                     case 'birthday':
+                        if (!is_string($dataValue)){
+                            $fieldErrors[] = 'Birthday value must be a string';
+                            continue;
+                        }
                         $date = \DateTime::createFromFormat('Y-m-d', $dataValue);
                         $now = new \DateTime();
                         if (!($date && $date->format('Y-m-d') == $dataValue)) {
@@ -172,6 +176,10 @@ class Validator
                         break;
 
                     case 'birthday_range':
+                        if (!is_array($dataValue)){
+                            $fieldErrors[] = 'Value must be an array';
+                            continue;
+                        }
                         if (isset($dataValue['min'])) {
                             $dateMin = \DateTime::createFromFormat('Y-m-d', $dataValue['min']);
                             if (isset($fieldData['min'])) {
