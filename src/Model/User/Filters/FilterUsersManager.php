@@ -399,14 +399,14 @@ class FilterUsersManager
             unset($userFilters['groups']);
         }
 
-        foreach ($metadata as $fieldName => $value) {
-            if ($value['type'] == 'integer_range') {
+        foreach ($metadata as $fieldName => $fieldValue) {
+            if ($fieldValue['type'] == 'integer_range') {
                 $fieldNameMin = $fieldName . '_min';
                 $fieldNameMax = $fieldName . '_max';
                 $qb->remove("filter.$fieldNameMin", "filter.$fieldNameMax");
 
-                if (isset($profileFilters[$fieldName])) {
-                    $value = $profileFilters[$fieldName];
+                if (isset($userFilters[$fieldName])) {
+                    $value = $userFilters[$fieldName];
                     //We do not support only one of these
                     $min = isset($value['min']) ? (integer)$value['min'] : $metadata[$fieldName]['min'];
                     $max = isset($value['max']) ? (integer)$value['max'] : $metadata[$fieldName]['max'];
