@@ -444,9 +444,9 @@ filters:
             doubleChoices: *sons.doubleChoices
         language:
             type: tags_and_choice
-            label: &language.label
-            choiceLabel: &language.choiceLabel
-            choices: &language.choices
+            label: *language.label
+            choiceLabel: *language.choiceLabel
+            choices: *language.choices
         gender:
             type: multiple_choices
             label:
