@@ -150,14 +150,14 @@ profile:
         label: &civilStatus.label
             en: 'Civil status'
             es: 'Estado civil'
-    nationality: &nationality.label
+    nationality:
         type: choice
-        label:
+        label: &nationality.label
             en: 'Nationality'
             es: 'Nacionalidad'
-    income: &income.label
+    income:
         type: choice
-        label:
+        label: &income.label
             en: 'Income'
             es: 'Ingresos'
     pets:
