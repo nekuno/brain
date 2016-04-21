@@ -234,9 +234,16 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                     case 'date':
 
                         break;
+                    //To use from social
                     case 'birthday':
                         $min = $value['min'];
                         $max = $value['max'];
+                        $conditions[] = "('$min' <= p.$name AND p.$name <= '$max')";
+                        break;
+                    case 'birthday_range':
+                        $birthdayRange = $this->profileFilterModel->getBirthdayRangeFromAgeRange($value['min'], $value['max']);
+                        $min = $birthdayRange['min'];
+                        $max = $birthdayRange['max'];
                         $conditions[] = "('$min' <= p.$name AND p.$name <= '$max')";
                         break;
                     case 'location':

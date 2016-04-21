@@ -423,6 +423,8 @@ filters:
             label:
                 en: 'Age'
                 es: 'Edad'
+            min: 14
+            max: 99
         zodiacSign:
             type: multiple_choices
             label:

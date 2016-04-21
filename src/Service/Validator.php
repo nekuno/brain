@@ -124,6 +124,7 @@ class Validator
                         }
                         break;
 
+                    case 'birthday_range':
                     case 'integer_range':
                         if (!is_array($dataValue)){
                             $fieldErrors[] = 'Must be an array';
@@ -181,46 +182,6 @@ class Validator
                         }
                         break;
 
-                    case 'birthday_range':
-                        if (!is_array($dataValue)){
-                            $fieldErrors[] = 'Value must be an array';
-                            continue;
-                        }
-                        if (isset($dataValue['min'])) {
-                            $dateMin = \DateTime::createFromFormat('Y-m-d', $dataValue['min']);
-                            if (isset($fieldData['min'])) {
-                                if ($dateMin < \DateTime::createFromFormat('Y-m-d', $fieldData['min'])) {
-                                    $fieldErrors[] = 'Must be greater than ' . $fieldData['min'];
-                                }
-                            }
-                            if (isset($fieldData['max'])) {
-                                if ($dateMin < \DateTime::createFromFormat('Y-m-d', $fieldData['max'])) {
-                                    $fieldErrors[] = 'Must be less than ' . $fieldData['max'];
-                                }
-                            }
-                        }
-
-                        if (isset($dataValue['max'])) {
-                            $dateMax = \DateTime::createFromFormat('Y-m-d', $dataValue['max']);
-                            if (isset($fieldData['min'])) {
-                                if ($dateMax < \DateTime::createFromFormat('Y-m-d', $fieldData['min'])) {
-                                    $fieldErrors[] = 'Must be greater than ' . $fieldData['min'];
-                                }
-                            }
-                            if (isset($fieldData['max'])) {
-                                if ($dateMax < \DateTime::createFromFormat('Y-m-d', $fieldData['max'])) {
-                                    $fieldErrors[] = 'Must be less than ' . $fieldData['max'];
-                                }
-                            }
-                        }
-
-                        if (isset($dataValue['min']) && isset($dataValue['max'])) {
-                            if (\DateTime::createFromFormat('Y-m-d', $dataValue['min']) > \DateTime::createFromFormat('Y-m-d', $dataValue['max'])) {
-                                $fieldErrors[] = 'Minimum value must be inferior or equal to maximum value';
-                            }
-                        }
-
-                        break;
                     case 'boolean':
                         if ($dataValue !== true && $dataValue !== false) {
                             $fieldErrors[] = 'Must be a boolean.';

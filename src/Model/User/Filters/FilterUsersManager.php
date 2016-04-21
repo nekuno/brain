@@ -242,6 +242,7 @@ class FilterUsersManager
                     }
                     $qb->with('filter');
                     break;
+                //TODO: Refactor this and integer_range into saving and loading arrays to the Node
                 case 'birthday_range':
 
                     $qb->remove("filter.age_min", "filter.age_max");
@@ -250,10 +251,8 @@ class FilterUsersManager
                         $value = $profileFilters[$fieldName];
                         //We do not support only one of these
 
-                        $age = $this->profileFilterModel->getAgeRangeFromBirthdayRange($value);
-
-                        $qb->set('filter.age_min = ' . $age['min']);
-                        $qb->set('filter.age_max = ' . $age['max']);
+                        $qb->set('filter.age_min = ' . $value['min']);
+                        $qb->set('filter.age_max = ' . $value['max']);
 
                     }
                     $qb->with('filter');
@@ -483,9 +482,9 @@ class FilterUsersManager
         $profileFilters += $this->buildTags($tags, $filterNode);
 
         $profileFilters += array(
-            'birthday' => $this->profileFilterModel->getBirthdayRangeFromAgeRange(
-                $filterNode->getProperty('age_min'),
-                $filterNode->getProperty('age_max')
+            'birthday' => array (
+                'min' => $filterNode->getProperty('age_min'),
+                'max' => $filterNode->getProperty('age_max')
             ),
             'description' => $filterNode->getProperty('description')
         );

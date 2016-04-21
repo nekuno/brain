@@ -193,10 +193,7 @@ class ThreadManager
 
         $location = $profile['location'];
 
-        $birthday = new \Datetime($profile['birthday']);
-        $ageRangeMax = new \DateInterval('P5Y');
-        $ageRangeMin = new \DateInterval('P5Y');
-        $ageRangeMin->invert = 1;
+        $birthdayRange = $this->getAgeRangeFromProfile($profile);
 
         $genderDesired = $this->getDesiredFromProfile($profile);
         $nounDesired = $this->translator->trans('threads.default.' . $genderDesired);
@@ -248,8 +245,8 @@ class ThreadManager
                     'filters' => array(
                         'userFilters' => array(
                             'birthday' => array(
-                                'min' => $birthday->add($ageRangeMin)->format('Y-m-d'),
-                                'max' => $birthday->add($ageRangeMax)->format('Y-m-d'),
+                                'min' => $birthdayRange['min'],
+                                'max' => $birthdayRange['max'],
                             ),
                             'location' => array(
                                 'distance' => 50,
@@ -573,14 +570,6 @@ class ThreadManager
 
     }
 
-    private function YearsToBirthday($years)
-    {
-        $now = new \DateTime();
-        $birthday = $now->modify('-' . $years . ' years')->format('Y-m-d');
-
-        return $birthday;
-    }
-
     private function getDesiredFromProfile(array $profile)
     {
         if(!isset($profile['orientation']) || !isset($profile['gender'])){
@@ -600,6 +589,20 @@ class ThreadManager
         }
 
         return 'people';
+    }
+
+    private function getAgeRangeFromProfile(array $profile)
+    {
+        $ageRangeMax = new \DateInterval('P5Y');
+        $ageRangeMin = new \DateInterval('P5Y');
+        $ageRangeMin->invert = 1;
+        $rawAgeMin = (new \DateTime($profile['birthday']))->add($ageRangeMax)->diff(new \DateTime())->y;
+        $rawAgeMax =(new \DateTime($profile['birthday']))->add($ageRangeMin)->diff(new \DateTime())->y;
+
+        return array(
+            'max'=> $rawAgeMax <= 99? $rawAgeMax : 99,
+            'min'=> $rawAgeMin >= 14? $rawAgeMin : 14,
+        );
     }
 }
 
