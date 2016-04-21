@@ -110,7 +110,7 @@ class ProfileController
 
         /* @var $model ProfileFilterModel */
         $model = $app['users.profileFilter.model'];
-        $metadata = $model->getMetadata($locale);
+        $metadata = $model->getProfileMetadata($locale);
 
         return $app->json($metadata);
     }
