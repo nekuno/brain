@@ -38,7 +38,6 @@ abstract class FilterModel
      */
     public function getFilters($locale = null)
     {
-
         $locale = $this->getLocale($locale);
         $metadata = $this->getMetadata($locale, false);
         $labels = array();
