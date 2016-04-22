@@ -9,6 +9,7 @@ namespace Service;
 
 use Model\User\GroupModel;
 use Model\User\Recommendation\ContentRecommendationPaginatedModel;
+use Model\User\Recommendation\SocialUserRecommendationPaginatedModel;
 use Model\User\Recommendation\UserRecommendationPaginatedModel;
 use Model\User\Thread\ContentThread;
 use Model\User\Thread\Thread;
@@ -29,6 +30,8 @@ class Recommendator
     protected $groupModel;
     /** @var  $userRecommendationPaginatedModel UserRecommendationPaginatedModel */
     protected $userRecommendationPaginatedModel;
+    /** @var  $socialUserRecommendationPaginatedModel SocialUserRecommendationPaginatedModel */
+    protected $socialUserRecommendationPaginatedModel;
     /** @var  $contentRecommendationPaginatedModel ContentRecommendationPaginatedModel */
     protected $contentRecommendationPaginatedModel;
 
@@ -43,15 +46,23 @@ class Recommendator
      * @param GroupModel $groupModel
      * @param UserManager $userManager
      * @param UserRecommendationPaginatedModel $userRecommendationPaginatedModel
+     * @param SocialUserRecommendationPaginatedModel $socialUserRecommendationPaginatedModel
      * @param ContentRecommendationPaginatedModel $contentRecommendationPaginatedModel
      */
-    public function __construct(Paginator $paginator, ContentPaginator $contentPaginator, GroupModel $groupModel, UserManager $userManager, UserRecommendationPaginatedModel $userRecommendationPaginatedModel, ContentRecommendationPaginatedModel $contentRecommendationPaginatedModel)
+    public function __construct(Paginator $paginator,
+                                ContentPaginator $contentPaginator,
+                                GroupModel $groupModel,
+                                UserManager $userManager,
+                                UserRecommendationPaginatedModel $userRecommendationPaginatedModel,
+                                SocialUserRecommendationPaginatedModel $socialUserRecommendationPaginatedModel,
+                                ContentRecommendationPaginatedModel $contentRecommendationPaginatedModel)
     {
         $this->paginator = $paginator;
         $this->contentPaginator = $contentPaginator;
         $this->groupModel = $groupModel;
         $this->userManager = $userManager;
         $this->userRecommendationPaginatedModel = $userRecommendationPaginatedModel;
+        $this->socialUserRecommendationPaginatedModel = $socialUserRecommendationPaginatedModel;
         $this->contentRecommendationPaginatedModel = $contentRecommendationPaginatedModel;
     }
 
@@ -164,10 +175,10 @@ class Recommendator
     /**
      * @param Request $request
      * @param integer $id userId
+     * @param bool $social Whether the Request comes from Social
      * @return array
-     * @throws AccessDeniedHttpException
      */
-    public function getUserRecommendationFromRequest(Request $request, $id)
+    public function getUserRecommendationFromRequest(Request $request, $id, $social =false)
     {
 
         //TODO: Validate
@@ -183,7 +194,7 @@ class Recommendator
             $filters['order'] = $order;
         }
 
-        return $this->getUserRecommendation($filters, $request);
+        return $this->getUserRecommendation($filters, $request, $social);
     }
 
     public function getContentRecommendationFromRequest(Request $request, $id)
@@ -213,7 +224,13 @@ class Recommendator
 
     }
 
-    private function getUserRecommendation($filters, $request = null)
+    /**
+     * @param $filters
+     * @param null $request
+     * @param bool $social
+     * @return array
+     */
+    private function getUserRecommendation($filters, $request = null, $social = false)
     {
         if ($request == null){
             $request = new Request();
@@ -227,7 +244,9 @@ class Recommendator
             }
         }
 
-        $result = $this->paginator->paginate($filters, $this->userRecommendationPaginatedModel, $request);
+        $model = $social ? $this->socialUserRecommendationPaginatedModel : $this->userRecommendationPaginatedModel;
+
+        $result = $this->paginator->paginate($filters, $model, $request);
         return $result;
     }
 

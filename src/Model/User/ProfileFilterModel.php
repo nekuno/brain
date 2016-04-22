@@ -13,9 +13,9 @@ class ProfileFilterModel extends FilterModel
 {
     protected $profileMetadata;
 
-    public function __construct(GraphManager $gm, array $metadata, array $profileMetadata, $defaultLocale)
+    public function __construct(GraphManager $gm, array $metadata, array $profileMetadata, array $socialMetadata, $defaultLocale)
     {
-        parent::__construct($gm, $metadata, $defaultLocale);
+        parent::__construct($gm, $metadata, $socialMetadata, $defaultLocale);
         $this->profileMetadata = $profileMetadata;
     }
 

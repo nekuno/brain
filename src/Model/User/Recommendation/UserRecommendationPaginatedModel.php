@@ -218,7 +218,8 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         $conditions = array();
         $matches = array();
 
-        foreach ($this->profileFilterModel->getFilters() as $name => $filter) {
+        $profileFilterMetadata = $this->getProfileFilterMetadata();
+        foreach ($profileFilterMetadata as $name => $filter) {
             if (isset($filters[$name])) {
                 $value = $filters[$name];
                 switch ($filter['type']) {
@@ -304,7 +305,8 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         $conditions = array();
         $matches = array();
 
-        foreach ($this->userFilterModel->getMetadata() as $name => $filter) {
+        $userFilterMetadata = $this->getUserFilterMetadata();
+        foreach ($userFilterMetadata as $name => $filter) {
             if (isset($filters[$name]) && !empty($filters[$name])) {
                 $value = $filters[$name];
                 switch ($name) {
@@ -331,5 +333,13 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
             'conditions' => $conditions,
             'matches' => $matches
         );
+    }
+
+    protected function getProfileFilterMetadata(){
+        return $this->profileFilterModel->getProfileMetadata();
+    }
+
+    protected function getUserFilterMetadata(){
+        return $this->userFilterModel->getMetadata();
     }
 } 

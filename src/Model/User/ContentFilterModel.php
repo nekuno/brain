@@ -16,9 +16,9 @@ class ContentFilterModel extends FilterModel
      */
     protected $linkModel;
 
-    public function __construct(GraphManager $gm, LinkModel $linkModel, array $metadata, $defaultLocale)
+    public function __construct(GraphManager $gm, LinkModel $linkModel, array $metadata, array $socialMetadata, $defaultLocale)
     {
-        parent::__construct($gm, $metadata, $defaultLocale);
+        parent::__construct($gm, $metadata, $socialMetadata, $defaultLocale);
         $this->linkModel = $linkModel;
     }
 
@@ -51,7 +51,8 @@ class ContentFilterModel extends FilterModel
         );
     }
 
-    protected function getTopContentTags($name){
+    protected function getTopContentTags($name)
+    {
         return array();
     }
 

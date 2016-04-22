@@ -1,0 +1,407 @@
+privacy:
+    profile:
+        type: choice
+        label:
+            en: 'Who can access my profile'
+            es: 'Quién puede acceder a mi perfil'
+    description:
+        type: choice
+        label:
+            en: 'Quién puede acceder a mi perfil'
+            es: 'Quién puede acceder a la descripción de mi perfil'
+    questions:
+        type: choice
+        label:
+            en: 'Who can access my content/questions'
+            es: 'Quién puede acceder a mis preguntas/contenidos'
+    gallery:
+        type: choice
+        label:
+            en: 'Who can access my gallery'
+            es: 'Quién puede acceder a mi galería'
+    messages:
+        type: choice
+        label:
+            en: 'Who can send me messages'
+            es: 'Quién puede enviarme mensajes'
+profile:
+    description:
+        type: textarea
+        min: 0
+        max: 20000
+        label:
+            en: 'About me'
+            es: 'Sobre mí'
+    birthday:
+        type: birthday
+        required: true
+        label:
+            en: 'Birthday'
+            es: 'Cumpleaños'
+        labelFilter:
+            en: 'Age'
+            es: 'Edad'
+    zodiacSign:
+        type: choice
+        editable: false
+        label:
+            en: 'Zodiac sign'
+            es: 'Signo del zodíaco'
+        labelFilter:
+            en: 'Zodiac'
+            es: 'Zodiaco'
+    height:
+        type: integer
+        min: 50
+        max: 300
+        label:
+            en: 'Height (cm)'
+            es: 'Altura (cm)'
+    allergy:
+        type: tags
+        min: 0
+        max: 255
+        label:
+            en: 'Allergy'
+            es: 'Alergia'
+    sons:
+        type: double_choice
+        label:
+            en: 'Sons'
+            es: 'Hijos'
+        doubleChoices:
+            yes:
+                might_want:
+                    en: "and might want more"
+                    es: "y quizás quiera más"
+                want:
+                    en: "and want more"
+                    es: "y quiero más"
+                not_want:
+                    en: "but doesn’t want more"
+                    es: "y no quiero más"
+            no:
+                might_want:
+                    en: "but might want them"
+                    es: "pero quizás quiera"
+                want:
+                    en: "but want them"
+                    es: "pero quiero"
+                not_want:
+                    en: "and doesn’t want any"
+                    es: "y no quiero ninguno"
+
+    language:
+        type: tags_and_choice
+        filterable: false
+        label:
+            en: 'Languages'
+            es: 'Idiomas'
+        choiceLabel:
+            en: 'Level'
+            es: 'Nivel'
+        choices:
+            elementary:
+                en: 'Elementary proficiency'
+                es: 'Competencia básica'
+            limited_working:
+                en: 'Limited working proficiency'
+                es: 'Competencia básica limitada'
+            professional_working:
+                en: 'Professional working proficiency'
+                es: 'Competencia básica profesional'
+            full_professional:
+                en: 'Full professional proficiency'
+                es: 'Competencia profesional completa'
+            native:
+                en: 'Native or bilingual proficiency'
+                es: 'Competencia bilingüe o nativa'
+
+    gender:
+        type: choice
+        required: true
+        label:
+            en: 'Want to be found in searches by gender'
+            es: 'Quiero salir en búsquedas por género'
+        labelFilter:
+            en: 'Gender'
+            es: 'Género'
+    descriptiveGender:
+        type: multiple_choices
+        required: false
+        label:
+            en: 'Descriptive gender'
+            es: 'Género descriptivo'
+        max_choices: 5
+        filterable: false
+    hairColor:
+        type: choice
+        label:
+            en: 'Hair color'
+            es: 'Color de pelo'
+    ethnicGroup:
+        type: choice
+        label:
+            en: 'Ethnic group'
+            es: 'Grupo Étnico'
+    complexion:
+        type: choice
+        label:
+            en: 'Complexion'
+            es: 'Complexión'
+    eyeColor:
+        type: choice
+        label:
+            en: 'Eyes color'
+            es: 'Color ojos'
+    civilStatus:
+        type: choice
+        label:
+            en: 'Civil status'
+            es: 'Estado civil'
+    nationality:
+        type: choice
+        label:
+            en: 'Nationality'
+            es: 'Nacionalidad'
+    income:
+        type: choice
+        label:
+            en: 'Income'
+            es: 'Ingresos'
+    pets:
+        type: choice
+        label:
+            en: 'Do you have pets?'
+            es: '¿Tienes mascotas?'
+        labelFilter:
+            en: 'Pets'
+            es: 'Mascotas'
+    smoke:
+        type: choice
+        label:
+            en: 'Do you smoke?'
+            es: '¿Fumas?'
+        labelFilter:
+            en: 'Smoker'
+            es: 'Fumador/a'
+    alcohol:
+        type: choice
+        label:
+            en: 'Do you drink alcohol?'
+            es: '¿Bebes Alcohol?'
+        labelFilter:
+            en: 'Alcohol'
+            es: 'Alcohol'
+    drugs:
+        type: choice
+        label:
+            en: 'Do you take drugs?'
+            es: '¿Tomas drogas?'
+        labelFilter:
+            en: 'Drugs'
+            es: 'Drogas'
+    diet:
+        type: choice
+        label:
+            en: 'Are you on a special diet?'
+            es: '¿Sigues alguna dieta especial?'
+        labelFilter:
+            en: 'Diet'
+            es: 'Dieta'
+    orientation:
+        type: choice
+        required: true
+        label:
+            en: 'Orientation'
+            es: 'Orientación'
+    orientationRequired:
+        type: boolean
+        filterable: false
+        label:
+            en: 'Orientation required'
+            es: 'Orientación obligatoria'
+    relationshipInterest:
+        type: choice
+        label:
+            en: 'What are your interests on relations?'
+            es: '¿Qué te interesa de las relaciones?'
+        labelFilter:
+            en: 'Kind of relation he/she is looking for'
+            es: 'Tipo de relación que busca'
+    interfaceLanguage:
+        type: choice
+        required: true
+        label:
+            en: 'What interface language do you prefer?'
+            es: '¿Qué lenguaje de interfaz prefieres?'
+        labelFilter:
+            en: 'Language'
+            es: 'Idioma'
+    religion:
+        type: double_choice
+        label:
+            en: 'Religion'
+            es: 'Religión'
+        doubleChoices:
+            agnosticism:
+                important:
+                    en: "and it's important"
+                    es: "y es importante"
+                not_important:
+                    en: "and it's not important"
+                    es: "y no es importante"
+                laughing_about_it:
+                    en: "and laughing about it"
+                    es: "y me río de ello"
+            atheism:
+                important:
+                    en: "and it's important"
+                    es: "y es importante"
+                not_important:
+                    en: "and it's not important"
+                    es: "y no es importante"
+                laughing_about_it:
+                    en: "and laughing about it"
+                    es: "y me río de ello"
+            christianity:
+                important:
+                    en: "and it's important"
+                    es: "y es importante"
+                not_important:
+                    en: "and it's not important"
+                    es: "y no es importante"
+                laughing_about_it:
+                    en: "and laughing about it"
+                    es: "y me río de ello"
+            judaism:
+                important:
+                    en: "and it's important"
+                    es: "y es importante"
+                not_important:
+                    en: "and it's not important"
+                    es: "y no es importante"
+                laughing_about_it:
+                    en: "and laughing about it"
+                    es: "y me río de ello"
+            catholicism:
+                important:
+                    en: "and it's important"
+                    es: "y es importante"
+                not_important:
+                    en: "and it's not important"
+                    es: "y no es importante"
+                laughing_about_it:
+                    en: "and laughing about it"
+                    es: "y me río de ello"
+            islam:
+                important:
+                    en: "and it's important"
+                    es: "y es importante"
+                not_important:
+                    en: "and it's not important"
+                    es: "y no es importante"
+                laughing_about_it:
+                    en: "and laughing about it"
+                    es: "y me río de ello"
+            hinduism:
+                important:
+                    en: "and it's important"
+                    es: "y es importante"
+                not_important:
+                    en: "and it's not important"
+                    es: "y no es importante"
+                laughing_about_it:
+                    en: "and laughing about it"
+                    es: "y me río de ello"
+            buddhism:
+                important:
+                    en: "and it's important"
+                    es: "y es importante"
+                not_important:
+                    en: "and it's not important"
+                    es: "y no es importante"
+                laughing_about_it:
+                    en: "and laughing about it"
+                    es: "y me río de ello"
+            sikh:
+                important:
+                    en: "and it's important"
+                    es: "y es importante"
+                not_important:
+                    en: "and it's not important"
+                    es: "y no es importante"
+                laughing_about_it:
+                    en: "and laughing about it"
+                    es: "y me río de ello"
+            kopimism:
+                important:
+                    en: "and it's important"
+                    es: "y es importante"
+                not_important:
+                    en: "and it's not important"
+                    es: "y no es importante"
+                laughing_about_it:
+                    en: "and laughing about it"
+                    es: "y me río de ello"
+            other:
+                important:
+                    en: "and it's important"
+                    es: "y es importante"
+                not_important:
+                    en: "and it's not important"
+                    es: "y no es importante"
+                laughing_about_it:
+                    en: "and laughing about it"
+                    es: "y me río de ello"
+    allergy:
+        type: tags
+        label:
+            en: 'Have you any allergy?'
+            es: '¿Tienes alguna alergia?'
+    handicap:
+        type: tags
+        label:
+            en: 'Have you any handicap?'
+            es: '¿Tienes alguna discapacidad?'
+    ideology:
+        type: tags
+        label:
+            en: 'Ideology'
+            es: 'Ideología'
+    profession:
+        type: tags
+        label:
+            en: 'Skills'
+            es: 'Habilidades profesionales'
+    education:
+        type: tags
+        label:
+            en: 'Education'
+            es: 'Educación'
+    location:
+        type: location
+        required: true
+        label:
+            en: 'Location'
+            es: 'Ubicación'
+user:
+    groups:
+        type: choice
+        label:
+            en: 'Groups'
+            es: 'Grupos'
+    compatibility:
+        type: single_integer
+        min: 50
+        max: 100
+        label:
+            en: 'Minimum compatibility (%)'
+            es: 'Compatibilidad mínima (%)'
+    similarity:
+        type: single_integer
+        min: 50
+        max: 100
+        label:
+            en: 'Minimum similarity (%)'
+            es: 'Similaridad mínima (%)'

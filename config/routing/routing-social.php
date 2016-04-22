@@ -11,6 +11,7 @@ $social->get('/users/find', 'social.users.controller:findAction');
 $social->put('/users/{id}', 'social.users.controller:putAction');
 $social->get('/users/jwt/{id}', 'social.users.controller:jwtAction');
 
+$social->get('/profile/metadata', 'social.profile.controller:getMetadataAction');
 $social->get('/profile/{id}', 'social.profile.controller:getAction')->value('id', null);
 $social->post('/profile/{id}', 'social.profile.controller:postAction');
 $social->put('/profile/{id}', 'social.profile.controller:putAction');
@@ -23,6 +24,9 @@ $social->delete('/users/{id}/tokens/{resourceOwner}', 'social.tokens.controller:
 
 $social->get('/users/{id}/privacy', 'social.privacy.controller:getAction')->value('id', null);
 $social->get('/privacy/metadata', 'users.privacy.controller:getMetadataAction');
+$social->get('/users/{id}/filters', 'social.users.controller:getAllFiltersAction');
+
+$social->get('/users/{id}/recommendations/users', 'social.users.controller:getUserRecommendationAction');
 
 $social->get('/users/{id}/answers/compare/{id2}', 'social.answers.controller:getUserAnswersCompareAction');
 $social->post('/users/{id}/answers/{questionId}', 'social.answers.controller:updateAction');

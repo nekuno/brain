@@ -2,6 +2,7 @@
 
 namespace Controller\Social;
 
+use Model\User\ProfileFilterModel;
 use Model\User\ProfileModel;
 use Model\User;
 use Silex\Application;
@@ -61,5 +62,21 @@ class ProfileController
         $profile = $model->update($id, $request->request->all());
 
         return $app->json($profile);
+    }
+
+    /**
+     * @param Application $app
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getMetadataAction(Request $request, Application $app)
+    {
+        $locale = $request->query->get('locale');
+
+        /* @var $model ProfileFilterModel */
+        $model = $app['users.profileFilter.model'];
+        $metadata = $model->getSocialMetadata($locale);
+
+        return $app->json($metadata);
     }
 }

@@ -29,6 +29,7 @@ use Model\User\QuestionPaginatedModel;
 use Model\User\RateModel;
 use Model\User\Recommendation\ContentRecommendationPaginatedModel;
 use Model\User\Recommendation\ContentRecommendationTagModel;
+use Model\User\Recommendation\SocialUserRecommendationPaginatedModel;
 use Model\User\Recommendation\UserRecommendationPaginatedModel;
 use Model\User\RelationsModel;
 use Model\User\Similarity\SimilarityModel;
@@ -94,21 +95,21 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.userFilter.model'] = $app->share(
             function ($app) {
 
-                return new UserFilterModel($app['neo4j.graph_manager'], $app['fields']['filters']['user'], $app['locale.options']['default']);
+                return new UserFilterModel($app['neo4j.graph_manager'], $app['fields']['filters']['user'], $app['socialFields']['user'], $app['locale.options']['default']);
             }
         );
 
         $app['users.profileFilter.model'] = $app->share(
             function ($app) {
 
-                return new ProfileFilterModel($app['neo4j.graph_manager'], $app['fields']['filters']['profile'], $app['fields']['profile'], $app['locale.options']['default']);
+                return new ProfileFilterModel($app['neo4j.graph_manager'], $app['fields']['filters']['profile'], $app['fields']['profile'], $app['socialFields']['profile'],  $app['locale.options']['default']);
             }
         );
 
         $app['users.contentFilter.model'] = $app->share(
             function ($app) {
 
-                return new ContentFilterModel($app['neo4j.graph_manager'], $app['links.model'], $app['fields']['filters']['content'], $app['locale.options']['default']);
+                return new ContentFilterModel($app['neo4j.graph_manager'], $app['links.model'], $app['fields']['filters']['content'], array(), $app['locale.options']['default']);
             }
         );
 
@@ -200,6 +201,13 @@ class ModelsServiceProvider implements ServiceProviderInterface
             function ($app) {
 
                 return new UserRecommendationPaginatedModel($app['neo4j.graph_manager'], $app['users.profileFilter.model'], $app['users.userFilter.model']);
+            }
+        );
+
+        $app['users.socialRecommendation.users.model'] = $app->share(
+            function ($app) {
+
+                return new SocialUserRecommendationPaginatedModel($app['neo4j.graph_manager'], $app['users.profileFilter.model'], $app['users.userFilter.model']);
             }
         );
 
