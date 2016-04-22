@@ -415,25 +415,20 @@ class FilterUsersManager
         }
 
         foreach ($metadata as $fieldName => $fieldValue) {
-            if ($fieldValue['type'] == 'integer_range') {
-                $fieldNameMin = $fieldName . '_min';
-                $fieldNameMax = $fieldName . '_max';
-                $qb->remove("filter.$fieldNameMin", "filter.$fieldNameMax");
+            switch ($fieldValue['type']){
+                //single_integer used in Social
+                case 'single_integer':
+                case 'integer':
+                    $qb->remove("filter.$fieldName");
 
-                if (isset($userFilters[$fieldName])) {
-                    $value = $userFilters[$fieldName];
-                    //We do not support only one of these
-                    $min = isset($value['min']) ? (integer)$value['min'] : $metadata[$fieldName]['min'];
-                    $max = isset($value['max']) ? (integer)$value['max'] : $metadata[$fieldName]['max'];
-                    if ($min) {
-                        $qb->set('filter.' . $fieldNameMin . ' = ' . $min);
+                    if (isset($userFilters[$fieldName])) {
+                        $value = $userFilters[$fieldName];
+                        $qb->set('filter.' . $fieldName . ' = ' . $value);
                     }
-                    if ($max) {
-                        $qb->set('filter.' . $fieldNameMax . ' = ' . $max);
-                    }
-
-                }
-                $qb->with('filter');
+                    $qb->with('filter');
+                    break;
+                default:
+                    break;
             }
         }
 
@@ -481,13 +476,16 @@ class FilterUsersManager
         $profileFilters = $this->buildProfileOptions($options, $filterNode);
         $profileFilters += $this->buildTags($tags, $filterNode);
 
-        $profileFilters += array(
-            'birthday' => array (
-                'min' => $filterNode->getProperty('age_min'),
-                'max' => $filterNode->getProperty('age_max')
-            ),
-            'description' => $filterNode->getProperty('description')
-        );
+        if ($filterNode->getProperty('age_min') || $filterNode->getProperty('age_max')) {
+            $profileFilters += array(
+                'birthday' => array(
+                    'min' => $filterNode->getProperty('age_min') ?: 14,
+                    'max' => $filterNode->getProperty('age_max') ?: 99
+                ),
+                'description' => $filterNode->getProperty('description')
+            );
+        }
+
         $height = array(
             'min' => $filterNode->getProperty('height_min'),
             'max' => $filterNode->getProperty('height_max')
@@ -643,7 +641,6 @@ class FilterUsersManager
         foreach ($row->offsetGet('groups') as $group) {
             $userFilters['groups'][] = $group;
         }
-        //TODO: Similarity & compatibility are single_integer, not integer_range. We must change that.
 
         if ($row->offsetGet('similarity')) {
             $userFilters['similarity'] = $row->offsetGet('similarity');
