@@ -33,6 +33,7 @@ class ProfileFilterModel extends FilterModel
                 }
                 break;
             case 'double_choice':
+            case 'double_multiple_choices':
                 $publicField['choices'] = array();
                 if (isset($choiceOptions[$name])) {
                     $publicField['choices'] = $choiceOptions[$name];
