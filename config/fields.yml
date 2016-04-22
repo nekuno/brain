@@ -441,7 +441,7 @@ filters:
             max: 255
             label: *allergy.label
         sons:
-            type: double_multiple_choice
+            type: double_multiple_choices
             label: *sons.label
             doubleChoices: *sons.doubleChoices
         language:
@@ -517,7 +517,7 @@ filters:
                 en: 'Interface language'
                 es: 'Idioma de interfaz'
         religion:
-            type: double_multiple_choice
+            type: double_multiple_choices
             label: *religion.label
             doubleChoices: *religion.doubleChoices
         allergy:

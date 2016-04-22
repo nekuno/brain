@@ -206,6 +206,24 @@ class Validator
                             $fieldErrors[] = sprintf('Detail with value "%s" is not valid, possible values are "%s"', $dataValue['detail'], implode("', '", array_keys($doubleChoices)));
                         }
                         break;
+                    case 'double_multiple_choices':
+                        if (!is_array($dataValue)) {
+                            $fieldErrors[] = 'Multiple choices value must be an array';
+                            continue;
+                        }
+                        $choices = $choices[$fieldName] + array('' => '');
+                        $doubleChoices = $fieldData['doubleChoices'] + array('' => '');
+                        foreach ($dataValue as $singleDataValue){
+                            if (!in_array($singleDataValue['choice'], $choices)) {
+                                $fieldErrors[] = sprintf('Option with value "%s" is not valid, possible values are "%s"', $singleDataValue['choice'], implode("', '", $choices));
+                            }
+                            if (!isset($doubleChoices[$singleDataValue['choice']]) || $singleDataValue['detail'] && !isset($doubleChoices[$singleDataValue['choice']][$singleDataValue['detail']])) {
+                                $fieldErrors[] = sprintf('Option choice and detail must be set in "%s"', $singleDataValue['choice']);
+                            } elseif ($singleDataValue['detail'] && !in_array($singleDataValue['detail'], array_keys($doubleChoices[$singleDataValue['choice']]))) {
+                                $fieldErrors[] = sprintf('Detail with value "%s" is not valid, possible values are "%s"', $singleDataValue['detail'], implode("', '", array_keys($doubleChoices)));
+                            }
+                        }
+                        break;
                     case 'tags':
                         break;
                     case 'tags_and_choice':

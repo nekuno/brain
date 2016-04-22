@@ -76,6 +76,12 @@ Comprueba que el valor no esté en las opciones habilitadas
 
     double_choices: Opciones posibles para el valor de 'detail' en los datos a validar. Formato: {choice: {detail: {locale: X}}}
     
+double_multiple_choices:
+
+Compreba tipo (array)
+
+Para cada valor, comprueba igual que en double_choice
+
 tags:
 
 //TODO: Max/min

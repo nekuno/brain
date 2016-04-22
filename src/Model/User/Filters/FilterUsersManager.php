@@ -324,17 +324,19 @@ class FilterUsersManager
                     }
                     $qb->with('filter');
                     break;
-                case 'double_choice':
+                case 'double_multiple_choices':
                     $profileLabelName = $this->profileFilterModel->typeToLabel($fieldName);
                     $qb->optionalMatch("(filter)-[old_po_rel:FILTERS_BY]->(:$profileLabelName)")
                         ->delete("old_po_rel");
-
                     if (isset($profileFilters[$fieldName])) {
-                        $value = $profileFilters[$fieldName];
-                        $choice = $value['choice'];
-                        $detail = $value['detail'];
-                            $qb->merge(" (option$fieldName:$profileLabelName{id:'$choice'})");
-                            $qb->merge(" (filter)-[:FILTERS_BY{detail: '$detail'}]->(option$fieldName)");
+                        $counter = 0;
+                        foreach ($profileFilters[$fieldName] as $value) {
+                            $choice = $value['choice'];
+                            $detail = $value['detail'];
+                            $qb->merge(" (option$fieldName$counter:$profileLabelName{id:'$choice'})");
+                            $qb->merge(" (filter)-[:FILTERS_BY{detail: '$detail'}]->(option$fieldName$counter)");
+                            $counter++;
+                        }
                     }
                     $qb->with('filter');
                     break;
