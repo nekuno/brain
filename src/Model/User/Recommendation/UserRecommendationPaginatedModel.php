@@ -336,10 +336,10 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
     }
 
     protected function getProfileFilterMetadata(){
-        return $this->profileFilterModel->getProfileMetadata();
+        return $this->profileFilterModel->getFilters();
     }
 
     protected function getUserFilterMetadata(){
-        return $this->userFilterModel->getMetadata();
+        return $this->userFilterModel->getFilters();
     }
 } 
