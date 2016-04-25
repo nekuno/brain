@@ -272,6 +272,18 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                         $value = implode("', '", $value);
                         $matches[] = "(p)<-[:OPTION_OF]-(option$name:$profileLabelName) WHERE option$name.id IN ['$value']";
                         break;
+                    case 'double_multiple_choices':
+                        $profileLabelName = $this->profileFilterModel->typeToLabel($name);
+                        $matchQuery = "(p)<-[rel$name:OPTION_OF]-(option$name:$profileLabelName)";
+                        $whereQueries = array();
+                        foreach ($value as $dataValue){
+                            $choice = $dataValue['choice'];
+                            $detail = $dataValue['detail'];
+                            $whereQueries[] = "( option$name.id = '$choice' AND rel$name.detail = '$detail')";
+                        }
+
+                        $matches[] = $matchQuery.' WHERE ' . implode('OR', $whereQueries);
+                        break;
                     case 'tags':
                         $tagLabelName = $this->profileFilterModel->typeToLabel($name);
                         $matches[] = "(p)<-[:TAGGED]-(tag$name:$tagLabelName) WHERE tag$name.name = '$value'";
@@ -280,12 +292,12 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                         $tagLabelName = $this->profileFilterModel->typeToLabel($name);
                         $matchQuery = "(p)<-[rel$name:TAGGED]-(tag$name:ProfileTag:$tagLabelName)";
                         $whereQueries = array();
-                        foreach ($value as $index => $dataValue) {
+                        foreach ($value as $dataValue) {
                             $tagValue = $name === 'language' ?
                                 $this->profileFilterModel->getLanguageFromTag($dataValue['tag']) :
                                 $dataValue['tag'];
                             $choice = !is_null($dataValue['choice']) ? $dataValue['choice'] : '';
-                            
+
                             $whereQueries[] = "( tag$name.name = '$tagValue' AND rel$name.detail = '$choice')";
                         }
                         $matches[] = $matchQuery.' WHERE ' . implode('OR', $whereQueries);
@@ -294,7 +306,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                         $tagLabelName = $this->profileFilterModel->typeToLabel($name);
                         $matchQuery = "(p)<-[rel$name:TAGGED]-(tag$name:ProfileTag:$tagLabelName)";
                         $whereQueries = array();
-                        foreach ($value as $index => $dataValue) {
+                        foreach ($value as $dataValue) {
                             $tagValue = $name === 'language' ?
                                 $this->profileFilterModel->getLanguageFromTag($dataValue['tag']) :
                                 $dataValue['tag'];

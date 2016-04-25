@@ -530,6 +530,7 @@ class FilterUsersManager
      */
     private function buildProfileOptions(\ArrayAccess $options, Node $filterNode)
     {
+        $filterMetadata = $this->profileFilterModel->getFilters();
         $optionsResult = array();
         /* @var Node $option */
         foreach ($options as $option) {
@@ -539,18 +540,29 @@ class FilterUsersManager
             foreach ($labels as $label) {
                 if ($label->getName() && $label->getName() != 'ProfileOption') {
                     $typeName = $this->profileFilterModel->labelToType($label->getName());
-                    $optionsResult[$typeName] = empty($optionsResult[$typeName]) ? array($option->getProperty('id')) :
-                        array_merge($optionsResult[$typeName], array($option->getProperty('id')));
-                    $detail = $relationship->getProperty('detail');
-                    if (!is_null($detail)) {
-                        $optionsResult[$typeName] = array();
-                        $optionsResult[$typeName]['choice'] = $option->getProperty('id');
-                        $optionsResult[$typeName]['detail'] = $detail;
+                    $metadataValues= isset($filterMetadata[$typeName]) ? $filterMetadata[$typeName] : array();
+
+                    switch ($metadataValues['type']){
+                        case 'double_multiple_choices':
+                            $detail = $relationship->getProperty('detail');
+                            $choiceArray = array('choice' => $option->getProperty('id'), 'detail' => $detail);
+                            $optionsResult[$typeName] = isset($optionsResult[$typeName]) && is_array($optionsResult[$typeName]) ?
+                                array_merge($optionsResult[$typeName], array($choiceArray))
+                                : array($choiceArray);
+                            break;
+                        case 'double_choice':
+                            $detail = $relationship->getProperty('detail');
+                            $choiceArray = array('choice' => $option->getProperty('id'), 'detail' => $detail);
+                            $optionsResult[$typeName] = $choiceArray;
+                            break;
+                        default:
+                            $optionsResult[$typeName] = empty($optionsResult[$typeName]) ? array($option->getProperty('id')) :
+                                array_merge($optionsResult[$typeName], array($option->getProperty('id')));
+                            break;
                     }
                 }
             }
         }
-
         return $optionsResult;
     }
     /**
