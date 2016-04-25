@@ -85,7 +85,7 @@ class ServicesServiceProvider implements ServiceProviderInterface
 
         $app['validator.service'] = $app->share(
             function (Application $app) {
-                return new Validator($app['users.manager'], $app['users.profileFilter.model'], $app['fields']);
+                return new Validator($app['users.manager'], $app['users.profileFilter.model'], $app['users.userFilter.model'], $app['users.contentFilter.model'], $app['fields']);
             }
         );
 

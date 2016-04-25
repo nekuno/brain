@@ -8,7 +8,9 @@ namespace Service;
 
 use Manager\UserManager;
 use Model\Exception\ValidationException;
+use Model\User\ContentFilterModel;
 use Model\User\ProfileFilterModel;
+use Model\User\UserFilterModel;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class Validator
@@ -30,10 +32,26 @@ class Validator
      */
     protected $userManager;
 
-    public function __construct(UserManager $userManager, ProfileFilterModel $profileFilterModel, $metadata)
+    /**
+     * @var UserFilterModel
+     */
+    protected $userFilterModel;
+
+    /**
+     * @var ContentFilterModel
+     */
+    protected $contentFilterModel;
+
+    public function __construct(UserManager $userManager,
+                                ProfileFilterModel $profileFilterModel,
+                                UserFilterModel $userFilterModel,
+                                ContentFilterModel $contentFilterModel,
+                                array $metadata)
     {
         $this->metadata = $metadata;
         $this->profileFilterModel = $profileFilterModel;
+        $this->userFilterModel = $userFilterModel;
+        $this->contentFilterModel = $contentFilterModel;
         $this->userManager = $userManager;
     }
 
@@ -63,22 +81,22 @@ class Validator
 
     public function validateEditFilterContent(array $data, array $choices = array())
     {
-        return $this->validate($data, $this->metadata['filters']['content'], $choices);
+        return $this->validate($data, $this->contentFilterModel->getFilters(), $choices);
     }
 
     public function validateEditFilterUsers($data, $choices = array())
     {
-        return $this->validate($data, $this->metadata['filters']['user'], $choices);
+        return $this->validate($data, $this->userFilterModel->getFilters(), $choices);
     }
 
     public function validateEditFilterProfile($data, $choices = array())
     {
-        return $this->validate($data, $this->profileFilterModel->getMetadata(), $choices);
+        return $this->validate($data, $this->profileFilterModel->getFilters(), $choices);
     }
 
     public function validateRecommendateContent($data, $choices = array())
     {
-        return $this->validate($data, $this->metadata['filters']['content'], $choices);
+        return $this->validate($data, $this->contentFilterModel->getFilters(), $choices);
     }
 
     protected function validate($data, $metadata, $dataChoices = array())
