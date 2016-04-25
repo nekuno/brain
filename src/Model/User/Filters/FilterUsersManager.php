@@ -79,7 +79,7 @@ class FilterUsersManager
         $filterId = $this->getFilterUsersIdByThreadId($id);
         $filters->setId($filterId);
 
-        $splitFilters = $this->splitFilters($filtersArray);
+        $splitFilters = $this->profileFilterModel->splitFilters($filtersArray);
 
         if (isset($splitFilters['profileFilters']) && !empty($splitFilters['profileFilters'])) {
             $filters->setProfileFilters($splitFilters['profileFilters']);
@@ -201,20 +201,6 @@ class FilterUsersManager
 
         return $result->current()->offsetGet('filterId');
 
-    }
-
-    protected function splitFilters($filters)
-    {
-        $filters['profileFilters'] = array();
-        $profileMetadata = $this->profileFilterModel->getProfileMetadata();
-        foreach ($profileMetadata as $fieldName => $fieldData){
-            if (isset($filters['userFilters'][$fieldName])){
-                $filters['profileFilters'][$fieldName] = $filters['userFilters'][$fieldName];
-                unset($filters['userFilters'][$fieldName]);
-            }
-        }
-
-        return $filters;
     }
 
     private function saveProfileFilters($profileFilters, $id)

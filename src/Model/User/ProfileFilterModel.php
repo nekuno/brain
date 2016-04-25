@@ -160,6 +160,20 @@ class ProfileFilterModel extends FilterModel
         return $publicMetadata;
     }
 
+    public function splitFilters($filters)
+    {
+        $filters['profileFilters'] = (isset($filters['profileFilters']) && is_array($filters['profileFilters']))? $filters['profileFilters'] : array();
+        $profileMetadata = $this->getProfileMetadata();
+        foreach ($profileMetadata as $fieldName => $fieldData){
+            if (isset($filters['userFilters'][$fieldName])){
+                $filters['profileFilters'][$fieldName] = $filters['userFilters'][$fieldName];
+                unset($filters['userFilters'][$fieldName]);
+            }
+        }
+
+        return $filters;
+    }
+
     public function labelToType($labelName)
     {
 
