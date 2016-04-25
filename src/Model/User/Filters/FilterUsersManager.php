@@ -121,8 +121,7 @@ class FilterUsersManager
     public function getFilterUsersById($id)
     {
         $filter = $this->buildFiltersUsers();
-        $filter->setProfileFilters($this->getProfileFilters($id));
-        $filter->setUsersFilters($this->getUserFilters($id));
+        $filter->setUsersFilters(array_merge($this->getUserFilters($id), $this->getProfileFilters($id)));
 
         return $filter;
     }
@@ -381,6 +380,24 @@ class FilterUsersManager
 
                             $qb->merge("(tag$fieldName$tag:$tagLabelName:ProfileTag{name:'$tag'})");
                             $qb->merge("(filter)-[:FILTERS_BY{detail:'$choice'}]->(tag$fieldName$tag)");
+                        }
+                    }
+                    $qb->with('filter');
+                    break;
+                case 'tags_and_multiple_choices':
+                    $tagLabelName = ucfirst($fieldName);
+                    $qb->optionalMatch("(filter)-[old_tag_rel:FILTERS_BY]->(:$tagLabelName)")
+                        ->delete("old_tag_rel");
+
+                    if (isset($profileFilters[$fieldName])) {
+                        foreach ($profileFilters[$fieldName] as $value){
+                            $tag = $fieldName === 'language' ?
+                                $this->profileFilterModel->getLanguageFromTag($value['tag']) :
+                                $value['tag'];
+                            $choices = json_encode($value['choices']);
+
+                            $qb->merge("(tag$fieldName$tag:$tagLabelName:ProfileTag{name:'$tag'})");
+                            $qb->merge("(filter)-[:FILTERS_BY{detail:$choices}]->(tag$fieldName$tag)");
                         }
                     }
                     $qb->with('filter');
