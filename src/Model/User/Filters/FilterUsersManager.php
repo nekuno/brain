@@ -380,10 +380,10 @@ class FilterUsersManager
                             $tag = $fieldName === 'language' ?
                                 $this->profileFilterModel->getLanguageFromTag($value['tag']) :
                                 $value['tag'];
-                            $choices = json_encode($value['choices']);
 
                             $qb->merge("(tag$fieldName$tag:$tagLabelName:ProfileTag{name:'$tag'})");
-                            $qb->merge("(filter)-[:FILTERS_BY{detail:$choices}]->(tag$fieldName$tag)");
+                            $qb->merge("(filter)-[:FILTERS_BY{detail:{detail$fieldName$tag}}]->(tag$fieldName$tag)");
+                            $qb->setParameter("detail$fieldName$tag", $value['choices']);
                         }
                     }
                     $qb->with('filter');
@@ -575,7 +575,11 @@ class FilterUsersManager
                     if (!is_null($detail)) {
                         $tagResult = array();
                         $tagResult['tag'] = $tag->getProperty('name');
-                        $tagResult['choice'] = $detail;
+                        if (is_array($detail)){
+                            $tagResult['choices'] = $detail;
+                        } else {
+                            $tagResult['choice'] = $detail;
+                        }
                     }
                     if ($typeName === 'language') {
                         if (is_null($detail)) {

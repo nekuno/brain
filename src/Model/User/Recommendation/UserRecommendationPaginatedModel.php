@@ -161,6 +161,8 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         $id = $filters['id'];
         $count = 0;
 
+        $filters = $this->profileFilterModel->splitFilters($filters);
+
         $profileFilters = $this->getProfileFilters($filters['profileFilters']);
         $userFilters = $this->getUserFilters($filters['userFilters']);
 
@@ -276,15 +278,31 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                         break;
                     case 'tags_and_choice':
                         $tagLabelName = $this->profileFilterModel->typeToLabel($name);
+                        $matchQuery = "(p)<-[rel$name:TAGGED]-(tag$name:ProfileTag:$tagLabelName)";
+                        $whereQueries = array();
                         foreach ($value as $index => $dataValue) {
                             $tagValue = $name === 'language' ?
                                 $this->profileFilterModel->getLanguageFromTag($dataValue['tag']) :
                                 $dataValue['tag'];
                             $choice = !is_null($dataValue['choice']) ? $dataValue['choice'] : '';
-                            $tagLabel = 'tag_' . $index;
-                            $matches[] = "(p)<-[rel$tagLabel:TAGGED]-($tagLabel:ProfileTag:$tagLabelName)" .
-                                " WHERE ($tagLabel.name = '$tagValue' AND rel$tagLabel.detail = '$choice')";
+                            
+                            $whereQueries[] = "( tag$name.name = '$tagValue' AND rel$name.detail = '$choice')";
                         }
+                        $matches[] = $matchQuery.' WHERE ' . implode('OR', $whereQueries);
+                        break;
+                    case 'tags_and_multiple_choices':
+                        $tagLabelName = $this->profileFilterModel->typeToLabel($name);
+                        $matchQuery = "(p)<-[rel$name:TAGGED]-(tag$name:ProfileTag:$tagLabelName)";
+                        $whereQueries = array();
+                        foreach ($value as $index => $dataValue) {
+                            $tagValue = $name === 'language' ?
+                                $this->profileFilterModel->getLanguageFromTag($dataValue['tag']) :
+                                $dataValue['tag'];
+                            $choices = !is_null($dataValue['choices']) ? json_encode($dataValue['choices']) : json_encode(array());
+
+                            $whereQueries[] = "( tag$name.name = '$tagValue' AND rel$name.detail IN $choices )";
+                        }
+                        $matches[] = $matchQuery.' WHERE ' . implode('OR', $whereQueries);
                         break;
                     default:
                         break;
