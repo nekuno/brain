@@ -205,7 +205,9 @@ class ThreadManager
                     'name' => $this->translator->trans('threads.default.twitter_channels'),
                     'category' => ThreadManager::LABEL_THREAD_CONTENT,
                     'filters' => array(
-                        'contentFilters' => array(),
+                        'contentFilters' => array(
+                            'type' => array('Creator'),
+                        ),
                     ),
                     'default' => true,
                 ),
