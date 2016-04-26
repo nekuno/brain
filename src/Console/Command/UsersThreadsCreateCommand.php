@@ -3,6 +3,7 @@
 namespace Console\Command;
 
 use Console\ApplicationAwareCommand;
+use Model\Exception\ValidationException;
 use Model\User;
 use Model\User\GroupModel;
 use Model\User\Thread\ThreadManager;
@@ -84,19 +85,24 @@ class UsersThreadsCreateCommand extends ApplicationAwareCommand
                 }
                 $output->writeln(sprintf('Deleted threads for user %d', $user->getId()));
             }
+            try{
+                $createdThreads = $threadManager->createBatchForUser($user->getId(), $threads);
+                $output->writeln('Added threads for scenario ' . $scenario . ' and user with id ' . $user->getId());
+                foreach ($createdThreads as $createdThread) {
 
-            /* @var $user User */
-            $createdThreads = $threadManager->createBatchForUser($user->getId(), $threads);
-            $output->writeln('Added threads for scenario ' . $scenario . ' and user with id ' . $user->getId());
-            foreach ($createdThreads as $createdThread) {
+                    $result = $recommendator->getRecommendationFromThread($createdThread);
 
-                $result = $recommendator->getRecommendationFromThread($createdThread);
-
-                $threadManager->cacheResults(
-                    $createdThread,
-                    array_slice($result['items'], 0, 5),
-                    $result['pagination']['total']
-                );
+                    $threadManager->cacheResults(
+                        $createdThread,
+                        array_slice($result['items'], 0, 5),
+                        $result['pagination']['total']
+                    );
+                }
+            } catch (\Exception $e){
+                $output->writeln($e->getMessage());
+                if ($e instanceof ValidationException) {
+                    $output->writeln(print_r($e->getErrors(), true));
+                }
             }
             $output->writeln(sprintf('Cached results from threads for user %d', $user->getId()));
         }
