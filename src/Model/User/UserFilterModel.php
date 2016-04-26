@@ -62,6 +62,8 @@ class UserFilterModel extends FilterModel
             default:
                 break;
         }
+
+        return $publicField;
     }
 
 
