@@ -81,8 +81,11 @@ class FilterContent implements \JsonSerializable
     function jsonSerialize()
     {
         return array(
-            'type' => $this->getType(),
-            'tag' => $this->getTag(),
-            'id' => $this->getId());
+            'id' => $this->getId(),
+            'contentFilters' => array(
+                'type' => $this->getType(),
+                'tag' => $this->getTag(),
+                ),
+            );
     }
 }
