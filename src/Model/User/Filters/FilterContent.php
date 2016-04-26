@@ -90,6 +90,9 @@ class FilterContent implements \JsonSerializable
         if (empty($filters['type']) || $filters['type'] === array('Link')){
             unset($filters['type']);
         }
+        if (empty($filters)){
+            $filters = new \StdClass();
+        }
         return array(
             'id' => $this->getId(),
             'contentFilters' => $filters,

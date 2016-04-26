@@ -151,8 +151,8 @@ class ThreadManager
         $thread->setUpdatedAt($threadNode->getProperty('updatedAt'));
 
         /* @var $label Label */
-        foreach ($threadNode->getLabels() as $label){
-            if ($label->getName() == 'ThreadDefault'){
+        foreach ($threadNode->getLabels() as $label) {
+            if ($label->getName() == 'ThreadDefault') {
                 $thread->setDefault(true);
             }
         }
@@ -167,13 +167,13 @@ class ThreadManager
      */
     public function getDefaultThreads(User $user, $scenario = ThreadManager::SCENARIO_DEFAULT)
     {
-        try{
+        try {
             $profile = $this->profileModel->getById($user->getId());
-        } catch (NotFoundHttpException $e){
+        } catch (NotFoundHttpException $e) {
             return array();
         }
 
-        if (!isset($profile['location'])){
+        if (!isset($profile['location'])) {
             $profile['location'] = array(
                 'latitude' => 40.4167754,
                 'longitude' => -3.7037902,
@@ -183,7 +183,7 @@ class ThreadManager
             );
         }
 
-        if (!isset($profile['birthday'])){
+        if (!isset($profile['birthday'])) {
             $profile['birthday'] = '1970-01-01';
         }
 
@@ -204,13 +204,18 @@ class ThreadManager
                 array(
                     'name' => $this->translator->trans('threads.default.twitter_channels'),
                     'category' => ThreadManager::LABEL_THREAD_CONTENT,
+                    'filters' => array(
+                        'contentFilters' => array(),
+                    ),
                     'default' => true,
                 ),
                 array(
                     'name' => str_replace('%location%', $location['locality'], $this->translator->trans('threads.default.best_of_location')),
                     'category' => ThreadManager::LABEL_THREAD_CONTENT,
                     'filters' => array(
-                        'tag' => array($location['locality']),
+                        'contentFilters' => array(
+                            'tags' => array($location['locality']),
+                        ),
                     ),
                     'default' => true,
                 ),
@@ -218,7 +223,9 @@ class ThreadManager
                     'name' => $this->translator->trans('threads.default.youtube_videos'),
                     'category' => ThreadManager::LABEL_THREAD_CONTENT,
                     'filters' => array(
-                        'type' => array('Video')
+                        'contentFilters' => array(
+                            'type' => array('Video')
+                        ),
                     ),
                     'default' => true,
                 ),
@@ -226,7 +233,9 @@ class ThreadManager
                     'name' => $this->translator->trans('threads.default.spotify_music'),
                     'category' => ThreadManager::LABEL_THREAD_CONTENT,
                     'filters' => array(
-                        'type' => array('Audio')
+                        'contentFilters' => array(
+                            'type' => array('Audio')
+                        ),
                     ),
                     'default' => true,
                 ),
@@ -234,7 +243,9 @@ class ThreadManager
                     'name' => $this->translator->trans('threads.default.images'),
                     'category' => ThreadManager::LABEL_THREAD_CONTENT,
                     'filters' => array(
-                        'type' => array('Image')
+                        'contentFilters' => array(
+                            'type' => array('Image')
+                        ),
                     ),
                     'default' => true,
                 ),
@@ -314,7 +325,7 @@ class ThreadManager
                 'thread.createdAt = timestamp()',
                 'thread.updatedAt = timestamp()')
             ->create('(u)-[:HAS_THREAD]->(thread)');
-        if (isset($data['default']) && $data['default'] === true){
+        if (isset($data['default']) && $data['default'] === true) {
             $qb->set('thread :ThreadDefault');
         }
         $qb->returns('id(thread) as id');
@@ -465,9 +476,9 @@ class ThreadManager
 
     public function getGroupThreadData($group, $userId)
     {
-        try{
+        try {
             $profile = $this->profileModel->getById($userId);
-        } catch (NotFoundHttpException $e){
+        } catch (NotFoundHttpException $e) {
             return array();
         }
 
@@ -487,13 +498,13 @@ class ThreadManager
 
     private function validateEditThread($data, $userId = null)
     {
-        if ($userId){
+        if ($userId) {
             $this->validator->validateUserId($userId);
         }
 
         $this->validator->validateEditThread($data, $this->getChoices());
 
-        if (isset($data['filters'])){
+        if (isset($data['filters'])) {
             $this->usersThreadManager->getFilterUsersManager()->validateFilterUsers($data['filters'], $userId);
         }
 
@@ -572,19 +583,19 @@ class ThreadManager
 
     private function getDesiredFromProfile(array $profile)
     {
-        if(!isset($profile['orientation']) || !isset($profile['gender'])){
+        if (!isset($profile['orientation']) || !isset($profile['gender'])) {
             return 'female';
         }
 
-        if ($profile['orientation'] == 'heterosexual'){
+        if ($profile['orientation'] == 'heterosexual') {
             return $profile['gender'] === 'male' ? 'female' : 'male';
         }
 
-        if ($profile['orientation'] == 'homosexual'){
+        if ($profile['orientation'] == 'homosexual') {
             return $profile['gender'] === 'male' ? 'male' : 'female';
         }
 
-        if ($profile['orientation'] == 'bisexual'){
+        if ($profile['orientation'] == 'bisexual') {
             return 'people';
         }
 
@@ -597,11 +608,11 @@ class ThreadManager
         $ageRangeMin = new \DateInterval('P5Y');
         $ageRangeMin->invert = 1;
         $rawAgeMin = (new \DateTime($profile['birthday']))->add($ageRangeMax)->diff(new \DateTime())->y;
-        $rawAgeMax =(new \DateTime($profile['birthday']))->add($ageRangeMin)->diff(new \DateTime())->y;
+        $rawAgeMax = (new \DateTime($profile['birthday']))->add($ageRangeMin)->diff(new \DateTime())->y;
 
         return array(
-            'max' => $rawAgeMax <= 99? ($rawAgeMax >= 14 ? $rawAgeMax : 14) : 99,
-            'min' => $rawAgeMin <= 99? ($rawAgeMin >= 14 ? $rawAgeMin : 14) : 99,
+            'max' => $rawAgeMax <= 99 ? ($rawAgeMax >= 14 ? $rawAgeMax : 14) : 99,
+            'min' => $rawAgeMin <= 99 ? ($rawAgeMin >= 14 ? $rawAgeMin : 14) : 99,
         );
     }
 }
