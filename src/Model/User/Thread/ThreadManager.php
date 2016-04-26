@@ -600,8 +600,8 @@ class ThreadManager
         $rawAgeMax =(new \DateTime($profile['birthday']))->add($ageRangeMin)->diff(new \DateTime())->y;
 
         return array(
-            'max'=> $rawAgeMax <= 99? $rawAgeMax : 99,
-            'min'=> $rawAgeMin >= 14? $rawAgeMin : 14,
+            'max' => $rawAgeMax <= 99? ($rawAgeMax >= 14 ? $rawAgeMax : 14) : 99,
+            'min' => $rawAgeMin <= 99? ($rawAgeMin >= 14 ? $rawAgeMin : 14) : 99,
         );
     }
 }
