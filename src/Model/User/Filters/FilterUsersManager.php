@@ -663,6 +663,10 @@ class FilterUsersManager
             $userFilters['groups'][] = $group;
         }
 
+        if (empty($userFilters['groups'])){
+            unset($userFilters['groups']);
+        }
+
         if ($row->offsetGet('similarity')) {
             $userFilters['similarity'] = $row->offsetGet('similarity');
         }
