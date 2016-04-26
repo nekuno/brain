@@ -80,12 +80,19 @@ class FilterContent implements \JsonSerializable
      */
     function jsonSerialize()
     {
+        $filters = array(
+            'type' => $this->getType(),
+            'tags' => $this->getTag(),
+        );
+        if (empty($filters['tags'])) {
+            unset ($filters['tags']);
+        }
+        if (empty($filters['type']) || $filters['type'] === array('Link')){
+            unset($filters['type']);
+        }
         return array(
             'id' => $this->getId(),
-            'contentFilters' => array(
-                'type' => $this->getType(),
-                'tags' => $this->getTag(),
-                ),
-            );
+            'contentFilters' => $filters,
+        );
     }
 }
