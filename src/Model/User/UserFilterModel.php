@@ -19,9 +19,13 @@ class UserFilterModel extends FilterModel
         $groups = $this->getGroupsIds($userId);
 
         $choices = array(
-            'groups' => $groups,
+            'groups' => array(),
         );
 
+        foreach ($groups as $group){
+            $choices['groups'][$group] = $group;
+        }
+        
         return $choices;
     }
 
