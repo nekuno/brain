@@ -8,7 +8,7 @@ namespace Model\User\Filters;
 
 class FilterContent implements \JsonSerializable
 {
-    protected $tag;
+    protected $tag = array();
 
     protected $type;
 
@@ -84,7 +84,7 @@ class FilterContent implements \JsonSerializable
             'id' => $this->getId(),
             'contentFilters' => array(
                 'type' => $this->getType(),
-                'tag' => $this->getTag(),
+                'tags' => $this->getTag(),
                 ),
             );
     }

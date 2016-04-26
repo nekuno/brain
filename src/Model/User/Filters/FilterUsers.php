@@ -58,8 +58,10 @@ class FilterUsers implements \JsonSerializable
      */
     function jsonSerialize()
     {
+        $filters = array_merge($this->getUserFilters(), $this->getProfileFilters());
         return array(
-            'userFilters' => array_merge($this->getUserFilters(), $this->getProfileFilters()),
+            'id' => $this->getId(),
+            'userFilters' => !empty($filters) ? $filters : new \StdClass(),
         );
 
     }

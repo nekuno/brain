@@ -71,9 +71,9 @@ class FilterContentManager
         $filterId = $this->getFilterContentIdByThreadId($id);
         $filters->setId($filterId);
 
-        if (isset($filtersArray['tag']))
+        if (isset($filtersArray['tags']))
         {
-            $filters->setTag($filtersArray['tag']);
+            $filters->setTag($filtersArray['tags']);
         }
 
         if (isset($filtersArray['type']))
