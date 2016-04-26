@@ -44,7 +44,6 @@ class UserManager implements PaginatedInterface
      */
     protected $encoder;
 
-
     public function __construct(EventDispatcher $dispatcher, GraphManager $gm, PasswordEncoderInterface $encoder)
     {
         $this->dispatcher = $dispatcher;
@@ -864,6 +863,7 @@ class UserManager implements PaginatedInterface
 
         $this->updateCanonicalFields($data);
         $this->updatePassword($data);
+        $this->updatePicture($data);
 
         $data['updatedAt'] = (new \DateTime())->format('Y-m-d H:i:s');
 
@@ -1057,6 +1057,17 @@ class UserManager implements PaginatedInterface
             $user['salt'] = base_convert(sha1(uniqid(mt_rand(), true)), 16, 36);
             $user['password'] = $this->encoder->encodePassword($user['plainPassword'], $user['salt']);
             unset($user['plainPassword']);
+        }
+    }
+
+    protected function updatePicture(array &$user)
+    {
+
+        if (isset($user['picture']) && filter_var($user['picture'], FILTER_VALIDATE_URL)) {
+            $url = $user['picture'];
+            $user['picture'] = $user['usernameCanonical'] . '_' . time() . '.jpg';
+            $filename = __DIR__ . '/../../../social/web/user/images/' . $user['picture'];
+            file_put_contents($filename, file_get_contents($url));
         }
     }
 
