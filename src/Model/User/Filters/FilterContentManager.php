@@ -64,21 +64,26 @@ class FilterContentManager
 
     public function updateFilterContentByThreadId($id, $filtersArray)
     {
-        $this->validate($filtersArray);
+        if (!isset($filtersArray['contentFilters'])){
+            return null;
+        }
+
+        $contentFilters = $filtersArray['contentFilters'];
+        $this->validator->validateEditFilterContent($contentFilters, $this->getChoices());
 
         $filters = $this->buildFiltersContent();
 
         $filterId = $this->getFilterContentIdByThreadId($id);
         $filters->setId($filterId);
 
-        if (isset($filtersArray['tags']))
+        if (isset($contentFilters['tags']))
         {
-            $filters->setTag($filtersArray['tags']);
+            $filters->setTag($contentFilters['tags']);
         }
 
-        if (isset($filtersArray['type']))
+        if (isset($contentFilters['type']))
         {
-            $filters->setType($filtersArray['type']);
+            $filters->setType($contentFilters['type']);
         }
 
         $this->updateFiltersContent($filters);
@@ -104,11 +109,6 @@ class FilterContentManager
         }
 
         return true;
-    }
-
-    protected function validate(array $data)
-    {
-        $this->validator->validateEditFilterContent($data, $this->getChoices());
     }
 
     //TODO: LinkModel->getValidTypes() is the same
