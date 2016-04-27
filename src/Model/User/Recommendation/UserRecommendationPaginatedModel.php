@@ -250,6 +250,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                         $max = $birthdayRange['max'];
                         $conditions[] = "('$min' <= p.$name AND p.$name <= '$max')";
                         break;
+                    case 'location_distance':
                     case 'location':
                         $distance = (int)$value['distance'];
                         $latitude = (float)$value['location']['latitude'];
