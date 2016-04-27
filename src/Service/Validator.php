@@ -261,7 +261,7 @@ class Validator
                         }
                         break;
                     case 'multiple_choices':
-                        $multipleChoices = $choices[$fieldName] + array('');
+                        $multipleChoices = $choices[$fieldName];
                         if (!is_array($dataValue)) {
                             $fieldErrors[] = 'Multiple choices value must be an array';
                             continue;

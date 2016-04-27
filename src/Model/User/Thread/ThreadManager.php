@@ -273,6 +273,9 @@ class ThreadManager
                 ),
             )
         );
+        if ($threads['default'][5]['filters']['userFilters']['gender'] == array(null)){
+            unset($threads['default'][5]['filters']['userFilters']['gender']);
+        }
 
         if (!isset($threads[$scenario])) {
             return array();
