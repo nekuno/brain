@@ -270,8 +270,8 @@ class Validator
                             $fieldErrors[] = sprintf('Option length "%s" is too long. "%s" is the maximum', count($dataValue), $fieldData['max_choices']);
                         }
                         foreach ($dataValue as $singleValue) {
-                            if (!in_array($singleValue, array_keys($choices[$fieldName]))) {
-                                $fieldErrors[] = sprintf('Option with value "%s" is not valid, possible values are "%s"', $singleValue, implode("', '", array_keys($choices[$fieldName])));
+                            if (!in_array($singleValue, $choices[$fieldName])) {
+                                $fieldErrors[] = sprintf('Option with value "%s" is not valid, possible values are "%s"', $singleValue, implode("', '", $choices[$fieldName]));
                             }
                         }
                         break;
