@@ -128,11 +128,13 @@ class FilterUsersManager
 
     public function validateFilterUsers(array $filters, $userId = null)
     {
-        if (isset($filters['profileFilters'])){
+        $filters = $this->profileFilterModel->splitFilters($filters);
+
+        if (isset($filters['profileFilters'])) {
             $this->validator->validateEditFilterProfile($filters['profileFilters'], $this->profileFilterModel->getChoiceOptionIds());
         }
 
-        if (isset($filters['userFilters'])){
+        if (isset($filters['userFilters'])) {
             $this->validator->validateEditFilterUsers($filters['userFilters'], $this->userFilterModel->getChoiceOptionIds($userId));
         }
     }
@@ -146,13 +148,8 @@ class FilterUsersManager
         $userFilters = $filters->getUserFilters();
         $profileFilters = $filters->getProfileFilters();
 
-        if (!empty($userFilters)) {
-            $this->saveUserFilters($userFilters, $filters->getId());
-        }
-
-        if (!empty($profileFilters)) {
-            $this->saveProfileFilters($profileFilters, $filters->getId());
-        }
+        $this->saveUserFilters($userFilters, $filters->getId());
+        $this->saveProfileFilters($profileFilters, $filters->getId());
 
         return true;
     }
@@ -331,8 +328,8 @@ class FilterUsersManager
                         ->delete("old_po_rel");
 
                     if (isset($profileFilters[$fieldName])) {
-                        $counter=0;
-                        foreach ($profileFilters[$fieldName] as $value){
+                        $counter = 0;
+                        foreach ($profileFilters[$fieldName] as $value) {
                             $qb->merge(" (option$fieldName$counter:$profileLabelName{id:'$value'})");
                             $qb->merge(" (filter)-[:FILTERS_BY]->(option$fieldName$counter)");
                             $counter++;
@@ -345,7 +342,7 @@ class FilterUsersManager
                     $qb->optionalMatch("(filter)-[old_tag_rel:FILTERS_BY]->(:$tagLabelName)")
                         ->delete("old_tag_rel");
                     if (isset($profileFilters[$fieldName])) {
-                        foreach ($profileFilters[$fieldName] as $value){
+                        foreach ($profileFilters[$fieldName] as $value) {
                             $qb->merge("(tag$fieldName$value:$tagLabelName{name:'$value'})");
                             $qb->merge("(filter)-[:FILTERS_BY]->(tag$fieldName$value)");
                         }
@@ -358,7 +355,7 @@ class FilterUsersManager
                         ->delete("old_tag_rel");
 
                     if (isset($profileFilters[$fieldName])) {
-                        foreach ($profileFilters[$fieldName] as $value){
+                        foreach ($profileFilters[$fieldName] as $value) {
                             $tag = $fieldName === 'language' ?
                                 $this->profileFilterModel->getLanguageFromTag($value['tag']) :
                                 $value['tag'];
@@ -376,7 +373,7 @@ class FilterUsersManager
                         ->delete("old_tag_rel");
 
                     if (isset($profileFilters[$fieldName])) {
-                        foreach ($profileFilters[$fieldName] as $value){
+                        foreach ($profileFilters[$fieldName] as $value) {
                             $tag = $fieldName === 'language' ?
                                 $this->profileFilterModel->getLanguageFromTag($value['tag']) :
                                 $value['tag'];
@@ -420,7 +417,7 @@ class FilterUsersManager
         }
 
         foreach ($metadata as $fieldName => $fieldValue) {
-            switch ($fieldValue['type']){
+            switch ($fieldValue['type']) {
                 //single_integer used in Social
                 case 'single_integer':
                 case 'integer':
@@ -540,9 +537,9 @@ class FilterUsersManager
             foreach ($labels as $label) {
                 if ($label->getName() && $label->getName() != 'ProfileOption') {
                     $typeName = $this->profileFilterModel->labelToType($label->getName());
-                    $metadataValues= isset($filterMetadata[$typeName]) ? $filterMetadata[$typeName] : array();
+                    $metadataValues = isset($filterMetadata[$typeName]) ? $filterMetadata[$typeName] : array();
 
-                    switch ($metadataValues['type']){
+                    switch ($metadataValues['type']) {
                         case 'double_multiple_choices':
                             $detail = $relationship->getProperty('detail');
                             $choiceArray = array('choice' => $option->getProperty('id'), 'detail' => $detail);
@@ -565,6 +562,7 @@ class FilterUsersManager
         }
         return $optionsResult;
     }
+
     /**
      * Quite similar to ProfileModel->buildTagOptions
      * @param \ArrayAccess $tags
@@ -587,7 +585,7 @@ class FilterUsersManager
                     if (!is_null($detail)) {
                         $tagResult = array();
                         $tagResult['tag'] = $tag->getProperty('name');
-                        if (is_array($detail)){
+                        if (is_array($detail)) {
                             $tagResult['choices'] = $detail;
                         } else {
                             $tagResult['choice'] = $detail;
@@ -622,12 +620,13 @@ class FilterUsersManager
             if ($relationship->getEndNode()->getId() === $node->getId() &&
                 $relationship->getStartNode()->getId() === $sourceId
             ) {
-               return $relationship;
+                return $relationship;
             }
         }
 
         return null;
     }
+
     /**
      * Creates array ready to use as userFilter from neo4j
      * @param $id
@@ -663,7 +662,7 @@ class FilterUsersManager
             $userFilters['groups'][] = $group;
         }
 
-        if (empty($userFilters['groups'])){
+        if (empty($userFilters['groups'])) {
             unset($userFilters['groups']);
         }
 

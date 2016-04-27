@@ -42,6 +42,7 @@ class FilterContentManager
         $filterId = $this->getFilterContentIdByThreadId($id);
         return $this->getFilterContentById($filterId);
     }
+
     /**
      * @param FilterContent $filters
      * @return Node|null
@@ -55,7 +56,7 @@ class FilterContentManager
         $result = $qb->getQuery()->getResultSet();
 
         $filter = $result->current()->offsetGet('filter');
-        if ($filter == null){
+        if ($filter == null) {
             return null;
         }
 
@@ -64,11 +65,7 @@ class FilterContentManager
 
     public function updateFilterContentByThreadId($id, $filtersArray)
     {
-        if (!isset($filtersArray['contentFilters'])){
-            return null;
-        }
-
-        $contentFilters = $filtersArray['contentFilters'];
+        $contentFilters = isset($filtersArray['contentFilters']) ? $filtersArray['contentFilters'] : array();
         $this->validator->validateEditFilterContent($contentFilters, $this->getChoices());
 
         $filters = $this->buildFiltersContent();
@@ -76,13 +73,11 @@ class FilterContentManager
         $filterId = $this->getFilterContentIdByThreadId($id);
         $filters->setId($filterId);
 
-        if (isset($contentFilters['tags']))
-        {
+        if (isset($contentFilters['tags'])) {
             $filters->setTag($contentFilters['tags']);
         }
 
-        if (isset($contentFilters['type']))
-        {
+        if (isset($contentFilters['type'])) {
             $filters->setType($contentFilters['type']);
         }
 
@@ -100,19 +95,15 @@ class FilterContentManager
         $type = $filters->getType();
         $tag = $filters->getTag();
 
-        if ($tag){
-            $this->saveTag($filters->getId(), $tag );
-        }
-
-        if ($type){
-            $this->saveType($filters->getId(), $type);
-        }
+        $this->saveTag($filters->getId(), $tag);
+        $this->saveType($filters->getId(), $type);
 
         return true;
     }
 
     //TODO: LinkModel->getValidTypes() is the same
-    protected function getChoices(){
+    protected function getChoices()
+    {
         return array(
             'type' => array(
                 'Link', 'Audio', 'Video', 'Image', 'Creator'
@@ -152,7 +143,7 @@ class FilterContentManager
         $qb->setParameter('id', (integer)$id);
         $result = $qb->getQuery()->getResultSet();
 
-        if ($result->count() == 0){
+        if ($result->count() == 0) {
             return null;
         }
 
@@ -180,7 +171,7 @@ class FilterContentManager
         }
 
         $tags = array();
-        foreach ($result as $row){
+        foreach ($result as $row) {
             /** @var Node $tagNode */
             $tagNode = $row->offsetGet('tag');
             if ($tagNode) {
@@ -209,12 +200,12 @@ class FilterContentManager
             throw new NotFoundHttpException('Filter with id ' . $id . ' not found');
         }
 
-        $type= $result->current()->offsetGet('type');
+        $type = $result->current()->offsetGet('type');
 
         //TODO: Unnedeed if database is consistent for sure.
-        try{
+        try {
             $type = \GuzzleHttp\json_decode($type);
-        } catch (\Exception $e){
+        } catch (\Exception $e) {
 
         }
 
@@ -241,7 +232,7 @@ class FilterContentManager
         }
 
     }
-    
+
     private function saveTag($id, $tag)
     {
         //TODO: Validate
@@ -262,7 +253,7 @@ class FilterContentManager
             $qb->setParameter($singleTag, $singleTag);
         }
 
-            $qb->returns('filter');
+        $qb->returns('filter');
         $qb->setParameters(array(
             'id' => (integer)$id
         ));
