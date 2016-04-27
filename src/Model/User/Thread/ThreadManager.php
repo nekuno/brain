@@ -356,14 +356,15 @@ class ThreadManager
     /**
      * Replaces thread data with $data
      * @param $threadId
+     * @param $userId
      * @param $data
      * @return Thread|null
      * @throws \Exception
      * @throws \Model\Neo4j\Neo4jException
      */
-    public function update($threadId, $data)
+    public function update($threadId, $userId, $data)
     {
-        $this->validateEditThread($data);
+        $this->validateEditThread($data, $userId);
 
         $name = isset($data['name']) ? $data['name'] : null;
         $category = isset($data['category']) ? $data['category'] : null;

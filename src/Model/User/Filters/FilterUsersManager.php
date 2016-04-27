@@ -411,7 +411,8 @@ class FilterUsersManager
             foreach ($userFilters['groups'] as $group) {
                 $qb->match("(group$group:Group)")
                     ->where("id(group$group) = $group")
-                    ->merge("(filter)-[:FILTERS_BY]->(group$group)");
+                    ->merge("(filter)-[:FILTERS_BY]->(group$group)")
+                    ->with('filter');
             }
             unset($userFilters['groups']);
         }

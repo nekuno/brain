@@ -213,9 +213,9 @@ class Validator
                         break;
 
                     case 'double_choice':
-                        $choices = $choices[$fieldName] + array('' => '');
-                        if (!in_array($dataValue['choice'], $choices)) {
-                            $fieldErrors[] = sprintf('Option with value "%s" is not valid, possible values are "%s"', $dataValue['choice'], implode("', '", $choices));
+                        $thisChoices = $choices[$fieldName] + array('' => '');
+                        if (!in_array($dataValue['choice'], $thisChoices)) {
+                            $fieldErrors[] = sprintf('Option with value "%s" is not valid, possible values are "%s"', $dataValue['choice'], implode("', '", $thisChoices));
                         }
                         $doubleChoices = $fieldData['doubleChoices'] + array('' => '');
                         if (!isset($doubleChoices[$dataValue['choice']]) || $dataValue['detail'] && !isset($doubleChoices[$dataValue['choice']][$dataValue['detail']])) {
@@ -229,11 +229,11 @@ class Validator
                             $fieldErrors[] = 'Multiple choices value must be an array';
                             continue;
                         }
-                        $choices = $choices[$fieldName] + array('' => '');
+                        $thisChoices = $choices[$fieldName] + array('' => '');
                         $doubleChoices = $fieldData['doubleChoices'] + array('' => '');
                         foreach ($dataValue as $singleDataValue){
-                            if (!in_array($singleDataValue['choice'], $choices)) {
-                                $fieldErrors[] = sprintf('Option with value "%s" is not valid, possible values are "%s"', $singleDataValue['choice'], implode("', '", $choices));
+                            if (!in_array($singleDataValue['choice'], $thisChoices)) {
+                                $fieldErrors[] = sprintf('Option with value "%s" is not valid, possible values are "%s"', $singleDataValue['choice'], implode("', '", $thisChoices));
                             }
                             if (!isset($doubleChoices[$singleDataValue['choice']]) || $singleDataValue['detail'] && !isset($doubleChoices[$singleDataValue['choice']][$singleDataValue['detail']])) {
                                 $fieldErrors[] = sprintf('Option choice and detail must be set in "%s"', $singleDataValue['choice']);

@@ -121,14 +121,14 @@ class ThreadController
     /**
      * @param Application $app
      * @param Request $request
+     * @param User $user
      * @param integer $id
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      * @throws \Exception
      */
-    public function putAction(Application $app, Request $request, $id)
+    public function putAction(Application $app, Request $request, User $user, $id)
     {
-
-        $thread = $app['users.threads.manager']->update($id, $request->request->all());
+        $thread = $app['users.threads.manager']->update($id, $user->getId(), $request->request->all());
 
         /** @var Recommendator $recommendator */
         $recommendator = $app['recommendator.service'];
@@ -144,7 +144,6 @@ class ThreadController
             if ($app['env'] == 'dev') {
                 throw $e;
             }
-
         }
 
         $thread = $app['users.threads.manager']->getById($thread->getId());

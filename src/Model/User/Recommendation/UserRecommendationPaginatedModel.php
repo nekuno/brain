@@ -36,9 +36,8 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
     {
         $hasId = isset($filters['id']);
         $hasProfileFilters = isset($filters['profileFilters']);
-        $notMultipleGroups = !(isset($filters['userFilters']['groups']) && count($filters['userFilters']['groups']) > 1);
 
-        return $hasId && $hasProfileFilters && $notMultipleGroups;
+        return $hasId && $hasProfileFilters;
     }
 
     /**
