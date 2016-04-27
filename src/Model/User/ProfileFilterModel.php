@@ -140,8 +140,8 @@ class ProfileFilterModel extends FilterModel
         foreach ($this->profileMetadata as $name => $values) {
             $publicField = $values;
             $publicField['label'] = $values['label'][$locale];
-            $publicField['required'] = isset($values['required']) ?: 'false';
-            $publicField['editable'] = isset($values['editable']) ?: 'true';
+            $publicField['required'] = isset($values['required']) ?: false;
+            $publicField['editable'] = isset($values['editable']) ?: true;
             
             $publicField = $this->modifyPublicFieldByType($publicField, $name, $values, $locale);
 
