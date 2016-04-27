@@ -227,7 +227,9 @@ $app->before(
     function (Request $request) use ($app) {
         // Parse request content and populate parameters
         if ($request->getContentType() === 'application/json' || $request->getContentType() === 'json') {
-            $data = json_decode(utf8_encode($request->getContent()), true);
+            $encoding = mb_detect_encoding($request->getContent(), 'auto');
+            $content = $encoding === 'UTF-8' ? $request->getContent() : utf8_encode($request->getContent());
+            $data = json_decode($content, true);
             if (json_last_error()) {
                 return $app->json(array('Error parsing JSON data.'), 400);
             }
