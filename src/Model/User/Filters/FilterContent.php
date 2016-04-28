@@ -8,7 +8,7 @@ namespace Model\User\Filters;
 
 class FilterContent implements \JsonSerializable
 {
-    protected $tag;
+    protected $tag = array();
 
     protected $type;
 
@@ -16,9 +16,9 @@ class FilterContent implements \JsonSerializable
 
     /**
      * FilterContent constructor.
-     * @param string $type
+     * @param array $type
      */
-    public function __construct($type = 'Link')
+    public function __construct($type = array('Link'))
     {
         $this->type = $type;
     }
@@ -80,9 +80,22 @@ class FilterContent implements \JsonSerializable
      */
     function jsonSerialize()
     {
-        return array(
+        $filters = array(
             'type' => $this->getType(),
-            'tag' => $this->getTag(),
-            'id' => $this->getId());
+            'tags' => $this->getTag(),
+        );
+        if (empty($filters['tags'])) {
+            unset ($filters['tags']);
+        }
+        if (empty($filters['type']) || $filters['type'] === array('Link')){
+            unset($filters['type']);
+        }
+        if (empty($filters)){
+            $filters = new \StdClass();
+        }
+        return array(
+            'id' => $this->getId(),
+            'contentFilters' => $filters,
+        );
     }
 }

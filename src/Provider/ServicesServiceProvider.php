@@ -13,6 +13,7 @@ use Service\Recommendator;
 use Service\SocialNetwork;
 use Service\TokenGenerator;
 use Service\UserAggregator;
+use Service\Validator;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
 use Silex\Translator;
@@ -67,7 +68,8 @@ class ServicesServiceProvider implements ServiceProviderInterface
             function (Application $app) {
                 return new Recommendator(
                     $app['paginator'], $app['paginator.content'], $app['users.groups.model'],
-                    $app['users.manager'], $app['users.recommendation.users.model'], $app['users.recommendation.content.model']
+                    $app['users.manager'], $app['users.recommendation.users.model'],
+                    $app['users.socialRecommendation.users.model'], $app['users.recommendation.content.model']
                 );
             }
         );
@@ -78,6 +80,12 @@ class ServicesServiceProvider implements ServiceProviderInterface
                     $app['users.manager'], $app['users.ghostuser.manager'], $app['users.socialprofile.manager'],
                     $app['api_consumer.resource_owner_factory'], $app['users.lookup.model'], $app['amqpManager.service']
                 );
+            }
+        );
+
+        $app['validator.service'] = $app->share(
+            function (Application $app) {
+                return new Validator($app['users.manager'], $app['users.profileFilter.model'], $app['users.userFilter.model'], $app['users.contentFilter.model'], $app['fields']);
             }
         );
 

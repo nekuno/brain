@@ -42,7 +42,7 @@ class ThreadPaginatedModel implements PaginatedInterface
      * @param array $filters
      * @param int $offset
      * @param int $limit
-     * @return array
+     * @return Thread[]
      */
     public function slice(array $filters, $offset, $limit)
     {
@@ -60,6 +60,7 @@ class ThreadPaginatedModel implements PaginatedInterface
             ->where('user.qnoow_id= {userId}')
             ->match('(user)-[:HAS_THREAD]->(thread:Thread)')
             ->returns('thread')
+            ->orderBy('thread.updatedAt DESC')
             ->skip('{offset}')
             ->limit('{limit}');
 

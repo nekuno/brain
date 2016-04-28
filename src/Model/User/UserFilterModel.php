@@ -4,89 +4,71 @@
  */
 namespace Model\User;
 
+
 use Model\Neo4j\GraphManager;
+use Model\User;
 
-class UserFilterModel
+class UserFilterModel extends FilterModel
 {
-    protected $client;
-    protected $metadata;
-    protected $defaultLocale;
-
-    public function __construct(GraphManager $gm, array $metadata, $defaultLocale)
-    {
-        $this->gm = $gm;
-        $this->metadata = $metadata;
-        $this->defaultLocale = $defaultLocale;
-    }
-
     /**
-     * Returns the metadata for filtering users
-     * @param null $locale Locale of the metadata
-     * @param bool $filter Filter non public attributes
+     * @param $userId
      * @return array
      */
-    public function getMetadata($locale = null, $filter = true)
+    public function getChoiceOptionIds($userId)
     {
-        $locale = $this->getLocale($locale);
+        $groups = $this->getGroupsIds($userId);
 
-        $publicMetadata = array();
-        foreach ($this->metadata as $name => $values) {
-            $publicField = $values;
-            $publicField['label'] = $values['label'][$locale];
-            $publicMetadata[$name] = $publicField;
+        $choices = array(
+            'groups' => array(),
+        );
+
+        foreach ($groups as $group){
+            $choices['groups'][$group] = $group;
+        }
+        
+        return $choices;
+    }
+
+//TODO: Use groupModel->getAllByUserId when groupModel has not filterUsersManagers dependency (QS-982)
+    private function getGroupsIds($userId)
+    {
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb ->match('(u:User{qnoow_id: { userId }})')
+            ->match('(g:Group)<-[:BELONGS_TO]-(u)')
+            ->setParameter('userId', $userId)
+            ->returns('id(g) as group');
+
+        $query = $qb->getQuery();
+
+        $result = $query->getResultSet();
+
+        $return = array();
+        foreach ($result as $row) {
+            $return[] = $row->offsetGet('group');
         }
 
-        if ($filter) {
-            foreach ($publicMetadata as &$item) {
-                if (isset($item['labelFilter'])) {
-                    unset($item['labelFilter']);
+        return $return;
+    }
+
+    //TODO: Move common uses to FilterModel
+    protected function modifyPublicFieldByType($publicField, $name, $values, $locale)
+    {
+        $publicField = parent::modifyPublicFieldByType($publicField, $name, $values, $locale);
+        switch($values['type']) {
+            case 'multiple_choices':
+                $publicField['choices'] = array();
+                if (isset($choiceOptions[$name])) {
+                    $publicField['choices'] = $choiceOptions[$name];
                 }
-                if (isset($item['filterable'])) {
-                    unset($item['filterable']);
-                }
-            }
+                $publicField['max_choices'] = isset($values['max_choices']) ? $values['max_choices'] : 999;
+                break;
+            default:
+                break;
         }
 
-        return $publicMetadata;
+        return $publicField;
     }
 
-    /**
-     * Returns the metadata for creating search filters
-     * @param null $locale
-     * @return array
-     */
-    public function getFilters($locale = null)
-    {
 
-        $locale = $this->getLocale($locale);
-        $metadata = $this->getMetadata($locale, false);
-        $labels = array();
-        foreach ($metadata as $key => &$item) {
-            if (isset($item['labelFilter'])) {
-                $item['label'] = $item['labelFilter'][$locale];
-                unset($item['labelFilter']);
-            }
-            if (isset($item['filterable']) && $item['filterable'] === false) {
-                unset($metadata[$key]);
-            } else {
-                $labels[] = $item['label'];
-            }
-        }
-
-        if (!empty($labels)) {
-            array_multisort($labels, SORT_ASC, $metadata);
-        }
-
-        return $metadata;
-    }
-
-    protected function getLocale($locale)
-    {
-
-        if (!$locale || !in_array($locale, array('en', 'es'))) {
-            $locale = $this->defaultLocale;
-        }
-
-        return $locale;
-    }
 }

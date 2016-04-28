@@ -5,6 +5,7 @@ namespace Model;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Neo4j\GraphManager;
+use Symfony\Component\Translation\Translator;
 
 /**
  * Class LinkModel
@@ -19,10 +20,15 @@ class LinkModel
      */
     protected $gm;
 
-    public function __construct(GraphManager $gm)
-    {
+    /**
+     * @var Translator
+     */
+    protected $translator;
 
+    public function __construct(GraphManager $gm, Translator $translator)
+    {
         $this->gm = $gm;
+        $this->translator = $translator;
     }
 
     /**
@@ -136,15 +142,14 @@ class LinkModel
      */
     public function findAllLinks($filters = array())
     {
-
-        $type = isset($filters['type']) ? $filters['type'] : 'Link';
-
         //todo: add tag filters, probably with an inter-model buildParamsFromFilters
+        $types = isset($filters['type']) ? $filters['type'] : array();
 
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match("(l:$type)")
+        $qb->match("(l:Link)")
             ->returns('l AS link');
+        $qb->filterContentByType($types, 'l');
         $query = $qb->getQuery();
         $result = $query->getResultSet();
 
@@ -164,18 +169,19 @@ class LinkModel
      */
     public function countAllLinks($filters = array())
     {
-        $type = isset($filters['type']) ? $filters['type'] : 'Link';
-
+        $types = isset($filters['type']) ? $filters['type'] : array();
         $qb = $this->gm->createQueryBuilder();
 
         $qb->match('(user:User {qnoow_id: { userId }})');
         $qb->setParameter('userId', (integer)$filters['id']);
         if (isset($filters['tag'])) {
-            $qb->match("(:Tag{name: { tag } })-[:TAGGED]-(l:$type)");
+            $qb->match("(:Tag{name: { tag } })-[:TAGGED]-(l:Link)");
             $qb->setParameter('tag', $filters['tag']);
         } else {
-            $qb->match("(l:$type)");
+            $qb->match("(l:Link)");
         }
+
+        $qb->filterContentByType($types, 'l');
 
         //TODO: Cache this at periodic calculations
 //        $qb->with('user', 'l')
@@ -589,10 +595,7 @@ class LinkModel
      */
     public function getPredictedContentForAUser($userId, $limitContent = 40, $limitUsers = 20, array $filters = array())
     {
-        $linkType = 'Link';
-        if (isset($filters['type'])) {
-            $linkType = $filters['type'];
-        }
+        $types = isset($filters['type']) ? $filters['type'] : array();
 
         $params = array(
             'userId' => (integer)$userId,
@@ -618,7 +621,8 @@ class LinkModel
                 ->orderby('m DESC')
                 ->limit('{limitUsers}');
 
-            $qb->match('(users)-[:LIKES]->(l:' . $linkType . ')');
+            $qb->match('(users)-[:LIKES]->(l:Link)');
+            $qb->filterContentByType($types, 'l', array('m', 'u'));
 
             $qb->with('u', 'avg(m) as average', 'count(m) as amount', 'l')
                 ->where('amount >= 2');
@@ -627,7 +631,6 @@ class LinkModel
                 ->skip('{internalOffset}')
                 ->limit('{internalLimit}');
 
-
             $conditions = array('l.processed = 1', 'NOT (u)-[:LIKES]-(l)', 'NOT (u)-[:DISLIKES]-(l)');
             if (!(isset($filters['affinity']) && $filters['affinity'] == true)) {
                 $conditions[] = '(NOT (u)-[:AFFINITY]-(l))';
@@ -635,11 +638,10 @@ class LinkModel
             $qb->where($conditions);
             if (isset($filters['tag'])) {
                 $qb->match('(l)-[:TAGGED]->(filterTag:Tag)')
-                    ->where('filterTag.name = { tag }');
+                    ->where('filterTag.name IN { filterTags } ');
 
-                $params['tag'] = $filters['tag'];
+                $params['filterTags'] = $filters['tag'];
             }
-
 
             $qb->with('l', 'average');
             $qb->optionalMatch('(l)-[:TAGGED]->(tag:Tag)')
@@ -868,32 +870,6 @@ class LinkModel
     }
 
     /**
-     * @param $url
-     * @return boolean
-     */
-    private function isAlreadySaved($url)
-    {
-        $qb = $this->gm->createQueryBuilder();
-
-        $qb->match('(l:Link)')
-            ->where('l.url = { url }')
-            ->returns('l')
-            ->limit(1);
-
-        $qb->setParameter('url', $url);
-
-        $query = $qb->getQuery();
-
-        $result = $query->getResultSet();
-
-        if ($result->count() > 0) {
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
      * @param $node Node
      * @return array
      */
@@ -911,6 +887,28 @@ class LinkModel
         }
 
         return $link;
+    }
+
+    public function getValidTypes($locale = 'en')
+    {
+        $this->translator->setLocale($locale);
+
+        $types = array();
+        $keyTypes = array('Audio', 'Video', 'Image', 'Link', 'Creator');
+
+        foreach ( $keyTypes as $type){
+            $types[$type] = $this->translator->trans('types.'.lcfirst($type));
+        };
+        return $types;
+    }
+
+    public function buildOptionalTypesLabel($filters){
+        $linkTypes = array('Link');
+        if (isset($filters['type'])) {
+            $linkTypes = $filters['type'];
+        }
+
+        return implode('|:', $linkTypes);
     }
 
     private function addSynonymousLink($id, $synonymousLinks)

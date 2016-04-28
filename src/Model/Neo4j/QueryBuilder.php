@@ -276,6 +276,17 @@ class QueryBuilder
         return $this->add('with', implode(', ', $withs));
     }
 
+    public function unwind($unwind = null)
+    {
+        if (empty($unwind)){
+            return $this;
+        }
+
+        $unwinds = is_array($unwind) ? $unwind : func_get_args();
+
+        return $this->add('unwind', implode(', ', $unwinds));
+    }
+
     /**
      * @param mixed $orderBy
      * @return QueryBuilder
@@ -318,6 +329,57 @@ class QueryBuilder
         }
 
         return $this->add('skip', $skip);
+    }
+
+    /**
+     * Equivalents to MATCH (a) WHERE a:Type1 OR a:Type 2, but faster
+
+     * @param array $types
+     * @param string $name
+     * @param array $withs
+     */
+    public function filterContentByType(array $types, $name = 'content', $withs = array())
+    {
+        //See http://stackoverflow.com/questions/20003769/neo4j-match-multiple-labels-2-or-more
+        //Much slower than next alternative, it seems.
+
+//        if (!empty($types)) {
+//            $this->with(array_merge($withs, array("collect(id($name)) as ids")));
+//
+//            $counter = 0;
+//            $lastCounter = -1;
+//            foreach ($types as $type) {
+//                $this->optionalMatch("($name$counter:$type)")
+//                    ->where("id($name$counter) IN ids");
+//                if ($counter == 0) {
+//                    $with = array_merge($withs, array("collect(distinct $name$counter) AS collect$name$counter", 'ids'));
+//                } else {
+//                    $with = array_merge($withs, array("collect(distinct $name$counter) + collect$name$lastCounter AS collect$name$counter", 'ids'));
+//                }
+//                $this->with($with);
+//                $lastCounter = $counter;
+//                $counter++;
+//            }
+//            $this->unwind("collect$name$lastCounter AS $name");
+//        }
+//
+//        $this->with(array_merge($withs, array($name)));
+
+        //See http://stackoverflow.com/questions/25530383/neo4j-match-multiple-labels?rq=1
+        //Faster for our "filter from a given subgraph" case
+        $this->match("($name)");
+        $wheres = array();
+        foreach ($types as $type){
+            if ($type === 'Link'){
+                continue;
+            }
+            $wheres[] = "('$type' in labels($name))";
+        }
+        if (!empty($wheres)){
+            $this->where(implode(' OR ', $wheres));
+        }
+
+        $this->with(array_merge($withs, array($name)));
     }
 
     /**

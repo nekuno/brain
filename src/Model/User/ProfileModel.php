@@ -14,116 +14,14 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 class ProfileModel
 {
     const MAX_TAGS_AND_CHOICE_LENGTH = 15;
-    protected $client;
-    protected $metadata;
-    protected $defaultLocale;
+    protected $gm;
+    protected $profileFilterModel;
 
-    public function __construct(GraphManager $gm, array $metadata, $defaultLocale)
+    public function __construct(GraphManager $gm, ProfileFilterModel $profileFilterModel)
     {
 
         $this->gm = $gm;
-        $this->metadata = $metadata;
-        $this->defaultLocale = $defaultLocale;
-    }
-
-    /**
-     * Returns the metadata for editing the profile
-     * @param null $locale Locale of the metadata
-     * @param bool $filter Filter non public attributes
-     * @return array
-     */
-    public function getMetadata($locale = null, $filter = true)
-    {
-        $locale = $this->getLocale($locale);
-        $choiceOptions = $this->getChoiceOptions($locale);
-
-        $publicMetadata = array();
-        foreach ($this->metadata as $name => $values) {
-            $publicField = $values;
-            $publicField['label'] = $values['label'][$locale];
-
-            if ($values['type'] === 'choice') {
-                $publicField['choices'] = array();
-                if (isset($choiceOptions[$name])) {
-                    $publicField['choices'] = $choiceOptions[$name];
-                }
-            } elseif ($values['type'] === 'double_choice') {
-                $publicField['choices'] = array();
-                if (isset($choiceOptions[$name])) {
-                    $publicField['choices'] = $choiceOptions[$name];
-                    if (isset($values['doubleChoices'])) {
-                        foreach ($values['doubleChoices'] as $choice => $doubleChoices) {
-                            foreach ($doubleChoices as $doubleChoice => $doubleChoiceValues) {
-                                $publicField['doubleChoices'][$choice][$doubleChoice] = $doubleChoiceValues[$locale];
-                            }
-                        }
-                    }
-                }
-            } elseif ($values['type'] === 'multiple_choices') {
-                $publicField['choices'] = array();
-                if (isset($choiceOptions[$name])) {
-                    $publicField['choices'] = $choiceOptions[$name];
-                }
-                if (isset($values['max_choices'])) {
-                    $publicField['max_choices'] = $values['max_choices'];
-                }
-            } elseif ($values['type'] === 'tags_and_choice') {
-                $publicField['choices'] = array();
-                if (isset($values['choices'])) {
-                    foreach ($values['choices'] as $choice => $description) {
-                        $publicField['choices'][$choice] = $description[$locale];
-                    }
-                }
-                $publicField['top'] = $this->getTopProfileTags($name);
-            } elseif ($values['type'] === 'tags') {
-                $publicField['top'] = $this->getTopProfileTags($name);
-            }
-
-            $publicMetadata[$name] = $publicField;
-        }
-
-        if ($filter) {
-            foreach ($publicMetadata as &$item) {
-                if (isset($item['labelFilter'])) {
-                    unset($item['labelFilter']);
-                }
-                if (isset($item['filterable'])) {
-                    unset($item['filterable']);
-                }
-            }
-        }
-
-        return $publicMetadata;
-    }
-
-    /**
-     * Returns the metadata for creating search filters
-     * @param null $locale
-     * @return array
-     */
-    public function getFilters($locale = null)
-    {
-
-        $locale = $this->getLocale($locale);
-        $metadata = $this->getMetadata($locale, false);
-        $labels = array();
-        foreach ($metadata as $key => &$item) {
-            if (isset($item['labelFilter'])) {
-                $item['label'] = $item['labelFilter'][$locale];
-                unset($item['labelFilter']);
-            }
-            if (isset($item['filterable']) && $item['filterable'] === false) {
-                unset($metadata[$key]);
-            } else {
-                $labels[] = $item['label'];
-            }
-        }
-
-        if (!empty($labels)) {
-            array_multisort($labels, SORT_ASC, $metadata);
-        }
-
-        return $metadata;
+        $this->profileFilterModel = $profileFilterModel;
     }
 
     /**
@@ -240,7 +138,7 @@ class ProfileModel
     public function validate(array $data)
     {
         $errors = array();
-        $metadata = $this->getMetadata();
+        $metadata = $this->profileFilterModel->getProfileMetadata();
 
         foreach ($metadata as $fieldName => $fieldData) {
 
@@ -341,6 +239,10 @@ class ProfileModel
                             }
                             break;
                         case 'multiple_choices':
+                            if (!is_array($fieldValue)){
+                                $fieldErrors[] = sprintf('Multiple choices option must be an array');
+                                continue;
+                            }
                             $choices = $fieldData['choices'];
                             if (count($fieldValue) > $fieldData['max_choices']) {
                                 $fieldErrors[] = sprintf('Option length "%s" is too long. "%s" is the maximum', count($fieldValue), $fieldData['max_choices']);
@@ -410,6 +312,9 @@ class ProfileModel
         $location = $row->offsetGet('location');
         if ($location && count($location->getProperties()) > 0) {
             $profile['location'] = $location->getProperties();
+            if (isset($profile['location']['locality']) && $profile['location']['locality'] === 'N/A'){
+                $profile['location']['locality'] = $profile['location']['address'];
+            }
         }
 
         $profile += $this->buildOptions($row);
@@ -441,7 +346,7 @@ class ProfileModel
             /* @var Label $label */
             foreach ($labels as $label) {
                 if ($label->getName() && $label->getName() != 'ProfileOption') {
-                    $typeName = $this->labelToType($label->getName());
+                    $typeName = $this->profileFilterModel->labelToType($label->getName());
                     if (isset($optionsResult[$typeName]) && $optionsResult[$typeName]) {
                         if (is_array($optionsResult[$typeName])) {
                             $optionsResult[$typeName] = array_merge($optionsResult[$typeName], array($option->getProperty('id')));
@@ -466,7 +371,7 @@ class ProfileModel
 
     protected function buildTags(Row $row, $locale = null)
     {
-        $locale = $this->getLocale($locale);
+        $locale = $this->profileFilterModel->getLocale($locale);
         $tags = $row->offsetGet('tags');
         /* @var Node $profile */
         $profile = $row->offsetGet('profile');
@@ -487,7 +392,7 @@ class ProfileModel
             /* @var Label $label */
             foreach ($labels as $label) {
                 if ($label->getName() && $label->getName() != 'ProfileTag') {
-                    $typeName = $this->labelToType($label->getName());
+                    $typeName = $this->profileFilterModel->labelToType($label->getName());
                     $tagResult = $tag->getProperty('name');
                     $detail = $relationship->getProperty('detail');
                     if (!is_null($detail)) {
@@ -501,7 +406,7 @@ class ProfileModel
                             $tagResult['tag'] = $tag->getProperty('name');
                             $tagResult['detail'] = '';
                         }
-                        $tagResult['tag'] = $this->translateLanguageToLocale($tagResult['tag'], $locale);
+                        $tagResult['tag'] = $this->profileFilterModel->translateLanguageToLocale($tagResult['tag'], $locale);
                     }
                     $tagsResult[$typeName][] = $tagResult;
                 }
@@ -509,31 +414,6 @@ class ProfileModel
         }
 
         return $tagsResult;
-    }
-
-    protected function getChoiceOptions($locale)
-    {
-        $translationField = 'name_' . $locale;
-
-        $qb = $this->gm->createQueryBuilder();
-        $qb->match('(option:ProfileOption)')
-            ->returns("head(filter(x IN labels(option) WHERE x <> 'ProfileOption')) AS labelName, option.id AS id, option." . $translationField . " AS name")
-            ->orderBy('labelName');
-
-        $query = $qb->getQuery();
-        $result = $query->getResultSet();
-
-        $choiceOptions = array();
-        /** @var Row $row */
-        foreach ($result as $row) {
-            $typeName = $this->labelToType($row->offsetGet('labelName'));
-            $optionId = $row->offsetGet('id');
-            $optionName = $row->offsetGet('name');
-
-            $choiceOptions[$typeName][$optionId] = $optionName;
-        }
-
-        return $choiceOptions;
     }
 
     protected function getUserAndProfileNodesById($id)
@@ -563,7 +443,7 @@ class ProfileModel
 
     protected function saveProfileData($id, array $data)
     {
-        $metadata = $this->getMetadata();
+        $metadata = $this->profileFilterModel->getProfileMetadata();
         $options = $this->getProfileNodeOptions($id);
         $tags = $this->getProfileNodeTags($id);
 
@@ -572,7 +452,6 @@ class ProfileModel
             ->where('u.qnoow_id = { id }')
             ->setParameter('id', (int)$id)
             ->with('profile');
-
         foreach ($data as $fieldName => $fieldValue) {
             if (isset($metadata[$fieldName])) {
 
@@ -627,12 +506,12 @@ class ProfileModel
                         break;
                     case 'choice':
                         if (isset($options[$fieldName])) {
-                            $qb->optionalMatch('(profile)<-[optionRel:OPTION_OF]-(:' . $this->typeToLabel($fieldName) . ')')
+                            $qb->optionalMatch('(profile)<-[optionRel:OPTION_OF]-(:' . $this->profileFilterModel->typeToLabel($fieldName) . ')')
                                 ->delete('optionRel')
                                 ->with('profile');
                         }
                         if (!is_null($fieldValue)) {
-                            $qb->match('(option:' . $this->typeToLabel($fieldName) . ' {id: { ' . $fieldName . ' }})')
+                            $qb->match('(option:' . $this->profileFilterModel->typeToLabel($fieldName) . ' {id: { ' . $fieldName . ' }})')
                                 ->merge('(profile)<-[:OPTION_OF]-(option)')
                                 ->setParameter($fieldName, $fieldValue)
                                 ->with('profile');
@@ -646,13 +525,13 @@ class ProfileModel
                             ->with('profile');
 
                         if (isset($options[$fieldName])) {
-                            $qbDoubleChoice->optionalMatch('(profile)<-[doubleChoiceOptionRel:OPTION_OF]-(:' . $this->typeToLabel($fieldName) . ')')
+                            $qbDoubleChoice->optionalMatch('(profile)<-[doubleChoiceOptionRel:OPTION_OF]-(:' . $this->profileFilterModel->typeToLabel($fieldName) . ')')
                                 ->delete('doubleChoiceOptionRel')
                                 ->with('profile');
                         }
                         if (isset($fieldValue['choice'])) {
                             $detail = !is_null($fieldValue['detail']) ? $fieldValue['detail'] : '';
-                            $qbDoubleChoice->match('(option:' . $this->typeToLabel($fieldName) . ' {id: { ' . $fieldName . ' }})')
+                            $qbDoubleChoice->match('(option:' . $this->profileFilterModel->typeToLabel($fieldName) . ' {id: { ' . $fieldName . ' }})')
                                 ->merge('(profile)<-[:OPTION_OF {detail: {' . $fieldName . '_detail}}]-(option)')
                                 ->setParameter($fieldName, $fieldValue['choice'])
                                 ->setParameter($fieldName . '_detail', $detail);
@@ -671,13 +550,13 @@ class ProfileModel
                                 ->setParameter('id', (int)$id)
                                 ->with('profile');
 
-                            $qbTagsAndChoice->optionalMatch('(profile)<-[tagsAndChoiceOptionRel:TAGGED]-(:' . $this->typeToLabel($fieldName) . ')')
+                            $qbTagsAndChoice->optionalMatch('(profile)<-[tagsAndChoiceOptionRel:TAGGED]-(:' . $this->profileFilterModel->typeToLabel($fieldName) . ')')
                                 ->delete('tagsAndChoiceOptionRel');
 
                             $savedTags = array();
                             foreach ($fieldValue as $index => $value) {
                                 $tagValue = $fieldName === 'language' ?
-                                    $this->translateTypicalLanguage($this->formatLanguage($value['tag'])) :
+                                    $this->profileFilterModel->getLanguageFromTag($value['tag']) :
                                     $value['tag'];
                                 if (in_array($tagValue, $savedTags)) {
                                     continue;
@@ -688,7 +567,7 @@ class ProfileModel
                                 $choiceParameter = $fieldName . '_choice_' . $index;
 
                                 $qbTagsAndChoice->with('profile')
-                                    ->merge('(' . $tagLabel . ':ProfileTag:' . $this->typeToLabel($fieldName) . ' {name: { ' . $tagParameter . ' }})')
+                                    ->merge('(' . $tagLabel . ':ProfileTag:' . $this->profileFilterModel->typeToLabel($fieldName) . ' {name: { ' . $tagParameter . ' }})')
                                     ->merge('(profile)<-[:TAGGED {detail: {' . $choiceParameter . '}}]-(' . $tagLabel . ')')
                                     ->setParameter($tagParameter, $tagValue)
                                     ->setParameter($choiceParameter, $choice);
@@ -707,13 +586,13 @@ class ProfileModel
                             ->with('profile');
 
                         if (isset($options[$fieldName])) {
-                            $qbMultipleChoices->optionalMatch('(profile)<-[optionRel:OPTION_OF]-(:' . $this->typeToLabel($fieldName) . ')')
+                            $qbMultipleChoices->optionalMatch('(profile)<-[optionRel:OPTION_OF]-(:' . $this->profileFilterModel->typeToLabel($fieldName) . ')')
                                 ->delete('optionRel')
                                 ->with('profile');
                         }
                         if (is_array($fieldValue)) {
                             foreach ($fieldValue as $index => $value) {
-                                $qbMultipleChoices->match('(option:' . $this->typeToLabel($fieldName) . ' {id: { ' . $index . ' }})')
+                                $qbMultipleChoices->match('(option:' . $this->profileFilterModel->typeToLabel($fieldName) . ' {id: { ' . $index . ' }})')
                                     ->merge('(profile)<-[:OPTION_OF]-(option)')
                                     ->setParameter($index, $value)
                                     ->with('profile');
@@ -722,19 +601,20 @@ class ProfileModel
                         $qbMultipleChoices->returns('profile');
 
                         $query = $qbMultipleChoices->getQuery();
+                        //var_dump($query->getExecutableQuery());
                         $query->getResultSet();
                         break;
                     case 'tags':
                         if (isset($tags[$fieldName])) {
                             foreach ($tags[$fieldName] as $tag) {
-                                $qb->optionalMatch('(profile)<-[tagRel:TAGGED]-(tag:' . $this->typeToLabel($fieldName) . ' {name: "' . $tag . '" })')
+                                $qb->optionalMatch('(profile)<-[tagRel:TAGGED]-(tag:' . $this->profileFilterModel->typeToLabel($fieldName) . ' {name: "' . $tag . '" })')
                                     ->delete('tagRel')
                                     ->with('profile');
                             }
                         }
                         if (is_array($fieldValue) && !empty($fieldValue)) {
                             foreach ($fieldValue as $tag) {
-                                $qb->merge('(tag:ProfileTag:' . $this->typeToLabel($fieldName) . ' {name: "' . $tag . '" })')
+                                $qb->merge('(tag:ProfileTag:' . $this->profileFilterModel->typeToLabel($fieldName) . ' {name: "' . $tag . '" })')
                                     ->merge('(profile)<-[:TAGGED]-(tag)')
                                     ->with('profile');
                             }
@@ -796,60 +676,6 @@ class ProfileModel
         return $tags;
     }
 
-    protected function getTopProfileTags($tagType)
-    {
-
-        $tagLabelName = $this->typeToLabel($tagType);
-
-        $qb = $this->gm->createQueryBuilder();
-        $qb->match('(tag:' . $tagLabelName . ')-[tagged:TAGGED]-(profile:Profile)')
-            ->returns('tag.name AS tag, count(*) as count')
-            ->limit(5);
-
-        $query = $qb->getQuery();
-        $result = $query->getResultSet();
-
-        $tags = array();
-        foreach ($result as $row) {
-            /* @var $row Row */
-            $tags[] = $row->offsetGet('tag');
-        }
-
-        return $tags;
-    }
-
-    public function getBirthdayRangeFromAgeRange($min = null, $max = null)
-    {
-        $return = array();
-        if ($min){
-            $now = new \DateTime();
-            $maxBirthday = $now->modify('-'.$min.' years')->format('Y-m-d');
-            $return ['max'] = $maxBirthday;
-        }
-        if ($max){
-            $now = new \DateTime();
-            $minBirthday = $now->modify('-'.$max.' years')->format('Y-m-d');
-            $return['min'] = $minBirthday;
-        }
-
-        return $return;
-    }
-
-    public function getAgeRangeFromBirthdayRange(array $birthday)
-    {
-        $min = $this->getYearsFromDate($birthday['min']);
-        $max = $this->getYearsFromDate($birthday['max']);
-
-        return array('min' => $max, 'max' => $min);
-    }
-
-    private function getYearsFromDate($birthday)
-    {
-        $minDate = new \DateTime($birthday);
-        $minInterval = $minDate->diff(new \DateTime());
-        return $minInterval->y;
-    }
-
     /*
      * Please don't believe in this crap
      */
@@ -890,109 +716,5 @@ class ProfileModel
         }
 
         return $sign;
-    }
-
-    protected function getLocale($locale)
-    {
-
-        if (!$locale || !in_array($locale, array('en', 'es'))) {
-            $locale = $this->defaultLocale;
-        }
-
-        return $locale;
-    }
-
-    public function labelToType($labelName)
-    {
-
-        return lcfirst($labelName);
-    }
-
-    protected function typeToLabel($typeName)
-    {
-        return ucfirst($typeName);
-    }
-
-    protected function formatLanguage($typeName)
-    {
-        $firstCharacter = mb_strtoupper(mb_substr($typeName, 0, 1, 'UTF-8'), 'UTF-8');
-        $restString = mb_strtolower(mb_substr($typeName, 1, null, 'UTF-8'), 'UTF-8');
-
-        return $firstCharacter . $restString;
-    }
-
-    protected function translateTypicalLanguage($language)
-    {
-        switch ($language) {
-            case 'Español':
-                return 'Spanish';
-            case 'Castellano':
-                return 'Spanish';
-            case 'Inglés':
-                return 'English';
-            case 'Ingles':
-                return 'English';
-            case 'Francés':
-                return 'French';
-            case 'Frances':
-                return 'French';
-            case 'Alemán':
-                return 'German';
-            case 'Aleman':
-                return 'German';
-            case 'Portugués':
-                return 'Portuguese';
-            case 'Portugues':
-                return 'Portuguese';
-            case 'Italiano':
-                return 'Italian';
-            case 'Chino':
-                return 'Chinese';
-            case 'Japonés':
-                return 'Japanese';
-            case 'Japones':
-                return 'Japanese';
-            case 'Ruso':
-                return 'Russian';
-            case 'Árabe':
-                return 'Arabic';
-            case 'Arabe':
-                return 'Arabic';
-            default:
-                return $language;
-        }
-    }
-
-    protected function translateLanguageToLocale($language, $locale)
-    {
-        if ($locale === 'en') {
-            return $language;
-        }
-        if ($locale === 'es') {
-            switch ($language) {
-                case 'Spanish':
-                    return 'Español';
-                case 'English':
-                    return 'Inglés';
-                case 'French':
-                    return 'Francés';
-                case 'German':
-                    return 'Alemán';
-                case 'Portuguese':
-                    return 'Portugués';
-                case 'Italian':
-                    return 'Italiano';
-                case 'Chinese':
-                    return 'Chino';
-                case 'Japanese':
-                    return 'Japonés';
-                case 'Russian':
-                    return 'Ruso';
-                case 'Arabic':
-                    return 'Árabe';
-            }
-        }
-
-        return $language;
     }
 }

@@ -9,14 +9,10 @@ use Model\LinkModel;
 use Model\User\Affinity\AffinityModel;
 use Paginator\PaginatedInterface;
 use Model\Neo4j\GraphManager;
+use Service\Validator;
 
 class ContentRecommendationPaginatedModel implements PaginatedInterface
 {
-    /**
-     * @var array
-     */
-    private static $validTypes = array('Audio', 'Video', 'Image', 'Link');
-
     /**
      * @var GraphManager
      */
@@ -33,20 +29,22 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
     protected $lm;
 
     /**
+     * @var Validator
+     */
+    protected $validator;
+
+    /**
      * @param GraphManager $gm
      * @param AffinityModel $am
      * @param LinkModel $lm
+     * @param Validator $validator
      */
-    public function __construct(GraphManager $gm, AffinityModel $am, LinkModel $lm)
+    public function __construct(GraphManager $gm, AffinityModel $am, LinkModel $lm, Validator $validator)
     {
         $this->gm = $gm;
         $this->am = $am;
         $this->lm = $lm;
-    }
-
-    public function getValidTypes()
-    {
-        return self::$validTypes;
+        $this->validator = $validator;
     }
 
     /**
@@ -56,17 +54,10 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
      */
     public function validateFilters(array $filters)
     {
-        $hasId = isset($filters['id']);
+        $userId = isset($filters['id'])? $filters['id'] : null;
+        $this->validator->validateUserId($userId);
 
-        if (isset($filters['type'])) {
-            $hasValidType = in_array($filters['type'], $this->getValidTypes());
-        } else {
-            $hasValidType = true;
-        }
-
-        $isValid = $hasId && $hasValidType;
-
-        return $isValid;
+        return $this->validator->validateRecommendateContent($filters, $this->getChoices());
     }
 
     /**
@@ -79,13 +70,13 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
      */
     public function slice(array $filters, $offset, $limit)
     {
-
         if ((integer)$limit == 0) {
             return array();
         }
         $return = array('items' => array());
 
         $id = $filters['id'];
+        $types = isset($filters['type']) ? $filters['type'] : array();
 
         $params = array(
             'userId' => (integer)$id,
@@ -93,21 +84,17 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
             'limit' => (integer)$limit
         );
 
-        $linkType = 'Link';
-        if (isset($filters['type'])) {
-            $linkType = $filters['type'];
-        }
-
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match('(user:User {qnoow_id: { userId }})-[affinity:AFFINITY]->(content:' . $linkType . ')')
+        $qb->match('(user:User {qnoow_id: { userId }})-[affinity:AFFINITY]->(content:Link)')
             ->where('NOT (user)-[:LIKES|:DISLIKES]->(content) AND affinity.affinity > 0 AND content.processed = 1');
+        $qb->filterContentByType($types, 'content', array('affinity'));
 
         if (isset($filters['tag'])) {
             $qb->match('(content)-[:TAGGED]->(filterTag:Tag)')
-                ->where('filterTag.name = { tag }');
+                ->where('filterTag.name IN { filterTags } ');
 
-            $params['tag'] = $filters['tag'];
+            $params['filterTags'] = $filters['tag'];
         }
 
         $qb->optionalMatch("(content)-[:SYNONYMOUS]->(synonymousLink:Link)")
@@ -170,14 +157,10 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
     {
 
         $id = $filters['id'];
+        $types = isset($filters['type']) ? $filters['type'] : array();
 
         if ((integer)$limit == 0) {
             return array();
-        }
-
-        $linkType = 'Link';
-        if (isset($filters['type'])) {
-            $linkType = $filters['type'];
         }
 
         $pageSizeMultiplier = 1; //small may make queries slow, big may skip results
@@ -209,13 +192,14 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
             $qb = $this->gm->createQueryBuilder();
             $qb->match('(user:User {qnoow_id: { userId }})');
             if (isset($filters['tag'])){
-                $qb->match('(content:' . $linkType . ')-[:TAGGED]->(filterTag:Tag)')
-                    ->where('filterTag.name = { tag }', 'content.processed = 1');
-
-                $params['tag'] = $filters['tag'];
+                $qb->match('(content:Link{processed: 1})-[:TAGGED]->(filterTag:Tag)')
+                    ->where('filterTag.name IN { filterTags } ');
+                $params['filterTags'] = $filters['tag'];
             } else {
-                $qb->match('(content:' . $linkType . '{processed: 1})');
+                $qb->match('(content:Link{processed: 1})');
             }
+
+            $qb->filterContentByType($types, 'content', array('user'));
 
             $qb->with('user', 'content')
                 ->orderBy('content.created DESC')
@@ -271,27 +255,23 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
     public function countTotal(array $filters)
     {
         $id = $filters['id'];
+        $types = isset($filters['type']) ? $filters['type'] : array();
         $count = 0;
 
         $params = array(
             'userId' => (integer)$id,
         );
 
-        $linkType = 'Link';
-        if (isset($filters['type'])) {
-            $linkType = $filters['type'];
-        }
-
         $qb = $this->gm->createQueryBuilder();
 
         if (isset($filters['tag'])) {
-            $qb->match('(content:' . $linkType . '{processed: 1})-[:TAGGED]->(filterTag:Tag)')
-                ->where('filterTag.name = { tag }');
-
-            $params['tag'] = $filters['tag'];
+            $qb->match('(content:Link{processed: 1})-[:TAGGED]->(filterTag:Tag)')
+                ->where('filterTag.name IN { filterTags } ');
+            $params['filterTags'] = $filters['tag'];
         } else {
-            $qb->match('(content:' . $linkType . '{processed: 1})');
+            $qb->match('(content:Link{processed: 1})');
         }
+        $qb->filterContentByType($types, 'content');
 
         $qb->with('content');
         $qb->optionalMatch('(user:User {qnoow_id: { userId }})-[l:LIKES|:DISLIKES]->(content)');
@@ -414,5 +394,10 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
         $content['match'] = $affinity['affinity'];
 
         return $content;
+    }
+
+    protected function getChoices()
+    {
+        return array('type' => $this->lm->getValidTypes());
     }
 } 

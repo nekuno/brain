@@ -3,25 +3,40 @@
 namespace Model\User;
 
 use Everyman\Neo4j\Node;
+use Model\LinkModel;
 use Paginator\PaginatedInterface;
 use Model\Neo4j\GraphManager;
+use Service\Validator;
 
 class ContentComparePaginatedModel implements PaginatedInterface
 {
     /**
-     * @var array
+     * @var GraphManager
      */
-    private static $validTypes = array('Audio', 'Video', 'Image');
+    protected $gm;
 
-    public function __construct(GraphManager $gm, TokensModel $tokensModel)
+    /**
+     * @var TokensModel
+     */
+    protected $tokensModel;
+
+    /**
+     * @var LinkModel
+     */
+    protected $linkModel;
+
+    /**
+     * @var Validator
+     */
+    protected $validator;
+
+    //TODO: Try to unify this with ContentCompareModel, maybe using from a superclass
+    public function __construct(GraphManager $gm, TokensModel $tokensModel, LinkModel $linkModel, Validator $validator)
     {
         $this->gm = $gm;
         $this->tokensModel = $tokensModel;
-    }
-
-    public function getValidTypes()
-    {
-        return self::$validTypes;
+        $this->linkModel = $linkModel;
+        $this->validator = $validator;
     }
 
     /**
@@ -31,17 +46,10 @@ class ContentComparePaginatedModel implements PaginatedInterface
      */
     public function validateFilters(array $filters)
     {
-        $hasIds = isset($filters['id']) && isset($filters['id2']);
+        $userId = isset($filters['id'])? $filters['id'] : null;
+        $this->validator->validateUserId($userId);
 
-        if (isset($filters['type'])) {
-            $hasValidType = in_array($filters['type'], $this->getValidTypes());
-        } else {
-            $hasValidType = true;
-        }
-
-        $isValid = $hasIds && $hasValidType;
-
-        return $isValid;
+        return $this->validator->validateRecommendateContent($filters, $this->getChoices());
     }
 
     /**
@@ -57,6 +65,8 @@ class ContentComparePaginatedModel implements PaginatedInterface
         $response = array();
         $id = $filters['id'];
         $id2 = $filters['id2'];
+        $types = isset($filters['type']) ? $filters['type'] : array();
+
         $qb = $this->gm->createQueryBuilder();
 
         $showOnlyCommon = false;
@@ -76,22 +86,21 @@ class ContentComparePaginatedModel implements PaginatedInterface
             $socialNetworks2[] = $token['resourceOwner'];
         }
 
-        $linkType = 'Link';
-        if (isset($filters['type'])) {
-            $linkType = $filters['type'];
-        }
-
         $qb->match("(u:User), (u2:User)")
             ->where("u.qnoow_id = { userId }","u2.qnoow_id = { userId2 }")
-            ->match("(u)-[r:LIKES]->(content:" . $linkType . ")");
+            ->match("(u)-[r:LIKES]->(content:Link)");
+        $qb->filterContentByType($types, 'content', array('u2', 'r'));
 
         $conditions = $this->buildConditions('r', $socialNetworks1);
 
         $qb->where($conditions);
 
         if (isset($filters['tag'])) {
-            $qb->match("(content)-[:TAGGED]->(filterTag:Tag)")
-                ->where("filterTag.name = { tag }");
+            $names = json_encode($filters['tag']);
+            $qb->match('(content)-[:TAGGED]->(filterTag:Tag)')
+                ->where('filterTag.name IN { filterTags } ');
+
+            $params['filterTags'] = $names;
         }
         if ($showOnlyCommon) {
             $qb->match("(u2)-[r2:LIKES]->(content)");
@@ -123,6 +132,7 @@ class ContentComparePaginatedModel implements PaginatedInterface
 
         $result = $query->getResultSet();
 
+        //TODO: Build with linkModel
         foreach ($result as $row) {
             $content = array();
 
@@ -189,6 +199,8 @@ class ContentComparePaginatedModel implements PaginatedInterface
     {
         $id = $filters['id'];
         $id2 = isset($filters['id2']) ? (integer)$filters['id2'] : null;
+        $types = isset($filters['type']) ? $filters['type'] : array();
+
         $count = 0;
         $qb = $this->gm->createQueryBuilder();
 
@@ -209,14 +221,10 @@ class ContentComparePaginatedModel implements PaginatedInterface
             $showOnlyCommon = $filters['showOnlyCommon'];
         }
 
-        $linkType = 'Link';
-        if (isset($filters['type'])) {
-            $linkType = $filters['type'];
-        }
-
         $qb->match("(u:User)","(u2:User)")
             ->where("u.qnoow_id = { userId }", "u2.qnoow_id = { userId2 }")
-            ->match("(u)-[r:LIKES]->(content:" . $linkType . ")");
+            ->match("(u)-[r:LIKES]->(content:Link)");
+        $qb->filterContentByType($types, 'content', array('u2', 'r'));
 
         $conditions = $this->buildConditions('r', $socialNetworks1);
 
@@ -231,10 +239,10 @@ class ContentComparePaginatedModel implements PaginatedInterface
         }
 
         if (isset($filters['tag'])) {
-            $qb->match("(content)-[:TAGGED]->(filterTag:Tag)")
-                ->where("filterTag.name = { tag }");
+            $qb->match('(content)-[:TAGGED]->(filterTag:Tag)')
+                ->where('filterTag.name IN { filterTags } ');
 
-            $params['tag'] = $filters['tag'];
+            $params['filterTags'] = $filters['tag'];
         }
 
         $qb->returns("count(r) as total")
@@ -270,5 +278,10 @@ class ContentComparePaginatedModel implements PaginatedInterface
         $conditions[] = $socialNetworkQuery;
 
         return $conditions;
+    }
+
+    protected function getChoices()
+    {
+        return array('type' => $this->linkModel->getValidTypes());
     }
 }

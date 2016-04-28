@@ -5,10 +5,14 @@ namespace Model\User\Thread;
 use Everyman\Neo4j\Label;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
-use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
 use Manager\UserManager;
+use Model\User;
+use Model\User\GroupModel;
+use Model\User\ProfileModel;
+use Service\Validator;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\Translation\Translator;
 
 class ThreadManager
 {
@@ -27,6 +31,12 @@ class ThreadManager
     protected $usersThreadManager;
     /** @var  ContentThreadManager */
     protected $contentThreadManager;
+    /** @var ProfileModel */
+    protected $profileModel;
+    /** @var  GroupModel */
+    protected $groupModel;
+    /** @var Validator */
+    protected $validator;
 
     /**
      * ThreadManager constructor.
@@ -34,13 +44,23 @@ class ThreadManager
      * @param UserManager $userManager
      * @param UsersThreadManager $um
      * @param ContentThreadManager $cm
+     * @param ProfileModel $profileModel
+     * @param GroupModel $groupModel
+     * @param Translator $translator
+     * @param Validator $validator
      */
-    public function __construct(GraphManager $graphManager, UserManager $userManager, UsersThreadManager $um, ContentThreadManager $cm)
+    public function __construct(GraphManager $graphManager, UserManager $userManager, UsersThreadManager $um,
+                                ContentThreadManager $cm, ProfileModel $profileModel, GroupModel $groupModel,
+                                Translator $translator, Validator $validator)
     {
         $this->graphManager = $graphManager;
         $this->userManager = $userManager;
         $this->usersThreadManager = $um;
         $this->contentThreadManager = $cm;
+        $this->profileModel = $profileModel;
+        $this->groupModel = $groupModel;
+        $this->translator = $translator;
+        $this->validator = $validator;
     }
 
     /**
@@ -127,82 +147,138 @@ class ThreadManager
 
         $thread->setCached($cached);
         $thread->setTotalResults($threadNode->getProperty('totalResults'));
+        $thread->setCreatedAt($threadNode->getProperty('createdAt'));
+        $thread->setUpdatedAt($threadNode->getProperty('updatedAt'));
+
+        /* @var $label Label */
+        foreach ($threadNode->getLabels() as $label) {
+            if ($label->getName() == 'ThreadDefault') {
+                $thread->setDefault(true);
+            }
+        }
 
         return $thread;
     }
 
-    public function getDefaultThreads($scenario = ThreadManager::SCENARIO_DEFAULT)
+    /**
+     * @param User $user
+     * @param string $scenario
+     * @return array
+     */
+    public function getDefaultThreads(User $user, $scenario = ThreadManager::SCENARIO_DEFAULT)
     {
+        try {
+            $profile = $this->profileModel->getById($user->getId());
+        } catch (NotFoundHttpException $e) {
+            return array();
+        }
+
+        if (!isset($profile['location'])) {
+            $profile['location'] = array(
+                'latitude' => 40.4167754,
+                'longitude' => -3.7037902,
+                'address' => 'Madrid',
+                'locality' => 'Madrid',
+                'country' => 'Spain'
+            );
+        }
+
+        if (!isset($profile['birthday'])) {
+            $profile['birthday'] = '1970-01-01';
+        }
+
+        $locale = isset($profile['interfaceLanguage']) ? $profile['interfaceLanguage'] : 'es';
+
+        $this->translator->setLocale($locale);
+
+        $location = $profile['location'];
+
+        $birthdayRange = $this->getAgeRangeFromProfile($profile);
+
+        $genderDesired = $this->getDesiredFromProfile($profile);
+        $nounDesired = $this->translator->trans('threads.default.' . $genderDesired);
+
+        //specific order to be created from bottom to top
         $threads = array(
             'default' => array(
                 array(
-                    'name' => 'Chicas de Madrid',
+                    'name' => $this->translator->trans('threads.default.twitter_channels'),
+                    'category' => ThreadManager::LABEL_THREAD_CONTENT,
+                    'filters' => array(
+                        'contentFilters' => array(
+                            'type' => array('Creator'),
+                        ),
+                    ),
+                    'default' => true,
+                ),
+                array(
+                    'name' => str_replace('%location%', $location['locality'], $this->translator->trans('threads.default.best_of_location')),
+                    'category' => ThreadManager::LABEL_THREAD_CONTENT,
+                    'filters' => array(
+                        'contentFilters' => array(
+                            'tags' => array($location['locality']),
+                        ),
+                    ),
+                    'default' => true,
+                ),
+                array(
+                    'name' => $this->translator->trans('threads.default.youtube_videos'),
+                    'category' => ThreadManager::LABEL_THREAD_CONTENT,
+                    'filters' => array(
+                        'contentFilters' => array(
+                            'type' => array('Video')
+                        ),
+                    ),
+                    'default' => true,
+                ),
+                array(
+                    'name' => $this->translator->trans('threads.default.spotify_music'),
+                    'category' => ThreadManager::LABEL_THREAD_CONTENT,
+                    'filters' => array(
+                        'contentFilters' => array(
+                            'type' => array('Audio')
+                        ),
+                    ),
+                    'default' => true,
+                ),
+                array(
+                    'name' => $this->translator->trans('threads.default.images'),
+                    'category' => ThreadManager::LABEL_THREAD_CONTENT,
+                    'filters' => array(
+                        'contentFilters' => array(
+                            'type' => array('Image')
+                        ),
+                    ),
+                    'default' => true,
+                ),
+                array(
+                    'name' => str_replace(array('%desired%', '%location%'), array($nounDesired, $location['locality']),
+                        $this->translator->trans('threads.default.desired_from_location')),
                     'category' => ThreadManager::LABEL_THREAD_USERS,
                     'filters' => array(
-                        'profileFilters' => array(
+                        'userFilters' => array(
                             'birthday' => array(
-                                'min' => $this->YearsToBirthday(32),
-                                'max' => $this->YearsToBirthday(22),
+                                'min' => $birthdayRange['min'],
+                                'max' => $birthdayRange['max'],
                             ),
                             'location' => array(
-                                'distance' => 10,
-                                'location' => array(
-                                    'latitude' => 40.4167754,
-                                    'longitude' => -3.7037901999999576,
-                                    'address' => 'Madrid, Madrid, Spain'
-                                )
+                                'distance' => 50,
+                                'location' => $location
                             ),
-                            'gender' => array(
-                                'female'
-                            )
+                            'gender' => array($genderDesired !== 'people' ? $genderDesired : null),
                         ),
                         'order' => 'content',
-                    )
-                ),
-                array(
-                    'name' => 'Música',
-                    'category' => ThreadManager::LABEL_THREAD_CONTENT,
-                    'filters' => array(
-                        'type' => 'Audio'
-                    )
-                ),
-                array(
-                    'name' => 'Vídeos',
-                    'category' => ThreadManager::LABEL_THREAD_CONTENT,
-                    'filters' => array(
-                        'type' => 'Video'
-                    )
-                ),
-                array(
-                    'name' => 'Imágenes',
-                    'category' => ThreadManager::LABEL_THREAD_CONTENT,
-                    'filters' => array(
-                        'type' => 'Image'
-                    )
-                ),
-                array(
-                    'name' => 'Contenidos de Madrid',
-                    'category' => ThreadManager::LABEL_THREAD_CONTENT,
-                    'filters' => array(
-                        'tag' => 'madrid'
-                    )
-                ),
-                array(
-                    'name' => 'Noticias',
-                    'category' => ThreadManager::LABEL_THREAD_CONTENT,
-                    'filters' => array(
-                        'tag' => 'noticias'
-                    )
-                ),
-                array(
-                    'name' => 'Los mejores contenidos para ti',
-                    'category' => ThreadManager::LABEL_THREAD_CONTENT,
+                    ),
+                    'default' => true,
                 ),
             )
         );
+        if ($threads['default'][5]['filters']['userFilters']['gender'] == array(null)){
+            unset($threads['default'][5]['filters']['userFilters']['gender']);
+        }
 
         if (!isset($threads[$scenario])) {
-            return null;
+            return array();
         }
 
         return $threads[$scenario];
@@ -215,13 +291,13 @@ class ThreadManager
      */
     public function createBatchForUser($userId, array $threadsData)
     {
-        $returnThreads=array();
+        $returnThreads = array();
 
         $existingThreads = $this->getByUser($userId);
 
-        foreach ($threadsData as $threadData){
-            foreach ($existingThreads as $existingThread){
-                if ($threadData['name'] == $existingThread->getName()){
+        foreach ($threadsData as $threadData) {
+            foreach ($existingThreads as $existingThread) {
+                if ($threadData['name'] == $existingThread->getName()) {
                     continue 2;
                 }
             }
@@ -233,7 +309,7 @@ class ThreadManager
     }
 
     /**
-     * Creates an appropriate neo4j node from a set of filters
+     * Creates an appropriate neo4j node and links a filter node to it
      * @param $userId
      * @param $data
      * @return Thread|null
@@ -241,22 +317,22 @@ class ThreadManager
      */
     public function create($userId, $data)
     {
+        $this->validateEditThread($data, $userId);
 
         $name = isset($data['name']) ? $data['name'] : null;
         $category = isset($data['category']) ? $data['category'] : null;
-        $this->validate(
-            array_merge(
-                array('userId' => (integer)$userId),
-                $data
-            )
-        );
 
         $qb = $this->graphManager->createQueryBuilder();
 
         $qb->match('(u:User{qnoow_id:{userId}})')
             ->create('(thread:' . ThreadManager::LABEL_THREAD . ':' . $category . ')')
-            ->set('thread.name = {name}')
+            ->set('thread.name = {name}',
+                'thread.createdAt = timestamp()',
+                'thread.updatedAt = timestamp()')
             ->create('(u)-[:HAS_THREAD]->(thread)');
+        if (isset($data['default']) && $data['default'] === true) {
+            $qb->set('thread :ThreadDefault');
+        }
         $qb->returns('id(thread) as id');
         $qb->setParameters(
             array(
@@ -277,8 +353,18 @@ class ThreadManager
         return $this->updateFromFilters($thread, $data);
     }
 
-    public function update($threadId, $data)
+    /**
+     * Replaces thread data with $data
+     * @param $threadId
+     * @param $userId
+     * @param $data
+     * @return Thread|null
+     * @throws \Exception
+     * @throws \Model\Neo4j\Neo4jException
+     */
+    public function update($threadId, $userId, $data)
     {
+        $this->validateEditThread($data, $userId);
 
         $name = isset($data['name']) ? $data['name'] : null;
         $category = isset($data['category']) ? $data['category'] : null;
@@ -287,9 +373,10 @@ class ThreadManager
 
         $qb->match('(thread:Thread)')
             ->where('id(thread) = {id}')
-            ->remove('thread:' . $this::LABEL_THREAD_USERS . ':' . $this::LABEL_THREAD_CONTENT)
+            ->remove('thread:' . $this::LABEL_THREAD_USERS . ':' . $this::LABEL_THREAD_CONTENT . ':ThreadDefault')
             ->set('thread:' . $category)
-            ->set('thread.name = {name}');
+            ->set('thread.name = {name}',
+                'thread.updatedAt = timestamp()');
         $qb->returns('thread');
         $qb->setParameters(
             array(
@@ -311,51 +398,6 @@ class ThreadManager
 
     }
 
-    public function validate($data)
-    {
-        $errors = array();
-        $metadata = $this->getMetadata();
-        foreach ($metadata as $fieldName => $fieldData) {
-
-            $fieldErrors = array();
-            if (isset($data[$fieldName])) {
-
-                switch ($fieldData['type']) {
-                    case 'choice':
-                        if (!in_array($data[$fieldName], $this->getChoices($fieldName))) {
-                            $fieldErrors[] = 'Choice not supported.';
-                        }
-                        break;
-                    default:
-                        break;
-                }
-            } else {
-                if ($fieldData['required'] === true) {
-                    $fieldErrors[] = 'It\'s required.';
-                }
-            }
-
-            if (count($fieldErrors) > 0) {
-                $errors[$fieldName] = $fieldErrors;
-            }
-        }
-
-        if (isset($data['userId'])) {
-            try {
-                $this->userManager->getById((integer)$data['userId'], true);
-            } catch (NotFoundHttpException $e) {
-                $errors['userId'] = array($e->getMessage());
-            }
-        } else {
-            $errors['userId'] = array('User identification not supplied');
-        }
-
-        if (count($errors) > 0) {
-            throw new ValidationException($errors);
-        }
-
-    }
-
     /**
      * @param Thread $thread Which thread returned the results
      * @param array $items
@@ -366,7 +408,6 @@ class ThreadManager
      */
     public function cacheResults(Thread $thread, array $items, $total)
     {
-
         $this->deleteCachedResults($thread);
 
         $parameters = array(
@@ -420,7 +461,6 @@ class ThreadManager
 
     public function deleteById($id)
     {
-
         $thread = $this->getById($id);
 
         $qb = $this->graphManager->createQueryBuilder();
@@ -437,6 +477,43 @@ class ThreadManager
         }
 
         return $result->current()->offsetGet('amount');
+    }
+
+
+    public function getGroupThreadData($group, $userId)
+    {
+        try {
+            $profile = $this->profileModel->getById($userId);
+        } catch (NotFoundHttpException $e) {
+            return array();
+        }
+
+        $locale = isset($profile['interfaceLanguage']) ? $profile['interfaceLanguage'] : 'es';
+        $this->translator->setLocale($locale);
+        return array(
+            'name' => str_replace('%group%', $group['name'], $this->translator->trans('threads.default.people_from_group')),
+            'category' => ThreadManager::LABEL_THREAD_USERS,
+            'filters' => array(
+                'userFilters' => array(
+                    'groups' => array($group['id']),
+                )
+            ),
+            'default' => true,
+        );
+    }
+
+    private function validateEditThread($data, $userId = null)
+    {
+        if ($userId) {
+            $this->validator->validateUserId($userId);
+        }
+
+        $this->validator->validateEditThread($data, $this->getChoices());
+
+        if (isset($data['filters'])) {
+            $this->usersThreadManager->getFilterUsersManager()->validateFilterUsers($data['filters'], $userId);
+        }
+
     }
 
     /**
@@ -468,7 +545,6 @@ class ThreadManager
 
     private function updateFromFilters(Thread $thread, $data)
     {
-
         $filters = isset($data['filters']) ? $data['filters'] : array();
         switch (get_class($thread)) {
             case 'Model\User\Thread\ContentThread':
@@ -486,33 +562,14 @@ class ThreadManager
         return $this->getById($thread->getId());
     }
 
-    private function getMetadata()
+    private function getChoices()
     {
-        $metadata = array(
-            'name' => array(
-                'type' => 'string',
-                'required' => true,
-            ),
+        return array(
             'category' => array(
-                'type' => 'choice',
-                'required' => true
+                ThreadManager::LABEL_THREAD_USERS,
+                ThreadManager::LABEL_THREAD_CONTENT
             )
         );
-
-        return $metadata;
-    }
-
-    private function getChoices($fieldName)
-    {
-        switch ($fieldName) {
-            case 'category':
-                return array(
-                    ThreadManager::LABEL_THREAD_USERS,
-                    ThreadManager::LABEL_THREAD_CONTENT,
-                );
-            default:
-                return array();
-        }
     }
 
     private function deleteCachedResults(Thread $thread)
@@ -530,12 +587,39 @@ class ThreadManager
 
     }
 
-    private function YearsToBirthday($years)
+    private function getDesiredFromProfile(array $profile)
     {
-        $now = new \DateTime();
-        $birthday = $now->modify('-' . $years . ' years')->format('Y-m-d');
+        if (!isset($profile['orientation']) || !isset($profile['gender'])) {
+            return 'female';
+        }
 
-        return $birthday;
+        if ($profile['orientation'] == 'heterosexual') {
+            return $profile['gender'] === 'male' ? 'female' : 'male';
+        }
+
+        if ($profile['orientation'] == 'homosexual') {
+            return $profile['gender'] === 'male' ? 'male' : 'female';
+        }
+
+        if ($profile['orientation'] == 'bisexual') {
+            return 'people';
+        }
+
+        return 'people';
+    }
+
+    private function getAgeRangeFromProfile(array $profile)
+    {
+        $ageRangeMax = new \DateInterval('P5Y');
+        $ageRangeMin = new \DateInterval('P5Y');
+        $ageRangeMin->invert = 1;
+        $rawAgeMin = (new \DateTime($profile['birthday']))->add($ageRangeMax)->diff(new \DateTime())->y;
+        $rawAgeMax = (new \DateTime($profile['birthday']))->add($ageRangeMin)->diff(new \DateTime())->y;
+
+        return array(
+            'max' => $rawAgeMax <= 99 ? ($rawAgeMax >= 14 ? $rawAgeMax : 14) : 99,
+            'min' => $rawAgeMin <= 99 ? ($rawAgeMin >= 14 ? $rawAgeMin : 14) : 99,
+        );
     }
 }
 

@@ -5,6 +5,8 @@ namespace Controller\Social;
 use Model\User\GroupModel;
 use Manager\UserManager;
 use Model\User;
+use Model\User\ProfileFilterModel;
+use Service\Recommendator;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -75,11 +77,76 @@ class UserController
 
     public function jwtAction(Application $app, $id)
     {
-
         $authService = $app['auth.service'];
         $jwt = $authService->getToken($id);
 
         return $app->json(array('jwt' => $jwt));
+    }
 
+    /**
+     * @param Request $request
+     * @param Application $app
+     * @param User $user
+     * @return JsonResponse
+     */
+    public function getAllFiltersAction(Request $request, Application $app, $id)
+    {
+        /* @var $model UserManager */
+        $model = $app['users.manager'];
+        $user = $model->getById($id);
+        $locale = $request->query->get('locale');
+        $filters = array();
+
+        /* @var $profileFilterModel ProfileFilterModel */
+        $profileFilterModel = $app['users.profileFilter.model'];
+        $filters['profileFilters'] = $profileFilterModel->getSocialFilters($locale);
+
+        //user-dependent filters
+
+        /* @var $userFilterModel User\UserFilterModel */
+        $userFilterModel = $app['users.userFilter.model'];
+        $userFilters = $userFilterModel->getSocialFilters($locale);
+
+        /* @var $groupModel User\GroupModel */
+        $groupModel = $app['users.groups.model'];
+        $groups = $groupModel->getByUser($user->getId());
+
+        $userFilters['groups']['choices'] = array();
+        foreach ($groups as $group) {
+            $userFilters['groups']['choices'][$group['id']] = $group['name'];
+        }
+
+        if ($groups = null || $groups == array()) {
+            unset($userFilters['groups']);
+        }
+
+        $filters['userFilters'] = $userFilters;
+
+        return $app->json($filters, 200);
+    }
+
+    /**
+     * @param Request $request
+     * @param Application $app
+     * @param int $id
+     * @return JsonResponse
+     * @throws \Exception
+     */
+    public function getUserRecommendationAction(Request $request, Application $app, $id)
+    {
+        /** @var Recommendator $recommendator */
+        $recommendator = $app['recommendator.service'];
+
+        try {
+            $result = $recommendator->getUserRecommendationFromRequest($request, $id, true);
+        } catch (\Exception $e) {
+            if ($app['env'] == 'dev') {
+                throw $e;
+            }
+
+            return $app->json(array(), 500);
+        }
+
+        return $app->json($result);
     }
 }

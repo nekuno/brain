@@ -4,7 +4,7 @@ namespace Controller\User;
 
 use Model\User\ContentPaginatedModel;
 use Model\User\GroupModel;
-use Model\User\ProfileModel;
+use Model\User\ProfileFilterModel;
 use Model\User\RateModel;
 use Model\User\UserStatsManager;
 use Manager\UserManager;
@@ -224,8 +224,8 @@ class UserController
     public function getUserContentAction(Request $request, Application $app, User $user)
     {
         $commonWithId = $request->get('commonWithId', null);
-        $tag = $request->get('tag', null);
-        $type = $request->get('type', null);
+        $tag = $request->get('tag', array());
+        $type = $request->get('type', array());
 
         /* @var $paginator \Paginator\Paginator */
         $paginator = $app['paginator'];
@@ -236,12 +236,16 @@ class UserController
             $filters['commonWithId'] = (int)$commonWithId;
         }
 
-        if ($tag) {
-            $filters['tag'] = urldecode($tag);
+        foreach ($tag as $singleTag) {
+            if (!empty($singleTag)) {
+                $filters['tag'][] = urldecode($singleTag);
+            }
         }
 
-        if ($type) {
-            $filters['type'] = urldecode($type);
+        foreach ($type as $singleType) {
+            if (!empty($singleType)) {
+                $filters['type'][] = urldecode($singleType);
+            }
         }
 
         /* @var $model ContentPaginatedModel */
@@ -270,8 +274,8 @@ class UserController
     public function getUserContentCompareAction(Request $request, Application $app, User $user)
     {
         $otherUserId = $request->get('id');
-        $tag = $request->get('tag', null);
-        $type = $request->get('type', null);
+        $tag = $request->get('tag', array());
+        $type = $request->get('type', array());
         $showOnlyCommon = $request->get('showOnlyCommon', 0);
 
         if (null === $otherUserId) {
@@ -283,12 +287,16 @@ class UserController
 
         $filters = array('id' => $otherUserId, 'id2' => $user->getId(), 'showOnlyCommon' => (int)$showOnlyCommon);
 
-        if ($tag) {
-            $filters['tag'] = urldecode($tag);
+        foreach ($tag as $singleTag) {
+            if (!empty($singleTag)) {
+                $filters['tag'][] = urldecode($singleTag);
+            }
         }
 
-        if ($type) {
-            $filters['type'] = urldecode($type);
+        foreach ($type as $singleType) {
+            if (!empty($singleType)) {
+                $filters['type'][] = urldecode($singleType);
+            }
         }
 
         /* @var $model \Model\User\ContentComparePaginatedModel */
@@ -497,18 +505,38 @@ class UserController
     {
         $locale = $request->query->get('locale');
         $filters = array();
-        /* @var $model ProfileModel */
-        $profileModel = $app['users.profile.model'];
-        $filters['profileFilters'] = $profileModel->getFilters($locale);
+
+        /* @var $profileFilterModel ProfileFilterModel */
+        $profileFilterModel = $app['users.profileFilter.model'];
+        $filters['userFilters'] = $profileFilterModel->getFilters($locale);
 
         //user-dependent filters
-        $dynamicFilters = array();
-        /* @var $groupModel GroupModel */
+
+        /* @var $userFilterModel User\UserFilterModel */
+        $userFilterModel = $app['users.userFilter.model'];
+        $userFilters = $userFilterModel->getFilters($locale);
+
+        //TODO: Move this logic to userFilter during/after QS-982 (remove filter logic from GroupModel)
+        /* @var $groupModel User\GroupModel */
         $groupModel = $app['users.groups.model'];
-        $dynamicFilters['groups'] = $groupModel->getByUser($user->getId());
-        /* @var $userManager UserManager */
-        $userManager = $app['users.manager'];
-        $filters['userFilters'] = $userManager->getFilters($locale, $dynamicFilters);
+        $groups = $groupModel->getByUser($user->getId());
+
+        $userFilters['groups']['choices'] = array();
+        foreach ($groups as $group) {
+            $userFilters['groups']['choices'][$group['id']] = $group['name'];
+        }
+
+        if ($groups = null || $groups == array()) {
+            unset($userFilters['groups']);
+        }
+
+        $filters['userFilters'] += $userFilters;
+
+        // content filters
+
+        /* @var $contentFilterModel User\ContentFilterModel */
+        $contentFilterModel = $app['users.contentFilter.model'];
+        $filters['contentFilters'] = $contentFilterModel->getFilters($locale);
 
         return $app->json($filters, 200);
     }

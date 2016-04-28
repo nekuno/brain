@@ -8,6 +8,8 @@ namespace Model\User\Filters;
 
 use Everyman\Neo4j\Node;
 use Model\Neo4j\GraphManager;
+use Model\User\ContentFilterModel;
+use Service\Validator;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class FilterContentManager
@@ -18,9 +20,21 @@ class FilterContentManager
      */
     protected $graphManager;
 
-    public function __construct(GraphManager $graphManager)
+    /**
+     * @var ContentFilterModel
+     */
+    protected $contentFilterModel;
+
+    /**
+     * @var Validator
+     */
+    protected $validator;
+
+    public function __construct(GraphManager $graphManager, ContentFilterModel $contentFilterModel, Validator $validator)
     {
         $this->graphManager = $graphManager;
+        $this->contentFilterModel = $contentFilterModel;
+        $this->validator = $validator;
     }
 
     public function getFilterContentByThreadId($id)
@@ -28,6 +42,7 @@ class FilterContentManager
         $filterId = $this->getFilterContentIdByThreadId($id);
         return $this->getFilterContentById($filterId);
     }
+
     /**
      * @param FilterContent $filters
      * @return Node|null
@@ -41,7 +56,7 @@ class FilterContentManager
         $result = $qb->getQuery()->getResultSet();
 
         $filter = $result->current()->offsetGet('filter');
-        if ($filter == null){
+        if ($filter == null) {
             return null;
         }
 
@@ -50,19 +65,20 @@ class FilterContentManager
 
     public function updateFilterContentByThreadId($id, $filtersArray)
     {
+        $contentFilters = isset($filtersArray['contentFilters']) ? $filtersArray['contentFilters'] : array();
+        $this->validator->validateEditFilterContent($contentFilters, $this->getChoices());
+
         $filters = $this->buildFiltersContent();
 
         $filterId = $this->getFilterContentIdByThreadId($id);
         $filters->setId($filterId);
 
-        if (isset($filtersArray['tag']))
-        {
-            $filters->setTag($filtersArray['tag']);
+        if (isset($contentFilters['tags'])) {
+            $filters->setTag($contentFilters['tags']);
         }
 
-        if (isset($filtersArray['type']))
-        {
-            $filters->setType($filtersArray['type']);
+        if (isset($contentFilters['type'])) {
+            $filters->setType($contentFilters['type']);
         }
 
         $this->updateFiltersContent($filters);
@@ -74,21 +90,25 @@ class FilterContentManager
      * @param FilterContent $filters
      * @return bool
      */
-    protected function updateFiltersContent(FilterContent $filters)
+    public function updateFiltersContent(FilterContent $filters)
     {
-
         $type = $filters->getType();
         $tag = $filters->getTag();
-        
-        if ($tag){
-            $this->saveTag($filters->getId(), $tag );
-        }
 
-        if ($type){
-            $this->saveType($filters->getId(), $type);
-        }
+        $this->saveTag($filters->getId(), $tag);
+        $this->saveType($filters->getId(), $type);
 
         return true;
+    }
+
+    //TODO: LinkModel->getValidTypes() is the same
+    protected function getChoices()
+    {
+        return array(
+            'type' => array(
+                'Link', 'Audio', 'Video', 'Image', 'Creator'
+            )
+        );
     }
 
     /**
@@ -106,6 +126,7 @@ class FilterContentManager
     protected function getFilterContentById($id)
     {
         $filter = $this->buildFiltersContent();
+        $filter->setId($id);
         $filter->setTag($this->getTag($id));
         $filter->setType($this->getType($id));
         return $filter;
@@ -122,7 +143,7 @@ class FilterContentManager
         $qb->setParameter('id', (integer)$id);
         $result = $qb->getQuery()->getResultSet();
 
-        if ($result->count() == 0){
+        if ($result->count() == 0) {
             return null;
         }
 
@@ -149,18 +170,21 @@ class FilterContentManager
             throw new NotFoundHttpException('Filter with id ' . $id . ' not found');
         }
 
-        /** @var Node $tagNode */
-        $tagNode = $result->current()->offsetGet('tag');
-        if ($tagNode) {
-            return $tagNode->getProperty('name');
+        $tags = array();
+        foreach ($result as $row) {
+            /** @var Node $tagNode */
+            $tagNode = $row->offsetGet('tag');
+            if ($tagNode) {
+                $tags[] = $tagNode->getProperty('name');
+            }
         }
 
-        return null;
+        return $tags;
     }
 
     /**
      * @param $id
-     * @return mixed|null
+     * @return array
      * @throws \Model\Neo4j\Neo4jException
      */
     private function getType($id)
@@ -175,8 +199,17 @@ class FilterContentManager
         if ($result->count() < 1) {
             throw new NotFoundHttpException('Filter with id ' . $id . ' not found');
         }
-        
-        return $result->current()->offsetGet('type');
+
+        $type = $result->current()->offsetGet('type');
+
+        //TODO: Unnedeed if database is consistent for sure.
+        try {
+            $type = \GuzzleHttp\json_decode($type);
+        } catch (\Exception $e) {
+
+        }
+
+        return $type;
     }
 
     private function saveType($id, $type)
@@ -190,7 +223,7 @@ class FilterContentManager
             ->returns('filter');
         $qb->setParameters(array(
             'id' => (integer)$id,
-            'type' => $type,
+            'type' => json_encode($type),
         ));
         $result = $qb->getQuery()->getResultSet();
 
@@ -199,7 +232,7 @@ class FilterContentManager
         }
 
     }
-    
+
     private function saveTag($id, $tag)
     {
         //TODO: Validate
@@ -213,13 +246,16 @@ class FilterContentManager
             ->where('id(filter) = {id}')
             ->optionalMatch('(filter)-[old_tag_rel:FILTERS_BY]->(:Tag)')
             ->delete('old_tag_rel')
-            ->with('filter')
-            ->merge('(tag:Tag{name: {tagname} })')
-            ->merge('(filter)-[:FILTERS_BY]->(tag)')
-            ->returns('filter');
+            ->with('filter');
+        foreach ($tag as $key => $singleTag) {
+            $qb->merge("(tag$key:Tag{name: '{$singleTag}' })")
+                ->merge("(filter)-[:FILTERS_BY]->(tag$key)");
+            $qb->setParameter($singleTag, $singleTag);
+        }
+
+        $qb->returns('filter');
         $qb->setParameters(array(
-            'id' => (integer)$id,
-            'tagname' => $tag,
+            'id' => (integer)$id
         ));
         $result = $qb->getQuery()->getResultSet();
 

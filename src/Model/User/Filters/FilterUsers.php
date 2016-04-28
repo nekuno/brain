@@ -9,20 +9,9 @@ namespace Model\User\Filters;
 class FilterUsers implements \JsonSerializable
 {
 
-    protected $metadata = array();
-
     protected $profileFilters = array();
     protected $usersFilters = array();
     protected $id;
-
-    /**
-     * Filters constructor.
-     * @param $metadata
-     */
-    public function __construct($metadata)
-    {
-        $this->metadata = $metadata;
-    }
 
     public function getProfileFilters()
     {
@@ -69,9 +58,10 @@ class FilterUsers implements \JsonSerializable
      */
     function jsonSerialize()
     {
+        $filters = array_merge($this->getUserFilters(), $this->getProfileFilters());
         return array(
-            'profileFilters' => $this->getProfileFilters(),
-            'userFilters' => $this->getUserFilters(),
+            'id' => $this->getId(),
+            'userFilters' => !empty($filters) ? $filters : new \StdClass(),
         );
 
     }

@@ -32,6 +32,7 @@ $replacements = array_merge($app['params'], array('app_root_dir' => __DIR__));
 $app->register(new ConfigServiceProvider(__DIR__ . "/../config/config.yml", $replacements));
 $app->register(new ConfigServiceProvider(__DIR__ . "/../config/config_{$app['env']}.yml", $replacements));
 $app->register(new ConfigServiceProvider(__DIR__ . "/../config/fields.yml", array(), null, 'fields'));
+$app->register(new ConfigServiceProvider(__DIR__ . "/../config/socialFields.yml", array(), null, 'socialFields'));
 $app->register(new MonologServiceProvider(), array('monolog.name' => 'brain', 'monolog.logfile' => __DIR__ . "/../var/logs/silex_{$app['env']}.log"));
 $app->register(new DoctrineServiceProvider());
 $app->register(new DoctrineOrmServiceProvider());

@@ -2,6 +2,7 @@
 
 namespace Model\User;
 
+use Event\GroupEvent;
 use Everyman\Neo4j\Label;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
@@ -9,6 +10,7 @@ use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
 use Model\User\Filters\FilterUsersManager;
 use Manager\UserManager;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class GroupModel
@@ -30,21 +32,26 @@ class GroupModel
     protected $filterUsersManager;
 
     /**
+     * @var EventDispatcher
+     */
+    protected $dispatcher;
+
+    /**
      * @param GraphManager $gm
+     * @param EventDispatcher $dispatcher
      * @param UserManager $um
      * @param FilterUsersManager $filterUsersManager
      */
-    public function __construct(GraphManager $gm, UserManager $um, FilterUsersManager $filterUsersManager)
+    public function __construct(GraphManager $gm, EventDispatcher $dispatcher, UserManager $um, FilterUsersManager $filterUsersManager)
     {
-
         $this->gm = $gm;
         $this->um = $um;
+        $this->dispatcher = $dispatcher;
         $this->filterUsersManager = $filterUsersManager;
     }
 
     public function getAll()
     {
-
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(g:Group)')
             ->optionalMatch('(g)-[:LOCATION]->(l:Location)')
@@ -66,7 +73,6 @@ class GroupModel
 
     public function getAllByUserId($userId)
     {
-
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(g:Group)<-[:BELONGS_TO]-(u:User)')
             ->where('u.qnoow_id = { userId }')
@@ -90,7 +96,6 @@ class GroupModel
 
     public function getById($id)
     {
-
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(g:Group)')
             ->where('id(g)= { id }')
@@ -118,7 +123,6 @@ class GroupModel
 
     public function getAllByEnterpriseUserId($enterpriseUserId)
     {
-
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(i:Invitation)-[:HAS_GROUP]->(g:Group)<-[:CREATED_GROUP]-(eu:EnterpriseUser)')
             ->where('eu.admin_id = { admin_id }')
@@ -142,7 +146,6 @@ class GroupModel
 
     public function getByIdAndEnterpriseUserId($id, $enterpriseUserId)
     {
-
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(i:Invitation)-[:HAS_GROUP]->(g:Group)<-[:CREATED_GROUP]-(eu:EnterpriseUser)')
             ->where('id(g) = { id }', 'eu.admin_id = { admin_id }')
@@ -256,7 +259,6 @@ class GroupModel
 
     public function create(array $data)
     {
-
         $this->validate($data);
 
         $qb = $this->gm->createQueryBuilder();
@@ -374,7 +376,6 @@ class GroupModel
 
     public function remove($id)
     {
-
         $group = $this->getById($id);
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(g:Group)')
@@ -422,7 +423,6 @@ class GroupModel
 
     public function getByUser($userId)
     {
-
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(u:User {qnoow_id: { userId }})')
             ->setParameter('userId', (integer)$userId)
@@ -447,7 +447,6 @@ class GroupModel
 
     public function addUser($id, $userId)
     {
-
         $this->getById($id);
         $this->um->getById($userId);
 
@@ -463,11 +462,15 @@ class GroupModel
 
         $query = $qb->getQuery();
         $query->getResultSet();
+
+
+        $group = $this->getById($id);
+        $user = $this->um->getById($userId);
+        $this->dispatcher->dispatch(\AppEvents::GROUP_ADDED, new GroupEvent($group, $user));
     }
 
     public function removeUser($id, $userId)
     {
-
         $this->getById($id);
         $this->um->getById($userId);
 
@@ -486,7 +489,6 @@ class GroupModel
 
     public function isUserFromGroup($id, $userId)
     {
-
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(g:Group)')
             ->where('id(g) = { id }')

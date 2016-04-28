@@ -4,7 +4,7 @@ namespace Model\User\Recommendation;
 
 use Model\Neo4j\GraphManager;
 use Model\User\GhostUser\GhostUserManager;
-use Model\User\ProfileModel;
+use Model\User\ProfileFilterModel;
 use Model\User\UserFilterModel;
 use Paginator\PaginatedInterface;
 
@@ -14,16 +14,16 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
     protected $gm;
 
     /**
-     * @var ProfileModel
+     * @var ProfileFilterModel
      */
-    protected $profileModel;
+    protected $profileFilterModel;
 
     protected $userFilterModel;
 
-    public function __construct(GraphManager $gm, ProfileModel $profileModel, UserFilterModel $userFilterModel)
+    public function __construct(GraphManager $gm, ProfileFilterModel $profileFilterModel, UserFilterModel $userFilterModel)
     {
         $this->gm = $gm;
-        $this->profileModel = $profileModel;
+        $this->profileFilterModel = $profileFilterModel;
         $this->userFilterModel = $userFilterModel;
     }
 
@@ -36,9 +36,8 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
     {
         $hasId = isset($filters['id']);
         $hasProfileFilters = isset($filters['profileFilters']);
-        $notMultipleGroups = !(isset($filters['userFilters']['groups']) && count($filters['userFilters']['groups']) > 1);
 
-        return $hasId && $hasProfileFilters && $notMultipleGroups;
+        return $hasId && $hasProfileFilters;
     }
 
     /**
@@ -60,13 +59,15 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
             'userId' => (integer)$id
         );
 
-        $profileFilters = $this->getProfileFilters($filters['profileFilters']);
-        $userFilters = $this->getUserFilters($filters['userFilters']);
-
         $orderQuery = '  similarity DESC, matching_questions DESC ';
         if (isset($filters['order']) && $filters['order'] == 'questions') {
             $orderQuery = ' matching_questions DESC, similarity DESC ';
         }
+
+        $filters = $this->profileFilterModel->splitFilters($filters);
+
+        $profileFilters = $this->getProfileFilters($filters['profileFilters']);
+        $userFilters = $this->getUserFilters($filters['userFilters']);
 
         $qb = $this->gm->createQueryBuilder();
 
@@ -159,6 +160,8 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         $id = $filters['id'];
         $count = 0;
 
+        $filters = $this->profileFilterModel->splitFilters($filters);
+
         $profileFilters = $this->getProfileFilters($filters['profileFilters']);
         $userFilters = $this->getUserFilters($filters['userFilters']);
 
@@ -218,7 +221,8 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         $conditions = array();
         $matches = array();
 
-        foreach ($this->profileModel->getFilters() as $name => $filter) {
+        $profileFilterMetadata = $this->getProfileFilterMetadata();
+        foreach ($profileFilterMetadata as $name => $filter) {
             if (isset($filters[$name])) {
                 $value = $filters[$name];
                 switch ($filter['type']) {
@@ -226,7 +230,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                     case 'textarea':
                         $conditions[] = "p.$name =~ '(?i).*$value.*'";
                         break;
-                    case 'integer':
+                    case 'integer_range':
                         $min = (integer)$value['min'];
                         $max = (integer)$value['max'];
                         $conditions[] = "($min <= p.$name AND p.$name <= $max)";
@@ -234,11 +238,19 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                     case 'date':
 
                         break;
+                    //To use from social
                     case 'birthday':
                         $min = $value['min'];
                         $max = $value['max'];
                         $conditions[] = "('$min' <= p.$name AND p.$name <= '$max')";
                         break;
+                    case 'birthday_range':
+                        $birthdayRange = $this->profileFilterModel->getBirthdayRangeFromAgeRange($value['min'], $value['max']);
+                        $min = $birthdayRange['min'];
+                        $max = $birthdayRange['max'];
+                        $conditions[] = "('$min' <= p.$name AND p.$name <= '$max')";
+                        break;
+                    case 'location_distance':
                     case 'location':
                         $distance = (int)$value['distance'];
                         $latitude = (float)$value['location']['latitude'];
@@ -250,18 +262,61 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                         $conditions[] = "p.$name = true";
                         break;
                     case 'choice':
-                        $profileLabelName = ucfirst($name);
+                    case 'multiple_choices':
+                        $profileLabelName = $this->profileFilterModel->typeToLabel($name);
                         $value = implode("', '", $value);
                         $matches[] = "(p)<-[:OPTION_OF]-(option$name:$profileLabelName) WHERE option$name.id IN ['$value']";
                         break;
                     case 'double_choice':
-                        $profileLabelName = ucfirst($name);
+                        $profileLabelName = $this->profileFilterModel->typeToLabel($name);
                         $value = implode("', '", $value);
                         $matches[] = "(p)<-[:OPTION_OF]-(option$name:$profileLabelName) WHERE option$name.id IN ['$value']";
                         break;
+                    case 'double_multiple_choices':
+                        $profileLabelName = $this->profileFilterModel->typeToLabel($name);
+                        $matchQuery = "(p)<-[rel$name:OPTION_OF]-(option$name:$profileLabelName)";
+                        $whereQueries = array();
+                        foreach ($value as $dataValue){
+                            $choice = $dataValue['choice'];
+                            $detail = $dataValue['detail'];
+                            $whereQueries[] = "( option$name.id = '$choice' AND rel$name.detail = '$detail')";
+                        }
+
+                        $matches[] = $matchQuery.' WHERE ' . implode('OR', $whereQueries);
+                        break;
                     case 'tags':
-                        $tagLabelName = ucfirst($name);
+                        $tagLabelName = $this->profileFilterModel->typeToLabel($name);
                         $matches[] = "(p)<-[:TAGGED]-(tag$name:$tagLabelName) WHERE tag$name.name = '$value'";
+                        break;
+                    case 'tags_and_choice':
+                        $tagLabelName = $this->profileFilterModel->typeToLabel($name);
+                        $matchQuery = "(p)<-[rel$name:TAGGED]-(tag$name:ProfileTag:$tagLabelName)";
+                        $whereQueries = array();
+                        foreach ($value as $dataValue) {
+                            $tagValue = $name === 'language' ?
+                                $this->profileFilterModel->getLanguageFromTag($dataValue['tag']) :
+                                $dataValue['tag'];
+                            $choice = !is_null($dataValue['choice']) ? $dataValue['choice'] : '';
+
+                            $whereQueries[] = "( tag$name.name = '$tagValue' AND rel$name.detail = '$choice')";
+                        }
+                        $matches[] = $matchQuery.' WHERE ' . implode('OR', $whereQueries);
+                        break;
+                    case 'tags_and_multiple_choices':
+                        $tagLabelName = $this->profileFilterModel->typeToLabel($name);
+                        $matchQuery = "(p)<-[rel$name:TAGGED]-(tag$name:ProfileTag:$tagLabelName)";
+                        $whereQueries = array();
+                        foreach ($value as $dataValue) {
+                            $tagValue = $name === 'language' ?
+                                $this->profileFilterModel->getLanguageFromTag($dataValue['tag']) :
+                                $dataValue['tag'];
+                            $choices = !is_null($dataValue['choices']) ? json_encode($dataValue['choices']) : json_encode(array());
+
+                            $whereQueries[] = "( tag$name.name = '$tagValue' AND rel$name.detail IN $choices )";
+                        }
+                        $matches[] = $matchQuery.' WHERE ' . implode('OR', $whereQueries);
+                        break;
+                    default:
                         break;
                 }
             }
@@ -282,7 +337,8 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         $conditions = array();
         $matches = array();
 
-        foreach ($this->userFilterModel->getFilters() as $name => $filter) {
+        $userFilterMetadata = $this->getUserFilterMetadata();
+        foreach ($userFilterMetadata as $name => $filter) {
             if (isset($filters[$name]) && !empty($filters[$name])) {
                 $value = $filters[$name];
                 switch ($name) {
@@ -294,11 +350,11 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
                         $matches[] = "(anyUser)-[:BELONGS_TO]->(group:Group) WHERE id(group) IN $jsonValues";
                         break;
                     case 'compatibility':
-                        $valuePerOne = intval($value)/100;
+                        $valuePerOne = intval($value) / 100;
                         $conditions[] = "($valuePerOne <= matching_questions)";
                         break;
                     case 'similarity':
-                        $valuePerOne = intval($value)/100;
+                        $valuePerOne = intval($value) / 100;
                         $conditions[] = "($valuePerOne <= similarity)";
                         break;
                 }
@@ -309,5 +365,13 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
             'conditions' => $conditions,
             'matches' => $matches
         );
+    }
+
+    protected function getProfileFilterMetadata(){
+        return $this->profileFilterModel->getFilters();
+    }
+
+    protected function getUserFilterMetadata(){
+        return $this->userFilterModel->getFilters();
     }
 } 
