@@ -174,11 +174,12 @@ class LinkModel
 
         $qb->match('(user:User {qnoow_id: { userId }})');
         $qb->setParameter('userId', (integer)$filters['id']);
-        if (isset($filters['tag'])) {
-            $qb->match("(:Tag{name: { tag } })-[:TAGGED]-(l:Link)");
-            $qb->setParameter('tag', $filters['tag']);
+        if (isset($filters['tag'])){
+            $qb->match('(l:Link{processed: 1})-[:TAGGED]->(filterTag:Tag)')
+                ->where('filterTag.name IN { filterTags } ');
+            $qb->setParameter('filterTags', $filters['tag']);
         } else {
-            $qb->match("(l:Link)");
+            $qb->match('(content:Link{processed: 1})');
         }
 
         $qb->filterContentByType($types, 'l');
