@@ -4,6 +4,7 @@ namespace Console\Command;
 
 use Console\ApplicationAwareCommand;
 use Model\Exception\ValidationException;
+use Model\Neo4j\Neo4jException;
 use Model\User;
 use Model\User\GroupModel;
 use Model\User\Thread\ThreadManager;
@@ -99,9 +100,14 @@ class UsersThreadsCreateCommand extends ApplicationAwareCommand
                     );
                 }
             } catch (\Exception $e){
+                $output->writeln('--------------EXCEPTION:');
+                $output->writeln($e->getTraceAsString());
                 $output->writeln($e->getMessage());
                 if ($e instanceof ValidationException) {
                     $output->writeln(print_r($e->getErrors(), true));
+                }
+                if ($e instanceof Neo4jException) {
+                    $output->writeln($e->getQuery());
                 }
             }
             $output->writeln(sprintf('Cached results from threads for user %d', $user->getId()));
