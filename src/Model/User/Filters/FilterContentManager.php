@@ -248,15 +248,13 @@ class FilterContentManager
             ->delete('old_tag_rel')
             ->with('filter');
         foreach ($tag as $key => $singleTag) {
-            $qb->merge("(tag$key:Tag{name: '{$singleTag}' })")
+            $qb->merge("(tag$key:Tag{name: { $key } })")
                 ->merge("(filter)-[:FILTERS_BY]->(tag$key)");
-            $qb->setParameter($singleTag, $singleTag);
+            $qb->setParameter($key, $singleTag);
         }
 
         $qb->returns('filter');
-        $qb->setParameters(array(
-            'id' => (integer)$id
-        ));
+        $qb->setParameter('id',(integer)$id);
         $result = $qb->getQuery()->getResultSet();
 
         if ($result->count() < 1) {

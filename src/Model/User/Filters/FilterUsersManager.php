@@ -270,19 +270,21 @@ class FilterUsersManager
 
                     if (isset($profileFilters[$fieldName])) {
                         $value = $profileFilters[$fieldName];
-                        $distance = (int)$value['distance'];
-                        $latitude = (float)$value['location']['latitude'];
-                        $longitude = (float)$value['location']['longitude'];
-                        $address = $value['location']['address'];
-                        $locality = $value['location']['locality'];
-                        $country = $value['location']['country'];
-                        $qb->merge("(filter)-[loc_rel:FILTERS_BY{distance:$distance }]->(location:Location)");
-                        $qb->set("loc_rel.distance = $distance");
-                        $qb->set("location.latitude = $latitude");
-                        $qb->set("location.longitude = $longitude");
-                        $qb->set("location.address = '$address'");
-                        $qb->set("location.locality = '$locality'");
-                        $qb->set("location.country = '$country'");
+                        $qb->setParameters(array(
+                            'distance' =>(int)$value['distance'],
+                            'latitude' => (float)$value['location']['latitude'],
+                            'longitude' => (float)$value['location']['longitude'],
+                            'address' => $value['location']['address'],
+                            'locality' => $value['location']['locality'],
+                            'country' => $value['location']['country'],
+                        ));
+                        $qb->merge("(filter)-[loc_rel:FILTERS_BY{distance:{distance} }]->(location:Location)");
+                        $qb->set("loc_rel.distance = {distance}");
+                        $qb->set("location.latitude = {latitude}");
+                        $qb->set("location.longitude = {longitude}");
+                        $qb->set("location.address = {address}");
+                        $qb->set("location.locality = {locality}");
+                        $qb->set("location.country = {country}");
                     }
                     $qb->with('filter');
                     break;
