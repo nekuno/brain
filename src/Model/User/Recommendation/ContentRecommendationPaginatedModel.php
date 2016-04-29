@@ -170,10 +170,10 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
 
         $internalLimit = $limit * $pageSizeMultiplier;
 
-        $maxPagesSearched = 10000; //bigger may get more contents but it's slower near the limit
+        $maxPagesSearched = 100; //bigger may get more contents but it's slower near the limit
 
-        $databaseSize = $this->lm->countAllLinks($filters);
-
+        //$databaseSize = $this->lm->countAllLinks($filters);
+$databaseSize = 2000;
         $pagesSearched = min(array($databaseSize / $internalLimit, $maxPagesSearched));
 
         $internalPaginationLimit = $foreign + $pagesSearched * $internalLimit;
