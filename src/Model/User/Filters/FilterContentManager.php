@@ -237,10 +237,6 @@ class FilterContentManager
     {
         //TODO: Validate
 
-        if (!$tag) {
-            return;
-        }
-
         $qb = $this->graphManager->createQueryBuilder();
         $qb->match('(filter:FilterContent)')
             ->where('id(filter) = {id}')
