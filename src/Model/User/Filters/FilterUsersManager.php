@@ -408,7 +408,10 @@ class FilterUsersManager
         $qb->match('(filter:FilterUsers)')
             ->where('id(filter) = {id}');
 
-        $metadata = $this->userFilterModel->getMetadata();
+        $qb->optionalMatch('(filter)-[old_rel_group:FILTERS_BY]->(:Group)')
+            ->delete('old_rel_group')
+            ->with('filter');
+
         if (isset($userFilters['groups'])) {
             foreach ($userFilters['groups'] as $group) {
                 $qb->match("(group$group:Group)")
@@ -418,6 +421,8 @@ class FilterUsersManager
             }
             unset($userFilters['groups']);
         }
+
+        $metadata = $this->userFilterModel->getMetadata();
 
         foreach ($metadata as $fieldName => $fieldValue) {
             switch ($fieldValue['type']) {
