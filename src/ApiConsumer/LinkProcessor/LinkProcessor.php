@@ -8,7 +8,6 @@ use ApiConsumer\LinkProcessor\Processor\ScraperProcessor;
 use ApiConsumer\LinkProcessor\Processor\SpotifyProcessor;
 use ApiConsumer\LinkProcessor\Processor\TwitterProcessor;
 use ApiConsumer\LinkProcessor\Processor\YoutubeProcessor;
-use ApiConsumer\LinkProcessor\UrlParser\UrlParser;
 use GuzzleHttp\Exception\RequestException;
 use Model\LinkModel;
 
@@ -248,24 +247,29 @@ class LinkProcessor
     {
         $url = $this->cleanURL($url);
         $processorName = $this->analyzer->getProcessorName($url);
-        switch ($processorName) {
-            case LinkAnalyzer::YOUTUBE:
-                $isCorrectResponse = $this->youtubeProcessor->isCorrectResponse($url);
-                break;
-            case LinkAnalyzer::SPOTIFY:
-                $isCorrectResponse = $this->spotifyProcessor->isCorrectResponse($url);
-                break;
-            case LinkAnalyzer::FACEBOOK:
-                $isCorrectResponse = $this->facebookProcessor->isCorrectResponse($url);
-                break;
-            case LinkAnalyzer::TWITTER:
-                $isCorrectResponse = $this->twitterProcessor->isCorrectResponse($url);
-                break;
-            case LinkAnalyzer::SCRAPPER:
-            default:
-            $isCorrectResponse = $this->scrapperProcessor->isCorrectResponse($url);
-                break;
+        try{
+            switch ($processorName) {
+                case LinkAnalyzer::YOUTUBE:
+                    $isCorrectResponse = $this->youtubeProcessor->isCorrectResponse($url);
+                    break;
+                case LinkAnalyzer::SPOTIFY:
+                    $isCorrectResponse = $this->spotifyProcessor->isCorrectResponse($url);
+                    break;
+                case LinkAnalyzer::FACEBOOK:
+                    $isCorrectResponse = $this->facebookProcessor->isCorrectResponse($url);
+                    break;
+                case LinkAnalyzer::TWITTER:
+                    $isCorrectResponse = $this->twitterProcessor->isCorrectResponse($url);
+                    break;
+                case LinkAnalyzer::SCRAPPER:
+                default:
+                    $isCorrectResponse = $this->scrapperProcessor->isCorrectResponse($url);
+                    break;
+            }
+        } catch (\Exception $e) {
+            $isCorrectResponse = false;
         }
+
         return $isCorrectResponse ? $url : null;
     }
 
