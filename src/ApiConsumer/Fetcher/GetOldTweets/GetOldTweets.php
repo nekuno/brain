@@ -5,6 +5,7 @@ namespace ApiConsumer\Fetcher\GetOldTweets;
 
 use ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser;
 use Manager\TweetManager;
+use Model\Tweet;
 use Model\TweetCriteria;
 use Model\User\TokensModel;
 
@@ -42,23 +43,23 @@ class GetOldTweets
     }
 
     /**
-     * @param array $tweets
+     * @param Tweet [] $tweets
      * @return array
      */
     public function getLinksFromTweets(array $tweets)
     {
         $links = array();
         $resource = TokensModel::TWITTER;
-        
+
         foreach ($tweets as $tweet) {
-            $text = utf8_encode($tweet['text']);
+            $text = utf8_encode($tweet->getText());
 
             $newUrls = $this->parser->extractURLsFromText($text);
-            $timestamp = $this->getDate($tweet);
+            $timestamp = $this->getTimestamp($tweet);
 
             $errorCharacters = array('&Acirc;', '&acirc;', '&brvbar;', '&nbsp;');
             foreach ($newUrls as $newUrl) {
-                
+
                 $newUrl = str_replace($errorCharacters, '', htmlentities($newUrl));
                 $newUrl = html_entity_decode($newUrl);
                 $links[] = array(
@@ -80,11 +81,13 @@ class GetOldTweets
 
     public function getMinDate(array $tweets)
     {
-        return min(array_map(array($this, 'getDate'), $tweets));
+        return min(array_map(array($this, 'getTimestamp'), $tweets));
     }
 
-    public function getDate(array $tweet)
+    public function getTimestamp(Tweet $tweet)
     {
-        return $tweet['date'];
+        /* @var $date \DateTime */
+        $date = $tweet->getDate();
+        return $date->getTimestamp();
     }
 }
