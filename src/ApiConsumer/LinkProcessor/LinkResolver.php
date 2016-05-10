@@ -41,6 +41,7 @@ class LinkResolver
 
         } catch (\Exception $e) {
             $preprocessedLink->addException($e);
+            return $preprocessedLink;
         }
 
         $preprocessedLink->setStatusCode($this->client->getResponse()->getStatus());
