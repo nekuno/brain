@@ -110,18 +110,8 @@ class ChannelWorker extends LoggerAwareWorker implements RabbitMQConsumerInterfa
                     }
                     $username = $data['username'];
                     $this->logger->info(sprintf('Using GetOldTweets to fetch from %s', $username));
-                    $links = array();
-                    $minDate = null;
 
-                    do{
-                        $until = $minDate;
-                        $tweets = $this->getOldTweets->fetchTweets($username, GetOldTweets::MAX_TWEETS, $until);
-                        if (!empty($tweets)){
-                            $links = array_merge($links, $this->getOldTweets->getLinksFromTweets($tweets));
-                            $minDate = $this->getOldTweets->getMinDate($tweets);
-                        }
-
-                    } while ($this->getOldTweets->needMore($tweets) && ($until !== $minDate));
+                    $links = $this->getOldTweets->fetchFromUser($username);
                     $this->logger->info(sprintf('Total %d links fetched from tweets from %s',count($links), $username));
                     break;
                 default:
