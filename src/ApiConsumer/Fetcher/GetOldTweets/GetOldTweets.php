@@ -12,6 +12,7 @@ use Model\User\TokensModel;
 class GetOldTweets
 {
     const MAX_TWEETS = 1000;
+    const MAX_LINKS = 3000;
 
     protected $parser;
     protected $tweetManager;
@@ -20,6 +21,23 @@ class GetOldTweets
     {
         $this->parser = $parser;
         $this->tweetManager = $tweetManager;
+    }
+
+    public function fetchFromUser($username)
+    {
+        $minDate = null;
+        $links = array();
+        do{
+            $until = $minDate;
+            $tweets = $this->fetchTweets($username, GetOldTweets::MAX_TWEETS, null, $until);
+            if (!empty($tweets)){
+                $links = array_merge($links, $this->getLinksFromTweets($tweets));
+                $minDate = $this->getMinDate($tweets);
+            }
+
+        } while ($this->needMore($links) && ($until !== $minDate));
+
+        return $links;
     }
 
     /**
@@ -42,11 +60,18 @@ class GetOldTweets
         return $this->tweetManager->getTweets($criteria);
     }
 
+    public function getDateString(Tweet $tweet)
+    {
+        /* @var $date \DateTime */
+        $date = $tweet->getDate();
+        return $date->format('Y-m-d');
+    }
+
     /**
      * @param Tweet [] $tweets
      * @return array
      */
-    public function getLinksFromTweets(array $tweets)
+    private function getLinksFromTweets(array $tweets)
     {
         $links = array();
         $resource = TokensModel::TWITTER;
@@ -71,20 +96,20 @@ class GetOldTweets
         return $links;
     }
 
-    public function needMore(array $tweets)
+    private function needMore(array $links)
     {
-        if (count($tweets) >= $this::MAX_TWEETS) {
+        if (count($links) <= $this::MAX_LINKS) {
             return true;
         }
         return false;
     }
 
-    public function getMinDate(array $tweets)
+    private function getMinDate(array $tweets)
     {
-        return min(array_map(array($this, 'getTimestamp'), $tweets));
+        return min(array_map(array($this, 'getDateString'), $tweets));
     }
 
-    public function getTimestamp(Tweet $tweet)
+    private function getTimestamp(Tweet $tweet)
     {
         /* @var $date \DateTime */
         $date = $tweet->getDate();

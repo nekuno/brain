@@ -722,7 +722,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/jadell/neo4jphp/zipball/6021d88dfa7082cefab5caf5d8834c889fd28138",
+                "url": "https://api.github.com/repos/jadell/neo4jphp/zipball/72b0911cc09eecf85ff712a5e78d5345bc8e2c5e",
                 "reference": "72b0911cc09eecf85ff712a5e78d5345bc8e2c5e",
                 "shasum": ""
             },
@@ -1236,6 +1236,7 @@
                 "console",
                 "silex"
             ],
+            "abandoned": "ivoba/console-service-provider",
             "time": "2016-02-01 15:38:27"
         },
         {
@@ -3784,7 +3785,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/php-amqplib/php-amqplib/zipball/f36597e303099516732459e1bbc77f8bc6ed658c",
+                "url": "https://api.github.com/repos/php-amqplib/php-amqplib/zipball/45b99c199e5b3b87afcc5f7a91f31bd8d6d6e214",
                 "reference": "45b99c199e5b3b87afcc5f7a91f31bd8d6d6e214",
                 "shasum": ""
             },
@@ -3850,12 +3851,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/yawmoght/GetOldTweets-PHP.git",
-                "reference": "d032984968780691c1efda485bee1d3ac56816bc"
+                "reference": "9130068378d55d9c87f5a86e894de7f1b9296f7b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/yawmoght/GetOldTweets-PHP/zipball/d032984968780691c1efda485bee1d3ac56816bc",
-                "reference": "d032984968780691c1efda485bee1d3ac56816bc",
+                "url": "https://api.github.com/repos/yawmoght/GetOldTweets-PHP/zipball/9130068378d55d9c87f5a86e894de7f1b9296f7b",
+                "reference": "9130068378d55d9c87f5a86e894de7f1b9296f7b",
                 "shasum": ""
             },
             "require": {
@@ -3873,7 +3874,7 @@
                 "MIT"
             ],
             "description": "Port of Jefferson-Henrique/GedOldTweets-java to PHP",
-            "time": "2016-03-21 09:23:49"
+            "time": "2016-05-11 09:10:55"
         }
     ],
     "packages-dev": [
