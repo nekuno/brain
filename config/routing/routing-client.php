@@ -141,3 +141,4 @@ $app->post('/tokens/{resourceOwner}', 'users.tokens.controller:postAction');
  * Client routes
  */
 $app->get('/client/version', 'client.controller:versionAction');
+$app->get('/client/blog-feed', 'client.controller:getBlogFeedAction');
