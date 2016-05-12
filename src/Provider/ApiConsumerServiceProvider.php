@@ -9,7 +9,7 @@ use ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser;
 use ApiConsumer\Registry\Registry;
 use Http\OAuth\Factory\ResourceOwnerFactory;
 use Igorw\Silex\ConfigServiceProvider;
-use Manager\TweetManager;
+use ApiConsumer\Fetcher\GetOldTweets\TweetManager;
 use Psr\Log\LoggerAwareInterface;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
