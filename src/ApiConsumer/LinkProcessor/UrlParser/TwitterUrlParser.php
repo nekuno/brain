@@ -112,4 +112,17 @@ class TwitterUrlParser extends UrlParser
         return $host === 'pic.twitter.com';
     }
 
+    public function extractURLsFromText($string)
+    {
+        $urls = parent::extractURLsFromText($string);
+
+        foreach ($urls as $key=>$url){
+            if (strpos($url, 'pic.twitter.com') > 0) {
+                $urls[$key] = substr($url, strpos($url, 'pic.twitter.com'));
+            }
+        }
+
+        return $urls;
+    }
+
 }
