@@ -127,7 +127,7 @@ class TokensModel
             throw new MethodNotAllowedHttpException(array('PUT'), 'Token already exists');
         }
 
-        $this->validate($resourceOwner, $data);
+        $this->validate($id, $resourceOwner, $data);
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(user:User)')
@@ -145,7 +145,7 @@ class TokensModel
         $row = $result->current();
         $tokenNode = $row->offsetGet('token');
 
-        $this->saveTokenData($tokenNode, $resourceOwner, $data);
+        $this->saveTokenData($userNode, $tokenNode, $resourceOwner, $data);
 
         $this->dispatcher->dispatch(\AppEvents::ACCOUNT_CONNECTED, new AccountConnectEvent($id, $resourceOwner));
 
@@ -172,9 +172,9 @@ class TokensModel
             throw new NotFoundHttpException('Token not found');
         }
 
-        $this->validate($resourceOwner, $data);
+        $this->validate($id, $resourceOwner, $data);
 
-        $this->saveTokenData($tokenNode, $resourceOwner, $data);
+        $this->saveTokenData($userNode, $tokenNode, $resourceOwner, $data);
 
         return $this->getById($id, $resourceOwner);
     }
@@ -227,11 +227,12 @@ class TokensModel
     }
 
     /**
+     * @param string $id
      * @param string $resourceOwner
      * @param array $data
      * @throws ValidationException
      */
-    public function validate($resourceOwner, array $data)
+    public function validate($id, $resourceOwner, array $data)
     {
 
         $errors = array();
@@ -274,6 +275,24 @@ class TokensModel
                         }
                         break;
                 }
+
+                if ($fieldName === 'userId') {
+                    $qb = $this->gm->createQueryBuilder();
+                    $qb->match('(user:User)')
+                        ->where('user.qnoow_id <> { id } AND user.' . $resourceOwner . 'ID = { userId }')
+                        ->setParameter('id', (integer)$id)
+                        ->setParameter('userId', $fieldValue)
+                        ->returns('user');
+
+                    $query = $qb->getQuery();
+
+                    $result = $query->getResultSet();
+
+                    if ($result->count() > 0) {
+                        $fieldErrors[] = 'There is other user with the same userId already registered';
+                    }
+                }
+
             }
 
             if (count($fieldErrors) > 0) {
@@ -440,6 +459,7 @@ class TokensModel
             'updatedTime' => array('type' => 'integer', 'editable' => false),
             'expireTime' => array('type' => 'integer', 'required' => false),
             'refreshToken' => array('type' => 'string', 'required' => false),
+            'userId' => array('type' => 'string', 'required' => false),
         );
     }
 
@@ -472,8 +492,13 @@ class TokensModel
         return array($userNode, $tokenNode);
     }
 
-    protected function saveTokenData(Node $tokenNode, $resourceOwner, array $data)
+    protected function saveTokenData(Node $userNode, Node $tokenNode, $resourceOwner, array $data)
     {
+
+        if (isset($data['userId'])) {
+            $userNode->setProperty($resourceOwner . 'ID', $data['userId']);
+            $userNode->save();
+        }
 
         $tokenNode->setProperty('resourceOwner', $resourceOwner);
         $tokenNode->setProperty('updatedTime', time());

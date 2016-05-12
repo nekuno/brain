@@ -1,2 +1,2 @@
-Nekuno Brain 0.35.11
+Nekuno Brain 0.35.12
 ====================
