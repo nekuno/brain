@@ -60,6 +60,7 @@ class ScraperProcessor implements ProcessorInterface
         $link['url'] = $url;
 
         try {
+            $this->client->getClient()->setDefaultOption('timeout', 30.0);
             $crawler = $this->client->request('GET', $url);
         } catch (\LogicException $e) {
             $link['processed'] = 0;
