@@ -12,7 +12,7 @@ use Model\User\TokensModel;
 class GetOldTweets
 {
     const MAX_TWEETS = 1000;
-    const MAX_LINKS = 3000;
+    const MAX_LINKS = 500;
 
     protected $parser;
     protected $tweetManager;

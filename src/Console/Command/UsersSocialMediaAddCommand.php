@@ -3,12 +3,18 @@
 namespace Console\Command;
 
 
+use ApiConsumer\EventListener\FetchLinksInstantSubscriber;
+use ApiConsumer\EventListener\FetchLinksSubscriber;
 use Console\ApplicationAwareCommand;
+use Model\User\TokensModel;
+use Psr\Log\LogLevel;
 use Service\UserAggregator;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 class UsersSocialMediaAddCommand extends ApplicationAwareCommand
 {
@@ -57,7 +63,6 @@ class UsersSocialMediaAddCommand extends ApplicationAwareCommand
 
             $socialProfiles = $userAggregator->addUser($username, $resource, $id);
 
-
             if (!$socialProfiles){
                 $output->writeln(sprintf('Error while creating user with name %s to the resource %s and with the id %s',
                                     $username, $resource, $id));
@@ -66,6 +71,23 @@ class UsersSocialMediaAddCommand extends ApplicationAwareCommand
 
             $output->writeln('Enqueuing fetching from that resource as channel');
             $userAggregator->enqueueChannel($socialProfiles, $username);
+
+            $amqpManager = $this->app['amqpManager.service'];
+
+            /* @var $socialProfile \Model\User\SocialNetwork\SocialProfile */
+            foreach ($socialProfiles as $socialProfile) {
+                if ($socialProfile->getResource() == TokensModel::TWITTER) {
+                    $output->writeln('Enqueuing fetching followers from that twitter account');
+
+                    $data = array(
+                        'userId' => $socialProfile->getUserId(),
+                        'resourceOwner' => $socialProfile->getResource(),
+                        'public' => true,
+                        'exclude' => array('twitter_links', 'twitter_favorites'),
+                    );
+                    $amqpManager->enqueueMessage($data, 'brain.fetching.links');
+                }
+            }
 
             $output->writeln('Success!');
         }
