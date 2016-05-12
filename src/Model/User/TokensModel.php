@@ -276,12 +276,12 @@ class TokensModel
                         break;
                 }
 
-                if ($fieldName === 'userId') {
+                if ($fieldName === 'resourceId') {
                     $qb = $this->gm->createQueryBuilder();
                     $qb->match('(user:User)')
-                        ->where('user.qnoow_id <> { id } AND user.' . $resourceOwner . 'ID = { userId }')
+                        ->where('user.qnoow_id <> { id } AND user.' . $resourceOwner . 'ID = { resourceId }')
                         ->setParameter('id', (integer)$id)
-                        ->setParameter('userId', $fieldValue)
+                        ->setParameter('resourceId', $fieldValue)
                         ->returns('user');
 
                     $query = $qb->getQuery();
@@ -289,7 +289,7 @@ class TokensModel
                     $result = $query->getResultSet();
 
                     if ($result->count() > 0) {
-                        $fieldErrors[] = 'There is other user with the same userId already registered';
+                        $fieldErrors[] = 'There is other user with the same resourceId already registered';
                     }
                 }
 
@@ -459,7 +459,7 @@ class TokensModel
             'updatedTime' => array('type' => 'integer', 'editable' => false),
             'expireTime' => array('type' => 'integer', 'required' => false),
             'refreshToken' => array('type' => 'string', 'required' => false),
-            'userId' => array('type' => 'string', 'required' => false),
+            'resourceId' => array('type' => 'string', 'required' => false),
         );
     }
 
@@ -495,8 +495,8 @@ class TokensModel
     protected function saveTokenData(Node $userNode, Node $tokenNode, $resourceOwner, array $data)
     {
 
-        if (isset($data['userId'])) {
-            $userNode->setProperty($resourceOwner . 'ID', $data['userId']);
+        if (isset($data['resourceId'])) {
+            $userNode->setProperty($resourceOwner . 'ID', $data['resourceId']);
             $userNode->save();
         }
 
