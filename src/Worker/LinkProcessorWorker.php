@@ -127,10 +127,11 @@ class LinkProcessorWorker extends LoggerAwareWorker implements RabbitMQConsumerI
         $resourceOwner = $data['resourceOwner'];
         $userId = $data['userId'];
         $public = array_key_exists('public', $data) ? $data['public'] : false;
+        $exclude = array_key_exists('exclude', $data) ? $data['exclude'] : array();
 
         try {
 
-            if (!(array_key_exists('public', $data) && $data['public'] == true)) {
+            if (!$public) {
                 $tokens = $this->tm->getByUserOrResource($userId, $resourceOwner);
             } else {
                 $profiles = $this->socialProfileManager->getSocialProfiles($userId, $resourceOwner, false);
@@ -143,7 +144,7 @@ class LinkProcessorWorker extends LoggerAwareWorker implements RabbitMQConsumerI
             foreach ($tokens as $token) {
 
                 $token['public'] = $public;
-                $this->fetcherService->fetch($token);
+                $this->fetcherService->fetch($token, $exclude);
 
                 if ($resourceOwner === TokensModel::TWITTER) {
 

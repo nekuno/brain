@@ -115,12 +115,12 @@ class FetcherService implements LoggerAwareInterface
 
     /**
      * @param array $token
-     * @return array
+     * @param array $exclude fetcher names that are not to be used
+     * @return \ApiConsumer\LinkProcessor\PreprocessedLink[]
      * @throws \Exception
      */
-    public function fetch($token)
+    public function fetch($token, $exclude = array() )
     {
-
         if (!$token) return array();
 
         if (array_key_exists('id', $token)) {
@@ -145,6 +145,10 @@ class FetcherService implements LoggerAwareInterface
 
             foreach ($this->options as $fetcher => $fetcherConfig) {
 
+                if (in_array($fetcher, $exclude)){
+                    continue;
+                }
+
                 if ($fetcherConfig['resourceOwner'] === $resourceOwner) {
                     try {
                         $links = array_merge($links, $this->fetcherFactory->build($fetcher)->fetchLinksFromUserFeed($token, $public));
@@ -161,7 +165,6 @@ class FetcherService implements LoggerAwareInterface
                         $this->logger->error(sprintf('Fetcher: Error fetching feed for user "%s" with fetcher "%s" from resource "%s". Reason: %s', $userId, $fetcher, $resourceOwner, $e->getMessage()));
                         continue;
                     }
-
                 }
             }
 
