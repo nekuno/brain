@@ -25,7 +25,7 @@ class ClientController
     public function getBlogFeedAction(Application $app)
     {
         $client = $app['guzzle.client'];
-        $blogFeed = $client->get('http://blog.nekuno.com/feed');
+        $blogFeed = $client->get('http://blog.nekuno.com/feed/');
 
         return $blogFeed->getBody();
     }
