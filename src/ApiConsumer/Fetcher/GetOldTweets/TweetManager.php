@@ -18,7 +18,10 @@ class TweetManager extends \Manager\TweetManager
     public function getUrlResponse($username, $since, $until, $querySearch, $scrollCursor)
     {
         sleep(rand(1,2));
-        return parent::getUrlResponse($username, $since, $until, $querySearch, $scrollCursor);
+        //See https://github.com/guzzle/guzzle/pull/879 or newer for charset setting
+        $response = parent::getUrlResponse($username, $since, $until, $querySearch, $scrollCursor);
+        $response['items_html'] = utf8_decode($response['items_html']);
+        return $response;
     }
 
 }
