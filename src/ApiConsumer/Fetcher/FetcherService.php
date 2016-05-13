@@ -10,6 +10,7 @@ use Event\ExceptionEvent;
 use Event\FetchEvent;
 use Event\ProcessLinkEvent;
 use Event\ProcessLinksEvent;
+use GuzzleHttp\Exception\RequestException;
 use Model\LinkModel;
 use Model\Neo4j\Neo4jException;
 use Model\User\LookUpModel;
@@ -153,9 +154,18 @@ class FetcherService implements LoggerAwareInterface
                     try {
                         $links = array_merge($links, $this->fetcherFactory->build($fetcher)->fetchLinksFromUserFeed($token, $public));
                     } catch (PaginatedFetchingException $e) {
+                        //TODO: Improve exception management between services, controllers, workers...
+                        $originalException = $e->getOriginalException();
+                        if ($originalException instanceof RequestException && $originalException->getCode()==429)
+                        {
+                            if ($resourceOwner == TokensModel::TWITTER){
+                                $this->logger->warning('Pausing for 15 minutes due to Too Many Requests Error');
+                                sleep(15*60);
+                            }
+                        }
                         $newLinks = $e->getLinks();
-                        $this->logger->warning(sprintf('Fetcher: Error fetching feed for user "%s" with fetcher "%s" from resource "%s". Reason: %s', $userId, $fetcher, $resourceOwner, $e->getOriginalException()->getMessage()));
-                        $this->dispatcher->dispatch(\AppEvents::EXCEPTION_WARNING, new ExceptionEvent($e, sprintf('Fetcher: Error fetching feed for user "%s" with fetcher "%s" from resource "%s". Reason: %s', $userId, $fetcher, $resourceOwner, $e->getOriginalException()->getMessage())));
+                        $this->logger->warning(sprintf('Fetcher: Error fetching feed for user "%s" with fetcher "%s" from resource "%s". Reason: %s', $userId, $fetcher, $resourceOwner, $originalException->getMessage()));
+                        $this->dispatcher->dispatch(\AppEvents::EXCEPTION_WARNING, new ExceptionEvent($e, sprintf('Fetcher: Error fetching feed for user "%s" with fetcher "%s" from resource "%s". Reason: %s', $userId, $fetcher, $resourceOwner, $originalException->getMessage())));
                         if (!empty($newLinks)) {
                             $this->logger->info(sprintf('%d links were fetched before the exception happened and are going to be processed.', count($newLinks)));
                             $links = array_merge($links, $newLinks);
