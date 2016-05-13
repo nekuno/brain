@@ -8,6 +8,7 @@ use ApiConsumer\Fetcher\GetOldTweets\GetOldTweets;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
 use Doctrine\DBAL\Connection;
 use Model\Neo4j\Neo4jException;
+use Model\User\SocialNetwork\SocialProfileManager;
 use Model\User\TokensModel;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Message\AMQPMessage;
@@ -39,11 +40,15 @@ class ChannelWorker extends LoggerAwareWorker implements RabbitMQConsumerInterfa
      * @var GetOldTweets
      */
     protected $getOldTweets;
+    protected $socialProfileManager;
+    protected $tokensModel;
 
     public function __construct(AMQPChannel $channel,
                                 EventDispatcher $dispatcher,
                                 FetcherService $fetcherService,
                                 GetOldTweets $getOldTweets,
+                                SocialProfileManager $socialProfileManager,
+                                TokensModel $tokensModel,
                                 Connection $connectionBrain)
     {
 
@@ -51,6 +56,8 @@ class ChannelWorker extends LoggerAwareWorker implements RabbitMQConsumerInterfa
         $this->dispatcher = $dispatcher;
         $this->fetcherService = $fetcherService;
         $this->getOldTweets = $getOldTweets;
+        $this->socialProfileManager = $socialProfileManager;
+        $this->tokensModel = $tokensModel;
         $this->connectionBrain = $connectionBrain;
     }
 
@@ -108,29 +115,37 @@ class ChannelWorker extends LoggerAwareWorker implements RabbitMQConsumerInterfa
                     if (!isset($data['username'])){
                         throw new \Exception('Enqueued message does not include  username parameter');
                     }
-                    $username = $data['username'];
-                    $this->logger->info(sprintf('Using GetOldTweets to fetch from %s', $username));
+//                    $username = $data['username'];
+//                    $this->logger->info(sprintf('Using GetOldTweets to fetch from %s', $username));
+                    $exclude = array('twitter_following', 'twitter_favorites');
+                    $socialProfiles = $this->socialProfileManager->getSocialProfiles($userId, $resourceOwner);
+                    foreach ($socialProfiles as $socialProfile){
+                        $this->logger->info(sprintf('Fetching from user %d', $socialProfile->getUserId()));
+                        $token = $this->tokensModel->buildFromSocialProfile($socialProfile);
+                        $token['public'] = true;
+                        $this->fetcherService->fetch($token, $exclude);
+                    }
 
-                    $links = $this->getOldTweets->fetchFromUser($username);
-                    $this->logger->info(sprintf('Total %d links fetched from tweets from %s',count($links), $username));
+//                    $links = $this->getOldTweets->fetchFromUser($username);
+//                    $this->logger->info(sprintf('Total %d links fetched from tweets from %s',count($links), $username));
                     break;
                 default:
                     throw new \Exception('Resource %s not supported in this queue', $resourceOwner);
             }
-            $this->logger->info(sprintf('Start processing %d links for user %d', count($links), $userId));
+//            $this->logger->info(sprintf('Start processing %d links for user %d', count($links), $userId));
 
-            $preprocessedLinks = array();
-            foreach ($links as $link)
-            {
-                $preprocessedLink = new PreprocessedLink($link['url']);
-                $preprocessedLink->setLink($link);
-                $preprocessedLink->setSource($resourceOwner);
-                $preprocessedLinks[] = $preprocessedLink;
-            }
-
-            $processedLinks = $this->fetcherService->processLinks($preprocessedLinks, $userId);
-
-            $this->logger->info(sprintf('Processed %d links for user %d', count($processedLinks), $userId));
+//            $preprocessedLinks = array();
+//            foreach ($links as $link)
+//            {
+//                $preprocessedLink = new PreprocessedLink($link['url']);
+//                $preprocessedLink->setLink($link);
+//                $preprocessedLink->setSource($resourceOwner);
+//                $preprocessedLinks[] = $preprocessedLink;
+//            }
+//
+//            $processedLinks = $this->fetcherService->processLinks($preprocessedLinks, $userId);
+//
+//            $this->logger->info(sprintf('Processed %d links for user %d', count($processedLinks), $userId));
 
         } catch (\Exception $e) {
             $this->logger->error(sprintf('Worker: Error fetching for channel with message %s on file %s, line %d', $e->getMessage(), $e->getFile(), $e->getLine()));
