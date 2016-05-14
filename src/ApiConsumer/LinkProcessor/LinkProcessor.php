@@ -250,20 +250,20 @@ class LinkProcessor
         try{
             switch ($processorName) {
                 case LinkAnalyzer::YOUTUBE:
-                    $isCorrectResponse = $this->youtubeProcessor->isCorrectResponse($url);
+                    $isCorrectResponse = $this->youtubeProcessor->isValidImage($url);
                     break;
                 case LinkAnalyzer::SPOTIFY:
-                    $isCorrectResponse = $this->spotifyProcessor->isCorrectResponse($url);
+                    $isCorrectResponse = $this->spotifyProcessor->isValidImage($url);
                     break;
                 case LinkAnalyzer::FACEBOOK:
-                    $isCorrectResponse = $this->facebookProcessor->isCorrectResponse($url);
+                    $isCorrectResponse = $this->facebookProcessor->isValidImage($url);
                     break;
                 case LinkAnalyzer::TWITTER:
-                    $isCorrectResponse = $this->twitterProcessor->isCorrectResponse($url);
+                    $isCorrectResponse = $this->twitterProcessor->isValidImage($url);
                     break;
                 case LinkAnalyzer::SCRAPPER:
                 default:
-                    $isCorrectResponse = $this->scrapperProcessor->isCorrectResponse($url);
+                    $isCorrectResponse = $this->scrapperProcessor->isValidImage($url);
                     break;
             }
         } catch (\Exception $e) {

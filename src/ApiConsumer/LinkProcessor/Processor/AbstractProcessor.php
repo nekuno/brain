@@ -39,13 +39,8 @@ abstract class AbstractProcessor implements ProcessorInterface
         return $this->parser;
     }
 
-    public function isCorrectResponse($url)
+    public function isValidImage($url)
     {
-        $response = $this->resourceOwner->getClient()->head($url);
-        if (200 <= $response->getStatusCode() && $response->getStatusCode() < 300 && strpos($response->getHeader('Content-Type'), 'image') !== false ){
-            return true;
-        }
-
-        return false;
+        return $this->scraperProcessor->isValidImage($url);
     }
 }
