@@ -36,6 +36,14 @@ class LinkResolver
                 $preprocessedLink->setFetched('http://'.$preprocessedLink->getFetched());
             };
 
+            /* TODO: Remove this quick fix, put here because of Curl not firing error 52 (empty response) */
+            $host = parse_url($preprocessedLink->getFetched(), PHP_URL_HOST);
+            $firstLetter = substr($host, 0, 1);
+            if (strtoupper($firstLetter) == $firstLetter){
+                throw new \Exception('This url would not return data');
+            }
+            /* End of quick fix */
+
             $this->client->getHistory()->clear();
             $crawler = $this->client->request('GET', $preprocessedLink->getFetched());
 
