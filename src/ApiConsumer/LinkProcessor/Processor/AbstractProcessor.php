@@ -38,9 +38,4 @@ abstract class AbstractProcessor implements ProcessorInterface
     {
         return $this->parser;
     }
-
-    public function isValidImage($url)
-    {
-        return $this->scraperProcessor->isValidImage($url);
-    }
 }

@@ -2,6 +2,7 @@
 
 namespace Model;
 
+use ApiConsumer\LinkProcessor\PreprocessedLink;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Neo4j\GraphManager;
@@ -63,6 +64,20 @@ class LinkModel
         return $link;
     }
 
+    /**
+     * @param array $urls
+     * @return array
+     */
+    public function findLinksByUrl(array $urls)
+    {
+        $links = array();
+        foreach ($urls as $url){
+            $links[] = $this->findLinkByUrl($url);
+        }
+        return $links;
+    }
+
+    //TODO: Check if findLinkById not used and delete
     /**
      * @param integer $linkId
      * @return array|boolean the link or false
@@ -888,6 +903,23 @@ class LinkModel
         }
 
         return $link;
+    }
+
+    /**
+     * @param array $links
+     * @return array PreprocessedLink[]
+     */
+    public function buildPreprocessedLinks(array $links)
+    {
+        $preprocessedLinks = array();
+        foreach ($links as $link)
+        {
+            $preprocessedLink = new PreprocessedLink($link['url']);
+            $preprocessedLink->setLink($link);
+            $preprocessedLinks[] = $preprocessedLink;
+        }
+
+        return $preprocessedLinks;
     }
 
     public function getValidTypes($locale = 'en')

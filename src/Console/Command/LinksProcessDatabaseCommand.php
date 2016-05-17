@@ -50,13 +50,7 @@ class LinksProcessDatabaseCommand extends ApplicationAwareCommand
         }
 
         /* @var $preprocessedLinks PreprocessedLink[] */
-        $preprocessedLinks = array();
-        foreach ($links as $link)
-        {
-            $preprocessedLink = new PreprocessedLink($link['url']);
-            $preprocessedLink->setLink($link);
-            $preprocessedLinks[] = $preprocessedLink;
-        }
+        $preprocessedLinks = $linksModel->buildPreprocessedLinks($links);
 
         $output->writeln('Got '.count($links).' links to process');
 

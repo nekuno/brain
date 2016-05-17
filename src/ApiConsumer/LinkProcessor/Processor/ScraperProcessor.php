@@ -2,6 +2,7 @@
 
 namespace ApiConsumer\LinkProcessor\Processor;
 
+use ApiConsumer\LinkProcessor\ImageAnalyzer;
 use ApiConsumer\LinkProcessor\MetadataParser\BasicMetadataParser;
 use ApiConsumer\LinkProcessor\MetadataParser\FacebookMetadataParser;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
@@ -30,23 +31,32 @@ class ScraperProcessor implements ProcessorInterface
     private $basicMetadataParser;
 
     protected $parser;
+
+    /**
+     * @var ImageAnalyzer
+     */
+    protected $imageAnalyzer;
+
     /**
      * @param UrlParser $urlParser
      * @param Client $client
      * @param \ApiConsumer\LinkProcessor\MetadataParser\BasicMetadataParser $basicMetadataParser
      * @param \ApiConsumer\LinkProcessor\MetadataParser\FacebookMetadataParser $facebookMetadataParser
+     * @param ImageAnalyzer $imageAnalyzer
      */
     public function __construct(
         UrlParser $urlParser,
         Client $client,
         BasicMetadataParser $basicMetadataParser,
-        FacebookMetadataParser $facebookMetadataParser
+        FacebookMetadataParser $facebookMetadataParser,
+        ImageAnalyzer $imageAnalyzer
     )
     {
         $this->parser = $urlParser;
         $this->client = $client;
         $this->basicMetadataParser = $basicMetadataParser;
         $this->facebookMetadataParser = $facebookMetadataParser;
+        $this->imageAnalyzer = $imageAnalyzer;
     }
 
     /**
@@ -77,7 +87,7 @@ class ScraperProcessor implements ProcessorInterface
         }
 
         $basicMetadata = $this->basicMetadataParser->extractMetadata($crawler);
-        $basicMetadata['thumbnail'] = $this->selectImage($basicMetadata['images']);
+        $basicMetadata['thumbnail'] = $this->imageAnalyzer->selectImage($basicMetadata['images']);
         $basicMetadata['tags'] = $this->basicMetadataParser->extractTags($crawler);
         $link = $this->overrideLinkDataWithScrapedData($link, $basicMetadata);
 
@@ -86,6 +96,15 @@ class ScraperProcessor implements ProcessorInterface
         $link = $this->overrideLinkDataWithScrapedData($link, $fbMetadata);
 
         return $link;
+    }
+
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getParser()
+    {
+        return $this->parser;
     }
 
     /**
@@ -129,71 +148,4 @@ class ScraperProcessor implements ProcessorInterface
         }
     }
 
-    private function selectImage(array $imageUrls)
-    {
-        $images=array();
-        foreach ($imageUrls as $key=> $imageUrl) {
-            $images[$key] = $this->buildResponseArray($imageUrl);
-        }
-
-        $images = $this->sortImages($images);
-
-        if (!empty($images))
-        {
-            return $images[0];
-        }
-
-        return null;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function getParser()
-    {
-        return $this->parser;
-    }
-
-    public function isValidImage($url)
-    {
-        $imageArray = $this->buildResponseArray($url);
-        return $this->isImageResponseValid($imageArray);
-    }
-
-    private function buildResponseArray($imageUrl)
-    {
-        $response = $this->client->getClient()->head($imageUrl);
-        $image = array(
-            'url' => $imageUrl,
-            'status' => $response->getStatusCode(),
-            'type' => $response->getHeader('Content-Type'),
-            'length' => intval($response->getHeader('Content-Length'))
-        );
-        return $image;
-    }
-
-    private function sortImages(array $images)
-    {
-        $lengths = array();
-        foreach ($images as $key => $image){
-            if (!$this->isImageResponseValid($image)) {
-                unset($images[$key]);
-            }
-            $lengths[$key] = $image['length'];
-        }
-
-        array_multisort($lengths, SORT_DESC, $images);
-
-        return $images;
-    }
-
-    private function isImageResponseValid(array $image){
-        if (!(200 <= $image['code'] && $image['code'] < 300 //status code
-            && strpos($image['type'], 'image') !== false  //image type
-            && $image['length']!==0 && 10000 < $image['length'] && 200000 > $image['length'])) { //image size
-            return false;
-        }
-
-        return true;
-    }
 }

@@ -225,4 +225,19 @@ class FetcherService implements LoggerAwareInterface
         return $links;
     }
 
+    /**
+     * @param array $links
+     * @return array
+     */
+    public function reprocessLinks(array $links){
+        $preprocessedLinks = $this->linkModel->buildPreprocessedLinks($links);
+
+        $reprocessedLinks = array();
+        foreach ($preprocessedLinks as $link){
+            $linkProcessed = $this->linkProcessor->process($link);
+            $reprocessedLinks[] = $this->linkModel->updateLink($linkProcessed, true);
+        }
+        return $reprocessedLinks;
+    }
+
 }

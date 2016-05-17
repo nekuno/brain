@@ -3,6 +3,7 @@
 
 namespace Provider;
 
+use ApiConsumer\LinkProcessor\ImageAnalyzer;
 use ApiConsumer\LinkProcessor\LinkAnalyzer;
 use ApiConsumer\LinkProcessor\LinkProcessor;
 use ApiConsumer\LinkProcessor\LinkResolver;
@@ -79,6 +80,12 @@ class LinkProcessorServiceProvider implements ServiceProviderInterface
             }
         );
 
+        $app['api_consumer.link_processor.image_analyzer'] = $app->share(
+            function ($app) {
+                return new ImageAnalyzer($app['guzzle.client']);
+            }
+        );
+
         $app['api_consumer.link_processor.link_resolver'] = $app->share(
             function ($app) {
 
@@ -99,6 +106,7 @@ class LinkProcessorServiceProvider implements ServiceProviderInterface
                     $app['api_consumer.link_processor.link_resolver'],
                     $app['api_consumer.link_processor.link_analyzer'],
                     $app['links.model'],
+                    $app['api_consumer.link_processor.image_analyzer'],
                     $app['api_consumer.link_processor.processor.scrapper'],
                     $app['api_consumer.link_processor.processor.youtube'],
                     $app['api_consumer.link_processor.processor.spotify'],

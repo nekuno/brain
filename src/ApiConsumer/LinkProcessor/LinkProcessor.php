@@ -58,6 +58,7 @@ class LinkProcessor
         LinkResolver $linkResolver,
         LinkAnalyzer $linkAnalyzer,
         LinkModel $linkModel,
+        ImageAnalyzer $imageAnalyzer,
         ScraperProcessor $scrapperProcessor,
         YoutubeProcessor $youtubeProcessor,
         SpotifyProcessor $spotifyProcessor,
@@ -69,6 +70,7 @@ class LinkProcessor
         $this->resolver = $linkResolver;
         $this->analyzer = $linkAnalyzer;
         $this->linkModel = $linkModel;
+        $this->imageAnalyzer = $imageAnalyzer;
         $this->scrapperProcessor = $scrapperProcessor;
         $this->youtubeProcessor = $youtubeProcessor;
         $this->spotifyProcessor = $spotifyProcessor;
@@ -246,26 +248,8 @@ class LinkProcessor
     private function sanitizeImage($url)
     {
         $url = $this->cleanURL($url);
-        $processorName = $this->analyzer->getProcessorName($url);
         try{
-            switch ($processorName) {
-                case LinkAnalyzer::YOUTUBE:
-                    $isCorrectResponse = $this->youtubeProcessor->isValidImage($url);
-                    break;
-                case LinkAnalyzer::SPOTIFY:
-                    $isCorrectResponse = $this->spotifyProcessor->isValidImage($url);
-                    break;
-                case LinkAnalyzer::FACEBOOK:
-                    $isCorrectResponse = $this->facebookProcessor->isValidImage($url);
-                    break;
-                case LinkAnalyzer::TWITTER:
-                    $isCorrectResponse = $this->twitterProcessor->isValidImage($url);
-                    break;
-                case LinkAnalyzer::SCRAPPER:
-                default:
-                    $isCorrectResponse = $this->scrapperProcessor->isValidImage($url);
-                    break;
-            }
+            $isCorrectResponse = $this->imageAnalyzer->isValidImage($url);
         } catch (\Exception $e) {
             $isCorrectResponse = false;
         }
