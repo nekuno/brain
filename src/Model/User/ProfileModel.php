@@ -329,6 +329,7 @@ class ProfileModel
         /* @var Node $profile */
         $profile = $row->offsetGet('profile');
 
+        $metadata = $this->profileFilterModel->getProfileMetadata();
         $optionsResult = array();
         /* @var Node $option */
         foreach ($options as $option) {
@@ -343,6 +344,7 @@ class ProfileModel
                     break;
                 }
             }
+            //TODO: Use metadata from the beginning. This is a guessing game.
             /* @var Label $label */
             foreach ($labels as $label) {
                 if ($label->getName() && $label->getName() != 'ProfileOption') {
@@ -362,7 +364,12 @@ class ProfileModel
                             $optionsResult[$typeName]['detail'] = $detail;
                         }
                     }
+                    if (isset($metadata[$typeName]) && $metadata[$typeName]['type'] == 'multiple_choices'
+                        && !empty($optionsResult[$typeName]) && !is_array($optionsResult[$typeName])){
+                        $optionsResult[$typeName] = array($optionsResult[$typeName]);
+                    }
                 }
+
             }
         }
 
