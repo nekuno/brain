@@ -2,12 +2,14 @@
 
 namespace Model\User;
 
+use Event\ProfileEvent;
 use Model\Neo4j\GraphManager;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Relationship;
 use Everyman\Neo4j\Query\Row;
 use Everyman\Neo4j\Label;
 use Model\Exception\ValidationException;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -16,12 +18,14 @@ class ProfileModel
     const MAX_TAGS_AND_CHOICE_LENGTH = 15;
     protected $gm;
     protected $profileFilterModel;
+    protected $dispatcher;
 
-    public function __construct(GraphManager $gm, ProfileFilterModel $profileFilterModel)
+    public function __construct(GraphManager $gm, ProfileFilterModel $profileFilterModel, EventDispatcher $dispatcher)
     {
 
         $this->gm = $gm;
         $this->profileFilterModel = $profileFilterModel;
+        $this->dispatcher = $dispatcher;
     }
 
     /**
@@ -86,7 +90,9 @@ class ProfileModel
 
         $this->saveProfileData($id, $data);
 
-        return $this->getById($id);
+        $profile = $this->getById($id);
+        $this->dispatcher->dispatch(\AppEvents::PROFILE_CREATED,(new ProfileEvent($profile, $id)));
+        return $profile;
     }
 
     /**
