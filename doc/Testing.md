@@ -8,7 +8,7 @@
 
     - Ir a Run -> Edit Configurations...
     - Botón + -> PHPUnit
-    - Nomrar test y seleccionar en "Test running" "Defined in the configuration file"
+    - Nombrar test y seleccionar en "Test running" "Defined in the configuration file"
     - Seleccionar "Use alternative configuratin file" y escribir pathToBrain/phpunit.xml
     - Guardar
 

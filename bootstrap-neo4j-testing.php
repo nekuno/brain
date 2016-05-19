@@ -14,7 +14,7 @@ if (!is_dir(NEO4J_PATH)) {
     exec("sed -i 's/org.neo4j.server.webserver.port=7474/org.neo4j.server.webserver.port=7475/g' " . NEO4J_PATH . '/conf/neo4j-server.properties');
     exec("sed -i 's/org.neo4j.server.webserver.https.port=7473/org.neo4j.server.webserver.https.port=7476/g' " . NEO4J_PATH . '/conf/neo4j-server.properties');
     exec('mkdir ' . NEO4J_PATH . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'dbms');
-    exec('echo admin:SHA-256,5F5E0B0CEBC8A4FCEEAC6A1E3A778039C7D9912F6C0378CCCBC1F2B1479FCFEA,5DE083E710DD6E7341331DEB11D636D9: > ' . NEO4J_PATH . '/data/dbms/auth');
+    exec('echo nekuno:SHA-256,F9C128A993975A8C867C996FBAD87CE1E557D9748B5451FF6F5257C19F56BA04,5A9123556B2846896AF655440E3966EC: > ' . NEO4J_PATH . '/data/dbms/auth');
 }
 
 $output_ssh = shell_exec('ssh vagrant@local.nekuno.com -o LogLevel=verbose ./../../vagrant/brain/' . NEO4J_PATH . '/bin/neo4j restart');

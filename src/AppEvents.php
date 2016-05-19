@@ -117,4 +117,9 @@ final class AppEvents
      * Fired when a user is added to a group
      */
     const GROUP_ADDED = 'group.added';
+
+    /**
+     * Fired when a profile is created
+     */
+    const PROFILE_CREATED = 'profile.created';
 }

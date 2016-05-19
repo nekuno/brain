@@ -21,4 +21,12 @@ class ClientController
 
         return $app->json($dateDiv->text(), 200);
     }
+
+    public function getBlogFeedAction(Application $app)
+    {
+        $client = $app['guzzle.client'];
+        $blogFeed = $client->get('http://blog.nekuno.com/feed/');
+
+        return $blogFeed->getBody();
+    }
 }

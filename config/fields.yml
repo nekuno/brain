@@ -411,13 +411,13 @@ filters:
                 en: 'Minimum similarity (%)'
                 es: 'Similaridad mínima (%)'
     profile:
-        description:
-            type: textarea
-            min: 0
-            max: 20000
-            label:
-                en: 'About me'
-                es: 'Sobre mí'
+#        description:
+#            type: textarea
+#            min: 0
+#            max: 20000
+#            label:
+#                en: 'About me'
+#                es: 'Sobre mí'
         birthday:
             type: birthday_range
             label:
