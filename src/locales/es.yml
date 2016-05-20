@@ -30,13 +30,13 @@ notifications:
 followers:
   invitation_slogan: '¡Descubre si eres %compatible_or_similar% con %username%!'
   group_name: 'Seguidores de %username%'
-  messages:
-    register: '¡Bienvenido! Puedes empezar a explorar la red a través de los hilos que hemos creado para ti. Si quieres mejorarlos, puedes añadir más redes sociales para dejarnos saber lo que te gusta.'
+messages:
+  register: '¡Bienvenido! Puedes empezar a explorar la red a través de los hilos que hemos creado para ti. Si quieres mejorarlos, puedes añadir más redes sociales para dejarnos saber lo que te gusta.'
 types:
   audio: 'Audio'
   video: 'Video'
   image: 'Imagen'
-  creator: 'Creador'
+  creator: 'Canal'
   link: 'Enlace'
 threads:
   default:

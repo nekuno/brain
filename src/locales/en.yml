@@ -36,7 +36,7 @@ types:
   audio: 'Audio'
   video: 'Video'
   image: 'Image'
-  creator: 'Creator'
+  creator: 'Channel'
   link: 'Link'
 threads:
   default:
