@@ -123,7 +123,7 @@ class ChatMessageNotifications
     public function createDefaultMessage($to, $locale)
     {
         $qb = $this->connectionSocial->createQueryBuilder()
-            ->insert('qnoow.chat_message')->values(array(
+            ->insert('chat_message')->values(array(
                 'user_to' => $to,
                 'user_from' => 16,
                 'text' => ":text",
