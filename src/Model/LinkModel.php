@@ -519,8 +519,9 @@ class LinkModel
             ->limit(1)
             ->optionalMatch('(l_max)-[likes:LIKES]-(:User)')
             //if that link's popularity was calculated more than a day ago, max = 0 as a flag to recalculate
+                //TODO: Fix query and remove this: Changed to 1000 years to avoid executing update max popularity
             ->with('CASE
-                        WHEN l_max.popularity_timestamp > timestamp()-1000*3600*24 THEN
+                        WHEN l_max.popularity_timestamp > timestamp()-1000*3600*24*365*1000 THEN
                             count(likes)
                         ELSE
                             0
@@ -542,7 +543,12 @@ class LinkModel
         $qb->optionalMatch('(l)-[r:LIKES]-(:User)')
             ->with('l', 'count(DISTINCT r) AS total', 'max')
             ->where('total > 1')
-            ->with('l', 'toFloat(total) AS total', 'toFloat(max) AS max');
+            ->with('l', 'toFloat(total) AS total', 'toFloat(max) AS max')
+            ->with('l', 'max', 'CASE
+                                    WHEN total < max THEN total
+                                    ELSE max
+                                END as total');
+        ;
 
         if (isset($filters['limit'])) {
 
@@ -567,8 +573,7 @@ class LinkModel
                                         END'
         );
 
-        $qb->returns('max')
-            ->limit(1);
+        $qb->returns('max');
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();
