@@ -895,12 +895,19 @@ class LinkModel
         return $link;
     }
 
-    public function getValidTypes($locale = 'en')
+    //TODO: Refactor this to use locale keys or move them to fields.yml
+    public function getValidTypes()
+    {
+        return array('Audio', 'Video', 'Image', 'Link', 'Creator');
+    }
+
+    //TODO: Only called from ContentFilterModel. Probably move logic and translator dependency there.
+    public function getValidTypesLabels($locale = 'en')
     {
         $this->translator->setLocale($locale);
 
         $types = array();
-        $keyTypes = array('Audio', 'Video', 'Image', 'Link', 'Creator');
+        $keyTypes = $this->getValidTypes();
 
         foreach ( $keyTypes as $type){
             $types[$type] = $this->translator->trans('types.'.lcfirst($type));
