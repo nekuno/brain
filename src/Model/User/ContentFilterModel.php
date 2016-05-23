@@ -47,7 +47,7 @@ class ContentFilterModel extends FilterModel
     protected function getChoiceOptions($locale)
     {
         return array(
-            'type' => $this->linkModel->getValidTypes($locale)
+            'type' => $this->linkModel->getValidTypesLabels($locale)
         );
     }
 
