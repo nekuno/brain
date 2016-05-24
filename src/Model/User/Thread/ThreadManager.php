@@ -589,21 +589,22 @@ class ThreadManager
 
     private function getDesiredFromProfile(array $profile)
     {
-        if (!isset($profile['orientation']) || !isset($profile['gender'])) {
-            return 'female';
-        }
-
-        if ($profile['orientation'] == 'heterosexual') {
-            return $profile['gender'] === 'male' ? 'female' : 'male';
-        }
-
-        if ($profile['orientation'] == 'homosexual') {
-            return $profile['gender'] === 'male' ? 'male' : 'female';
-        }
-
-        if ($profile['orientation'] == 'bisexual') {
-            return 'people';
-        }
+        //QS-1001: Changed for now
+//        if (!isset($profile['orientation']) || !isset($profile['gender'])) {
+//            return 'people';
+//        }
+//
+//        if ($profile['orientation'] == 'heterosexual') {
+//            return $profile['gender'] === 'male' ? 'female' : 'male';
+//        }
+//
+//        if ($profile['orientation'] == 'homosexual') {
+//            return $profile['gender'] === 'male' ? 'male' : 'female';
+//        }
+//
+//        if ($profile['orientation'] == 'bisexual') {
+//            return 'people';
+//        }
 
         return 'people';
     }
