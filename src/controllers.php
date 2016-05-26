@@ -247,7 +247,7 @@ $app->before(
         if ($app['user'] instanceof User) {
             /* @var $user User */
             $user = $app['user'];
-            if ($user->getUsername() === 'guest' && in_array($request->getMethod(), array('POST', 'PUT', 'DELETE'))) {
+            if ($user->isGuest() && in_array($request->getMethod(), array('POST', 'PUT', 'DELETE'))) {
                 throw new MethodNotAllowedHttpException(array('GET'), 'Method not supported');
             }
         }
