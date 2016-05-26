@@ -80,7 +80,7 @@ class OldQuestionComparePaginatedModel implements PaginatedInterface
             WHERE u.qnoow_id = {UserId} AND u2.qnoow_id = {UserId2}
             MATCH
             (u)-[:ANSWERS]-(answer:Answer)-[:IS_ANSWER_OF]-(question:Question)
-            WHERE HAS(answer.text_$locale)
+            WHERE EXISTS(answer.text_$locale)
         ";
         $query .= $commonQuery;
         $query .= "

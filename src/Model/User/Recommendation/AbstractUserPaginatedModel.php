@@ -78,8 +78,8 @@ abstract class AbstractUserPaginatedModel implements PaginatedInterface
             ->with(
                 'u, anyUser,
                 (CASE WHEN like IS NOT NULL THEN 1 ELSE 0 END) AS like,
-                (CASE WHEN HAS(m.matching_questions) THEN m.matching_questions ELSE 0 END) AS matching_questions,
-                (CASE WHEN HAS(s.similarity) THEN s.similarity ELSE 0 END) AS similarity'
+                (CASE WHEN EXISTS(m.matching_questions) THEN m.matching_questions ELSE 0 END) AS matching_questions,
+                (CASE WHEN EXISTS(s.similarity) THEN s.similarity ELSE 0 END) AS similarity'
             )
             ->match('(anyUser)<-[:PROFILE_OF]-(p:Profile)');
 
@@ -185,7 +185,7 @@ abstract class AbstractUserPaginatedModel implements PaginatedInterface
                         $distance = (int)$value['distance'];
                         $latitude = (float)$value['location']['latitude'];
                         $longitude = (float)$value['location']['longitude'];
-                        $conditions[] = "(NOT l IS NULL AND has(l.latitude) AND has(l.longitude) AND
+                        $conditions[] = "(NOT l IS NULL AND EXISTS(l.latitude) AND EXISTS(l.longitude) AND
                         " . $distance . " >= toInt(6371 * acos( cos( radians(" . $latitude . ") ) * cos( radians(l.latitude) ) * cos( radians(l.longitude) - radians(" . $longitude . ") ) + sin( radians(" . $latitude . ") ) * sin( radians(l.latitude) ) )))";
                         break;
                     case 'boolean':

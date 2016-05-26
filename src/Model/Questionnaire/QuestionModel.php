@@ -39,7 +39,7 @@ class QuestionModel
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(q:Question)')
-            ->where("HAS(q.text_$locale)")
+            ->where("EXISTS(q.text_$locale)")
             ->match('(q)<-[:IS_ANSWER_OF]-(a:Answer)')
             ->with('q', 'a')
             ->orderBy('id(a)')
@@ -88,7 +88,7 @@ class QuestionModel
             ->optionalMatch('(:User)-[:REPORTS]->(report:Question)')
             ->with('user', 'collect(answered) + collect(skip) + collect(report) AS excluded')
             ->match('(q3:Question)<-[:IS_ANSWER_OF]-(a2:Answer)')
-            ->where('NOT q3 IN excluded', "HAS(q3.text_$locale)")
+            ->where('NOT q3 IN excluded', "EXISTS(q3.text_$locale)")
             ->with('q3 AS question', 'collect(DISTINCT a2) AS answers')
             ->returns('question', 'answers')
             ->orderBy($sortByRanking && $this->sortByRanking() ? 'question.ranking DESC' : 'question.timestamp ASC')
@@ -127,7 +127,7 @@ class QuestionModel
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(q:Question)<-[:IS_ANSWER_OF]-(a:Answer)')
-            ->where('id(q) = { id }', "HAS(q.text_$locale)")
+            ->where('id(q) = { id }', "EXISTS(q.text_$locale)")
             ->setParameter('id', (integer)$id)
             ->with('q', 'a')
             ->orderBy('id(a)')
@@ -644,7 +644,7 @@ class QuestionModel
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(q:RegisterQuestion)')
-            ->where("HAS(q.text_$locale)")
+            ->where("EXISTS(q.text_$locale)")
             ->match('(q)<-[:IS_ANSWER_OF]-(a:Answer)')
             ->with('q', 'a')
             ->orderBy('id(a)')
@@ -672,7 +672,7 @@ class QuestionModel
             ->optionalMatch('(user)-[:ANSWERS]->(a:Answer)-[:IS_ANSWER_OF]->(answered:RegisterQuestion)')
             ->with('user', 'collect(answered) AS excluded')
             ->match('(q3:RegisterQuestion)<-[:IS_ANSWER_OF]-(a2:Answer)')
-            ->where('NOT q3 IN excluded', "HAS(q3.text_$locale)")
+            ->where('NOT q3 IN excluded', "EXISTS(q3.text_$locale)")
             ->with('q3 AS question', 'collect(DISTINCT a2) AS answers')
             ->returns('question', 'answers')
             ->limit(1);
