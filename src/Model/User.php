@@ -258,7 +258,7 @@ class User implements UserInterface, \JsonSerializable
 
     public function isGuest()
     {
-        return $this->username !== User::USER_GUEST_NAME;
+        return $this->username === User::USER_GUEST_NAME;
     }
 
     public function getSalt()
