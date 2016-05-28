@@ -12,6 +12,7 @@ class User implements UserInterface, \JsonSerializable
     const USER_STATUS_DISABLED = 'disabled';
     const USER_STATUS_INCOMPLETE = 'incomplete';
     const USER_STATUS_COMPLETE = 'complete';
+    const USER_GUEST_NAME = 'guest';
 
     protected $id;
 
@@ -253,6 +254,11 @@ class User implements UserInterface, \JsonSerializable
     public function getUsernameCanonical()
     {
         return $this->usernameCanonical;
+    }
+
+    public function isGuest()
+    {
+        return $this->username === User::USER_GUEST_NAME;
     }
 
     public function getSalt()

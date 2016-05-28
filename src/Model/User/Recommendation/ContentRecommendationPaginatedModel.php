@@ -3,35 +3,19 @@
 namespace Model\User\Recommendation;
 
 use Everyman\Neo4j\Node;
-use Everyman\Neo4j\Query\ResultSet;
 use Everyman\Neo4j\Query\Row;
 use Model\LinkModel;
 use Model\User\Affinity\AffinityModel;
-use Paginator\PaginatedInterface;
 use Model\Neo4j\GraphManager;
 use Service\Validator;
 
-class ContentRecommendationPaginatedModel implements PaginatedInterface
+class ContentRecommendationPaginatedModel extends AbstractContentPaginatedModel
 {
-    /**
-     * @var GraphManager
-     */
-    protected $gm;
 
     /**
      * @var AffinityModel
      */
     protected $am;
-
-    /**
-     * @var LinkModel
-     */
-    protected $lm;
-
-    /**
-     * @var Validator
-     */
-    protected $validator;
 
     /**
      * @param GraphManager $gm
@@ -41,10 +25,8 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
      */
     public function __construct(GraphManager $gm, AffinityModel $am, LinkModel $lm, Validator $validator)
     {
-        $this->gm = $gm;
+        parent::__construct($gm, $lm, $validator);
         $this->am = $am;
-        $this->lm = $lm;
-        $this->validator = $validator;
     }
 
     /**
@@ -57,7 +39,7 @@ class ContentRecommendationPaginatedModel implements PaginatedInterface
         $userId = isset($filters['id'])? $filters['id'] : null;
         $this->validator->validateUserId($userId);
 
-        return $this->validator->validateRecommendateContent($filters, $this->getChoices());
+        return parent::validateFilters($filters);
     }
 
     /**
@@ -247,76 +229,6 @@ $databaseSize = 2000;
     }
 
     /**
-     * Counts the total results from queryset.
-     * @param array $filters
-     * @throws \Exception
-     * @return int
-     */
-    public function countTotal(array $filters)
-    {
-        $id = $filters['id'];
-        $types = isset($filters['type']) ? $filters['type'] : array();
-        $count = 0;
-
-        $params = array(
-            'userId' => (integer)$id,
-        );
-
-        $qb = $this->gm->createQueryBuilder();
-
-        if (isset($filters['tag'])) {
-            $qb->match('(content:Link{processed: 1})-[:TAGGED]->(filterTag:Tag)')
-                ->where('filterTag.name IN { filterTags } ');
-            $params['filterTags'] = $filters['tag'];
-        } else {
-            $qb->match('(content:Link{processed: 1})');
-        }
-        $qb->filterContentByType($types, 'content');
-
-        $qb->with('content');
-        $qb->optionalMatch('(user:User {qnoow_id: { userId }})-[l:LIKES|:DISLIKES]->(content)');
-        $qb->returns('count(content)-count(distinct(l)) AS total');
-
-        $qb->setParameters($params);
-
-        $query = $qb->getQuery();
-        $result = $query->getResultSet();
-
-        foreach ($result as $row) {
-            $count = $row['total'];
-        }
-
-        return $count;
-    }
-
-    /**
-     * @param $result ResultSet
-     * @param $id
-     * @return array
-     */
-    public function buildResponseFromResult($result, $id)
-    {
-        $response = array('items' => array());
-
-        /** @var Row $row */
-        foreach ($result as $row) {
-
-            $content = array();
-            /** @var Node $contentNode */
-            $contentNode = $row->offsetGet('content');
-
-            $content['content'] = $this->lm->buildLink($contentNode);
-
-            $content = array_merge($content, $this->completeContent($row, $contentNode, $id));
-
-            $response['items'][] = $content;
-
-        }
-
-        return $response;
-    }
-
-    /**
      * @param $limit int
      * @param $response array
      * @return int
@@ -340,43 +252,7 @@ $databaseSize = 2000;
      */
     protected function completeContent($row = null, $contentNode = null, $id = null, $contentId = null)
     {
-        $content = array();
-
-        $content['synonymous'] = array();
-
-        if ($row && $row->offsetGet('synonymous')) {
-            foreach ($row->offsetGet('synonymous') as $synonymousLink) {
-                /* @var $synonymousLink Node */
-                $synonymous = array();
-                $synonymous['id'] = $synonymousLink->getId();
-                $synonymous['url'] = $synonymousLink->getProperty('url');
-                $synonymous['title'] = $synonymousLink->getProperty('title');
-                $synonymous['thumbnail'] = $synonymousLink->getProperty('thumbnail');
-
-                $content['synonymous'][] = $synonymous;
-            }
-        }
-
-        $content['tags'] = array();
-        if (isset($row['tags'])) {
-            foreach ($row['tags'] as $tag) {
-                $content['tags'][] = $tag;
-            }
-        }
-
-        $content['types'] = array();
-        if (isset($row['types'])) {
-            foreach ($row['types'] as $type) {
-                $content['types'][] = $type;
-            }
-        }
-
-        if ($contentNode && $contentNode->getProperty('embed_type')) {
-            $content['embed']['type'] = $contentNode->getProperty('embed_type');
-            $content['embed']['id'] = $contentNode->getProperty('embed_id');
-        }
-
-        $affinity = array('affinity' => 0);
+        $content = parent::completeContent($row, $contentNode);
 
         if (!$contentId) {
             if ($contentNode) {
@@ -389,15 +265,12 @@ $databaseSize = 2000;
 
         if ($contentId && $id) {
             $affinity = $this->am->getAffinity((integer)$id, $contentId);
+        } else {
+            $affinity = array('affinity' => 0);
         }
 
         $content['match'] = $affinity['affinity'];
 
         return $content;
-    }
-
-    protected function getChoices()
-    {
-        return array('type' => $this->lm->getValidTypes());
     }
 } 
