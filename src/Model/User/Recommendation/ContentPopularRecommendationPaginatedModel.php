@@ -76,9 +76,4 @@ class ContentPopularRecommendationPaginatedModel extends AbstractContentPaginate
         }
         return $response;
     }
-    /**
-     * Popularity is (likes / max_likes)^3 , so we revert that
-     * {@inheritDoc}
-     */
-
 }
