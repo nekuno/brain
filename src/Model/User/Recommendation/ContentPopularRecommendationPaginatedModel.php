@@ -28,9 +28,8 @@ class ContentPopularRecommendationPaginatedModel extends AbstractContentPaginate
 
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match('(content:Link)')
+        $qb->matchContentByType($types, 'content')
             ->where('content.processed = 1');
-        $qb->filterContentByType($types, 'content');
 
         if (isset($filters['tag'])) {
             $qb->match('(content)-[:TAGGED]->(filterTag:Tag)')
