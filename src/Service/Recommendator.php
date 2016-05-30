@@ -162,7 +162,7 @@ class Recommendator
 
                 if ($user->isGuest())
                 {
-                    return $this->getPopularContentRecommendation($filters);
+                    return $this->getPopularContentRecommendation($filters, $request);
                 }
 
                 return $this->getContentRecommendation($filters, $request);
@@ -186,7 +186,7 @@ class Recommendator
 
                 if ($user->isGuest())
                 {
-                    return $this->getPopularUserRecommendation($filters);
+                    return $this->getPopularUserRecommendation($filters, $request);
                 }
 
                 return $this->getUserRecommendation($filters, $request);
