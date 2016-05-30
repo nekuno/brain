@@ -28,9 +28,8 @@ class ContentPopularRecommendationPaginatedModel extends AbstractContentPaginate
 
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match('(content:Link)')
+        $qb->matchContentByType($types, 'content')
             ->where('content.processed = 1');
-        $qb->filterContentByType($types, 'content');
 
         if (isset($filters['tag'])) {
             $qb->match('(content)-[:TAGGED]->(filterTag:Tag)')
@@ -48,7 +47,7 @@ class ContentPopularRecommendationPaginatedModel extends AbstractContentPaginate
                 'labels(content) as types',
                 'COLLECT (DISTINCT synonymousLink) AS synonymous'
             )
-            ->orderBy('1 - content.popularity ASC')
+            ->orderBy('content.unpopularity ASC')
             ->skip('{ offset }')
             ->limit('{ limit }');
 
@@ -63,4 +62,18 @@ class ContentPopularRecommendationPaginatedModel extends AbstractContentPaginate
         //Works with ContentPaginator (accepts $result), not Paginator (accepts $result['items'])
         return $response['items'];
     }
-} 
+
+    /**
+     * Popularity = (likes / max_likes)^3 . We reverse that exponent for a sensible output to the user.
+     * {@inheritDoc}
+     */
+    public function buildResponseFromResult($result, $id = null)
+    {
+        $response = parent::buildResponseFromResult($result, $id);
+
+        foreach ($response['items'] as &$item){
+            $item['match'] = isset($item['content']) && isset($item['content']['popularity']) ? pow(floatval($item['content']['popularity']), 1/3) : 0;
+        }
+        return $response;
+    }
+}
