@@ -16,6 +16,8 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 class Validator
 {
     const MAX_TAGS_AND_CHOICE_LENGTH = 15;
+    const LATITUDE_REGEX = '/^-?([1-8]?[0-9]|[1-9]0)\.{1}\d+$/';
+    const LONGITUDE_REGEX = '/^-?([1]?[0-7][1-9]|[1]?[1-8][0]|[1-9]?[0-9])\.{1}\d+$/';
 
     /**
      * @var array
@@ -325,12 +327,12 @@ class Validator
             if (!isset($dataValue['address']) || !$dataValue['address'] || !is_string($dataValue['address'])) {
                 $fieldErrors[] = 'Address required';
             } else {
-                if (!isset($dataValue['latitude']) || !preg_match("/^-?([1-8]?[0-9]|[1-9]0)\.{1}\d+$/", $dataValue['latitude'])) {
+                if (!isset($dataValue['latitude']) || !preg_match(Validator::LATITUDE_REGEX, $dataValue['latitude'])) {
                     $fieldErrors[] = 'Latitude not valid';
                 } elseif (!is_float($dataValue['latitude'])) {
                     $fieldErrors[] = 'Latitude must be float';
                 }
-                if (!isset($dataValue['longitude']) || !preg_match("/^-?([1]?[0-7][1-9]|[1]?[1-8][0]|[1-9]?[0-9])\.{1}\d+$/", $dataValue['longitude'])) {
+                if (!isset($dataValue['longitude']) || !preg_match(Validator::LONGITUDE_REGEX, $dataValue['longitude'])) {
                     $fieldErrors[] = 'Longitude not valid';
                 } elseif (!is_float($dataValue['longitude'])) {
                     $fieldErrors[] = 'Longitude must be float';
