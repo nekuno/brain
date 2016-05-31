@@ -10,6 +10,7 @@ use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
 use Model\User\Filters\FilterUsersManager;
 use Manager\UserManager;
+use Service\Validator;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -228,14 +229,14 @@ class GroupModel
             }
             if (!array_key_exists('latitude', $data['location'])) {
                 $errors['latitude'] = 'Latitude required';
-            } elseif (isset($data['location']['latitude']) && !preg_match("/^-?([1-8]?[1-9]|[1-9]0)\.{1}\d+$/", $data['location']['latitude'])) {
+            } elseif (isset($data['location']['latitude']) && !preg_match(Validator::LATITUDE_REGEX, $data['location']['latitude'])) {
                 $errors['latitude'] = 'Latitude not valid';
             } elseif (isset($data['location']['latitude']) && !is_float($data['location']['latitude'])) {
                 $errors['latitude'] = 'Latitude must be float';
             }
             if (!array_key_exists('longitude', $data['location'])) {
                 $errors['longitude'] = 'Longitude required';
-            } elseif (isset($data['location']['longitude']) && !preg_match("/^-?([1-8]?[1-9]|[1-9]0)\.{1}\d+$/", $data['location']['longitude'])) {
+            } elseif (isset($data['location']['longitude']) && !preg_match(Validator::LONGITUDE_REGEX, $data['location']['longitude'])) {
                 $errors['longitude'] = 'Longitude not valid';
             } elseif (isset($data['location']['longitude']) && !is_float($data['location']['longitude'])) {
                 $errors['longitude'] = 'Longitude must be float';

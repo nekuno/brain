@@ -9,6 +9,7 @@ use Everyman\Neo4j\Relationship;
 use Everyman\Neo4j\Query\Row;
 use Everyman\Neo4j\Label;
 use Model\Exception\ValidationException;
+use Service\Validator;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -266,12 +267,12 @@ class ProfileModel
                                 if (!isset($fieldValue['address']) || !$fieldValue['address'] || !is_string($fieldValue['address'])) {
                                     $fieldErrors[] = 'Address required';
                                 } else {
-                                    if (!isset($fieldValue['latitude']) || !preg_match("/^-?([1-8]?[0-9]|[1-9]0)\.{1}\d+$/", $fieldValue['latitude'])) {
+                                    if (!isset($fieldValue['latitude']) || !preg_match(Validator::LATITUDE_REGEX, $fieldValue['latitude'])) {
                                         $fieldErrors[] = 'Latitude not valid';
                                     } elseif (!is_float($fieldValue['latitude'])) {
                                         $fieldErrors[] = 'Latitude must be float';
                                     }
-                                    if (!isset($fieldValue['longitude']) || !preg_match("/^-?([1]?[0-7][1-9]|[1]?[1-8][0]|[1-9]?[0-9])\.{1}\d+$/", $fieldValue['longitude'])) {
+                                    if (!isset($fieldValue['longitude']) || !preg_match(Validator::LONGITUDE_REGEX, $fieldValue['longitude'])) {
                                         $fieldErrors[] = 'Longitude not valid';
                                     } elseif (!is_float($fieldValue['longitude'])) {
                                         $fieldErrors[] = 'Longitude must be float';
