@@ -274,7 +274,8 @@ class GroupModel
         }
 
         $qb->with('g')
-            ->merge('(l:Location {address: { address }, latitude: { latitude }, longitude: { longitude }, locality: { locality }, country: { country }})<-[:LOCATION]-(g)')
+            ->merge('(l:Location)<-[:LOCATION]-(g)')
+            ->set('l.address = { address }', 'l.latitude = { latitude }', 'l.longitude = { longitude }', 'l.locality = { locality }', 'l.country = { country }')
             ->setParameters(
                 array(
                     'name' => $data['name'],
