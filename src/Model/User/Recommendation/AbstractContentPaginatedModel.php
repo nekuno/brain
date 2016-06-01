@@ -114,7 +114,7 @@ abstract class AbstractContentPaginatedModel implements PaginatedInterface
 
             $content['content'] = $this->lm->buildLink($contentNode);
 
-            $content = array_merge($content, $this->completeContent($row, $contentNode));
+            $content = array_merge($content, $this->completeContent($row, $contentNode, $id));
 
             $response['items'][] = $content;
 
@@ -131,9 +131,10 @@ abstract class AbstractContentPaginatedModel implements PaginatedInterface
     /**
      * @param $row Row
      * @param $contentNode Node
+     * @param null $id
      * @return array
      */
-    protected function completeContent($row, $contentNode){
+    protected function completeContent($row, $contentNode, $id = null){
         $content = array();
 
         $content['synonymous'] = array();
