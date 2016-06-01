@@ -61,14 +61,15 @@ abstract class AbstractContentPaginatedModel implements PaginatedInterface
 
         $qb = $this->gm->createQueryBuilder();
 
+        $qb->matchContentByType($types, 'content')
+            ->where('content.processed = 1');
+
         if (isset($filters['tag'])) {
-            $qb->match('(content:Link{processed: 1})-[:TAGGED]->(filterTag:Tag)')
+            $qb->match('(content)-[:TAGGED]->(filterTag:Tag)')
                 ->where('filterTag.name IN { filterTags } ');
+
             $params['filterTags'] = $filters['tag'];
-        } else {
-            $qb->match('(content:Link{processed: 1})');
         }
-        $qb->filterContentByType($types, 'content');
 
         $qb->with('content');
         $qb->optionalMatch('(user:User {qnoow_id: { userId }})-[l:LIKES|:DISLIKES]->(content)');
@@ -114,7 +115,7 @@ abstract class AbstractContentPaginatedModel implements PaginatedInterface
 
             $content['content'] = $this->lm->buildLink($contentNode);
 
-            $content = array_merge($content, $this->completeContent($row, $contentNode));
+            $content = array_merge($content, $this->completeContent($row, $contentNode, $id));
 
             $response['items'][] = $content;
 
@@ -131,9 +132,10 @@ abstract class AbstractContentPaginatedModel implements PaginatedInterface
     /**
      * @param $row Row
      * @param $contentNode Node
+     * @param null $id
      * @return array
      */
-    protected function completeContent($row, $contentNode){
+    protected function completeContent($row, $contentNode, $id = null){
         $content = array();
 
         $content['synonymous'] = array();
