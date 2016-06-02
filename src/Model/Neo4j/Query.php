@@ -35,8 +35,7 @@ class Query extends \Everyman\Neo4j\Cypher\Query implements LoggerAwareInterface
                 $this->logger->error($message);
             }
             if ($this->logger instanceof Logger){
-                $this->logger->addRecord(Logger::ERROR, $message, array('source' => Neo4jHandler::NEO4J_SOURCE));
-                $this->logger->addRecord(Logger::ERROR, $e->getTraceAsString(), array('source' => Neo4jHandler::NEO4J_SOURCE));
+                $this->logger->addRecord(Logger::ERROR, $e->getTraceAsString(), array('source' => Neo4jHandler::NEO4J_SOURCE, 'query' => $this));
             }
 
             $query = str_replace(array("\n", "\r", '"'), array(' ', ' ', "'"), $this->getExecutableQuery());

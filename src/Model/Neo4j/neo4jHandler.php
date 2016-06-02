@@ -61,7 +61,7 @@ class Neo4jHandler extends AbstractHandler
         if (isset($record['context']['query']) && $record['context']['query'] instanceof Query) {
             /** @var Query $query */
             $query = $record['context']['query'];
-            $string .= 'Query:' . $query->getExecutableQuery();
+            $string .= PHP_EOL . 'Query:' . $query->getExecutableQuery();
         }
         
         $fp = fopen($this->path, "a+");
