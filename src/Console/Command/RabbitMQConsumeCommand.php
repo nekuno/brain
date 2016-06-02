@@ -74,7 +74,7 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
         /* @var $dispatcher EventDispatcher */
         $dispatcher = $this->app['dispatcher'];
 
-        $dispatcher->addSubscriber(new ExceptionLoggerSubscriber());
+        $dispatcher->addSubscriber(new ExceptionLoggerSubscriber($this->app['monolog']));
 
         switch ($consumer) {
 
