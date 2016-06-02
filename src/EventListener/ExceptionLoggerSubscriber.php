@@ -9,7 +9,6 @@ namespace EventListener;
 use Event\ExceptionEvent;
 use Model\Neo4j\Neo4jException;
 use Model\Neo4j\Neo4jHandler;
-use Model\Neo4j\Query;
 use Monolog\Logger;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
@@ -46,14 +45,13 @@ class ExceptionLoggerSubscriber implements EventSubscriberInterface, LoggerAware
 
         $context = array('source' => Neo4jHandler::NEO4J_SOURCE,
             'process' => $process,
-            'sublevel' => Neo4jHandler::SUBLEVEL_ERROR
         );
 
         if ($exception instanceof Neo4jException) {
             $context['query'] = $exception->getQuery();
         }
 
-        $this->logger->addRecord(Logger::ERROR, $exception->getMessage(),$context);
+        $this->logger->addRecord(Logger::WARNING, $exception->getMessage(),$context);
 
     }
 
@@ -65,7 +63,6 @@ class ExceptionLoggerSubscriber implements EventSubscriberInterface, LoggerAware
 
         $context = array('source' => Neo4jHandler::NEO4J_SOURCE,
                         'process' => $process,
-                        'sublevel' => Neo4jHandler::SUBLEVEL_WARNING
             );
 
         if ($exception instanceof Neo4jException) {

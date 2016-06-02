@@ -25,7 +25,6 @@ class Query extends \Everyman\Neo4j\Cypher\Query implements LoggerAwareInterface
      */
     public function getResultSet()
     {
-
         $now = microtime(true);
         try {
             $result = parent::getResultSet();
@@ -56,8 +55,17 @@ class Query extends \Everyman\Neo4j\Cypher\Query implements LoggerAwareInterface
         }
         $time = round(microtime(true) - $now, 3) * 1000;
         $message = sprintf('Executed Neo4j query (took %s ms): "%s"', $time, $this->getExecutableQuery());
+
         if ($this->logger instanceof LoggerInterface) {
-            1000 <= $time ? $this->logger->warning($message) : $this->logger->debug($message);
+            if (1000 <= $time) {
+                $this->logger->warning($message);
+                if ($this->logger instanceof Logger){
+                    $this->logger->addRecord(Logger::WARNING, 'Query too slow', array('source' => Neo4jHandler::NEO4J_SOURCE, 'query' => $this, 'time' => $time));
+                }
+            } else {
+                $this->logger->debug($message);
+            };
+
         }
 
         return $result;
@@ -66,7 +74,6 @@ class Query extends \Everyman\Neo4j\Cypher\Query implements LoggerAwareInterface
 
     public function getExecutableQuery()
     {
-
         $query = $this->getQuery();
 
         foreach ($this->getParameters() as $parameter => $value) {
