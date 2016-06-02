@@ -5,7 +5,7 @@ namespace Provider;
 use Everyman\Neo4j\Client;
 use Model\Neo4j\Constraints;
 use Model\Neo4j\GraphManager;
-use Model\Neo4j\neo4jHandler;
+use Model\Neo4j\Neo4jHandler;
 use Monolog\Logger;
 use Psr\Log\LoggerAwareInterface;
 use Silex\Application;
@@ -58,7 +58,7 @@ class Neo4jPHPServiceProvider implements ServiceProviderInterface
         
         $app['neo4j.logger.handler'] = $app->share(
             function ($app) {
-                return new neo4jHandler(Logger::ERROR);
+                return new Neo4jHandler(Logger::ERROR);
             }
         );
         

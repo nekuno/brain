@@ -9,7 +9,7 @@ namespace Model\Neo4j;
 use Monolog\Handler\AbstractHandler;
 use Monolog\Logger;
 
-class neo4jHandler extends AbstractHandler
+class Neo4jHandler extends AbstractHandler
 {
     const NEO4J_SOURCE = 'neo4j';
     
