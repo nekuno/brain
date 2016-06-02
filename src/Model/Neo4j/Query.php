@@ -3,6 +3,7 @@
 namespace Model\Neo4j;
 
 use Model\Exception\ValidationException;
+use Monolog\Logger;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 use Everyman\Neo4j\Exception;
@@ -33,6 +34,11 @@ class Query extends \Everyman\Neo4j\Cypher\Query implements LoggerAwareInterface
             if ($this->logger instanceof LoggerInterface) {
                 $this->logger->error($message);
             }
+            if ($this->logger instanceof Logger){
+                $this->logger->addRecord(Logger::ERROR, $message, array('source' => neo4jHandler::NEO4J_SOURCE));
+                $this->logger->addRecord(Logger::ERROR, $e->getTraceAsString(), array('source' => neo4jHandler::NEO4J_SOURCE));
+            }
+
             $query = str_replace(array("\n", "\r", '"'), array(' ', ' ', "'"), $this->getExecutableQuery());
 
             $data = $e->getData();
