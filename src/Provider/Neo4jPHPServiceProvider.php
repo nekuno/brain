@@ -42,7 +42,7 @@ class Neo4jPHPServiceProvider implements ServiceProviderInterface
                 $manager = new GraphManager($app['neo4j.client']);
 
                 if ($app['env'] == 'dev' && $manager instanceof LoggerAwareInterface) {
-                    $manager->setLogger($app['logger']);
+                    $manager->setLogger($app['monolog']);
                 }
 
                 return $manager;
