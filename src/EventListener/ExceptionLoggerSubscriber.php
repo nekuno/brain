@@ -8,20 +8,25 @@ namespace EventListener;
 
 use Event\ExceptionEvent;
 use Model\Neo4j\Neo4jException;
-use Model\Neo4j\Query;
+use Model\Neo4j\Neo4jHandler;
+use Monolog\Logger;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-class ExceptionLoggerSubscriber implements EventSubscriberInterface
+class ExceptionLoggerSubscriber implements EventSubscriberInterface, LoggerAwareInterface
 {
-
+    protected $logger;
+    
     protected $path;
 
     /**
      * ExceptionLoggerSubscriber constructor.
+     * @param Logger $logger
      */
-    public function __construct()
+    public function __construct(Logger $logger)
     {
-        $this->path = __DIR__ . '/../../var/logs/errors.log';
+        $this->logger = $logger;
     }
 
     public static function getSubscribedEvents()
@@ -35,56 +40,46 @@ class ExceptionLoggerSubscriber implements EventSubscriberInterface
     public function onError(ExceptionEvent $event)
     {
         $exception = $event->getException();
-        $datetime = $event->getDatetime();
+//        $datetime = $event->getDatetime();
         $process = $event->getProcess();
 
-        $string = '-------------------EXCEPTION-------------------' . PHP_EOL .
-            'Time: ' . $datetime->format('Y-m-d H:i:s') . PHP_EOL;
-        if ($process) {
-            $string .= 'While: ' . $process . PHP_EOL;
-        }
-        $string .= 'Error message:' . $exception->getMessage() . PHP_EOL;
+        $context = array('source' => Neo4jHandler::NEO4J_SOURCE,
+            'process' => $process,
+        );
+
         if ($exception instanceof Neo4jException) {
-            $string .= 'Query:' . $exception->getQuery();
+            $context['query'] = $exception->getQuery();
         }
 
-        $this->writeParagraph($string);
+        $this->logger->addRecord(Logger::WARNING, $exception->getMessage(),$context);
 
     }
 
     public function onWarning(ExceptionEvent $event)
     {
         $exception = $event->getException();
-        $datetime = $event->getDatetime();
+//        $datetime = $event->getDatetime();
         $process = $event->getProcess();
 
-        $string = '-------------------WARNING-------------------' . PHP_EOL .
-            'Time: ' . $datetime->format('Y-m-d H:i:s') . PHP_EOL;
-        if ($process) {
-            $string .= 'While: ' . $process . PHP_EOL;
-        }
+        $context = array('source' => Neo4jHandler::NEO4J_SOURCE,
+                        'process' => $process,
+            );
 
-        $string .= 'Error message:' . $exception->getMessage() . PHP_EOL;
         if ($exception instanceof Neo4jException) {
-            /** @var Query $query */
-            $query = $exception->getQuery();
-            $string .= 'Query:' . $query->getExecutableQuery();
+            $context['query'] = $exception->getQuery();
         }
-
-        $this->writeParagraph($string);
+        
+        $this->logger->addRecord(Logger::ERROR, $exception->getMessage(),$context);
     }
 
-    private function writeParagraph($string)
+    /**
+     * Sets a logger instance on the object
+     *
+     * @param LoggerInterface $logger
+     * @return null
+     */
+    public function setLogger(LoggerInterface $logger)
     {
-        $fp = fopen($this->path, "a+");
-        if (flock($fp, LOCK_EX)) {
-            fwrite($fp, PHP_EOL);
-            fwrite($fp, $string);
-            fwrite($fp, PHP_EOL);
-        } else {
-            //couldn´t block the file
-            return false;
-        };
-        return true;
+        $this->logger = $logger;
     }
 }

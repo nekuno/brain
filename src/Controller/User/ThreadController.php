@@ -30,24 +30,9 @@ class ThreadController
     {
         $thread = $app['users.threads.manager']->getById($id);
 
-        /** @var Recommendator $recommendator */
-        $recommendator = $app['recommendator.service'];
-
-        try {
-            $result = $recommendator->getRecommendationFromThreadAndRequest($thread, $request);
-
-            if ($request->get('offset') == 0) {
-                $app['users.threads.manager']->cacheResults($thread,
-                    array_slice($result['items'], 0, 5),
-                    $result['pagination']['total']);
-            }
-
-        } catch (\Exception $e) {
-            if ($app['env'] == 'dev') {
-                throw $e;
-            }
-
-            return $app->json($e->getMessage(), 500);
+        $result = $this->getRecommendations($app, $thread, $request);
+        if (!is_array($result)) {
+            return $app->json($result, 500);
         }
 
         return $app->json($result);
@@ -89,22 +74,8 @@ class ThreadController
     {
         $thread = $app['users.threads.manager']->create($user->getId(), $request->request->all());
 
-        /** @var Recommendator $recommendator */
-        $recommendator = $app['recommendator.service'];
-        try {
-            $result = $recommendator->getRecommendationFromThreadAndRequest($thread, $request);
-            $app['users.threads.manager']->cacheResults($thread,
-                array_slice($result['items'], 0, 5),
-                $result['pagination']['total']);
+        $this->getRecommendations($app, $thread, $request);
 
-            $thread = $app['users.threads.manager']->getById($thread->getId());
-        } catch (\Exception $e) {
-            if ($app['env'] == 'dev') {
-                throw $e;
-            }
-
-            return $app->json($e->getMessage(), 500);
-        }
         return $app->json($thread, 201);
     }
 
@@ -113,7 +84,17 @@ class ThreadController
         $threadManager = $app['users.threads.manager'];
 
         $threads = $threadManager->getDefaultThreads($user);
-        $createdThreads = $threadManager->createBatchForUser($user->getId(), $threads);
+        try{
+            $createdThreads = $threadManager->createBatchForUser($user->getId(), $threads);
+        } catch (\Exception $e) {
+            sleep(5);
+            $createdThreads = $threadManager->createBatchForUser($user->getId(), $threads);
+        }
+
+        if (count($createdThreads) < count ($threads) ) {
+            sleep(5);
+            $createdThreads = $threadManager->createBatchForUser($user->getId(), $threads);
+        }
 
         return $app->json($createdThreads, 201);
     }
@@ -130,21 +111,7 @@ class ThreadController
     {
         $thread = $app['users.threads.manager']->update($id, $user->getId(), $request->request->all());
 
-        /** @var Recommendator $recommendator */
-        $recommendator = $app['recommendator.service'];
-
-        try {
-            $result = $recommendator->getRecommendationFromThreadAndRequest($thread, $request);
-
-            $app['users.threads.manager']->cacheResults($thread,
-                array_slice($result['items'], 0, 5),
-                $result['pagination']['total']);
-
-        } catch (\Exception $e) {
-            if ($app['env'] == 'dev') {
-                throw $e;
-            }
-        }
+        $this->getRecommendations($app, $thread, $request);
 
         $thread = $app['users.threads.manager']->getById($thread->getId());
 
@@ -170,5 +137,34 @@ class ThreadController
         }
 
         return $app->json($relationships);
+    }
+
+    /**
+     * @param $app
+     * @param $thread
+     * @param $request
+     * @return array|string string if got an exception in production environment
+     * @throws \Exception
+     */
+    protected function getRecommendations($app, $thread, $request) {
+        /** @var Recommendator $recommendator */
+        $recommendator = $app['recommendator.service'];
+        try {
+            $result = $recommendator->getRecommendationFromThreadAndRequest($thread, $request);
+
+            $app['users.threads.manager']->cacheResults($thread,
+                array_slice($result['items'], 0, 5),
+                $result['pagination']['total']);
+
+        } catch (\Exception $e) {
+            if ($app['env'] == 'dev') {
+                throw $e;
+            } else {
+                return $e->getMessage();
+
+            }
+        }
+
+        return $result;
     }
 }
