@@ -84,7 +84,17 @@ class ThreadController
         $threadManager = $app['users.threads.manager'];
 
         $threads = $threadManager->getDefaultThreads($user);
-        $createdThreads = $threadManager->createBatchForUser($user->getId(), $threads);
+        try{
+            $createdThreads = $threadManager->createBatchForUser($user->getId(), $threads);
+        } catch (\Exception $e) {
+            sleep(5);
+            $createdThreads = $threadManager->createBatchForUser($user->getId(), $threads);
+        }
+
+        if (count($createdThreads) < count ($threads) ) {
+            sleep(5);
+            $createdThreads = $threadManager->createBatchForUser($user->getId(), $threads);
+        }
 
         return $app->json($createdThreads, 201);
     }
