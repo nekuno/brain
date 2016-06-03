@@ -79,7 +79,7 @@ class ServicesServiceProvider implements ServiceProviderInterface
             function (Application $app) {
                 return new UserAggregator(
                     $app['users.manager'], $app['users.ghostuser.manager'], $app['users.socialprofile.manager'],
-                    $app['api_consumer.resource_owner_factory'], $app['users.lookup.model'], $app['amqpManager.service']
+                    $app['api_consumer.resource_owner_factory'], $app['socialNetwork.service'], $app['users.lookup.model'], $app['amqpManager.service']
                 );
             }
         );

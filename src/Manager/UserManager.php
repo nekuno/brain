@@ -344,10 +344,11 @@ class UserManager implements PaginatedInterface
 
     /**
      * @param bool $includeGhost
+     * @param integer $groupId
      * @return array
      * @throws Neo4jException
      */
-    public function getAllCombinations($includeGhost = true)
+    public function getAllCombinations($includeGhost = true, $groupId = null)
     {
 
         $conditions = array('u1.qnoow_id < u2.qnoow_id');
@@ -356,9 +357,20 @@ class UserManager implements PaginatedInterface
             $conditions[] = 'NOT u2:' . GhostUserManager::LABEL_GHOST_USER;
         }
         $qb = $this->gm->createQueryBuilder();
-        $qb->match('(u1:User), (u2:User)')
-            ->where($conditions)
-            ->returns('u1.qnoow_id, u2.qnoow_id');
+
+        if ($groupId) {
+            $qb->setParameter('groupId', (integer)$groupId);
+            $qb->match('(g:Group)')
+                ->where('id(g) = {groupId}')
+                ->with('g')
+                ->limit(1);
+            $qb->match('(u1)-[:BELONGS_TO]-(g), (u2)-[:BELONGS_TO]-(g)');
+        } else {
+            $qb->match('(u1:User), (u2:User)');
+        }
+        $qb->where($conditions);
+
+        $qb->returns('u1.qnoow_id, u2.qnoow_id');
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();
