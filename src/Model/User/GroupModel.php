@@ -446,10 +446,10 @@ class GroupModel
         return $return;
     }
 
-    public function addUser($id, $userId, $includeGhosts = false)
+    public function addUser($id, $userId)
     {
         $this->getById($id);
-        $this->um->getById($userId, $includeGhosts);
+        $this->um->getById($userId);
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(g:Group)')
@@ -462,15 +462,43 @@ class GroupModel
             ->returns('r');
 
         $query = $qb->getQuery();
-        $query->getResultSet();
+	    $result = $query->getResultSet();
 
-        $group = $this->getById($id);
-        $user = $this->um->getById($userId, $includeGhosts);
+	    if ($result->count() > 0) {
+		    $group = $this->getById($id);
+		    $user = $this->um->getById($userId);
 
-	    if (!$includeGhosts) {
-            $this->dispatcher->dispatch(\AppEvents::GROUP_ADDED, new GroupEvent($group, $user));
+		    $this->dispatcher->dispatch(\AppEvents::GROUP_ADDED, new GroupEvent($group, $user));
+		    return true;
 	    }
+
+	    return false;
     }
+
+	public function addGhostUser($id, $userId)
+	{
+		$this->getById($id);
+		$this->um->getById($userId, true);
+
+		$qb = $this->gm->createQueryBuilder();
+		$qb->match('(g:Group)')
+			->where('id(g) = { id }')
+			->setParameter('id', (integer)$id)
+			->match('(u:User { qnoow_id: { userId } })')
+			->setParameter('userId', (integer)$userId)
+			->merge('(u)-[r:BELONGS_TO]->(g)')
+			->set('r.created = timestamp()')
+			->returns('r');
+
+		$query = $qb->getQuery();
+		$result = $query->getResultSet();
+
+		if ($result->count() > 0) {
+			return true;
+		}
+
+		return false;
+	}
 
     public function removeUser($id, $userId)
     {

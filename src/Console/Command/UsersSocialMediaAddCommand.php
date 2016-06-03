@@ -68,7 +68,7 @@ class UsersSocialMediaAddCommand extends ApplicationAwareCommand
                 continue;
             }
 
-            $output->writeln('Enqueuing fetching from that resource as channel');
+            $output->writeln('Enqueuing fetching from that resource as channel if needed');
             $userAggregator->enqueueChannel($socialProfiles, $username);
 
             $amqpManager = $this->app['amqpManager.service'];
@@ -94,7 +94,7 @@ class UsersSocialMediaAddCommand extends ApplicationAwareCommand
 			        $output->writeln(sprintf('Group with id %s does not exist', $groupId));
 		        }
 
-			    $this->app['users.groups.model']->addUser($groupId, $id, true);
+			    $this->app['users.groups.model']->addGhostUser($groupId, $id);
 	        }
 
             $output->writeln('Success!');
