@@ -357,13 +357,18 @@ class UserManager implements PaginatedInterface
             $conditions[] = 'NOT u2:' . GhostUserManager::LABEL_GHOST_USER;
         }
         $qb = $this->gm->createQueryBuilder();
-        $qb->match('(u1:User), (u2:User)')
-            ->where($conditions);
 
         if ($groupId) {
-            $qb->with('u1, u2');
+            $qb->setParameter('groupId', (integer)$groupId);
+            $qb->match('(g:Group)')
+                ->where('id(g) = {groupId}')
+                ->with('g')
+                ->limit(1);
             $qb->match('(u1)-[:BELONGS_TO]-(g), (u2)-[:BELONGS_TO]-(g)');
+        } else {
+            $qb->match('(u1:User), (u2:User)');
         }
+        $qb->where($conditions);
 
         $qb->returns('u1.qnoow_id, u2.qnoow_id');
 
