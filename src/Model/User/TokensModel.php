@@ -21,6 +21,7 @@ class TokensModel
     CONST TWITTER = 'twitter';
     CONST GOOGLE = 'google';
     CONST SPOTIFY = 'spotify';
+    CONST LINKEDIN = 'linkedin';
 
     /**
      * @var EventDispatcher
