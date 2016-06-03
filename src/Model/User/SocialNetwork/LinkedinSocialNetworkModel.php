@@ -24,12 +24,20 @@ class LinkedinSocialNetworkModel extends SocialNetworkModel
             ->setParameter('id', (int)$id)
             ->with('u');
         foreach($data['skills'] as $index => $skill) {
-            $qb->merge('(u)-[:HAS_SKILL]->(:Skill {name: { skill' . $index . ' }})')
+            if (null == $skill){
+                continue;
+            }
+            $qb->merge('(skill :Skill {name: { skill' . $index . ' }})');
+            $qb->merge('(u)-[:HAS_SKILL]->(skill)')
                 ->setParameter('skill' . $index, $skill)
                 ->with('u');
         }
         foreach($data['languages'] as $index => $language) {
-            $qb->merge('(u)-[:SPEAKS_LANGUAGE]->(:Language {name: { language' . $index . ' }})')
+            if (null == $language){
+                continue;
+            }
+            $qb->merge('(language :Language {name: { language' . $index . ' }})');
+            $qb->merge('(u)-[:SPEAKS_LANGUAGE]->(language)')
                 ->setParameter('language' . $index, $language)
                 ->with('u');
         }
