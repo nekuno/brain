@@ -21,9 +21,16 @@ class LinkedinParser extends BaseParser
 
     private function getSkills(Crawler $crawler, LoggerInterface $logger = null)
     {
-        return array_filter($crawler->filter('#background-skills > #skills-item > #skills-item-view > #profile-skills > .skills-section li .endorse-item-name a')->each(function (Crawler $node) use ($logger) {
+        $skills = array_filter($crawler->filter('#background-skills > #skills-item > #skills-item-view > #profile-skills > .skills-section li .endorse-item-name a')->each(function (Crawler $node) use ($logger) {
             return $this->getSkill($node, $logger);
         }));
+        if (empty($skills)){
+            $skills = array_filter($crawler->filter('#skills > .pills > .skill a')->each(function (Crawler $node) use ($logger) {
+                return $this->getSkill($node, $logger);
+            }));
+        }
+
+        return $skills;
     }
 
     private function getSkill(Crawler $node, LoggerInterface $logger = null)
@@ -34,7 +41,9 @@ class LinkedinParser extends BaseParser
             $text = $this->getSkillFromLink($href);
         }
 
-        $logger->info($text . ' skill added');
+        if ($logger instanceof LoggerInterface){
+            $logger->info($text . ' skill added');
+        }
 
         return $text ?: false;
     }
@@ -52,17 +61,25 @@ class LinkedinParser extends BaseParser
 
     private function getLanguages(Crawler $crawler, LoggerInterface $logger = null)
     {
-        return array_filter($crawler->filter('#background-languages > #languages > #languages-view li')->each(function (Crawler $node) use ($logger) {
+        $languages = array_filter($crawler->filter('#background-languages > #languages > #languages-view li')->each(function (Crawler $node) use ($logger) {
             return $this->getLanguage($node, $logger);
         }));
+        if (empty($languages)){
+            $languages = array_filter($crawler->filter('#languages > ul > .language > .wrap')->each(function (Crawler $node) use ($logger) {
+                return $this->getLanguage($node, $logger);
+            }));
+        }
+        return $languages;
     }
 
-    private function getLanguage(Crawler $node, LoggerInterface $logger)
+    private function getLanguage(Crawler $node, LoggerInterface $logger = null)
     {
         $language = $node->filter('h4 > span')->text();
         $translatedLanguage = $this->translateTypicalLanguage($language);
 
-        $logger->info($translatedLanguage . ' language added');
+        if ($logger instanceof LoggerInterface){
+            $logger->info($translatedLanguage . ' language added');
+        }
 
         return $translatedLanguage ?: false;
     }
