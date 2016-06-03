@@ -351,8 +351,8 @@ class SimilarityModel
             ->merge('(userA)-[s:SIMILARITY]-(userB)')
             ->set(
                 's.skills = similarity',
-                's.interests = CASE WHEN HAS(s.interests) THEN s.interests ELSE 0 END',
-                's.questions = CASE WHEN HAS(s.questions) THEN s.questions ELSE 0 END',
+                's.interests = CASE WHEN EXISTS(s.interests) THEN s.interests ELSE 0 END',
+                's.questions = CASE WHEN EXISTS(s.questions) THEN s.questions ELSE 0 END',
                 's.skillsUpdated = timestamp()',
                 's.similarityUpdated = timestamp()'
             )
