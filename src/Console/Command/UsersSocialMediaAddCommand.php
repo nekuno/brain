@@ -2,19 +2,13 @@
 
 namespace Console\Command;
 
-
-use ApiConsumer\EventListener\FetchLinksInstantSubscriber;
-use ApiConsumer\EventListener\FetchLinksSubscriber;
 use Console\ApplicationAwareCommand;
 use Model\User\TokensModel;
-use Psr\Log\LogLevel;
 use Service\UserAggregator;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
-use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\EventDispatcher\EventDispatcher;
 
 class UsersSocialMediaAddCommand extends ApplicationAwareCommand
 {
@@ -27,6 +21,7 @@ class UsersSocialMediaAddCommand extends ApplicationAwareCommand
             ->addArgument('username', InputArgument::OPTIONAL, 'The username of the user in the social media')
             ->addOption('id', null, InputOption::VALUE_OPTIONAL, 'Id or name of user to add the social network to', null)
             ->addOption('url', null, InputOption::VALUE_OPTIONAL, 'Url of social network to add to user', null)
+            ->addOption('add-to-group', null, InputOption::VALUE_OPTIONAL, 'Id of the group to add the user to', null)
             ->addOption('file', null, InputOption::VALUE_REQUIRED, 'Name of CSV file to read users from', null);
     }
 
@@ -37,6 +32,7 @@ class UsersSocialMediaAddCommand extends ApplicationAwareCommand
         $resource = $input->getArgument('resource');
         $id = $input->getOption('id');
         $url = $input->getOption('url');
+        $groupId = $input->getOption('add-to-group');
         $file = $input->getOption('file');
 
         if (!$file) {
@@ -90,7 +86,16 @@ class UsersSocialMediaAddCommand extends ApplicationAwareCommand
                     );
                     $amqpManager->enqueueMessage($data, 'brain.fetching.links');
                 }
+	            $id = $socialProfile->getUserId();
             }
+
+	        if ($groupId) {
+		        if (!$this->app['users.groups.model']->existsGroup($groupId)) {
+			        $output->writeln(sprintf('Group with id %s does not exist', $groupId));
+		        }
+
+			    $this->app['users.groups.model']->addUser($groupId, $id, true);
+	        }
 
             $output->writeln('Success!');
         }

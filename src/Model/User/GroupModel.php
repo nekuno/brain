@@ -446,10 +446,10 @@ class GroupModel
         return $return;
     }
 
-    public function addUser($id, $userId)
+    public function addUser($id, $userId, $includeGhosts = false)
     {
         $this->getById($id);
-        $this->um->getById($userId);
+        $this->um->getById($userId, $includeGhosts);
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(g:Group)')
@@ -464,10 +464,12 @@ class GroupModel
         $query = $qb->getQuery();
         $query->getResultSet();
 
-
         $group = $this->getById($id);
-        $user = $this->um->getById($userId);
-        $this->dispatcher->dispatch(\AppEvents::GROUP_ADDED, new GroupEvent($group, $user));
+        $user = $this->um->getById($userId, $includeGhosts);
+
+	    if (!$includeGhosts) {
+            $this->dispatcher->dispatch(\AppEvents::GROUP_ADDED, new GroupEvent($group, $user));
+	    }
     }
 
     public function removeUser($id, $userId)
