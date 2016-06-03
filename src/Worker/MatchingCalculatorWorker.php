@@ -126,7 +126,7 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                     foreach ($usersWithSameContent as $currentUser) {
                         /* @var $currentUser User */
                         $userB = $currentUser->getId();
-                        $similarity = $this->similarityModel->getSimilarityByInterests($userA, $userB);
+                        $similarity = $this->similarityModel->getSimilarityBy(SimilarityModel::INTERESTS, $userA, $userB);
                         $this->logger->info(sprintf('   Similarity by interests between users %d - %d: %s', $userA, $userB, $similarity['interests']));
                     }
                 } catch (\Exception $e) {
@@ -155,7 +155,7 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                         /* @var $currentUser User */
                         $userB = $currentUser->getId();
                         if ($userA <> $userB) {
-                            $similarity = $this->similarityModel->getSimilarityByQuestions($userA, $userB);
+                            $similarity = $this->similarityModel->getSimilarityBy(SimilarityModel::QUESTIONS, $userA, $userB);
                             $matching = $this->matchingModel->calculateMatchingBetweenTwoUsersBasedOnAnswers($userA, $userB);
                             $this->logger->info(sprintf('   Similarity by questions between users %d - %d: %s', $userA, $userB, $similarity['questions']));
                             $this->logger->info(sprintf('   Matching by questions between users %d - %d: %s', $userA, $userB, $matching));

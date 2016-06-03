@@ -10,6 +10,7 @@ use Silex\Application;
 use Symfony\Component\Console\Helper\TableHelper;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class UsersCalculateSimilarityCommand extends ApplicationAwareCommand
@@ -20,7 +21,8 @@ class UsersCalculateSimilarityCommand extends ApplicationAwareCommand
         $this->setName('users:calculate:similarity')
             ->setDescription('Calculate the similarity of two users.')
             ->addArgument('userA', InputArgument::OPTIONAL, 'id of the first user?')
-            ->addArgument('userB', InputArgument::OPTIONAL, 'id of the second user?');
+            ->addArgument('userB', InputArgument::OPTIONAL, 'id of the second user?')
+            ->addOption('groupId', null, InputOption::VALUE_REQUIRED, 'Group id');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -30,6 +32,7 @@ class UsersCalculateSimilarityCommand extends ApplicationAwareCommand
 
         $userA = $input->getArgument('userA');
         $userB = $input->getArgument('userB');
+        $groupId = $input->getOption('groupId');
 
         $combinations = array(
             array(
@@ -39,10 +42,15 @@ class UsersCalculateSimilarityCommand extends ApplicationAwareCommand
         );
 
         if (null === $userA || null === $userB) {
-            $output->writeln('Calculating for all users, including ghost users.');
+
+            if ($groupId) {
+                $output->writeln(sprintf('Calculating for all users in group %d, including ghost users.', $groupId));
+            } else {
+                $output->writeln('Calculating for all users, including ghost users.');
+            }
             /* @var $userManager UserManager */
             $userManager = $this->app['users.manager'];
-            $combinations = $userManager->getAllCombinations(true);
+            $combinations = $userManager->getAllCombinations(true, $groupId);
         }
 
         foreach ($combinations AS $users) {
@@ -81,6 +89,8 @@ class UsersCalculateSimilarityCommand extends ApplicationAwareCommand
         $questionsUpdated->setTimestamp($similarity['questionsUpdated'] / 1000);
         $interestsUpdated = new \DateTime();
         $interestsUpdated->setTimestamp($similarity['interestsUpdated'] / 1000);
+        $skillsUpdated = new \DateTime();
+        $skillsUpdated->setTimestamp($similarity['interestsUpdated'] / 1000);
         $similarityUpdated = new \DateTime();
         $similarityUpdated->setTimestamp($similarity['similarityUpdated'] / 1000);
 
@@ -92,6 +102,7 @@ class UsersCalculateSimilarityCommand extends ApplicationAwareCommand
                 array(
                     array('Questions', $similarity['questions'], $questionsUpdated->format('Y-m-d H:i:s')),
                     array('Interests', $similarity['interests'], $interestsUpdated->format('Y-m-d H:i:s')),
+                    array('Skills', $similarity['skills'], $skillsUpdated->format('Y-m-d H:i:s')),
                     array('Similarity', $similarity['similarity'], $similarityUpdated->format('Y-m-d H:i:s')),
                 )
             );

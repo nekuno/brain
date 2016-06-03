@@ -65,13 +65,13 @@ class TwitterFollowingFetcher extends BasicPaginationFetcher
             }
         } else {
             foreach ($links as &$link) {
-                $screenName = $link['screen_name'];
+//                $screenName = $link['screen_name'];
                 $link = $this->resourceOwner->buildProfileFromLookup($link);
                 $link['processed'] = 1;
-                $this->resourceOwner->dispatchChannel(array(
-                    'url' => $link['url'],
-                    'username' => $screenName,
-                ));
+//                $this->resourceOwner->dispatchChannel(array(
+//                    'url' => $link['url'],
+//                    'username' => $screenName,
+//                ));
                 $preprocessedLink = new PreprocessedLink($link['url']);
                 $preprocessedLink->setLink($link);
                 $preprocessedLinks[] = $preprocessedLink;
