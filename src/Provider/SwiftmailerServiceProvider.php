@@ -23,8 +23,8 @@ class SwiftmailerServiceProvider implements ServiceProviderInterface
 {
     public function register(Application $app)
     {
-        $app['swiftmailer.options'] = $app['swiftmailer.options'] ?: array();
-        $app['swiftmailer.use_spool'] = $app['swiftmailer.use_spool'] ?: true;
+        $app['swiftmailer.options'] = isset($app['swiftmailer.options']) ? $app['swiftmailer.options'] : array();
+        $app['swiftmailer.use_spool'] = isset($app['swiftmailer.use_spool']) ? $app['swiftmailer.use_spool'] : true;
 
         $app['mailer.initialized'] = false;
 
