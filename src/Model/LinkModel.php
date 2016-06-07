@@ -552,7 +552,7 @@ class LinkModel
 
         if (isset($filters['limit'])) {
 
-            $qb->orderBy('HAS(l.popularity_timestamp)', 'l.popularity_timestamp')
+            $qb->orderBy('EXISTS(l.popularity_timestamp)', 'l.popularity_timestamp')
                 ->limit('{ limit }');
             $qb->setParameter('limit', (integer)$filters['limit']);
         }
