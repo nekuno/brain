@@ -193,7 +193,7 @@ class AnswerModel
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(q:Question)', '(u:User)')
-            ->where('u.qnoow_id = { userId }', 'id(q) = { questionId }', "HAS(q.text_$locale)")
+            ->where('u.qnoow_id = { userId }', 'id(q) = { questionId }', "EXISTS(q.text_$locale)")
             ->setParameter('userId', $user->getId())
             ->setParameter('questionId', $question['questionId'])
             ->with('u', 'q')

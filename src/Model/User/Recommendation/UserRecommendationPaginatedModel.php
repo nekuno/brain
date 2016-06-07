@@ -60,8 +60,8 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
             ->with(
                 'u, anyUser,
                 (CASE WHEN like IS NOT NULL THEN 1 ELSE 0 END) AS like,
-                (CASE WHEN HAS(m.matching_questions) THEN m.matching_questions ELSE 0 END) AS matching_questions,
-                (CASE WHEN HAS(s.similarity) THEN s.similarity ELSE 0 END) AS similarity'
+                (CASE WHEN EXISTS(m.matching_questions) THEN m.matching_questions ELSE 0 END) AS matching_questions,
+                (CASE WHEN EXISTS(s.similarity) THEN s.similarity ELSE 0 END) AS similarity'
             )
             ->where($userFilters['conditions'])
             ->match('(anyUser)<-[:PROFILE_OF]-(p:Profile)');
@@ -156,8 +156,8 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
             ->optionalMatch('(u)-[s:SIMILARITY]-(anyUser)')
             ->with(
                 'u, anyUser,
-            (CASE WHEN HAS(m.matching_questions) THEN m.matching_questions ELSE 0 END) AS matching_questions,
-            (CASE WHEN HAS(s.similarity) THEN s.similarity ELSE 0 END) AS similarity'
+            (CASE WHEN EXISTS(m.matching_questions) THEN m.matching_questions ELSE 0 END) AS matching_questions,
+            (CASE WHEN EXISTS(s.similarity) THEN s.similarity ELSE 0 END) AS similarity'
             )
             ->where($userFilters['conditions'])
             ->match('(anyUser)<-[:PROFILE_OF]-(p:Profile)');

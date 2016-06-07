@@ -217,9 +217,9 @@ class ContentPaginatedModel implements PaginatedInterface
     {
         $conditions = array("content.processed = 1");
 
-        $whereSocialNetwork[] = "HAS (r.nekuno)";
+        $whereSocialNetwork[] = "EXISTS (r.nekuno)";
         foreach ($socialNetworks as $socialNetwork) {
-            $whereSocialNetwork [] = "HAS (r.$socialNetwork)";
+            $whereSocialNetwork [] = "EXISTS (r.$socialNetwork)";
         }
         $socialNetworkQuery = implode(' OR ', $whereSocialNetwork);
         $conditions[] = $socialNetworkQuery;

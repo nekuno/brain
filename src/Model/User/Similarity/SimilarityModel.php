@@ -149,10 +149,10 @@ class SimilarityModel
                 's.interests AS interests',
                 's.skills AS skills',
                 's.similarity AS similarity',
-                'CASE WHEN HAS(s.questionsUpdated) THEN s.questionsUpdated ELSE 0 END AS questionsUpdated',
-                'CASE WHEN HAS(s.interestsUpdated) THEN s.interestsUpdated ELSE 0 END AS interestsUpdated',
-                'CASE WHEN HAS(s.skillsUpdated) THEN s.skillsUpdated ELSE 0 END AS skillsUpdated',
-                'CASE WHEN HAS(s.similarityUpdated) THEN s.similarityUpdated ELSE 0 END AS similarityUpdated'
+                'CASE WHEN EXISTS(s.questionsUpdated) THEN s.questionsUpdated ELSE 0 END AS questionsUpdated',
+                'CASE WHEN EXISTS(s.interestsUpdated) THEN s.interestsUpdated ELSE 0 END AS interestsUpdated',
+                'CASE WHEN EXISTS(s.skillsUpdated) THEN s.skillsUpdated ELSE 0 END AS skillsUpdated',
+                'CASE WHEN EXISTS(s.similarityUpdated) THEN s.similarityUpdated ELSE 0 END AS similarityUpdated'
             )
             ->returns('questions, interests, skills, similarity, questionsUpdated, interestsUpdated, skillsUpdated, similarityUpdated');
 
@@ -225,8 +225,8 @@ class SimilarityModel
             ->merge('(userA)-[s:SIMILARITY]-(userB)')
             ->set(
                 's.questions = similarity',
-                's.interests = CASE WHEN HAS(s.interests) THEN s.interests ELSE 0 END',
-                's.skills = CASE WHEN HAS(s.skills) THEN s.skills ELSE 0 END',
+                's.interests = CASE WHEN EXISTS(s.interests) THEN s.interests ELSE 0 END',
+                's.skills = CASE WHEN EXISTS(s.skills) THEN s.skills ELSE 0 END',
                 's.questionsUpdated = timestamp()',
                 's.similarityUpdated = timestamp()'
             )
@@ -262,7 +262,7 @@ class SimilarityModel
             ->match('(userA:User {qnoow_id: { idA } }), (userB:User {qnoow_id: { idB } })')
             ->where('userA <> userB')
             ->optionalMatch('(userA)-[:LIKES]-(l:Link)-[:LIKES]-(userB)')
-            ->where('HAS(l.unpopularity)')
+            ->where('EXISTS(l.unpopularity)')
             ->with('userA, userB, COUNT(DISTINCT l) AS numberCommonContent, SUM(l.unpopularity) AS common')
             ->with('userA', 'userB', 'CASE WHEN numberCommonContent > 4 THEN true ELSE false END AS valid', 'common')
             ->with('userA', 'userB', 'valid', 'CASE WHEN valid THEN common ELSE 1 END AS common') //prevents divide by zero
@@ -270,12 +270,12 @@ class SimilarityModel
 
         $qb
             ->optionalMatch('(userA)-[:LIKES]-(l1:Link)')
-            ->where('NOT (userB)-[:LIKES]->(l1) AND HAS(l1.popularity)')
+            ->where('NOT (userB)-[:LIKES]->(l1) AND EXISTS(l1.popularity)')
             ->with('userA, userB, valid, common, SUM(l1.popularity) AS onlyUserA');
 
         $qb
             ->optionalMatch('(userB)-[:LIKES]-(l2:Link)')
-            ->where('NOT (userA)-[:LIKES]->(l2) AND HAS(l2.popularity)')
+            ->where('NOT (userA)-[:LIKES]->(l2) AND EXISTS(l2.popularity)')
             ->with(' userA, userB, valid, common, onlyUserA, SUM(l2.popularity) AS onlyUserB');
 
         $qb
@@ -286,8 +286,8 @@ class SimilarityModel
             ->merge('(userA)-[s:SIMILARITY]-(userB)')
             ->set(
                 's.interests = similarity',
-                's.questions = CASE WHEN HAS(s.questions) THEN s.questions ELSE 0 END',
-                's.skills = CASE WHEN HAS(s.skills) THEN s.skills ELSE 0 END',
+                's.questions = CASE WHEN EXISTS(s.questions) THEN s.questions ELSE 0 END',
+                's.skills = CASE WHEN EXISTS(s.skills) THEN s.skills ELSE 0 END',
                 's.interestsUpdated = timestamp()',
                 's.similarityUpdated = timestamp()'
             )
@@ -351,8 +351,8 @@ class SimilarityModel
             ->merge('(userA)-[s:SIMILARITY]-(userB)')
             ->set(
                 's.skills = similarity',
-                's.interests = CASE WHEN HAS(s.interests) THEN s.interests ELSE 0 END',
-                's.questions = CASE WHEN HAS(s.questions) THEN s.questions ELSE 0 END',
+                's.interests = CASE WHEN EXISTS(s.interests) THEN s.interests ELSE 0 END',
+                's.questions = CASE WHEN EXISTS(s.questions) THEN s.questions ELSE 0 END',
                 's.skillsUpdated = timestamp()',
                 's.similarityUpdated = timestamp()'
             )

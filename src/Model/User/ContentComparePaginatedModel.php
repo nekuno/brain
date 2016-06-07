@@ -270,9 +270,9 @@ class ContentComparePaginatedModel implements PaginatedInterface
     {
         $conditions = array("content.processed = 1");
 
-        $whereSocialNetwork[] = "HAS ($relationship.nekuno)";
+        $whereSocialNetwork[] = "EXISTS ($relationship.nekuno)";
         foreach ($socialNetworks as $socialNetwork) {
-            $whereSocialNetwork [] = "HAS ($relationship.$socialNetwork)";
+            $whereSocialNetwork [] = "EXISTS ($relationship.$socialNetwork)";
         }
         $socialNetworkQuery = implode(' OR ', $whereSocialNetwork);
         $conditions[] = $socialNetworkQuery;
