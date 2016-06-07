@@ -11,7 +11,9 @@ class LinkedinParser extends BaseParser
 {
     public function parse($profileUrl, LoggerInterface $logger = null)
     {
+	    //$this->client->setHeader('cookie', 'bcookie="...');
         $crawler = $this->client->request('GET', $profileUrl);
+	    //$this->client->removeHeader('cookie');
 
         $skills = $this->getSkills($crawler, $logger);
         $languages = $this->getLanguages($crawler, $logger);
@@ -21,14 +23,19 @@ class LinkedinParser extends BaseParser
 
     private function getSkills(Crawler $crawler, LoggerInterface $logger = null)
     {
-        $skills = array_filter($crawler->filter('#background-skills > #skills-item > #skills-item-view > #profile-skills > .skills-section li .endorse-item-name a')->each(function (Crawler $node) use ($logger) {
+        $skills = array_filter($crawler->filter('#background-skills > #skills-item .endorse-item-name a')->each(function (Crawler $node) use ($logger) {
             return $this->getSkill($node, $logger);
         }));
         if (empty($skills)){
-            $skills = array_filter($crawler->filter('#skills > .pills > .skill a')->each(function (Crawler $node) use ($logger) {
+            $skills = array_filter($crawler->filter('#skills > .skill a')->each(function (Crawler $node) use ($logger) {
                 return $this->getSkill($node, $logger);
             }));
         }
+	    if (empty($skills)){
+		    $skills = array_filter($crawler->filter('#background-skills > #skills-item .endorse-item-name-text')->each(function (Crawler $node) use ($logger) {
+			    return $node->text();
+		    }));
+	    }
 
         return $skills;
     }
@@ -50,7 +57,9 @@ class LinkedinParser extends BaseParser
 
     private function getSkillFromLink($href)
     {
+	    //$this->client->setHeader('cookie', 'bcookie="...');
         $crawler = $this->client->request('GET', $href);
+	    //$this->client->removeHeader('cookie');
 
         if($crawler->filter('meta[content="LinkedIn"]')->count() > 0) {
             return $crawler->filter('h1')->first()->text();
