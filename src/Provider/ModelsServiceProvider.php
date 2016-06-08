@@ -4,6 +4,7 @@ namespace Provider;
 
 use Model\EnterpriseUser\EnterpriseUserModel;
 use Model\LinkModel;
+use Model\Popularity\PopularityManager;
 use Model\Questionnaire\QuestionModel;
 use Model\User\Affinity\AffinityModel;
 use Model\User\AnswerModel;
@@ -195,7 +196,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.similarity.model'] = $app->share(
             function ($app) {
 
-                return new SimilarityModel($app['dispatcher'], $app['neo4j.graph_manager'], $app['links.model'], $app['users.questions.model'], $app['users.content.model'], $app['users.profile.model']);
+                return new SimilarityModel($app['dispatcher'], $app['neo4j.graph_manager'], $app['popularity.manager'], $app['users.questions.model'], $app['users.content.model'], $app['users.profile.model']);
             }
         );
 
@@ -294,6 +295,12 @@ class ModelsServiceProvider implements ServiceProviderInterface
             function ($app) {
 
                 return new LinkModel($app['neo4j.graph_manager'], $app['translator']);
+            }
+        );
+        
+        $app['popularity.manager'] = $app->share(
+            function ($app) {
+                return new PopularityManager($app['neo4j.graph_manager']);
             }
         );
 
