@@ -23,6 +23,21 @@ class PopularityManager
         $this->gm = $gm;
     }
 
+    /**
+     * CAUTION: Adding to this list is irreversible. Deleting from it disables use of popularity but does not delete it.
+     * List of node labels that use popularity, and relationships that are counted as a measure of it.
+     * All relationships are from :User node to the 'label' node.
+     * @return array
+     */
+    public static function getPopularOptions()
+    {
+        return array(
+            array('label' => 'Link', 'type' => 'LIKES'),
+            array('label' => 'Skill', 'type' => 'HAS_SKILL'),
+            array('label' => 'Language', 'type' => 'SPEAKS_LANGUAGE'),
+        );
+    }
+
     public function updatePopularityByUser($userId)
     {
         $max_popularity = $this->getMaxPopularity();
@@ -33,19 +48,24 @@ class PopularityManager
                 return true;
             }
         }
+        $max_new_popularity = new Popularity();
 
-        $qb = $this->gm->createQueryBuilder();
+        foreach (self::getPopularOptions() as $option) {
+            $qb = $this->gm->createQueryBuilder();
 
-        $qb->match('(u:User {qnoow_id: { id } })')
-            ->setParameter('id', (integer)$userId);
+            $qb->match('(u:User {qnoow_id: { id } })')
+                ->setParameter('id', (integer)$userId);
 
-        ///migrate old popularities to new format, or create new if link is new///
-        $qb->optionalMatch('(u)-[:LIKES]-(old_link:Link)')
-            ->where('NOT (old_link)-[:HAS_POPULARITY]-()')
-            ->with('u', 'old_link')
-            ->with('u', 'collect(old_link) as old_links')
-            // Simply merge and set/remove causes error when there are no old links
-            ->add('FOREACH', '(old_link in old_links | MERGE (old_link)-[:HAS_POPULARITY]->(new_pop:Popularity)
+            ///migrate old popularities to new format, or create new if link is new///
+            $qb->optionalMatch('(u)-[:' . $option['type'] . ']-(old_link1:' . $option['label'] . ')')
+                ->where('NOT (old_link1)-[:HAS_POPULARITY]-()')
+                ->with('u', 'old_link1')
+                ->with('u', 'collect(old_link1) as old_links1')
+                ->optionalMatch('(u)-[:' . $option['type'] . ']-(old_link2:' . $option['label'] . ')-[:HAS_POPULARITY]-(old_pop:Popularity)')
+                ->where('NOT(EXISTS(old_pop.popularity))')
+                ->with('u', 'old_links1 + collect(old_link2) AS old_links')
+                // Simply merge and set/remove causes error when there are no old links
+                ->add('FOREACH', '(old_link in old_links | MERGE (old_link)-[:HAS_POPULARITY]->(new_pop:Popularity)
                                                       SET new_pop.popularity = CASE WHEN EXISTS(old_link.popularity) THEN old_link.popularity ELSE 0 END
                                                       SET new_pop.unpopularity = CASE WHEN EXISTS(old_link.unpopularity) THEN old_link.unpopularity ELSE 1 END
                                                       SET new_pop.timestamp = CASE WHEN EXISTS(old_link.popularity_timestamp) THEN old_link.popularity_timestamp ELSE 0 END
@@ -53,45 +73,49 @@ class PopularityManager
                                                       REMOVE old_link.unpopularity
                                                       REMOVE old_link.popularity_timestamp
                                                          )')
-            ->with('u');
+                ->with('u');
 
-        $qb->match('(u)-[:LIKES]->(link:Link)-[:HAS_POPULARITY]->(popularity:Popularity)')
-            ->where('coalesce(popularity.timestamp, 0) < timestamp() - 1000*3600*24');
-        $qb->with('link', 'popularity');
-        $qb->optionalMatch('(link)-[r:LIKES]-(:User)')
-            ->with('link', 'popularity', 'count(DISTINCT r) AS total')
-            ->where('total > 1')
-            ->with('popularity', 'toFloat(total) AS total')
-            ->with('popularity', 'CASE
+            $qb->match('(u)-[:' . $option['type'] . ']->(link:' . $option['label'] . ')-[:HAS_POPULARITY]->(popularity:Popularity)')
+                ->where('coalesce(popularity.timestamp, 0) < timestamp() - 0');
+            $qb->with('link', 'popularity');
+            $qb->optionalMatch('(link)-[r:' . $option['type'] . ']-(:User)')
+                ->with('link', 'popularity', 'count(DISTINCT r) AS total')
+//                ->where('total > 1')
+                ->with('popularity', 'toFloat(total) AS total')
+                ->with('popularity', 'CASE
                                     WHEN total < {max} THEN total
                                     ELSE {max}
                                 END as total');
-        $qb->setParameter('max', floatval($max_popularity->getAmount()));
+            $qb->setParameter('max', floatval($max_popularity->getAmount()));
 
-        $qb->set(
-            'popularity.popularity = (total/{max})^3',
-            'popularity.unpopularity = (1-(total/{max}))^3',
-            'popularity.timestamp = timestamp()'
-        );
+            $qb->set(
+                'popularity.popularity = (total/{max})^3',
+                'popularity.unpopularity = (1-(total/{max}))^3',
+                'popularity.timestamp = timestamp()'
+            );
 
-        $qb->returns('   id(popularity) AS id',
-            'popularity.popularity AS popularity',
-            'popularity.unpopularity AS unpopularity',
-            'popularity.timestamp AS timestamp',
-            'total AS amount',
-            'true AS new')
-            ->orderBy('popularity DESC');
+            $qb->returns('   id(popularity) AS id',
+                'popularity.popularity AS popularity',
+                'popularity.unpopularity AS unpopularity',
+                'popularity.timestamp AS timestamp',
+                'total AS amount',
+                'true AS new')
+                ->orderBy('popularity DESC');
 
-        $query = $qb->getQuery();
-        $result = $query->getResultSet();
+            $query = $qb->getQuery();
+            $result = $query->getResultSet();
 
-        //If user had no links to set popularity, all done
-        if ($result->count() == 0) {
-            return true;
+            $popularities = $this->build($result);
+//If user had no links to set popularity, all done
+            if (empty($popularities)) {
+                continue;
+            }
+
+            if ($popularities[0]->getPopularity() > $max_new_popularity->getPopularity()) {
+                $max_new_popularity = $popularities[0];
+            }
         }
-        $popularities = $this->build($result);
 
-        $max_new_popularity = $popularities[0];
         if ($max_new_popularity->getPopularity() == 1) {
             if (!$max_new_popularity->isNew()) {
                 $this->migrateMaxPopularity();
@@ -107,36 +131,44 @@ class PopularityManager
      */
     private function getMaxPopularity()
     {
-        $qb = $this->gm->createQueryBuilder();
+        foreach (self::getPopularOptions() as $option) {
+            $qb = $this->gm->createQueryBuilder();
 
-        $qb->match('(link:Link)')
-            ->where('link.popularity = 1')
-            ->with('link')
-            ->limit(1)
-            ->optionalMatch('(link)<-[likes:LIKES]-()')
-            ->returns('  id(link) AS id',
-                'link.popularity AS popularity',
-                'link.unpopularity AS unpopularity',
-                'link.popularity_timestamp AS timestamp',
-                'count(likes) AS amount',
-                'false AS new');
-        $result = $qb->getQuery()->getResultSet();
-        $popularities = $this->build($result);
+            $qb->match('(link:' . $option['label'] . ')')
+                ->where('link.popularity = 1')
+                ->with('link')
+                ->limit(1)
+                ->optionalMatch('(link)<-[likes:' . $option['type'] . ']-()')
+                ->returns('  id(link) AS id',
+                    'link.popularity AS popularity',
+                    'link.unpopularity AS unpopularity',
+                    'link.popularity_timestamp AS timestamp',
+                    'count(likes) AS amount',
+                    'false AS new');
+            $result = $qb->getQuery()->getResultSet();
+            $popularities = $this->build($result);
 
-        if (!empty($popularities)) {
-            return $popularities[0];
+            if (!empty($popularities)) {
+                return $popularities[0];
+            }
         }
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(popularity:Popularity)')
             ->where('popularity.popularity = 1')
-            ->with('popularity')
-            ->optionalMatch('(popularity)-[:HAS_POPULARITY]-(:Link)-[:LIKES]-(likes)')
-            ->returns(' id(popularity) AS id,
+            ->with('popularity', '0 AS amount0');
+        //Add numbers to "amount" to avoid << Unexpected error during late semantic checking:   amount@185 not defined >>
+        $counter = 0;
+        foreach (self::getPopularOptions() as $option) {
+            $qb->optionalMatch('(popularity)-[:HAS_POPULARITY]-(link:' . $option['label'] . ')-[:' . $option['type'] . ']-(likes)')
+                ->with('popularity, amount'.$counter.' + count(likes) AS amount'.($counter+1));
+            $counter++;
+        }
+        $qb->returns(' id(popularity) AS id,
                         popularity.popularity AS popularity,
                         popularity.unpopularity AS unpopularity,
                         popularity.timestamp AS timestamp,
-                        count(likes) AS amount,
+                        amount'.$counter.' AS amount,
                         true AS new')
             ->limit(1);
         $result = $qb->getQuery()->getResultSet();
@@ -149,19 +181,26 @@ class PopularityManager
         return null;
     }
 
-    private function getMaxPopularityByUser($userId){
-        $qb = $this->gm->createQueryBuilder();
+    private function getMaxPopularityByUser($userId)
+    {
+        $topPopularity = new Popularity();
 
-        $qb->match('(u:User {qnoow_id: { id } })')
-            ->setParameter('id', (integer)$userId);
+        foreach (self::getPopularOptions() as $option) {
+            $qb = $this->gm->createQueryBuilder();
 
-        ///migrate old popularities to new format, or create new if link is new///
-        $qb->optionalMatch('(u)-[:LIKES]-(old_link:Link)')
-            ->where('NOT (old_link)-[:HAS_POPULARITY]-()')
-            ->with('u', 'old_link')
-            ->with('u', 'collect(old_link) as old_links')
-            // Simply merge and set/remove causes error when there are no old links
-            ->add('FOREACH', '(old_link in old_links | MERGE (old_link)-[:HAS_POPULARITY]->(new_pop:Popularity)
+            $qb->match('(u:User {qnoow_id: { id } })')
+                ->setParameter('id', (integer)$userId);
+
+            ///migrate old popularities to new format, or create new if link is new///
+            $qb->optionalMatch('(u)-[:' . $option['type'] . ']-(old_link1:' . $option['label'] . ')')
+                ->where('NOT (old_link1)-[:HAS_POPULARITY]-()')
+                ->with('u', 'old_link1')
+                ->with('u', 'collect(old_link1) as old_links1')
+                ->optionalMatch('(u)-[:' . $option['type'] . ']-(old_link2:' . $option['label'] . ')-[:HAS_POPULARITY]-(old_pop:Popularity)')
+                ->where('NOT(EXISTS(old_pop.popularity))')
+                ->with('u', 'old_links1 + collect(old_link2) AS old_links')
+                // Simply merge and set/remove causes error when there are no old links
+                ->add('FOREACH', '(old_link in old_links | MERGE (old_link)-[:HAS_POPULARITY]->(new_pop:Popularity)
                                                       SET new_pop.popularity = CASE WHEN EXISTS(old_link.popularity) THEN old_link.popularity ELSE 0 END
                                                       SET new_pop.unpopularity = CASE WHEN EXISTS(old_link.unpopularity) THEN old_link.unpopularity ELSE 1 END
                                                       SET new_pop.timestamp = CASE WHEN EXISTS(old_link.popularity_timestamp) THEN old_link.popularity_timestamp ELSE 0 END
@@ -169,25 +208,36 @@ class PopularityManager
                                                       REMOVE old_link.unpopularity
                                                       REMOVE old_link.popularity_timestamp
                                                          )')
-            ->with('u');
+                ->with('u');
 
-        $qb->match('(u)-[:LIKES]->(link:Link)-[:HAS_POPULARITY]->(popularity:Popularity)')
-            ->where('EXISTS(popularity.popularity)');
-        $qb->with('link', 'popularity');
-        $qb->optionalMatch('(link)-[likes:LIKES]-(:User)')
-            ->returns(' id(popularity) AS id,
+            $qb->match('(u)-[:' . $option['type'] . ']->(link:' . $option['label'] . ')-[:HAS_POPULARITY]->(popularity:Popularity)')
+                ->where('EXISTS(popularity.popularity)');
+            $qb->with('link', 'popularity');
+            $qb->optionalMatch('(link)-[likes:' . $option['type'] . ']-(:User)')
+                ->with('popularity, count(likes) AS amount');
+
+            $qb->returns(' id(popularity) AS id,
                         popularity.popularity AS popularity,
                         popularity.unpopularity AS unpopularity,
                         popularity.timestamp AS timestamp,
-                        count(likes) AS amount,
+                        amount,
                         true AS new')
-            ->orderBy('popularity DESC')
-            ->limit(1);
+                ->orderBy('popularity DESC')
+                ->limit(1);
 
-        $result = $qb->getQuery()->getResultSet();
+            $query = $qb->getQuery();
+            $result = $query->getResultSet();
+            $popularities = $this->build($result);
 
-        $popularities = $this->build($result);
-        return empty($popularities) ? null : $popularities[0];
+            if (empty($popularities)) {
+                continue;
+            }
+
+            if ($popularities[0]->getPopularity() > $topPopularity->getPopularity()) {
+                $topPopularity = $popularities[0];
+            }
+        }
+        return $topPopularity;
     }
 
     private function updateMaxPopularity()
@@ -236,6 +286,7 @@ class PopularityManager
     {
         $qb = $this->gm->createQueryBuilder();
 
+        //Only Link since other types never had popularity attributes
         $qb->match('(l:Link)')
             ->where('l.popularity = 1')
             ->with('l')
@@ -259,7 +310,6 @@ class PopularityManager
         foreach ($result as $row) {
 
             $popularity = new Popularity();
-
             $popularity->setId($row->offsetGet('id'));
             $popularity->setPopularity($row->offsetGet('popularity'));
             $popularity->setUnpopularity($row->offsetGet('unpopularity'));

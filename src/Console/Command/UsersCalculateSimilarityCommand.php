@@ -89,8 +89,6 @@ class UsersCalculateSimilarityCommand extends ApplicationAwareCommand
         $questionsUpdated->setTimestamp($similarity['questionsUpdated'] / 1000);
         $interestsUpdated = new \DateTime();
         $interestsUpdated->setTimestamp($similarity['interestsUpdated'] / 1000);
-        $skillsUpdated = new \DateTime();
-        $skillsUpdated->setTimestamp($similarity['interestsUpdated'] / 1000);
         $similarityUpdated = new \DateTime();
         $similarityUpdated->setTimestamp($similarity['similarityUpdated'] / 1000);
 
@@ -102,7 +100,6 @@ class UsersCalculateSimilarityCommand extends ApplicationAwareCommand
                 array(
                     array('Questions', $similarity['questions'], $questionsUpdated->format('Y-m-d H:i:s')),
                     array('Interests', $similarity['interests'], $interestsUpdated->format('Y-m-d H:i:s')),
-                    array('Skills', $similarity['skills'], $skillsUpdated->format('Y-m-d H:i:s')),
                     array('Similarity', $similarity['similarity'], $similarityUpdated->format('Y-m-d H:i:s')),
                 )
             );
