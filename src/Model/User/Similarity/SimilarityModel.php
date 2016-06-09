@@ -245,36 +245,42 @@ class SimilarityModel
         $qb
             ->match('(userA:User {qnoow_id: { idA } }), (userB:User {qnoow_id: { idB } })')
             ->where('userA <> userB')
-            ->with('userA, userB, 0 AS numberCommonContent, 0 AS common, 0 AS onlyUserA, 0 AS onlyUserB');
+            ->with('userA, userB, 0 AS numberCommonContent0, 0 AS common0, 0 AS onlyUserA0, 0 AS onlyUserB0');
 
+        //needed to avoid late semantic checking error
+        $counter = 0;
         foreach (PopularityManager::getPopularOptions() as $option){
             $qb->optionalMatch('(userA)-[:'.$option['type'].']-(l:'.$option['label'].')-[:'.$option['type'].']-(userB)')
                 ->optionalMatch('(l)-[:HAS_POPULARITY]-(popularity:Popularity)')
                 ->where('EXISTS(l.unpopularity) OR EXISTS(popularity.unpopularity)')
-                ->with('userA, userB, numberCommonContent + COUNT(DISTINCT l) AS numberCommonContent, common + SUM(l.unpopularity) + SUM(popularity.unpopularity) AS common, onlyUserA, onlyUserB')
-                ->with('userA', 'userB', 'numberCommonContent', 'common', 'onlyUserA', 'onlyUserB');
+                ->with('userA, userB, numberCommonContent'.($counter).' + COUNT(DISTINCT l) AS numberCommonContent'.($counter+1).', 
+                        common'.($counter).' + SUM(l.unpopularity) + SUM(popularity.unpopularity) AS common'.($counter+1).', onlyUserA'.($counter).', onlyUserB'.($counter).'')
+                ->with('userA', 'userB', 'numberCommonContent'.($counter+1).'', 'common'.($counter+1).'', 'onlyUserA'.($counter).'', 'onlyUserB'.($counter).'');
 
             $qb
                 ->optionalMatch('(userA)-[:'.$option['type'].']-(l1:'.$option['label'].')')
                 ->where('NOT (userB)-[:'.$option['type'].']->(l1)')
-                ->with('userA', 'userB', 'numberCommonContent', 'common', 'onlyUserA', 'onlyUserB', 'l1')
+                ->with('userA', 'userB', 'numberCommonContent'.($counter+1).'', 'common'.($counter+1).'', 'onlyUserA'.($counter).'', 'onlyUserB'.($counter).'', 'l1')
                 ->optionalMatch('(l1)-[:HAS_POPULARITY]-(popularity:Popularity)')
                 ->where('(EXISTS(l1.popularity) OR EXISTS(popularity.popularity))')
-                ->with('userA, userB, numberCommonContent, common, onlyUserA + SUM(l1.popularity) + SUM(popularity.popularity) AS onlyUserA', 'onlyUserB');
+                ->with('userA, userB, numberCommonContent'.($counter+1).', common'.($counter+1).',
+                            onlyUserA'.($counter).' + SUM(l1.popularity) + SUM(popularity.popularity) AS onlyUserA'.($counter+1).'', 'onlyUserB'.($counter).'');
 
             $qb
                 ->optionalMatch('(userB)-[:'.$option['type'].']-(l2:'.$option['label'].')')
                 ->where('NOT (userA)-[:'.$option['type'].']->(l2)')
-                ->with('userA', 'userB', 'numberCommonContent', 'common', 'onlyUserA', 'onlyUserB', 'l2')
+                ->with('userA', 'userB', 'numberCommonContent'.($counter+1).'', 'common'.($counter+1).'', 'onlyUserA'.($counter+1).'', 'onlyUserB'.($counter).'', 'l2')
                 ->optionalMatch('(l2)-[:HAS_POPULARITY]-(popularity:Popularity)')
                 ->where('(EXISTS(l2.popularity) OR EXISTS(popularity.popularity))')
-                ->with('userA, userB, numberCommonContent, common, onlyUserA, onlyUserB + SUM(l2.popularity) + SUM(popularity.popularity) AS onlyUserB');
+                ->with('userA, userB, numberCommonContent'.($counter+1).', common'.($counter+1).', onlyUserA'.($counter+1).',
+                        onlyUserB'.($counter).' + SUM(l2.popularity) + SUM(popularity.popularity) AS onlyUserB'.($counter+1).'');
+            $counter++;
         }
 
         $qb
-            ->with('userA, userB, CASE WHEN numberCommonContent > 4 THEN true ELSE false END AS valid, common, onlyUserA, onlyUserB')
-            ->with('userA, userB, valid, CASE WHEN valid THEN common ELSE 1 END AS common, onlyUserA, onlyUserB') //prevents divide by zero
-            ->with('userA, userB, valid, sqrt( common / (onlyUserA + common)) * sqrt( common / (onlyUserB + common)) AS similarity')
+            ->with('userA, userB, CASE WHEN numberCommonContent'.($counter).' > 4 THEN true ELSE false END AS valid, common'.($counter).', onlyUserA'.($counter).', onlyUserB'.($counter).'')
+            ->with('userA, userB, valid, CASE WHEN valid THEN common'.($counter).' ELSE 1 END AS common, onlyUserA'.($counter).', onlyUserB'.($counter).'') //prevents divide by zero
+            ->with('userA, userB, valid, sqrt( common / (onlyUserA'.($counter).' + common)) * sqrt( common / (onlyUserB'.($counter).' + common)) AS similarity')
             ->with('userA', 'userB', 'CASE WHEN valid THEN similarity ELSE 0 END AS similarity');
 
         $qb
