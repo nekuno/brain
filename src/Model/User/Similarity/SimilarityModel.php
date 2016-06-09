@@ -6,7 +6,7 @@ use Event\SimilarityEvent;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Neo4j\GraphManager;
-use Model\LinkModel;
+use Model\Popularity\PopularityManager;
 use Model\User\ContentPaginatedModel;
 use Model\User\ProfileModel;
 use Model\User\QuestionPaginatedModel;
@@ -35,9 +35,9 @@ class SimilarityModel
     protected $gm;
 
     /**
-     * @var LinkModel
+     * @var PopularityManager
      */
-    protected $linkModel;
+    protected $popularityManager;
 
     /**
      * @var QuestionPaginatedModel
@@ -57,14 +57,14 @@ class SimilarityModel
     public function __construct(
         EventDispatcher $dispatcher,
         GraphManager $gm,
-        LinkModel $linkModel,
+        PopularityManager $popularityManager,
         QuestionPaginatedModel $questionPaginatedModel,
         ContentPaginatedModel $contentPaginatedModel,
         ProfileModel $profileModel
     ) {
         $this->dispatcher = $dispatcher;
         $this->gm = $gm;
-        $this->linkModel = $linkModel;
+        $this->popularityManager = $popularityManager;
         $this->questionPaginatedModel = $questionPaginatedModel;
         $this->contentPaginatedModel = $contentPaginatedModel;
         $this->profileModel = $profileModel;
@@ -254,29 +254,36 @@ class SimilarityModel
 
     private function calculateSimilarityByInterests($idA, $idB)
     {
-        $this->linkModel->updatePopularity(array('userId' => $idA));
-        $this->linkModel->updatePopularity(array('userId' => $idB));
+        $this->popularityManager->updatePopularityByUser($idA);
+        $this->popularityManager->updatePopularityByUser($idB);
 
         $qb = $this->gm->createQueryBuilder();
         $qb
             ->match('(userA:User {qnoow_id: { idA } }), (userB:User {qnoow_id: { idB } })')
             ->where('userA <> userB')
             ->optionalMatch('(userA)-[:LIKES]-(l:Link)-[:LIKES]-(userB)')
-            ->where('EXISTS(l.unpopularity)')
-            ->with('userA, userB, COUNT(DISTINCT l) AS numberCommonContent, SUM(l.unpopularity) AS common')
+            ->optionalMatch('(l)-[:HAS_POPULARITY]-(popularity:Popularity)')
+            ->where('EXISTS(l.unpopularity) OR EXISTS(popularity.unpopularity)')
+            ->with('userA, userB, COUNT(DISTINCT l) AS numberCommonContent, SUM(l.unpopularity) + SUM(popularity.unpopularity) AS common')
             ->with('userA', 'userB', 'CASE WHEN numberCommonContent > 4 THEN true ELSE false END AS valid', 'common')
             ->with('userA', 'userB', 'valid', 'CASE WHEN valid THEN common ELSE 1 END AS common') //prevents divide by zero
-            ->with('userA', 'userB','valid', 'common');
+            ->with('userA', 'userB', 'valid', 'common');
 
         $qb
             ->optionalMatch('(userA)-[:LIKES]-(l1:Link)')
-            ->where('NOT (userB)-[:LIKES]->(l1) AND EXISTS(l1.popularity)')
-            ->with('userA, userB, valid, common, SUM(l1.popularity) AS onlyUserA');
+            ->where('NOT (userB)-[:LIKES]->(l1)')
+            ->with('userA', 'userB', 'valid', 'common, l1')
+            ->optionalMatch('(l1)-[:HAS_POPULARITY]-(popularity:Popularity)')
+            ->where('(EXISTS(l1.popularity) OR EXISTS(popularity.popularity))')
+            ->with('userA, userB, valid, common, SUM(l1.popularity) + SUM(popularity.popularity) AS onlyUserA');
 
         $qb
             ->optionalMatch('(userB)-[:LIKES]-(l2:Link)')
-            ->where('NOT (userA)-[:LIKES]->(l2) AND EXISTS(l2.popularity)')
-            ->with(' userA, userB, valid, common, onlyUserA, SUM(l2.popularity) AS onlyUserB');
+            ->where('NOT (userA)-[:LIKES]->(l2)')
+            ->with('userA', 'userB', 'valid', 'common, onlyUserA, l2')
+            ->optionalMatch('(l2)-[:HAS_POPULARITY]-(popularity:Popularity)')
+            ->where('EXISTS(l2.popularity) OR EXISTS(popularity.popularity)')
+            ->with(' userA, userB, valid, common, onlyUserA, SUM(l2.popularity) + SUM(popularity.popularity) AS onlyUserB');
 
         $qb
             ->with('userA, userB, valid, sqrt( common / (onlyUserA + common)) * sqrt( common / (onlyUserB + common)) AS similarity')

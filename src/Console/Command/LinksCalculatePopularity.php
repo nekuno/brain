@@ -3,8 +3,9 @@
 namespace Console\Command;
 
 use Console\ApplicationAwareCommand;
-use Model\LinkModel;
+use Model\Popularity\PopularityManager;
 use Silex\Application;
+use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -18,16 +19,9 @@ class LinksCalculatePopularity extends ApplicationAwareCommand
             ->setDescription('Calculate the popularity of the links.')
             ->setDefinition(
                 array(
-                    new InputOption(
-                        'limit',
-                        null,
-                        InputOption::VALUE_OPTIONAL,
-                        'Maximum number of links to recalculate'
-                    ),
-                    new InputOption(
+                    new InputArgument(
                         'user',
                         null,
-                        InputOption::VALUE_OPTIONAL,
                         'ID of the user to recalculate links from'
                     ),
                 )
@@ -36,23 +30,13 @@ class LinksCalculatePopularity extends ApplicationAwareCommand
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        /* @var $modelObject LinkModel */
-        $modelObject = $this->app['links.model'];
+        /* @var $modelObject PopularityManager */
+        $modelObject = $this->app['popularity.manager'];
 
-        $filters = array();
-
-        $limit = $input->getOption('limit');
-        if (null !== $limit) {
-            $filters['limit'] = $limit;
-        }
-
-        $userId = $input->getOption('user');
-        if (null !== $userId) {
-            $filters['userId'] = $userId;
-        }
-
+        $userId = $input->getArgument('user');
+        
         try {
-            $modelObject->updatePopularity($filters);
+            $modelObject->updatePopularityByUser((integer)$userId);
 
         } catch (\Exception $e) {
             $output->writeln(
