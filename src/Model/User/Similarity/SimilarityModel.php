@@ -359,8 +359,11 @@ class SimilarityModel
         $questionsFactor = ( (($userALinks) && !$userAQuestions) || ( ($userBLinks) && !$userBQuestions)) ? 0 : 1;
         $contentsFactor = ($userALinks || $userAQuestions) && ($userBLinks || $userBQuestions) ? 1 : 0; //include questions to be consistent with previous behaviour
 
-        $similarity['similarity'] = ( ($similarity['interests'] * $contentsFactor + $similarity['questions'] * $questionsFactor)
-                                        / ($contentsFactor + $questionsFactor)
+        $denominator = $questionsFactor + $contentsFactor;
+
+        $similarity['similarity'] = $denominator == 0 ? 0 :
+                                        ( ($similarity['interests'] * $contentsFactor + $similarity['questions'] * $questionsFactor + $similarity['skills'] * $skillsFactor)
+                                        / ($denominator)
         );
 
         $this->setSimilarity($idA, $idB, $similarity['similarity']);
