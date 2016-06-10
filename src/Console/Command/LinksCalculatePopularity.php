@@ -3,7 +3,6 @@
 namespace Console\Command;
 
 use Console\ApplicationAwareCommand;
-use Model\Neo4j\Neo4jException;
 use Model\Popularity\PopularityManager;
 use Silex\Application;
 use Symfony\Component\Console\Input\InputArgument;
@@ -43,9 +42,6 @@ class LinksCalculatePopularity extends ApplicationAwareCommand
             $output->writeln(
                 'Error trying to recalculate popularity with message: ' . $e->getMessage()
             );
-            if ($e instanceof Neo4jException){
-                $output->writeln('Query: '.$e->getQuery());
-            }
 
             return;
         }
