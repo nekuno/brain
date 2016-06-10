@@ -440,8 +440,11 @@ class SimilarityModel
 //        $skillsFactor = $userASkills & $userBSkills ? 1 : 0;
         $skillsFactor = $similarity['skills'] > 0 ? 1 : 0;
 
-        $similarity['similarity'] = ( ($similarity['interests'] * $contentsFactor + $similarity['questions'] * $questionsFactor + $similarity['skills'] * $skillsFactor)
-                                        / ($contentsFactor + $questionsFactor + $skillsFactor)
+        $denominator = $questionsFactor + $contentsFactor + $skillsFactor;
+
+        $similarity['similarity'] = $denominator == 0 ? 0 :
+                                        ( ($similarity['interests'] * $contentsFactor + $similarity['questions'] * $questionsFactor + $similarity['skills'] * $skillsFactor)
+                                        / ($denominator)
         );
 
         $this->setSimilarity($idA, $idB, $similarity['similarity']);
