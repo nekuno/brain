@@ -544,6 +544,43 @@ class UserManager implements PaginatedInterface
     }
 
     /**
+     * @param $userId
+     * @param array $resources
+     * @return User[]
+     */
+    public function getFollowingFrom($userId, $resources = array())
+    {
+        $qb = $this->gm->createQueryBuilder();
+
+        $resourceStrings = array();
+        foreach ($resources as $resource){
+            $resourceStrings[] = "EXISTS(likes.$resource)";
+        }
+        $resourceString = implode(' OR ', $resourceStrings);
+
+        $qb->match('(u:User{qnoow_id: {userId}})')
+            ->with('(u)');
+        $qb->setParameter('userId', (integer)$userId);
+        $qb->match('(u)-[likes:LIKES]-(c:Creator)');
+        if (!empty($resourceStrings)){
+            $qb->where($resourceString);
+        }
+        $qb->with('collect(c.url) AS urls');
+        $qb->match('(u2:User)-[hsn:HAS_SOCIAL_NETWORK]-()')
+            ->where ('hsn.url IN urls');
+        $qb->returns('u2 AS u');
+        
+        $result = $qb->getQuery()->getResultSet();
+        
+        $users = array();
+        foreach ($result as $row){
+            $users[] = $this->build($row);
+        }
+
+        return $users;
+    }
+
+    /**
      * @param $id
      * @return UserStatusModel
      * @throws NotFoundHttpException
@@ -592,9 +629,9 @@ class UserManager implements PaginatedInterface
         $qb->match('(u:User {qnoow_id: { id1 }}), (u2:User {qnoow_id: { id2 }})')
             ->optionalMatch('(u)-[:BELONGS_TO]->(g:Group)<-[:BELONGS_TO]-(u2)')
             ->with('u', 'u2', 'collect(distinct g) AS groupsBelonged')
-            ->optionalmatch('(u)-[:TOKEN_OF]-(token:Token)')
+            ->optionalMatch('(u)-[:TOKEN_OF]-(token:Token)')
             ->with('u', 'u2', 'groupsBelonged', 'collect(distinct token.resourceOwner) as resourceOwners')
-            ->optionalmatch('(u2)-[:TOKEN_OF]-(token2:Token)');
+            ->optionalMatch('(u2)-[:TOKEN_OF]-(token2:Token)');
         $qb->with('u, u2', 'groupsBelonged', 'resourceOwners', 'collect(distinct token2.resourceOwner) as resourceOwners2')
             ->optionalMatch('(u)-[:LIKES]->(link:Link)')
             ->where('(u2)-[:LIKES]->(link)')
