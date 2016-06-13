@@ -107,15 +107,16 @@ class UserAggregator
     /**
      * @param SocialProfile[] $socialProfiles
      * @param $username
+     * @param bool $force
      */
-    public function enqueueChannel(array $socialProfiles, $username)
+    public function enqueueChannel(array $socialProfiles, $username, $force = false)
     {
         foreach ($socialProfiles as $socialProfile) {
 	        if ($socialProfile->getResource() == TokensModel::TWITTER || $socialProfile->getResource() == TokensModel::GOOGLE) {
 	            $userId = $socialProfile->getUserId();
 	            $resource = $socialProfile->getResource();
 
-	            if ($this->userManager->isChannel($userId, $resource)){
+	            if (!$force && $this->userManager->isChannel($userId, $resource)){
 	                continue;
 	            }
 
