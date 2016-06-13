@@ -79,8 +79,10 @@ class Neo4jHandler extends AbstractHandler
             fwrite($fp, PHP_EOL);
             fwrite($fp, $string);
             fwrite($fp, PHP_EOL);
+            fclose($fp);
         } else {
             //couldn´t block the file
+            fclose($fp);
             return false;
         };
         return true;
