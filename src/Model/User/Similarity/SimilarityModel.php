@@ -399,7 +399,7 @@ class SimilarityModel
     private function returnSimilarity(array $similarity, $idA, $idB)
     {
         $questionLimit = 0;
-        $contentLimit = -1;
+        $contentLimit = 10;
         $skillLimit = 0;
 
         try {
