@@ -196,7 +196,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.similarity.model'] = $app->share(
             function ($app) {
 
-                return new SimilarityModel($app['dispatcher'], $app['neo4j.graph_manager'], $app['popularity.manager'], $app['users.questions.model'], $app['users.content.model'], $app['users.profile.model']);
+                return new SimilarityModel($app['dispatcher'], $app['neo4j.graph_manager'], $app['popularity.manager'], $app['users.questions.model'], $app['users.content.model'], $app['users.profile.model'], $app['users.groups.model']);
             }
         );
 

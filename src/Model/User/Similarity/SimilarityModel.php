@@ -8,6 +8,7 @@ use Everyman\Neo4j\Query\Row;
 use Model\Neo4j\GraphManager;
 use Model\Popularity\PopularityManager;
 use Model\User\ContentPaginatedModel;
+use Model\User\GroupModel;
 use Model\User\ProfileModel;
 use Model\User\QuestionPaginatedModel;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -18,7 +19,7 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
  */
 class SimilarityModel
 {
-    const numberOfSecondsToCache = 300;
+    const numberOfSecondsToCache = 30;
     const ALL = 1;
     const INTERESTS = 2;
     const QUESTIONS = 3;
@@ -54,13 +55,16 @@ class SimilarityModel
      */
     protected $profileModel;
 
+    protected $groupModel;
+
     public function __construct(
         EventDispatcher $dispatcher,
         GraphManager $gm,
         PopularityManager $popularityManager,
         QuestionPaginatedModel $questionPaginatedModel,
         ContentPaginatedModel $contentPaginatedModel,
-        ProfileModel $profileModel
+        ProfileModel $profileModel,
+        GroupModel $groupModel
     ) {
         $this->dispatcher = $dispatcher;
         $this->gm = $gm;
@@ -68,6 +72,7 @@ class SimilarityModel
         $this->questionPaginatedModel = $questionPaginatedModel;
         $this->contentPaginatedModel = $contentPaginatedModel;
         $this->profileModel = $profileModel;
+        $this->groupModel = $groupModel;
     }
 
     /**
@@ -394,7 +399,7 @@ class SimilarityModel
     private function returnSimilarity(array $similarity, $idA, $idB)
     {
         $questionLimit = 0;
-        $contentLimit = 100;
+        $contentLimit = -1;
         $skillLimit = 0;
 
         try {
@@ -442,6 +447,27 @@ class SimilarityModel
 
         $denominator = $questionsFactor + $contentsFactor + $skillsFactor;
 
+        //TODO: Check why this is necessary NOW
+        ////// PATCH TO FIX SIMILARITIES OF INVESTOR GROUPS //////////////////
+        //0-------------------limitSimilarity-------1
+        // TO
+        //0---------newLimitSimilarity--------------1
+        //Contracts/expands intervals to fix similarities
+        $limitSimilarity = 0.85;
+        $newLimitSimilarity = 0.4;
+        $investorGroupIds = array(9507567);
+
+        foreach ($investorGroupIds as $investorGroupId){
+            if ($this->groupModel->isUserFromGroup($investorGroupId, $idA) && $this->groupModel->isUserFromGroup($investorGroupId, $idB)){
+                if ($similarity['interests'] > $limitSimilarity ){
+                    $similarity['interests'] = (($similarity['interests']-$limitSimilarity)/(1-$limitSimilarity) )*(1-$newLimitSimilarity) + $newLimitSimilarity;
+                } else {
+                    $similarity['interests'] = (($similarity['interests'])/$limitSimilarity) * $newLimitSimilarity;
+                }
+            }
+        }
+        /////////////////////////////////////////////////////////////////////
+        
         $similarity['similarity'] = $denominator == 0 ? 0 :
                                         ( ($similarity['interests'] * $contentsFactor + $similarity['questions'] * $questionsFactor + $similarity['skills'] * $skillsFactor)
                                         / ($denominator)
