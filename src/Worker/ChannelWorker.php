@@ -112,9 +112,9 @@ class ChannelWorker extends LoggerAwareWorker implements RabbitMQConsumerInterfa
             switch($resourceOwner){
                 case TokensModel::TWITTER:
 
-                    if (!isset($data['username'])){
-                        throw new \Exception('Enqueued message does not include  username parameter');
-                    }
+//                    if (!isset($data['username'])){
+//                        throw new \Exception('Enqueued message does not include  username parameter');
+//                    }
 //                    $username = $data['username'];
 //                    $this->logger->info(sprintf('Using GetOldTweets to fetch from %s', $username));
                     $exclude = array('twitter_following', 'twitter_favorites');
