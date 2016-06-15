@@ -184,18 +184,50 @@ class SimilarityModel
         if ($result->count() > 0) {
             /* @var $row Row */
             $row = $result->current();
-            /* @var $node Node */
-            $similarity['questions'] = $row->offsetExists('questions') ? $row->offsetGet('questions') : 0;
-            $similarity['interests'] = $row->offsetExists('interests') ? $row->offsetGet('interests') : 0;
-            $similarity['skills'] = $row->offsetExists('skills') ? $row->offsetGet('skills') : 0;
-            $similarity['similarity'] = $row->offsetExists('similarity') ? $row->offsetGet('similarity') : 0;
-            $similarity['questionsUpdated'] = $row->offsetExists('questionsUpdated') ? $row->offsetGet('questionsUpdated') : 0;
-            $similarity['interestsUpdated'] = $row->offsetExists('interestsUpdated') ? $row->offsetGet('interestsUpdated') : 0;
-            $similarity['skillsUpdated'] = $row->offsetExists('skillsUpdated') ? $row->offsetGet('skillsUpdated') : 0;
-            $similarity['similarityUpdated'] = $row->offsetExists('similarityUpdated') ? $row->offsetGet('similarityUpdated') : 0;
+            $similarity = $this->buildSimilarity($row);
+
         }
 
         return $similarity;
+    }
+
+    /**
+     * @param $id
+     * @return array[]
+     * @throws \Model\Neo4j\Neo4jException
+     */
+    public function getAllCurrentByUser($id){
+
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(u:User{qnoow_id: {id} })')
+            ->with('u')
+            ->limit(1);
+        $qb->setParameter('id', (integer)$id);
+
+        $qb->match('(u)-[s:SIMILARITY]-(u2:User)')
+            ->where('NOT (u2:GhostUser)')
+            ->with(
+                's.questions AS questions',
+                's.interests AS interests',
+                's.skills AS skills',
+                's.similarity AS similarity',
+                'CASE WHEN EXISTS(s.questionsUpdated) THEN s.questionsUpdated ELSE 0 END AS questionsUpdated',
+                'CASE WHEN EXISTS(s.interestsUpdated) THEN s.interestsUpdated ELSE 0 END AS interestsUpdated',
+                'CASE WHEN EXISTS(s.skillsUpdated) THEN s.skillsUpdated ELSE 0 END AS skillsUpdated',
+                'CASE WHEN EXISTS(s.similarityUpdated) THEN s.similarityUpdated ELSE 0 END AS similarityUpdated'
+            )
+            ->returns('questions, interests, skills, similarity, questionsUpdated, interestsUpdated, skillsUpdated, similarityUpdated');
+        
+        $result = $qb->getQuery()->getResultSet();
+        
+        $similarities = array();
+        foreach ($result as $row)
+        {
+            $similarities[] = $this->buildSimilarity($row);
+        }
+        
+        return $similarities;
     }
 
     /**
@@ -494,5 +526,19 @@ class SimilarityModel
             ->set('s.similarity = {similarity}');
 
         $qb->getQuery()->getResultSet();
+    }
+
+    private function buildSimilarity(Row $row) {
+        $similarity = array();
+        $similarity['questions'] = $row->offsetExists('questions') ? $row->offsetGet('questions') : 0;
+        $similarity['interests'] = $row->offsetExists('interests') ? $row->offsetGet('interests') : 0;
+        $similarity['skills'] = $row->offsetExists('skills') ? $row->offsetGet('skills') : 0;
+        $similarity['similarity'] = $row->offsetExists('similarity') ? $row->offsetGet('similarity') : 0;
+        $similarity['questionsUpdated'] = $row->offsetExists('questionsUpdated') ? $row->offsetGet('questionsUpdated') : 0;
+        $similarity['interestsUpdated'] = $row->offsetExists('interestsUpdated') ? $row->offsetGet('interestsUpdated') : 0;
+        $similarity['skillsUpdated'] = $row->offsetExists('skillsUpdated') ? $row->offsetGet('skillsUpdated') : 0;
+        $similarity['similarityUpdated'] = $row->offsetExists('similarityUpdated') ? $row->offsetGet('similarityUpdated') : 0;
+
+        return $similarity;
     }
 }
