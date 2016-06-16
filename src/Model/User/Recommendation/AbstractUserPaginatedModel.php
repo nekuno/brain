@@ -103,7 +103,7 @@ abstract class AbstractUserPaginatedModel implements PaginatedInterface
                         $whereQueries = array();
                         foreach ($value as $dataValue){
                             $choice = $dataValue['choice'];
-                            $detail = isset($dataValue['detail']) && !is_null($dataValue['detail']) ? $dataValue['detail'] : null;
+                            $detail = isset($dataValue['detail']) ? $dataValue['detail'] : null;
 
                             $whereQuery = " option$name.id = '$choice'";
                             if (!(null==$detail)){
@@ -127,7 +127,7 @@ abstract class AbstractUserPaginatedModel implements PaginatedInterface
                             $tagValue = $name === 'language' ?
                                 $this->profileFilterModel->getLanguageFromTag($dataValue['tag']) :
                                 $dataValue['tag'];
-                            $choice = isset($dataValue['choices']) && !is_null($dataValue['choices']) ? $dataValue['choices'] : null;
+                            $choice = isset($dataValue['choices']) ? $dataValue['choices'] : null;
                             $whereQuery = " tag$name.name = '$tagValue'";
                             if (!null==$choice){
                                 $whereQuery.= " AND rel$name.detail = '$choice'";
@@ -145,7 +145,7 @@ abstract class AbstractUserPaginatedModel implements PaginatedInterface
                             $tagValue = $name === 'language' ?
                                 $this->profileFilterModel->getLanguageFromTag($dataValue['tag']) :
                                 $dataValue['tag'];
-                            $choices = isset($dataValue['choices']) && !is_null($dataValue['choices']) ? $dataValue['choices'] : array();
+                            $choices = isset($dataValue['choices']) ? $dataValue['choices'] : array();
 
                             $whereQuery = " tag$name.name = '$tagValue'";
                             if (!empty($choices)){

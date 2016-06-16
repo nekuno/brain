@@ -384,7 +384,7 @@ class FilterUsersManager
                                 $this->profileFilterModel->getLanguageFromTag($value['tag']) :
                                 $value['tag'];
 
-                            $choices = isset($value['choices']) ? $value['choices'] : '[]';
+                            $choices = isset($value['choices']) ? $value['choices'] : array();
                             $qb->merge("(tag$fieldName$tag:$tagLabelName:ProfileTag{name:'$tag'})");
                             $qb->merge("(filter)-[tag_rel$fieldName$tag:FILTERS_BY]->(tag$fieldName$tag)")
                                 ->set("tag_rel$fieldName$tag.detail = {detail$fieldName$tag}");
