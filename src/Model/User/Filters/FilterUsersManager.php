@@ -316,9 +316,11 @@ class FilterUsersManager
                         $counter = 0;
                         foreach ($profileFilters[$fieldName] as $value) {
                             $choice = $value['choice'];
-                            $detail = $value['detail'];
+                            $detail = isset($value['detail']) ? $value['detail'] : '';
                             $qb->merge(" (option$fieldName$counter:$profileLabelName{id:'$choice'})");
-                            $qb->merge(" (filter)-[:FILTERS_BY{detail: '$detail'}]->(option$fieldName$counter)");
+                            $qb->merge(" (filter)-[po_rel$fieldName$counter:FILTERS_BY]->(option$fieldName$counter)")
+                                ->set(" po_rel$fieldName$counter.detail = {detail$fieldName$counter}");
+                            $qb->setParameter("detail$fieldName$counter", $detail);
                             $counter++;
                         }
                     }
@@ -361,10 +363,12 @@ class FilterUsersManager
                             $tag = $fieldName === 'language' ?
                                 $this->profileFilterModel->getLanguageFromTag($value['tag']) :
                                 $value['tag'];
-                            $choice = $value['choice'];
+                            $choice = isset($value['choice']) ? $value['choice'] : '';
 
                             $qb->merge("(tag$fieldName$tag:$tagLabelName:ProfileTag{name:'$tag'})");
-                            $qb->merge("(filter)-[:FILTERS_BY{detail:'$choice'}]->(tag$fieldName$tag)");
+                            $qb->merge("(filter)-[tag_rel$fieldName$tag:FILTERS_BY]->(tag$fieldName$tag)")
+                                ->set("tag_rel$fieldName$tag.detail = {detail$fieldName$tag}");
+                            $qb->setParameter("detail$fieldName$tag", $choice);
                         }
                     }
                     $qb->with('filter');
@@ -380,9 +384,11 @@ class FilterUsersManager
                                 $this->profileFilterModel->getLanguageFromTag($value['tag']) :
                                 $value['tag'];
 
+                            $choices = isset($value['choices']) ? $value['choices'] : '[]';
                             $qb->merge("(tag$fieldName$tag:$tagLabelName:ProfileTag{name:'$tag'})");
-                            $qb->merge("(filter)-[:FILTERS_BY{detail:{detail$fieldName$tag}}]->(tag$fieldName$tag)");
-                            $qb->setParameter("detail$fieldName$tag", $value['choices']);
+                            $qb->merge("(filter)-[tag_rel$fieldName$tag:FILTERS_BY]->(tag$fieldName$tag)")
+                                ->set("tag_rel$fieldName$tag.detail = {detail$fieldName$tag}");
+                            $qb->setParameter("detail$fieldName$tag", $choices);
                         }
                     }
                     $qb->with('filter');
