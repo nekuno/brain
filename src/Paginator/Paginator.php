@@ -33,6 +33,14 @@ class Paginator
     }
 
     /**
+     * @param int $maxLimit
+     */
+    public function setMaxLimit($maxLimit)
+    {
+        $this->maxLimit = $maxLimit;
+    }
+
+    /**
      * @param array $filters
      * @param PaginatedInterface $paginated
      * @param \Symfony\Component\HttpFoundation\Request $request
