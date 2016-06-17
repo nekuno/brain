@@ -103,6 +103,31 @@ class PopularityManager
     }
 
     /**
+     * @param ResultSet $result
+     * @return Popularity[]
+     */
+    public function build(ResultSet $result)
+    {
+        $popularities = array();
+        /** @var Row $row */
+        foreach ($result as $row) {
+
+            $popularity = new Popularity();
+
+            $popularity->setId($row->offsetGet('id'));
+            $popularity->setPopularity($row->offsetGet('popularity'));
+            $popularity->setUnpopularity($row->offsetGet('unpopularity'));
+            $popularity->setTimestamp($row->offsetGet('timestamp'));
+            $popularity->setAmount($row->offsetGet('amount'));
+            $popularity->setNew($row->offsetGet('new'));
+
+            $popularities[] = $popularity;
+        }
+
+        return $popularities;
+    }
+
+    /**
      * Looks for :Link(popularity) and :Popularity(popularity) for now
      */
     private function getMaxPopularity()
@@ -246,30 +271,5 @@ class PopularityManager
             ->with('l')
             ->remove('l.popularity', 'l.unpopularity', 'l.popularity_timestamp');
         $qb->getQuery()->getResultSet();
-    }
-
-    /**
-     * @param ResultSet $result
-     * @return Popularity[]
-     */
-    private function build(ResultSet $result)
-    {
-        $popularities = array();
-        /** @var Row $row */
-        foreach ($result as $row) {
-
-            $popularity = new Popularity();
-
-            $popularity->setId($row->offsetGet('id'));
-            $popularity->setPopularity($row->offsetGet('popularity'));
-            $popularity->setUnpopularity($row->offsetGet('unpopularity'));
-            $popularity->setTimestamp($row->offsetGet('timestamp'));
-            $popularity->setAmount($row->offsetGet('amount'));
-            $popularity->setNew($row->offsetGet('new'));
-
-            $popularities[] = $popularity;
-        }
-
-        return $popularities;
     }
 }
