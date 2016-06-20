@@ -4,6 +4,7 @@ namespace Manager;
 
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
+use Model\Exception\ValidationException;
 use Model\Photo;
 use Model\Neo4j\GraphManager;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -89,9 +90,10 @@ class PhotoManager
         $user = $this->um->getById($userId);
 
         // Validate
+        $extension = $this->validate($file);
 
         // Save file
-        $name = sha1(uniqid($user->getUsernameCanonical() . '_' . time(), true)) . '.jpg';
+        $name = sha1(uniqid($user->getUsernameCanonical() . '_' . time(), true)) . '.' . $extension;
         $path = 'uploads/gallery/' . md5($user->getId()) . '/' . $name;
         file_put_contents($this->path . $path, $file);
 
@@ -138,6 +140,30 @@ class PhotoManager
             throw new NotFoundHttpException('Photo not found');
         }
 
+    }
+
+    public function validate($file)
+    {
+
+        $extension = null;
+
+        if (!$finfo = new \finfo(FILEINFO_MIME_TYPE)) {
+            throw new ValidationException(array('file' => array('Unable to guess file mime type')));
+        }
+
+        $mimeType = $finfo->buffer($file);
+
+        $validTypes = array(
+            'image/png' => 'png',
+            'image/jpeg' => 'jpg',
+            'image/gif' => 'gif',
+        );
+
+        if (!isset($validTypes[$mimeType])) {
+            throw new ValidationException(array('file' => array(sprintf('Invalid mime type, possibles values are ""', implode('", "', $validTypes)))));
+        }
+
+        return $validTypes[$mimeType];
     }
 
     /**
