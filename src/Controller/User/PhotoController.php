@@ -43,7 +43,7 @@ class PhotoController
 
         $manager = $app['users.photo.manager'];
 
-        $file = '';
+        $file = base64_decode($request->request->get('file'));
 
         $photo = $manager->create($user->getId(), $file);
 

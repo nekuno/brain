@@ -26,6 +26,16 @@ class Photo implements \JsonSerializable
     protected $user;
 
     /**
+     * @var string
+     */
+    protected $host;
+
+    public function __construct($host)
+    {
+        $this->host = $host;
+    }
+
+    /**
      * @return int
      */
     public function getId()
@@ -106,8 +116,7 @@ class Photo implements \JsonSerializable
         return array(
             'id' => $this->getId(),
             'createdAt' => $this->getCreatedAt(),
-            'path' => $this->getPath(),
-            'url' => 'https://nekuno.com',
+            'url' => $this->host . $this->getPath(),
         );
     }
 

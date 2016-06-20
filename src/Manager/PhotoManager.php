@@ -21,10 +21,22 @@ class PhotoManager
      */
     protected $um;
 
-    public function __construct(GraphManager $gm, UserManager $um)
+    /**
+     * @var string
+     */
+    protected $path;
+
+    /**
+     * @var string
+     */
+    protected $host;
+
+    public function __construct(GraphManager $gm, UserManager $um, $path, $host)
     {
         $this->gm = $gm;
         $this->um = $um;
+        $this->path = $path;
+        $this->host = $host;
     }
 
     public function getAll($userId)
@@ -79,7 +91,9 @@ class PhotoManager
         // Validate
 
         // Save file
-        $path = '';
+        $name = sha1(uniqid($user->getUsernameCanonical() . '_' . time(), true)) . '.jpg';
+        $path = 'uploads/gallery/' . md5($user->getId()) . '/' . $name;
+        file_put_contents($this->path . $path, $file);
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(u:User {qnoow_id: { id }})')
@@ -140,7 +154,7 @@ class PhotoManager
         $userNode = $row->offsetGet('u');
         $user = $this->um->getById($userNode->getProperty('qnoow_id'));
 
-        $photo = new Photo();
+        $photo = new Photo($this->host);
         $photo->setId($node->getId());
         $photo->setCreatedAt(new \DateTime($node->getProperty('createdAt')));
         $photo->setPath($node->getProperty('path'));
