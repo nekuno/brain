@@ -2,6 +2,7 @@
 
 namespace Provider;
 
+use Manager\PhotoManager;
 use Model\EnterpriseUser\EnterpriseUserModel;
 use Model\LinkModel;
 use Model\Popularity\PopularityManager;
@@ -106,7 +107,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.profileFilter.model'] = $app->share(
             function ($app) {
 
-                return new ProfileFilterModel($app['neo4j.graph_manager'], $app['fields']['filters']['profile'], $app['fields']['profile'], $app['socialFields']['profile'],  $app['locale.options']['default']);
+                return new ProfileFilterModel($app['neo4j.graph_manager'], $app['fields']['filters']['profile'], $app['fields']['profile'], $app['socialFields']['profile'], $app['locale.options']['default']);
             }
         );
 
@@ -221,7 +222,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
                 return new SocialUserRecommendationPaginatedModel($app['neo4j.graph_manager'], $app['users.profileFilter.model'], $app['users.userFilter.model']);
             }
         );
-        
+
         $app['users.recommendation.popularusers.model'] = $app->share(
             function ($app) {
 
@@ -246,7 +247,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.recommendation.popularcontent.model'] = $app->share(
             function ($app) {
 
-                return new ContentPopularRecommendationPaginatedModel($app['neo4j.graph_manager'],  $app['links.model'], $app['validator.service']);
+                return new ContentPopularRecommendationPaginatedModel($app['neo4j.graph_manager'], $app['links.model'], $app['validator.service']);
             }
         );
 
@@ -305,7 +306,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
                 return new LinkModel($app['neo4j.graph_manager'], $app['translator']);
             }
         );
-        
+
         $app['popularity.manager'] = $app->share(
             function ($app) {
                 return new PopularityManager($app['neo4j.graph_manager']);
@@ -350,9 +351,11 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.threads.manager'] = $app->share(
             function ($app) {
 
-                return new ThreadManager($app['neo4j.graph_manager'], $app['users.manager'], $app['users.threadusers.manager'],
+                return new ThreadManager(
+                    $app['neo4j.graph_manager'], $app['users.manager'], $app['users.threadusers.manager'],
                     $app['users.threadcontent.manager'], $app['users.profile.model'], $app['users.groups.model'],
-                    $app['translator'], $app['validator.service']);
+                    $app['translator'], $app['validator.service']
+                );
             }
         );
 
@@ -387,6 +390,13 @@ class ModelsServiceProvider implements ServiceProviderInterface
             function ($app) {
 
                 return new CommunityModel($app['neo4j.graph_manager'], $app['users.manager']);
+            }
+        );
+
+        $app['users.photo.manager'] = $app->share(
+            function ($app) {
+
+                return new PhotoManager($app['neo4j.graph_manager'], $app['users.manager']);
             }
         );
     }

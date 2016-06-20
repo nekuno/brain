@@ -1,0 +1,152 @@
+<?php
+
+namespace Manager;
+
+use Everyman\Neo4j\Node;
+use Everyman\Neo4j\Query\Row;
+use Model\Photo;
+use Model\Neo4j\GraphManager;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+
+class PhotoManager
+{
+
+    /**
+     * @var GraphManager
+     */
+    protected $gm;
+
+    /**
+     * @var UserManager
+     */
+    protected $um;
+
+    public function __construct(GraphManager $gm, UserManager $um)
+    {
+        $this->gm = $gm;
+        $this->um = $um;
+    }
+
+    public function getAll($userId)
+    {
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User)<-[:PHOTO_OF]-(i:Photo)')
+            ->where('u.qnoow_id = { userId }')
+            ->setParameter('userId', $userId)
+            ->returns('u', 'i')
+            ->orderBy('i.createdAt DESC');
+
+        $query = $qb->getQuery();
+
+        $result = $query->getResultSet();
+
+        $return = array();
+
+        foreach ($result as $row) {
+            $return[] = $this->build($row);
+        }
+
+        return $return;
+    }
+
+    public function getById($id)
+    {
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User)<-[:PHOTO_OF]-(i:Photo)')
+            ->where('id(i)= { id }')
+            ->setParameter('id', (integer)$id)
+            ->returns('u', 'i');
+
+        $query = $qb->getQuery();
+
+        $result = $query->getResultSet();
+
+        if (count($result) < 1) {
+            throw new NotFoundHttpException('Photo not found');
+        }
+
+        /* @var $row Row */
+        $row = $result->current();
+
+        return $this->build($row);
+    }
+
+    public function create($userId, $file)
+    {
+
+        $user = $this->um->getById($userId);
+
+        // Validate
+
+        // Save file
+        $path = '';
+
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User {qnoow_id: { id }})')
+            ->with('u')
+            ->create('(u)<-[:PHOTO_OF]-(i:Photo)')
+            ->set('i.createdAt = { createdAt }', 'i.path = { path }')
+            ->setParameters(
+                array(
+                    'id' => (int)$userId,
+                    'createdAt' => (new \DateTime())->format('Y-m-d H:i:s'),
+                    'path' => $path,
+                )
+            )
+            ->returns('u', 'i');
+
+        $result = $qb->getQuery()->getResultSet();
+
+        if (count($result) < 1) {
+            throw new \Exception('Could not create Photo');
+        }
+
+        $row = $result->current();
+
+        return $this->build($row);
+
+    }
+
+    public function remove($id)
+    {
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User)<-[r:PHOTO_OF]-(i:Photo)')
+            ->where('id(i)= { id }')
+            ->setParameter('id', (integer)$id)
+            ->delete('r', 'i')
+            ->returns('u');
+
+        $query = $qb->getQuery();
+
+        $result = $query->getResultSet();
+
+        if (count($result) < 1) {
+            throw new NotFoundHttpException('Photo not found');
+        }
+
+    }
+
+    /**
+     * @param Row $row
+     * @return Photo
+     */
+    protected function build(Row $row)
+    {
+
+        /* @var $node Node */
+        $node = $row->offsetGet('i');
+
+        /* @var $userNode Node */
+        $userNode = $row->offsetGet('u');
+        $user = $this->um->getById($userNode->getProperty('qnoow_id'));
+
+        $photo = new Photo();
+        $photo->setId($node->getId());
+        $photo->setCreatedAt(new \DateTime($node->getProperty('createdAt')));
+        $photo->setPath($node->getProperty('path'));
+        $photo->setUser($user);
+
+        return $photo;
+    }
+
+}
