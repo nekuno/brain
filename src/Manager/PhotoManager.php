@@ -145,6 +145,11 @@ class PhotoManager
     public function validate($file)
     {
 
+        $max = 1900000;
+        if (strlen($file) > $max) {
+            throw new ValidationException(array('file' => array(sprintf('Max "%s" bytes file size exceed', $max))));
+        }
+
         $extension = null;
 
         if (!$finfo = new \finfo(FILEINFO_MIME_TYPE)) {
