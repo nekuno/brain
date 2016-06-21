@@ -147,4 +147,5 @@ $app->get('/client/blog-feed', 'client.controller:getBlogFeedAction');
 $app->get('/photos', 'users.photos.controller:getAllAction');
 $app->get('/photos/{id}', 'users.photos.controller:getAction');
 $app->post('/photos', 'users.photos.controller:postAction');
+$app->post('/photos/{id}/profile', 'users.photos.controller:postProfileAction');
 $app->delete('/photos/{id}', 'users.photos.controller:deleteAction');

@@ -67,6 +67,25 @@ class PhotoController
         return $app->json($photo, 201);
     }
 
+    public function postProfileAction(Application $app, Request $request, User $user, $id)
+    {
+
+        $manager = $app['users.photo.manager'];
+
+        $photo = $manager->getById($id);
+
+        if ($photo->getUser()->getId() !== $user->getId()) {
+            throw new AccessDeniedHttpException('Photo not allowed');
+        }
+
+        $user = $app['users.manager']->getById($user->getId());
+
+        //TODO: Remove old picture, make crop, save new file and save user
+
+        return $app->json($user);
+
+    }
+
     public function deleteAction(Application $app, User $user, $id)
     {
 
