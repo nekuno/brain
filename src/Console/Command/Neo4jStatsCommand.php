@@ -32,6 +32,13 @@ class Neo4jStatsCommand extends ApplicationAwareCommand
         'unpopularity' => array()
     );
 
+    protected $popularityCalculations = array(
+        'countCommon' => array(),
+        'unpopularityCommon' => array(),
+        'countOnly' => array(),
+        'popularityOnly' => array(),
+    );
+
     protected function configure()
     {
         $this->setName('neo4j:stats')
@@ -61,7 +68,7 @@ class Neo4jStatsCommand extends ApplicationAwareCommand
         }
 
         if ($similarity) {
-            $this->checkSimilarity($users, $output);
+            $this->checkSimilarity($users, $output, $includeGhost);
         }
 
         if ($likes_per_user) {
@@ -74,20 +81,32 @@ class Neo4jStatsCommand extends ApplicationAwareCommand
     /**
      * @param $users User[]
      * @param $output OutputInterface
+     * @param $includeGhost
      */
-    private function checkSimilarity(array $users, OutputInterface $output)
+    private function checkSimilarity(array $users, OutputInterface $output, $includeGhost)
     {
         $path = $this->buildFilePath('similarity');
 
         foreach ($users as $user) {
             $output->writeln('Getting similarities for user ' . $user->getId());
-            $similarities = $this->app['users.similarity.model']->getAllCurrentByUser($user->getId());
+            $similarityData = $this->app['users.similarity.model']->getAllCurrentByUser($user->getId(), $includeGhost);
 
+            $similarities = $similarityData['similarities'];
             foreach ($similarities as $similarity) {
                 $this->similaritiesDistribution['interests'][$similarity['interests'] == 0 ? 'zero' : floor($similarity['interests'] / 0.1)]++;
                 $this->similaritiesDistribution['questions'][$similarity['questions'] == 0 ? 'zero' : floor($similarity['questions'] / 0.1)]++;
                 $this->similaritiesDistribution['skills'][$similarity['skills'] == 0 ? 'zero' : floor($similarity['skills'] / 0.1)]++;
                 $this->similaritiesDistribution['similarity'][$similarity['similarity'] == 0 ? 'zero' : floor($similarity['similarity'] / 0.1)]++;
+            }
+
+            $popularityData = $similarityData['popularityData'];
+            foreach ($popularityData as $singlePopularityData) {
+                $this->popularityCalculations['countCommon'][floor($singlePopularityData['countCommon'] / 10)]++;
+                $this->popularityCalculations['unpopularityCommon'][round($singlePopularityData['unpopularityCommon'])]++;
+                $this->popularityCalculations['countOnly'][floor($singlePopularityData['countOnlyA'] / 10)]++;
+                $this->popularityCalculations['popularityOnly'][round($singlePopularityData['popularityOnlyA'])]++;
+                $this->popularityCalculations['countOnly'][floor($singlePopularityData['countOnlyB'] / 10)]++;
+                $this->popularityCalculations['popularityOnly'][round($singlePopularityData['popularityOnlyB'])]++;
             }
         }
 
@@ -95,6 +114,11 @@ class Neo4jStatsCommand extends ApplicationAwareCommand
         $this->exportDistribution($this->similaritiesDistribution['questions'], $path, 'Similarity by questions');
         $this->exportDistribution($this->similaritiesDistribution['skills'], $path, 'Similarity by skills');
         $this->exportDistribution($this->similaritiesDistribution['similarity'], $path, 'Total Similarity');
+
+        $this->exportDistribution($this->popularityCalculations['countCommon'], $path, 'Common content count, decade');
+        $this->exportDistribution($this->popularityCalculations['unpopularityCommon'], $path, 'Common content unpopularity, rounded');
+        $this->exportDistribution($this->popularityCalculations['countOnly'], $path, 'Only one user content count, decade');
+        $this->exportDistribution($this->popularityCalculations['popularityOnly'], $path, 'Only one user content popularity, rounded');
     }
 
     /**
@@ -140,7 +164,7 @@ class Neo4jStatsCommand extends ApplicationAwareCommand
             $popularity = $popularityManager->calculatePopularity($likes, $maxPopularity->getAmount());
 
             //Avoid duplicates
-            $this->likesPerLinkDistribution[$likes] = round($total/($likes?: 1));
+            $this->likesPerLinkDistribution[$likes] = round($total / ($likes ?: 1));
 
             $this->popularityByLikes['popularity'][$likes] = $popularity->getPopularity();
             $this->popularityByLikes['unpopularity'][$likes] = $popularity->getUnpopularity();
@@ -153,16 +177,38 @@ class Neo4jStatsCommand extends ApplicationAwareCommand
 
     private function exportDistribution(array $distribution, $path, $text = null)
     {
-        $array = array('zero' => $distribution['zero']);
+        $array = array('zero' => isset($distribution['zero']) ? $distribution['zero'] : 0);
         $keys = array('zero' => 'zero');
         unset($distribution['zero']);
 
         ksort($distribution);
         end($distribution);
-        var_dump($distribution);
+
+        //build complete distribution array to facilitate graph creation
         for ($i = 0; $i <= key($distribution); $i++) {
             $array[$i] = isset($distribution[$i]) ? $distribution[$i] : 0;
             $keys[$i] = $i;
+        }
+
+        //calculate average
+        $average = array('numerator' => 0, 'denominator' => 0);
+        for ($i=0; $i < count($array) - 1; $i++) {
+            $average['numerator'] += $i * $array[$i];
+            $average['denominator'] += $array[$i];
+        }
+        $average['result'] = $average['denominator'] == 0 ? 0 : $average['numerator'] / $average['denominator'];
+
+        //calculate median
+        $median = 0;
+        $counted = 0;
+        for ($i = 0; $i < count($array); $i++) {
+            if (null !== $counted) {
+                $counted += $array[$i];
+                if ($counted >= ($average['denominator'] / 2)) {
+                    $median = $i;
+                    $counted = null;
+                }
+            }
         }
 
         $handle = fopen($path, 'a+');
@@ -171,6 +217,8 @@ class Neo4jStatsCommand extends ApplicationAwareCommand
         }
         fputcsv($handle, $keys);
         fputcsv($handle, $array);
+        fwrite($handle, 'Average: ' . $average['result'] . PHP_EOL);
+        fwrite($handle, 'Median: ' . $median . PHP_EOL);
         fwrite($handle, PHP_EOL);
         fclose($handle);
     }
