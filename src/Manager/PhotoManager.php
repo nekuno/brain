@@ -147,13 +147,13 @@ class PhotoManager
 
         $max = 1900000;
         if (strlen($file) > $max) {
-            throw new ValidationException(array('file' => array(sprintf('Max "%s" bytes file size exceed', $max))));
+            throw new ValidationException(array('photo' => array(sprintf('Max "%s" bytes file size exceed', $max))));
         }
 
         $extension = null;
 
         if (!$finfo = new \finfo(FILEINFO_MIME_TYPE)) {
-            throw new ValidationException(array('file' => array('Unable to guess file mime type')));
+            throw new ValidationException(array('photo' => array('Unable to guess file mime type')));
         }
 
         $mimeType = $finfo->buffer($file);
@@ -165,7 +165,7 @@ class PhotoManager
         );
 
         if (!isset($validTypes[$mimeType])) {
-            throw new ValidationException(array('file' => array(sprintf('Invalid mime type, possibles values are ""', implode('", "', $validTypes)))));
+            throw new ValidationException(array('photo' => array(sprintf('Invalid mime type, possibles values are ""', implode('", "', $validTypes)))));
         }
 
         return $validTypes[$mimeType];
