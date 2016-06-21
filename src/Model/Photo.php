@@ -28,10 +28,16 @@ class Photo implements \JsonSerializable
     /**
      * @var string
      */
+    protected $base;
+
+    /**
+     * @var string
+     */
     protected $host;
 
-    public function __construct($host)
+    public function __construct($base, $host)
     {
+        $this->base = $base;
         $this->host = $host;
     }
 
@@ -109,6 +115,11 @@ class Photo implements \JsonSerializable
         $this->user = $user;
 
         return $this;
+    }
+
+    public function getFullPath()
+    {
+        return $this->base . $this->getPath();
     }
 
     public function jsonSerialize()

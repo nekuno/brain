@@ -25,18 +25,18 @@ class PhotoManager
     /**
      * @var string
      */
-    protected $path;
+    protected $base;
 
     /**
      * @var string
      */
     protected $host;
 
-    public function __construct(GraphManager $gm, UserManager $um, $path, $host)
+    public function __construct(GraphManager $gm, UserManager $um, $base, $host)
     {
         $this->gm = $gm;
         $this->um = $um;
-        $this->path = $path;
+        $this->base = $base;
         $this->host = $host;
     }
 
@@ -95,7 +95,7 @@ class PhotoManager
         // Save file
         $name = sha1(uniqid($user->getUsernameCanonical() . '_' . time(), true)) . '.' . $extension;
         $path = 'uploads/gallery/' . md5($user->getId()) . '/' . $name;
-        file_put_contents($this->path . $path, $file);
+        file_put_contents($this->base . $path, $file);
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(u:User {qnoow_id: { id }})')
@@ -140,6 +140,8 @@ class PhotoManager
             throw new NotFoundHttpException('Photo not found');
         }
 
+        return true;
+
     }
 
     public function validate($file)
@@ -165,7 +167,7 @@ class PhotoManager
         );
 
         if (!isset($validTypes[$mimeType])) {
-            throw new ValidationException(array('photo' => array(sprintf('Invalid mime type, possibles values are ""', implode('", "', $validTypes)))));
+            throw new ValidationException(array('photo' => array(sprintf('Invalid mime type, possibles values are "%s".', implode('", "', array_keys($validTypes))))));
         }
 
         return $validTypes[$mimeType];
@@ -185,7 +187,7 @@ class PhotoManager
         $userNode = $row->offsetGet('u');
         $user = $this->um->getById($userNode->getProperty('qnoow_id'));
 
-        $photo = new Photo($this->host);
+        $photo = new Photo($this->base, $this->host);
         $photo->setId($node->getId());
         $photo->setCreatedAt(new \DateTime($node->getProperty('createdAt')));
         $photo->setPath($node->getProperty('path'));
