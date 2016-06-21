@@ -122,12 +122,17 @@ class Photo implements \JsonSerializable
         return $this->base . $this->getPath();
     }
 
+    public function getUrl()
+    {
+        return $this->host . $this->getPath();
+    }
+
     public function jsonSerialize()
     {
         return array(
             'id' => $this->getId(),
             'createdAt' => $this->getCreatedAt(),
-            'url' => $this->host . $this->getPath(),
+            'url' => $this->getUrl(),
         );
     }
 
