@@ -66,7 +66,7 @@ class PhotoManager
     {
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(u:User)<-[:PHOTO_OF]-(i:Photo)')
-            ->where('id(i)= { id }')
+            ->where('id(i) = { id }')
             ->setParameter('id', (integer)$id)
             ->returns('u', 'i');
 
