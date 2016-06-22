@@ -25,18 +25,14 @@ class PhotoController
         return $app->json($photos);
     }
 
-    public function getAction(Application $app, User $user, $id)
+    public function getAction(Application $app, $id)
     {
 
         $manager = $app['users.photo.manager'];
 
-        $photo = $manager->getById($id);
+        $photos = $manager->getAll($id);
 
-        if ($photo->getUser()->getId() !== $user->getId()) {
-            throw new AccessDeniedHttpException('Photo not allowed');
-        }
-
-        return $app->json($photo);
+        return $app->json($photos);
     }
 
     public function postAction(Application $app, Request $request, User $user)
