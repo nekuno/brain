@@ -83,8 +83,30 @@ class PhotoController
             throw new \RuntimeException(sprintf('Source image "%s" does not exists', $photo->getFullPath()));
         }
 
-        //TODO: crop
-        copy($photo->getFullPath(), $base . $new);
+        $dest = $base . $new;
+        $file = file_get_contents($photo->getFullPath());
+        $size = getimagesizefromstring($file);
+        $x = $request->request->get('x', 0);
+        $y = $request->request->get('y', 0);
+        $width = $request->request->get('width', $size[0]);
+        $height = $request->request->get('height', $size[1]);
+        $image = imagecreatefromstring($file);
+        $crop = imagecrop($image, array('x' => $x, 'y' => $y, 'width' => $width, 'height' => $height));
+
+        switch ($size['mime']) {
+            case 'image/png':
+                imagepng($crop, $dest);
+                break;
+            case 'image/jpeg':
+                imagejpeg($crop, $dest);
+                break;
+            case 'image/gif':
+                imagegif($crop, $dest);
+                break;
+            default:
+                throw new ValidationException(array('photo' => array('Invalid mimetype')));
+                break;
+        }
 
         $data = array(
             'userId' => $user->getId(),
