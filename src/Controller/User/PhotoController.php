@@ -90,14 +90,13 @@ class PhotoController
         //TODO: crop
         copy($photo->getFullPath(), $base . $new);
 
-        $user->setPicture($new);
         $data = array(
             'userId' => $user->getId(),
             'username' => $user->getUsername(),
             'email' => $user->getEmail(),
-            'picture' => $user->getPicture(),
+            'picture' => $new,
         );
-        $app['users.manager']->update($data);
+        $user = $app['users.manager']->update($data);
 
         if (file_exists($oldPicture)) {
             unlink($oldPicture);
