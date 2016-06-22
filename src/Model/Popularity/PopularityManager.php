@@ -103,6 +103,36 @@ class PopularityManager
     }
 
     /**
+     * @param $userId
+     * @param bool $countGhost
+     * @return Popularity[]
+     * @throws \Model\Neo4j\Neo4jException
+     */
+    public function getPopularitiesByUser($userId, $countGhost = true)
+    {
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(u:User {qnoow_id: { id } })-[:LIKES]->(link:Link)<-[likes:LIKES]-(u2:User)')
+            ->setParameter('id', (integer)$userId);
+        if (!$countGhost) {
+            $qb->where('NOT (u2:GhostUser)');
+        }
+        $qb->with('link, count(likes) AS amount');
+
+        $qb->match('(link)-[:HAS_POPULARITY]-(popularity:Popularity)');
+        $qb->returns('   id(popularity) AS id',
+            'popularity.popularity AS popularity',
+            'popularity.unpopularity AS unpopularity',
+            'popularity.timestamp AS timestamp',
+            'amount',
+            'true AS new');
+
+        $result = $qb->getQuery()->getResultSet();
+
+        return $this->build($result);
+    }
+
+    /**
      * @param ResultSet $result
      * @return Popularity[]
      */
@@ -130,7 +160,7 @@ class PopularityManager
     /**
      * Looks for :Link(popularity) and :Popularity(popularity) for now
      */
-    private function getMaxPopularity()
+    public function getMaxPopularity()
     {
         $qb = $this->gm->createQueryBuilder();
 
@@ -174,7 +204,8 @@ class PopularityManager
         return null;
     }
 
-    private function getMaxPopularityByUser($userId){
+    private function getMaxPopularityByUser($userId)
+    {
         $qb = $this->gm->createQueryBuilder();
 
         $qb->match('(u:User {qnoow_id: { id } })')
@@ -255,6 +286,27 @@ class PopularityManager
         $result = $query->getResultSet();
 
         return $this->build($result);
+    }
+
+    /**
+     * @param $likes
+     * @param $maxAmount
+     * @return Popularity
+     */
+    public function calculatePopularity($likes, $maxAmount = null)
+    {
+        if (null == $maxAmount) {
+            $maxPopularity = $this->getMaxPopularity();
+            $maxAmount = $maxPopularity->getAmount();
+        }
+
+        $popularity = new Popularity(true);
+        $popularity->setAmount($likes);
+        $popularity->setPopularity(pow(floatval($likes) / floatval($maxAmount), 3));
+        $popularity->setUnpopularity(1 - pow(floatval($likes) / floatval($maxAmount), 3));
+
+        return $popularity;
+
     }
 
     private function migrateMaxPopularity()

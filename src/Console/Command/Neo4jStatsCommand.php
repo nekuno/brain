@@ -6,13 +6,12 @@
 namespace Console\Command;
 
 use Console\ApplicationAwareCommand;
-use Model\Popularity\Popularity;
 use Model\User;
 use Manager\UserManager;
+use Silex\Application;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\HttpFoundation\Request;
 
 class Neo4jStatsCommand extends ApplicationAwareCommand
 {
@@ -24,13 +23,20 @@ class Neo4jStatsCommand extends ApplicationAwareCommand
         'similarity' => array('zero' => 0),
     );
 
-    protected $likesDistribution = array('zero' => 0);
+    protected $likesPerUserDistribution = array('zero' => 0);
+    protected $likesPerLinkDistribution = array('zero' => 0);
 
-    protected $popularitiesDistribution = array(
-        'linear' => array('popularity' => array('zero' => 0),
-                            'unpopularity' => array('zero' => 0)),
-        'logarithmic' => array('popularity' => array('zero' => 0),
-                                'unpopularity' => array('zero' => 0)),
+    // $this[1] = popularity for likes = 1
+    protected $popularityByLikes = array(
+        'popularity' => array(),
+        'unpopularity' => array()
+    );
+
+    protected $popularityCalculations = array(
+        'countCommon' => array(),
+        'unpopularityCommon' => array(),
+        'countOnly' => array(),
+        'popularityOnly' => array(),
     );
 
     protected function configure()
@@ -57,14 +63,12 @@ class Neo4jStatsCommand extends ApplicationAwareCommand
         $users = $userManager->getAll($includeGhost);
         $output->writeln('Got ' . count($users) . ' users.');
 
-        //checking status
-
         if ($popularity) {
-            $this->checkPopularity($output);
+            $this->checkPopularity($users, $output, $includeGhost);
         }
 
         if ($similarity) {
-            $this->checkSimilarity($users, $output);
+            $this->checkSimilarity($users, $output, $includeGhost);
         }
 
         if ($likes_per_user) {
@@ -77,20 +81,32 @@ class Neo4jStatsCommand extends ApplicationAwareCommand
     /**
      * @param $users User[]
      * @param $output OutputInterface
+     * @param $includeGhost
      */
-    private function checkSimilarity(array $users, OutputInterface $output)
+    private function checkSimilarity(array $users, OutputInterface $output, $includeGhost)
     {
         $path = $this->buildFilePath('similarity');
 
         foreach ($users as $user) {
             $output->writeln('Getting similarities for user ' . $user->getId());
-            $similarities = $this->app['users.similarity.model']->getAllCurrentByUser($user->getId());
+            $similarityData = $this->app['users.similarity.model']->getAllCurrentByUser($user->getId(), $includeGhost);
 
+            $similarities = $similarityData['similarities'];
             foreach ($similarities as $similarity) {
                 $this->similaritiesDistribution['interests'][$similarity['interests'] == 0 ? 'zero' : floor($similarity['interests'] / 0.1)]++;
                 $this->similaritiesDistribution['questions'][$similarity['questions'] == 0 ? 'zero' : floor($similarity['questions'] / 0.1)]++;
                 $this->similaritiesDistribution['skills'][$similarity['skills'] == 0 ? 'zero' : floor($similarity['skills'] / 0.1)]++;
                 $this->similaritiesDistribution['similarity'][$similarity['similarity'] == 0 ? 'zero' : floor($similarity['similarity'] / 0.1)]++;
+            }
+
+            $popularityData = $similarityData['popularityData'];
+            foreach ($popularityData as $singlePopularityData) {
+                $this->popularityCalculations['countCommon'][floor($singlePopularityData['countCommon'] / 10)]++;
+                $this->popularityCalculations['unpopularityCommon'][round($singlePopularityData['unpopularityCommon'])]++;
+                $this->popularityCalculations['countOnly'][floor($singlePopularityData['countOnlyA'] / 10)]++;
+                $this->popularityCalculations['popularityOnly'][round($singlePopularityData['popularityOnlyA'])]++;
+                $this->popularityCalculations['countOnly'][floor($singlePopularityData['countOnlyB'] / 10)]++;
+                $this->popularityCalculations['popularityOnly'][round($singlePopularityData['popularityOnlyB'])]++;
             }
         }
 
@@ -98,6 +114,11 @@ class Neo4jStatsCommand extends ApplicationAwareCommand
         $this->exportDistribution($this->similaritiesDistribution['questions'], $path, 'Similarity by questions');
         $this->exportDistribution($this->similaritiesDistribution['skills'], $path, 'Similarity by skills');
         $this->exportDistribution($this->similaritiesDistribution['similarity'], $path, 'Total Similarity');
+
+        $this->exportDistribution($this->popularityCalculations['countCommon'], $path, 'Common content count, decade');
+        $this->exportDistribution($this->popularityCalculations['unpopularityCommon'], $path, 'Common content unpopularity, rounded');
+        $this->exportDistribution($this->popularityCalculations['countOnly'], $path, 'Only one user content count, decade');
+        $this->exportDistribution($this->popularityCalculations['popularityOnly'], $path, 'Only one user content popularity, rounded');
     }
 
     /**
@@ -112,77 +133,99 @@ class Neo4jStatsCommand extends ApplicationAwareCommand
         foreach ($users as $user) {
             $rates = $this->app['users.rate.model']->getRatesByUser($user->getId(), User\RateModel::LIKE);
             $output->writeln(sprintf('Got %d likes from user %d ', count($rates), $user->getId()));
-            $this->likesDistribution[intval(floor(count($rates) / 10))]++;
+            $this->likesPerUserDistribution[intval(floor(count($rates) / 10))]++;
         }
 
-        $this->exportDistribution($this->likesDistribution, $path, 'Likes per user');
+        $this->exportDistribution($this->likesPerUserDistribution, $path, 'Likes per user');
     }
 
-    private function checkPopularity(OutputInterface $output)
+    /**
+     * @param User[] $users
+     * @param OutputInterface $output
+     * @param $includeGhost
+     */
+    private function checkPopularity(array $users, OutputInterface $output, $includeGhost)
     {
         $path = $this->buildFilePath('popularity');
-
-        $paginationSize = 1000;
-        $offset = 0;
-
-        $request = new Request();
-        $request->query->set('limit', $paginationSize);
-
-        $paginator = $this->app['paginator'];
-        $oldPaginationSize = $paginator->getMaxLimit();
-        $paginator->setMaxLimit($paginationSize);
-
         $output->writeln('Getting popularities');
-        do {
-            $request->query->set('offset', $offset);
 
-            $result = $this->app['paginator']->paginate(array(), $this->app['links.popularity.paginated.model'], $request);
-            $offset += $paginationSize; //Use nextUrl if we use filters
+        $popularityManager = $this->app['popularity.manager'];
 
-            /** @var Popularity[] $popularities */
-            $popularities = $result['items'];
+        $maxPopularity = $popularityManager->getMaxPopularity();
+        foreach ($users as $user) {
+            $popularities = $popularityManager->getPopularitiesByUser($user->getId(), $includeGhost);
 
             foreach ($popularities as $popularity) {
-                $this->popularitiesDistribution['linear']['popularity'][$popularity->getPopularity() == 0 ? 'zero' : floor($popularity->getPopularity() / 0.1)]++;
-                $this->popularitiesDistribution['linear']['unpopularity'][$popularity->getUnpopularity() == 0 ? 'zero' : floor($popularity->getUnpopularity() / 0.1)]++;
-                $this->popularitiesDistribution['logarithmic']['popularity'][$popularity->getPopularity() == 0 ? 'zero' : -floor(log10($popularity->getPopularity()))]++;
-                $this->popularitiesDistribution['logarithmic']['unpopularity'][$popularity->getUnpopularity() == 0 ? 'zero' : -floor(log10($popularity->getUnpopularity()))]++;
+                $this->likesPerLinkDistribution[$popularity->getAmount()]++;
             }
-        } while (count($popularities) > 0);
+        }
+        foreach ($this->likesPerLinkDistribution as $likes => $total) {
 
-        $paginator->setMaxLimit($oldPaginationSize);
+            $popularity = $popularityManager->calculatePopularity($likes, $maxPopularity->getAmount());
 
-        $this->exportDistribution($this->popularitiesDistribution['linear']['popularity'], $path, 'Linear popularity');
-        $this->exportDistribution($this->popularitiesDistribution['linear']['unpopularity'], $path, 'Linear unpopularity');
-        $this->exportDistribution($this->popularitiesDistribution['logarithmic']['popularity'], $path, 'Logarithmic popularity');
-        $this->exportDistribution($this->popularitiesDistribution['logarithmic']['unpopularity'], $path, 'Logarithmic unpopularity');
+            //Avoid duplicates
+            $this->likesPerLinkDistribution[$likes] = round($total / ($likes ?: 1));
+
+            $this->popularityByLikes['popularity'][$likes] = $popularity->getPopularity();
+            $this->popularityByLikes['unpopularity'][$likes] = $popularity->getUnpopularity();
+        }
+
+        $this->exportDistribution($this->popularityByLikes['popularity'], $path, 'Popularity');
+        $this->exportDistribution($this->popularityByLikes['unpopularity'], $path, 'Unpopularity');
+        $this->exportDistribution($this->likesPerLinkDistribution, $path, 'Likes per link');
     }
 
     private function exportDistribution(array $distribution, $path, $text = null)
     {
-        $array = array('zero' => $distribution['zero']);
+        $array = array('zero' => isset($distribution['zero']) ? $distribution['zero'] : 0);
         $keys = array('zero' => 'zero');
         unset($distribution['zero']);
 
         ksort($distribution);
         end($distribution);
+
+        //build complete distribution array to facilitate graph creation
         for ($i = 0; $i <= key($distribution); $i++) {
             $array[$i] = isset($distribution[$i]) ? $distribution[$i] : 0;
             $keys[$i] = $i;
         }
 
+        //calculate average
+        $average = array('numerator' => 0, 'denominator' => 0);
+        for ($i=0; $i < count($array) - 1; $i++) {
+            $average['numerator'] += $i * $array[$i];
+            $average['denominator'] += $array[$i];
+        }
+        $average['result'] = $average['denominator'] == 0 ? 0 : $average['numerator'] / $average['denominator'];
+
+        //calculate median
+        $median = 0;
+        $counted = 0;
+        for ($i = 0; $i < count($array); $i++) {
+            if (null !== $counted) {
+                $counted += $array[$i];
+                if ($counted >= ($average['denominator'] / 2)) {
+                    $median = $i;
+                    $counted = null;
+                }
+            }
+        }
+
         $handle = fopen($path, 'a+');
-        if ($text){
+        if ($text) {
             fwrite($handle, $text . PHP_EOL);
         }
         fputcsv($handle, $keys);
         fputcsv($handle, $array);
+        fwrite($handle, 'Average: ' . $average['result'] . PHP_EOL);
+        fwrite($handle, 'Median: ' . $median . PHP_EOL);
+        fwrite($handle, PHP_EOL);
         fclose($handle);
     }
 
     private function buildFilePath($name)
     {
-        return dirname(__FILE__) . '/../../../var/logs/' . $name . '-' . date('d-m-Y') .'.csv';
+        return dirname(__FILE__) . '/../../../var/logs/' . $name . '-' . date('d-m-Y') . '.csv';
     }
 
 }
