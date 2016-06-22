@@ -70,17 +70,38 @@ class PhotoController
     public function postProfileAction(Application $app, Request $request, User $user, $id)
     {
 
-        $manager = $app['users.photo.manager'];
-
-        $photo = $manager->getById($id);
+        $photo = $app['users.photo.manager']->getById($id);
 
         if ($photo->getUser()->getId() !== $user->getId()) {
             throw new AccessDeniedHttpException('Photo not allowed');
         }
 
-        $user = $app['users.manager']->getById($user->getId());
+        $base = $app['social_web_dir'] . '/user/images/';
 
-        //TODO: Remove old picture, make crop, save new file and save user
+        $oldPicture = $base . $user->getPicture();
+
+        $extension = $photo->getExtension();
+        $new = $user->getUsernameCanonical() . '_' . time() . $extension;
+
+        if (!is_readable($photo->getFullPath())) {
+            throw new \RuntimeException(sprintf('Source image "%s" does not exists', $photo->getFullPath()));
+        }
+
+        //TODO: crop
+        copy($photo->getFullPath(), $base . $new);
+
+        $user->setPicture($new);
+        $data = array(
+            'userId' => $user->getId(),
+            'username' => $user->getUsername(),
+            'email' => $user->getEmail(),
+            'picture' => $user->getPicture(),
+        );
+        $app['users.manager']->update($data);
+
+        if (file_exists($oldPicture)) {
+            unlink($oldPicture);
+        }
 
         return $app->json($user);
 

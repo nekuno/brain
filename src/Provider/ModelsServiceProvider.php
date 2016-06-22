@@ -396,7 +396,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.photo.manager'] = $app->share(
             function ($app) {
 
-                return new PhotoManager($app['neo4j.graph_manager'], $app['users.manager'], __DIR__ . '/../../../social/web/', $app['params']['social.host']);
+                return new PhotoManager($app['neo4j.graph_manager'], $app['users.manager'], $app['social_web_dir'], $app['params']['social.host']);
             }
         );
     }

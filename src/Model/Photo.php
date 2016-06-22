@@ -127,6 +127,13 @@ class Photo implements \JsonSerializable
         return $this->host . $this->getPath();
     }
 
+    public function getExtension()
+    {
+        $fileName = basename($this->path);
+
+        return strrpos($fileName, '.') !== false ? substr($fileName, strrpos($fileName, '.')) : '';
+    }
+
     public function jsonSerialize()
     {
         return array(
