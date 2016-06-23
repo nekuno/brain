@@ -86,12 +86,18 @@ class PhotoController
         $dest = $base . $new;
         $file = file_get_contents($photo->getFullPath());
         $size = getimagesizefromstring($file);
-        $x = $request->request->get('x', 0);
-        $y = $request->request->get('y', 0);
-        $width = $request->request->get('width', $size[0]);
-        $height = $request->request->get('height', $size[1]);
+	    $width = $size[0];
+	    $height = $size[1];
+        $xPercent = $request->request->get('x', 0);
+        $yPercent = $request->request->get('y', 0);
+        $widthPercent = $request->request->get('width', 100);
+        $heightPercent = $request->request->get('height', 100);
+		$x = $width * $xPercent/100;
+		$y = $height * $yPercent/100;
+	    $widthCrop = $width * $widthPercent/100;
+	    $heightCrop = $height * $heightPercent/100;
         $image = imagecreatefromstring($file);
-        $crop = imagecrop($image, array('x' => $x, 'y' => $y, 'width' => $width, 'height' => $height));
+        $crop = imagecrop($image, array('x' => $x, 'y' => $y, 'width' => $widthCrop, 'height' => $heightCrop));
 
         switch ($size['mime']) {
             case 'image/png':
