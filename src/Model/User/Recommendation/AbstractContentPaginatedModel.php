@@ -16,6 +16,8 @@ use Service\Validator;
 
 abstract class AbstractContentPaginatedModel implements PaginatedInterface
 {
+    const POP_LOWER_LIMIT = 0.000001;
+    const POP_UPPER_LIMIT = 0.01;
     /**
      * @var GraphManager
      */
@@ -126,6 +128,76 @@ abstract class AbstractContentPaginatedModel implements PaginatedInterface
     public function validateFilters(array $filters)
     {
         return $this->validator->validateRecommendateContent($filters, $this->getChoices());
+    }
+
+    public function getContentsByPopularity(array $filters, $limit, $offset, $additionalCondition = null)
+    {
+        $types = isset($filters['type']) ? $filters['type'] : array();
+
+        $response = array('items' => array());
+        for ($popLimit = count($filters['type']) > 1 || $filters['type'][0] != 'Link' ? self::POP_UPPER_LIMIT * 10 : self::POP_UPPER_LIMIT; $popLimit >= self::POP_LOWER_LIMIT; $popLimit /= 10) {
+
+            $params = array(
+                'offset' => (integer)$offset,
+                'limit' => (integer)$limit,
+                'popLimit' => $popLimit,
+            );
+
+            $qb = $this->gm->createQueryBuilder();
+
+            $qb->setParameters($params);
+
+            if (isset($filters['tag'])) {
+                $qb->match('(filterTag:Tag)<-[:TAGGED]-(content:Link)-[:HAS_POPULARITY]-(popularity:Popularity)')
+                    ->where('filterTag.name IN { filterTags } ')
+                    ->with('content', 'popularity')
+                    ->where('popularity.popularity > {popLimit}')
+                    ->with('content', 'popularity');
+                $qb->setParameter('filterTags', $filters['tag']);
+
+            } else {
+                $qb->match('(popularity:Popularity)')
+                    ->where('popularity.popularity > {popLimit}')
+                    ->with('popularity');
+
+                $qb->match('(popularity)-[:HAS_POPULARITY]-(content:Link)')
+                    ->with('content', 'popularity.popularity AS popularity');
+            }
+
+            $qb->filterContentByType($types, 'content', array('popularity'))
+                ->where('content.processed = 1')
+                ->with('content', 'popularity');
+            if (null !== $additionalCondition){
+                $qb->add('', $additionalCondition);
+            }
+
+            $qb->optionalMatch("(content)-[:SYNONYMOUS]->(synonymousLink:Link)")
+                ->optionalMatch('(content)-[:TAGGED]->(tag:Tag)')
+                ->returns(
+                    'id(content) as id',
+                    'content',
+                    'collect(distinct tag.name) as tags',
+                    'labels(content) as types',
+                    'COLLECT (DISTINCT synonymousLink) AS synonymous',
+                    'popularity'
+                )
+                ->orderBy('popularity DESC')
+                ->skip('{ offset }')
+                ->limit('{ limit }');
+
+            $query = $qb->getQuery();
+            $result = $query->getResultSet();
+
+            $id = isset($filters['id']) ? $filters['id'] : null;
+
+            $response = $this->buildResponseFromResult($result, $id);
+
+            if (count($response['items']) >= $limit) {
+                break;
+            }
+        }
+        
+        return $response['items'];
     }
 
     /**
