@@ -28,6 +28,7 @@ $app = new Application();
 
 $app['env'] = getenv('APP_ENV') ?: 'prod';
 $app->register(new ConfigServiceProvider(__DIR__ . "/../config/params.yml"));
+$app['social_web_dir'] = __DIR__ . '/../../social/web/';
 $replacements = array_merge($app['params'], array('app_root_dir' => __DIR__));
 $app->register(new ConfigServiceProvider(__DIR__ . "/../config/config.yml", $replacements));
 $app->register(new ConfigServiceProvider(__DIR__ . "/../config/config_{$app['env']}.yml", $replacements));
