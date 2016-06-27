@@ -122,7 +122,6 @@ class ContentRecommendationPaginatedModel extends AbstractContentPaginatedModel
             $return['items'] = array_merge($return['items'], $foreignResult['items']);
             $return['newForeign'] = $foreignResult['foreign'];
         }
-
         //Works with ContentPaginator (accepts $result), not Paginator (accepts $result['items'])
         return $return;
     }
@@ -137,93 +136,13 @@ class ContentRecommendationPaginatedModel extends AbstractContentPaginatedModel
      */
     public function getForeignContent($filters, $limit, $foreign)
     {
-
         $id = $filters['id'];
-        $types = isset($filters['type']) ? $filters['type'] : array();
+        $condition = "MATCH (u:User{qnoow_id:$id}) WHERE NOT(u)-[:LIKES]-(content)";
 
-        if ((integer)$limit == 0) {
-            return array();
-        }
-
-        $pageSizeMultiplier = 1; //small may make queries slow, big may skip results
-        if (isset($filters['tag'])) {
-            $pageSizeMultiplier *= 5;
-        }
-
-        $internalLimit = $limit * $pageSizeMultiplier;
-
-        $maxPagesSearched = 100; //bigger may get more contents but it's slower near the limit
-
-        //$databaseSize = $this->lm->countAllLinks($filters);
-$databaseSize = 2000;
-        $pagesSearched = min(array($databaseSize / $internalLimit, $maxPagesSearched));
-
-        $internalPaginationLimit = $foreign + $pagesSearched * $internalLimit;
-
-        $params = array(
-            'userId' => (integer)$id,
-            'limit' => (integer)$limit,
-            'internalOffset' => (integer)$foreign,
-            'internalLimit' => $internalLimit,
-        );
-
-        $items = array();
-
-        while (count($items) < $limit && $params['internalOffset'] < $internalPaginationLimit) {
-
-            $qb = $this->gm->createQueryBuilder();
-            $qb->match('(user:User {qnoow_id: { userId }})');
-            if (isset($filters['tag'])){
-                $qb->match('(content:Link{processed: 1})-[:TAGGED]->(filterTag:Tag)')
-                    ->where('filterTag.name IN { filterTags } ');
-                $params['filterTags'] = $filters['tag'];
-            } else {
-                $qb->match('(content:Link{processed: 1})');
-            }
-
-            $qb->filterContentByType($types, 'content', array('user'));
-
-            $qb->with('user', 'content')
-                ->orderBy('content.created DESC')
-                ->skip('{internalOffset}')
-                ->limit('{internalLimit}');
-
-            $qb->with('user', 'content')
-                ->where('NOT (user)-[:AFFINITY]-(content)',
-                    'NOT (user)-[:LIKES]-(content)',
-                    'NOT (user)-[:DISLIKES]-(content)');
-
-            $qb->with('content')
-                ->limit('{ limit }');
-
-            $qb->optionalMatch('(content)-[:TAGGED]->(tag:Tag)')
-                ->optionalMatch('(content)-[:SYNONYMOUS]->(synonymousLink:Link)')
-                ->returns(
-                    'id(content) as id',
-                    'content',
-                    'collect(distinct tag.name) as tags',
-                    'labels(content) as types',
-                    'COLLECT (DISTINCT synonymousLink) AS synonymous'
-                )
-                ->orderBy('content.timestamp DESC');
-
-            $qb->setParameters($params);
-            $query = $qb->getQuery();
-            $result = $query->getResultSet();
-
-            $response = $this->buildResponseFromResult($result, $id);
-
-            $items = array_merge($items, $response['items']);
-
-            $params['internalOffset'] += $internalLimit;
-        }
-
-        $return = array('items' => array_slice($items, 0, $limit));
-
-        if ($params['internalOffset'] >= $databaseSize) {
-            $params['internalOffset'] = -1;
-        }
-        $return['foreign'] = $params['internalOffset'];
+        $items = $this->getContentsByPopularity($filters, $limit, $foreign, $condition);
+        
+        $return = array('items' => array_slice($items, 0, $limit) );
+        $return['foreign'] = $foreign + count($return['items']);
 
         return $return;
     }

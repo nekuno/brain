@@ -95,6 +95,12 @@ $app['users.tokens.controller'] = $app->share(
     }
 );
 
+$app['users.photos.controller'] = $app->share(
+    function() {
+        return new \Controller\User\PhotoController();
+    }
+);
+
 $app['client.controller'] = $app->share(
     function() {
         return new Controller\ClientController;

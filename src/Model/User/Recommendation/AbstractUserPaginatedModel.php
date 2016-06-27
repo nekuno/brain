@@ -3,7 +3,6 @@
 namespace Model\User\Recommendation;
 
 use Model\Neo4j\GraphManager;
-use Model\User\GhostUser\GhostUserManager;
 use Model\User\ProfileFilterModel;
 use Paginator\PaginatedInterface;
 
@@ -36,110 +35,6 @@ abstract class AbstractUserPaginatedModel implements PaginatedInterface
         $hasProfileFilters = isset($filters['profileFilters']);
 
         return $hasId && $hasProfileFilters;
-    }
-
-    /**
-     * Slices the query according to $offset, and $limit.
-     * @param array $filters
-     * @param int $offset
-     * @param int $limit
-     * @throws \Exception
-     * @return array
-     */
-    public function slice(array $filters, $offset, $limit)
-    {
-        $id = $filters['id'];
-        $response = array();
-
-        $parameters = array(
-            'offset' => (integer)$offset,
-            'limit' => (integer)$limit,
-            'userId' => (integer)$id
-        );
-
-        $orderQuery = '  similarity DESC, matching_questions DESC ';
-        if (isset($filters['order']) && $filters['order'] == 'questions') {
-            $orderQuery = ' matching_questions DESC, similarity DESC ';
-        }
-
-        $filters = $this->profileFilterModel->splitFilters($filters);
-
-        $profileFilters = $this->getProfileFilters($filters['profileFilters']);
-
-        $qb = $this->gm->createQueryBuilder();
-
-        $qb->setParameters($parameters);
-
-        $qb->match('(u:User {qnoow_id: {userId}})-[:MATCHES|SIMILARITY]-(anyUser:User)')
-            ->where('u <> anyUser', 'NOT (anyUser:' . GhostUserManager::LABEL_GHOST_USER . ')')
-            ->optionalMatch('(u)-[like:LIKES]-(anyUser)')
-            ->optionalMatch('(u)-[m:MATCHES]-(anyUser)')
-            ->optionalMatch('(u)-[s:SIMILARITY]-(anyUser)')
-            ->with(
-                'u, anyUser,
-                (CASE WHEN like IS NOT NULL THEN 1 ELSE 0 END) AS like,
-                (CASE WHEN EXISTS(m.matching_questions) THEN m.matching_questions ELSE 0 END) AS matching_questions,
-                (CASE WHEN EXISTS(s.similarity) THEN s.similarity ELSE 0 END) AS similarity'
-            )
-            ->match('(anyUser)<-[:PROFILE_OF]-(p:Profile)');
-
-        $qb->optionalMatch('(p)-[:LOCATION]->(l:Location)');
-
-        $qb->with('u, anyUser, like, matching_questions, similarity, p, l');
-        $qb->where(
-            array_merge(
-                array('(matching_questions > 0 OR similarity > 0)'),
-                $profileFilters['conditions']
-            )
-        )
-            ->with('u', 'anyUser', 'like', 'matching_questions', 'similarity', 'p', 'l');
-
-        foreach ($profileFilters['matches'] as $match) {
-            $qb->match($match);
-        }
-
-        $qb->returns(
-            'DISTINCT anyUser.qnoow_id AS id,
-                    anyUser.username AS username,
-                    anyUser.picture AS picture,
-                    p.birthday AS birthday,
-                    l.locality + ", " + l.country AS location,
-                    matching_questions,
-                    similarity,
-                    like'
-        )
-            ->orderBy($orderQuery)
-            ->skip('{ offset }')
-            ->limit('{ limit }');
-
-        $query = $qb->getQuery();
-        $result = $query->getResultSet();
-
-        foreach ($result as $row) {
-
-            $age = null;
-            if ($row['birthday']) {
-                $date = new \DateTime($row['birthday']);
-                $now = new \DateTime();
-                $interval = $now->diff($date);
-                $age = $interval->y;
-            }
-
-            $user = array(
-                'id' => $row['id'],
-                'username' => $row['username'],
-                'picture' => $row['picture'],
-                'matching' => $row['matching_questions'],
-                'similarity' => $row['similarity'],
-                'age' => $age,
-                'location' => $row['location'],
-                'like' => $row['like'],
-            );
-
-            $response[] = $user;
-        }
-
-        return $response;
     }
 
     /**
@@ -208,11 +103,17 @@ abstract class AbstractUserPaginatedModel implements PaginatedInterface
                         $whereQueries = array();
                         foreach ($value as $dataValue){
                             $choice = $dataValue['choice'];
-                            $detail = $dataValue['detail'];
-                            $whereQueries[] = "( option$name.id = '$choice' AND rel$name.detail = '$detail')";
+                            $detail = isset($dataValue['detail']) ? $dataValue['detail'] : null;
+
+                            $whereQuery = " option$name.id = '$choice'";
+                            if (!(null==$detail)){
+                                $whereQuery.= " AND rel$name.detail = '$detail'";
+                            }
+
+                            $whereQueries[] = $whereQuery;
                         }
 
-                        $matches[] = $matchQuery.' WHERE ' . implode('OR', $whereQueries);
+                        $matches[] = $matchQuery.' WHERE (' . implode('OR', $whereQueries) . ')';
                         break;
                     case 'tags':
                         $tagLabelName = $this->profileFilterModel->typeToLabel($name);
@@ -226,11 +127,15 @@ abstract class AbstractUserPaginatedModel implements PaginatedInterface
                             $tagValue = $name === 'language' ?
                                 $this->profileFilterModel->getLanguageFromTag($dataValue['tag']) :
                                 $dataValue['tag'];
-                            $choice = !is_null($dataValue['choice']) ? $dataValue['choice'] : '';
+                            $choice = isset($dataValue['choices']) ? $dataValue['choices'] : null;
+                            $whereQuery = " tag$name.name = '$tagValue'";
+                            if (!null==$choice){
+                                $whereQuery.= " AND rel$name.detail = '$choice'";
+                            }
 
-                            $whereQueries[] = "( tag$name.name = '$tagValue' AND rel$name.detail = '$choice')";
+                            $whereQueries[] = $whereQuery;
                         }
-                        $matches[] = $matchQuery.' WHERE ' . implode('OR', $whereQueries);
+                        $matches[] = $matchQuery.' WHERE (' . implode('OR', $whereQueries . ')');
                         break;
                     case 'tags_and_multiple_choices':
                         $tagLabelName = $this->profileFilterModel->typeToLabel($name);
@@ -240,11 +145,16 @@ abstract class AbstractUserPaginatedModel implements PaginatedInterface
                             $tagValue = $name === 'language' ?
                                 $this->profileFilterModel->getLanguageFromTag($dataValue['tag']) :
                                 $dataValue['tag'];
-                            $choices = !is_null($dataValue['choices']) ? json_encode($dataValue['choices']) : json_encode(array());
+                            $choices = isset($dataValue['choices']) ? $dataValue['choices'] : array();
 
-                            $whereQueries[] = "( tag$name.name = '$tagValue' AND rel$name.detail IN $choices )";
+                            $whereQuery = " tag$name.name = '$tagValue'";
+                            if (!empty($choices)){
+                                $choices = json_encode($choices);
+                                $whereQuery .= " AND rel$name.detail IN $choices ";
+                            }
+                            $whereQueries[] = $whereQuery;
                         }
-                        $matches[] = $matchQuery.' WHERE ' . implode('OR', $whereQueries);
+                        $matches[] = $matchQuery.' WHERE (' . implode('OR', $whereQueries) . ')';
                         break;
                     default:
                         break;
