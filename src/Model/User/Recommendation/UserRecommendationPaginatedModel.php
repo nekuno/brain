@@ -2,6 +2,7 @@
 
 namespace Model\User\Recommendation;
 
+use Everyman\Neo4j\Query\ResultSet;
 use Model\Neo4j\GraphManager;
 use Model\User\GhostUser\GhostUserManager;
 use Model\User\ProfileFilterModel;
@@ -30,7 +31,6 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
     public function slice(array $filters, $offset, $limit)
     {
         $id = $filters['id'];
-        $response = array();
 
         $parameters = array(
             'offset' => (integer)$offset,
@@ -38,9 +38,9 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
             'userId' => (integer)$id
         );
 
-        $orderQuery = '  similarity DESC, matching_questions DESC ';
+        $orderQuery = '  similarity DESC, matching_questions DESC, id ';
         if (isset($filters['order']) && $filters['order'] == 'questions') {
-            $orderQuery = ' matching_questions DESC, similarity DESC ';
+            $orderQuery = ' matching_questions DESC, similarity DESC, id ';
         }
 
         $filters = $this->profileFilterModel->splitFilters($filters);
@@ -54,7 +54,7 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
 
         $qb->match('(u:User {qnoow_id: {userId}})-[:MATCHES|SIMILARITY]-(anyUser:User)')
             ->where('u <> anyUser', 'NOT (anyUser:' . GhostUserManager::LABEL_GHOST_USER . ')')
-            ->optionalMatch('(u)-[like:LIKES]-(anyUser)')
+            ->optionalMatch('(u)-[like:LIKES]->(anyUser)')
             ->optionalMatch('(u)-[m:MATCHES]-(anyUser)')
             ->optionalMatch('(u)-[s:SIMILARITY]-(anyUser)')
             ->with(
@@ -101,31 +101,7 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
         $query = $qb->getQuery();
         $result = $query->getResultSet();
 
-        foreach ($result as $row) {
-
-            $age = null;
-            if ($row['birthday']) {
-                $date = new \DateTime($row['birthday']);
-                $now = new \DateTime();
-                $interval = $now->diff($date);
-                $age = $interval->y;
-            }
-
-            $user = array(
-                'id' => $row['id'],
-                'username' => $row['username'],
-                'picture' => $row['picture'],
-                'matching' => $row['matching_questions'],
-                'similarity' => $row['similarity'],
-                'age' => $age,
-                'location' => $row['location'],
-                'like' => $row['like'],
-            );
-
-            $response[] = $user;
-        }
-
-        return $response;
+        return $this->buildUserRecommendations($result);
     }
 
     /**
@@ -191,6 +167,39 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
         return $count;
     }
 
+    /**
+     * @param ResultSet $result
+     * @return UserRecommendation[]
+     */
+    public function buildUserRecommendations(ResultSet $result) {
+
+        $response = array();
+        foreach ($result as $row) {
+
+            $age = null;
+            if ($row['birthday']) {
+                $date = new \DateTime($row['birthday']);
+                $now = new \DateTime();
+                $interval = $now->diff($date);
+                $age = $interval->y;
+            }
+
+            $user = new UserRecommendation();
+            $user->setId($row->offsetGet('id'));
+            $user->setUsername($row->offsetGet('username'));
+            $user->setPicture($row->offsetGet('picture'));
+            $user->setMatching($row->offsetGet('matching_questions'));
+            $user->setSimilarity($row->offsetGet('similarity'));
+            $user->setAge($age);
+            $user->setLocation($row->offsetGet('location'));
+            $user->setLike($row->offsetGet('like'));
+
+            $response[] = $user;
+        }
+        
+        return $response;
+    }
+    
     /**
      * @param array $filters
      * @return array

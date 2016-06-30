@@ -8,6 +8,7 @@ namespace Paginator;
 
 use Model\Exception\ValidationException;
 use Model\LinkModel;
+use Model\User\Recommendation\ContentRecommendation;
 use Symfony\Component\HttpFoundation\Request;
 
 class ContentPaginator extends Paginator
@@ -48,7 +49,8 @@ class ContentPaginator extends Paginator
         $newForeign = isset($slice['newForeign']) ? $slice['newForeign'] : $foreign;
         $foreignContent = 0;
         foreach ($slice['items'] as $item) {
-            if ($item['match'] == 0) {
+            /** @var $item ContentRecommendation */
+            if ($item->getMatch() == 0) {
                 $foreignContent++;
             }
         }

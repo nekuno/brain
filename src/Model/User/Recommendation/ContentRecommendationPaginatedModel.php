@@ -105,7 +105,7 @@ class ContentRecommendationPaginatedModel extends AbstractContentPaginatedModel
         if ($needContent) {
             $newItems = $this->lm->getLivePredictedContent($id, $needContent, 2, $filters);
             foreach ($newItems as &$newItem) {
-                $newItem = array_merge($newItem, $this->completeContent(null, null, $id, $newItem['content']['id']));
+                $newItem = $this->completeContent($newItem, null, null, $id, $newItem->getContent()['id']);
             }
             $return['items'] = array_merge($return['items'], $newItems);
         }
@@ -137,7 +137,7 @@ class ContentRecommendationPaginatedModel extends AbstractContentPaginatedModel
     public function getForeignContent($filters, $limit, $foreign)
     {
         $id = $filters['id'];
-        $condition = "MATCH (u:User{qnoow_id:$id}) WHERE NOT(u)-[:LIKES]-(content)";
+        $condition = "MATCH (u:User{qnoow_id:$id}) WHERE NOT(u)-[:LIKES|:AFFINITY]-(content)";
 
         $items = $this->getContentsByPopularity($filters, $limit, $foreign, $condition);
         
@@ -163,15 +163,16 @@ class ContentRecommendationPaginatedModel extends AbstractContentPaginatedModel
     }
 
     /**
+     * @param ContentRecommendation $contentRecommendation
      * @param $row Row
      * @param $contentNode Node
      * @param $id
      * @param null $contentId
-     * @return array
+     * @return ContentRecommendation
      */
-    protected function completeContent($row = null, $contentNode = null, $id = null, $contentId = null)
+    public function completeContent(ContentRecommendation $contentRecommendation, $row = null, $contentNode = null, $id = null, $contentId = null)
     {
-        $content = parent::completeContent($row, $contentNode);
+        $contentRecommendation = parent::completeContent($contentRecommendation, $row, $contentNode);
 
         if (!$contentId) {
             if ($contentNode) {
@@ -183,13 +184,13 @@ class ContentRecommendationPaginatedModel extends AbstractContentPaginatedModel
         }
 
         if ($contentId && $id) {
-            $affinity = $this->am->getAffinity((integer)$id, $contentId);
+            $affinity = $this->am->getCurrentAffinity((integer)$id, $contentId);
         } else {
             $affinity = array('affinity' => 0);
         }
 
-        $content['match'] = $affinity['affinity'];
+        $contentRecommendation->setMatch($affinity['affinity']);
 
-        return $content;
+        return $contentRecommendation;
     }
 } 

@@ -44,7 +44,7 @@ abstract class AbstractContentPaginatedModel implements PaginatedInterface
         $this->lm = $lm;
         $this->validator = $validator;
     }
-    
+
     /**
      * Counts the total results from queryset.
      * @param array $filters
@@ -87,7 +87,7 @@ abstract class AbstractContentPaginatedModel implements PaginatedInterface
         }
 
         ///End estimation ///
-        
+
 //        $params = array(
 //            'userId' => (integer)$id,
 //        );
@@ -130,6 +130,14 @@ abstract class AbstractContentPaginatedModel implements PaginatedInterface
         return $this->validator->validateRecommendateContent($filters, $this->getChoices());
     }
 
+    /**
+     * @param array $filters
+     * @param $limit
+     * @param $offset
+     * @param string $additionalCondition
+     * @return ContentRecommendation[]
+     * @throws \Model\Neo4j\Neo4jException
+     */
     public function getContentsByPopularity(array $filters, $limit, $offset, $additionalCondition = null)
     {
         $types = isset($filters['type']) ? $filters['type'] : array();
@@ -167,7 +175,7 @@ abstract class AbstractContentPaginatedModel implements PaginatedInterface
             $qb->filterContentByType($types, 'content', array('popularity'))
                 ->where('content.processed = 1')
                 ->with('content', 'popularity');
-            if (null !== $additionalCondition){
+            if (null !== $additionalCondition) {
                 $qb->add('', $additionalCondition);
             }
 
@@ -196,7 +204,7 @@ abstract class AbstractContentPaginatedModel implements PaginatedInterface
                 break;
             }
         }
-        
+
         return $response['items'];
     }
 
@@ -212,13 +220,13 @@ abstract class AbstractContentPaginatedModel implements PaginatedInterface
         /** @var Row $row */
         foreach ($result as $row) {
 
-            $content = array();
+            $content = new ContentRecommendation();
             /** @var Node $contentNode */
             $contentNode = $row->offsetGet('content');
 
-            $content['content'] = $this->lm->buildLink($contentNode);
+            $content->setContent($this->lm->buildLink($contentNode));
 
-            $content = array_merge($content, $this->completeContent($row, $contentNode, $id));
+            $content = $this->completeContent($content, $row, $contentNode, $id);
 
             $response['items'][] = $content;
 
@@ -233,16 +241,15 @@ abstract class AbstractContentPaginatedModel implements PaginatedInterface
     }
 
     /**
+     * @param ContentRecommendation $content
      * @param $row Row
      * @param $contentNode Node
      * @param null $id
-     * @return array
+     * @return ContentRecommendation
      */
-    protected function completeContent($row, $contentNode, $id = null){
-        $content = array();
-
-        $content['synonymous'] = array();
-
+    protected function completeContent(ContentRecommendation $content, $row, $contentNode, $id = null)
+    {
+        $synonymousArray = array();
         if ($row && $row->offsetGet('synonymous')) {
             foreach ($row->offsetGet('synonymous') as $synonymousLink) {
                 /* @var $synonymousLink Node */
@@ -252,30 +259,35 @@ abstract class AbstractContentPaginatedModel implements PaginatedInterface
                 $synonymous['title'] = $synonymousLink->getProperty('title');
                 $synonymous['thumbnail'] = $synonymousLink->getProperty('thumbnail');
 
-                $content['synonymous'][] = $synonymous;
+                $synonymousArray[] = $synonymous;
             }
         }
+        $content->setSynonymous($synonymousArray);
 
-        $content['tags'] = array();
+        $tags = array();
         if (isset($row['tags'])) {
             foreach ($row['tags'] as $tag) {
-                $content['tags'][] = $tag;
+                $tags[] = $tag;
             }
         }
+        $content->setTags($tags);
 
-        $content['types'] = array();
+        $types = array();
         if (isset($row['types'])) {
             foreach ($row['types'] as $type) {
-                $content['types'][] = $type;
+                $types[] = $type;
             }
         }
+        $content->setTypes($types);
 
         if ($contentNode && $contentNode->getProperty('embed_type')) {
-            $content['embed']['type'] = $contentNode->getProperty('embed_type');
-            $content['embed']['id'] = $contentNode->getProperty('embed_id');
+            $content->setEmbed(array(
+                'type' => $contentNode->getProperty('embed_type'),
+                'id' => $contentNode->getProperty('embed_id'),
+            ));
         }
 
-        $content['match'] = 0;
+        $content->setMatch(0);
 
         return $content;
     }

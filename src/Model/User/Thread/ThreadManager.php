@@ -423,7 +423,8 @@ class ThreadManager
         foreach ($items as $item) {
             switch (get_class($thread)) {
                 case 'Model\User\Thread\ContentThread':
-                    $id = $item['content']['id'];
+                    /** @var $item User\Recommendation\ContentRecommendation */
+                    $id = $item->getContent()['id'];
                     $qb->match('(l:Link)')
                         ->where("id(l) = {$id}")
                         ->merge('(thread)-[:RECOMMENDS]->(l)')
@@ -431,7 +432,8 @@ class ThreadManager
                     $parameters += array($id => $id);
                     break;
                 case 'Model\User\Thread\UsersThread':
-                    $id = $item['id'];
+                    /** @var $item User\Recommendation\UserRecommendation */
+                    $id = $item->getId();
                     $qb->match('(u:User)')
                         ->where("u.qnoow_id = {$id}")
                         ->merge('(thread)-[:RECOMMENDS]->(u)')

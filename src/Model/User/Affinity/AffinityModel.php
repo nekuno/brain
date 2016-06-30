@@ -38,7 +38,7 @@ class AffinityModel
         return $affinity;
     }
 
-    private function getCurrentAffinity($userId, $linkId)
+    public function getCurrentAffinity($userId, $linkId)
     {
         $qb = $this->gm->createQueryBuilder();
         $qb
