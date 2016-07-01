@@ -31,6 +31,24 @@ class OAuthServiceProvider implements ServiceProviderInterface
 		    }
 	    );
 
+	    // Create ResourceOwner's services
+	    foreach ($app['hwi_oauth']['resource_owners'] as $name => $checkPath) {
+		    $app['hwi_oauth.resource_owner.' . $name] = $app->share(
+			    function ($app) use ($name) {
+					$options = $app['hwi_oauth']['resource_owners'][$name];
+				    $type = $options['type'];
+				    $class = "Http\\OAuth\\ResourceOwner\\" . ucfirst($type) . "ResourceOwner";
+
+				    return new $class($app['guzzle.client'], $app['dispatcher'], array(
+					    'consumer_key' => $options['client_id'],
+					    'consumer_secret' => $options['client_secret'],
+					    'class' => $class
+
+				    ));
+		        }
+	        );
+	    }
+
 	    $app['oauth.resorcer_owner_map'] = $app->share(
 		    function ($app) {
 
@@ -38,8 +56,12 @@ class OAuthServiceProvider implements ServiceProviderInterface
 			    foreach ($app['hwi_oauth']['resource_owners'] as $name => $checkPath) {
 				    $resourceOwnersMap[$name] = "";
 			    }
+			    $resourceOwnerMap =  new ResourceOwnerMap($app['oauth.httpUtils'], $app['hwi_oauth']['resource_owners'], $resourceOwnersMap);
+			    /* TODO: Symfony $container is needed for getting the resource owner by name from ResourceOwnerMap (getResourceOwnerByName)
+			       Of course, this throws an error because the container is expected. How can we solve it? */
+			    $resourceOwnerMap->setContainer($app);
 
-			    return new ResourceOwnerMap($app['oauth.httpUtils'], $app['hwi_oauth']['resource_owners'], $resourceOwnersMap);
+			    return $resourceOwnerMap;
 		    }
 	    );
 
