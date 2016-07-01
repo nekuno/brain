@@ -35,11 +35,11 @@ class OAuthServiceProvider implements ServiceProviderInterface
 		    function ($app) {
 
 			    $resourceOwnersMap = array();
-			    foreach ($app['hwi_oauth.resource_owners'] as $name => $checkPath) {
+			    foreach ($app['hwi_oauth']['resource_owners'] as $name => $checkPath) {
 				    $resourceOwnersMap[$name] = "";
 			    }
 
-			    return new ResourceOwnerMap($app['oauth.httpUtils'], $app['hwi_oauth.resource_owners'], $resourceOwnersMap);
+			    return new ResourceOwnerMap($app['oauth.httpUtils'], $app['hwi_oauth']['resource_owners'], $resourceOwnersMap);
 		    }
 	    );
 
