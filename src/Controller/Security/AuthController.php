@@ -32,7 +32,7 @@ class AuthController
 	    $accessToken = $request->request->get('accessToken');
 
 	    /* @var $authService AuthService */
-	    $authService = $app['oauth.service'];
+	    $authService = $app['auth.service'];
 	    if ($username && $password) {
 	        $jwt = $authService->login($username, $password);
 	    }
