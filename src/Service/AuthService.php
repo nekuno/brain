@@ -34,14 +34,14 @@ class AuthService
 	/**
 	 * @var OAuthProvider
 	 */
-	protected $OAuthProvider;
+	protected $oAuthProvider;
 
-    public function __construct(UserManager $um, PasswordEncoderInterface $encoder, JWTEncoder $jwtEncoder, OAuthProvider $OAuthProvider)
+    public function __construct(UserManager $um, PasswordEncoderInterface $encoder, JWTEncoder $jwtEncoder, OAuthProvider $oAuthProvider)
     {
         $this->um = $um;
         $this->encoder = $encoder;
         $this->jwtEncoder = $jwtEncoder;
-        $this->OAuthProvider = $OAuthProvider;
+        $this->oAuthProvider = $oAuthProvider;
     }
 
     /**
@@ -81,7 +81,7 @@ class AuthService
 		$token = new OAuthToken($accessToken);
 		$token->setResourceOwnerName($resourceOwner);
 		try {
-			$newToken = $this->OAuthProvider->authenticate($token);
+			$newToken = $this->oAuthProvider->authenticate($token);
 		} catch (\Exception $e) {
 			throw new UnauthorizedHttpException('', 'Los datos introducidos no coinciden con nuestros registros.');
 		}
