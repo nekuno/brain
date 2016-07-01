@@ -6,8 +6,7 @@ use HWI\Bundle\OAuthBundle\Security\Core\Authentication\Provider\OAuthProvider;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
 use Symfony\Component\Security\Core\User\UserChecker;
-use HWI\Bundle\OAuthBundle\Security\Http\ResourceOwnerMap;
-use Symfony\Component\Security\Http\HttpUtils;
+use Security\Http\ResourceOwnerMap;
 
 class OAuthServiceProvider implements ServiceProviderInterface
 {
@@ -21,13 +20,6 @@ class OAuthServiceProvider implements ServiceProviderInterface
 		    function () {
 
 			    return new UserChecker();
-		    }
-	    );
-
-	    $app['oauth.httpUtils'] = $app->share(
-		    function () {
-
-			    return new HttpUtils();
 		    }
 	    );
 
@@ -56,10 +48,7 @@ class OAuthServiceProvider implements ServiceProviderInterface
 			    foreach ($app['hwi_oauth']['resource_owners'] as $name => $checkPath) {
 				    $resourceOwnersMap[$name] = "";
 			    }
-			    $resourceOwnerMap =  new ResourceOwnerMap($app['oauth.httpUtils'], $app['hwi_oauth']['resource_owners'], $resourceOwnersMap);
-			    /* TODO: Symfony $container is needed for getting the resource owner by name from ResourceOwnerMap (getResourceOwnerByName)
-			       Of course, this throws an error because the container is expected. How can we solve it? */
-			    $resourceOwnerMap->setContainer($app);
+			    $resourceOwnerMap =  new ResourceOwnerMap($app['hwi_oauth']['resource_owners'], $resourceOwnersMap, $app);
 
 			    return $resourceOwnerMap;
 		    }
