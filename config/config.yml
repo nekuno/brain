@@ -108,50 +108,18 @@ hwi_oauth:
             type:               facebook
             client_id:          %facebook.consumer_key%
             client_secret:      %facebook.consumer_secret%
-            scope:              "public_profile email user_birthday user_location user_likes user_posts"
-            infos_url:          "https://graph.facebook.com/me?fields=id,name,birthday,gender,email,location,picture.type(normal).height(200)"
-            #user_response_class: Qnoow\OAuthBundle\OAuth\Response\PathUserResponse
-            paths:
-                email:          email
-                profilepicture: picture.data.url
-                birthday:       birthday
-                gender:         gender
-                location:       location.name
         google:
             type:                google
             client_id:           %google.consumer_key%
             client_secret:       %google.consumer_secret%
-            scope:               "email profile openid https://www.googleapis.com/auth/youtube.readonly"
-            infos_url:           "https://www.googleapis.com/userinfo/v2/me"
-            #user_response_class: Qnoow\OAuthBundle\OAuth\Response\PathUserResponse
-            paths:
-                email:           email
-                profilepicture:  picture
-                birthday:        birthday
-                gender:          gender
-            options:
-                access_type:     offline
-                approval_prompt: force
         twitter:
             type:                twitter
             client_id:           %twitter.consumer_key%
             client_secret:       %twitter.consumer_secret%
-            infos_url:           "https://api.twitter.com/1.1/account/verify_credentials.json?include_email=true"
-            paths:
-                email:           email
-                profilepicture:  profile_image_url
         spotify:
             type:                oauth2
             client_id:           %spotify.consumer_key%
             client_secret:       %spotify.consumer_secret%
             access_token_url:    https://accounts.spotify.com/api/token
             authorization_url:   https://accounts.spotify.com/authorize
-            infos_url:           https://api.spotify.com/v1/me
-            scope:               "user-read-private user-read-email playlist-read-private"
-            #user_response_class: HWI\Bundle\OAuthBundle\OAuth\Response\PathUserResponse
-            paths:
-                identifier:      id
-                nickname:        display_name
-                realname:        display_name
-                email:           email
-                profilepicture:  images.0.url
+

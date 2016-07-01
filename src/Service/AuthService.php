@@ -56,7 +56,7 @@ class AuthService
         try {
             $user = $this->um->findUserBy(array('usernameCanonical' => $this->um->canonicalize($username)));
         } catch (\Exception $e) {
-            throw new UnauthorizedHttpException('', 'El nombre de usuario y la contraseña que ingresaste no coinciden con nuestros registros.');
+            throw new UnauthorizedHttpException('', 'Los datos introducidos no coinciden con nuestros registros.');
         }
 
         $encodedPassword = $user->getPassword();
@@ -64,23 +64,27 @@ class AuthService
         $valid = $this->encoder->isPasswordValid($encodedPassword, $password, $salt);
 
         if (!$valid) {
-            throw new UnauthorizedHttpException('', 'El nombre de usuario y la contraseña que ingresaste no coinciden con nuestros registros.');
+            throw new UnauthorizedHttpException('', 'Los datos introducidos no coinciden con nuestros registros.');
         }
 
         return $this->buildToken($user);
     }
 
 	/**
-	 * @param $resourceOwnerName
+	 * @param $resourceOwner
 	 * @param $accessToken
 	 * @return string
 	 * @throws UnauthorizedHttpException
 	 */
-	public function loginByResourceOwner($resourceOwnerName, $accessToken)
+	public function loginByResourceOwner($resourceOwner, $accessToken)
 	{
 		$token = new OAuthToken($accessToken);
-		$token->setResourceOwnerName($resourceOwnerName);
-		$newToken = $this->OAuthProvider->authenticate($token);
+		$token->setResourceOwnerName($resourceOwner);
+		try {
+			$newToken = $this->OAuthProvider->authenticate($token);
+		} catch (\Exception $e) {
+			throw new UnauthorizedHttpException('', 'Los datos introducidos no coinciden con nuestros registros.');
+		}
 
 		return $this->buildToken($newToken->getUser());
 	}

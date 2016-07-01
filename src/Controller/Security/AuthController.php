@@ -28,34 +28,21 @@ class AuthController
 
         $username = $request->request->get('username');
         $password = $request->request->get('password');
+	    $resourceOwner = $request->request->get('resourceOwner');
+	    $accessToken = $request->request->get('accessToken');
 
-        if (!$username || !$password) {
-            throw new BadRequestHttpException('El nombre de usuario y la contraseña que ingresaste no coinciden con nuestros registros.');
-        }
-
-        /* @var $authService AuthService */
-        $authService = $app['auth.service'];
-        $jwt = $authService->login($username, $password);
+	    /* @var $authService AuthService */
+	    $authService = $app['auth.service'];
+	    if ($username && $password) {
+	        $jwt = $authService->login($username, $password);
+	    }
+	    elseif ($resourceOwner && $accessToken) {
+		    $jwt = $authService->loginByResourceOwner($resourceOwner, $accessToken);
+	    }
+	    else {
+		    throw new BadRequestHttpException('Los datos introducidos no coinciden con nuestros registros.');
+	    }
 
         return $app->json(array('jwt' => $jwt));
-
     }
-
-	public function resourceOwnerLoginAction(Request $request, Application $app)
-	{
-
-		$resourceOwnerName = $request->request->get('resourceOwnerName');
-		$accessToken = $request->request->get('access_token');
-
-		if (!$resourceOwnerName || !$accessToken) {
-			throw new BadRequestHttpException('There is not resourceOwnerName and/or access_token in the request');
-		}
-
-		/* @var $authService AuthService */
-		$authService = $app['auth.service'];
-		$jwt = $authService->loginByResourceOwner($resourceOwnerName, $accessToken);
-
-		return $app->json(array('jwt' => $jwt));
-
-	}
 }

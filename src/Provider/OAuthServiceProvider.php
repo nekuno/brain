@@ -3,7 +3,6 @@
 namespace Provider;
 
 use HWI\Bundle\OAuthBundle\Security\Core\Authentication\Provider\OAuthProvider;
-use Igorw\Silex\ConfigServiceProvider;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
 use Symfony\Component\Security\Core\User\UserChecker;
@@ -18,9 +17,6 @@ class OAuthServiceProvider implements ServiceProviderInterface
      */
     public function register(Application $app)
     {
-
-        $app->register(new ConfigServiceProvider(__DIR__ . "/../ApiConsumer/config/apiConsumer.yml"));
-
 	    $app['user.checker'] = $app->share(
 		    function () {
 
@@ -40,11 +36,10 @@ class OAuthServiceProvider implements ServiceProviderInterface
 
 			    $resourceOwnersMap = array();
 			    foreach ($app['hwi_oauth.resource_owners'] as $name => $checkPath) {
-				    $resourceOwnersMap[] = $name;
+				    $resourceOwnersMap[$name] = "";
 			    }
-			    $resourceOwnerFactory = new ResourceOwnerMap($app['oauth.httpUtils'], $resourceOwnersMap, $app['hwi_oauth.resource_owners']);
 
-			    return $resourceOwnerFactory;
+			    return new ResourceOwnerMap($app['oauth.httpUtils'], $app['hwi_oauth.resource_owners'], $resourceOwnersMap);
 		    }
 	    );
 

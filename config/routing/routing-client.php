@@ -9,7 +9,6 @@ use Model\User\RelationsModel;
 /** User Routes */
 $app->match('{url}', 'auth.controller:preflightAction')->assert('url', '.+')->method('OPTIONS');
 $app->post('/login', 'auth.controller:loginAction');
-$app->post('/resource-owner-login', 'auth.controller:resourceOwnerLoginAction');
 
 $app->get('/users', 'users.controller:getAction');
 $app->get('/users/{id}', 'users.controller:getOtherAction');
