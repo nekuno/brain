@@ -29,7 +29,7 @@ class OAuthServiceProvider implements ServiceProviderInterface
 			    function ($app) use ($name) {
 					$options = $app['hwi_oauth']['resource_owners'][$name];
 				    $type = $options['type'];
-				    $class = "Http\\OAuth\\ResourceOwner\\" . ucfirst($type) . "ResourceOwner";
+				    $class = "HWI\\Bundle\\OAuthBundle\\OAuth\\ResourceOwner\\" . ucfirst($type) . "ResourceOwner";
 
 				    return new $class($app['guzzle.client'], $app['dispatcher'], array(
 					    'consumer_key' => $options['client_id'],
