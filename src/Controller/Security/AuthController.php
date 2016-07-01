@@ -41,4 +41,21 @@ class AuthController
 
     }
 
+	public function resourceOwnerLoginAction(Request $request, Application $app)
+	{
+
+		$resourceOwnerName = $request->request->get('resourceOwnerName');
+		$accessToken = $request->request->get('access_token');
+
+		if (!$resourceOwnerName || !$accessToken) {
+			throw new BadRequestHttpException('There is not resourceOwnerName and/or access_token in the request');
+		}
+
+		/* @var $authService AuthService */
+		$authService = $app['auth.service'];
+		$jwt = $authService->loginByResourceOwner($resourceOwnerName, $accessToken);
+
+		return $app->json(array('jwt' => $jwt));
+
+	}
 }

@@ -14,6 +14,10 @@ $app['security.firewalls'] = array(
         'pattern' => '^/login$',
         'anonymous' => true,
     ),
+	'resourceOwnerLogin' => array(
+		'pattern' => '^/resource-owner-login$',
+		'anonymous' => true,
+	),
     'preFlight' => array(
         'pattern' => new RequestMatcher('^.*$', null, 'OPTIONS'),
         'anonymous' => true,

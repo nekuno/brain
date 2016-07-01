@@ -2,6 +2,8 @@
 
 namespace Security;
 
+use HWI\Bundle\OAuthBundle\OAuth\Response\UserResponseInterface;
+use HWI\Bundle\OAuthBundle\Security\Core\User\OAuthAwareUserProviderInterface;
 use Manager\UserManager;
 use Model\User;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -10,7 +12,7 @@ use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\Exception\UsernameNotFoundException;
 use Symfony\Component\Security\Core\User\UserInterface as SecurityUserInterface;
 
-class UserProvider implements UserProviderInterface
+class UserProvider implements UserProviderInterface, OAuthAwareUserProviderInterface
 {
     /**
      * @var UserManager
@@ -40,6 +42,14 @@ class UserProvider implements UserProviderInterface
 
         return $user;
     }
+
+	public function loadUserByOAuthUserResponse(UserResponseInterface $response)
+	{
+		$resourceID = $response->getUsername();
+		$resourceOwnerName = $response->getOAuthToken()->getResourceOwnerName();
+
+		return $this->userManager->findUserByResourceOwner($resourceID, $resourceOwnerName);
+	}
 
     /**
      * {@inheritDoc}

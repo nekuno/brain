@@ -2,6 +2,8 @@
 
 namespace Service;
 
+use HWI\Bundle\OAuthBundle\Security\Core\Authentication\Provider\OAuthProvider;
+use HWI\Bundle\OAuthBundle\Security\Core\Authentication\Token\OAuthToken;
 use Manager\UserManager;
 use Model\User;
 use Silex\Component\Security\Core\Encoder\JWTEncoder;
@@ -29,17 +31,24 @@ class AuthService
      */
     protected $jwtEncoder;
 
-    public function __construct(UserManager $um, PasswordEncoderInterface $encoder, JWTEncoder $jwtEncoder)
+	/**
+	 * @var OAuthProvider
+	 */
+	protected $OAuthProvider;
+
+    public function __construct(UserManager $um, PasswordEncoderInterface $encoder, JWTEncoder $jwtEncoder, OAuthProvider $OAuthProvider)
     {
         $this->um = $um;
         $this->encoder = $encoder;
         $this->jwtEncoder = $jwtEncoder;
+        $this->OAuthProvider = $OAuthProvider;
     }
 
     /**
      * @param $username
      * @param $password
      * @return string
+     * @throws UnauthorizedHttpException
      */
     public function login($username, $password)
     {
@@ -60,6 +69,21 @@ class AuthService
 
         return $this->buildToken($user);
     }
+
+	/**
+	 * @param $resourceOwnerName
+	 * @param $accessToken
+	 * @return string
+	 * @throws UnauthorizedHttpException
+	 */
+	public function loginByResourceOwner($resourceOwnerName, $accessToken)
+	{
+		$token = new OAuthToken($accessToken);
+		$token->setResourceOwnerName($resourceOwnerName);
+		$newToken = $this->OAuthProvider->authenticate($token);
+
+		return $this->buildToken($newToken->getUser());
+	}
 
     /**
      * @param string $id
