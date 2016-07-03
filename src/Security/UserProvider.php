@@ -48,9 +48,9 @@ class UserProvider implements UserProviderInterface, OAuthAwareUserProviderInter
 	public function loadUserByOAuthUserResponse(UserResponseInterface $response)
 	{
 		$resourceId = $response->getUsername();
-		$resourceOwner = $response->getOAuthToken()->getResourceOwnerName();
+		$resourceOwner = $response->getResourceOwner()->getName();
 		try {
-			$user = $this->userManager->findUserByResourceOwner($resourceId, $resourceOwner);
+			$user = $this->userManager->findUserByResourceOwner($resourceOwner, $resourceId);
 		} catch (NotFoundHttpException $e) {
 			throw new UnauthorizedHttpException('', 'Los datos introducidos no coinciden con nuestros registros.');
 		}
