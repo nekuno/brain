@@ -86,6 +86,10 @@ class AuthService
 			throw new UnauthorizedHttpException('', 'Los datos introducidos no coinciden con nuestros registros.');
 		}
 
+        if (!$newToken) {
+            throw new UnauthorizedHttpException('', 'Los datos introducidos no coinciden con nuestros registros.');
+        }
+
 		return $this->buildToken($newToken->getUser());
 	}
 
