@@ -174,7 +174,7 @@ class GraphManager implements LoggerAwareInterface
     private function copyProperties($id1, $id2)
     {
         //TODO: Improve code placement of unique node properties
-        $unique = array('qnoow_id', 'twitterID', 'googleID', 'facebookID', 'spotifyID', 'usernameCanonical', 'emailCanonical');
+        $unique = array('qnoow_id', 'usernameCanonical', 'emailCanonical');
 
         //get properties
         $qb = $this->createQueryBuilder();
