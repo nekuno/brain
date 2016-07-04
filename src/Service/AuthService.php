@@ -82,8 +82,8 @@ class AuthService
 		$type = Configuration::getResourceOwnerType($resourceOwner);
 	    if ($type == 'oauth1') {
 		    $accessToken = array(
-			    'oauth_token' => substr($accessToken, 0, strpos(':', $accessToken)),
-			    'oauth_token_secret' => substr($accessToken, strpos(':', $accessToken) + 1, strpos('@', $accessToken)),
+			    'oauth_token' => substr($accessToken, 0, strpos($accessToken, ':')),
+			    'oauth_token_secret' => substr($accessToken, strpos($accessToken, ':') + 1, strpos($accessToken, '@')),
 		    );
 	    }
         $token = new OAuthToken($accessToken);
