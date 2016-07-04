@@ -54,7 +54,7 @@ class UserProvider implements UserProviderInterface, OAuthAwareUserProviderInter
             $e = new UsernameNotFoundException();
             $e->setUsername($response->getUsername());
             $e->setToken($response->getOAuthToken());
-			throw new $e;
+			throw $e;
 		}
 
 		return $user;
