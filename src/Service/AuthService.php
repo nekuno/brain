@@ -9,6 +9,7 @@ use Model\User;
 use Silex\Component\Security\Core\Encoder\JWTEncoder;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\Security\Core\Encoder\PasswordEncoderInterface;
+use HWI\Bundle\OAuthBundle\DependencyInjection\Configuration;
 
 /**
  * @author Juan Luis Martínez <juanlu@comakai.com>
@@ -73,16 +74,19 @@ class AuthService
     /**
      * @param $resourceOwner
      * @param $accessToken
-     * @param $oauthTokenSecret|null
      * @return string
      * @throws UnauthorizedHttpException
      */
-    public function loginByResourceOwner($resourceOwner, $accessToken, $oauthTokenSecret = null)
+    public function loginByResourceOwner($resourceOwner, $accessToken)
     {
-        $token = new OAuthToken(array(
-	       'oauth_token' => $accessToken,
-	       'oauth_token_secret' => $oauthTokenSecret,
-        ));
+		$type = Configuration::getResourceOwnerType($resourceOwner);
+	    if ($type == 'oauth1') {
+		    $accessToken = array(
+			    'oauth_token' => substr($accessToken, 0, strpos(':', $accessToken)),
+			    'oauth_token_secret' => substr($accessToken, strpos(':', $accessToken) + 1, strpos('@', $accessToken)),
+		    );
+	    }
+        $token = new OAuthToken($accessToken);
         $token->setResourceOwnerName($resourceOwner);
         try {
             $newToken = $this->oAuthProvider->authenticate($token);
