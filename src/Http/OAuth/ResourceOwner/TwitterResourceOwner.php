@@ -20,18 +20,6 @@ class TwitterResourceOwner extends Oauth1GenericResourceOwner
 
     public $name = TokensModel::TWITTER;
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function getUserInformation(array $accessToken, array $extraParameters = array())
-	{
-		if ($this->options['include_email']) {
-			$this->options['infos_url'] = $this->normalizeUrl($this->options['infos_url'], array('include_email' => 'true'));
-		}
-
-		return parent::getUserInformation($accessToken, $extraParameters);
-	}
-
 	public function getAPIRequest($url, array $query = array(), array $token = array())
     {
         $request = parent::getAPIRequest($url, $query, $token);
