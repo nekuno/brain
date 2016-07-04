@@ -31,10 +31,10 @@ class AuthService
      */
     protected $jwtEncoder;
 
-	/**
-	 * @var OAuthProvider
-	 */
-	protected $oAuthProvider;
+    /**
+     * @var OAuthProvider
+     */
+    protected $oAuthProvider;
 
     public function __construct(UserManager $um, PasswordEncoderInterface $encoder, JWTEncoder $jwtEncoder, OAuthProvider $oAuthProvider)
     {
@@ -70,28 +70,28 @@ class AuthService
         return $this->buildToken($user);
     }
 
-	/**
-	 * @param $resourceOwner
-	 * @param $accessToken
-	 * @return string
-	 * @throws UnauthorizedHttpException
-	 */
-	public function loginByResourceOwner($resourceOwner, $accessToken)
-	{
-		$token = new OAuthToken($accessToken);
-		$token->setResourceOwnerName($resourceOwner);
-		try {
-			$newToken = $this->oAuthProvider->authenticate($token);
-		} catch (\Exception $e) {
-			throw new UnauthorizedHttpException('', 'Los datos introducidos no coinciden con nuestros registros.');
-		}
+    /**
+     * @param $resourceOwner
+     * @param $accessToken
+     * @return string
+     * @throws UnauthorizedHttpException
+     */
+    public function loginByResourceOwner($resourceOwner, $accessToken)
+    {
+        $token = new OAuthToken($accessToken);
+        $token->setResourceOwnerName($resourceOwner);
+        try {
+            $newToken = $this->oAuthProvider->authenticate($token);
+        } catch (\Exception $e) {
+            throw new UnauthorizedHttpException('', 'Los datos introducidos no coinciden con nuestros registros.');
+        }
 
         if (!$newToken) {
             throw new UnauthorizedHttpException('', 'Los datos introducidos no coinciden con nuestros registros.');
         }
 
-		return $this->buildToken($newToken->getUser());
-	}
+        return $this->buildToken($newToken->getUser());
+    }
 
     /**
      * @param string $id
