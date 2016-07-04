@@ -73,12 +73,16 @@ class AuthService
     /**
      * @param $resourceOwner
      * @param $accessToken
+     * @param $oauthTokenSecret|null
      * @return string
      * @throws UnauthorizedHttpException
      */
-    public function loginByResourceOwner($resourceOwner, $accessToken)
+    public function loginByResourceOwner($resourceOwner, $accessToken, $oauthTokenSecret = null)
     {
-        $token = new OAuthToken($accessToken);
+        $token = new OAuthToken(array(
+	       'oauth_token' => $accessToken,
+	       'oauth_token_secret' => $oauthTokenSecret,
+        ));
         $token->setResourceOwnerName($resourceOwner);
         try {
             $newToken = $this->oAuthProvider->authenticate($token);
