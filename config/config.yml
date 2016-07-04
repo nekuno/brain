@@ -117,9 +117,6 @@ hwi_oauth:
             client_id:           %twitter.consumer_key%
             client_secret:       %twitter.consumer_secret%
         spotify:
-            type:                oauth2
+            type:                spotify
             client_id:           %spotify.consumer_key%
             client_secret:       %spotify.consumer_secret%
-            access_token_url:    https://accounts.spotify.com/api/token
-            authorization_url:   https://accounts.spotify.com/authorize
-

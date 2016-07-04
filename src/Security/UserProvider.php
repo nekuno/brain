@@ -7,7 +7,6 @@ use HWI\Bundle\OAuthBundle\Security\Core\User\OAuthAwareUserProviderInterface;
 use Manager\UserManager;
 use Model\User;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
@@ -48,11 +47,14 @@ class UserProvider implements UserProviderInterface, OAuthAwareUserProviderInter
 	public function loadUserByOAuthUserResponse(UserResponseInterface $response)
 	{
 		$resourceId = $response->getUsername();
-		$resourceOwner = $response->getOAuthToken()->getResourceOwnerName();
+		$resourceOwner = $response->getResourceOwner()->getName();
 		try {
-			$user = $this->userManager->findUserByResourceOwner($resourceId, $resourceOwner);
+			$user = $this->userManager->findUserByResourceOwner($resourceOwner, $resourceId);
 		} catch (NotFoundHttpException $e) {
-			throw new UnauthorizedHttpException('', 'Los datos introducidos no coinciden con nuestros registros.');
+            $e = new UsernameNotFoundException();
+            $e->setUsername($response->getUsername());
+            $e->setToken($response->getOAuthToken());
+			throw new $e;
 		}
 
 		return $user;

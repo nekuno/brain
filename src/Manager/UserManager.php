@@ -162,22 +162,21 @@ class UserManager implements PaginatedInterface
     }
 
 	/**
-	 * @param string $resourceOwnerName
-	 * @param string $resourceOwnerID
+	 * @param string $resourceOwner
+	 * @param string $resourceId
 	 * @return User
 	 * @throws Neo4jException
 	 * @throws NotFoundHttpException
 	 */
-	public function findUserByResourceOwner($resourceOwnerName, $resourceOwnerID)
+        public function findUserByResourceOwner($resourceOwner, $resourceId)
 	{
 
 		$qb = $this->gm->createQueryBuilder();
 		$qb->match('(u:User)<-[:TOKEN_OF]-(t:Token)')
-			->where('t.resourceId = { resourceOwnerID }')
-			->where('t.resourceOwner = { resourceOwnerName }')
+			->where('t.resourceOwner = { resourceOwner }', 't.resourceId = { resourceId }')
 			->setParameters(array(
-				'resourceOwnerID' => $resourceOwnerID,
-				'resourceOwnerName' => $resourceOwnerName,
+				'resourceOwner' => $resourceOwner,
+				'resourceId' => $resourceId,
 			))
 			->returns('u');
 
@@ -920,10 +919,6 @@ class UserManager implements PaginatedInterface
             'expiresAt' => array('type' => 'datetime'),
             'confirmationToken' => array('type' => 'string'),
             'passwordRequestedAt' => array('type' => 'datetime'),
-            'facebookID' => array('type' => 'string'),
-            'googleID' => array('type' => 'string'),
-            'twitterID' => array('type' => 'string'),
-            'spotifyID' => array('type' => 'string'),
             'createdAt' => array('type' => 'datetime', 'editable' => false),
             'updatedAt' => array('type' => 'datetime', 'editable' => false),
             'confirmed' => array('type' => 'boolean', 'default' => false),

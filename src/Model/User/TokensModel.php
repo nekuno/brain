@@ -356,16 +356,8 @@ class TokensModel
         $return = array();
         /* @var $row Row */
         foreach ($result as $row) {
-            /* @var $user Node */
-            $user = $row->offsetGet('user');
-            $ids = array(
-                'facebookID' => $user->getProperty('facebookID'),
-                'googleID' => $user->getProperty('googleID'),
-                'twitterID' => $user->getProperty('twitterID'),
-                'spotifyID' => $user->getProperty('spotifyID'),
-            );
 
-            $return[] = array_merge($this->build($row), $ids);
+            $return[] = $this->build($row);
         }
 
         return $return;
@@ -454,13 +446,13 @@ class TokensModel
 
         return array(
             'resourceOwner' => array('type' => 'choice', 'choices' => self::getResourceOwners(), 'required' => true),
+            'resourceId' => array('type' => 'string', 'required' => true),
             'oauthToken' => array('type' => 'string', 'required' => true),
             'oauthTokenSecret' => array('type' => 'string', 'required' => false),
             'createdTime' => array('type' => 'integer', 'required' => false),
             'updatedTime' => array('type' => 'integer', 'editable' => false),
             'expireTime' => array('type' => 'integer', 'required' => false),
             'refreshToken' => array('type' => 'string', 'required' => false),
-            'resourceId' => array('type' => 'string', 'required' => false),
         );
     }
 

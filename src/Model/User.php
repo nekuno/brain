@@ -110,26 +110,6 @@ class User implements UserInterface, \JsonSerializable
     protected $credentialsExpireAt;
 
     /**
-     * @var string
-     */
-    protected $facebookID;
-
-    /**
-     * @var string
-     */
-    protected $googleID;
-
-    /**
-     * @var string
-     */
-    protected $twitterID;
-
-    /**
-     * @var string
-     */
-    protected $spotifyID;
-
-    /**
      * @var boolean
      */
     protected $confirmed;
@@ -600,104 +580,6 @@ class User implements UserInterface, \JsonSerializable
     public function setPicture($picture)
     {
         $this->picture = $picture;
-
-        return $this;
-    }
-
-    /**
-     * Get facebookID
-     *
-     * @return string
-     */
-    public function getFacebookID()
-    {
-
-        return $this->facebookID;
-    }
-
-    /**
-     * Set facebookID
-     *
-     * @param string $facebookID
-     * @return $this
-     */
-    public function setFacebookID($facebookID)
-    {
-
-        $this->facebookID = $facebookID;
-
-        return $this;
-    }
-
-    /**
-     * Get googleID
-     *
-     * @return string
-     */
-    public function getGoogleID()
-    {
-
-        return $this->googleID;
-    }
-
-    /**
-     * Set googleID
-     *
-     * @param string $googleID
-     * @return $this
-     */
-    public function setGoogleID($googleID)
-    {
-
-        $this->googleID = $googleID;
-
-        return $this;
-    }
-
-    /**
-     * Get twitterID
-     *
-     * @return string
-     */
-    public function getTwitterID()
-    {
-
-        return $this->twitterID;
-    }
-
-    /**
-     * Set twitterID
-     *
-     * @param string $twitterID
-     * @return $this
-     */
-    public function setTwitterID($twitterID)
-    {
-
-        $this->twitterID = $twitterID;
-
-        return $this;
-    }
-
-    /**
-     * Get spotifyID
-     *
-     * @return string
-     */
-    public function getSpotifyID()
-    {
-        return $this->spotifyID;
-    }
-
-    /**
-     * Set spotifyID
-     *
-     * @param string $spotifyID
-     * @return $this
-     */
-    public function setSpotifyID($spotifyID)
-    {
-        $this->spotifyID = $spotifyID;
 
         return $this;
     }
