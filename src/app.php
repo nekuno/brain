@@ -53,6 +53,7 @@ $app->register(new AMQPServiceProvider());
 $app->register(new TranslationServiceProvider(), array('locale_fallbacks' => array('en', 'es')));
 $app->register(new ServicesServiceProvider());
 $app->register(new ModelsServiceProvider());
+$app->register(new \Provider\OAuthServiceProvider());
 $app->register(new Silex\Provider\SecurityServiceProvider());
 $app['security.jwt'] = array(
     'secret_key' => $app['secret'],

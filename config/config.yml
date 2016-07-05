@@ -100,3 +100,23 @@ fullContact.url: %fullContact.url%
 fullContact.consumer_key: %fullContact.consumer_key%
 peopleGraph.url: %peopleGraph.url%
 peopleGraph.consumer_key: %peopleGraph.consumer_key%
+
+# HWIOAuthBundle
+hwi_oauth:
+    resource_owners:
+        facebook:
+            type:               facebook
+            client_id:          %facebook.consumer_key%
+            client_secret:      %facebook.consumer_secret%
+        google:
+            type:                google
+            client_id:           %google.consumer_key%
+            client_secret:       %google.consumer_secret%
+        twitter:
+            type:                twitter
+            client_id:           %twitter.consumer_key%
+            client_secret:       %twitter.consumer_secret%
+        spotify:
+            type:                spotify
+            client_id:           %spotify.consumer_key%
+            client_secret:       %spotify.consumer_secret%
