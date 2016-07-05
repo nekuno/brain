@@ -25,6 +25,8 @@ class Thread implements \JsonSerializable
     protected $cached;
 
     protected $totalResults;
+    
+    protected $recommendationUrl;
 
     function __construct($id, $name)
     {
@@ -145,6 +147,23 @@ class Thread implements \JsonSerializable
     }
 
     /**
+     * @return mixed
+     */
+    public function getRecommendationUrl()
+    {
+        return $this->recommendationUrl;
+    }
+
+    /**
+     * @param mixed $recommendationUrl
+     */
+    public function setRecommendationUrl($recommendationUrl)
+    {
+        $this->recommendationUrl = $recommendationUrl;
+    }
+
+    
+    /**
      * Specify data which should be serialized to JSON
      * @link http://php.net/manual/en/jsonserializable.jsonserialize.php
      * @return mixed data which can be serialized by <b>json_encode</b>,
@@ -160,6 +179,7 @@ class Thread implements \JsonSerializable
             'createdAt' => $this->getCreatedAt(),
             'updatedAt' => $this->getUpdatedAt(),
             'cached' => $this->getCached(),
+            'recommendationUrl' => $this->getRecommendationUrl(),
             'totalResults' => $this->getTotalResults(),
         );
     }

@@ -352,8 +352,8 @@ class ModelsServiceProvider implements ServiceProviderInterface
             function ($app) {
 
                 return new ThreadManager(
-                    $app['neo4j.graph_manager'], $app['users.manager'], $app['users.threadusers.manager'],
-                    $app['users.threadcontent.manager'], $app['users.profile.model'], $app['users.groups.model'],
+                    $app['neo4j.graph_manager'], $app['users.threadusers.manager'],
+                    $app['users.threadcontent.manager'], $app['users.profile.model'],
                     $app['translator'], $app['validator.service']
                 );
             }
