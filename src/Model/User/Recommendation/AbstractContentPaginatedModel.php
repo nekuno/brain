@@ -160,7 +160,7 @@ abstract class AbstractContentPaginatedModel implements PaginatedInterface
                     ->where('filterTag.name IN { filterTags } ')
                     ->with('content', 'popularity')
                     ->where('popularity.popularity > {popLimit}')
-                    ->with('content', 'popularity');
+                    ->with('content', 'popularity.popularity AS popularity');
                 $qb->setParameter('filterTags', $filters['tag']);
 
             } else {
