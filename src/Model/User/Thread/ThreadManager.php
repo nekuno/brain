@@ -41,24 +41,21 @@ class ThreadManager
     /**
      * ThreadManager constructor.
      * @param GraphManager $graphManager
-     * @param UserManager $userManager
      * @param UsersThreadManager $um
      * @param ContentThreadManager $cm
      * @param ProfileModel $profileModel
-     * @param GroupModel $groupModel
      * @param Translator $translator
      * @param Validator $validator
      */
-    public function __construct(GraphManager $graphManager, UserManager $userManager, UsersThreadManager $um,
-                                ContentThreadManager $cm, ProfileModel $profileModel, GroupModel $groupModel,
+    public function __construct(GraphManager $graphManager, UsersThreadManager $um,
+                                ContentThreadManager $cm, ProfileModel $profileModel,
                                 Translator $translator, Validator $validator)
     {
         $this->graphManager = $graphManager;
-        $this->userManager = $userManager;
         $this->usersThreadManager = $um;
         $this->contentThreadManager = $cm;
+        //TODO: Move profileModel and translator dependencies to a new Class DefaultThreadManager to create data
         $this->profileModel = $profileModel;
-        $this->groupModel = $groupModel;
         $this->translator = $translator;
         $this->validator = $validator;
     }
@@ -146,6 +143,7 @@ class ThreadManager
         }
 
         $thread->setCached($cached);
+        $thread->setRecommendationUrl($this->getRecommendationUrl($thread));
         $thread->setTotalResults($threadNode->getProperty('totalResults'));
         $thread->setCreatedAt($threadNode->getProperty('createdAt'));
         $thread->setUpdatedAt($threadNode->getProperty('updatedAt'));
@@ -273,7 +271,7 @@ class ThreadManager
                 ),
             )
         );
-        if ($threads['default'][5]['filters']['userFilters']['gender'] == array(null)){
+        if ($threads['default'][5]['filters']['userFilters']['gender'] == array(null)) {
             unset($threads['default'][5]['filters']['userFilters']['gender']);
         }
 
@@ -423,7 +421,8 @@ class ThreadManager
         foreach ($items as $item) {
             switch (get_class($thread)) {
                 case 'Model\User\Thread\ContentThread':
-                    $id = $item['content']['id'];
+                    /** @var $item User\Recommendation\ContentRecommendation */
+                    $id = $item->getContent()['id'];
                     $qb->match('(l:Link)')
                         ->where("id(l) = {$id}")
                         ->merge('(thread)-[:RECOMMENDS]->(l)')
@@ -431,7 +430,8 @@ class ThreadManager
                     $parameters += array($id => $id);
                     break;
                 case 'Model\User\Thread\UsersThread':
-                    $id = $item['id'];
+                    /** @var $item User\Recommendation\UserRecommendation */
+                    $id = $item->getId();
                     $qb->match('(u:User)')
                         ->where("u.qnoow_id = {$id}")
                         ->merge('(thread)-[:RECOMMENDS]->(u)')
@@ -585,6 +585,11 @@ class ThreadManager
         $qb->setParameters($parameters);
         $qb->getQuery()->getResultSet();
 
+    }
+
+    private function getRecommendationUrl(Thread $thread)
+    {
+        return 'threads/' . $thread->getId() . '/recommendation?offset=20';
     }
 
     private function getDesiredFromProfile(array $profile)

@@ -337,14 +337,14 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.threadusers.manager'] = $app->share(
             function ($app) {
 
-                return new UsersThreadManager($app['neo4j.graph_manager'], $app['users.filterusers.manager'], $app['users.manager']);
+                return new UsersThreadManager($app['neo4j.graph_manager'], $app['users.filterusers.manager'], $app['users.manager'], $app['users.recommendation.users.model']);
             }
         );
 
         $app['users.threadcontent.manager'] = $app->share(
             function ($app) {
 
-                return new ContentThreadManager($app['neo4j.graph_manager'], $app['links.model'], $app['users.filtercontent.manager']);
+                return new ContentThreadManager($app['neo4j.graph_manager'], $app['links.model'], $app['users.filtercontent.manager'], $app['users.recommendation.content.model']);
             }
         );
 
@@ -352,8 +352,8 @@ class ModelsServiceProvider implements ServiceProviderInterface
             function ($app) {
 
                 return new ThreadManager(
-                    $app['neo4j.graph_manager'], $app['users.manager'], $app['users.threadusers.manager'],
-                    $app['users.threadcontent.manager'], $app['users.profile.model'], $app['users.groups.model'],
+                    $app['neo4j.graph_manager'], $app['users.threadusers.manager'],
+                    $app['users.threadcontent.manager'], $app['users.profile.model'],
                     $app['translator'], $app['validator.service']
                 );
             }

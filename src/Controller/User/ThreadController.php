@@ -142,19 +142,21 @@ class ThreadController
     /**
      * @param $app
      * @param $thread
-     * @param $request
+     * @param Request $request
      * @return array|string string if got an exception in production environment
      * @throws \Exception
      */
-    protected function getRecommendations($app, $thread, $request) {
+    protected function getRecommendations($app, $thread, Request $request) {
         /** @var Recommendator $recommendator */
         $recommendator = $app['recommendator.service'];
         try {
             $result = $recommendator->getRecommendationFromThreadAndRequest($thread, $request);
 
-            $app['users.threads.manager']->cacheResults($thread,
-                array_slice($result['items'], 0, 5),
-                $result['pagination']['total']);
+            if (!$request->get('offset')){
+                $app['users.threads.manager']->cacheResults($thread,
+                    array_slice($result['items'], 0, 20),
+                    $result['pagination']['total']);
+            }
 
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {

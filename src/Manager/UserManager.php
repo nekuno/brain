@@ -161,6 +161,38 @@ class UserManager implements PaginatedInterface
         return $this->build($row);
     }
 
+	/**
+	 * @param string $resourceOwner
+	 * @param string $resourceId
+	 * @return User
+	 * @throws Neo4jException
+	 * @throws NotFoundHttpException
+	 */
+        public function findUserByResourceOwner($resourceOwner, $resourceId)
+	{
+
+		$qb = $this->gm->createQueryBuilder();
+		$qb->match('(u:User)<-[:TOKEN_OF]-(t:Token)')
+			->where('t.resourceOwner = { resourceOwner }', 't.resourceId = { resourceId }')
+			->setParameters(array(
+				'resourceOwner' => $resourceOwner,
+				'resourceId' => $resourceId,
+			))
+			->returns('u');
+
+		$query = $qb->getQuery();
+		$result = $query->getResultSet();
+
+		if ($result->count() < 1) {
+			throw new NotFoundHttpException('User not found');
+		}
+
+		/* @var $row Row */
+		$row = $result->current();
+
+		return $this->build($row);
+	}
+
     /**
      * Finds a user by email
      *

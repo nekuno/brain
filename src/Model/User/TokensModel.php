@@ -6,6 +6,7 @@ use Doctrine\ORM\EntityManager;
 use Event\AccountConnectEvent;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
+use HWI\Bundle\OAuthBundle\DependencyInjection\Configuration;
 use Model\Entity\DataStatus;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
@@ -117,7 +118,6 @@ class TokensModel
      */
     public function create($id, $resourceOwner, array $data)
     {
-
         list($userNode, $tokenNode) = $this->getUserAndTokenNodesById($id, $resourceOwner);
 
         if (!($userNode instanceof Node)) {
@@ -500,6 +500,15 @@ class TokensModel
             $userNode->setProperty($resourceOwner . 'ID', $data['resourceId']);
             $userNode->save();
         }
+
+	    $type = Configuration::getResourceOwnerType($resourceOwner);
+	    if ($type == 'oauth1' && $data['oauthToken']) {
+		    $oauthToken = substr($data['oauthToken'], 0, strpos($data['oauthToken'], ':'));
+		    $oauthTokenSecret = substr($data['oauthToken'], strpos($data['oauthToken'], ':') + 1, strpos($data['oauthToken'], '@') - strpos($data['oauthToken'], ':') - 1);
+
+		    $data['oauthToken'] = $oauthToken;
+		    $data['oauthTokenSecret'] = $oauthTokenSecret;
+	    }
 
         $tokenNode->setProperty('resourceOwner', $resourceOwner);
         $tokenNode->setProperty('updatedTime', time());

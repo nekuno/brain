@@ -41,7 +41,7 @@ class Query extends \Everyman\Neo4j\Cypher\Query implements LoggerAwareInterface
 
             $data = $e->getData();
 
-            if (isset($data['cause']['exception']) && $data['cause']['exception'] === 'UniqueConstraintViolationKernelException') {
+            if (isset($data['cause']['exception']) && $data['cause']['exception'] === 'UniquePropertyConstraintViolationKernelException') {
 
                 $errors = $data;
                 if (isset($data['message']) && preg_match('/^.* property "(.*)".*/', $data['message'], $matches)) {

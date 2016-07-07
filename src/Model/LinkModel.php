@@ -5,6 +5,7 @@ namespace Model;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Neo4j\GraphManager;
+use Model\User\Recommendation\ContentRecommendation;
 use Symfony\Component\Translation\Translator;
 
 /**
@@ -594,7 +595,7 @@ class LinkModel
      * @param int $limitContent
      * @param int $maxUsers
      * @param array $filters
-     * @return array
+     * @return ContentRecommendation[]
      */
     public function getLivePredictedContent($userId, $limitContent = 20, $maxUsers = 10, array $filters = array())
     {
@@ -604,7 +605,9 @@ class LinkModel
             $content = array();
             $predictedContents = $this->getPredictedContentForAUser($userId, $limitContent, $users, $filters);
             foreach ($predictedContents as $predictedContent) {
-                $content[] = array('content' => $predictedContent);
+                $eachContent = new ContentRecommendation();
+                $eachContent->setContent($predictedContent);
+                $content[] = $eachContent;
             }
             $users++;
         }
