@@ -3,7 +3,7 @@
 namespace Http\OAuth\Factory;
 
 use GuzzleHttp\Client;
-use Http\OAuth\ResourceOwner\ResourceOwnerInterface;
+use HWI\Bundle\OAuthBundle\OAuth\ResourceOwnerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
 /**
