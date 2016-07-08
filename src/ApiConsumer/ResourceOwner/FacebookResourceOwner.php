@@ -18,7 +18,9 @@ use HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\FacebookResourceOwner as Facebook
  */
 class FacebookResourceOwner extends FacebookResourceOwnerBase
 {
-	use AbstractResourceOwnerTrait;
+	use AbstractResourceOwnerTrait {
+		configureOptions as traitConfigureOptions;
+	};
 
 	protected $name = TokensModel::FACEBOOK;
 
@@ -111,7 +113,7 @@ class FacebookResourceOwner extends FacebookResourceOwnerBase
 	 */
 	protected function configureOptions(OptionsResolver $resolver)
 	{
-		parent::configureOptions($resolver);
+		$this->traitConfigureOptions($resolver);
 
 		$resolver->setDefaults(
 			array(

@@ -21,7 +21,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  */
 trait AbstractResourceOwnerTrait
 {
-	protected $name = 'generic';
+	protected $name;
 
 	/**
 	 * @var Client
@@ -35,13 +35,13 @@ trait AbstractResourceOwnerTrait
 	/**
 	 * @var array Configuration
 	 */
-	protected $options = array();
+	protected $options;
 	/**
 	 * @var \Http\OAuth\ResourceOwner\ClientCredential\ClientCredentialInterface
 	 */
 	protected $clientCredential;
 
-	protected $expire_time_margin = 0;
+	protected $expire_time_margin;
 
 	/**
 	 * @var UrlParser
