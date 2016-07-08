@@ -5,7 +5,7 @@ api_consumer.config:
             client_credential_class: Http\OAuth\ResourceOwner\ClientCredential\TwitterClientCredential
             parser_class: ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser
         facebook:
-            class: Http\OAuth\ResourceOwner\FacebookResourceOwner
+            class: ApiConsumer\ResourceOwner\FacebookResourceOwner
             parser_class: ApiConsumer\LinkProcessor\UrlParser\FacebookUrlParser
         google:
             class: Http\OAuth\ResourceOwner\GoogleResourceOwner
