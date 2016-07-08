@@ -19,10 +19,10 @@ use ApiConsumer\ResourceOwner\Oauth2GenericResourceOwner;
  */
 class FacebookResourceOwner extends FacebookResourceOwnerBase
 {
-	use AbstractResourceOwnerTrait {
-		configureOptions as traitConfigureOptions;
+	use AbstractResourceOwnerTrait, Oauth2GenericResourceOwner {
+		AbstractResourceOwnerTrait::configureOptions as traitConfigureOptions;
+		Oauth2GenericResourceOwner::getAuthorizedRequest insteadof AbstractResourceOwnerTrait;
 	}
-	use Oauth2GenericResourceOwner;
 
 	protected $name = TokensModel::FACEBOOK;
 
