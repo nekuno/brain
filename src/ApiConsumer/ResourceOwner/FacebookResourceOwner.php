@@ -20,7 +20,7 @@ class FacebookResourceOwner extends FacebookResourceOwnerBase
 {
 	use AbstractResourceOwnerTrait {
 		configureOptions as traitConfigureOptions;
-	};
+	}
 
 	protected $name = TokensModel::FACEBOOK;
 
