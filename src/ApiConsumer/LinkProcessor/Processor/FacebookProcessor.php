@@ -4,7 +4,7 @@ namespace ApiConsumer\LinkProcessor\Processor;
 
 use ApiConsumer\LinkProcessor\PreprocessedLink;
 use ApiConsumer\LinkProcessor\UrlParser\FacebookUrlParser;
-use Http\OAuth\ResourceOwner\FacebookResourceOwner;
+use ApiConsumer\ResourceOwner\FacebookResourceOwner;
 use Model\User\TokensModel;
 use Service\UserAggregator;
 
