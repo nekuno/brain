@@ -9,6 +9,7 @@ use GuzzleHttp\Exception\RequestException;
 use Model\User\TokensModel;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\FacebookResourceOwner as FacebookResourceOwnerBase;
+use ApiConsumer\ResourceOwner\Oauth2GenericResourceOwner;
 
 /**
  * Class FacebookResourceOwner
@@ -21,6 +22,7 @@ class FacebookResourceOwner extends FacebookResourceOwnerBase
 	use AbstractResourceOwnerTrait {
 		configureOptions as traitConfigureOptions;
 	}
+	use Oauth2GenericResourceOwner;
 
 	protected $name = TokensModel::FACEBOOK;
 
