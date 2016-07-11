@@ -141,11 +141,7 @@ class PhotoController
             throw new AccessDeniedHttpException('Photo not allowed');
         }
 
-        $success = $manager->remove($id);
-
-        if ($success && is_writable($photo->getFullPath())) {
-            unlink($photo->getFullPath());
-        }
+        $manager->remove($id);
 
         return $app->json($photo);
     }

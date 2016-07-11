@@ -125,6 +125,9 @@ class PhotoManager
 
     public function remove($id)
     {
+
+        $photo = $this->getById($id);
+
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(u:User)<-[r:PHOTO_OF]-(i:Photo)')
             ->where('id(i)= { id }')
@@ -140,7 +143,7 @@ class PhotoManager
             throw new NotFoundHttpException('Photo not found');
         }
 
-        return true;
+        $photo->delete();
 
     }
 
