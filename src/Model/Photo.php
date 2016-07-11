@@ -140,6 +140,11 @@ class Photo implements \JsonSerializable
             'id' => $this->getId(),
             'createdAt' => $this->getCreatedAt(),
             'url' => $this->getUrl(),
+            'thumbnail' => array(
+                'small' => $this->host . 'media/cache/resolve/gallery_small/' . $this->getPath(),
+                'medium' => $this->host . 'media/cache/resolve/gallery_medium/' . $this->getPath(),
+                'big' => $this->host . 'media/cache/resolve/gallery_big/' . $this->getPath(),
+            )
         );
     }
 
