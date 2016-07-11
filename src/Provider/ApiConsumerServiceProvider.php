@@ -29,7 +29,7 @@ class ApiConsumerServiceProvider implements ServiceProviderInterface
         $app['api_consumer.resource_owner_factory'] = $app->share(
             function ($app) {
 
-                $resourceOwnerFactory = new ResourceOwnerFactory($app['api_consumer.config']['resource_owner'], $app['guzzle.client'], $app['dispatcher']);
+                $resourceOwnerFactory = new ResourceOwnerFactory($app['api_consumer.config']['resource_owner'], $app['hwi_oauth.http_client'], $app['security.http_utils'], $app['hwi_oauth.storage.session'], $app['dispatcher']);
 
                 return $resourceOwnerFactory;
             }

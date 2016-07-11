@@ -9,7 +9,6 @@ use GuzzleHttp\Exception\RequestException;
 use Model\User\TokensModel;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\FacebookResourceOwner as FacebookResourceOwnerBase;
-use ApiConsumer\ResourceOwner\Oauth2GenericResourceOwner;
 
 /**
  * Class FacebookResourceOwner
@@ -19,14 +18,30 @@ use ApiConsumer\ResourceOwner\Oauth2GenericResourceOwner;
  */
 class FacebookResourceOwner extends FacebookResourceOwnerBase
 {
-	use AbstractResourceOwnerTrait, Oauth2GenericResourceOwner {
+	use AbstractResourceOwnerTrait {
 		AbstractResourceOwnerTrait::configureOptions as traitConfigureOptions;
-		Oauth2GenericResourceOwner::getAuthorizedRequest insteadof AbstractResourceOwnerTrait;
 	}
 
 	protected $name = TokensModel::FACEBOOK;
 
-	protected $expire_time_margin = 1728000;// 20 days because expired tokens can´t be refreshed
+	//protected $expire_time_margin = 1728000;// 20 days because expired tokens can´t be refreshed
+	protected $expire_time_margin;
+
+	/**
+	 * {@inheritDoc}
+	 */
+	protected function configureOptions(OptionsResolver $resolver)
+	{
+		$this->traitConfigureOptions($resolver);
+
+		$resolver->setDefaults(
+			array(
+				'base_url' => 'https://graph.facebook.com/v2.4/',
+			)
+		);
+
+		$resolver->setDefined('redirect_uri');
+	}
 
 	/**
 	 * We use Facebook system for getting new long-lived tokens
@@ -34,6 +49,7 @@ class FacebookResourceOwner extends FacebookResourceOwnerBase
 	 * @param array $token
 	 * @param array $extraParameters
 	 * @return array
+	 * @throws RequestException
 	 */
 	public function refreshAccessToken($token, array $extraParameters = array())
 	{
@@ -46,15 +62,14 @@ class FacebookResourceOwner extends FacebookResourceOwnerBase
 			'redirect_uri' => $this->getOption('redirect_uri'),
 		);
 		try {
-			$request = $this->getAPIRequest($getCodeURL, $query);
-			$response = $this->httpClient->send($request);
+			$response = $this->httpRequest($this->normalizeUrl($getCodeURL, $query));
 		} catch (RequestException $e) {
 			throw $e;
 		}
 
 		$getAccessURL = 'https://graph.facebook.com/oauth/access_token';
 		$query = array(
-			'code' => $response->json()['code'],
+			'code' => $this->getResponseContent($response)['code'],
 			'client_id' => $this->getOption('consumer_key'),
 			'redirect_uri' => $this->getOption('redirect_uri'),
 		);
@@ -63,9 +78,8 @@ class FacebookResourceOwner extends FacebookResourceOwnerBase
 			$query['machine_id'] = $token['refreshToken'];
 		}
 
-		$request = $this->getAPIRequest($getAccessURL, $query);
-		$response = $this->httpClient->send($request);
-		$data = $response->json();
+		$response = $this->httpRequest($this->normalizeUrl($getAccessURL, $query));
+		$data = $this->getResponseContent($response);
 
 		return array_merge($data, array('refreshToken' => $data['machine_id']));
 
@@ -92,9 +106,8 @@ class FacebookResourceOwner extends FacebookResourceOwnerBase
 		);
 
 		try {
-			$request = $this->getAPIRequest($getCodeURL, $query);
-			$response = $this->httpClient->send($request);
-			parse_str($response->getBody(), $data);
+			$response = $this->httpRequest($this->normalizeUrl($getCodeURL, $query));
+			parse_str($this->getResponseContent($response), $data);
 			if (isset($data['expires'])) {
 				$data['expires_in'] = $data['expires'];
 				unset($data['expires']);
@@ -110,22 +123,6 @@ class FacebookResourceOwner extends FacebookResourceOwnerBase
 		return $token;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
-	protected function configureOptions(OptionsResolver $resolver)
-	{
-		$this->traitConfigureOptions($resolver);
-
-		$resolver->setDefaults(
-			array(
-				'base_url' => 'https://graph.facebook.com/v2.4/',
-			)
-		);
-
-		$resolver->setDefined('redirect_uri');
-	}
-
 	public function getPicture($id, $token, $size = 'large')
 	{
 		if ($this->getParser()->isStatusId($id)){
@@ -137,18 +134,16 @@ class FacebookResourceOwner extends FacebookResourceOwnerBase
 			'type' => $size,
 		);
 
-		$request = $this->getAuthorizedRequest($this->options['base_url'] . $url, $query, $token);
-
 		try {
-			$response = $this->httpClient->send($request);
+			$response = $this->sendAuthorizedRequest($this->options['base_url'] . $url, $query, $token);
 		} catch (RequestException $e) {
 			var_dump($e->getMessage());
 			$this->dispatcher->dispatch(\AppEvents::EXCEPTION_ERROR, new ExceptionEvent($e, 'Error getting facebook image by API'));
 			throw $e;
 		}
 
-		$imageUrl = $response->getEffectiveUrl();
+		$imageUrl = $this->getResponseContent($response);
 
-		return $imageUrl==$url? null : $imageUrl;
+		return $imageUrl == $url ? null : $imageUrl;
 	}
 }

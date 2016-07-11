@@ -4,15 +4,15 @@ namespace ApiConsumer\ResourceOwner;
 
 use ApiConsumer\Event\OAuthTokenEvent;
 use ApiConsumer\LinkProcessor\UrlParser\UrlParser;
-use GuzzleHttp\Client;
-use GuzzleHttp\ClientInterface;
-use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Message\Request;
-use GuzzleHttp\Message\ResponseInterface;
+use Buzz\Client\ClientInterface as HttpClientInterface;
+use GuzzleHttp\Subscriber\Oauth\Oauth1;
 use Http\Exception\TokenException;
 use Http\OAuth\ResourceOwner\ClientCredential\ClientCredentialInterface;
+use HWI\Bundle\OAuthBundle\DependencyInjection\Configuration;
+use HWI\Bundle\OAuthBundle\OAuth\RequestDataStorageInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Security\Http\HttpUtils;
 
 /**
  * Trait AbstractResourceOwnerTrait
@@ -24,7 +24,7 @@ trait AbstractResourceOwnerTrait
 	protected $name;
 
 	/**
-	 * @var Client
+	 * @var HttpClientInterface
 	 */
 	protected $httpClient;
 
@@ -36,6 +36,12 @@ trait AbstractResourceOwnerTrait
 	 * @var array Configuration
 	 */
 	protected $options;
+
+	/**
+	 * @var array
+	 */
+	protected $paths;
+
 	/**
 	 * @var \Http\OAuth\ResourceOwner\ClientCredential\ClientCredentialInterface
 	 */
@@ -49,14 +55,31 @@ trait AbstractResourceOwnerTrait
 	protected $urlParser;
 
 	/**
-	 * @param ClientInterface $httpClient
-	 * @param \Symfony\Component\EventDispatcher\EventDispatcher $dispatcher
-	 * @param array $options
+	 * @param HttpClientInterface         $httpClient Buzz http client
+	 * @param HttpUtils                   $httpUtils  Http utils
+	 * @param array                       $options    Options for the resource owner
+	 * @param string                      $name       Name for the resource owner
+	 * @param RequestDataStorageInterface $storage    Request token storage
+	 * @param EventDispatcher             $dispatcher
 	 */
-	public function __construct(ClientInterface $httpClient, EventDispatcher $dispatcher, array $options = array())
+	public function __construct(HttpClientInterface $httpClient, HttpUtils $httpUtils, array $options, $name, RequestDataStorageInterface $storage, EventDispatcher $dispatcher)
 	{
 		$this->httpClient = $httpClient;
+		$this->name = $name;
+		$this->httpUtils = $httpUtils;
+		$this->storage = $storage;
 		$this->dispatcher = $dispatcher;
+
+		if (!empty($options['paths'])) {
+			$this->addPaths($options['paths']);
+		}
+		unset($options['paths']);
+
+		if (!empty($options['options'])) {
+			$options += $options['options'];
+			unset($options['options']);
+		}
+		unset($options['options']);
 
 		// Resolve merged options
 		$resolver = new OptionsResolver();
@@ -120,6 +143,38 @@ trait AbstractResourceOwnerTrait
 	{
 		return $this->httpClient;
 	}
+
+	public function sendAuthorizedRequest($url, array $query = array(), array $token = array())
+	{
+		if (Configuration::getResourceOwnerType($this->name) == 'oauth2') {
+			$query = array_merge($query, array('access_token' => $token['oauthToken']));
+
+			$clientConfig = array(
+				'query' => $query,
+			);
+
+			return $this->httpRequest($this->normalizeUrl($url, $clientConfig));
+		} else {
+			// TODO: Any special logic here?
+			/*$oauth = new Oauth1(
+				[
+					'consumer_key'    => $this->options['consumer_key'],
+					'consumer_secret' => $this->options['consumer_secret'],
+					'token'           => $token['oauthToken'],
+					'token_secret'    => $token['oauthTokenSecret']
+				]
+			);
+			$this->httpClient->getEmitter()->attach($oauth);*/
+
+			$clientConfig = array(
+				'query' => $query,
+				'auth' => 'oauth',
+			);
+
+			return $this->httpRequest($this->normalizeUrl($url, $clientConfig));
+		}
+	}
+
 	/**
 	 * Performs an authorized HTTP request
 	 *
@@ -157,13 +212,7 @@ trait AbstractResourceOwnerTrait
 			$this->dispatcher->dispatch(\AppEvents::TOKEN_REFRESHED, $event);
 		}
 
-		$request = $this->getAuthorizedRequest($this->options['base_url'] . $url, $query, $token);
-
-		try {
-			$response = $this->httpClient->send($request);
-		} catch (RequestException $e) {
-			throw $e;
-		}
+		$response = $this->sendAuthorizedRequest($this->options['base_url'] . $url, $query, $token);
 
 		return $this->getResponseContent($response);
 	}
@@ -179,10 +228,6 @@ trait AbstractResourceOwnerTrait
 
 	protected function addOauthData($data, $token)
 	{
-		if (!$data['access_token']) {
-			$this->notifyUserByEmail($token);
-		}
-
 		$token['oauthToken'] = $data['access_token'];
 		$token['expireTime'] = (int)$token['createdTime'] + (int)$data['expires_in'] - $this->expire_time_margin;
 		$token['refreshToken'] = isset($data['refreshToken']) ? $data['refreshToken'] : null;
@@ -190,60 +235,11 @@ trait AbstractResourceOwnerTrait
 		return $token;
 	}
 
-	/**
-	 * @param $url
-	 * @param array $query
-	 * @param array $token
-	 * @return Request
-	 */
-	public function getAPIRequest($url, array $query = array(), array $token = array())
-	{
-		$clientConfig = array(
-			'query' => $query,
-		);
-
-		return $this->httpClient->createRequest('GET', $url, $clientConfig);
-	}
-
 	public function authorizedAPIRequest($url, array $query = array(), array $token = array())
 	{
-
-		$request = $this->getAPIRequest($this->options['base_url'] . $url, $query, $token);
-
-		try {
-			$response = $this->httpClient->send($request);
-		} catch (RequestException $e) {
-			throw $e;
-		}
+		$response = $this->httpRequest($this->normalizeUrl($this->options['base_url'] . $url, $query));
 
 		return $this->getResponseContent($response);
-	}
-
-	/**
-	 * Refresh an access token using a refresh token.
-	 *
-	 * @param array $token Array of user data
-	 * @param array $extraParameters An array of parameters to add to the url
-	 *
-	 * @throws \Exception
-	 * @return array Array containing the access token and it's 'expires_in' value,
-	 *               along with any other parameters returned from the authentication
-	 *               provider.
-	 *
-	 */
-	public function refreshAccessToken($token, array $extraParameters = array())
-	{
-		throw new \Exception('OAuth error: "Method unsupported."');
-	}
-
-	public function forceRefreshAccessToken($token)
-	{
-		throw new \Exception('OAuth error: "Method unsupported."');
-	}
-
-	public function getProfileUrl(array $token)
-	{
-		throw new \Exception('Method unsupported for this resource');
 	}
 
 	protected function getClientToken()
@@ -262,30 +258,6 @@ trait AbstractResourceOwnerTrait
 		}
 
 		return '';
-	}
-
-	/**
-	 * Get the 'parsed' content based on the response headers.
-	 *
-	 * @param ResponseInterface $response
-	 *
-	 * @return array
-	 */
-	protected function getResponseContent(ResponseInterface $response)
-	{
-		return $response->json();
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	protected function getAuthorizedRequest($url, array $query = array(), array $token = array())
-	{
-		$clientConfig = array(
-			'query' => $query,
-		);
-
-		return $this->httpClient->createRequest('GET', $url, $clientConfig);
 	}
 
 	/**
@@ -322,6 +294,4 @@ trait AbstractResourceOwnerTrait
 		$parts = explode('/', $url);
 		return end($parts);
 	}
-
-
 }

@@ -1,20 +1,20 @@
 api_consumer.config:
     resource_owner:
         twitter:
-            class: Http\OAuth\ResourceOwner\TwitterResourceOwner
+            class: ApiConsumer\ResourceOwner\TwitterResourceOwner
             client_credential_class: Http\OAuth\ResourceOwner\ClientCredential\TwitterClientCredential
             parser_class: ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser
         facebook:
             class: ApiConsumer\ResourceOwner\FacebookResourceOwner
             parser_class: ApiConsumer\LinkProcessor\UrlParser\FacebookUrlParser
         google:
-            class: Http\OAuth\ResourceOwner\GoogleResourceOwner
+            class: ApiConsumer\ResourceOwner\GoogleResourceOwner
             client_credential_class: Http\OAuth\ResourceOwner\ClientCredential\GoogleClientCredentialFromLibrary
         google_profile:
-            class: Http\OAuth\ResourceOwner\GoogleResourceOwner
+            class: ApiConsumer\ResourceOwner\GoogleResourceOwner
             client_credential_class: Http\OAuth\ResourceOwner\ClientCredential\GoogleClientCredentialFromLibrary
         spotify:
-            class: Http\OAuth\ResourceOwner\SpotifyResourceOwner
+            class: ApiConsumer\ResourceOwner\SpotifyResourceOwner
             parser_class: ApiConsumer\LinkProcessor\UrlParser\SpotifyUrlParser
     fetcher:
         twitter_links:

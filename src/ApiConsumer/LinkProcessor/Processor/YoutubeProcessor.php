@@ -5,7 +5,7 @@ namespace ApiConsumer\LinkProcessor\Processor;
 use ApiConsumer\LinkProcessor\LinkAnalyzer;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
 use GuzzleHttp\Exception\RequestException;
-use Http\OAuth\ResourceOwner\GoogleResourceOwner;
+use ApiConsumer\ResourceOwner\GoogleResourceOwner;
 use ApiConsumer\LinkProcessor\UrlParser\YoutubeUrlParser;
 use Service\UserAggregator;
 

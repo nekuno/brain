@@ -55,9 +55,9 @@ class OAuthServiceProvider implements ServiceProviderInterface
                 function ($app) use ($name, $options) {
                     $type = $options['type'];
                     unset($options['type']);
-                    $class = 'HWI\\Bundle\\OAuthBundle\\OAuth\\ResourceOwner\\' . ucfirst($type) . 'ResourceOwner';
+                    $class = 'ApiConsumer\\ResourceOwner\\' . ucfirst($type) . 'ResourceOwner';
 
-                    return new $class($app['hwi_oauth.http_client'], $app['security.http_utils'], $options, $name, $app['hwi_oauth.storage.session']);
+                    return new $class($app['hwi_oauth.http_client'], $app['security.http_utils'], $options, $name, $app['hwi_oauth.storage.session'], $app['dispatcher']);
                 }
             );
         }
