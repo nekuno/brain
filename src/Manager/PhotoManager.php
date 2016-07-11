@@ -147,7 +147,7 @@ class PhotoManager
     public function validate($file)
     {
 
-        $max = 1900000;
+        $max = 5000000;
         if (strlen($file) > $max) {
             throw new ValidationException(array('photo' => array(sprintf('Max "%s" bytes file size exceed', $max))));
         }
