@@ -136,15 +136,18 @@ class Photo implements \JsonSerializable
 
     public function jsonSerialize()
     {
+        $thumbnail = array();
+        foreach (array('small', 'medium', 'big') as $size) {
+            $cache = "media/cache/gallery_$size/";
+            $resolve = "media/cache/resolve/gallery_$size/";
+            $thumbnail[$size] = file_exists($this->base . $cache . $this->getPath()) ? $this->host . $cache . $this->getPath() : $this->host . $resolve . $this->getPath();
+        }
+
         return array(
             'id' => $this->getId(),
             'createdAt' => $this->getCreatedAt(),
             'url' => $this->getUrl(),
-            'thumbnail' => array(
-                'small' => $this->host . 'media/cache/resolve/gallery_small/' . $this->getPath(),
-                'medium' => $this->host . 'media/cache/resolve/gallery_medium/' . $this->getPath(),
-                'big' => $this->host . 'media/cache/resolve/gallery_big/' . $this->getPath(),
-            )
+            'thumbnail' => $thumbnail,
         );
     }
 
