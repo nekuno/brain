@@ -24,7 +24,7 @@ class TwitterResourceOwner extends TwitterResourceOwnerBase
 
 	public function sendAuthorizedRequest($url, array $parameters = array(), array $token = array())
 	{
-		$clientToken = $this->getClientToken();
+		$clientToken = $this->getOption('client_credential')['application_token'];
 		$headers = array();
 
 		if (!empty($clientToken)) {
