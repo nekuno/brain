@@ -122,29 +122,19 @@ trait AbstractResourceOwnerTrait
 	public function sendAuthorizedRequest($url, array $query = array(), array $token = array())
 	{
 		if (Configuration::getResourceOwnerType($this->name) == 'oauth2') {
+			// oauth2
 			$query = array_merge($query, array('access_token' => $token['oauthToken']));
 
 			return $this->httpRequest($this->normalizeUrl($url, $query));
 		} else {
-			// TODO: Any special logic here?
-			/*$oauth = new Oauth1(
-				[
-					'consumer_key'    => $this->options['consumer_key'],
-					'consumer_secret' => $this->options['consumer_secret'],
-					'token'           => $token['oauthToken'],
-					'token_secret'    => $token['oauthTokenSecret']
-				]
-			);
-			$this->httpClient->getEmitter()->attach($oauth);*/
-
-
+			// oauth1
 			$parameters = array_merge(array(
 				'oauth_consumer_key'     => $this->options['consumer_key'],
 				'oauth_timestamp'        => time(),
 				'oauth_nonce'            => $this->generateNonce(),
 				'oauth_version'          => '1.0',
 				'oauth_signature_method' => $this->options['signature_method'],
-				'oauth_token'            => $token['oauthToken'],
+				'oauth_token'            => isset($token['oauthToken']) ? $token['oauthToken'] : null,
 			), $query);
 
 			$parameters['oauth_signature'] = OAuthUtils::signRequest(
@@ -152,7 +142,7 @@ trait AbstractResourceOwnerTrait
 				$url,
 				$parameters,
 				$this->options['consumer_secret'],
-				$token['oauthTokenSecret'],
+				isset($token['oauthTokenSecret']) ? $token['oauthTokenSecret'] : null,
 				$this->options['signature_method']
 			);
 
