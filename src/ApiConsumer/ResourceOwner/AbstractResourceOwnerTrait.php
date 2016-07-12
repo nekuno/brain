@@ -5,7 +5,6 @@ namespace ApiConsumer\ResourceOwner;
 use ApiConsumer\Event\OAuthTokenEvent;
 use ApiConsumer\LinkProcessor\UrlParser\UrlParser;
 use Buzz\Client\ClientInterface as HttpClientInterface;
-use GuzzleHttp\Subscriber\Oauth\Oauth1;
 use Http\Exception\TokenException;
 use Http\OAuth\ResourceOwner\ClientCredential\ClientCredentialInterface;
 use HWI\Bundle\OAuthBundle\DependencyInjection\Configuration;
@@ -132,11 +131,7 @@ trait AbstractResourceOwnerTrait
 		if (Configuration::getResourceOwnerType($this->name) == 'oauth2') {
 			$query = array_merge($query, array('access_token' => $token['oauthToken']));
 
-			$clientConfig = array(
-				'query' => $query,
-			);
-
-			return $this->httpRequest($this->normalizeUrl($url, $clientConfig));
+			return $this->httpRequest($this->normalizeUrl($url, $query));
 		} else {
 			// TODO: Any special logic here?
 			/*$oauth = new Oauth1(
