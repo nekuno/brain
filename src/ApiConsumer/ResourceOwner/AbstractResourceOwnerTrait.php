@@ -12,6 +12,7 @@ use HWI\Bundle\OAuthBundle\DependencyInjection\Configuration;
 use HWI\Bundle\OAuthBundle\OAuth\RequestDataStorageInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\OptionsResolver\OptionsResolverInterface;
 use Symfony\Component\Security\Http\HttpUtils;
 
 /**
@@ -21,33 +22,15 @@ use Symfony\Component\Security\Http\HttpUtils;
  */
 trait AbstractResourceOwnerTrait
 {
-	protected $name;
-
-	/**
-	 * @var HttpClientInterface
-	 */
-	protected $httpClient;
-
 	/**
 	 * @var EventDispatcher
 	 */
 	protected $dispatcher;
-	/**
-	 * @var array Configuration
-	 */
-	protected $options;
-
-	/**
-	 * @var array
-	 */
-	protected $paths;
 
 	/**
 	 * @var \Http\OAuth\ResourceOwner\ClientCredential\ClientCredentialInterface
 	 */
 	protected $clientCredential;
-
-	protected $expire_time_margin;
 
 	/**
 	 * @var UrlParser
@@ -263,9 +246,9 @@ trait AbstractResourceOwnerTrait
 	/**
 	 * Configure the option resolver
 	 *
-	 * @param OptionsResolver $resolver
+	 * @param OptionsResolverInterface $resolver
 	 */
-	protected function configureOptions(OptionsResolver $resolver)
+	protected function configureOptions(OptionsResolverInterface $resolver)
 	{
 		$resolver->setRequired(
 			array(

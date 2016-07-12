@@ -4,8 +4,8 @@ namespace ApiConsumer\ResourceOwner;
 
 use ApiConsumer\LinkProcessor\UrlParser\SpotifyUrlParser;
 use Model\User\TokensModel;
-use Symfony\Component\OptionsResolver\OptionsResolver;
 use HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\SpotifyResourceOwner as SpotifyResourceOwnerBase;
+use Symfony\Component\OptionsResolver\OptionsResolverInterface;
 
 /**
  * Class FacebookResourceOwner
@@ -25,7 +25,7 @@ class SpotifyResourceOwner extends SpotifyResourceOwnerBase
 	/**
 	 * {@inheritDoc}
 	 */
-	protected function configureOptions(OptionsResolver $resolver)
+	protected function configureOptions(OptionsResolverInterface $resolver)
 	{
 		$this->traitConfigureOptions($resolver);
 

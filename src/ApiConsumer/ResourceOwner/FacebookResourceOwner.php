@@ -7,8 +7,8 @@ use ApiConsumer\LinkProcessor\UrlParser\FacebookUrlParser;
 use Event\ExceptionEvent;
 use GuzzleHttp\Exception\RequestException;
 use Model\User\TokensModel;
-use Symfony\Component\OptionsResolver\OptionsResolver;
 use HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\FacebookResourceOwner as FacebookResourceOwnerBase;
+use Symfony\Component\OptionsResolver\OptionsResolverInterface;
 
 /**
  * Class FacebookResourceOwner
@@ -24,13 +24,12 @@ class FacebookResourceOwner extends FacebookResourceOwnerBase
 
 	protected $name = TokensModel::FACEBOOK;
 
-	//protected $expire_time_margin = 1728000;// 20 days because expired tokens can´t be refreshed
-	protected $expire_time_margin;
+	protected $expire_time_margin = 1728000;// 20 days because expired tokens can´t be refreshed
 
 	/**
 	 * {@inheritDoc}
 	 */
-	protected function configureOptions(OptionsResolver $resolver)
+	protected function configureOptions(OptionsResolverInterface $resolver)
 	{
 		$this->traitConfigureOptions($resolver);
 
@@ -107,7 +106,7 @@ class FacebookResourceOwner extends FacebookResourceOwnerBase
 
 		try {
 			$response = $this->httpRequest($this->normalizeUrl($getCodeURL, $query));
-			parse_str($this->getResponseContent($response), $data);
+			$data = $this->getResponseContent($response);
 			if (isset($data['expires'])) {
 				$data['expires_in'] = $data['expires'];
 				unset($data['expires']);

@@ -4,7 +4,7 @@ namespace ApiConsumer\ResourceOwner;
 
 use ApiConsumer\LinkProcessor\LinkAnalyzer;
 use Model\User\TokensModel;
-use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\OptionsResolver\OptionsResolverInterface;
 use HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\GoogleResourceOwner as GoogleResourceOwnerBase;
 
 /**
@@ -46,7 +46,7 @@ class GoogleResourceOwner extends GoogleResourceOwnerBase
 	/**
 	 * {@inheritDoc}
 	 */
-	protected function configureOptions(OptionsResolver $resolver)
+	protected function configureOptions(OptionsResolverInterface $resolver)
 	{
 		$this->traitConfigureOptions($resolver);
 

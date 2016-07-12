@@ -6,9 +6,8 @@ use ApiConsumer\Event\ChannelEvent;
 use Buzz\Exception\RequestException;
 use Model\User\TokensModel;
 use Service\LookUp\LookUp;
-use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\OptionsResolver\OptionsResolverInterface;
 use HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\TwitterResourceOwner as TwitterResourceOwnerBase;
-use ApiConsumer\ResourceOwner\Oauth2GenericResourceOwner;
 
 /**
  * Class TwitterResourceOwner
@@ -43,7 +42,7 @@ class TwitterResourceOwner extends TwitterResourceOwnerBase
 	/**
 	 * {@inheritDoc}
 	 */
-	protected function configureOptions(OptionsResolver $resolver)
+	protected function configureOptions(OptionsResolverInterface $resolver)
 	{
 		$this->traitConfigureOptions($resolver);
 
