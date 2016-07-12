@@ -265,6 +265,10 @@ trait AbstractResourceOwnerTrait
 				'parser_class'
 			)
 		);
+		$resolver->setDefaults(array(
+			'realm'            => null,
+			'signature_method' => 'HMAC-SHA1',
+		));
 	}
 
 	/**
