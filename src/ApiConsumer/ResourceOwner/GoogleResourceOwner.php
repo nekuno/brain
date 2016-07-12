@@ -22,25 +22,15 @@ class GoogleResourceOwner extends GoogleResourceOwnerBase
 
 	public function sendAuthorizedRequest($url, array $query = array(), array $token = array())
 	{
+		$headers = array();
 		if (array_key_exists('network', $token) && $token['network'] == LinkAnalyzer::YOUTUBE) {
-
-			$token = $this->getClientToken();
-
-			$clientConfig = array(
-				'query' => $query,
-				'headers' => array(
-					'Authorization' => 'Bearer ' . $token
-				)
-			);
-
+			$token = $this->getOption('client_credential')['application_token'];
+			$headers = array('Authorization: Bearer ' . $token);
 		} else {
-			$query['key'] = $this->clientCredential->getApplicationToken();
-			$clientConfig = array(
-				'query' => $query,
-			);
+			$query['key'] = $this->getOption('client_credential')['application_token'];
 		}
 
-		return $this->httpRequest($this->normalizeUrl($url, $clientConfig));
+		return $this->httpRequest($this->normalizeUrl($url, $query), null, $headers);
 	}
 
 	/**
