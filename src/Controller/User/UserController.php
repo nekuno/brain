@@ -498,6 +498,37 @@ class UserController
     /**
      * @param Request $request
      * @param Application $app
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @throws \Exception
+     */
+    public function getContentAllTagsAction(Request $request, Application $app)
+    {
+        $search = $request->get('search', '');
+        $limit = $request->get('limit', 0);
+
+        if ($search) {
+            $search = urldecode($search);
+        }
+
+        /* @var $model \Model\User\Recommendation\ContentRecommendationTagModel */
+        $model = $app['users.recommendation.content.tag.model'];
+
+        try {
+            $result = $model->getAllTags($search, $limit);
+        } catch (\Exception $e) {
+            if ($app['env'] == 'dev') {
+                throw $e;
+            }
+
+            return $app->json(array(), 500);
+        }
+
+        return $app->json($result, !empty($result) ? 201 : 200);
+    }
+
+    /**
+     * @param Request $request
+     * @param Application $app
      * @param User $user
      * @return JsonResponse
      */
