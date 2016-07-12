@@ -9,10 +9,12 @@ use Http\Exception\TokenException;
 use Http\OAuth\ResourceOwner\ClientCredential\ClientCredentialInterface;
 use HWI\Bundle\OAuthBundle\DependencyInjection\Configuration;
 use HWI\Bundle\OAuthBundle\OAuth\RequestDataStorageInterface;
+use HWI\Bundle\OAuthBundle\Security\OAuthUtils;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
 use Symfony\Component\Security\Http\HttpUtils;
+use Buzz\Message\RequestInterface as HttpRequestInterface;
 
 /**
  * Trait AbstractResourceOwnerTrait
@@ -135,12 +137,26 @@ trait AbstractResourceOwnerTrait
 			);
 			$this->httpClient->getEmitter()->attach($oauth);*/
 
-			$clientConfig = array(
-				'query' => $query,
-				'auth' => 'oauth',
+
+			$parameters = array_merge(array(
+				'oauth_consumer_key'     => $this->options['consumer_key'],
+				'oauth_timestamp'        => time(),
+				'oauth_nonce'            => $this->generateNonce(),
+				'oauth_version'          => '1.0',
+				'oauth_signature_method' => $this->options['signature_method'],
+				'oauth_token'            => $token['oauthToken'],
+			), $query);
+
+			$parameters['oauth_signature'] = OAuthUtils::signRequest(
+				HttpRequestInterface::METHOD_GET,
+				$url,
+				$parameters,
+				$this->options['consumer_secret'],
+				$token['oauthTokenSecret'],
+				$this->options['signature_method']
 			);
 
-			return $this->httpRequest($this->normalizeUrl($url, $query));
+			return $this->httpRequest($this->normalizeUrl($url, $parameters));
 		}
 	}
 
