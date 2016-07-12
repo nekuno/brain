@@ -55,20 +55,6 @@ class SpotifyResourceOwner extends SpotifyResourceOwnerBase
 		return $this->getResponseContent($response);
 	}
 
-	/**
-	 * { @inheritdoc }
-	 */
-	public function sendAuthorizedRequest($url, array $query = array(), array $token = array())
-	{
-		$query = array_merge($query, array('access_token' => $token['oauthToken']));
-
-		$clientConfig = array(
-			'query' => $query,
-		);
-
-		return $this->httpRequest($this->normalizeUrl($url, $clientConfig));
-	}
-
 	protected function addOauthData($data, $token)
 	{
 		$newToken = $this->traitAddOauthData($data, $token);
