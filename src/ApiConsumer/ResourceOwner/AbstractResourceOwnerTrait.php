@@ -149,7 +149,7 @@ trait AbstractResourceOwnerTrait
 				'auth' => 'oauth',
 			);
 
-			return $this->httpRequest($this->normalizeUrl($url, $clientConfig));
+			return $this->httpRequest($this->normalizeUrl($url, $query));
 		}
 	}
 

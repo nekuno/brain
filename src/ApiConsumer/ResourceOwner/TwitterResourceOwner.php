@@ -22,23 +22,6 @@ class TwitterResourceOwner extends TwitterResourceOwnerBase
 
 	protected $name = TokensModel::TWITTER;
 
-	public function sendAuthorizedRequest($url, array $parameters = array(), array $token = array())
-	{
-		$clientToken = $this->getOption('client_credential')['application_token'];
-		$headers = array();
-
-		if (!empty($clientToken)) {
-			$headers = array('Authorization: Bearer ' . $clientToken);
-		}
-
-		$username = $this->getUsername($token);
-		if ($username) {
-			$parameters += array('screen_name' => $username);
-		}
-
-		return $this->httpRequest($this->normalizeUrl($url, $parameters), null, $headers);
-	}
-
 	/**
 	 * {@inheritDoc}
 	 */
@@ -51,6 +34,25 @@ class TwitterResourceOwner extends TwitterResourceOwnerBase
 				'base_url' => 'https://api.twitter.com/1.1/',
 			)
 		);
+	}
+
+	public function authorizedAPIRequest($url, array $query = array(), array $token = array())
+	{
+		$clientToken = $this->getOption('client_credential')['application_token'];
+		$headers = array();
+
+		if (!empty($clientToken)) {
+			$headers = array('Authorization: Bearer ' . $clientToken);
+		}
+
+		$username = $this->getUsername($token);
+		if ($username) {
+			$query += array('screen_name' => $username);
+		}
+
+		$response = $this->httpRequest($this->normalizeUrl($url, $query), null, $headers);
+
+		return $this->getResponseContent($response);
 	}
 
 	public function refreshAccessToken($token, array $extraParameters = array())
