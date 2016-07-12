@@ -69,15 +69,6 @@ trait AbstractResourceOwnerTrait
 		$options = $resolver->resolve($options);
 		$this->options = $options;
 
-		if (isset($this->options['client_credential_class'])) {
-			$clientCredentialClass = $this->options['client_credential_class'];
-			$clientCredentialOptions = array();
-			if (isset($this->options['client_credential'])) {
-				$clientCredentialOptions = $this->options['client_credential'];
-			}
-			$this->clientCredential = new $clientCredentialClass($clientCredentialOptions);
-		}
-
 		if (isset($options['parser_class'])){
 			$this->urlParser = new $options['parser_class']();
 		} else {
@@ -254,7 +245,6 @@ trait AbstractResourceOwnerTrait
 		);
 		$resolver->setDefined(
 			array(
-				'client_credential_class',
 				'client_credential',
 				'parser_class'
 			)
