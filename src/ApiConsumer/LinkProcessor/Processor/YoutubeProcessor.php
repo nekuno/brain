@@ -102,7 +102,7 @@ class YoutubeProcessor extends AbstractProcessor
             //YouTube API returns 200 on non-existent videos, against its documentation
             //$response = $this->resourceOwner->authorizedAPIRequest($this->resourceOwner->getOption('base_url').$url,$query, $token);
             //throw new RequestException('Video does not exist', $request, null, null);
-	        return null;
+            $preprocessedLink->addToLink(array('processed' => 0));
         }
 
         return $link;
