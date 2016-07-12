@@ -32,6 +32,7 @@ class TwitterResourceOwner extends TwitterResourceOwnerBase
 		$resolver->setDefaults(
 			array(
 				'base_url' => 'https://api.twitter.com/1.1/',
+				'realm' => null,
 			)
 		);
 	}
