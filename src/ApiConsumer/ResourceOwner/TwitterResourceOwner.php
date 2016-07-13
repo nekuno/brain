@@ -28,6 +28,7 @@ class TwitterResourceOwner extends TwitterResourceOwnerBase
 	protected function configureOptions(OptionsResolverInterface $resolver)
 	{
 		$this->traitConfigureOptions($resolver);
+		parent::configureOptions($resolver);
 
 		$resolver->setDefaults(
 			array(

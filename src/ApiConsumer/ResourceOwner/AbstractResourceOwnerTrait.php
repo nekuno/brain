@@ -244,20 +244,23 @@ trait AbstractResourceOwnerTrait
 	{
 		$resolver->setRequired(
 			array(
-				'consumer_key',
-				'consumer_secret',
-				'class'
+
 			)
 		);
 		$resolver->setDefined(
 			array(
 				'client_credential',
-				'parser_class'
+				'parser_class',
+				'consumer_key',
+				'consumer_secret',
+				'class',
 			)
 		);
 		$resolver->setDefaults(array(
 			'realm'            => null,
 			'signature_method' => 'HMAC-SHA1',
+			'client_id' => '',
+			'client_secret' => '',
 		));
 	}
 

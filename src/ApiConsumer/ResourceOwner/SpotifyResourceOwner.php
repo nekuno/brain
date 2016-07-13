@@ -28,6 +28,7 @@ class SpotifyResourceOwner extends SpotifyResourceOwnerBase
 	protected function configureOptions(OptionsResolverInterface $resolver)
 	{
 		$this->traitConfigureOptions($resolver);
+		parent::configureOptions($resolver);
 
 		$resolver->setDefaults(array(
 			'base_url' => 'https://api.spotify.com/v1/',

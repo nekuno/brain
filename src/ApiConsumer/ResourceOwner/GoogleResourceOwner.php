@@ -39,6 +39,7 @@ class GoogleResourceOwner extends GoogleResourceOwnerBase
 	protected function configureOptions(OptionsResolverInterface $resolver)
 	{
 		$this->traitConfigureOptions($resolver);
+		parent::configureOptions($resolver);
 
 		$resolver->setDefaults(array(
 			'base_url' => 'https://www.googleapis.com/',

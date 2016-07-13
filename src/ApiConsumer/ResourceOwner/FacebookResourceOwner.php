@@ -32,6 +32,7 @@ class FacebookResourceOwner extends FacebookResourceOwnerBase
 	protected function configureOptions(OptionsResolverInterface $resolver)
 	{
 		$this->traitConfigureOptions($resolver);
+		parent::configureOptions($resolver);
 
 		$resolver->setDefaults(
 			array(
