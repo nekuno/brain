@@ -5,6 +5,8 @@ namespace Model;
 class Photo implements \JsonSerializable
 {
 
+    public static $sizes = array('small', 'medium', 'big');
+
     /**
      * @var int
      */
@@ -134,12 +136,35 @@ class Photo implements \JsonSerializable
         return strrpos($fileName, '.') !== false ? substr($fileName, strrpos($fileName, '.')) : '';
     }
 
+    public function delete()
+    {
+
+        if (is_writable($this->getFullPath())) {
+            unlink($this->getFullPath());
+        }
+
+        foreach (self::$sizes as $size) {
+            $cache = $this->base . "media/cache/gallery_$size/" . $this->getPath();
+            if (is_writable($cache)) {
+                unlink($cache);
+            }
+        }
+    }
+
     public function jsonSerialize()
     {
+        $thumbnail = array();
+        foreach (self::$sizes as $size) {
+            $cache = "media/cache/gallery_$size/";
+            $resolve = "media/cache/resolve/gallery_$size/";
+            $thumbnail[$size] = file_exists($this->base . $cache . $this->getPath()) ? $this->host . $cache . $this->getPath() : $this->host . $resolve . $this->getPath();
+        }
+
         return array(
             'id' => $this->getId(),
             'createdAt' => $this->getCreatedAt(),
             'url' => $this->getUrl(),
+            'thumbnail' => $thumbnail,
         );
     }
 
