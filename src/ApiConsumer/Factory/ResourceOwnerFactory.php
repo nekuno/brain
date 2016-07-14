@@ -1,6 +1,6 @@
 <?php
 
-namespace Http\OAuth\Factory;
+namespace ApiConsumer\Factory;
 
 use Buzz\Client\Curl;
 use HWI\Bundle\OAuthBundle\OAuth\RequestDataStorageInterface;

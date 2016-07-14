@@ -3,7 +3,7 @@
 namespace Service;
 
 
-use Http\OAuth\Factory\ResourceOwnerFactory;
+use ApiConsumer\Factory\ResourceOwnerFactory;
 use Model\User\GhostUser\GhostUserManager;
 use Model\User\LookUpModel;
 use Model\User\SocialNetwork\SocialProfile;

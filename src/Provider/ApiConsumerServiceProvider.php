@@ -7,7 +7,7 @@ use ApiConsumer\Fetcher\FetcherService;
 use ApiConsumer\Fetcher\GetOldTweets\GetOldTweets;
 use ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser;
 use ApiConsumer\Registry\Registry;
-use Http\OAuth\Factory\ResourceOwnerFactory;
+use ApiConsumer\Factory\ResourceOwnerFactory;
 use Igorw\Silex\ConfigServiceProvider;
 use ApiConsumer\Fetcher\GetOldTweets\TweetManager;
 use Psr\Log\LoggerAwareInterface;
@@ -73,7 +73,7 @@ class ApiConsumerServiceProvider implements ServiceProviderInterface
 
                 $resourceOwnerFactory = $app['api_consumer.resource_owner_factory'];
 
-                /* @var $resourceOwnerFactory ResourceOwnerFactory */
+                /* @var $resourceOwnerFactory \ApiConsumer\Factory\ResourceOwnerFactory */
 
                 return $resourceOwnerFactory->build('facebook');
             }
