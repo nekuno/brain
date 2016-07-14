@@ -30,6 +30,10 @@ class FacebookUrlParser extends UrlParser
         $reserved_urls = array('photo.php', 'settings', 'support', '#', 'groups', 'help');
 
         $parts = parse_url($url);
+	    if (!isset($parts['path']) || !isset($parts['host'])) {
+		    return false;
+	    }
+
         $path = explode('/', $parts['path']);
 
         if ($parts['host'] === 'www.facebook.com' && count($path) == 2 && !in_array($path[1], $reserved_urls)){

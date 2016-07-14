@@ -5,7 +5,7 @@ namespace ApiConsumer\LinkProcessor\UrlParser;
 /**
  * @author Juan Luis Martínez <juanlu@comakai.com>
  */
-class UrlParser
+class UrlParser implements UrlParserInterface
 {
     public function isUrlValid($url)
     {
@@ -13,7 +13,8 @@ class UrlParser
         return filter_var($url, FILTER_VALIDATE_URL);
     }
 
-    public function cleanURL($url){
+    public function cleanURL($url)
+    {
         return $this->removeEndingChars($url, array('?','&','/'));
     }
 
@@ -36,7 +37,9 @@ class UrlParser
         return $urls;
 
     }
-    private function removeEndingChars($url, array $rules){
+
+    private function removeEndingChars($url, array $rules)
+    {
         if (!is_array($rules)){
             $rules=array($rules);
         }

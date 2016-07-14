@@ -49,29 +49,26 @@ class LinkProcessorServiceProvider implements ServiceProviderInterface
             }
         );
 
-        $app['api_consumer.link_processor.processor.youtube'] = $app->share(
-            function ($app) {
-                return new YoutubeProcessor($app['userAggregator.service'], $app['api_consumer.link_processor.processor.scrapper'], $app['api_consumer.resource_owner.google'], new YoutubeUrlParser());
-            }
-        );
-
-        $app['api_consumer.link_processor.processor.spotify'] = $app->share(
-            function ($app) {
-                return new SpotifyProcessor($app['userAggregator.service'], $app['api_consumer.link_processor.processor.scrapper'], $app['api_consumer.resource_owner.spotify'], new SpotifyUrlParser(), $app['api_consumer.resource_owner.google'], new YoutubeUrlParser());
-            }
-        );
-
-        $app['api_consumer.link_processor.processor.facebook'] = $app->share(
-            function ($app) {
-                return new FacebookProcessor($app['userAggregator.service'], $app['api_consumer.link_processor.processor.scrapper'], $app['api_consumer.resource_owner.facebook'], new FacebookUrlParser());
-            }
-        );
-
-        $app['api_consumer.link_processor.processor.twitter'] = $app->share(
-            function ($app) {
-                return new TwitterProcessor($app['userAggregator.service'], $app['api_consumer.link_processor.processor.scrapper'], $app['api_consumer.resource_owner.twitter'], new TwitterUrlParser());
-            }
-        );
+	    foreach ($app['hwi_oauth']['resource_owners'] as $name => $options) {
+		    if ($name == 'google') {
+			    $name = 'youtube';
+		    }
+		    $app['api_consumer.link_processor.processor.' . $name] = $app->share(
+			    function ($app) use ($name) {
+				    if ($name == 'youtube') {
+					    return new YoutubeProcessor($app['userAggregator.service'], $app['api_consumer.link_processor.processor.scrapper'], $app['api_consumer.resource_owner.google'], new YoutubeUrlParser(), $app['guzzle.client']);
+				    }
+				    elseif ($name == 'spotify') {
+					    return new SpotifyProcessor($app['userAggregator.service'], $app['api_consumer.link_processor.processor.scrapper'], $app['api_consumer.resource_owner.spotify'], new SpotifyUrlParser(), $app['api_consumer.resource_owner.google'], new YoutubeUrlParser(), $app['guzzle.client']);
+				    }
+				    else {
+					    $processorClass = 'ApiConsumer\\LinkProcessor\\Processor\\' . ucfirst($name) . 'Processor';
+					    $urlParserClass = 'ApiConsumer\\LinkProcessor\\UrlParser\\' . ucfirst($name) . 'UrlParser';
+					    return new $processorClass($app['userAggregator.service'], $app['api_consumer.link_processor.processor.scrapper'], $app['api_consumer.resource_owner.' . $name], new $urlParserClass(), $app['guzzle.client']);
+				    }
+			    }
+		    );
+	    }
 
         $app['api_consumer.link_processor.link_analyzer'] = $app->share(
             function () {

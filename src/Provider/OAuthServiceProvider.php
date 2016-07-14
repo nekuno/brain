@@ -53,9 +53,8 @@ class OAuthServiceProvider implements ServiceProviderInterface
         foreach ($app['hwi_oauth']['resource_owners'] as $name => $options) {
             $app['hwi_oauth.resource_owner.' . $name] = $app->share(
                 function ($app) use ($name, $options) {
-                    $type = $options['type'];
                     unset($options['type']);
-                    $class = 'ApiConsumer\\ResourceOwner\\' . ucfirst($type) . 'ResourceOwner';
+                    $class = 'ApiConsumer\\ResourceOwner\\' . ucfirst($name) . 'ResourceOwner';
 
                     return new $class($app['hwi_oauth.http_client'], $app['security.http_utils'], $options, $name, $app['hwi_oauth.storage.session'], $app['dispatcher']);
                 }

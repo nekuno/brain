@@ -34,9 +34,10 @@ class SpotifyProcessor extends AbstractProcessor
 
     public function __construct(UserAggregator $userAggregator, ScraperProcessor $scraperProcessor, SpotifyResourceOwner $resourceOwner, SpotifyUrlParser $parser, GoogleResourceOwner $googleResourceOwner, YoutubeUrlParser $youtubeUrlParser)
     {
-        parent::__construct($userAggregator, $scraperProcessor);
-        $this->resourceOwner = $resourceOwner;
-        $this->parser = $parser;
+	    $this->userAggregator = $userAggregator;
+	    $this->scraperProcessor = $scraperProcessor;
+	    $this->resourceOwner = $resourceOwner;
+	    $this->parser = $parser;
         $this->googleResourceOwner = $googleResourceOwner;
         $this->youtubeUrlParser = $youtubeUrlParser;
     }
