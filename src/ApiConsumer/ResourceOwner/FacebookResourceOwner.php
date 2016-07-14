@@ -142,8 +142,8 @@ class FacebookResourceOwner extends FacebookResourceOwnerBase
 			throw $e;
 		}
 
-		$imageUrl = $this->getResponseContent($response);
+		$response = $this->getResponseContent($response);
 
-		return $imageUrl == $url ? null : $imageUrl;
+		return isset($response['thumbnail']['data']['url']) ? $response['data']['url'] : null;
 	}
 }
