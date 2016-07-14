@@ -132,6 +132,7 @@ class FacebookResourceOwner extends FacebookResourceOwnerBase
 		$url = $id . '/picture';
 		$query = array(
 			'type' => $size,
+			'redirect' => false,
 		);
 
 		try {
@@ -144,6 +145,6 @@ class FacebookResourceOwner extends FacebookResourceOwnerBase
 
 		$response = $this->getResponseContent($response);
 
-		return isset($response['thumbnail']['data']['url']) ? $response['data']['url'] : null;
+		return isset($response['data']['url']) ? $response['data']['url'] : null;
 	}
 }
