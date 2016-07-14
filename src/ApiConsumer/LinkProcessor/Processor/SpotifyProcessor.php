@@ -8,6 +8,7 @@ use ApiConsumer\ResourceOwner\SpotifyResourceOwner;
 use ApiConsumer\LinkProcessor\UrlParser\SpotifyUrlParser;
 use ApiConsumer\ResourceOwner\GoogleResourceOwner;
 use ApiConsumer\LinkProcessor\UrlParser\YoutubeUrlParser;
+use GuzzleHttp\Client;
 use Service\UserAggregator;
 
 class SpotifyProcessor extends AbstractProcessor
@@ -32,7 +33,7 @@ class SpotifyProcessor extends AbstractProcessor
      */
     protected $youtubeUrlParser;
 
-    public function __construct(UserAggregator $userAggregator, ScraperProcessor $scraperProcessor, SpotifyResourceOwner $resourceOwner, SpotifyUrlParser $parser, GoogleResourceOwner $googleResourceOwner, YoutubeUrlParser $youtubeUrlParser)
+    public function __construct(UserAggregator $userAggregator, ScraperProcessor $scraperProcessor, SpotifyResourceOwner $resourceOwner, SpotifyUrlParser $parser, GoogleResourceOwner $googleResourceOwner, YoutubeUrlParser $youtubeUrlParser, Client $client)
     {
 	    $this->userAggregator = $userAggregator;
 	    $this->scraperProcessor = $scraperProcessor;
@@ -40,6 +41,7 @@ class SpotifyProcessor extends AbstractProcessor
 	    $this->parser = $parser;
         $this->googleResourceOwner = $googleResourceOwner;
         $this->youtubeUrlParser = $youtubeUrlParser;
+	    $this->client = $client;
     }
 
     /**
