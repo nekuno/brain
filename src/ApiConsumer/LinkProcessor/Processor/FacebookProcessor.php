@@ -114,7 +114,7 @@ class FacebookProcessor extends AbstractProcessor
             $link = array(
                 'description' => isset($response['description']) ? $response['description'] : $this->buildDescriptionFromTitle($response),
                 'title' => isset($response['name']) ? $response['name'] : $this->buildTitleFromDescription($response),
-                'thumbnail' => $thumbnail ?: (isset($response['picture']) ? $response['picture'] : null),
+                'thumbnail' => is_string($thumbnail) ? $thumbnail : (isset($response['picture']) ? $response['picture'] : null),
             );
 
         } else {
