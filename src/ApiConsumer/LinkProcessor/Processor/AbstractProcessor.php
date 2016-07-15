@@ -2,9 +2,9 @@
 
 namespace ApiConsumer\LinkProcessor\Processor;
 
-
-use ApiConsumer\LinkProcessor\UrlParser\UrlParser;
-use Http\OAuth\ResourceOwner\ResourceOwnerInterface;
+use ApiConsumer\LinkProcessor\UrlParser\UrlParserInterface;
+use GuzzleHttp\Client;
+use HWI\Bundle\OAuthBundle\OAuth\ResourceOwnerInterface;
 use Service\UserAggregator;
 
 abstract class AbstractProcessor implements ProcessorInterface
@@ -15,15 +15,20 @@ abstract class AbstractProcessor implements ProcessorInterface
     /** @var  ResourceOwnerInterface */
     protected $resourceOwner;
 
-    /** @var  $parser UrlParser */
+    /** @var  $parser UrlParserInterface */
     protected $parser;
 
     protected $scraperProcessor;
 
-    public function __construct(UserAggregator $userAggregator, ScraperProcessor $scraperProcessor)
+	protected $client;
+
+    public function __construct(UserAggregator $userAggregator, ScraperProcessor $scraperProcessor, ResourceOwnerInterface $resourceOwner, UrlParserInterface $urlParser, Client $client)
     {
         $this->userAggregator = $userAggregator;
         $this->scraperProcessor = $scraperProcessor;
+	    $this->resourceOwner = $resourceOwner;
+	    $this->parser = $urlParser;
+	    $this->client = $client;
     }
 
     protected function addCreator($username)
@@ -39,9 +44,13 @@ abstract class AbstractProcessor implements ProcessorInterface
         return $this->parser;
     }
 
+	protected function getClient() {
+		return $this->client;
+	}
+
     public function isCorrectResponse($url)
     {
-        $response = $this->resourceOwner->getClient()->head($url);
+        $response = $this->getClient()->head($url);
         if (200 <= $response->getStatusCode() && $response->getStatusCode() < 300 && strpos($response->getHeader('Content-Type'), 'image') !== false ){
             return true;
         }

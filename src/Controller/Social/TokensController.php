@@ -2,7 +2,7 @@
 
 namespace Controller\Social;
 
-use Http\OAuth\Factory\ResourceOwnerFactory;
+use ApiConsumer\Factory\ResourceOwnerFactory;
 use Http\OAuth\ResourceOwner\FacebookResourceOwner;
 use Model\User\GhostUser\GhostUserManager;
 use Model\User\SocialNetwork\SocialProfile;
@@ -65,7 +65,7 @@ class TokensController
 
         $token = $model->create($id, $resourceOwner, $request->request->all());
 
-        /* @var $resourceOwnerFactory ResourceOwnerFactory */
+        /* @var $resourceOwnerFactory \ApiConsumer\Factory\ResourceOwnerFactory */
         $resourceOwnerFactory = $app['api_consumer.resource_owner_factory'];
 
         if ($resourceOwner === TokensModel::FACEBOOK) {

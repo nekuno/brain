@@ -57,66 +57,70 @@ abstract class AbstractContentPaginatedModel implements PaginatedInterface
         $types = isset($filters['type']) ? $filters['type'] : array();
         $count = 0;
 
-        /// Estimation to avoid calculating in real time ///
-        $baseSize = 1300000;
-        $estimations = array(
-            'type' => array(
-                'Video' => 0.1,
-                'Audio' => 0.02,
-                'Image' => 0.008,
-                'Creator' => 0.01,
-                'Link' => 1,
-            ),
-            'tag' => 0.001,
-        );
+        if (!isset($filters['tag'])) {
 
-        if (empty($types) && !isset($filters['tag'])) {
-            return $baseSize;
+            /// Estimation to avoid calculating in real time ///
+            $baseSize = 1300000;
+            $estimations = array(
+                'type' => array(
+                    'Video' => 0.1,
+                    'Audio' => 0.02,
+                    'Image' => 0.008,
+                    'Creator' => 0.01,
+                    'Link' => 1,
+                ),
+                'tag' => 0.001,
+            );
+
+            if (empty($types)) {
+                return $baseSize;
+            }
+
+            if (empty($types)) {
+                $types = array('Link');
+            }
+
+            foreach ($types as $type) {
+                $count += $baseSize * $estimations['type'][$type];
+            }
+
+            ///End estimation ///
+
+        } else {
+            $params = array(
+                'userId' => (integer)$id,
+                'filterTags' => $filters['tag'],
+            );
+
+            $qb = $this->gm->createQueryBuilder();
+
+            $qb->match('(filterTag:Tag)')
+                ->where('filterTag.name IN { filterTags }')
+                ->with('filterTag');
+
+            $qb->match('(filterTag)<-[:TAGGED]-(content:Link)')
+                ->with('content');
+
+            $qb->filterContentByType($types, 'content');
+
+            $qb->match('(u:User {qnoow_id: {userId }})')
+                ->with('content', 'u');
+            $qb->optionalMatch('(u)-[l:LIKES]->(content)');
+            $qb->with('u', 'count(l) AS likes', 'content');
+            $qb->optionalMatch('(u)-[l:DISLIKES]->(content)');
+            $qb->with('likes', 'count(l) AS dislikes', 'count(content) as total');
+            $qb->returns('total-(likes+dislikes) AS total');
+
+            $qb->setParameters($params);
+
+            $query = $qb->getQuery();
+            $result = $query->getResultSet();
+
+            foreach ($result as $row) {
+                $count = $row['total'];
+            }
         }
 
-        if (isset($filters['tag'])) {
-            $baseSize = $baseSize * $estimations['tag'];
-        }
-
-        if (empty($types)) {
-            $types = array('Link');
-        }
-
-        foreach ($types as $type) {
-            $count += $baseSize * $estimations['type'][$type];
-        }
-
-        ///End estimation ///
-
-//        $params = array(
-//            'userId' => (integer)$id,
-//        );
-//
-//        $qb = $this->gm->createQueryBuilder();
-//
-//        $qb->matchContentByType($types, 'content')
-//            ->where('content.processed = 1');
-//
-//        if (isset($filters['tag'])) {
-//            $qb->match('(content)-[:TAGGED]->(filterTag:Tag)')
-//                ->where('filterTag.name IN { filterTags } ');
-//
-//            $params['filterTags'] = $filters['tag'];
-//        }
-//
-//        $qb->with('content');
-//        $qb->optionalMatch('(user:User {qnoow_id: { userId }})-[l:LIKES|:DISLIKES]->(content)');
-//        $qb->returns('count(content)-count(distinct(l)) AS total');
-//
-//        $qb->setParameters($params);
-//
-//        $query = $qb->getQuery();
-//        $result = $query->getResultSet();
-//
-//        foreach ($result as $row) {
-//            $count = $row['total'];
-//        }
-//
         return $count;
     }
 

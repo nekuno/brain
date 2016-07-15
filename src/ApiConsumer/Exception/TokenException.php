@@ -1,6 +1,6 @@
 <?php
 
-namespace Http\Exception;
+namespace ApiConsumer\Exception;
 
 /**
  * @author Juan Luis Martínez <juanlu@comakai.com>

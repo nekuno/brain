@@ -74,8 +74,6 @@ class ThreadController
     {
         $thread = $app['users.threads.manager']->create($user->getId(), $request->request->all());
 
-        $this->getRecommendations($app, $thread, $request);
-
         return $app->json($thread, 201);
     }
 
@@ -110,10 +108,6 @@ class ThreadController
     public function putAction(Application $app, Request $request, User $user, $id)
     {
         $thread = $app['users.threads.manager']->update($id, $user->getId(), $request->request->all());
-
-        $this->getRecommendations($app, $thread, $request);
-
-        $thread = $app['users.threads.manager']->getById($thread->getId());
 
         return $app->json($thread, 201);
     }

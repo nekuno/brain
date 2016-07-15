@@ -69,7 +69,7 @@ $app->get('/threads', 'users.threads.controller:getByUserAction');
 $app->post('/threads', 'users.threads.controller:postAction');
 $app->get('/recommendations/users', 'users.controller:getUserRecommendationAction');
 $app->get('/recommendations/content', 'users.controller:getContentRecommendationAction');
-$app->get('/recommendations/content/tags', 'users.controller:getContentRecommendationTagsAction');
+$app->get('/recommendations/content/tags', 'users.controller:getContentAllTagsAction');
 $app->get('/status', 'users.controller:statusAction');
 $app->get('/stats', 'users.controller:statsAction');
 $app->get('/stats/compare/{id}', 'users.controller:statsCompareAction');

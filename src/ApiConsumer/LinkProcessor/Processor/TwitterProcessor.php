@@ -5,28 +5,19 @@ namespace ApiConsumer\LinkProcessor\Processor;
 
 use ApiConsumer\LinkProcessor\PreprocessedLink;
 use ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser;
-use Http\OAuth\ResourceOwner\TwitterResourceOwner;
-use Service\UserAggregator;
+use ApiConsumer\ResourceOwner\TwitterResourceOwner;
 
 class TwitterProcessor extends AbstractProcessor
 {
-
-    /**
-     * @var TwitterResourceOwner
+	/**
+	 * @var TwitterResourceOwner
      */
-    protected $resourceOwner;
+	protected $resourceOwner;
 
-    /**
-     * @var TwitterUrlParser
-     */
-    protected $parser;
-
-    public function __construct(UserAggregator $userAggregator, ScraperProcessor $scraperProcessor, TwitterResourceOwner $resourceOwner, TwitterUrlParser $parser)
-    {
-        parent::__construct($userAggregator, $scraperProcessor);
-        $this->resourceOwner = $resourceOwner;
-        $this->parser = $parser;
-    }
+	/**
+	 * @var TwitterUrlParser
+	 */
+	protected $parser;
 
     /**
      * @inheritdoc

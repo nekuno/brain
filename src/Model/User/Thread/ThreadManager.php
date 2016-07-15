@@ -545,6 +545,7 @@ class ThreadManager
 
     private function updateFromFilters(Thread $thread, $data)
     {
+        $this->deleteCachedResults($thread);
         $filters = isset($data['filters']) ? $data['filters'] : array();
         switch (get_class($thread)) {
             case 'Model\User\Thread\ContentThread':

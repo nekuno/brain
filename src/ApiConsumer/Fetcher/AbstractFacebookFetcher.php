@@ -2,7 +2,6 @@
 
 namespace ApiConsumer\Fetcher;
 
-use ApiConsumer\LinkProcessor\LinkAnalyzer;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
 
 abstract class AbstractFacebookFetcher extends BasicPaginationFetcher

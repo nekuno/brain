@@ -4,9 +4,8 @@ namespace ApiConsumer\LinkProcessor\Processor;
 
 use ApiConsumer\LinkProcessor\PreprocessedLink;
 use ApiConsumer\LinkProcessor\UrlParser\FacebookUrlParser;
-use Http\OAuth\ResourceOwner\FacebookResourceOwner;
+use ApiConsumer\ResourceOwner\FacebookResourceOwner;
 use Model\User\TokensModel;
-use Service\UserAggregator;
 
 /**
  * Class FacebookProcessor
@@ -18,24 +17,15 @@ class FacebookProcessor extends AbstractProcessor
     const FACEBOOK_VIDEO = 'video';
     protected $FACEBOOK_VIDEO_TYPES = array('video_inline', 'video_autoplay');
 
-    /**
-     * @var $resourceOwner FacebookResourceOwner
-     */
-    protected $resourceOwner;
+	/**
+	 * @var $resourceOwner FacebookResourceOwner
+	 */
+	protected $resourceOwner;
 
-    /**
-     * @param UserAggregator $userAggregator
-     * @param ScraperProcessor $scraperProcessor
-     * @param FacebookResourceOwner $facebookResourceOwner
-     * @param FacebookUrlParser $urlParser
-     */
-    public function __construct(UserAggregator $userAggregator, ScraperProcessor $scraperProcessor, FacebookResourceOwner $facebookResourceOwner, FacebookUrlParser $urlParser)
-    {
-        parent::__construct($userAggregator, $scraperProcessor);
-        $this->resourceOwner = $facebookResourceOwner;
-        $this->scraperProcessor = $scraperProcessor;
-        $this->parser = $urlParser;
-    }
+	/**
+	 * @var FacebookUrlParser
+	 */
+	protected $parser;
 
     /**
      * @inheritdoc
@@ -124,7 +114,7 @@ class FacebookProcessor extends AbstractProcessor
             $link = array(
                 'description' => isset($response['description']) ? $response['description'] : $this->buildDescriptionFromTitle($response),
                 'title' => isset($response['name']) ? $response['name'] : $this->buildTitleFromDescription($response),
-                'thumbnail' => $thumbnail ?: (isset($response['picture']) ? $response['picture'] : null),
+                'thumbnail' => is_string($thumbnail) && $thumbnail ? $thumbnail : (isset($response['picture']) ? $response['picture'] : null),
             );
 
         } else {
