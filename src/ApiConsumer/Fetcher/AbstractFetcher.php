@@ -2,7 +2,7 @@
 
 namespace ApiConsumer\Fetcher;
 
-use Http\OAuth\ResourceOwner\ResourceOwnerInterface;
+use HWI\Bundle\OAuthBundle\OAuth\ResourceOwnerInterface;
 
 abstract class AbstractFetcher implements FetcherInterface
 {

@@ -6,7 +6,7 @@
 namespace Controller\User;
 
 
-use Http\OAuth\Factory\ResourceOwnerFactory;
+use ApiConsumer\Factory\ResourceOwnerFactory;
 use Http\OAuth\ResourceOwner\FacebookResourceOwner;
 use Manager\UserManager;
 use Model\User;

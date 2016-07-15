@@ -4,17 +4,14 @@ namespace ApiConsumer\LinkProcessor\Processor;
 
 use ApiConsumer\LinkProcessor\LinkAnalyzer;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
-use GuzzleHttp\Exception\RequestException;
-use Http\OAuth\ResourceOwner\GoogleResourceOwner;
+use ApiConsumer\ResourceOwner\GoogleResourceOwner;
 use ApiConsumer\LinkProcessor\UrlParser\YoutubeUrlParser;
-use Service\UserAggregator;
 
 /**
  * @author Juan Luis Martínez <juanlu@comakai.com>
  */
 class YoutubeProcessor extends AbstractProcessor
 {
-
     /**
      * @var GoogleResourceOwner
      */
@@ -24,13 +21,6 @@ class YoutubeProcessor extends AbstractProcessor
      * @var YoutubeUrlParser
      */
     protected $parser;
-
-    public function __construct(UserAggregator $userAggregator, ScraperProcessor $scraperProcessor, GoogleResourceOwner $resourceOwner, YoutubeUrlParser $parser)
-    {
-        parent::__construct($userAggregator, $scraperProcessor);
-        $this->resourceOwner = $resourceOwner;
-        $this->parser = $parser;
-    }
 
     /**
      * @inheritdoc
@@ -100,11 +90,9 @@ class YoutubeProcessor extends AbstractProcessor
         } else {
             //TODO: Use exceptions logic here
             //YouTube API returns 200 on non-existent videos, against its documentation
-            $request = $this->resourceOwner->getAPIRequest($this->resourceOwner->getOption('base_url').$url,
-                                                            $query,
-                                                            $token);
-            throw new RequestException('Video does not exist',
-                                        $request, null, null);
+            //$response = $this->resourceOwner->authorizedAPIRequest($this->resourceOwner->getOption('base_url').$url,$query, $token);
+            //throw new RequestException('Video does not exist', $request, null, null);
+            $preprocessedLink->addToLink(array('processed' => 0));
         }
 
         return $link;

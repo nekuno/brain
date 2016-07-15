@@ -4,10 +4,11 @@ namespace ApiConsumer\LinkProcessor\Processor;
 
 use ApiConsumer\LinkProcessor\LinkAnalyzer;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
-use Http\OAuth\ResourceOwner\SpotifyResourceOwner;
+use ApiConsumer\ResourceOwner\SpotifyResourceOwner;
 use ApiConsumer\LinkProcessor\UrlParser\SpotifyUrlParser;
-use Http\OAuth\ResourceOwner\GoogleResourceOwner;
+use ApiConsumer\ResourceOwner\GoogleResourceOwner;
 use ApiConsumer\LinkProcessor\UrlParser\YoutubeUrlParser;
+use GuzzleHttp\Client;
 use Service\UserAggregator;
 
 class SpotifyProcessor extends AbstractProcessor
@@ -32,13 +33,15 @@ class SpotifyProcessor extends AbstractProcessor
      */
     protected $youtubeUrlParser;
 
-    public function __construct(UserAggregator $userAggregator, ScraperProcessor $scraperProcessor, SpotifyResourceOwner $resourceOwner, SpotifyUrlParser $parser, GoogleResourceOwner $googleResourceOwner, YoutubeUrlParser $youtubeUrlParser)
+    public function __construct(UserAggregator $userAggregator, ScraperProcessor $scraperProcessor, SpotifyResourceOwner $resourceOwner, SpotifyUrlParser $parser, GoogleResourceOwner $googleResourceOwner, YoutubeUrlParser $youtubeUrlParser, Client $client)
     {
-        parent::__construct($userAggregator, $scraperProcessor);
-        $this->resourceOwner = $resourceOwner;
-        $this->parser = $parser;
+	    $this->userAggregator = $userAggregator;
+	    $this->scraperProcessor = $scraperProcessor;
+	    $this->resourceOwner = $resourceOwner;
+	    $this->parser = $parser;
         $this->googleResourceOwner = $googleResourceOwner;
         $this->youtubeUrlParser = $youtubeUrlParser;
+	    $this->client = $client;
     }
 
     /**
