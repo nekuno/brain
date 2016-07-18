@@ -57,9 +57,14 @@ class UsersCalculateSimilarityCommand extends ApplicationAwareCommand
             $output->writeln('Calculating for all users, including ghost users.');
             $userIds = $this->app['users.manager']->getAllIds();
 
-            $combinations = array();
+            $combinationsByUser = array();
             foreach ($userIds as $userId) {
-                $combinations = array_merge($combinations, $this->getCombinations($userId, $combinations));
+                $combinationsByUser[$userId] = $this->getCombinations($userId, $combinationsByUser);
+            }
+
+            $combinations = array();
+            foreach ($combinationsByUser as $combinationsBySingleUser) {
+                $combinations = array_merge($combinations, $combinationsBySingleUser);
             }
         }
 
@@ -120,7 +125,8 @@ class UsersCalculateSimilarityCommand extends ApplicationAwareCommand
         return $table;
     }
 
-    protected function getCombinations($userId, $currentCombinations = array()) {
+    protected function getCombinations($userId, $combinationsByUser = array())
+    {
         $similarRealIds = $this->app['users.manager']->getMostSimilarIds($userId, 800);
         $similarGhostIds = $this->app['users.ghostuser.manager']->getMostSimilarIds($userId, 200);
 
@@ -156,22 +162,24 @@ class UsersCalculateSimilarityCommand extends ApplicationAwareCommand
 
         $combinations = array();
         foreach ($allIds as $id) {
-            if (!in_array(array($id, $userId), $currentCombinations)){
+            if (!(isset($combinationsByUser[$id]) && in_array(array($id, $userId), $combinationsByUser[$id]))) {
                 $combinations[] = array($userId, $id);
             }
         }
         return $combinations;
     }
 
-    protected function getRealIds() {
-        if (!$this->allRealIds){
+    protected function getRealIds()
+    {
+        if (!$this->allRealIds) {
             $this->allRealIds = $this->app['users.manager']->getAllIds();
         }
         return $this->allRealIds;
     }
 
-    protected function getGhostIds() {
-        if (!$this->allGhostIds){
+    protected function getGhostIds()
+    {
+        if (!$this->allGhostIds) {
             $this->allGhostIds = $this->app['users.ghostuser.manager']->getAllIds();
         }
         return $this->allGhostIds;
