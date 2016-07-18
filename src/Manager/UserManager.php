@@ -337,9 +337,7 @@ class UserManager implements PaginatedInterface
         $this->validate($data);
 
         $data['userId'] = $this->getNextId();
-	    if (!isset($data['username']) || !$data['username']) {
-		    $data['username'] = $this->getDefaultUsername();
-	    }
+	    $data['username'] = $this->getVerifiedUsername($data['username']);
 
         $qb = $this->gm->createQueryBuilder();
         $qb->create('(u:User)')
@@ -1026,12 +1024,13 @@ class UserManager implements PaginatedInterface
         return $id;
     }
 
-	protected function getDefaultUsername()
+	protected function getVerifiedUsername($username)
 	{
-		$username = 'user_';
 		$exists = true;
+		$suffix = 1;
+		$username = $username ?: 'user';
+
 		while ($exists) {
-			$username = $username . mt_rand(1, 1000);
 			$qb = $this->gm->createQueryBuilder();
 			$qb->match('(u:User {username: { username }})')
 				->setParameter('username', $username)
@@ -1042,6 +1041,10 @@ class UserManager implements PaginatedInterface
 			$result = $query->getResultSet();
 
 			$exists = $result->count() > 0;
+			if ($exists) {
+				$username = $username . $suffix;
+				$suffix++;
+			}
 		}
 
 		return $username;
