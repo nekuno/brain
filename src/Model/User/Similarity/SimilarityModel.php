@@ -23,6 +23,7 @@ class SimilarityModel
     const INTERESTS = 2;
     const QUESTIONS = 3;
     const SKILLS = 4;
+    const MAX_SIMILARITIES = 1000;
 
     /**
      * @var EventDispatcher
@@ -255,7 +256,7 @@ class SimilarityModel
                 'countOnlyB' => $row->offsetGet('countOnlyB'),
                 'popularityOnlyA' => $row->offsetGet('popularityOnlyA'),
                 'popularityOnlyB' => $row->offsetGet('popularityOnlyB'),
-            ); 
+            );
         }
 
         return array(

@@ -134,4 +134,40 @@ class GhostUserManager
 
         return null;
     }
+
+    public function getMostSimilarIds($userId, $userLimit)
+    {
+        $qb = $this->graphManager->createQueryBuilder();
+
+        $qb->match('(u:User{qnoow_id:{userId}})')
+            ->setParameter('userId', $userId);
+        $qb->with('u')
+            ->limit(1);
+
+        $qb->match('(u)-[s:SIMILARITY]-(u2:GhostUser)')
+            ->with('s.similarity AS similarity', 'u2.qnoow_id AS id')
+            ->orderBy(' 1 - similarity ASC')// similarity DESC starts with NULL values
+            ->limit('{limit}')
+            ->setParameter('limit', $userLimit)
+            ->returns('id');
+
+        $result = $qb->getQuery()->getResultSet();
+
+        return $this->userManager->buildIdsArray($result);
+    }
+
+    /**
+     * @return array
+     */
+    public function getAllIds()
+    {
+        $qb = $this->graphManager->createQueryBuilder();
+        $qb->match('(u:GhostUser)');
+        $qb->returns('u.qnoow_id AS id');
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        return $this->userManager->buildIdsArray($result);
+    }
 }

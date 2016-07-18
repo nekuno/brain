@@ -4,6 +4,7 @@ namespace Manager;
 
 use Event\UserEvent;
 use Everyman\Neo4j\Node;
+use Everyman\Neo4j\Query\ResultSet;
 use Everyman\Neo4j\Query\Row;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
@@ -90,6 +91,55 @@ class UserManager implements PaginatedInterface
         }
 
         return $return;
+    }
+
+    /**
+     * @param bool $includeGhosts
+     * @return array
+     */
+    public function getAllIds($includeGhosts = false)
+    {
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User)');
+        if (!$includeGhosts) {
+            $qb->where('NOT (u:GhostUser)');
+        }
+        $qb->returns('u.qnoow_id AS id');
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        return $this->buildIdsArray($result);
+    }
+
+    public function getMostSimilarIds($userId, $userLimit)
+    {
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(u:User{qnoow_id:{userId}})')
+            ->setParameter('userId', $userId);
+        $qb->with('u')
+            ->limit(1);
+
+        $qb->match('(u)-[s:SIMILARITY]-(u2:User)')
+            ->where('NOT (u2:GhostUser)')
+            ->with('s.similarity AS similarity', 'u2.qnoow_id AS id')
+            ->orderBy(' 1 - similarity ASC')// similarity DESC starts with NULL values
+            ->limit('{limit}')
+            ->setParameter('limit', $userLimit)
+            ->returns('id');
+
+        $result = $qb->getQuery()->getResultSet();
+
+        return $this->buildIdsArray($result);
+    }
+
+    public function buildIdsArray(ResultSet $result) {
+        $ids = array();
+        foreach ($result as $row) {
+            $ids[] = $row->offsetGet('id');
+        }
+        return $ids;
     }
 
     /**
@@ -601,9 +651,9 @@ class UserManager implements PaginatedInterface
         $qb->match('(u2:User)-[hsn:HAS_SOCIAL_NETWORK]-()')
             ->where ('hsn.url IN urls');
         $qb->returns('u2 AS u');
-        
+
         $result = $qb->getQuery()->getResultSet();
-        
+
         $users = array();
         foreach ($result as $row){
             $users[] = $this->build($row);

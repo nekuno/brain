@@ -5,8 +5,6 @@ namespace Console\Command;
 use Console\ApplicationAwareCommand;
 use Model\Neo4j\Neo4jException;
 use Model\User\Similarity\SimilarityModel;
-use Manager\UserManager;
-use Silex\Application;
 use Symfony\Component\Console\Helper\TableHelper;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -15,11 +13,16 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class UsersCalculateSimilarityCommand extends ApplicationAwareCommand
 {
+    protected $realSimilarities = 800;
+    protected $ghostSimilarities = 200;
+
+    protected $allRealIds = null;
+    protected $allGhostIds = null;
 
     protected function configure()
     {
         $this->setName('users:calculate:similarity')
-            ->setDescription('Calculate the similarity of two users.')
+            ->setDescription('Calculate the similarity of users combinations.')
             ->addArgument('userA', InputArgument::OPTIONAL, 'id of the first user?')
             ->addArgument('userB', InputArgument::OPTIONAL, 'id of the second user?')
             ->addOption('groupId', null, InputOption::VALUE_REQUIRED, 'Group id');
@@ -34,23 +37,30 @@ class UsersCalculateSimilarityCommand extends ApplicationAwareCommand
         $userB = $input->getArgument('userB');
         $groupId = $input->getOption('groupId');
 
-        $combinations = array(
-            array(
-                0 => $userA,
-                1 => $userB
-            )
-        );
+        if ($userA && $userB) {
+            $combinations = array(
+                array(
+                    0 => $userA,
+                    1 => $userB
+                )
+            );
+        } else if ($userA) {
 
-        if (null === $userA || null === $userB) {
+            $combinations = $this->getCombinations($userA);
 
-            if ($groupId) {
-                $output->writeln(sprintf('Calculating for all users in group %d, including ghost users.', $groupId));
-            } else {
-                $output->writeln('Calculating for all users, including ghost users.');
-            }
-            /* @var $userManager UserManager */
+        } else if ($groupId) {
+            $output->writeln(sprintf('Calculating for all users in group %d, including ghost users.', $groupId));
             $userManager = $this->app['users.manager'];
             $combinations = $userManager->getAllCombinations(true, $groupId);
+
+        } else {
+            $output->writeln('Calculating for all users, including ghost users.');
+            $userIds = $this->app['users.manager']->getAllIds();
+
+            $combinations = array();
+            foreach ($userIds as $userId) {
+                $combinations = array_merge($combinations, $this->getCombinations($userId, $combinations));
+            }
         }
 
         foreach ($combinations AS $users) {
@@ -58,7 +68,7 @@ class UsersCalculateSimilarityCommand extends ApplicationAwareCommand
             $userA = $users[0];
             $userB = $users[1];
 
-            if ($userA == $userB){
+            if ($userA == $userB) {
                 continue;
             }
 
@@ -108,5 +118,62 @@ class UsersCalculateSimilarityCommand extends ApplicationAwareCommand
             );
 
         return $table;
+    }
+
+    protected function getCombinations($userId, $currentCombinations = array()) {
+        $similarRealIds = $this->app['users.manager']->getMostSimilarIds($userId, 800);
+        $similarGhostIds = $this->app['users.ghostuser.manager']->getMostSimilarIds($userId, 200);
+
+        $missingRealIds = $this->realSimilarities - count($similarRealIds);
+        if ($missingRealIds > 0) {
+            $allIds = $this->getRealIds();
+
+            foreach ($allIds as $newId) {
+                if (!in_array($newId, $similarRealIds)) {
+                    array_push($similarRealIds, $newId);
+                }
+                if (count($similarRealIds) >= $this->realSimilarities) {
+                    break;
+                }
+            }
+        }
+
+        $missingGhostIds = $this->ghostSimilarities - count($similarGhostIds);
+        if ($missingGhostIds > 0) {
+            $allIds = $this->getGhostIds();
+
+            foreach ($allIds as $newId) {
+                if (!in_array($newId, $similarGhostIds)) {
+                    array_push($similarGhostIds, $newId);
+                }
+                if (count($similarGhostIds) >= $this->ghostSimilarities) {
+                    break;
+                }
+            }
+        }
+
+        $allIds = $similarRealIds + $similarGhostIds;
+
+        $combinations = array();
+        foreach ($allIds as $id) {
+            if (!in_array(array($id, $userId), $currentCombinations)){
+                $combinations[] = array($userId, $id);
+            }
+        }
+        return $combinations;
+    }
+
+    protected function getRealIds() {
+        if (!$this->allRealIds){
+            $this->allRealIds = $this->app['users.manager']->getAllIds();
+        }
+        return $this->allRealIds;
+    }
+
+    protected function getGhostIds() {
+        if (!$this->allGhostIds){
+            $this->allGhostIds = $this->app['users.ghostuser.manager']->getAllIds();
+        }
+        return $this->allGhostIds;
     }
 }
