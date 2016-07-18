@@ -34,7 +34,6 @@ profile:
             es: 'Sobre mí'
     birthday:
         type: birthday
-        required: true
         label:
             en: 'Birthday'
             es: 'Cumpleaños'
@@ -115,7 +114,6 @@ profile:
 
     gender:
         type: choice
-        required: true
         label:
             en: 'Want to be found in searches by gender'
             es: 'Quiero salir en búsquedas por género'
@@ -187,7 +185,6 @@ profile:
             es: '¿Sigues alguna dieta especial?'
     orientation:
         type: choice
-        required: true
         label: &orientation.label
             en: 'Orientation'
             es: 'Orientación'
@@ -204,7 +201,6 @@ profile:
             es: '¿Qué te interesa de las relaciones?'
     interfaceLanguage:
         type: choice
-        required: true
         label:
             en: 'What interface language do you prefer?'
             es: '¿Qué lenguaje de interfaz prefieres?'
@@ -351,7 +347,6 @@ profile:
             es: 'Educación'
     location:
         type: location
-        required: true
         label: &location.label
             en: 'Location'
             es: 'Ubicación'
