@@ -337,6 +337,9 @@ class UserManager implements PaginatedInterface
         $this->validate($data);
 
         $data['userId'] = $this->getNextId();
+	    if (!isset($data['username']) || !$data['username']) {
+		    $data['username'] = $this->getDefaultUsername();
+	    }
 
         $qb = $this->gm->createQueryBuilder();
         $qb->create('(u:User)')
@@ -1022,6 +1025,27 @@ class UserManager implements PaginatedInterface
 
         return $id;
     }
+
+	protected function getDefaultUsername()
+	{
+		$username = 'user_';
+		$exists = true;
+		while ($exists) {
+			$username = $username . mt_rand(1, 1000);
+			$qb = $this->gm->createQueryBuilder();
+			$qb->match('(u:User {username: { username }})')
+				->setParameter('username', $username)
+				->returns('u AS users')
+				->limit(1);
+
+			$query = $qb->getQuery();
+			$result = $query->getResultSet();
+
+			$exists = $result->count() > 0;
+		}
+
+		return $username;
+	}
 
     public function canonicalize($string)
     {
