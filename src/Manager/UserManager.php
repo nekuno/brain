@@ -6,6 +6,7 @@ use Event\UserEvent;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\ResultSet;
 use Everyman\Neo4j\Query\Row;
+use Everyman\Neo4j\Relationship;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
 use Model\Neo4j\Neo4jException;
@@ -427,12 +428,11 @@ class UserManager implements PaginatedInterface
     /**
      * @param bool $includeGhost
      * @param integer $groupId
-     * @return array
+     * @return \ArrayAccess
      * @throws Neo4jException
      */
     public function getAllCombinations($includeGhost = true, $groupId = null)
     {
-
         $conditions = array('u1.qnoow_id < u2.qnoow_id');
         if (!$includeGhost) {
             $conditions[] = 'NOT u1:' . GhostUserManager::LABEL_GHOST_USER;
@@ -458,13 +458,12 @@ class UserManager implements PaginatedInterface
         $result = $query->getResultSet();
 
         return $result;
-
     }
 
     /**
      * @param $id
      * @param int $limit
-     * @return array
+     * @return User[]
      * @throws Neo4jException
      */
     public function getByCommonLinksWithUser($id, $limit = 100)
@@ -481,8 +480,7 @@ class UserManager implements PaginatedInterface
             ->with('u', 'count(l) as amount')
             ->orderBy('amount DESC')
             ->limit('{limit}')
-            ->returns('DISTINCT u')
-            ->orderBy('u.qnoow_id');
+            ->returns('DISTINCT u');
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();
@@ -493,18 +491,20 @@ class UserManager implements PaginatedInterface
 
     /**
      * @param $questionId
-     * @return array
-     * @throws Neo4jException
+     * @param int $limit
+     * @return User[]
      */
-    public function getByQuestionAnswered($questionId)
+    public function getByQuestionAnswered($questionId, $limit = 100)
     {
-
         $qb = $this->gm->createQueryBuilder();
+
+        $qb->setParameters(array('limit' => (integer)$limit));
+
         $qb->match('(u:User)-[:RATES]->(q:Question)')
-            ->setParameter('questions', (integer)$questionId)
-            ->where('id(q) IN [ { questions } ]')
+            ->setParameter('question', (integer)$questionId)
+            ->where('id(q) = {question}')
             ->returns('DISTINCT u')
-            ->orderBy('u.qnoow_id');
+            ->limit('{limit}');
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();
@@ -516,7 +516,7 @@ class UserManager implements PaginatedInterface
     /**
      * @param $groupId
      * @param array $data
-     * @return User
+     * @return User[]
      * @throws Neo4jException
      */
     public function getByGroup($groupId, array $data = array())
@@ -729,6 +729,7 @@ class UserManager implements PaginatedInterface
         /* @var $row Row */
         $row = $result->current();
 
+        //TODO: Change $groups array to Group[]
         $groups = array();
         foreach ($row->offsetGet('groupsBelonged') as $group) {
             /* @var $group Node */
@@ -899,13 +900,17 @@ class UserManager implements PaginatedInterface
 
             $user['matching'] = 0;
             if (isset($row['match'])) {
-                $matchingByQuestions = $row['match']->getProperty('matching_questions');
+                /** @var Relationship $matchRelationship */
+                $matchRelationship = $row['match'];
+                $matchingByQuestions = $matchRelationship->getProperty('matching_questions');
                 $user['matching'] = null === $matchingByQuestions ? 0 : $matchingByQuestions;
             }
 
             $user['similarity'] = 0;
             if (isset($row['similarity'])) {
-                $similarity = $row['similarity']->getProperty('similarity');
+                /** @var Relationship $similarityRelationship */
+                $similarityRelationship = $row['similarity'];
+                $similarity = $similarityRelationship->getProperty('similarity');
                 $user['similarity'] = null === $similarity ? 0 : $similarity;
             }
 
@@ -1149,7 +1154,7 @@ class UserManager implements PaginatedInterface
 
     /**
      * @param $resultSet
-     * @return array
+     * @return User[]
      */
     protected function parseResultSet($resultSet)
     {
