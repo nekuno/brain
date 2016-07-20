@@ -14,6 +14,12 @@ use Silex\Application;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Model\User\TokensModel;
+use Model\User\SocialNetwork\SocialProfile;
+use ApiConsumer\Factory\ResourceOwnerFactory;
+use ApiConsumer\ResourceOwner\FacebookResourceOwner;
+use Model\User\GhostUser\GhostUserManager;
+use Model\User\SocialNetwork\SocialProfileManager;
 
 /**
  * Class UserController
@@ -128,9 +134,63 @@ class UserController
      */
     public function postAction(Application $app, Request $request)
     {
-        /* @var $model UserManager */
-        $model = $app['users.manager'];
-        $user = $model->create($request->request->all());
+	    $data = $request->request->all();
+	    if (isset($data['oauth'])) {
+		    $oauthData = $data['oauth'];
+		    unset($data['oauth']);
+	    }
+        /* @var $userManager UserManager */
+        $userManager = $app['users.manager'];
+        $user = $userManager->create($data);
+
+	    if (isset($oauthData)) {
+		    /* @var $tokensModel TokensModel */
+		    $tokensModel = $app['users.tokens.model'];
+		    $resourceOwner = $oauthData['resourceOwner'];
+
+		    $token = $tokensModel->create($user->getId(), $resourceOwner, $oauthData);
+
+		    /* @var $resourceOwnerFactory ResourceOwnerFactory */
+		    $resourceOwnerFactory = $app['api_consumer.resource_owner_factory'];
+
+		    if ($resourceOwner === TokensModel::FACEBOOK) {
+
+			    /* @var $facebookResourceOwner FacebookResourceOwner */
+			    $facebookResourceOwner = $resourceOwnerFactory->build(TokensModel::FACEBOOK);
+
+			    if ($request->query->has('extend')) {
+				    $token = $facebookResourceOwner->extend($token);
+			    }
+
+			    if (array_key_exists('refreshToken', $token) && is_null($token['refreshToken'])) {
+				    $token = $facebookResourceOwner->forceRefreshAccessToken($token);
+			    }
+		    }
+
+		    // TODO: This will not be executed since we only use Facebook for registration
+		    if ($resourceOwner == TokensModel::TWITTER) {
+			    $resourceOwnerObject = $resourceOwnerFactory->build($resourceOwner);
+			    $profileUrl = $resourceOwnerObject->getProfileUrl($token);
+			    if (!$profileUrl) {
+				    //TODO: Add information about this if it happens
+				    return $app->json($token, 201);
+			    }
+			    $profile = new SocialProfile($user->getId(), $profileUrl, $resourceOwner);
+
+			    /* @var $ghostUserManager GhostUserManager */
+			    $ghostUserManager = $app['users.ghostuser.manager'];
+			    if ($ghostUser = $ghostUserManager->getBySocialProfile($profile)) {
+				    /* @var $userManager UserManager */
+				    $userManager = $app['users.manager'];
+				    $userManager->fuseUsers($user->getId(), $ghostUser->getId());
+				    $ghostUserManager->saveAsUser($user->getId());
+			    } else {
+				    /** @var $socialProfilesManager SocialProfileManager */
+				    $socialProfilesManager = $app['users.socialprofile.manager'];
+				    $socialProfilesManager->addSocialProfile($profile);
+			    }
+		    }
+	    }
 
         return $app->json($user, 201);
     }

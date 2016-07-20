@@ -906,14 +906,14 @@ class UserManager implements PaginatedInterface
     {
         $metadata = array(
             'qnoow_id' => array('type' => 'string', 'editable' => false),
-            'username' => array('type' => 'string', 'required' => true, 'editable' => true),
+            'username' => array('type' => 'string', 'editable' => true),
             'usernameCanonical' => array('type' => 'string', 'editable' => false),
             'email' => array('type' => 'string', 'required' => true),
             'emailCanonical' => array('type' => 'string', 'editable' => false),
             'enabled' => array('type' => 'boolean', 'default' => true),
             'salt' => array('type' => 'string', 'editable' => false),
             'password' => array('type' => 'string', 'editable' => false),
-            'plainPassword' => array('type' => 'string', 'required' => true, 'visible' => false),
+            'plainPassword' => array('type' => 'string', 'visible' => false),
             'lastLogin' => array('type' => 'datetime'),
             'locked' => array('type' => 'boolean', 'default' => false),
             'expired' => array('type' => 'boolean', 'editable' => false),
@@ -1028,7 +1028,7 @@ class UserManager implements PaginatedInterface
 	{
 		$exists = true;
 		$suffix = 1;
-		$username = $username ?: 'user';
+		$username = $username ?: 'user1';
 
 		while ($exists) {
 			$qb = $this->gm->createQueryBuilder();
@@ -1042,8 +1042,7 @@ class UserManager implements PaginatedInterface
 
 			$exists = $result->count() > 0;
 			if ($exists) {
-				$username = $username . $suffix;
-				$suffix++;
+				$username = 'user' . $suffix++;
 			}
 		}
 
