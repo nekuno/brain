@@ -23,6 +23,7 @@ class SimilarityModel
     const INTERESTS = 2;
     const QUESTIONS = 3;
     const SKILLS = 4;
+    const MAX_SIMILARITIES = 1000;
 
     /**
      * @var EventDispatcher
@@ -200,7 +201,6 @@ class SimilarityModel
      */
     public function getAllCurrentByUser($id, $includeGhost = true)
     {
-
         $qb = $this->gm->createQueryBuilder();
 
         $qb->match('(u:User{qnoow_id: {id} })')
@@ -255,13 +255,56 @@ class SimilarityModel
                 'countOnlyB' => $row->offsetGet('countOnlyB'),
                 'popularityOnlyA' => $row->offsetGet('popularityOnlyA'),
                 'popularityOnlyB' => $row->offsetGet('popularityOnlyB'),
-            ); 
+            );
         }
 
         return array(
             'similarities' => $similarities,
             'popularityData' => $popularityData,
         );
+    }
+
+    public function recalculateSimilaritiesByQuestions($userId, $limit = 800)
+    {
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(u:User{qnoow_id: {userId}})')
+            ->setParameter('userId', (integer)$userId)
+            ->with('u')
+            ->limit(1);
+
+        $qb->match('(u)-[:ANSWERS]->(a:Answer)-[:IS_ANSWER_OF]->(q:Question)')
+            ->with('u', 'collect(a) AS answers', 'collect(q) AS questions');
+        $qb->match('(u)-[s:SIMILARITY]-(u2)')
+            ->where('EXISTS(s.questionsUpdated)','s.questionsUpdated < timestamp() - {updateLimit}')
+            ->setParameter('updateLimit', 1000*self::numberOfSecondsToCache)
+            ->with('u', 'answers','questions','u2')
+            ->orderBy('1-s.questions ASC') // s.questions DESC would put NULL values first
+            ->limit('{limit}')
+            ->setParameter('limit', $limit);
+
+        $qb->match('(u2)-[:ANSWERS]-(a2)-[:IS_ANSWER_OF]->(q2:Question)')
+            ->with('u', 'u2', 'a2', 'q2')
+            ->where('a2 IN answers', 'q2 IN questions')
+            ->with('u', 'u2', 'collect(a2) AS answers2', 'collect(q2) AS questions2')
+            ->with('u', 'u2', 'size(answers2) AS RI', 'size(questions2) AS PC')
+            //Same as $this->calculateSimilarityByQuestions from here
+            ->with('u', 'u2', 'toFloat(RI) AS RI', 'toFloat(PC) AS PC')
+            ->with('u, u2, CASE WHEN PC <= 0 THEN toFloat(0) ELSE RI/PC - 1/PC END AS similarity')
+            ->with('u, u2, CASE WHEN similarity < 0 THEN toFloat(0) ELSE similarity END AS similarity');
+
+        $qb
+            ->merge('(u)-[s:SIMILARITY]-(u2)')
+            ->set(
+                's.questions = similarity',
+                's.interests = CASE WHEN EXISTS(s.interests) THEN s.interests ELSE 0 END',
+                's.skills = CASE WHEN EXISTS(s.skills) THEN s.skills ELSE 0 END',
+                's.questionsUpdated = timestamp()',
+                's.similarityUpdated = timestamp()'
+            )
+            ->returns('similarity');
+
+        $qb->getQuery()->getResultSet();
     }
 
     /**
@@ -275,7 +318,6 @@ class SimilarityModel
      */
     private function calculateSimilarityByQuestions($idA, $idB)
     {
-
         $qb = $this->gm->createQueryBuilder();
         $qb
             ->match('(userA:User {qnoow_id: { idA } }), (userB:User {qnoow_id: { idB } })')
