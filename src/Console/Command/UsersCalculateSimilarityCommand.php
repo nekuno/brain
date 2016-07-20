@@ -38,59 +38,40 @@ class UsersCalculateSimilarityCommand extends ApplicationAwareCommand
         $groupId = $input->getOption('groupId');
 
         if ($userA && $userB) {
-            $combinations = array(
-                array(
-                    0 => $userA,
-                    1 => $userB
-                )
-            );
+//            $combinations = array(
+//                array(
+//                    0 => $userA,
+//                    1 => $userB
+//                )
+//            );
+            $model->getSimilarity($userA, $userB);
         } else if ($userA) {
 
-            $combinations = $this->getCombinations($userA);
+//            $combinations = $this->getCombinations($userA);
+            $model->recalculateSimilaritiesByQuestions($userA);
 
         } else if ($groupId) {
             $output->writeln(sprintf('Calculating for all users in group %d, including ghost users.', $groupId));
             $userManager = $this->app['users.manager'];
             $combinations = $userManager->getAllCombinations(true, $groupId);
+            $this->calculateSimilarities($combinations);
 
         } else {
             $output->writeln('Calculating for all users, including ghost users.');
             $userIds = $this->app['users.manager']->getAllIds();
 
-            $combinationsByUser = array();
+//            $combinationsByUser = array();
+//            foreach ($userIds as $userId) {
+//                $combinationsByUser[$userId] = $this->getCombinations($userId, $combinationsByUser);
+//            }
+//
+//            $combinations = array();
+//            foreach ($combinationsByUser as $combinationsBySingleUser) {
+//                $combinations = array_merge($combinations, $combinationsBySingleUser);
+//            }
+
             foreach ($userIds as $userId) {
-                $combinationsByUser[$userId] = $this->getCombinations($userId, $combinationsByUser);
-            }
-
-            $combinations = array();
-            foreach ($combinationsByUser as $combinationsBySingleUser) {
-                $combinations = array_merge($combinations, $combinationsBySingleUser);
-            }
-        }
-
-        foreach ($combinations AS $users) {
-
-            $userA = $users[0];
-            $userB = $users[1];
-
-            if ($userA == $userB) {
-                continue;
-            }
-
-            try {
-                $similarity = $model->getSimilarity($userA, $userB);
-            } catch (\Exception $e) {
-
-                $output->writeln(sprintf('[%s] Error trying to recalculate similarity between user %d - %d with message %s', date('Y-m-d H:i:s'), $userA, $userB, $e->getMessage()));
-                if ($e instanceof Neo4jException) {
-                    $output->writeln(sprintf('Query: %s' . "\n" . 'Data: %s', $e->getQuery(), print_r($e->getData(), true)));
-                }
-                continue;
-            }
-
-            if (OutputInterface::VERBOSITY_NORMAL < $output->getVerbosity()) {
-                $output->writeln(sprintf('[%s] Similarity between user %d - %d', date('Y-m-d H:i:s'), $userA, $userB));
-                $this->getTable($similarity)->render($output);
+                $model->recalculateSimilaritiesByQuestions($userId);
             }
         }
 
@@ -183,5 +164,33 @@ class UsersCalculateSimilarityCommand extends ApplicationAwareCommand
             $this->allGhostIds = $this->app['users.ghostuser.manager']->getAllIds();
         }
         return $this->allGhostIds;
+    }
+
+    protected function calculateSimilarities(array $combinations) {
+        foreach ($combinations AS $users) {
+
+            $userA = $users[0];
+            $userB = $users[1];
+
+            if ($userA == $userB) {
+                continue;
+            }
+
+            try {
+                $similarity = $model->getSimilarity($userA, $userB);
+            } catch (\Exception $e) {
+
+                $output->writeln(sprintf('[%s] Error trying to recalculate similarity between user %d - %d with message %s', date('Y-m-d H:i:s'), $userA, $userB, $e->getMessage()));
+                if ($e instanceof Neo4jException) {
+                    $output->writeln(sprintf('Query: %s' . "\n" . 'Data: %s', $e->getQuery(), print_r($e->getData(), true)));
+                }
+                continue;
+            }
+
+            if (OutputInterface::VERBOSITY_NORMAL < $output->getVerbosity()) {
+                $output->writeln(sprintf('[%s] Similarity between user %d - %d', date('Y-m-d H:i:s'), $userA, $userB));
+                $this->getTable($similarity)->render($output);
+            }
+        }
     }
 }
