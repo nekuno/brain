@@ -963,7 +963,7 @@ class UserManager implements PaginatedInterface
             'qnoow_id' => array('type' => 'string', 'editable' => false),
             'username' => array('type' => 'string', 'editable' => true),
             'usernameCanonical' => array('type' => 'string', 'editable' => false),
-            'email' => array('type' => 'string', 'required' => true),
+            'email' => array('type' => 'string'),
             'emailCanonical' => array('type' => 'string', 'editable' => false),
             'enabled' => array('type' => 'boolean', 'default' => true),
             'salt' => array('type' => 'string', 'editable' => false),
