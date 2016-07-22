@@ -307,6 +307,57 @@ class SimilarityModel
         $qb->getQuery()->getResultSet();
     }
 
+    public function recalculateSimilaritiesByInterests($userId, $limit = 800)
+    {
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(u:User{qnoow_id: {userId}})')
+            ->setParameter('userId', (integer)$userId)
+            ->with('u')
+            ->limit(1);
+
+        $qb->match('(u)-[:LIKES]->(l:Link)-[:HAS_POPULARITY]->(p:Popularity)')
+            ->with('u', 'sum(p.popularity) AS popularity');
+
+        $qb->match('(u)-[s:SIMILARITY]->(u2:User)')
+            ->where('EXISTS(s.interestsUpdated)','s.interestsUpdated < timestamp() - {updateLimit}')
+            ->setParameter('updateLimit', 1000*self::numberOfSecondsToCache)
+            ->with('u', 'popularity', 'u2')
+            ->orderBy('1-s.interests ASC')
+            ->limit('{limit}')
+            ->setParameter('limit', (integer)$limit);
+
+        $qb->match('(u2)-[:LIKES]->(:Link)-[:HAS_POPULARITY]->(p:Popularity)')
+            ->with('u', 'popularity', 'u2', 'sum(p.popularity) AS popularity2');
+
+        $qb->match('(u2)-[:LIKES]->(l:Link)<-[:LIKES]-(u)')
+            ->match('(l)-[:HAS_POPULARITY]->(p:Popularity)')
+            ->with('u', 'popularity', 'u2', 'popularity2',
+                'CASE WHEN count(l) > 4 THEN true ELSE false END AS valid',
+                'sum(p.popularity) AS popularityCommon',
+                'sum(p.unpopularity) AS unpopularityCommon');
+
+        $qb->with('u', 'u2', 'valid', 'unpopularityCommon', 'popularity - popularityCommon AS popularity1', 'popularity2 - popularityCommon AS popularity2' )
+            ->with(' u, u2, valid, unpopularityCommon, popularity1, popularity2');
+
+        $qb
+            ->with('u, u2, valid, sqrt( unpopularityCommon / (popularity1 + unpopularityCommon)) * sqrt( unpopularityCommon / (popularity2 + unpopularityCommon)) AS similarity')
+            ->with('u', 'u2', 'CASE WHEN valid THEN similarity ELSE 0 END AS similarity');
+
+        $qb
+            ->merge('(u)-[s:SIMILARITY]-(u2)')
+            ->set(
+                's.interests = similarity',
+                's.questions = CASE WHEN EXISTS(s.questions) THEN s.questions ELSE 0 END',
+                's.skills = CASE WHEN EXISTS(s.skills) THEN s.skills ELSE 0 END',
+                's.interestsUpdated = timestamp()',
+                's.similarityUpdated = timestamp()'
+            )
+            ->returns('similarity');
+
+        $result = $qb->getQuery()->getResultSet();
+    }
+
     /**
      * Similarity By Questions = (equal answers -1)/ common questions
      * To get equal answers we match every answer answered by both users

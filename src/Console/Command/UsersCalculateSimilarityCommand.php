@@ -38,45 +38,33 @@ class UsersCalculateSimilarityCommand extends ApplicationAwareCommand
         $groupId = $input->getOption('groupId');
 
         if ($userA && $userB) {
-//            $combinations = array(
-//                array(
-//                    0 => $userA,
-//                    1 => $userB
-//                )
-//            );
             $model->getSimilarity($userA, $userB);
-        } else if ($userA) {
 
-//            $combinations = $this->getCombinations($userA);
+        } else if ($userA) {
+            $output->writeln('Calculating similarities by questions for '.$userA);
             $model->recalculateSimilaritiesByQuestions($userA);
+            $output->writeln('Calculating similarities by interests for '.$userA);
+            $model->recalculateSimilaritiesByInterests($userA);
 
         } else if ($groupId) {
-            $output->writeln(sprintf('Calculating for all users in group %d, including ghost users.', $groupId));
+            $output->writeln(sprintf('Calculating for all users in group %d', $groupId));
             $userManager = $this->app['users.manager'];
             $combinations = $userManager->getAllCombinations(true, $groupId);
-            $this->calculateSimilarities($combinations);
+            $this->calculateSimilarities($combinations, $output);
 
         } else {
-            $output->writeln('Calculating for all users, including ghost users.');
+            $output->writeln('Calculating for all users');
             $userIds = $this->app['users.manager']->getAllIds();
 
-//            $combinationsByUser = array();
-//            foreach ($userIds as $userId) {
-//                $combinationsByUser[$userId] = $this->getCombinations($userId, $combinationsByUser);
-//            }
-//
-//            $combinations = array();
-//            foreach ($combinationsByUser as $combinationsBySingleUser) {
-//                $combinations = array_merge($combinations, $combinationsBySingleUser);
-//            }
-
             foreach ($userIds as $userId) {
+                $output->writeln('Calculating similarities by questions for '.$userA);
                 $model->recalculateSimilaritiesByQuestions($userId);
+                $output->writeln('Calculating similarities by interests for '.$userA);
+                $model->recalculateSimilaritiesByInterests($userId);
             }
         }
 
         $output->writeln('Done.');
-
     }
 
     protected function getTable($similarity)
@@ -166,7 +154,7 @@ class UsersCalculateSimilarityCommand extends ApplicationAwareCommand
         return $this->allGhostIds;
     }
 
-    protected function calculateSimilarities(array $combinations) {
+    protected function calculateSimilarities(array $combinations, OutputInterface $output) {
         foreach ($combinations AS $users) {
 
             $userA = $users[0];
@@ -177,7 +165,7 @@ class UsersCalculateSimilarityCommand extends ApplicationAwareCommand
             }
 
             try {
-                $similarity = $model->getSimilarity($userA, $userB);
+                $similarity = $this->app['users.similarity.model']->getSimilarity($userA, $userB);
             } catch (\Exception $e) {
 
                 $output->writeln(sprintf('[%s] Error trying to recalculate similarity between user %d - %d with message %s', date('Y-m-d H:i:s'), $userA, $userB, $e->getMessage()));
