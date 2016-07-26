@@ -1,0 +1,15 @@
+nodes:
+    user:
+        label: User
+        relationships:
+            profile:
+                type: PROFILE_OF
+                direction: incoming
+                otherNode: Profile
+                minimum: 1
+                maximum: 1
+        properties:
+            qnoow_id:
+                required: true
+                type: integer
+
