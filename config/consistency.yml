@@ -12,4 +12,9 @@ nodes:
             qnoow_id:
                 required: true
                 type: integer
+            updatedAt:
+                required: true
+                type: datetime
+                maximum: "2017-01-01"
+                minimum: "2010-01-01"
 
