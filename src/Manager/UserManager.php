@@ -439,7 +439,10 @@ class UserManager implements PaginatedInterface
     public function update(array $data)
     {
         $this->validate($data, true);
-	    $this->validateUsername($data['userId'], $data['username']);
+
+	    if (isset($data['username'])) {
+	        $this->validateUsername($data['userId'], $data['username']);
+	    }
 
         $user = $this->save($data);
 
