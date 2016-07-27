@@ -377,6 +377,28 @@ class UserManager implements PaginatedInterface
         }
     }
 
+	public function validateUsername($userId, $username)
+	{
+		$qb = $this->gm->createQueryBuilder();
+		$qb->match('(u:User {username: { username }})')
+			->where('u.qnoow_id <> { userId }')
+			->setParameters(array(
+				'userId' => $userId,
+				'username' => $username,
+			))
+			->returns('u AS users')
+			->limit(1);
+
+		$query = $qb->getQuery();
+		$result = $query->getResultSet();
+
+		if ($result->count() > 0) {
+			throw new ValidationException(array(
+				'username' => array('Invalid username')
+			));
+		}
+	}
+
     /**
      * @param array $data
      * @return User
@@ -417,6 +439,7 @@ class UserManager implements PaginatedInterface
     public function update(array $data)
     {
         $this->validate($data, true);
+	    $this->validateUsername($data['userId'], $data['username']);
 
         $user = $this->save($data);
 

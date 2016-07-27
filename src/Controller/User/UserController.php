@@ -209,7 +209,14 @@ class UserController
         $model = $app['users.manager'];
         $user = $model->update($data);
 
-        return $app->json($user);
+	    /* @var $authService AuthService */
+	    $authService = $app['auth.service'];
+	    $jwt = $authService->getToken($data['userId']);
+
+        return $app->json(array(
+	        'user' => $user,
+	        'jwt' => $jwt,
+        ), 200);
     }
 
     /**
