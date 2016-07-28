@@ -6,62 +6,17 @@
 namespace Service\Consistency;
 
 
-use Everyman\Neo4j\Label;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\PropertyContainer;
 use Everyman\Neo4j\Relationship;
 use Model\Exception\ValidationException;
-use Model\Neo4j\GraphManager;
-use Model\User;
 
 class ConsistencyChecker
 {
-    protected $graphManager;
-    protected $consistency;
+    public function check(Node $node, ConsistencyNodeRule $userRule) {
 
-    /**
-     * ConsistencyChecker constructor.
-     * @param GraphManager $graphManager
-     * @param array $consistency
-     */
-    public function __construct(GraphManager $graphManager, array $consistency)
-    {
-        $this->graphManager = $graphManager;
-        $this->consistency = $consistency;
-    }
-
-    public function checkUser(User $user)
-    {
-        $qb = $this->graphManager->createQueryBuilder();
-
-        $qb->match('(u:User{qnoow_id: {userId}})')
-            ->setParameter('userId', $user->getId())
-            ->returns('u');
-
-        $result = $qb->getQuery()->getResultSet();
-
-        $userNode = $result->current()->offsetGet('u');
-
-        $this->checkNode($userNode);
-    }
-
-    private function checkNode(Node $node)
-    {
-        /** @var Label[] $labels */
-        $labelNames = $this->getLabelNames($node);
-
-        $rules = $this->consistency;
-        foreach ($rules['nodes'] as $rule) {
-            if (!in_array($rule['label'], $labelNames)) {
-                continue;
-            }
-
-            $nodeRule = new ConsistencyNodeRule($rule);
-
-            $this->checkNodeRelationships($node, $nodeRule->getRelationships());
-
-            $this->checkProperties($node, $nodeRule->getProperties());
-        }
+        $this->checkNodeRelationships($node, $userRule->getRelationships());
+        $this->checkProperties($node, $userRule->getProperties());
     }
 
     /**
@@ -84,11 +39,11 @@ class ConsistencyChecker
             $errors = array('relationships' => array());
 
             if (count($relationships) < $rule->getMinimum()) {
-                $errors['relationships'][$rule->getType()] = sprintf('Amount of relationships %d is less than %d allowed', count($relationships), $rule->getMinimum());
+                $errors['relationships'][$rule->getType()] = sprintf('Amount of relationships %d is less than %d allowed for node with id %d', count($relationships), $rule->getMinimum(), $node->getId());
             }
 
             if (count($relationships) > $rule->getMaximum()) {
-                $errors['relationships'][$rule->getType()] = sprintf('Amount of relationships %d is more than %d allowed', count($relationships), $rule->getMaximum());
+                $errors['relationships'][$rule->getType()] = sprintf('Amount of relationships %d is more than %d allowed for node with id %d', count($relationships), $rule->getMaximum(), $node->getId());
             }
 
             foreach ($relationships as $relationship) {
@@ -103,7 +58,7 @@ class ConsistencyChecker
                     $errors['relationships'][] = sprintf('Direction of relationship %d is not correct', $relationship->getId());
                 }
 
-                if (!in_array($rule->getOtherNode(), $this->getLabelNames($otherNode))) {
+                if (!in_array($rule->getOtherNode(), ConsistencyCheckerService::getLabelNames($otherNode))) {
                     $errors['relationships'][] = sprintf('Label of destination node for relationship %d is not correct', $relationship->getId());
                 }
 
@@ -184,20 +139,5 @@ class ConsistencyChecker
                 throw new ValidationException($errors, 'Properties consistency error for element ' . $propertyContainer->getId());
             }
         }
-    }
-
-    //checkUsers
-    //checkLinks
-
-    private function getLabelNames(Node $node)
-    {
-        /** @var Label[] $labels */
-        $labels = $node->getLabels();
-        $labelNames = array();
-        foreach ($labels as $label) {
-            $labelNames[] = $label->getName();
-        }
-
-        return $labelNames;
     }
 }

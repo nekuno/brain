@@ -7,6 +7,7 @@ namespace EventListener;
 
 
 use Event\ExceptionEvent;
+use Model\Exception\ValidationException;
 use Model\Neo4j\Neo4jException;
 use Model\Neo4j\Neo4jHandler;
 use Monolog\Logger;
@@ -17,7 +18,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 class ExceptionLoggerSubscriber implements EventSubscriberInterface, LoggerAwareInterface
 {
     protected $logger;
-    
+
     protected $path;
 
     /**
@@ -34,6 +35,7 @@ class ExceptionLoggerSubscriber implements EventSubscriberInterface, LoggerAware
         return array(
             \AppEvents::EXCEPTION_ERROR => array('onError'),
             \AppEvents::EXCEPTION_WARNING => array('onWarning'),
+            \AppEvents::CONSISTENCY_ERROR => array('onConsistencyError')
         );
     }
 
@@ -68,8 +70,32 @@ class ExceptionLoggerSubscriber implements EventSubscriberInterface, LoggerAware
         if ($exception instanceof Neo4jException) {
             $context['query'] = $exception->getQuery();
         }
-        
+
         $this->logger->addRecord(Logger::ERROR, $exception->getMessage(),$context);
+    }
+
+    public function onConsistencyError(ExceptionEvent $event)
+    {
+        /** @var ValidationException $exception */
+        $exception = $event->getException();
+        $errors = $exception->getErrors();
+
+        $path = __DIR__ . '/../../var/logs/consistency_errors.log';
+        foreach ($errors as $field => $error) {
+            $fp = fopen($path, "a+");
+            foreach ($error as $name => $message) {
+                $string = sprintf('%s error related to %s: %s', $field, $name, $message);
+
+                if (flock($fp, LOCK_EX)) {
+                    fwrite($fp, PHP_EOL);
+                    fwrite($fp, $string);
+                    fwrite($fp, PHP_EOL);
+                } else {
+                    //couldn´t block the file
+                };
+            }
+            fclose($fp);
+        }
     }
 
     /**

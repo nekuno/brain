@@ -1,6 +1,7 @@
 nodes:
     user:
         label: User
+        class: Service\Consistency\UserConsistencyChecker
         relationships:
             profile:
                 type: PROFILE_OF
@@ -15,6 +16,5 @@ nodes:
             updatedAt:
                 required: true
                 type: datetime
-                maximum: "2017-01-01"
+                maximum: "now"
                 minimum: "2010-01-01"
-

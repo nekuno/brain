@@ -10,7 +10,7 @@ use Model\Exception\ValidationException;
 use Model\User;
 use Model\User\ProfileModel;
 use Manager\UserManager;
-use Service\Consistency\ConsistencyChecker;
+use Service\Consistency\ConsistencyCheckerService;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -51,12 +51,12 @@ class Neo4jConsistencyUsersCommand extends ApplicationAwareCommand
 //            $this->checkProfile($users, $force, $output);
 //        }
 
-        /** @var ConsistencyChecker $consistencyChecker */
+        /** @var ConsistencyCheckerService $consistencyChecker */
         $consistencyChecker = $this->app['consistency.service'];
 
         foreach ($users as $user){
             try{
-                $consistencyChecker->checkUser($user);
+                $this->checkUser($user);
                 $output->writeln(sprintf('user %d checked', $user->getId()));
             } catch(ValidationException $e) {
                 var_dump($e->getErrors());
@@ -150,6 +150,20 @@ class Neo4jConsistencyUsersCommand extends ApplicationAwareCommand
             }
 
         }
+    }
+
+    public function checkUser(User $user) {
+        $qb = $this->app['neo4j.graph_manager']->createQueryBuilder();
+
+        $qb->match('(u:User{qnoow_id: {userId}})')
+            ->setParameter('userId', $user->getId())
+            ->returns('u');
+
+        $result = $qb->getQuery()->getResultSet();
+
+        $userNode = $result->current()->offsetGet('u');
+
+        $this->app['consistency.service']->checkNode($userNode);
     }
 
 }
