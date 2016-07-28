@@ -122,4 +122,9 @@ final class AppEvents
      * Fired when a profile is created
      */
     const PROFILE_CREATED = 'profile.created';
+
+    /**
+     * Fired when a neo4j consistency error is detected
+     */
+    const CONSISTENCY_ERROR = 'consistency.error';
 }
