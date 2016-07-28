@@ -158,9 +158,7 @@ class UserController
 			    /* @var $facebookResourceOwner FacebookResourceOwner */
 			    $facebookResourceOwner = $resourceOwnerFactory->build(TokensModel::FACEBOOK);
 
-			    if ($request->query->has('extend')) {
-				    $token = $facebookResourceOwner->extend($token);
-			    }
+				$token = $facebookResourceOwner->extend($token);
 
 			    if (array_key_exists('refreshToken', $token) && is_null($token['refreshToken'])) {
 				    $token = $facebookResourceOwner->forceRefreshAccessToken($token);
