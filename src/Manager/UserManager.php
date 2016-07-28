@@ -377,6 +377,28 @@ class UserManager implements PaginatedInterface
         }
     }
 
+	public function validateUsername($userId, $username)
+	{
+		$qb = $this->gm->createQueryBuilder();
+		$qb->match('(u:User {username: { username }})')
+			->where('u.qnoow_id <> { userId }')
+			->setParameters(array(
+				'userId' => $userId,
+				'username' => $username,
+			))
+			->returns('u AS users')
+			->limit(1);
+
+		$query = $qb->getQuery();
+		$result = $query->getResultSet();
+
+		if ($result->count() > 0) {
+			throw new ValidationException(array(
+				'username' => array('Invalid username')
+			));
+		}
+	}
+
     /**
      * @param array $data
      * @return User
@@ -388,6 +410,7 @@ class UserManager implements PaginatedInterface
         $this->validate($data);
 
         $data['userId'] = $this->getNextId();
+	    $data['username'] = $this->getVerifiedUsername($data['username']);
 
         $qb = $this->gm->createQueryBuilder();
         $qb->create('(u:User)')
@@ -416,6 +439,10 @@ class UserManager implements PaginatedInterface
     public function update(array $data)
     {
         $this->validate($data, true);
+
+	    if (isset($data['username'])) {
+	        $this->validateUsername($data['userId'], $data['username']);
+	    }
 
         $user = $this->save($data);
 
@@ -960,14 +987,14 @@ class UserManager implements PaginatedInterface
     {
         $metadata = array(
             'qnoow_id' => array('type' => 'string', 'editable' => false),
-            'username' => array('type' => 'string', 'required' => true, 'editable' => true),
+            'username' => array('type' => 'string', 'editable' => true),
             'usernameCanonical' => array('type' => 'string', 'editable' => false),
-            'email' => array('type' => 'string', 'required' => true),
+            'email' => array('type' => 'string'),
             'emailCanonical' => array('type' => 'string', 'editable' => false),
             'enabled' => array('type' => 'boolean', 'default' => true),
             'salt' => array('type' => 'string', 'editable' => false),
             'password' => array('type' => 'string', 'editable' => false),
-            'plainPassword' => array('type' => 'string', 'required' => true, 'visible' => false),
+            'plainPassword' => array('type' => 'string', 'visible' => false),
             'lastLogin' => array('type' => 'datetime'),
             'locked' => array('type' => 'boolean', 'default' => false),
             'expired' => array('type' => 'boolean', 'editable' => false),
@@ -1077,6 +1104,31 @@ class UserManager implements PaginatedInterface
 
         return $id;
     }
+
+	protected function getVerifiedUsername($username)
+	{
+		$exists = true;
+		$suffix = 1;
+		$username = $username ?: 'user1';
+
+		while ($exists) {
+			$qb = $this->gm->createQueryBuilder();
+			$qb->match('(u:User {username: { username }})')
+				->setParameter('username', $username)
+				->returns('u AS users')
+				->limit(1);
+
+			$query = $qb->getQuery();
+			$result = $query->getResultSet();
+
+			$exists = $result->count() > 0;
+			if ($exists) {
+				$username = 'user' . $suffix++;
+			}
+		}
+
+		return $username;
+	}
 
     public function canonicalize($string)
     {
