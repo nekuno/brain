@@ -6,9 +6,11 @@
 namespace Console\Command;
 
 use Console\ApplicationAwareCommand;
+use Model\Exception\ValidationException;
 use Model\User;
 use Model\User\ProfileModel;
 use Manager\UserManager;
+use Service\Consistency\ConsistencyChecker;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -41,12 +43,24 @@ class Neo4jConsistencyUsersCommand extends ApplicationAwareCommand
 
         //checking status
 
-        if ($status) {
-            $this->checkStatus($users, $force, $output);
-        }
+//        if ($status) {
+//            $this->checkStatus($users, $force, $output);
+//        }
+//
+//        if ($profile) {
+//            $this->checkProfile($users, $force, $output);
+//        }
 
-        if ($profile) {
-            $this->checkProfile($users, $force, $output);
+        /** @var ConsistencyChecker $consistencyChecker */
+        $consistencyChecker = $this->app['consistency.service'];
+
+        foreach ($users as $user){
+            try{
+                $consistencyChecker->checkUser($user);
+                $output->writeln(sprintf('user %d checked', $user->getId()));
+            } catch(ValidationException $e) {
+                var_dump($e->getErrors());
+            }
         }
 
         $output->writeln('Finished.');

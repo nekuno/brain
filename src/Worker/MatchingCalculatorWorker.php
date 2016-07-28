@@ -4,7 +4,6 @@
 namespace Worker;
 
 use Doctrine\DBAL\Connection;
-use Event\ExceptionEvent;
 use Event\UserStatusChangedEvent;
 use Model\Neo4j\Neo4jException;
 use Model\User;
@@ -150,7 +149,7 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                         $userStatusChangedEvent = new UserStatusChangedEvent($userA, $status->getStatus());
                         $this->dispatcher->dispatch(\AppEvents::USER_STATUS_CHANGED, $userStatusChangedEvent);
                     }
-                    $usersAnsweredQuestion = $this->userManager->getByQuestionAnswered($questionId);
+                    $usersAnsweredQuestion = $this->userManager->getByQuestionAnswered($questionId, 800);
                     foreach ($usersAnsweredQuestion as $currentUser) {
                         /* @var $currentUser User */
                         $userB = $currentUser->getId();

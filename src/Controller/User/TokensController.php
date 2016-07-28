@@ -7,7 +7,7 @@ namespace Controller\User;
 
 
 use ApiConsumer\Factory\ResourceOwnerFactory;
-use Http\OAuth\ResourceOwner\FacebookResourceOwner;
+use ApiConsumer\ResourceOwner\FacebookResourceOwner;
 use Manager\UserManager;
 use Model\User;
 use Model\User\GhostUser\GhostUserManager;
