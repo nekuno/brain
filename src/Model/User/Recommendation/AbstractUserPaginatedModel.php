@@ -2,8 +2,11 @@
 
 namespace Model\User\Recommendation;
 
+use Everyman\Neo4j\Query\ResultSet;
 use Model\Neo4j\GraphManager;
+use Model\User\GhostUser\GhostUserManager;
 use Model\User\ProfileFilterModel;
+use Model\User\UserFilterModel;
 use Paginator\PaginatedInterface;
 
 abstract class AbstractUserPaginatedModel implements PaginatedInterface
@@ -18,10 +21,16 @@ abstract class AbstractUserPaginatedModel implements PaginatedInterface
      */
     protected $profileFilterModel;
 
-    public function __construct(GraphManager $gm, ProfileFilterModel $profileFilterModel)
+    /**
+     * @var UserFilterModel
+     */
+    protected $userFilterModel;
+
+    public function __construct(GraphManager $gm, ProfileFilterModel $profileFilterModel, UserFilterModel $userFilterModel)
     {
         $this->gm = $gm;
         $this->profileFilterModel = $profileFilterModel;
+        $this->userFilterModel = $userFilterModel;
     }
 
     /**
@@ -35,6 +44,93 @@ abstract class AbstractUserPaginatedModel implements PaginatedInterface
         $hasProfileFilters = isset($filters['profileFilters']);
 
         return $hasId && $hasProfileFilters;
+    }
+
+    public function getUsersByPopularity($filters, $offset, $limit, $additionalCondition = null)
+    {
+        $id = $filters['id'];
+        $response = array();
+
+        $parameters = array(
+            'offset' => (integer)$offset,
+            'limit' => (integer)$limit,
+            'userId' => (integer)$id
+        );
+
+        $filters = $this->profileFilterModel->splitFilters($filters);
+
+        $profileFilters = $this->getProfileFilters($filters['profileFilters']);
+        $userFilters = $this->getUserFilters($filters['userFilters']);
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->setParameters($parameters);
+
+        $qb->match('(anyUser:User)')
+            ->where('{userId} <> anyUser.qnoow_id', 'NOT (anyUser:' . GhostUserManager::LABEL_GHOST_USER . ')')
+            ->with('anyUser')
+            ->where($userFilters['conditions'])
+            ->match('(anyUser)<-[:PROFILE_OF]-(p:Profile)');
+
+        $qb->optionalMatch('(p)-[:LOCATION]->(l:Location)');
+
+        $qb->with('anyUser, p, l');
+        $qb->where($profileFilters['conditions'])
+            ->with('anyUser', 'p', 'l');
+
+        if (null !== $additionalCondition) {
+            $qb->add('', $additionalCondition);
+        }
+
+        foreach ($profileFilters['matches'] as $match) {
+            $qb->match($match);
+        }
+        foreach ($userFilters['matches'] as $match) {
+            $qb->match($match);
+        }
+
+        $qb->with('anyUser, p, l')
+            ->optionalMatch('(anyUser)<-[likes:LIKES]-(:User)')
+            ->with('anyUser', 'count(likes) as popularity', 'p', 'l');
+
+        $qb->returns(
+            'DISTINCT anyUser.qnoow_id AS id,
+                    anyUser.username AS username,
+                    anyUser.picture AS picture,
+                    p.birthday AS birthday,
+                    l.locality + ", " + l.country AS location',
+            'popularity'
+        )
+            ->orderBy('popularity DESC')
+            ->skip('{ offset }')
+            ->limit('{ limit }');
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+        foreach ($result as $row) {
+
+            $age = null;
+            if ($row['birthday']) {
+                $date = new \DateTime($row['birthday']);
+                $now = new \DateTime();
+                $interval = $now->diff($date);
+                $age = $interval->y;
+            }
+//TODO: Change to UserRecommendation
+            $user = array(
+                'id' => $row['id'],
+                'username' => $row['username'],
+                'picture' => $row['picture'],
+                'matching' => 0.5,
+                'similarity' => 0.5,
+                'age' => $age,
+                'location' => $row['location'],
+                'like' => 0,
+            );
+
+            $response[] = $user;
+        }
+
+        return $response;
     }
 
     /**
@@ -170,5 +266,83 @@ abstract class AbstractUserPaginatedModel implements PaginatedInterface
 
     protected function getProfileFilterMetadata(){
         return $this->profileFilterModel->getFilters();
+    }
+
+    /**
+     * @param array $filters
+     * @return array
+     */
+    protected function getUserFilters(array $filters)
+    {
+        $conditions = array();
+        $matches = array();
+
+        $userFilterMetadata = $this->getUserFilterMetadata();
+        foreach ($userFilterMetadata as $name => $filter) {
+            if (isset($filters[$name]) && !empty($filters[$name])) {
+                $value = $filters[$name];
+                switch ($name) {
+                    case 'groups':
+                        foreach ($value as $index => $groupId) {
+                            $value[$index] = (int)$groupId;
+                        }
+                        $jsonValues = json_encode($value);
+                        $matches[] = "(anyUser)-[:BELONGS_TO]->(group:Group) WHERE id(group) IN $jsonValues";
+                        break;
+                    case 'compatibility':
+                        $valuePerOne = intval($value) / 100;
+                        $conditions[] = "($valuePerOne <= matching_questions)";
+                        break;
+                    case 'similarity':
+                        $valuePerOne = intval($value) / 100;
+                        $conditions[] = "($valuePerOne <= similarity)";
+                        break;
+                }
+            }
+        }
+
+        return array(
+            'conditions' => $conditions,
+            'matches' => $matches
+        );
+    }
+
+    protected function getUserFilterMetadata()
+    {
+        return $this->userFilterModel->getFilters();
+    }
+
+    /**
+     * @param ResultSet $result
+     * @return UserRecommendation[]
+     */
+    public function buildUserRecommendations(ResultSet $result)
+    {
+
+        $response = array();
+        foreach ($result as $row) {
+
+            $age = null;
+            if ($row['birthday']) {
+                $date = new \DateTime($row['birthday']);
+                $now = new \DateTime();
+                $interval = $now->diff($date);
+                $age = $interval->y;
+            }
+
+            $user = new UserRecommendation();
+            $user->setId($row->offsetGet('id'));
+            $user->setUsername($row->offsetGet('username'));
+            $user->setPicture($row->offsetGet('picture'));
+            $user->setMatching($row->offsetGet('matching_questions'));
+            $user->setSimilarity($row->offsetGet('similarity'));
+            $user->setAge($age);
+            $user->setLocation($row->offsetGet('location'));
+            $user->setLike($row->offsetGet('like'));
+
+            $response[] = $user;
+        }
+
+        return $response;
     }
 }
