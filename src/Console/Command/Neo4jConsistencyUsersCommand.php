@@ -54,14 +54,15 @@ class Neo4jConsistencyUsersCommand extends ApplicationAwareCommand
         /** @var ConsistencyCheckerService $consistencyChecker */
         $consistencyChecker = $this->app['consistency.service'];
 
-        foreach ($users as $user){
-            try{
-                $this->checkUser($user);
-                $output->writeln(sprintf('user %d checked', $user->getId()));
-            } catch(ValidationException $e) {
-                var_dump($e->getErrors());
-            }
-        }
+        $consistencyChecker->checkDatabase();
+//        foreach ($users as $user){
+//            try{
+//                $this->checkUser($user);
+//                $output->writeln(sprintf('user %d checked', $user->getId()));
+//            } catch(ValidationException $e) {
+//                var_dump($e->getErrors());
+//            }
+//        }
 
         $output->writeln('Finished.');
     }

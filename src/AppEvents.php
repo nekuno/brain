@@ -127,4 +127,10 @@ final class AppEvents
      * Fired when a neo4j consistency error is detected
      */
     const CONSISTENCY_ERROR = 'consistency.error';
+
+    /**
+     * Fired when a neo4j consistency check starts or finish
+     */
+    const CONSISTENCY_START = 'consistency.start';
+    const CONSISTENCY_END = 'consistency.end';
 }

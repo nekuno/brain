@@ -19,7 +19,7 @@ class ExceptionLoggerSubscriber implements EventSubscriberInterface, LoggerAware
 {
     protected $logger;
 
-    protected $path;
+    protected $consistency_path;
 
     /**
      * ExceptionLoggerSubscriber constructor.
@@ -28,6 +28,7 @@ class ExceptionLoggerSubscriber implements EventSubscriberInterface, LoggerAware
     public function __construct(Logger $logger)
     {
         $this->logger = $logger;
+        $this->consistency_path = __DIR__ . '/../../var/logs/consistency_errors.log';
     }
 
     public static function getSubscribedEvents()
@@ -35,7 +36,9 @@ class ExceptionLoggerSubscriber implements EventSubscriberInterface, LoggerAware
         return array(
             \AppEvents::EXCEPTION_ERROR => array('onError'),
             \AppEvents::EXCEPTION_WARNING => array('onWarning'),
-            \AppEvents::CONSISTENCY_ERROR => array('onConsistencyError')
+            \AppEvents::CONSISTENCY_ERROR => array('onConsistencyError'),
+            \AppEvents::CONSISTENCY_START => array('onConsistencyStart'),
+            \AppEvents::CONSISTENCY_END => array('onConsistencyEnd'),
         );
     }
 
@@ -80,9 +83,8 @@ class ExceptionLoggerSubscriber implements EventSubscriberInterface, LoggerAware
         $exception = $event->getException();
         $errors = $exception->getErrors();
 
-        $path = __DIR__ . '/../../var/logs/consistency_errors.log';
         foreach ($errors as $field => $error) {
-            $fp = fopen($path, "a+");
+            $fp = fopen($this->consistency_path, "a+");
             foreach ($error as $name => $message) {
                 $string = sprintf('%s error related to %s: %s', $field, $name, $message);
 
@@ -98,6 +100,37 @@ class ExceptionLoggerSubscriber implements EventSubscriberInterface, LoggerAware
         }
     }
 
+    public function onConsistencyStart()
+    {
+        $fp = fopen($this->consistency_path, "a+");
+        $now = (new \DateTime('now'))->format('Y-m-d');
+            if (flock($fp, LOCK_EX)) {
+                fwrite($fp, PHP_EOL);
+                fwrite($fp, '---------------------------------');
+                fwrite($fp, 'Starting consistency check on '. $now);
+                fwrite($fp, '---------------------------------');
+                fwrite($fp, PHP_EOL);
+            } else {
+                //couldn´t block the file
+            };
+        fclose($fp);
+    }
+
+    public function onConsistencyEnd()
+    {
+        $fp = fopen($this->consistency_path, "a+");
+        $now = (new \DateTime('now'))->format('Y-m-d');
+        if (flock($fp, LOCK_EX)) {
+            fwrite($fp, PHP_EOL);
+            fwrite($fp, '---------------------------------');
+            fwrite($fp, 'Ending consistency check on '. $now);
+            fwrite($fp, '---------------------------------');
+            fwrite($fp, PHP_EOL);
+        } else {
+            //couldn´t block the file
+        };
+        fclose($fp);
+    }
     /**
      * Sets a logger instance on the object
      *

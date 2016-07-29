@@ -125,7 +125,7 @@ class ServicesServiceProvider implements ServiceProviderInterface
 
         $app['consistency.service'] = $app->share(
             function (Application $app) {
-                return new ConsistencyCheckerService($app['dispatcher'], $app['consistency']);
+                return new ConsistencyCheckerService($app['neo4j.graph_manager'], $app['dispatcher'], $app['consistency']);
             }
         );
 
