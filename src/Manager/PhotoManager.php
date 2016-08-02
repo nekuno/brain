@@ -94,8 +94,16 @@ class PhotoManager
 
         // Save file
         $name = sha1(uniqid($user->getUsernameCanonical() . '_' . time(), true)) . '.' . $extension;
-        $path = 'uploads/gallery/' . md5($user->getId()) . '/' . $name;
-        file_put_contents($this->base . $path, $file);
+        $folder = 'uploads/gallery/' . md5($user->getId()) . '/';
+        if (!is_dir($this->base . $folder)) {
+            mkdir($this->base . $folder, 0775);
+        }
+        $path = $folder . $name;
+        $saved = file_put_contents($this->base . $path, $file);
+
+        if ($saved === false) {
+            throw new ValidationException(array('photo' => array('File can not be saved')));
+        }
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(u:User {qnoow_id: { id }})')

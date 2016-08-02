@@ -6,7 +6,7 @@ use Service\AffinityRecalculations;
 use Service\AMQPManager;
 use Service\AuthService;
 use Service\ChatMessageNotifications;
-use Service\Consistency\ConsistencyChecker;
+use Service\Consistency\ConsistencyCheckerService;
 use Service\EmailNotifications;
 use Service\MigrateSocialInvitations;
 use Service\NotificationManager;
@@ -125,7 +125,7 @@ class ServicesServiceProvider implements ServiceProviderInterface
 
         $app['consistency.service'] = $app->share(
             function (Application $app) {
-                return new ConsistencyChecker($app['neo4j.graph_manager'], $app['consistency']);
+                return new ConsistencyCheckerService($app['neo4j.graph_manager'], $app['dispatcher'], $app['consistency']);
             }
         );
 
