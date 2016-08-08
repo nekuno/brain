@@ -7,6 +7,7 @@ use ApiConsumer\EventListener\FetchLinksSubscriber;
 use ApiConsumer\Fetcher\FetcherService;
 use Console\ApplicationAwareCommand;
 use EventListener\ExceptionLoggerSubscriber;
+use EventListener\UserProcessSubscriber;
 use EventListener\UserStatusSubscriber;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
@@ -103,7 +104,9 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
 
             case AMQPManager::MATCHING:
                 $userStatusSubscriber = new UserStatusSubscriber($this->app['instant.client']);
+                $userProcessSubscriber = new UserProcessSubscriber($this->app['instant.client']);
                 $dispatcher->addSubscriber($userStatusSubscriber);
+                $dispatcher->addSubscriber($userProcessSubscriber);
 
                 $worker = new MatchingCalculatorWorker(
                     $channel,
