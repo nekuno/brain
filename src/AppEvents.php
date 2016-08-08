@@ -123,6 +123,16 @@ final class AppEvents
      */
     const PROFILE_CREATED = 'profile.created';
 
+	/**
+	 * Fired when a user process starts
+	 */
+	const USER_PROCESS_STARTED = 'userProcess.start';
+
+	/**
+	 * Fired when a user process finishes
+	 */
+	const USER_PROCESS_FINISHED = 'userProcess.finish';
+
     /**
      * Fired when a neo4j consistency error is detected
      */
