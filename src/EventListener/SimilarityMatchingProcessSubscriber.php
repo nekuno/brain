@@ -16,15 +16,15 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  */
 class SimilarityMatchingProcessSubscriber implements EventSubscriberInterface
 {
-	/**
-	 * @var Client
-	 */
-	protected $client;
+    /**
+     * @var Client
+     */
+    protected $client;
 
-	public function __construct(Client $client)
-	{
-		$this->client = $client;
-	}
+    public function __construct(Client $client)
+    {
+        $this->client = $client;
+    }
 
     /**
      * { @inheritdoc }
@@ -44,61 +44,61 @@ class SimilarityMatchingProcessSubscriber implements EventSubscriberInterface
 
     public function onSimilarityProcessStart(SimilarityProcessEvent $event)
     {
-	    $json = array('userId' => $event->getUserId());
-	    try {
-		    $this->client->post('api/similarity/start', array('json' => $json));
-	    } catch (RequestException $e) {
+        $json = array('userId' => $event->getUserId(), 'processId' => $event->getProcessId());
+        try {
+            $this->client->post('api/similarity/start', array('json' => $json));
+        } catch (RequestException $e) {
 
-	    }
+        }
     }
 
-	public function onSimilarityProcessStep(SimilarityProcessStepEvent $event)
-	{
-		$json = array('userId' => $event->getUserId(), 'percentage' => $event->getPercentage());
-		try {
-			$this->client->post('api/similarity/step', array('json' => $json));
-		} catch (RequestException $e) {
+    public function onSimilarityProcessStep(SimilarityProcessStepEvent $event)
+    {
+        $json = array('userId' => $event->getUserId(), 'processId' => $event->getProcessId(), 'percentage' => $event->getPercentage());
+        try {
+            $this->client->post('api/similarity/step', array('json' => $json));
+        } catch (RequestException $e) {
 
-		}
-	}
+        }
+    }
 
-	public function onSimilarityProcessFinish(SimilarityProcessEvent $event)
-	{
-		$json = array('userId' => $event->getUserId());
-		try {
-			$this->client->post('api/similarity/finish', array('json' => $json));
-		} catch (RequestException $e) {
+    public function onSimilarityProcessFinish(SimilarityProcessEvent $event)
+    {
+        $json = array('userId' => $event->getUserId(), 'processId' => $event->getProcessId());
+        try {
+            $this->client->post('api/similarity/finish', array('json' => $json));
+        } catch (RequestException $e) {
 
-		}
-	}
+        }
+    }
 
-	public function onMatchingProcessStart(MatchingProcessEvent $event)
-	{
-		$json = array('userId' => $event->getUserId());
-		try {
-			$this->client->post('api/matching/start', array('json' => $json));
-		} catch (RequestException $e) {
+    public function onMatchingProcessStart(MatchingProcessEvent $event)
+    {
+        $json = array('userId' => $event->getUserId(), 'processId' => $event->getProcessId());
+        try {
+            $this->client->post('api/matching/start', array('json' => $json));
+        } catch (RequestException $e) {
 
-		}
-	}
+        }
+    }
 
-	public function onMatchingProcessStep(MatchingProcessStepEvent $event)
-	{
-		$json = array('userId' => $event->getUserId(), 'percentage' => $event->getPercentage());
-		try {
-			$this->client->post('api/matching/step', array('json' => $json));
-		} catch (RequestException $e) {
+    public function onMatchingProcessStep(MatchingProcessStepEvent $event)
+    {
+        $json = array('userId' => $event->getUserId(), 'processId' => $event->getProcessId(), 'percentage' => $event->getPercentage());
+        try {
+            $this->client->post('api/matching/step', array('json' => $json));
+        } catch (RequestException $e) {
 
-		}
-	}
+        }
+    }
 
-	public function onMatchingProcessFinish(MatchingProcessEvent $event)
-	{
-		$json = array('userId' => $event->getUserId());
-		try {
-			$this->client->post('api/matching/finish', array('json' => $json));
-		} catch (RequestException $e) {
+    public function onMatchingProcessFinish(MatchingProcessEvent $event)
+    {
+        $json = array('userId' => $event->getUserId(), 'processId' => $event->getProcessId());
+        try {
+            $this->client->post('api/matching/finish', array('json' => $json));
+        } catch (RequestException $e) {
 
-		}
-	}
+        }
+    }
 }

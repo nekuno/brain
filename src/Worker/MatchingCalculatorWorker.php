@@ -132,7 +132,8 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                     }
                     $usersWithSameContent = $this->userManager->getByCommonLinksWithUser($userA, 1000);
 
-	                $similarityProcessEvent = new SimilarityProcessEvent($userA);
+                    $processId = time();
+	                $similarityProcessEvent = new SimilarityProcessEvent($userA, $processId);
 	                $this->dispatcher->dispatch(\AppEvents::SIMILARITY_PROCESS_START, $similarityProcessEvent);
 	                $usersCount = count($usersWithSameContent);
 	                $prevPercentage = 0;
@@ -143,7 +144,7 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                         $percentage = round(($userIndex + 1)/$usersCount * 100);
 	                    $this->logger->info(sprintf('   Similarity by interests between users %d - %d: %s', $userA, $userB, $similarity['interests']));
 	                    if ($percentage > $prevPercentage) {
-		                    $similarityProcessStepEvent = new SimilarityProcessStepEvent($userA, $percentage);
+		                    $similarityProcessStepEvent = new SimilarityProcessStepEvent($userA, $processId, $percentage);
 		                    $this->dispatcher->dispatch(\AppEvents::SIMILARITY_PROCESS_STEP, $similarityProcessStepEvent);
 							$prevPercentage = $percentage;
 	                    }
@@ -176,7 +177,8 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                     }
                     $usersAnsweredQuestion = $this->userManager->getByQuestionAnswered($questionId, 800);
 
-	                $matchingProcessEvent = new MatchingProcessEvent($userA);
+                    $processId = time();
+	                $matchingProcessEvent = new MatchingProcessEvent($userA, $processId);
 	                $this->dispatcher->dispatch(\AppEvents::MATCHING_PROCESS_START, $matchingProcessEvent);
 	                $usersCount = count($usersAnsweredQuestion);
 	                $prevPercentage = 0;
@@ -190,7 +192,7 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
 	                        $this->logger->info(sprintf('   Similarity by questions between users %d - %d: %s', $userA, $userB, $similarity['questions']));
                             $this->logger->info(sprintf('   Matching by questions between users %d - %d: %s', $userA, $userB, $matching));
 	                        if ($percentage > $prevPercentage) {
-		                        $matchingProcessStepEvent = new MatchingProcessStepEvent($userA, $percentage);
+		                        $matchingProcessStepEvent = new MatchingProcessStepEvent($userA, $processId, $percentage);
 		                        $this->dispatcher->dispatch(\AppEvents::MATCHING_PROCESS_STEP, $matchingProcessStepEvent);
 		                        $prevPercentage = $percentage;
 	                        }
