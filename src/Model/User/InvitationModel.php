@@ -202,7 +202,7 @@ class InvitationModel
             ->where("u.qnoow_id = { userId }")
             ->optionalMatch('(inv)-[:HAS_GROUP]->(g:Group)')
             ->optionalMatch('(inv)<-[:CONSUMED_INVITATION]-(cu:User)')
-            ->returns('inv AS invitation', 'g AS group', 'cu.emailCanonical as consumedUserEmail')
+            ->returns('inv AS invitation', 'g AS group', 'cu.qnoow_id as consumedUserId', 'cu.usernameCanonical as consumedUsername')
             ->skip("{ offset }")
             ->limit("{ limit }")
             ->setParameters(
@@ -826,7 +826,8 @@ class InvitationModel
 
         $userId = $row->offsetExists('userId') ? $row->offsetGet('userId') : null;
 
-	    $consumedUserEmail = $row->offsetExists('consumedUserEmail') ? $row->offsetGet('consumedUserEmail') : null;
+	    $consumedUserId = $row->offsetExists('consumedUserId') ? $row->offsetGet('consumedUserId') : null;
+	    $consumedUsername = $row->offsetExists('consumedUsername') ? $row->offsetGet('consumedUsername') : null;
 
 	    $optionalKeys = array('email', 'expiresAt', 'htmlText', 'slogan', 'image_url', 'image_path', 'orientationRequired');
         $requiredKeys = array('token', 'available', 'consumed', 'createdAt');
@@ -853,8 +854,8 @@ class InvitationModel
             $invitationArray += array('userId' => $userId);
         }
 
-	    if (!$group && $consumedUserEmail) {
-		    $invitationArray += array('consumedUserEmail' => $consumedUserEmail);
+	    if (!$group && $consumedUserId && $consumedUsername) {
+		    $invitationArray += array('consumedUserId' => $consumedUserId, 'consumedUsername' => $consumedUsername);
 	    }
 
         if (isset($invitationArray['image_path'])) {
