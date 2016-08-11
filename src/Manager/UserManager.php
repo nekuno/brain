@@ -541,6 +541,32 @@ class UserManager implements PaginatedInterface
     }
 
     /**
+     * @param $userId
+     * @param int $limit
+     * @return User[]
+     */
+    public function getByUserQuestionAnswered($userId, $limit = 100)
+    {
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->setParameters(array('limit' => (integer)$limit));
+
+        $qb->match('(u:User {qnoow_id: {userId})-[:RATES]->(q:Question)')
+            ->setParameter('userId', (integer)$userId)
+            ->with('u, q')
+            ->match('(o:User)-[:RATES]->(q)')
+            ->where('u <> o')
+            ->returns('DISTINCT o')
+            ->limit('{limit}');
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        return $this->parseResultSet($result);
+
+    }
+
+    /**
      * @param $groupId
      * @param array $data
      * @return User[]
