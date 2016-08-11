@@ -123,6 +123,36 @@ final class AppEvents
      */
     const PROFILE_CREATED = 'profile.created';
 
+	/**
+	 * Fired when a similarity process starts
+	 */
+	const SIMILARITY_PROCESS_START = 'similarity.start';
+
+	/**
+	 * Fired for each similarity process step
+	 */
+	const SIMILARITY_PROCESS_STEP = 'similarity.step';
+
+	/**
+	 * Fired when a similarity process finishes
+	 */
+	const SIMILARITY_PROCESS_FINISH = 'similarity.finish';
+
+	/**
+	 * Fired when a matching process starts
+	 */
+	const MATCHING_PROCESS_START = 'matching.start';
+
+	/**
+	 * Fired for each matching process step
+	 */
+	const MATCHING_PROCESS_STEP = 'matching.step';
+
+	/**
+	 * Fired when a matching process finishes
+	 */
+	const MATCHING_PROCESS_FINISH = 'matching.finish';
+
     /**
      * Fired when a neo4j consistency error is detected
      */

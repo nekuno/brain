@@ -7,6 +7,7 @@ use ApiConsumer\EventListener\FetchLinksSubscriber;
 use ApiConsumer\Fetcher\FetcherService;
 use Console\ApplicationAwareCommand;
 use EventListener\ExceptionLoggerSubscriber;
+use EventListener\SimilarityMatchingProcessSubscriber;
 use EventListener\UserStatusSubscriber;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
@@ -103,13 +104,16 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
 
             case AMQPManager::MATCHING:
                 $userStatusSubscriber = new UserStatusSubscriber($this->app['instant.client']);
+                $similarityMatchingProcessSubscriber = new SimilarityMatchingProcessSubscriber($this->app['instant.client']);
                 $dispatcher->addSubscriber($userStatusSubscriber);
+                $dispatcher->addSubscriber($similarityMatchingProcessSubscriber);
 
                 $worker = new MatchingCalculatorWorker(
                     $channel,
                     $this->app['users.manager'],
                     $this->app['users.matching.model'],
                     $this->app['users.similarity.model'],
+                    $this->app['questionnaire.questions.model'],
                     $this->app['dbs']['mysql_social'],
                     $this->app['dbs']['mysql_brain'],
                     $dispatcher);

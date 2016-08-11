@@ -1,11 +1,15 @@
 <?php
 
-
 namespace Worker;
 
 use Doctrine\DBAL\Connection;
+use Event\MatchingProcessEvent;
+use Event\MatchingProcessStepEvent;
+use Event\SimilarityProcessEvent;
+use Event\SimilarityProcessStepEvent;
 use Event\UserStatusChangedEvent;
 use Model\Neo4j\Neo4jException;
+use Model\Questionnaire\QuestionModel;
 use Model\User;
 use Model\User\Matching\MatchingModel;
 use Model\User\Similarity\SimilarityModel;
@@ -39,6 +43,10 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
      */
     protected $similarityModel;
     /**
+     * @var QuestionModel
+     */
+    protected $questionModel;
+    /**
      * @var Connection
      */
     protected $connectionSocial;
@@ -51,13 +59,14 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
      */
     protected $dispatcher;
 
-    public function __construct(AMQPChannel $channel, UserManager $userManager, MatchingModel $matchingModel, SimilarityModel $similarityModel, Connection $connectionSocial, Connection $connectionBrain, EventDispatcher $dispatcher)
+    public function __construct(AMQPChannel $channel, UserManager $userManager, MatchingModel $matchingModel, SimilarityModel $similarityModel, QuestionModel $questionModel, Connection $connectionSocial, Connection $connectionBrain, EventDispatcher $dispatcher)
     {
 
         $this->channel = $channel;
         $this->userManager = $userManager;
         $this->matchingModel = $matchingModel;
         $this->similarityModel = $similarityModel;
+        $this->questionModel = $questionModel;
         $this->connectionSocial = $connectionSocial;
         $this->connectionBrain = $connectionBrain;
         $this->dispatcher = $dispatcher;
@@ -122,12 +131,28 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                     }
                     $usersWithSameContent = $this->userManager->getByCommonLinksWithUser($userA, 1000);
 
-                    foreach ($usersWithSameContent as $currentUser) {
+                    $processId = time();
+                    $similarityProcessEvent = new SimilarityProcessEvent($userA, $processId);
+                    $this->dispatcher->dispatch(\AppEvents::SIMILARITY_PROCESS_START, $similarityProcessEvent);
+                    $usersCount = count($usersWithSameContent);
+                    $prevPercentage = 0;
+                    foreach ($usersWithSameContent as $userIndex => $currentUser) {
                         /* @var $currentUser User */
                         $userB = $currentUser->getId();
                         $similarity = $this->similarityModel->getSimilarityBy(SimilarityModel::INTERESTS, $userA, $userB);
+                        $percentage = round(($userIndex + 1) / $usersCount * 100);
                         $this->logger->info(sprintf('   Similarity by interests between users %d - %d: %s', $userA, $userB, $similarity['interests']));
+                        if ($percentage > $prevPercentage) {
+                            $similarityProcessStepEvent = new SimilarityProcessStepEvent($userA, $processId, $percentage);
+                            $this->dispatcher->dispatch(\AppEvents::SIMILARITY_PROCESS_STEP, $similarityProcessStepEvent);
+                            $prevPercentage = $percentage;
+                        }
                     }
+                    $this->dispatcher->dispatch(\AppEvents::SIMILARITY_PROCESS_FINISH, $similarityProcessEvent);
+
+                    $usersAnsweredQuestion = $this->userManager->getByQuestionAnswered($userA, 800);
+                    $this->processUsersAnsweredQuestion($userA, $usersAnsweredQuestion);
+
                 } catch (\Exception $e) {
                     $this->logger->error(sprintf('Worker: Error calculating similarity for user %d with message %s on file %s, line %d', $userA, $e->getMessage(), $e->getFile(), $e->getLine()));
                     if ($e instanceof Neo4jException) {
@@ -149,17 +174,12 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                         $userStatusChangedEvent = new UserStatusChangedEvent($userA, $status->getStatus());
                         $this->dispatcher->dispatch(\AppEvents::USER_STATUS_CHANGED, $userStatusChangedEvent);
                     }
-                    $usersAnsweredQuestion = $this->userManager->getByQuestionAnswered($questionId, 800);
-                    foreach ($usersAnsweredQuestion as $currentUser) {
-                        /* @var $currentUser User */
-                        $userB = $currentUser->getId();
-                        if ($userA <> $userB) {
-                            $similarity = $this->similarityModel->getSimilarityBy(SimilarityModel::QUESTIONS, $userA, $userB);
-                            $matching = $this->matchingModel->calculateMatchingBetweenTwoUsersBasedOnAnswers($userA, $userB);
-                            $this->logger->info(sprintf('   Similarity by questions between users %d - %d: %s', $userA, $userB, $similarity['questions']));
-                            $this->logger->info(sprintf('   Matching by questions between users %d - %d: %s', $userA, $userB, $matching));
-                        }
+
+                    if (!$this->questionModel->userHasCompletedRegisterQuestions($userA)) {
+                        break;
                     }
+                    $usersAnsweredQuestion = $this->userManager->getByQuestionAnswered($questionId, 800);
+                    $this->processUsersAnsweredQuestion($userA, $usersAnsweredQuestion);
 
                 } catch (\Exception $e) {
                     $this->logger->error(sprintf('Worker: Error calculating matching and similarity for user %d with message %s on file %s, line %d', $userA, $e->getMessage(), $e->getFile(), $e->getLine()));
@@ -220,6 +240,32 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
         $message->delivery_info['channel']->basic_ack($message->delivery_info['delivery_tag']);
 
         $this->memory();
+    }
+
+    private function processUsersAnsweredQuestion($userA, $usersAnsweredQuestion)
+    {
+        $processId = time();
+        $matchingProcessEvent = new MatchingProcessEvent($userA, $processId);
+        $this->dispatcher->dispatch(\AppEvents::MATCHING_PROCESS_START, $matchingProcessEvent);
+        $usersCount = count($usersAnsweredQuestion);
+        $prevPercentage = 0;
+        foreach ($usersAnsweredQuestion as $userIndex => $currentUser) {
+            /* @var $currentUser User */
+            $userB = $currentUser->getId();
+            if ($userA <> $userB) {
+                $similarity = $this->similarityModel->getSimilarityBy(SimilarityModel::QUESTIONS, $userA, $userB);
+                $matching = $this->matchingModel->calculateMatchingBetweenTwoUsersBasedOnAnswers($userA, $userB);
+                $percentage = round(($userIndex + 1)/$usersCount * 100);
+                $this->logger->info(sprintf('   Similarity by questions between users %d - %d: %s', $userA, $userB, $similarity['questions']));
+                $this->logger->info(sprintf('   Matching by questions between users %d - %d: %s', $userA, $userB, $matching));
+                if ($percentage > $prevPercentage) {
+                    $matchingProcessStepEvent = new MatchingProcessStepEvent($userA, $processId, $percentage);
+                    $this->dispatcher->dispatch(\AppEvents::MATCHING_PROCESS_STEP, $matchingProcessStepEvent);
+                    $prevPercentage = $percentage;
+                }
+            }
+        }
+        $this->dispatcher->dispatch(\AppEvents::MATCHING_PROCESS_FINISH, $matchingProcessEvent);
     }
 
 }
