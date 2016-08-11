@@ -7,6 +7,7 @@ namespace EventListener;
 use Model\Neo4j\GraphManager;
 use Everyman\Neo4j\Query\Row;
 use Event\AnswerEvent;
+use Model\User\InvitationModel;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -18,10 +19,12 @@ class InvitationSubscriber implements EventSubscriberInterface
     const INVITATIONS_PER_HUNDRED_ANSWERS = 10;
 
     protected $gm;
+    protected $im;
 
-    public function __construct(GraphManager $gm)
+    public function __construct(GraphManager $gm, InvitationModel $im)
     {
         $this->gm = $gm;
+        $this->im = $im;
     }
 
     public static function getSubscribedEvents()
@@ -37,8 +40,14 @@ class InvitationSubscriber implements EventSubscriberInterface
 
         $userAnswersCount = $this->getNumberOfUserAnswers($userId);
 
-        if((int)$userAnswersCount % 100 === 0) {
+        if((int)$userAnswersCount === 1) {
             $this->addUserAvailable($userId, self::INVITATIONS_PER_HUNDRED_ANSWERS);
+	        for ($i = 0; $i < self::INVITATIONS_PER_HUNDRED_ANSWERS; $i++) {
+	        	$this->im->create(array(
+	        		'userId' => $userId,
+			        'available' => 1,
+		        ));
+	        }
         }
     }
 
