@@ -853,7 +853,7 @@ class InvitationModel
             $invitationArray += array('userId' => $userId);
         }
 
-	    if ($consumedUserEmail) {
+	    if (!$group && $consumedUserEmail) {
 		    $invitationArray += array('consumedUserEmail' => $consumedUserEmail);
 	    }
 
