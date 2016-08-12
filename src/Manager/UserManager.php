@@ -556,7 +556,7 @@ class UserManager implements PaginatedInterface
     {
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match('(u:User {qnoow_id: {userId})-[:RATES]->(q:Question)')
+        $qb->match('(u:User {qnoow_id: {userId}})-[:RATES]->(q:Question)')
             ->setParameter('userId', (int)$userId)
             ->with('u, q')
             ->match('(o:User)-[:RATES]->(q)')
