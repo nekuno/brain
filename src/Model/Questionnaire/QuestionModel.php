@@ -108,6 +108,25 @@ class QuestionModel
         return $this->build($row, $locale);
     }
 
+	public function userHasCompletedRegisterQuestions($userId)
+	{
+		$qb = $this->gm->createQueryBuilder();
+
+		$qb->match('(user:User {qnoow_id: { userId }})', '(a:Answer)-[:IS_ANSWER_OF]->(:RegisterQuestion)')
+		   ->setParameter('userId', (int)$userId)
+		   ->where('NOT (user)-[:ANSWERS]->(a)')
+		   ->returns('COUNT(a)');
+
+		$query = $qb->getQuery();
+		$result = $query->getResultSet();
+
+		if ($result->count() > 0) {
+			return true;
+		}
+
+		return false;
+	}
+
     /**
      * @return bool
      */
