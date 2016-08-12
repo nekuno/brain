@@ -1262,8 +1262,12 @@ class UserManager implements PaginatedInterface
 
     protected function updateCanonicalFields(array &$user)
     {
-	    $user['usernameCanonical'] = $this->canonicalize($user['username']);
-	    $user['emailCanonical'] = $this->canonicalize($user['email']);
+        if (isset($user['username'])) {
+            $user['usernameCanonical'] = $this->canonicalize($user['username']);
+        }
+        if (isset($user['email'])) {
+            $user['emailCanonical'] = $this->canonicalize($user['email']);
+        }
     }
 
     protected function updatePassword(array &$user)
