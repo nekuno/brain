@@ -150,7 +150,7 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                     }
                     $this->dispatcher->dispatch(\AppEvents::SIMILARITY_PROCESS_FINISH, $similarityProcessEvent);
 
-                    $usersAnsweredQuestion = $this->userManager->getByQuestionAnswered($userA, 800);
+                    $usersAnsweredQuestion = $this->userManager->getByUserQuestionAnswered($userA, 800);
                     $this->processUsersAnsweredQuestion($userA, $usersAnsweredQuestion);
 
                 } catch (\Exception $e) {
@@ -248,6 +248,7 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
         $matchingProcessEvent = new MatchingProcessEvent($userA, $processId);
         $this->dispatcher->dispatch(\AppEvents::MATCHING_PROCESS_START, $matchingProcessEvent);
         $usersCount = count($usersAnsweredQuestion);
+        $this->logger->info(sprintf('   Processing %d users', $usersCount));
         $prevPercentage = 0;
         foreach ($usersAnsweredQuestion as $userIndex => $currentUser) {
             /* @var $currentUser User */
