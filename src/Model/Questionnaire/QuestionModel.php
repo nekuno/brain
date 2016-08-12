@@ -120,7 +120,7 @@ class QuestionModel
 		$query = $qb->getQuery();
 		$result = $query->getResultSet();
 
-		if ($result > 0) {
+		if ($result->count() > 0) {
 			return true;
 		}
 
