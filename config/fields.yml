@@ -148,11 +148,6 @@ profile:
         label: &civilStatus.label
             en: 'Civil status'
             es: 'Estado civil'
-    nationality:
-        type: choice
-        label: &nationality.label
-            en: 'Nationality'
-            es: 'Nacionalidad'
     income:
         type: choice
         label: &income.label
@@ -467,9 +462,6 @@ filters:
         civilStatus:
             type: multiple_choices
             label: *civilStatus.label
-        nationality:
-            type: multiple_choices
-            label: *nationality.label
         income:
             type: multiple_choices
             label: *income.label

@@ -371,23 +371,6 @@ class ProfileOptions implements LoggerAwareInterface
                     'name_es' => 'Más de 24.000 US$/año',
                 ),
             ),
-            'Nationality' => array(
-                array(
-                    'id' => 'us',
-                    'name_en' => 'US',
-                    'name_es' => 'Estadounidense',
-                ),
-                array(
-                    'id' => 'british',
-                    'name_en' => 'British',
-                    'name_es' => 'Británica',
-                ),
-                array(
-                    'id' => 'spanish',
-                    'name_en' => 'Spanish',
-                    'name_es' => 'Española',
-                ),
-            ),
             'Orientation' => array(
                 array(
                     'id' => 'heterosexual',
