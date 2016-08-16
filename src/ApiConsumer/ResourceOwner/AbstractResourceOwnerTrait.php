@@ -6,7 +6,6 @@ use ApiConsumer\Event\OAuthTokenEvent;
 use ApiConsumer\LinkProcessor\UrlParser\UrlParser;
 use Buzz\Client\ClientInterface as HttpClientInterface;
 use ApiConsumer\Exception\TokenException;
-use Http\OAuth\ResourceOwner\ClientCredential\ClientCredentialInterface;
 use HWI\Bundle\OAuthBundle\DependencyInjection\Configuration;
 use HWI\Bundle\OAuthBundle\OAuth\RequestDataStorageInterface;
 use HWI\Bundle\OAuthBundle\Security\OAuthUtils;
@@ -27,11 +26,6 @@ trait AbstractResourceOwnerTrait
      * @var EventDispatcher
      */
     protected $dispatcher;
-
-    /**
-     * @var \Http\OAuth\ResourceOwner\ClientCredential\ClientCredentialInterface
-     */
-    protected $clientCredential;
 
     /**
      * @var UrlParser
@@ -217,24 +211,6 @@ trait AbstractResourceOwnerTrait
         $response = $this->httpRequest($this->normalizeUrl($this->options['base_url'] . $url, $query));
 
         return $this->getResponseContent($response);
-    }
-
-    protected function getClientToken()
-    {
-        if ($this->clientCredential instanceof ClientCredentialInterface) {
-            return $this->clientCredential->getClientToken();
-        }
-
-        return '';
-    }
-
-    protected function getApplicationToken()
-    {
-        if ($this->clientCredential instanceof ClientCredentialInterface) {
-            return $this->clientCredential->getApplicationToken();
-        }
-
-        return '';
     }
 
     /**
