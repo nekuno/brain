@@ -202,7 +202,7 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
         $id = $filters['id'];
         $condition = "MATCH (u:User{qnoow_id:$id}) WHERE NOT (u)-[:SIMILARITY|:MATCHES]-(anyUser)";
 
-        $items = $this->getUsersByPopularity($filters, $limit, $foreign, $condition);
+        $items = $this->getUsersByPopularity($filters, $foreign, $limit, $condition);
 
         $return = array('items' => array_slice($items, 0, $limit) );
         $return['foreign'] = $foreign + count($return['items']);

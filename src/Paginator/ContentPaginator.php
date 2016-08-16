@@ -7,20 +7,12 @@
 namespace Paginator;
 
 use Model\Exception\ValidationException;
-use Model\LinkModel;
 use Model\User\Recommendation\ContentRecommendation;
+use Model\User\Recommendation\UserRecommendation;
 use Symfony\Component\HttpFoundation\Request;
 
 class ContentPaginator extends Paginator
 {
-    protected $linkModel;
-
-    function __construct(LinkModel $linkModel, $maxLimit = 50, $defaultLimit = 20)
-    {
-        parent::__construct($maxLimit, $defaultLimit);
-        $this->linkModel = $linkModel;
-    }
-
     /**
      * @param array $filters
      * @param PaginatedInterface $paginated Slice returns array (items, newForeign)
@@ -49,9 +41,19 @@ class ContentPaginator extends Paginator
         $newForeign = isset($slice['newForeign']) ? $slice['newForeign'] : $foreign;
         $foreignContent = 0;
         foreach ($slice['items'] as $item) {
-            /** @var $item ContentRecommendation */
-            if ($item->getMatch() == 0) {
-                $foreignContent++;
+            if ($item instanceof ContentRecommendation) {
+                if ($item->getMatch() == 0) {
+                    $foreignContent++;
+                }
+            } else if ($item instanceof UserRecommendation) {
+                if ($item->getSimilarity() == 0) {
+                    $foreignContent++;
+                }
+                //TODO: This should not happen when revised
+            } else if (is_array($item)){
+                if (isset($item['similarity']) && $item['similarity'] == 0) {
+                    $foreignContent++;
+                }
             }
         }
 

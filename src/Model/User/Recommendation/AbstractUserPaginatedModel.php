@@ -49,7 +49,6 @@ abstract class AbstractUserPaginatedModel implements PaginatedInterface
     public function getUsersByPopularity($filters, $offset, $limit, $additionalCondition = null)
     {
         $id = $filters['id'];
-        $response = array();
 
         $parameters = array(
             'offset' => (integer)$offset,
@@ -106,31 +105,8 @@ abstract class AbstractUserPaginatedModel implements PaginatedInterface
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();
-        foreach ($result as $row) {
 
-            $age = null;
-            if ($row['birthday']) {
-                $date = new \DateTime($row['birthday']);
-                $now = new \DateTime();
-                $interval = $now->diff($date);
-                $age = $interval->y;
-            }
-//TODO: Change to UserRecommendation
-            $user = array(
-                'id' => $row['id'],
-                'username' => $row['username'],
-                'picture' => $row['picture'],
-                'matching' => 0.5,
-                'similarity' => 0.5,
-                'age' => $age,
-                'location' => $row['location'],
-                'like' => 0,
-            );
-
-            $response[] = $user;
-        }
-
-        return $response;
+        return $this->buildUserRecommendations($result);
     }
 
     /**
@@ -318,7 +294,6 @@ abstract class AbstractUserPaginatedModel implements PaginatedInterface
      */
     public function buildUserRecommendations(ResultSet $result)
     {
-
         $response = array();
         foreach ($result as $row) {
 
