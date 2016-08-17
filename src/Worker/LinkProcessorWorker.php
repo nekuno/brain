@@ -6,7 +6,7 @@ namespace Worker;
 use ApiConsumer\Fetcher\FetcherService;
 use Doctrine\DBAL\Connection;
 use ApiConsumer\Factory\ResourceOwnerFactory;
-use Http\OAuth\ResourceOwner\TwitterResourceOwner;
+use ApiConsumer\ResourceOwner\TwitterResourceOwner;
 use Model\Neo4j\Neo4jException;
 use Model\User\LookUpModel;
 use Model\User\SocialNetwork\SocialProfileManager;

@@ -135,11 +135,13 @@ class UserManager implements PaginatedInterface
         return $this->buildIdsArray($result);
     }
 
-    public function buildIdsArray(ResultSet $result) {
+    public function buildIdsArray(ResultSet $result)
+    {
         $ids = array();
         foreach ($result as $row) {
             $ids[] = $row->offsetGet('id');
         }
+
         return $ids;
     }
 
@@ -212,37 +214,39 @@ class UserManager implements PaginatedInterface
         return $this->build($row);
     }
 
-	/**
-	 * @param string $resourceOwner
-	 * @param string $resourceId
-	 * @return User
-	 * @throws Neo4jException
-	 * @throws NotFoundHttpException
-	 */
-        public function findUserByResourceOwner($resourceOwner, $resourceId)
-	{
+    /**
+     * @param string $resourceOwner
+     * @param string $resourceId
+     * @return User
+     * @throws Neo4jException
+     * @throws NotFoundHttpException
+     */
+    public function findUserByResourceOwner($resourceOwner, $resourceId)
+    {
 
-		$qb = $this->gm->createQueryBuilder();
-		$qb->match('(u:User)<-[:TOKEN_OF]-(t:Token)')
-			->where('t.resourceOwner = { resourceOwner }', 't.resourceId = { resourceId }')
-			->setParameters(array(
-				'resourceOwner' => $resourceOwner,
-				'resourceId' => $resourceId,
-			))
-			->returns('u');
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User)<-[:TOKEN_OF]-(t:Token)')
+            ->where('t.resourceOwner = { resourceOwner }', 't.resourceId = { resourceId }')
+            ->setParameters(
+                array(
+                    'resourceOwner' => $resourceOwner,
+                    'resourceId' => $resourceId,
+                )
+            )
+            ->returns('u');
 
-		$query = $qb->getQuery();
-		$result = $query->getResultSet();
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
 
-		if ($result->count() < 1) {
-			throw new NotFoundHttpException('User not found');
-		}
+        if ($result->count() < 1) {
+            throw new NotFoundHttpException('User not found');
+        }
 
-		/* @var $row Row */
-		$row = $result->current();
+        /* @var $row Row */
+        $row = $result->current();
 
-		return $this->build($row);
-	}
+        return $this->build($row);
+    }
 
     /**
      * Finds a user by email
@@ -377,27 +381,31 @@ class UserManager implements PaginatedInterface
         }
     }
 
-	public function validateUsername($userId, $username)
-	{
-		$qb = $this->gm->createQueryBuilder();
-		$qb->match('(u:User {username: { username }})')
-			->where('u.qnoow_id <> { userId }')
-			->setParameters(array(
-				'userId' => $userId,
-				'username' => $username,
-			))
-			->returns('u AS users')
-			->limit(1);
+    public function validateUsername($userId, $username)
+    {
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User {username: { username }})')
+            ->where('u.qnoow_id <> { userId }')
+            ->setParameters(
+                array(
+                    'userId' => $userId,
+                    'username' => $username,
+                )
+            )
+            ->returns('u AS users')
+            ->limit(1);
 
-		$query = $qb->getQuery();
-		$result = $query->getResultSet();
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
 
-		if ($result->count() > 0) {
-			throw new ValidationException(array(
-				'username' => array('Invalid username')
-			));
-		}
-	}
+        if ($result->count() > 0) {
+            throw new ValidationException(
+                array(
+                    'username' => array('Invalid username')
+                )
+            );
+        }
+    }
 
     /**
      * @param array $data
@@ -410,7 +418,7 @@ class UserManager implements PaginatedInterface
         $this->validate($data);
 
         $data['userId'] = $this->getNextId();
-	    $data['username'] = $this->getVerifiedUsername($data['username']);
+        $data['username'] = $this->getVerifiedUsername($data['username']);
 
         $qb = $this->gm->createQueryBuilder();
         $qb->create('(u:User)')
@@ -440,9 +448,9 @@ class UserManager implements PaginatedInterface
     {
         $this->validate($data, true);
 
-	    if (isset($data['username'])) {
-	        $this->validateUsername($data['userId'], $data['username']);
-	    }
+        if (isset($data['username'])) {
+            $this->validateUsername($data['userId'], $data['username']);
+        }
 
         $user = $this->save($data);
 
@@ -525,13 +533,37 @@ class UserManager implements PaginatedInterface
     {
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->setParameters(array('limit' => (integer)$limit));
-
         $qb->match('(u:User)-[:RATES]->(q:Question)')
-            ->setParameter('question', (integer)$questionId)
+            ->setParameter('question', (int)$questionId)
             ->where('id(q) = {question}')
             ->returns('DISTINCT u')
-            ->limit('{limit}');
+            ->limit('{limit}')
+            ->setParameter('limit', (int)$limit);
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        return $this->parseResultSet($result);
+
+    }
+
+    /**
+     * @param $userId
+     * @param int $limit
+     * @return User[]
+     */
+    public function getByUserQuestionAnswered($userId, $limit = 100)
+    {
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(u:User {qnoow_id: {userId}})-[:RATES]->(q:Question)')
+            ->setParameter('userId', (int)$userId)
+            ->with('u, q')
+            ->match('(o:User)-[:RATES]->(q)')
+            ->where('u <> o')
+            ->returns('DISTINCT o')
+            ->limit('{limit}')
+            ->setParameter('limit', (int)$limit);
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();
@@ -662,7 +694,7 @@ class UserManager implements PaginatedInterface
         $qb = $this->gm->createQueryBuilder();
 
         $resourceStrings = array();
-        foreach ($resources as $resource){
+        foreach ($resources as $resource) {
             $resourceStrings[] = "EXISTS(likes.$resource)";
         }
         $resourceString = implode(' OR ', $resourceStrings);
@@ -671,18 +703,18 @@ class UserManager implements PaginatedInterface
             ->with('(u)');
         $qb->setParameter('userId', (integer)$userId);
         $qb->match('(u)-[likes:LIKES]-(c:Creator)');
-        if (!empty($resourceStrings)){
+        if (!empty($resourceStrings)) {
             $qb->where($resourceString);
         }
         $qb->with('collect(c.url) AS urls');
         $qb->match('(u2:User)-[hsn:HAS_SOCIAL_NETWORK]-()')
-            ->where ('hsn.url IN urls');
+            ->where('hsn.url IN urls');
         $qb->returns('u2 AS u');
 
         $result = $qb->getQuery()->getResultSet();
 
         $users = array();
-        foreach ($result as $row){
+        foreach ($result as $row) {
             $users[] = $this->build($row);
         }
 
@@ -1105,30 +1137,30 @@ class UserManager implements PaginatedInterface
         return $id;
     }
 
-	protected function getVerifiedUsername($username)
-	{
-		$exists = true;
-		$suffix = 1;
-		$username = $username ?: 'user1';
+    protected function getVerifiedUsername($username)
+    {
+        $exists = true;
+        $suffix = 1;
+        $username = $username ?: 'user1';
 
-		while ($exists) {
-			$qb = $this->gm->createQueryBuilder();
-			$qb->match('(u:User {username: { username }})')
-				->setParameter('username', $username)
-				->returns('u AS users')
-				->limit(1);
+        while ($exists) {
+            $qb = $this->gm->createQueryBuilder();
+            $qb->match('(u:User {username: { username }})')
+                ->setParameter('username', $username)
+                ->returns('u AS users')
+                ->limit(1);
 
-			$query = $qb->getQuery();
-			$result = $query->getResultSet();
+            $query = $qb->getQuery();
+            $result = $query->getResultSet();
 
-			$exists = $result->count() > 0;
-			if ($exists) {
-				$username = 'user' . $suffix++;
-			}
-		}
+            $exists = $result->count() > 0;
+            if ($exists) {
+                $username = 'user' . $suffix++;
+            }
+        }
 
-		return $username;
-	}
+        return $username;
+    }
 
     public function canonicalize($string)
     {
@@ -1230,10 +1262,10 @@ class UserManager implements PaginatedInterface
 
     protected function updateCanonicalFields(array &$user)
     {
-        if (isset($user['username']) && !isset($user['usernameCanonical'])) {
+        if (isset($user['username'])) {
             $user['usernameCanonical'] = $this->canonicalize($user['username']);
         }
-        if (isset($user['email']) && !isset($user['emailCanonical'])) {
+        if (isset($user['email'])) {
             $user['emailCanonical'] = $this->canonicalize($user['email']);
         }
     }

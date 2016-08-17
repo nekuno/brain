@@ -12,11 +12,13 @@ use Model\Neo4j\GraphManager;
 class ProfileFilterModel extends FilterModel
 {
     protected $profileMetadata;
+    protected $profileCategories;
 
-    public function __construct(GraphManager $gm, array $metadata, array $profileMetadata, array $socialMetadata, $defaultLocale)
+    public function __construct(GraphManager $gm, array $metadata, array $profileMetadata, array $profileCategories, array $socialMetadata, $defaultLocale)
     {
         parent::__construct($gm, $metadata, $socialMetadata, $defaultLocale);
         $this->profileMetadata = $profileMetadata;
+        $this->profileCategories = $profileCategories;
     }
 
     protected function modifyPublicFieldByType($publicField, $name, $values, $locale)
@@ -158,6 +160,22 @@ class ProfileFilterModel extends FilterModel
         }
 
         return $publicMetadata;
+    }
+
+    public function getProfileCategories($locale = null)
+    {
+        $locale = $this->getLocale($locale);
+
+        $publicCategories = array();
+        foreach ($this->profileCategories as $type => $categories) {
+            foreach ($categories as $category) {
+                $publicField = $category;
+                $publicField['label'] = $category['label'][$locale];
+                $publicCategories[$type][] = $publicField;
+            }
+        }
+
+        return $publicCategories;
     }
 
     public function splitFilters($filters)

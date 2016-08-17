@@ -159,11 +159,6 @@ profile:
         label:
             en: 'Civil status'
             es: 'Estado civil'
-    nationality:
-        type: choice
-        label:
-            en: 'Nationality'
-            es: 'Nacionalidad'
     income:
         type: choice
         label:

@@ -201,7 +201,8 @@ class InvitationModel
         $qb->match("(inv:Invitation)<-[:CREATED_INVITATION]-(u:User)")
             ->where("u.qnoow_id = { userId }")
             ->optionalMatch('(inv)-[:HAS_GROUP]->(g:Group)')
-            ->returns('inv AS invitation', 'g AS group')
+            ->optionalMatch('(inv)<-[:CONSUMED_INVITATION]-(cu:User)')
+            ->returns('inv AS invitation', 'g AS group', 'cu.qnoow_id as consumedUserId', 'cu.usernameCanonical as consumedUsername')
             ->skip("{ offset }")
             ->limit("{ limit }")
             ->setParameters(
@@ -261,6 +262,13 @@ class InvitationModel
                     continue;
                 }
             }
+	        if ($index === 'available') {
+		        if (isset($data['userId'])) {
+			        $data['available'] = 1;
+		        }
+		        $qb->set('inv.available = ' . $data['available']);
+		        continue;
+	        }
             if (array_key_exists($index, $data)) {
                 if (ctype_digit((string)$parameter)) {
                     $parameter = (integer)$parameter;
@@ -818,7 +826,10 @@ class InvitationModel
 
         $userId = $row->offsetExists('userId') ? $row->offsetGet('userId') : null;
 
-        $optionalKeys = array('email', 'expiresAt', 'htmlText', 'slogan', 'image_url', 'image_path', 'orientationRequired');
+	    $consumedUserId = $row->offsetExists('consumedUserId') ? $row->offsetGet('consumedUserId') : null;
+	    $consumedUsername = $row->offsetExists('consumedUsername') ? $row->offsetGet('consumedUsername') : null;
+
+	    $optionalKeys = array('email', 'expiresAt', 'htmlText', 'slogan', 'image_url', 'image_path', 'orientationRequired');
         $requiredKeys = array('token', 'available', 'consumed', 'createdAt');
         $invitationArray = array();
 
@@ -842,6 +853,10 @@ class InvitationModel
         if ($userId) {
             $invitationArray += array('userId' => $userId);
         }
+
+	    if (!$group && $consumedUserId && $consumedUsername) {
+		    $invitationArray += array('consumedUserId' => $consumedUserId, 'consumedUsername' => $consumedUsername);
+	    }
 
         if (isset($invitationArray['image_path'])) {
             $invitationArray['image_url'] = $this->adminDomain . $invitationArray['image_path'];

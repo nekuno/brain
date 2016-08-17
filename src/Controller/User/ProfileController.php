@@ -100,8 +100,8 @@ class ProfileController
     }
 
     /**
-     * @param Application $app
      * @param Request $request
+     * @param Application $app
      * @return JsonResponse
      */
     public function getMetadataAction(Request $request, Application $app)
@@ -113,6 +113,22 @@ class ProfileController
         $metadata = $model->getProfileMetadata($locale);
 
         return $app->json($metadata);
+    }
+
+    /**
+     * @param Request $request
+     * @param Application $app
+     * @return JsonResponse
+     */
+    public function getCategoriesAction(Request $request, Application $app)
+    {
+        $locale = $request->query->get('locale');
+
+        /* @var $model ProfileFilterModel */
+        $model = $app['users.profileFilter.model'];
+        $categories = $model->getProfileCategories($locale);
+
+        return $app->json($categories);
     }
 
     /**

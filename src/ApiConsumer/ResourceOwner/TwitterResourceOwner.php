@@ -18,9 +18,15 @@ class TwitterResourceOwner extends TwitterResourceOwnerBase
 {
 	use AbstractResourceOwnerTrait {
 		AbstractResourceOwnerTrait::configureOptions as traitConfigureOptions;
+		AbstractResourceOwnerTrait::__construct as private traitConstructor;
 	}
 
 	protected $name = TokensModel::TWITTER;
+
+	public function __construct($httpClient, $httpUtils, $options, $name, $storage, $dispatcher)
+	{
+		$this->traitConstructor($httpClient, $httpUtils, $options, $name, $storage, $dispatcher);
+	}
 
 	/**
 	 * {@inheritDoc}

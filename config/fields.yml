@@ -24,6 +24,57 @@ privacy:
         label:
             en: 'Who can send me messages'
             es: 'Quién puede enviarme mensajes'
+categories:
+    profile:
+        - label:
+            en: Basic
+            es: Básicos
+          fields: [birthday, gender, descriptiveGender, location, orientation]
+        - label:
+            en: Availability
+            es: Disponibilidad
+          fields: [civilStatus, relationshipInterest]
+        - label:
+            en: Look
+            es: Apariencia
+          fields: [complexion, ethnicGroup, eyeColor, hairColor, height]
+        - label:
+            en: Background
+            es: Cultura
+          fields: [interfaceLanguage, language, education, religion, ideology]
+        - label:
+            en: Vices
+            es: Vicios
+          fields: [alcohol, drugs, smoke]
+        - label:
+            en: Others
+            es: Otros
+          fields: [income, diet, pets, profession, allergy, sons, zodiacSign, handicap]
+    filters:
+        - label:
+            en: Basic
+            es: Básicos
+          fields: [birthday, gender, descriptiveGender, location, orientation, groups, compatibility, similarity]
+        - label:
+            en: Availability
+            es: Disponibilidad
+          fields: [civilStatus, relationshipInterest]
+        - label:
+            en: Look
+            es: Apariencia
+          fields: [complexion, ethnicGroup, eyeColor, hairColor, height]
+        - label:
+            en: Background
+            es: Cultura
+          fields: [interfaceLanguage, language, education, religion, ideology]
+        - label:
+            en: Vices
+            es: Vicios
+          fields: [alcohol, drugs, smoke]
+        - label:
+            en: Others
+            es: Otros
+          fields: [income, diet, pets, profession, allergy, sons, zodiacSign, handicap]
 profile:
     description:
         type: textarea
@@ -148,11 +199,6 @@ profile:
         label: &civilStatus.label
             en: 'Civil status'
             es: 'Estado civil'
-    nationality:
-        type: choice
-        label: &nationality.label
-            en: 'Nationality'
-            es: 'Nacionalidad'
     income:
         type: choice
         label: &income.label
@@ -467,9 +513,6 @@ filters:
         civilStatus:
             type: multiple_choices
             label: *civilStatus.label
-        nationality:
-            type: multiple_choices
-            label: *nationality.label
         income:
             type: multiple_choices
             label: *income.label
@@ -504,7 +547,7 @@ filters:
         relationshipInterest:
             type: multiple_choices
             label:
-                en: 'Kind of relation he/she is looking for'
+                en: 'Looking for'
                 es: 'Tipo de relación que busca'
         interfaceLanguage:
             type: multiple_choices
