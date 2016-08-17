@@ -97,6 +97,9 @@ abstract class AbstractUserPaginatedModel implements PaginatedInterface
                     anyUser.picture AS picture,
                     p.birthday AS birthday,
                     l.locality + ", " + l.country AS location',
+                    '0.01 AS matching_questions',
+                    '0 AS similarity',
+                    '0 AS like',
             'popularity'
         )
             ->orderBy('popularity DESC')
