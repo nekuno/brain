@@ -149,8 +149,8 @@ class LinkModel
         $qb = $this->gm->createQueryBuilder();
 
         $qb->match("(l:Link)")
+            ->filterContentByType($types, 'l')
             ->returns('l AS link');
-        $qb->filterContentByType($types, 'l');
         $query = $qb->getQuery();
         $result = $query->getResultSet();
 
