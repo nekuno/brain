@@ -19,6 +19,9 @@ use Buzz\Message\RequestInterface as HttpRequestInterface;
  * Trait AbstractResourceOwnerTrait
  *
  * @package ApiConsumer\ResourceOwner
+ * @method normalizeUrl ($a, $b)
+ * @method generateNonce
+ * @method getResponseContent($a)
  */
 trait AbstractResourceOwnerTrait
 {
