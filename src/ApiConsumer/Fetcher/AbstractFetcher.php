@@ -2,7 +2,7 @@
 
 namespace ApiConsumer\Fetcher;
 
-use HWI\Bundle\OAuthBundle\OAuth\ResourceOwnerInterface;
+use ApiConsumer\ResourceOwner\AbstractResourceOwnerTrait;
 
 abstract class AbstractFetcher implements FetcherInterface
 {
@@ -17,7 +17,7 @@ abstract class AbstractFetcher implements FetcherInterface
     protected $rawFeed = array();
 
     /**
-     * @var ResourceOwnerInterface
+     * @var AbstractResourceOwnerTrait
      */
     protected $resourceOwner;
 
@@ -27,9 +27,9 @@ abstract class AbstractFetcher implements FetcherInterface
     protected $user;
 
     /**
-     * @param ResourceOwnerInterface $resourceOwner
+     * @param AbstractResourceOwnerTrait $resourceOwner
      */
-    public function __construct(ResourceOwnerInterface $resourceOwner)
+    public function __construct(AbstractResourceOwnerTrait $resourceOwner)
     {
         $this->resourceOwner = $resourceOwner;
     }
