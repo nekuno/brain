@@ -25,40 +25,42 @@ class LinksProcessDatabaseCommand extends ApplicationAwareCommand
 
                 )
             )
-            ->addOption('all', null, InputOption::VALUE_NONE, 'Process again all links, not only unprocessed ones');
+            ->addOption('all', null, InputOption::VALUE_NONE, 'Process again all links, not only unprocessed ones')
+            ->addOption('url-contains', null, InputOption::VALUE_REQUIRED, 'Condition to filter url');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-
         /* @var $linksModel LinkModel */
         $linksModel = $this->app['links.model'];
 
         $limit = $input->getArgument('limit');
         $all = $input->getOption('all');
+        $urlContains = $input->getOption('url-contains');
 
-        if ($all){
+        if ($all) {
             $links = $linksModel->findAllLinks();
-            foreach ($links as &$link){
-                if (!isset($link['url'])){
+            foreach ($links as &$link) {
+                if (!isset($link['url'])) {
                     continue;
                 }
                 $link['tempId'] = $link['url'];
             }
         } else {
-            $links = $linksModel->getUnprocessedLinks($limit);
+            $conditions = $urlContains ? array('link.url CONTAINS "' . $urlContains . '"') : array();
+
+            $links = $linksModel->getUnprocessedLinks($limit, 0, $conditions);
         }
 
         /* @var $preprocessedLinks PreprocessedLink[] */
         $preprocessedLinks = array();
-        foreach ($links as $link)
-        {
+        foreach ($links as $link) {
             $preprocessedLink = new PreprocessedLink($link['url']);
             $preprocessedLink->setLink($link);
             $preprocessedLinks[] = $preprocessedLink;
         }
 
-        $output->writeln('Got '.count($links).' links to process');
+        $output->writeln('Got ' . count($links) . ' links to process');
 
         foreach ($preprocessedLinks as $preprocessedLink) {
 
@@ -67,8 +69,8 @@ class LinksProcessDatabaseCommand extends ApplicationAwareCommand
                 $processor = $this->app['api_consumer.link_processor'];
                 $processedLink = $processor->process($preprocessedLink, $all);
 
-                $processed = array_key_exists('processed', $processedLink)? $processedLink['processed'] : 1;
-                if ($processed){
+                $processed = array_key_exists('processed', $processedLink) ? $processedLink['processed'] : 1;
+                if ($processed) {
                     $output->writeln(sprintf('Success: Link %s processed', $preprocessedLink->getFetched()));
                 } else {
                     $output->writeln(sprintf('Failed request: Link %s not processed', $preprocessedLink->getFetched()));

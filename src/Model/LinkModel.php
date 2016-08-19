@@ -468,19 +468,22 @@ class LinkModel
 
     }
 
-    public function getUnprocessedLinks($limit = 100)
+    public function getUnprocessedLinks($limit = 100, $offset = 0, $conditions = array())
     {
+        $conditions = array_merge($conditions, array('link.processed = 0'));
 
         $qb = $this->gm->createQueryBuilder();
 
         $qb->match('(link:Link)')
-            ->where('link.processed = 0')
+            ->where($conditions)
             ->returns('link')
+            ->skip('{ offset }')
             ->limit('{ limit }');
 
         $qb->setParameters(
             array(
-                'limit' => (integer)$limit
+                'limit' => (integer)$limit,
+                'offset' => (integer) $offset,
             )
         );
 
