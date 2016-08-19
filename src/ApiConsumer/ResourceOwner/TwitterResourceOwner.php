@@ -80,7 +80,7 @@ class TwitterResourceOwner extends TwitterResourceOwnerBase
 		return $data;
 	}
 
-	public function lookupUsersBy($parameter, array $userIds)
+	public function lookupUsersBy($parameter, array $userIds, array $token = array())
 	{
 		if ($parameter !== 'user_id' && $parameter !== 'screen_name') {
 			return false;
@@ -93,7 +93,7 @@ class TwitterResourceOwner extends TwitterResourceOwnerBase
 		$users = array();
 		foreach ($chunks as $chunk) {
 			$query = array($parameter => implode(',', $chunk));
-			$response = $this->sendAuthorizedRequest($url, $query);
+			$response = $this->sendAuthorizedRequest($url, $query, $token);
 			$users = array_merge($users, $this->getResponseContent($response));
 		}
 

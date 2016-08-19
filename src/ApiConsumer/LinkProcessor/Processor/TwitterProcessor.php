@@ -6,6 +6,7 @@ namespace ApiConsumer\LinkProcessor\Processor;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
 use ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser;
 use ApiConsumer\ResourceOwner\TwitterResourceOwner;
+use Model\User\TokensModel;
 
 class TwitterProcessor extends AbstractProcessor
 {
@@ -58,12 +59,26 @@ class TwitterProcessor extends AbstractProcessor
     {
         $link = $preprocessedLink->getLink();
 
+        if ($preprocessedLink->getSource() == TokensModel::TWITTER) {
+
+            if (isset($link['title']) && !empty($link['title'])
+                && isset($link['description']) && !empty($link['description'])
+                && isset($link['url']) && !empty($link['url'])
+                && isset($link['thumbnail'])
+            ) {
+                return $link;
+            }
+        }
+
         $userId = isset($link['resourceItemId']) ?
             array('user_id' => $link['resourceItemId']) :
             $this->parser->getProfileIdFromIntentUrl($preprocessedLink->getCanonical());
 
         $key = array_keys($userId)[0];
-        $users = $this->resourceOwner->lookupUsersBy($key, array($userId[$key]));
+
+        $token = $preprocessedLink->getSource() == TokensModel::TWITTER ? $preprocessedLink->getToken() : array();
+
+        $users = $this->resourceOwner->lookupUsersBy($key, array($userId[$key]), $token);
 
         if (empty($users)) return false;
 
@@ -73,6 +88,17 @@ class TwitterProcessor extends AbstractProcessor
     private function processProfile(PreprocessedLink $preprocessedLink)
     {
         $link = $preprocessedLink->getLink();
+
+        if ($preprocessedLink->getSource() == TokensModel::TWITTER) {
+
+            if (isset($link['title']) && !empty($link['title'])
+                && isset($link['description']) && !empty($link['description'])
+                && isset($link['url']) && !empty($link['url'])
+                && isset($link['thumbnail'])
+            ) {
+                return $link;
+            }
+        }
 
         $userName = $this->parser->getProfileNameFromProfileUrl($preprocessedLink->getCanonical());
 
