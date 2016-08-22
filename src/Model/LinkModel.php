@@ -137,20 +137,27 @@ class LinkModel
 
     /**
      * @param array $filters
+     * @param $offset
+     * @param $limit
      * @return array
-     * @throws Neo4j\Neo4jException
-     * @throws \Exception
      */
-    public function findAllLinks($filters = array())
+    public function findLinks($filters = array(), $offset = 0, $limit = 100)
     {
         //todo: add tag filters, probably with an inter-model buildParamsFromFilters
         $types = isset($filters['type']) ? $filters['type'] : array();
 
         $qb = $this->gm->createQueryBuilder();
 
+        $qb->setParameters(array(
+            'offset' => (integer)$offset,
+            'limit' => (integer)$limit,
+        ));
+
         $qb->match("(l:Link)")
             ->filterContentByType($types, 'l')
-            ->returns('l AS link');
+            ->returns('l AS link')
+            ->skip('{offset}')
+            ->limit('{limit}');
         $query = $qb->getQuery();
         $result = $query->getResultSet();
 
@@ -468,7 +475,7 @@ class LinkModel
 
     }
 
-    public function getUnprocessedLinks($limit = 100, $offset = 0, $conditions = array())
+    public function getUnprocessedLinks($conditions = array(), $offset = 0, $limit = 100)
     {
         $conditions = array_merge($conditions, array('link.processed = 0'));
 
@@ -758,7 +765,7 @@ class LinkModel
      * @return array
      * @throws Neo4j\Neo4jException
      */
-    public function findDuplicates($offset = 0, $limit = 99999999)
+    public function findDuplicates($offset = 0, $limit = 1000)
     {
         $qb = $this->gm->createQueryBuilder();
 
@@ -768,12 +775,19 @@ class LinkModel
         ));
 
         $qb->match('(l:Link)')
-            ->with('l')
-            ->orderBy('l.created DESC')
+            ->with('l.url AS url')
             ->skip('{offset}')
             ->limit('{limit}')
-            ->with('l.url AS url, COLLECT(ID(l)) AS ids, COUNT(*) AS count')
-            ->where('count > 1')
+            ->with('collect(url) AS urls');
+
+        $qb->match('(l:Link)')
+            ->where('l.url IN urls')
+            ->with('l.url AS url', 'count(l) AS amount')
+            ->where('amount > 1');
+
+        $qb->match('(l:Link)')
+            ->where('l.url = url')
+            ->with('l.url AS url', 'collect(id(l)) AS ids')
             ->returns('url, ids');
 
         $rs = $qb->getQuery()->getResultSet();

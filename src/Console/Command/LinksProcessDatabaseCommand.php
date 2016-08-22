@@ -39,7 +39,7 @@ class LinksProcessDatabaseCommand extends ApplicationAwareCommand
         $urlContains = $input->getOption('url-contains');
 
         if ($all) {
-            $links = $linksModel->findAllLinks();
+            $links = $linksModel->findLinks();
             foreach ($links as &$link) {
                 if (!isset($link['url'])) {
                     continue;
@@ -49,7 +49,7 @@ class LinksProcessDatabaseCommand extends ApplicationAwareCommand
         } else {
             $conditions = $urlContains ? array('link.url CONTAINS "' . $urlContains . '"') : array();
 
-            $links = $linksModel->getUnprocessedLinks($limit, 0, $conditions);
+            $links = $linksModel->getUnprocessedLinks($conditions, 0, $limit);
         }
 
         /* @var $preprocessedLinks PreprocessedLink[] */

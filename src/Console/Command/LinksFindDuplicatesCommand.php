@@ -33,24 +33,30 @@ class LinksFindDuplicatesCommand extends ApplicationAwareCommand
         /* @var $linkModel LinkModel */
         $linkModel = $this->app['links.model'];
 
-        $limit = $input->getOption('limit');
+        $maxlimit = $input->getOption('limit');
         $offset = $input->getOption('offset');
 
         $output->writeln('Updating link URLs');
         $this->updateURLs($output, $linkModel);
 
         $output->writeln('Finding duplicates');
-        $duplicates = $linkModel->findDuplicates($offset, $limit);
 
-        $numDuplicates = count($duplicates);
+        $limit = 1000;
+        while ($offset < $maxlimit) {
 
-        if ($numDuplicates > 0) {
-            $output->writeln(sprintf('%d duplicated links found.', $numDuplicates));
+            $output->writeln(sprintf('Getting and analyzing %d urls from offset %d.', $limit, $offset));
 
-            $this->analyzeDuplicates($duplicates, $input, $output);
+            $duplicates = $linkModel->findDuplicates($offset, $limit);
 
-        } else {
-            $output->writeln('No duplicated links found.');
+            $numDuplicates = count($duplicates);
+
+            if ($numDuplicates > 0) {
+                $output->writeln(sprintf('%d duplicated links found.', $numDuplicates));
+
+                $this->analyzeDuplicates($duplicates, $input, $output);
+            }
+
+            $offset += $limit;
         }
 
         $output->writeln('Done.');
@@ -130,7 +136,7 @@ class LinksFindDuplicatesCommand extends ApplicationAwareCommand
     private function updateURLs($output, $linkModel)
     {
 
-        $links = $linkModel->findAllLinks();
+        $links = $linkModel->findLinks(array(),0,100);
 
         /** @var $linkProcessor LinkProcessor */
         $linkProcessor = $this->app['api_consumer.link_processor'];
