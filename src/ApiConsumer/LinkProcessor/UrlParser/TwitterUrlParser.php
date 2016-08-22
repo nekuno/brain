@@ -131,8 +131,8 @@ class TwitterUrlParser extends UrlParser
 
         $parts = parse_url($url);
 
-        if (isset($parts['host']) && $parts['host'] === 'twitter.com'){
-            $parts['host'] = 'www.twitter.com';
+        if (isset($parts['host']) && $parts['host'] === 'www.twitter.com'){
+            $parts['host'] = 'twitter.com';
             $url = http_build_url($parts);
         }
 
