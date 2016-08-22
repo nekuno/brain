@@ -770,7 +770,7 @@ class LinkModel
         $qb = $this->gm->createQueryBuilder();
 
         $qb->setParameters(array(
-            'offset' => $offset,
+            'offset' => (integer)$offset,
             'limit' => (integer)$limit,
         ));
 
