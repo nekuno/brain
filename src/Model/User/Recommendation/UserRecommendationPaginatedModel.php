@@ -82,7 +82,7 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
         }
 
         $qb->returns(
-            'DISTINCT anyUser.qnoow_id AS id,
+            'anyUser.qnoow_id AS id,
                     anyUser.username AS username,
                     anyUser.picture AS picture,
                     p.birthday AS birthday,
