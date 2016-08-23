@@ -184,7 +184,7 @@ class ContentRecommendationPaginatedModel extends AbstractContentPaginatedModel
         }
 
         if ($contentId && $id) {
-            $affinity = $this->am->getCurrentAffinity((integer)$id, $contentId);
+            $affinity = $this->am->getAffinity((integer)$id, $contentId);
         } else {
             $affinity = array('affinity' => 0);
         }
