@@ -3,7 +3,7 @@
 namespace ApiConsumer\Fetcher;
 
 use ApiConsumer\LinkProcessor\PreprocessedLink;
-use Http\OAuth\ResourceOwner\TwitterResourceOwner;
+use ApiConsumer\ResourceOwner\TwitterResourceOwner;
 
 class TwitterFollowingFetcher extends BasicPaginationFetcher
 {

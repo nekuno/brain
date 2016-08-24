@@ -125,4 +125,17 @@ class TwitterUrlParser extends UrlParser
         return $urls;
     }
 
+    public function cleanURL($url)
+    {
+        $url = parent::cleanURL($url);
+
+        $parts = parse_url($url);
+
+        if (isset($parts['host']) && $parts['host'] === 'www.twitter.com'){
+            $parts['host'] = 'twitter.com';
+            $url = http_build_url($parts);
+        }
+
+        return $url;
+    }
 }

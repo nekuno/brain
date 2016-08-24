@@ -20,11 +20,17 @@ class FacebookResourceOwner extends FacebookResourceOwnerBase
 {
 	use AbstractResourceOwnerTrait {
 		AbstractResourceOwnerTrait::configureOptions as traitConfigureOptions;
+		AbstractResourceOwnerTrait::__construct as private traitConstructor;
 	}
 
 	protected $name = TokensModel::FACEBOOK;
 
 	protected $expire_time_margin = 1728000;// 20 days because expired tokens can´t be refreshed
+
+	public function __construct($httpClient, $httpUtils, $options, $name, $storage, $dispatcher)
+	{
+		$this->traitConstructor($httpClient, $httpUtils, $options, $name, $storage, $dispatcher);
+	}
 
 	/**
 	 * {@inheritDoc}

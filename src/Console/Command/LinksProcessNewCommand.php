@@ -75,7 +75,7 @@ class LinksProcessNewCommand extends ApplicationAwareCommand
                 }
                 /* @var LinkProcessor $processor */
                 $processor = $this->app['api_consumer.link_processor'];
-                $processedLink = $processor->process($preprocessedLink);
+                $processedLink = $processor->process($preprocessedLink, true);
 
                 if (OutputInterface::VERBOSITY_NORMAL < $output->getVerbosity()) {
                     $output->writeln('----------Link outputted------------');

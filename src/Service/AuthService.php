@@ -68,6 +68,8 @@ class AuthService
             throw new UnauthorizedHttpException('', 'Los datos introducidos no coinciden con nuestros registros.');
         }
 
+        $user = $this->updateLastLogin($user);
+
         return $this->buildToken($user);
     }
 
@@ -79,16 +81,16 @@ class AuthService
      */
     public function loginByResourceOwner($resourceOwner, $accessToken)
     {
-		$type = Configuration::getResourceOwnerType($resourceOwner);
-	    if ($type == 'oauth1') {
-		    $oauthToken = substr($accessToken, 0, strpos($accessToken, ':'));
-		    $oauthTokenSecret = substr($accessToken, strpos($accessToken, ':') + 1, strpos($accessToken, '@') - strpos($accessToken, ':') - 1);
+        $type = Configuration::getResourceOwnerType($resourceOwner);
+        if ($type == 'oauth1') {
+            $oauthToken = substr($accessToken, 0, strpos($accessToken, ':'));
+            $oauthTokenSecret = substr($accessToken, strpos($accessToken, ':') + 1, strpos($accessToken, '@') - strpos($accessToken, ':') - 1);
 
-		    $accessToken = array(
-			    'oauth_token' => $oauthToken,
-			    'oauth_token_secret' => $oauthTokenSecret,
-		    );
-	    }
+            $accessToken = array(
+                'oauth_token' => $oauthToken,
+                'oauth_token_secret' => $oauthTokenSecret,
+            );
+        }
         $token = new OAuthToken($accessToken);
         $token->setResourceOwnerName($resourceOwner);
         try {
@@ -101,7 +103,9 @@ class AuthService
             throw new UnauthorizedHttpException('', 'Los datos introducidos no coinciden con nuestros registros.');
         }
 
-        return $this->buildToken($newToken->getUser());
+        $user = $this->updateLastLogin($newToken->getUser());
+
+        return $this->buildToken($user);
     }
 
     /**
@@ -131,4 +135,18 @@ class AuthService
 
         return $jwt;
     }
+
+    protected function updateLastLogin(User $user)
+    {
+
+        $data = array(
+            'userId' => $user->getId(),
+            'username' => $user->getUsername(),
+            'email' => $user->getEmail(),
+            'lastLogin' => (new \DateTime())->format('Y-m-d H:i:s'),
+        );
+
+        return $this->um->update($data);
+    }
+
 }

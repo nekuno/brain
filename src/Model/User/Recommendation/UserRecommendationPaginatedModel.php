@@ -3,22 +3,11 @@
 namespace Model\User\Recommendation;
 
 use Everyman\Neo4j\Query\ResultSet;
-use Model\Neo4j\GraphManager;
 use Model\User\GhostUser\GhostUserManager;
-use Model\User\ProfileFilterModel;
-use Model\User\UserFilterModel;
 
 class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
 {
     const USER_SAFETY_LIMIT = 5000;
-
-    protected $userFilterModel;
-
-    public function __construct(GraphManager $gm, ProfileFilterModel $profileFilterModel, UserFilterModel $userFilterModel)
-    {
-        parent::__construct($gm, $profileFilterModel);
-        $this->userFilterModel = $userFilterModel;
-    }
 
     /**
      * Slices the query according to $offset, and $limit.
@@ -47,6 +36,8 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
 
         $profileFilters = $this->getProfileFilters($filters['profileFilters']);
         $userFilters = $this->getUserFilters($filters['userFilters']);
+
+        $return = array('items' => array());
 
         $qb = $this->gm->createQueryBuilder();
 
@@ -98,7 +89,23 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
         $query = $qb->getQuery();
         $result = $query->getResultSet();
 
-        return $this->buildUserRecommendations($result);
+        $response = $this->buildResponseFromResult($result);
+        $return['items'] = array_merge($return['items'], $response['items']);
+
+        $needContent = $this->needMoreContent($limit, $return);
+        if ($needContent) {
+
+            $foreign = 0;
+            if (isset($filters['foreign'])) {
+                $foreign = $filters['foreign'];
+            }
+
+            $foreignResult = $this->getForeignContent($filters, $needContent, $foreign);
+            $return['items'] = array_merge($return['items'], $foreignResult['items']);
+            $return['newForeign'] = $foreignResult['foreign'];
+        }
+        //Works with ContentPaginator (accepts $result), not Paginator (accepts $result['items'])
+        return $return;
     }
 
     /**
@@ -163,79 +170,43 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
         return $count;
     }
 
-    /**
-     * @param ResultSet $result
-     * @return UserRecommendation[]
-     */
-    public function buildUserRecommendations(ResultSet $result) {
-
-        $response = array();
-        foreach ($result as $row) {
-
-            $age = null;
-            if ($row['birthday']) {
-                $date = new \DateTime($row['birthday']);
-                $now = new \DateTime();
-                $interval = $now->diff($date);
-                $age = $interval->y;
-            }
-
-            $user = new UserRecommendation();
-            $user->setId($row->offsetGet('id'));
-            $user->setUsername($row->offsetGet('username'));
-            $user->setPicture($row->offsetGet('picture'));
-            $user->setMatching($row->offsetGet('matching_questions'));
-            $user->setSimilarity($row->offsetGet('similarity'));
-            $user->setAge($age);
-            $user->setLocation($row->offsetGet('location'));
-            $user->setLike($row->offsetGet('like'));
-
-            $response[] = $user;
-        }
-        
-        return $response;
+    public function buildResponseFromResult(ResultSet $result) {
+        return array('items' => $this->buildUserRecommendations($result));
     }
-    
+
     /**
-     * @param array $filters
-     * @return array
+     * @param $limit int
+     * @param $response array
+     * @return int
      */
-    protected function getUserFilters(array $filters)
+    protected function needMoreContent($limit, $response)
     {
-        $conditions = array();
-        $matches = array();
-
-        $userFilterMetadata = $this->getUserFilterMetadata();
-        foreach ($userFilterMetadata as $name => $filter) {
-            if (isset($filters[$name]) && !empty($filters[$name])) {
-                $value = $filters[$name];
-                switch ($name) {
-                    case 'groups':
-                        foreach ($value as $index => $groupId) {
-                            $value[$index] = (int)$groupId;
-                        }
-                        $jsonValues = json_encode($value);
-                        $matches[] = "(anyUser)-[:BELONGS_TO]->(group:Group) WHERE id(group) IN $jsonValues";
-                        break;
-                    case 'compatibility':
-                        $valuePerOne = intval($value) / 100;
-                        $conditions[] = "($valuePerOne <= matching_questions)";
-                        break;
-                    case 'similarity':
-                        $valuePerOne = intval($value) / 100;
-                        $conditions[] = "($valuePerOne <= similarity)";
-                        break;
-                }
-            }
+        $moreContent = $limit - count($response['items']);
+        if ($moreContent <= 0) {
+            return 0;
         }
 
-        return array(
-            'conditions' => $conditions,
-            'matches' => $matches
-        );
+        return $moreContent;
     }
 
-    protected function getUserFilterMetadata(){
-        return $this->userFilterModel->getFilters();
+    /**
+     * @param $filters
+     * @param $limit
+     * @param $foreign
+     * @return array (items, foreign = # of links database searched, -1 if total)
+     * @throws \Exception
+     * @throws \Model\Neo4j\Neo4jException
+     */
+    public function getForeignContent($filters, $limit, $foreign)
+    {
+        $id = $filters['id'];
+        $condition = "MATCH (u:User{qnoow_id:$id}) WHERE NOT (u)-[:SIMILARITY|:MATCHES]-(anyUser)";
+
+        $items = $this->getUsersByPopularity($filters, $foreign, $limit, $condition);
+
+        $return = array('items' => array_slice($items, 0, $limit) );
+        $return['foreign'] = $foreign + count($return['items']);
+
+        return $return;
     }
 } 

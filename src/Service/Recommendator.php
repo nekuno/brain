@@ -277,8 +277,9 @@ class Recommendator
         }
 
         $model = $social ? $this->socialUserRecommendationPaginatedModel : $this->userRecommendationPaginatedModel;
+        $paginator = $social ? $this->paginator : $this->contentPaginator;
 
-        $result = $this->paginator->paginate($filters, $model, $request);
+        $result = $paginator->paginate($filters, $model, $request);
         return $result;
     }
 

@@ -18,9 +18,15 @@ class TwitterResourceOwner extends TwitterResourceOwnerBase
 {
 	use AbstractResourceOwnerTrait {
 		AbstractResourceOwnerTrait::configureOptions as traitConfigureOptions;
+		AbstractResourceOwnerTrait::__construct as private traitConstructor;
 	}
 
 	protected $name = TokensModel::TWITTER;
+
+	public function __construct($httpClient, $httpUtils, $options, $name, $storage, $dispatcher)
+	{
+		$this->traitConstructor($httpClient, $httpUtils, $options, $name, $storage, $dispatcher);
+	}
 
 	/**
 	 * {@inheritDoc}
@@ -74,7 +80,7 @@ class TwitterResourceOwner extends TwitterResourceOwnerBase
 		return $data;
 	}
 
-	public function lookupUsersBy($parameter, array $userIds)
+	public function lookupUsersBy($parameter, array $userIds, array $token = array())
 	{
 		if ($parameter !== 'user_id' && $parameter !== 'screen_name') {
 			return false;
@@ -87,7 +93,7 @@ class TwitterResourceOwner extends TwitterResourceOwnerBase
 		$users = array();
 		foreach ($chunks as $chunk) {
 			$query = array($parameter => implode(',', $chunk));
-			$response = $this->sendAuthorizedRequest($url, $query);
+			$response = $this->sendAuthorizedRequest($url, $query, $token);
 			$users = array_merge($users, $this->getResponseContent($response));
 		}
 

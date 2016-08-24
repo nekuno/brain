@@ -4,12 +4,12 @@
  */
 namespace Console\Command;
 
+use ApiConsumer\ResourceOwner\FacebookResourceOwner;
 use Console\BaseCommand;
-use Http\OAuth\ResourceOwner\AbstractResourceOwner;
+use HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\AbstractResourceOwner;
 use Model\Exception\ValidationException;
 use Model\User;
 use Model\User\TokensModel;
-use Silex\Application;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -58,7 +58,12 @@ class UsersSocialMediaRefreshCommand extends BaseCommand
                     } else {
                         $token = current($tokens);
                     }
-                    $resourceOwner->forceRefreshAccessToken($token);
+                    if ($resourceOwner instanceof FacebookResourceOwner){
+                        $resourceOwner->forceRefreshAccessToken($token);
+                    } else {
+                        $resourceOwner->refreshAccessToken($token);
+                    }
+
                     $this->displayMessage('Refreshed ' . $input->getArgument('resource') . ' token for user ' . $user->getId());
 
                 } catch (\Exception $e) {
