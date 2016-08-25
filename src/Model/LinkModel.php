@@ -734,6 +734,7 @@ class LinkModel
         return $row->offsetGet('when');
     }
 
+    //TODO: Move to ConsistencyCheckerService
     /**
      * @param $id
      * @return array

@@ -94,7 +94,6 @@ class GraphManager implements LoggerAwareInterface
      */
     public function fuseNodes($id1, $id2)
     {
-
         $id1 = (integer)$id1;
         $id2 = (integer)$id2;
 
@@ -109,7 +108,9 @@ class GraphManager implements LoggerAwareInterface
         $qb->match(('(n1)'))
             ->where('id(n1)={id1}')
             ->optionalMatch('(n1)-[r1]->()')
+            ->with('n1', 'r1')
             ->optionalMatch(('(n1)<-[r2]-()'))
+            ->with('n1', 'r1', 'r2')
             ->delete('r1,r2,n1')
             ->returns('count(r1)+count(r2) as amount');
         $qb->setParameter('id1', $id1);
@@ -124,7 +125,6 @@ class GraphManager implements LoggerAwareInterface
 
     protected function copyRelationships($id1, $id2, $mode = 'outgoing')
     {
-
         //get relationships
         $qb = $this->createQueryBuilder();
         if ($mode == 'outgoing') {
@@ -265,7 +265,6 @@ class GraphManager implements LoggerAwareInterface
 
     private function manageAttribute($value = null)
     {
-
         if (is_string($value)) {
             $value = '"' . addslashes($value) . '"';
         } else if ($value == true || is_int($value)) {

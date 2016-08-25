@@ -93,6 +93,9 @@ class LinksFindDuplicatesCommand extends ApplicationAwareCommand
                     /* @var ResultSet $deletionRS */
                     $deletionRS = $fusion['deleted'];
                     if ($deletionRS->count() > 0) {
+                        $popularityManager = $this->app['popularity.manager'];
+                        $popularityManager->deleteOneByLink($mainId);
+                        $popularityManager->updatePopularity($mainId);
                         $output->writeln('Duplicate and main node successfully fused');
                     } else {
                         $output->writeln('Nodes were not fused');
