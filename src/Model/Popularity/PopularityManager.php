@@ -37,6 +37,7 @@ class PopularityManager
             ->setParameter('nodeId', (integer)$linkId);
 
         $qb->merge('(l)-[:HAS_POPULARITY]-(popularity:Popularity)')
+            ->with('l', 'popularity')
             ->optionalMatch('(l)<-[likes:LIKES]-(:User)')
             ->with('popularity', 'count(likes) AS total');
 
