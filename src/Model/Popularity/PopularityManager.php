@@ -36,7 +36,9 @@ class PopularityManager
             ->where('id(l) = {nodeId}')
             ->setParameter('nodeId', (integer)$linkId);
 
-        $qb->merge('(l)-[:HAS_POPULARITY]-(popularity:Popularity)');
+        $qb->merge('(l)-[:HAS_POPULARITY]-(popularity:Popularity)')
+            ->optionalMatch('(l)<-[likes:LIKES]-(:User)')
+            ->with('popularity', 'count(likes) AS total');
 
         $qb->setParameter('max', floatval($max_popularity->getAmount()));
         $qb->set(
