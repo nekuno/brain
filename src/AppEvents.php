@@ -153,6 +153,21 @@ final class AppEvents
 	 */
 	const MATCHING_PROCESS_FINISH = 'matching.finish';
 
+	/**
+	 * Fired when a affinity process starts
+	 */
+	const AFFINITY_PROCESS_START = 'affinity.start';
+
+	/**
+	 * Fired for each affinity process step
+	 */
+	const AFFINITY_PROCESS_STEP = 'affinity.step';
+
+	/**
+	 * Fired when a affinity process finishes
+	 */
+	const AFFINITY_PROCESS_FINISH = 'affinity.finish';
+
     /**
      * Fired when a neo4j consistency error is detected
      */

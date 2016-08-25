@@ -16,6 +16,7 @@ use Model\User\Similarity\SimilarityModel;
 use Manager\UserManager;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Message\AMQPMessage;
+use Service\AffinityRecalculations;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
 /**
@@ -47,6 +48,10 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
      */
     protected $questionModel;
     /**
+     * @var AffinityRecalculations
+     */
+    protected $affinityRecalculations;
+    /**
      * @var Connection
      */
     protected $connectionSocial;
@@ -59,7 +64,7 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
      */
     protected $dispatcher;
 
-    public function __construct(AMQPChannel $channel, UserManager $userManager, MatchingModel $matchingModel, SimilarityModel $similarityModel, QuestionModel $questionModel, Connection $connectionSocial, Connection $connectionBrain, EventDispatcher $dispatcher)
+    public function __construct(AMQPChannel $channel, UserManager $userManager, MatchingModel $matchingModel, SimilarityModel $similarityModel, QuestionModel $questionModel, AffinityRecalculations $affinityRecalculations, Connection $connectionSocial, Connection $connectionBrain, EventDispatcher $dispatcher)
     {
 
         $this->channel = $channel;
@@ -67,6 +72,7 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
         $this->matchingModel = $matchingModel;
         $this->similarityModel = $similarityModel;
         $this->questionModel = $questionModel;
+        $this->affinityRecalculations = $affinityRecalculations;
         $this->connectionSocial = $connectionSocial;
         $this->connectionBrain = $connectionBrain;
         $this->dispatcher = $dispatcher;
@@ -153,6 +159,8 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                     $usersAnsweredQuestion = $this->userManager->getByUserQuestionAnswered($userA, 800);
                     $this->processUsersAnsweredQuestion($userA, $usersAnsweredQuestion);
 
+                    $this->processUserAffinities($userA);
+
                 } catch (\Exception $e) {
                     $this->logger->error(sprintf('Worker: Error calculating similarity for user %d with message %s on file %s, line %d', $userA, $e->getMessage(), $e->getFile(), $e->getLine()));
                     if ($e instanceof Neo4jException) {
@@ -180,6 +188,8 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                     }
                     $usersAnsweredQuestion = $this->userManager->getByQuestionAnswered($questionId, 800);
                     $this->processUsersAnsweredQuestion($userA, $usersAnsweredQuestion);
+
+                    $this->processUserAffinities($userA);
 
                 } catch (\Exception $e) {
                     $this->logger->error(sprintf('Worker: Error calculating matching and similarity for user %d with message %s on file %s, line %d', $userA, $e->getMessage(), $e->getFile(), $e->getLine()));
@@ -267,6 +277,12 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
             }
         }
         $this->dispatcher->dispatch(\AppEvents::MATCHING_PROCESS_FINISH, $matchingProcessEvent);
+    }
+
+    private function processUserAffinities($userId) {
+        $this->logger->info(sprintf('   Recalculating affinities for user %d', $userId));
+        $this->affinityRecalculations->recalculateAffinities($userId, 300, 20);
+        $this->logger->info(sprintf('   Finished recalculating affinities for user %d', $userId));
     }
 
 }
