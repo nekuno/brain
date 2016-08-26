@@ -281,7 +281,7 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
 
     private function processUserAffinities($userId) {
         $this->logger->info(sprintf('   Recalculating affinities for user %d', $userId));
-        $this->affinityRecalculations->recalculateAffinities($userId, 300, 20);
+        $this->affinityRecalculations->recalculateAffinities($userId, 100, 20);
         $this->logger->info(sprintf('   Finished recalculating affinities for user %d', $userId));
     }
 
