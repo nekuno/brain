@@ -240,7 +240,7 @@ class ProfileModel
                                 if (!isset($tagAndChoice['tag']) || !array_key_exists('choice', $tagAndChoice)) {
                                     $fieldErrors[] = sprintf('Tag and choice must be defined for tags and choice type');
                                 }
-                                if (isset($tagAndChoice['choice']) && !in_array($tagAndChoice['choice'], array_keys($choices))) {
+                                if (isset($tagAndChoice['choice']) && $tagAndChoice['choice'] && !in_array($tagAndChoice['choice'], array_keys($choices))) {
                                     $fieldErrors[] = sprintf('Option with value "%s" is not valid, possible values are "%s"', $tagAndChoice['choice'], implode("', '", array_keys($choices)));
                                 }
                             }
@@ -412,13 +412,13 @@ class ProfileModel
                     if (!is_null($detail)) {
                         $tagResult = array();
                         $tagResult['tag'] = $tag->getProperty('name');
-                        $tagResult['detail'] = $detail;
+                        $tagResult['choice'] = $detail;
                     }
                     if ($typeName === 'language') {
                         if (is_null($detail)) {
                             $tagResult = array();
                             $tagResult['tag'] = $tag->getProperty('name');
-                            $tagResult['detail'] = '';
+                            $tagResult['choice'] = '';
                         }
                         $tagResult['tag'] = $this->profileFilterModel->translateLanguageToLocale($tagResult['tag'], $locale);
                     }
