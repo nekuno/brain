@@ -3,11 +3,8 @@
 
 namespace Console\Command;
 
-use ApiConsumer\LinkProcessor\LinkProcessor;
 use Console\ApplicationAwareCommand;
 use Everyman\Neo4j\Query\ResultSet;
-use Model\LinkModel;
-use Model\Neo4j\GraphManager;
 use Model\Neo4j\Neo4jException;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -30,14 +27,10 @@ class LinksFindDuplicatesCommand extends ApplicationAwareCommand
 
         $output->writeln('Starting database search.');
 
-        /* @var $linkModel LinkModel */
         $linkModel = $this->app['links.model'];
 
         $maxlimit = $input->getOption('limit');
         $offset = $input->getOption('offset');
-
-        $output->writeln('Updating link URLs');
-        $this->updateURLs($output, $linkModel);
 
         $output->writeln('Finding duplicates');
 
@@ -46,7 +39,14 @@ class LinksFindDuplicatesCommand extends ApplicationAwareCommand
 
             $output->writeln(sprintf('Getting and analyzing %d urls from offset %d.', $limit, $offset));
 
-            $duplicates = $linkModel->findDuplicates($offset, $limit);
+            $links = $linkModel->findLinks( array(), $offset, $limit);
+
+            foreach ($links as &$link)
+            {
+                $link = $this->updateURL($link, $output);
+            }
+
+            $duplicates = $linkModel->findDuplicates($links);
 
             $numDuplicates = count($duplicates);
 
@@ -69,9 +69,7 @@ class LinksFindDuplicatesCommand extends ApplicationAwareCommand
      */
     private function analyzeDuplicates(array $duplicates, $input, $output)
     {
-        /* @var $gm GraphManager */
         $gm = $this->app['neo4j.graph_manager'];
-        /* @var $linkModel LinkModel */
         $linkModel = $this->app['links.model'];
 
         $errors = array();
@@ -132,29 +130,25 @@ class LinksFindDuplicatesCommand extends ApplicationAwareCommand
         $output->writeln('Finished.');
     }
 
-    /**
-     * @param OutputInterface $output
-     * @param LinkModel $linkModel
-     */
-    private function updateURLs($output, $linkModel)
-    {
+    private function updateURL($link, OutputInterface $output){
 
-        $links = $linkModel->findLinks(array(),0,100);
-
-        /** @var $linkProcessor LinkProcessor */
         $linkProcessor = $this->app['api_consumer.link_processor'];
+        $linkModel = $this->app['links.model'];
 
-        foreach ($links as $link) {
-            $cleanUrl = $linkProcessor->cleanURL($link['url']);
-
-            if ($cleanUrl !== $link['url']) {
-                $output->writeln('Changing ' . $link['url'] . ' to ' . $cleanUrl);
-                $link['tempId'] = $link['url'];
-                $link['url'] = $cleanUrl;
-                $processed = isset($link['processed']) ? $link['processed'] : 0;
-                $linkModel->updateLink($link, $processed);
-            }
+        if (isset($link['url'])){
+            return false;
         }
 
+        $cleanUrl = $linkProcessor->cleanURL($link['url']);
+
+        if ($cleanUrl !== $link['url']) {
+            $output->writeln('Changing ' . $link['url'] . ' to ' . $cleanUrl);
+            $link['tempId'] = $link['url'];
+            $link['url'] = $cleanUrl;
+            $processed = isset($link['processed']) ? $link['processed'] : 0;
+            $linkModel->updateLink($link, $processed);
+        }
+
+        return $link;
     }
 }
