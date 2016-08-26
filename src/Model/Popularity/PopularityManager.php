@@ -23,6 +23,55 @@ class PopularityManager
         $this->gm = $gm;
     }
 
+    public function updatePopularity($linkId) {
+        $max_popularity = $this->getMaxPopularity();
+
+        if (null === $max_popularity) {
+            return true;
+        }
+
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(l:Link)')
+            ->where('id(l) = {nodeId}')
+            ->setParameter('nodeId', (integer)$linkId);
+
+        $qb->merge('(l)-[:HAS_POPULARITY]-(popularity:Popularity)')
+            ->with('l', 'popularity')
+            ->optionalMatch('(l)<-[likes:LIKES]-(:User)')
+            ->with('popularity', 'count(likes) AS total');
+
+        $qb->setParameter('max', floatval($max_popularity->getAmount()));
+        $qb->set(
+            'popularity.popularity = (total/{max})^3',
+            'popularity.unpopularity = (1-(total/{max}))^3',
+            'popularity.timestamp = timestamp()'
+        );
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        if ($result->count() == 0) {
+            return false;
+        }
+
+        return $this->buildOne($result->current());
+    }
+
+    public function deleteOneByLink($linkId)
+    {
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(l:Link)')
+            ->where('id(l) = {nodeId}')
+            ->setParameter('nodeId', (integer)$linkId);
+
+        $qb->match('(l)-[rel:HAS_POPULARITY]-(popularity:Popularity)')
+            ->delete('rel', 'popularity');
+
+        $qb->getQuery()->getResultSet();
+    }
+
     public function updatePopularityByUser($userId)
     {
         $max_popularity = $this->getMaxPopularity();
@@ -142,19 +191,24 @@ class PopularityManager
         /** @var Row $row */
         foreach ($result as $row) {
 
-            $popularity = new Popularity();
-
-            $popularity->setId($row->offsetGet('id'));
-            $popularity->setPopularity($row->offsetGet('popularity'));
-            $popularity->setUnpopularity($row->offsetGet('unpopularity'));
-            $popularity->setTimestamp($row->offsetGet('timestamp'));
-            $popularity->setAmount($row->offsetGet('amount'));
-            $popularity->setNew($row->offsetGet('new'));
-
-            $popularities[] = $popularity;
+            $popularities[] = $this->buildOne($row);
         }
 
         return $popularities;
+    }
+
+    private function buildOne(Row $row)
+    {
+        $popularity = new Popularity();
+
+        $popularity->setId($row->offsetGet('id'));
+        $popularity->setPopularity($row->offsetGet('popularity'));
+        $popularity->setUnpopularity($row->offsetGet('unpopularity'));
+        $popularity->setTimestamp($row->offsetGet('timestamp'));
+        $popularity->setAmount($row->offsetGet('amount'));
+        $popularity->setNew($row->offsetGet('new'));
+
+        return $popularity;
     }
 
     /**

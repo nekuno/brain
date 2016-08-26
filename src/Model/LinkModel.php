@@ -734,6 +734,7 @@ class LinkModel
         return $row->offsetGet('when');
     }
 
+    //TODO: Move to ConsistencyCheckerService
     /**
      * @param $id
      * @return array
@@ -760,28 +761,21 @@ class LinkModel
     }
 
     /**
-     * @param int $offset
-     * @param int $limit
+     * @param array $links
      * @return array
-     * @throws Neo4j\Neo4jException
      */
-    public function findDuplicates($offset = 0, $limit = 1000)
+    public function findDuplicates(array $links)
     {
+        $urls = array();
+        foreach ($links as $link){
+            $urls[] = $link['url'];
+        }
+
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->setParameters(array(
-            'offset' => (integer)$offset,
-            'limit' => (integer)$limit,
-        ));
-
         $qb->match('(l:Link)')
-            ->with('l.url AS url')
-            ->skip('{offset}')
-            ->limit('{limit}')
-            ->with('collect(url) AS urls');
-
-        $qb->match('(l:Link)')
-            ->where('l.url IN urls')
+            ->where('l.url IN { urls }')
+            ->setParameter('urls', $urls)
             ->with('l.url AS url', 'count(l) AS amount')
             ->where('amount > 1');
 

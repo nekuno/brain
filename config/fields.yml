@@ -88,6 +88,7 @@ profile:
         label:
             en: 'Birthday'
             es: 'Cumpleaños'
+        notErasable: true
     zodiacSign:
         type: choice
         editable: false
@@ -168,6 +169,7 @@ profile:
         label:
             en: 'Want to be found in searches by gender'
             es: 'Quiero salir en búsquedas por género'
+        notErasable: true
     descriptiveGender:
         type: multiple_choices
         label: &descriptiveGender.label
@@ -234,6 +236,7 @@ profile:
         label: &orientation.label
             en: 'Orientation'
             es: 'Orientación'
+        notErasable: true
     orientationRequired:
         type: boolean
         filterable: false
@@ -250,6 +253,7 @@ profile:
         label:
             en: 'What interface language do you prefer?'
             es: '¿Qué lenguaje de interfaz prefieres?'
+        notErasable: true
     religion:
         type: double_choice
         label: &religion.label
@@ -396,6 +400,7 @@ profile:
         label: &location.label
             en: 'Location'
             es: 'Ubicación'
+        notErasable: true
 content:
     type:
         type: choice
