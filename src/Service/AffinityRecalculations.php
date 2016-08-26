@@ -92,8 +92,8 @@ class AffinityRecalculations
 
             $percentage = round(($index + 1) / $count * 100);
             if ($percentage > $prevPercentage) {
-                $similarityProcessStepEvent = new AffinityProcessStepEvent($userId, $processId, $percentage);
-                $this->dispatcher->dispatch(\AppEvents::SIMILARITY_PROCESS_STEP, $similarityProcessStepEvent);
+                $affinityProcessStepEvent = new AffinityProcessStepEvent($userId, $processId, $percentage);
+                $this->dispatcher->dispatch(\AppEvents::AFFINITY_PROCESS_STEP, $affinityProcessStepEvent);
                 $prevPercentage = $percentage;
             }
 
