@@ -92,7 +92,7 @@ abstract class AbstractUserPaginatedModel implements PaginatedInterface
             ->with('anyUser', 'count(likes) as popularity', 'p', 'l');
 
         $qb->returns(
-            'DISTINCT anyUser.qnoow_id AS id,
+            'anyUser.qnoow_id AS id,
                     anyUser.username AS username,
                     anyUser.picture AS picture,
                     p.birthday AS birthday,
