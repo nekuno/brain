@@ -2,6 +2,8 @@
 
 namespace EventListener;
 
+use Event\AffinityProcessEvent;
+use Event\AffinityProcessStepEvent;
 use Event\MatchingProcessEvent;
 use Event\MatchingProcessStepEvent;
 use Event\SimilarityProcessEvent;
@@ -39,6 +41,9 @@ class SimilarityMatchingProcessSubscriber implements EventSubscriberInterface
             \AppEvents::MATCHING_PROCESS_START => array('onMatchingProcessStart'),
             \AppEvents::MATCHING_PROCESS_STEP => array('onMatchingProcessStep'),
             \AppEvents::MATCHING_PROCESS_FINISH => array('onMatchingProcessFinish'),
+            \AppEvents::AFFINITY_PROCESS_START => array('onAffinityProcessStart'),
+            \AppEvents::AFFINITY_PROCESS_STEP => array('onAffinityProcessStep'),
+            \AppEvents::AFFINITY_PROCESS_FINISH => array('onAffinityProcessFinish'),
         );
     }
 
@@ -97,6 +102,36 @@ class SimilarityMatchingProcessSubscriber implements EventSubscriberInterface
         $json = array('userId' => $event->getUserId(), 'processId' => $event->getProcessId());
         try {
             $this->client->post('api/matching/finish', array('json' => $json));
+        } catch (RequestException $e) {
+
+        }
+    }
+
+    public function onAffinityProcessStart(AffinityProcessEvent $event)
+    {
+        $json = array('userId' => $event->getUserId(), 'processId' => $event->getProcessId());
+        try {
+            $this->client->post('api/affinity/start', array('json' => $json));
+        } catch (RequestException $e) {
+
+        }
+    }
+
+    public function onAffinityProcessStep(AffinityProcessStepEvent $event)
+    {
+        $json = array('userId' => $event->getUserId(), 'processId' => $event->getProcessId(), 'percentage' => $event->getPercentage());
+        try {
+            $this->client->post('api/affinity/step', array('json' => $json));
+        } catch (RequestException $e) {
+
+        }
+    }
+
+    public function onAffinityProcessFinish(AffinityProcessEvent $event)
+    {
+        $json = array('userId' => $event->getUserId(), 'processId' => $event->getProcessId());
+        try {
+            $this->client->post('api/affinity/finish', array('json' => $json));
         } catch (RequestException $e) {
 
         }
