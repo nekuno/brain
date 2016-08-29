@@ -21,11 +21,12 @@ class LinksProcessDatabaseCommand extends ApplicationAwareCommand
             ->setDescription('Reprocess already saved and unprocessed links')
             ->setDefinition(
                 array(
-                    new InputArgument('limit', InputArgument::OPTIONAL, 'Items limit', 100)
+                    new InputArgument('limit', InputArgument::OPTIONAL, 'Items limit', 9999999)
 
                 )
             )
             ->addOption('all', null, InputOption::VALUE_NONE, 'Process again all links, not only unprocessed ones')
+            ->addOption('offset', null, InputOption::VALUE_OPTIONAL, 'Links to skip from oldest', 0)
             ->addOption('url-contains', null, InputOption::VALUE_REQUIRED, 'Condition to filter url');
     }
 
@@ -34,69 +35,75 @@ class LinksProcessDatabaseCommand extends ApplicationAwareCommand
         /* @var $linksModel LinkModel */
         $linksModel = $this->app['links.model'];
 
-        $limit = $input->getArgument('limit');
+        $maxLimit = $input->getArgument('limit');
         $all = $input->getOption('all');
         $urlContains = $input->getOption('url-contains');
+        $offset = $input->getOption('offset');
 
         $conditions = array();
-        if (!$all){
+        if (!$all) {
             $conditions += array('link.processed = 0');
         }
-        if ($urlContains){
+        if ($urlContains) {
             $conditions += array('link.url CONTAINS "' . $urlContains . '"');
         }
 
-        $links = $linksModel->getLinks($conditions, 0, $limit);
+        $limit = 1000;
+        do {
+            $output->writeln(sprintf('Getting and analyzing %d urls from offset %d.', $limit, $offset));
 
-        /* @var $preprocessedLinks PreprocessedLink[] */
-        $preprocessedLinks = array();
-        foreach ($links as $link) {
-            $preprocessedLink = new PreprocessedLink($link['url']);
-            $preprocessedLink->setLink($link);
-            $preprocessedLinks[] = $preprocessedLink;
-        }
+            $links = $linksModel->getLinks($conditions, $offset, $limit);
 
-        $output->writeln('Got ' . count($links) . ' links to process');
-
-        foreach ($preprocessedLinks as $preprocessedLink) {
-
-            try {
-                /* @var LinkProcessor $processor */
-                $processor = $this->app['api_consumer.link_processor'];
-                $processedLink = $processor->process($preprocessedLink, $all);
-
-                $processed = array_key_exists('processed', $processedLink) ? $processedLink['processed'] : 1;
-                if ($processed) {
-                    $output->writeln(sprintf('Success: Link %s processed', $preprocessedLink->getFetched()));
-                } else {
-                    $output->writeln(sprintf('Failed request: Link %s not processed', $preprocessedLink->getFetched()));
-                }
-
-            } catch (\Exception $e) {
-                $output->writeln(sprintf('Error: %s', $e->getMessage()));
-                $output->writeln(sprintf('Error: Link %s not processed', $preprocessedLink->getFetched()));
-                $processedLink = $preprocessedLink->getLink();
-                $processedLink['url'] = $preprocessedLink->getFetched();
-                $processedLink['processed'] = 0;
-                continue;
+            /* @var $preprocessedLinks PreprocessedLink[] */
+            $preprocessedLinks = array();
+            foreach ($links as $link) {
+                $preprocessedLink = new PreprocessedLink($link['url']);
+                $preprocessedLink->setLink($link);
+                $preprocessedLinks[] = $preprocessedLink;
             }
 
-            try {
-                $linksModel->addOrUpdateLink($processedLink);
+            foreach ($preprocessedLinks as $preprocessedLink) {
 
-                if (isset($processedLink['tags'])) {
-                    foreach ($processedLink['tags'] as $tag) {
-                        $linksModel->createTag($tag);
-                        $linksModel->addTag($processedLink, $tag);
+                try {
+                    /* @var LinkProcessor $processor */
+                    $processor = $this->app['api_consumer.link_processor'];
+                    $processedLink = $processor->process($preprocessedLink, $all);
+
+                    $processed = array_key_exists('processed', $processedLink) ? $processedLink['processed'] : 1;
+                    if ($processed) {
+                        $output->writeln(sprintf('Success: Link %s processed', $preprocessedLink->getFetched()));
+                    } else {
+                        $output->writeln(sprintf('Failed request: Link %s not processed', $preprocessedLink->getFetched()));
                     }
+
+                } catch (\Exception $e) {
+                    $output->writeln(sprintf('Error: %s', $e->getMessage()));
+                    $output->writeln(sprintf('Error: Link %s not processed', $preprocessedLink->getFetched()));
+                    $processedLink = $preprocessedLink->getLink();
+                    $processedLink['url'] = $preprocessedLink->getFetched();
+                    $processedLink['processed'] = 0;
+                    continue;
                 }
 
-                $output->writeln(sprintf('Success: Link %s saved', $preprocessedLink->getFetched()));
+                try {
+                    $linksModel->addOrUpdateLink($processedLink);
 
-            } catch (\Exception $e) {
-                $output->writeln(sprintf('Error: Link %s not saved', $preprocessedLink->getFetched()));
-                $output->writeln($e->getMessage());
+                    if (isset($processedLink['tags'])) {
+                        foreach ($processedLink['tags'] as $tag) {
+                            $linksModel->createTag($tag);
+                            $linksModel->addTag($processedLink, $tag);
+                        }
+                    }
+
+                    $output->writeln(sprintf('Success: Link %s saved', $preprocessedLink->getFetched()));
+
+                } catch (\Exception $e) {
+                    $output->writeln(sprintf('Error: Link %s not saved', $preprocessedLink->getFetched()));
+                    $output->writeln($e->getMessage());
+                }
             }
-        }
+
+            $offset += $limit;
+        } while ($offset < $maxLimit && !empty($links));
     }
 }

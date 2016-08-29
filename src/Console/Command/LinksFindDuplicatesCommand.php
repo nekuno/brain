@@ -29,13 +29,13 @@ class LinksFindDuplicatesCommand extends ApplicationAwareCommand
 
         $linkModel = $this->app['links.model'];
 
-        $maxlimit = $input->getOption('limit');
+        $maxLimit = $input->getOption('limit');
         $offset = $input->getOption('offset');
 
         $output->writeln('Finding duplicates');
 
         $limit = 1000;
-        while ($offset < $maxlimit) {
+        do {
 
             $output->writeln(sprintf('Getting and analyzing %d urls from offset %d.', $limit, $offset));
 
@@ -57,7 +57,8 @@ class LinksFindDuplicatesCommand extends ApplicationAwareCommand
             }
 
             $offset += $limit;
-        }
+        } while ($offset < $maxLimit && !empty($links));
+
 
         $output->writeln('Done.');
     }
