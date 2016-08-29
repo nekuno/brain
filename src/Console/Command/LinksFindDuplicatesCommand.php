@@ -145,8 +145,7 @@ class LinksFindDuplicatesCommand extends ApplicationAwareCommand
             $output->writeln('Changing ' . $link['url'] . ' to ' . $cleanUrl);
             $link['tempId'] = $link['url'];
             $link['url'] = $cleanUrl;
-            $processed = isset($link['processed']) ? $link['processed'] : 0;
-            $linkModel->updateLink($link, $processed);
+            $linkModel->updateLink($link, true);
         }
 
         return $link;
