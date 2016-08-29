@@ -42,10 +42,10 @@ class LinksProcessDatabaseCommand extends ApplicationAwareCommand
 
         $conditions = array();
         if (!$all) {
-            $conditions += array('link.processed = 0');
+            $conditions[] = 'link.processed = 0';
         }
         if ($urlContains) {
-            $conditions += array('link.url CONTAINS "' . $urlContains . '"');
+            $conditions[] = 'link.url CONTAINS "' . $urlContains . '"';
         }
 
         $limit = 1000;
