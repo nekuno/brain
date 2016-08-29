@@ -39,7 +39,7 @@ class LinksFindDuplicatesCommand extends ApplicationAwareCommand
 
             $output->writeln(sprintf('Getting and analyzing %d urls from offset %d.', $limit, $offset));
 
-            $links = $linkModel->findLinks( array(), $offset, $limit);
+            $links = $linkModel->getLinks(array(), $offset, $limit);
 
             foreach ($links as &$link)
             {
