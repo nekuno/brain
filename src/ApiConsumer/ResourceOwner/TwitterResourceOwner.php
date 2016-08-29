@@ -114,6 +114,7 @@ class TwitterResourceOwner extends TwitterResourceOwnerBase
 			'additionalLabels' => array('Creator'),
 			'resource' => TokensModel::TWITTER,
 			'timestamp' => 1000 * time(),
+            'processed' => 1
 		);
 
 		return $profile;

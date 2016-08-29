@@ -65,6 +65,7 @@ class TwitterProcessor extends AbstractProcessor
                 && isset($link['description']) && !empty($link['description'])
                 && isset($link['url']) && !empty($link['url'])
                 && isset($link['thumbnail'])
+                && !(isset($link['process']) && $link['process'] == 0)
             ) {
                 return $link;
             }
@@ -95,6 +96,7 @@ class TwitterProcessor extends AbstractProcessor
                 && isset($link['description']) && !empty($link['description'])
                 && isset($link['url']) && !empty($link['url'])
                 && isset($link['thumbnail'])
+                && !(isset($link['process']) && $link['process'] == 0)
             ) {
                 return $link;
             }
