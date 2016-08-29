@@ -227,7 +227,7 @@ class LinkModel
         }
 
         if (isset($link['processed']) || !$link['processed'] == 1) {
-            $data['tempId'] = $data['url'];
+            $data['tempId'] = isset($data['tempId']) ? $data['tempId'] : $data['url'];
             $newProcessed = isset($data['processed'])? $data['processed'] : true;
             return $this->updateLink($data, $newProcessed);
         }
