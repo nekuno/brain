@@ -47,8 +47,9 @@ class TwitterResourceOwner extends TwitterResourceOwnerBase
 	public function authorizedAPIRequest($url, array $query = array(), array $token = array())
 	{
 		$clientToken = $this->getOption('client_credential')['application_token'];
-		$headers = array();
+        $url = $this->getOption('base_url').$url;
 
+		$headers = array();
 		if (!empty($clientToken)) {
 			$headers = array('Authorization: Bearer ' . $clientToken);
 		}
@@ -58,7 +59,7 @@ class TwitterResourceOwner extends TwitterResourceOwnerBase
 			$query += array('screen_name' => $username);
 		}
 
-		$response = $this->httpRequest($this->normalizeUrl($url, $query), null, $headers);
+		$response = $this->httpRequest($this->normalizeUrl($url, $query), null, array(), $headers);
 
 		return $this->getResponseContent($response);
 	}
