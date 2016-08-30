@@ -108,7 +108,6 @@ class TwitterResourceOwner extends TwitterResourceOwnerBase
 		}
 
 		$profile = array(
-			'title' => isset($user['name']) ? $user['name'] : $user['url'],
 			'description' => isset($user['description']) ? $user['description'] : $user['name'],
 			'url' => isset($user['screen_name']) ? 'https://twitter.com/' . $user['screen_name'] : null,
 			'thumbnail' => isset($user['profile_image_url']) ? str_replace('_normal', '', $user['profile_image_url']) : null,
@@ -117,6 +116,7 @@ class TwitterResourceOwner extends TwitterResourceOwnerBase
 			'timestamp' => 1000 * time(),
             'processed' => 1
 		);
+        $profile['title'] = isset($user['name']) ? $user['name'] : $profile['url'];
 
 		return $profile;
 	}
