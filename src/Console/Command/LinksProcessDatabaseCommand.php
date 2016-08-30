@@ -4,6 +4,7 @@ namespace Console\Command;
 
 use ApiConsumer\LinkProcessor\LinkProcessor;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
+use ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser;
 use Console\ApplicationAwareCommand;
 use Model\LinkModel;
 use Symfony\Component\Console\Input\InputArgument;
@@ -45,7 +46,8 @@ class LinksProcessDatabaseCommand extends ApplicationAwareCommand
             $conditions[] = 'link.processed = 0';
         }
         if ($urlContains) {
-            $conditions[] = 'link.url CONTAINS "' . $urlContains . '"';
+//            $conditions[] = 'link.url CONTAINS "' . $urlContains . '"';
+            $conditions[] = 'link.url =~ ".*twitter.com.*"';
         }
 
         $limit = 1000;
@@ -62,18 +64,52 @@ class LinksProcessDatabaseCommand extends ApplicationAwareCommand
                 $preprocessedLinks[] = $preprocessedLink;
             }
 
+            $twitterParser = new TwitterUrlParser();
+            $twitterProfiles = array();
+
             foreach ($preprocessedLinks as $preprocessedLink) {
 
                 try {
                     /* @var LinkProcessor $processor */
                     $processor = $this->app['api_consumer.link_processor'];
-                    $processedLink = $processor->process($preprocessedLink, $all);
 
-                    $processed = array_key_exists('processed', $processedLink) ? $processedLink['processed'] : 1;
-                    if ($processed) {
-                        $output->writeln(sprintf('Success: Link %s processed', $preprocessedLink->getFetched()));
+                    if ($twitterParser->getUrlType($preprocessedLink->getFetched()) === TwitterUrlParser::TWITTER_PROFILE){
+                        $twitterProfiles[] = $preprocessedLink;
+                        if (count($twitterProfiles) >= 100){
+                            $processedLinks= $this->app['api_consumer.link_processor.processor.twitter']->processMultipleProfiles($twitterProfiles);
+                            $twitterProfiles = array();
+                        } else {
+                            continue;
+                        }
                     } else {
-                        $output->writeln(sprintf('Failed request: Link %s not processed', $preprocessedLink->getFetched()));
+                        $processedLinks = array($processor->process($preprocessedLink, $all));
+                    }
+
+                    foreach ($processedLinks as $processedLink){
+                        $processed = array_key_exists('processed', $processedLink) ? $processedLink['processed'] : 1;
+                        if ($processed) {
+                            $output->writeln(sprintf('Success: Link %s processed', $preprocessedLink->getFetched()));
+
+                            try {
+                                $linksModel->addOrUpdateLink($processedLink);
+
+                                if (isset($processedLink['tags'])) {
+                                    foreach ($processedLink['tags'] as $tag) {
+                                        $linksModel->createTag($tag);
+                                        $linksModel->addTag($processedLink, $tag);
+                                    }
+                                }
+
+                                $output->writeln(sprintf('Success: Link %s saved', $preprocessedLink->getFetched()));
+
+                            } catch (\Exception $e) {
+                                $output->writeln(sprintf('Error: Link %s not saved', $preprocessedLink->getFetched()));
+                                $output->writeln($e->getMessage());
+                            }
+
+                        } else {
+                            $output->writeln(sprintf('Failed request: Link %s not processed', $preprocessedLink->getFetched()));
+                        }
                     }
 
                 } catch (\Exception $e) {
@@ -83,23 +119,6 @@ class LinksProcessDatabaseCommand extends ApplicationAwareCommand
                     $processedLink['url'] = $preprocessedLink->getFetched();
                     $processedLink['processed'] = 0;
                     continue;
-                }
-
-                try {
-                    $linksModel->addOrUpdateLink($processedLink);
-
-                    if (isset($processedLink['tags'])) {
-                        foreach ($processedLink['tags'] as $tag) {
-                            $linksModel->createTag($tag);
-                            $linksModel->addTag($processedLink, $tag);
-                        }
-                    }
-
-                    $output->writeln(sprintf('Success: Link %s saved', $preprocessedLink->getFetched()));
-
-                } catch (\Exception $e) {
-                    $output->writeln(sprintf('Error: Link %s not saved', $preprocessedLink->getFetched()));
-                    $output->writeln($e->getMessage());
                 }
             }
 

@@ -43,6 +43,7 @@ class TwitterFollowingFetcher extends BasicPaginationFetcher
         return $paginationId;
     }
 
+    //TODO: Refactor to use RO->processMultipleProfiles
     /**
      * @inheritdoc
      */
