@@ -46,8 +46,7 @@ class LinksProcessDatabaseCommand extends ApplicationAwareCommand
             $conditions[] = 'link.processed = 0';
         }
         if ($urlContains) {
-//            $conditions[] = 'link.url CONTAINS "' . $urlContains . '"';
-            $conditions[] = 'link.url =~ ".*twitter.com.*"';
+            $conditions[] = 'link.url CONTAINS "' . $urlContains . '"';
         }
 
         $limit = 1000;
