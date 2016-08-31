@@ -72,7 +72,8 @@ class LinksProcessDatabaseCommand extends ApplicationAwareCommand
                     /* @var LinkProcessor $processor */
                     $processor = $this->app['api_consumer.link_processor'];
 
-                    if ($twitterParser->getUrlType($preprocessedLink->getFetched()) === TwitterUrlParser::TWITTER_PROFILE){
+                    $cleanUrl = $processor->cleanURL($preprocessedLink->getFetched());
+                    if ($twitterParser->getUrlType($cleanUrl) === TwitterUrlParser::TWITTER_PROFILE){
                         $twitterProfiles[] = $preprocessedLink;
                         if (count($twitterProfiles) >= 100){
                             $processedLinks= $this->app['api_consumer.link_processor.processor.twitter']->processMultipleProfiles($twitterProfiles);
