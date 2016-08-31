@@ -4,6 +4,7 @@ namespace ApiConsumer\ResourceOwner;
 
 use ApiConsumer\Event\ChannelEvent;
 use Buzz\Exception\RequestException;
+use Buzz\Message\Response;
 use Model\User\TokensModel;
 use Service\LookUp\LookUp;
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
@@ -94,7 +95,12 @@ class TwitterResourceOwner extends TwitterResourceOwnerBase
 		$users = array();
 		foreach ($chunks as $chunk) {
 			$query = array($parameter => implode(',', $chunk));
+            /** @var Response $response */
 			$response = $this->sendAuthorizedRequest($url, $query, $token);
+            if ($response->getStatusCode() === 429){
+                sleep(60*15);
+                $response = $this->sendAuthorizedRequest($url, $query, $token);
+            }
 			$users = array_merge($users, $this->getResponseContent($response));
 		}
 

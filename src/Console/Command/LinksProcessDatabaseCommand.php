@@ -79,6 +79,7 @@ class LinksProcessDatabaseCommand extends ApplicationAwareCommand
 
                     $cleanUrl = $processor->cleanURL($preprocessedLink->getFetched());
                     if ($twitterParser->getUrlType($cleanUrl) === TwitterUrlParser::TWITTER_PROFILE) {
+                        $preprocessedLink->setCanonical($cleanUrl);
                         $twitterProfiles[] = $preprocessedLink;
                         if (count($twitterProfiles) >= 100) {
                             $processedLinks = $this->app['api_consumer.link_processor.processor.twitter']->processMultipleProfiles($twitterProfiles);
@@ -93,7 +94,7 @@ class LinksProcessDatabaseCommand extends ApplicationAwareCommand
                     foreach ($processedLinks as $processedLink) {
                         $processed = array_key_exists('processed', $processedLink) ? $processedLink['processed'] : 1;
                         if ($processed) {
-                            $output->writeln(sprintf('Success: Link %s processed', $preprocessedLink->getFetched()));
+                            $output->writeln(sprintf('Success: Link %s processed', $processedLink['url']));
 
                             try {
                                 $linksModel->addOrUpdateLink($processedLink);
@@ -105,10 +106,10 @@ class LinksProcessDatabaseCommand extends ApplicationAwareCommand
                                     }
                                 }
 
-                                $output->writeln(sprintf('Success: Link %s saved', $preprocessedLink->getFetched()));
+                                $output->writeln(sprintf('Success: Link %s saved', $processedLink['url']));
 
                             } catch (\Exception $e) {
-                                $output->writeln(sprintf('Error: Link %s not saved', $preprocessedLink->getFetched()));
+                                $output->writeln(sprintf('Error: Link %s not saved', $processedLink['url']));
                                 $output->writeln($e->getMessage());
                             }
 

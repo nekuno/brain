@@ -74,7 +74,7 @@ class TwitterUrlParser extends UrlParser
             $path = explode('/', trim($parts['path'], '/'));
 
             $reserved = array('i', 'intent', 'hashtag', 'search',
-                'who_to_follow', 'about', 'tos', 'privacy', 'settings', '#');
+                'who_to_follow', 'about', 'tos', 'privacy', 'settings', '#', 'login');
 
             if (!empty($path) && !in_array($path[0], $reserved) && !isset($path[1])) {
                 return $path[0];
