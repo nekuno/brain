@@ -28,7 +28,8 @@ class LinksProcessDatabaseCommand extends ApplicationAwareCommand
             )
             ->addOption('all', null, InputOption::VALUE_NONE, 'Process again all links, not only unprocessed ones')
             ->addOption('offset', null, InputOption::VALUE_OPTIONAL, 'Links to skip from oldest', 0)
-            ->addOption('url-contains', null, InputOption::VALUE_REQUIRED, 'Condition to filter url');
+            ->addOption('url-contains', null, InputOption::VALUE_REQUIRED, 'Condition to filter url')
+            ->addOption('label', null, InputOption::VALUE_REQUIRED, 'Extra label of links');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -39,6 +40,7 @@ class LinksProcessDatabaseCommand extends ApplicationAwareCommand
         $maxLimit = $input->getArgument('limit');
         $all = $input->getOption('all');
         $urlContains = $input->getOption('url-contains');
+        $label = $input->getOption('label');
         $offset = $input->getOption('offset');
 
         $conditions = array();
@@ -47,6 +49,9 @@ class LinksProcessDatabaseCommand extends ApplicationAwareCommand
         }
         if ($urlContains) {
             $conditions[] = 'link.url CONTAINS "' . $urlContains . '"';
+        }
+        if ($label) {
+            $conditions[] = 'link:'.$label;
         }
 
         $limit = 1000;
@@ -73,10 +78,10 @@ class LinksProcessDatabaseCommand extends ApplicationAwareCommand
                     $processor = $this->app['api_consumer.link_processor'];
 
                     $cleanUrl = $processor->cleanURL($preprocessedLink->getFetched());
-                    if ($twitterParser->getUrlType($cleanUrl) === TwitterUrlParser::TWITTER_PROFILE){
+                    if ($twitterParser->getUrlType($cleanUrl) === TwitterUrlParser::TWITTER_PROFILE) {
                         $twitterProfiles[] = $preprocessedLink;
-                        if (count($twitterProfiles) >= 100){
-                            $processedLinks= $this->app['api_consumer.link_processor.processor.twitter']->processMultipleProfiles($twitterProfiles);
+                        if (count($twitterProfiles) >= 100) {
+                            $processedLinks = $this->app['api_consumer.link_processor.processor.twitter']->processMultipleProfiles($twitterProfiles);
                             $twitterProfiles = array();
                         } else {
                             continue;
@@ -85,7 +90,7 @@ class LinksProcessDatabaseCommand extends ApplicationAwareCommand
                         $processedLinks = array($processor->process($preprocessedLink, $all));
                     }
 
-                    foreach ($processedLinks as $processedLink){
+                    foreach ($processedLinks as $processedLink) {
                         $processed = array_key_exists('processed', $processedLink) ? $processedLink['processed'] : 1;
                         if ($processed) {
                             $output->writeln(sprintf('Success: Link %s processed', $preprocessedLink->getFetched()));
