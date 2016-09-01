@@ -70,6 +70,7 @@ class LinksProcessDatabaseCommand extends ApplicationAwareCommand
 
             $twitterParser = new TwitterUrlParser();
             $twitterProfiles = array();
+            $twitterIntents = array();
 
             foreach ($preprocessedLinks as $preprocessedLink) {
 
@@ -84,6 +85,15 @@ class LinksProcessDatabaseCommand extends ApplicationAwareCommand
                         if (count($twitterProfiles) >= 100) {
                             $processedLinks = $this->app['api_consumer.link_processor.processor.twitter']->processMultipleProfiles($twitterProfiles);
                             $twitterProfiles = array();
+                        } else {
+                            continue;
+                        }
+                    } else if ($twitterParser->getUrlType($cleanUrl) === TwitterUrlParser::TWITTER_INTENT){
+                        $preprocessedLink->setCanonical($cleanUrl);
+                        $twitterIntents[] = $preprocessedLink;
+                        if (count($twitterIntents) >= 100) {
+                            $processedLinks = $this->app['api_consumer.link_processor.processor.twitter']->processMultipleIntents($twitterIntents);
+                            $twitterIntents = array();
                         } else {
                             continue;
                         }
