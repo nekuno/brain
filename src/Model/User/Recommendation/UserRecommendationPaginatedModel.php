@@ -72,6 +72,8 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
             $qb->match($match);
         }
 
+        $qb->with('DISTINCT anyUser AS anyUser, u, like, matching_questions, similarity, p, l');
+
         $qb->returns(
             'anyUser.qnoow_id AS id,
                     anyUser.username AS username,
