@@ -91,6 +91,8 @@ abstract class AbstractUserPaginatedModel implements PaginatedInterface
             ->optionalMatch('(anyUser)<-[likes:LIKES]-(:User)')
             ->with('anyUser', 'count(likes) as popularity', 'p', 'l');
 
+        $qb->with('DISTINCT anyUser AS anyUser, popularity, p, l');
+
         $qb->returns(
             'anyUser.qnoow_id AS id,
                     anyUser.username AS username,
