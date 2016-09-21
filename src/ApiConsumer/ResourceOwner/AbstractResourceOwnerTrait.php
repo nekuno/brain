@@ -35,6 +35,8 @@ trait AbstractResourceOwnerTrait
      */
     protected $urlParser;
 
+    protected $expire_time_margin = 0;
+
     /**
      * @param HttpClientInterface $httpClient Buzz http client
      * @param HttpUtils $httpUtils Http utils
@@ -204,7 +206,7 @@ trait AbstractResourceOwnerTrait
     {
         $token['oauthToken'] = $data['access_token'];
         $token['expireTime'] = (int)$token['createdTime'] + (int)$data['expires_in'] - $this->expire_time_margin;
-        $token['refreshToken'] = isset($data['refreshToken']) ? $data['refreshToken'] : null;
+        $token['refreshToken'] = isset($data['refreshToken']) ? $data['refreshToken'] : isset($token['refreshToken']) ? $token['refreshToken'] : null;
 
         return $token;
     }
