@@ -6,6 +6,8 @@ use ApiConsumer\LinkProcessor\LinkAnalyzer;
 use Model\User\TokensModel;
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
 use HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\GoogleResourceOwner as GoogleResourceOwnerBase;
+use Buzz\Message\RequestInterface as HttpRequestInterface;
+
 
 /**
  * Class GoogleResourceOwner
@@ -63,7 +65,7 @@ class GoogleResourceOwner extends GoogleResourceOwnerBase
 			'client_secret' => $this->options['consumer_secret'],
 		);
 
-		$response = $this->httpRequest($url, array('body' => $parameters));
+		$response = $this->httpRequest($this->normalizeUrl($url, $parameters), null, array(), HttpRequestInterface::METHOD_POST);
 		$data = $this->getResponseContent($response);
 
 		return $data;

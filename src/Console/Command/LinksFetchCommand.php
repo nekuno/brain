@@ -4,13 +4,12 @@ namespace Console\Command;
 
 use ApiConsumer\EventListener\FetchLinksInstantSubscriber;
 use ApiConsumer\EventListener\FetchLinksSubscriber;
+use ApiConsumer\EventListener\OAuthTokenSubscriber;
 use ApiConsumer\Fetcher\FetcherService;
 use Console\ApplicationAwareCommand;
-use Model\User\LookUpModel;
 use Model\User\SocialNetwork\SocialProfileManager;
 use Model\User\TokensModel;
 use Psr\Log\LogLevel;
-use Silex\Application;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Logger\ConsoleLogger;
@@ -98,10 +97,12 @@ class LinksFetchCommand extends ApplicationAwareCommand
 
         $fetchLinksSubscriber = new FetchLinksSubscriber($output);
         $fetchLinksInstantSubscriber = new FetchLinksInstantSubscriber($this->app['guzzle.client'], $this->app['instant.host']);
+        $oauthTokenSubscriber = new OAuthTokenSubscriber($this->app['users.tokens.model'], $this->app['mailer'], $this->app['logger'], $this->app['amqp']);
         $dispatcher = $this->app['dispatcher'];
         /* @var $dispatcher EventDispatcher */
         $dispatcher->addSubscriber($fetchLinksSubscriber);
         $dispatcher->addSubscriber($fetchLinksInstantSubscriber);
+        $dispatcher->addSubscriber($oauthTokenSubscriber);
 
         foreach ($tokens as $token) {
             try {
