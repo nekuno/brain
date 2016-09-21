@@ -25,11 +25,10 @@ class FacebookResourceOwner extends FacebookResourceOwnerBase
 
 	protected $name = TokensModel::FACEBOOK;
 
-	protected $expire_time_margin = 1728000;// 20 days because expired tokens can´t be refreshed
-
 	public function __construct($httpClient, $httpUtils, $options, $name, $storage, $dispatcher)
 	{
 		$this->traitConstructor($httpClient, $httpUtils, $options, $name, $storage, $dispatcher);
+        $this->expire_time_margin = 1728000;
 	}
 
 	/**

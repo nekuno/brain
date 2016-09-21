@@ -6,6 +6,8 @@ use ApiConsumer\LinkProcessor\UrlParser\SpotifyUrlParser;
 use Model\User\TokensModel;
 use HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\SpotifyResourceOwner as SpotifyResourceOwnerBase;
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
+use Buzz\Message\RequestInterface as HttpRequestInterface;
+
 
 /**
  * Class FacebookResourceOwner
@@ -57,7 +59,7 @@ class SpotifyResourceOwner extends SpotifyResourceOwnerBase
 			'refresh_token' => $refreshToken,
 		);
 
-		$response = $this->httpRequest($url, $body, $headers);
+		$response = $this->httpRequest($this->normalizeUrl($url, $body), null, $headers, HttpRequestInterface::METHOD_POST);
 
 		return $this->getResponseContent($response);
 	}
