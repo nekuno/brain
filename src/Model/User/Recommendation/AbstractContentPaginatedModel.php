@@ -162,8 +162,6 @@ abstract class AbstractContentPaginatedModel implements PaginatedInterface
             if (isset($filters['tag'])) {
                 $qb->match('(filterTag:Tag)<-[:TAGGED]-(content:Link)-[:HAS_POPULARITY]-(popularity:Popularity)')
                     ->where('filterTag.name IN { filterTags } ')
-                    ->with('content', 'popularity')
-                    ->where('popularity.popularity > {popLimit}')
                     ->with('content', 'popularity.popularity AS popularity');
                 $qb->setParameter('filterTags', $filters['tag']);
 
