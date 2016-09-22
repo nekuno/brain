@@ -29,17 +29,17 @@ class LinksFindDuplicatesCommand extends ApplicationAwareCommand
 
         $linkModel = $this->app['links.model'];
 
-        $maxlimit = $input->getOption('limit');
+        $maxLimit = $input->getOption('limit');
         $offset = $input->getOption('offset');
 
         $output->writeln('Finding duplicates');
 
         $limit = 1000;
-        while ($offset < $maxlimit) {
+        do {
 
             $output->writeln(sprintf('Getting and analyzing %d urls from offset %d.', $limit, $offset));
 
-            $links = $linkModel->findLinks( array(), $offset, $limit);
+            $links = $linkModel->getLinks(array(), $offset, $limit);
 
             foreach ($links as &$link)
             {
@@ -57,7 +57,8 @@ class LinksFindDuplicatesCommand extends ApplicationAwareCommand
             }
 
             $offset += $limit;
-        }
+        } while ($offset < $maxLimit && !empty($links));
+
 
         $output->writeln('Done.');
     }
@@ -145,8 +146,7 @@ class LinksFindDuplicatesCommand extends ApplicationAwareCommand
             $output->writeln('Changing ' . $link['url'] . ' to ' . $cleanUrl);
             $link['tempId'] = $link['url'];
             $link['url'] = $cleanUrl;
-            $processed = isset($link['processed']) ? $link['processed'] : 0;
-            $linkModel->updateLink($link, $processed);
+            $linkModel->updateLink($link, true);
         }
 
         return $link;

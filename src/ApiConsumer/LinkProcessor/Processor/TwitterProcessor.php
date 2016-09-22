@@ -55,6 +55,92 @@ class TwitterProcessor extends AbstractProcessor
         return $link;
     }
 
+    /**
+     * @param $preprocessedLinks PreprocessedLink[]
+     * @return array|bool
+     */
+    public function processMultipleProfiles($preprocessedLinks){
+
+        $userNames = array();
+        foreach ($preprocessedLinks as $key=>$preprocessedLink){
+
+            $link = $preprocessedLink->getLink();
+
+            if ($preprocessedLink->getSource() == TokensModel::TWITTER) {
+
+                if (isset($link['title']) && !empty($link['title'])
+                    && isset($link['description']) && !empty($link['description'])
+                    && isset($link['url']) && !empty($link['url'])
+                    && isset($link['thumbnail'])
+                    && !(isset($link['process']) && $link['process'] == 0)
+                ) {
+                    unset($preprocessedLinks[$key]);
+                }
+            }
+
+            $userName = $this->parser->getProfileNameFromProfileUrl($preprocessedLink->getCanonical());
+            $this->addCreator($userName);
+            $userNames[] = $userName;
+        }
+
+        $users = $this->resourceOwner->lookupUsersBy('screen_name', $userNames);
+
+        if (empty($users)) return false;
+
+        $links = array();
+        foreach ($users as $user){
+            $links[] = $this->resourceOwner->buildProfileFromLookup($user);
+        }
+
+        return $links;
+    }
+
+    /**
+     * @param $preprocessedLinks PreprocessedLink[]
+     * @return array|bool
+     */
+    public function processMultipleIntents($preprocessedLinks){
+
+        $userIds = array('user_id' => array(), 'screen_name' => array());
+        foreach ($preprocessedLinks as $key=>$preprocessedLink){
+
+            $link = $preprocessedLink->getLink();
+
+            if ($preprocessedLink->getSource() == TokensModel::TWITTER) {
+
+                if (isset($link['title']) && !empty($link['title'])
+                    && isset($link['description']) && !empty($link['description'])
+                    && isset($link['url']) && !empty($link['url'])
+                    && isset($link['thumbnail'])
+                    && !(isset($link['process']) && $link['process'] == 0)
+                ) {
+                    unset($preprocessedLinks[$key]);
+                }
+            }
+
+            $userId = isset($link['resourceItemId']) ?
+                array('user_id' => $link['resourceItemId']) :
+                $this->parser->getProfileIdFromIntentUrl($preprocessedLink->getCanonical());
+
+            $key = array_keys($userId)[0];
+            $userIds[$key][] = $userId;
+        }
+
+        $users = array();
+        foreach ($userIds as $key => $ids) {
+            $users = array_merge($this->resourceOwner->lookupUsersBy($key, $ids));
+        }
+
+        if (empty($users)) return false;
+
+        $links = array();
+        foreach ($users as $user){
+            $links[] = $this->resourceOwner->buildProfileFromLookup($user);
+        }
+
+        return $links;
+    }
+
     private function processIntent(PreprocessedLink $preprocessedLink)
     {
         $link = $preprocessedLink->getLink();
@@ -65,6 +151,7 @@ class TwitterProcessor extends AbstractProcessor
                 && isset($link['description']) && !empty($link['description'])
                 && isset($link['url']) && !empty($link['url'])
                 && isset($link['thumbnail'])
+                && !(isset($link['process']) && $link['process'] == 0)
             ) {
                 return $link;
             }
@@ -95,6 +182,7 @@ class TwitterProcessor extends AbstractProcessor
                 && isset($link['description']) && !empty($link['description'])
                 && isset($link['url']) && !empty($link['url'])
                 && isset($link['thumbnail'])
+                && !(isset($link['process']) && $link['process'] == 0)
             ) {
                 return $link;
             }

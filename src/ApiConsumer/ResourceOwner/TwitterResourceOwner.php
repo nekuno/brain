@@ -4,6 +4,7 @@ namespace ApiConsumer\ResourceOwner;
 
 use ApiConsumer\Event\ChannelEvent;
 use Buzz\Exception\RequestException;
+use Buzz\Message\Response;
 use Model\User\TokensModel;
 use Service\LookUp\LookUp;
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
@@ -47,8 +48,9 @@ class TwitterResourceOwner extends TwitterResourceOwnerBase
 	public function authorizedAPIRequest($url, array $query = array(), array $token = array())
 	{
 		$clientToken = $this->getOption('client_credential')['application_token'];
-		$headers = array();
+        $url = $this->getOption('base_url').$url;
 
+		$headers = array();
 		if (!empty($clientToken)) {
 			$headers = array('Authorization: Bearer ' . $clientToken);
 		}
@@ -58,7 +60,7 @@ class TwitterResourceOwner extends TwitterResourceOwnerBase
 			$query += array('screen_name' => $username);
 		}
 
-		$response = $this->httpRequest($this->normalizeUrl($url, $query), null, $headers);
+		$response = $this->httpRequest($this->normalizeUrl($url, $query), null, array(), $headers);
 
 		return $this->getResponseContent($response);
 	}
@@ -93,7 +95,12 @@ class TwitterResourceOwner extends TwitterResourceOwnerBase
 		$users = array();
 		foreach ($chunks as $chunk) {
 			$query = array($parameter => implode(',', $chunk));
+            /** @var Response $response */
 			$response = $this->sendAuthorizedRequest($url, $query, $token);
+            if ($response->getStatusCode() === 429){
+                sleep(60*15);
+                $response = $this->sendAuthorizedRequest($url, $query, $token);
+            }
 			$users = array_merge($users, $this->getResponseContent($response));
 		}
 
@@ -107,14 +114,15 @@ class TwitterResourceOwner extends TwitterResourceOwnerBase
 		}
 
 		$profile = array(
-			'title' => isset($user['name']) ? $user['name'] : $user['url'],
 			'description' => isset($user['description']) ? $user['description'] : $user['name'],
 			'url' => isset($user['screen_name']) ? 'https://twitter.com/' . $user['screen_name'] : null,
 			'thumbnail' => isset($user['profile_image_url']) ? str_replace('_normal', '', $user['profile_image_url']) : null,
 			'additionalLabels' => array('Creator'),
 			'resource' => TokensModel::TWITTER,
 			'timestamp' => 1000 * time(),
+            'processed' => 1
 		);
+        $profile['title'] = isset($user['name']) ? $user['name'] : $profile['url'];
 
 		return $profile;
 	}

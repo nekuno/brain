@@ -136,38 +136,37 @@ class LinkModel
     }
 
     /**
-     * @param array $filters
-     * @param $offset
-     * @param $limit
+     * @param array $conditions
+     * @param int $offset
+     * @param int $limit
      * @return array
      */
-    public function findLinks($filters = array(), $offset = 0, $limit = 100)
+    public function getLinks($conditions = array(), $offset = 0, $limit = 100)
     {
-        //todo: add tag filters, probably with an inter-model buildParamsFromFilters
-        $types = isset($filters['type']) ? $filters['type'] : array();
-
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->setParameters(array(
-            'offset' => (integer)$offset,
-            'limit' => (integer)$limit,
-        ));
+        $qb->match('(link:Link)')
+            ->where($conditions)
+            ->returns('link')
+            ->skip('{ offset }')
+            ->limit('{ limit }');
 
-        $qb->match("(l:Link)")
-            ->filterContentByType($types, 'l')
-            ->returns('l AS link')
-            ->skip('{offset}')
-            ->limit('{limit}');
+        $qb->setParameters(
+            array(
+                'limit' => (integer)$limit,
+                'offset' => (integer) $offset,
+            )
+        );
+
         $query = $qb->getQuery();
-        $result = $query->getResultSet();
+        $resultSet = $query->getResultSet();
 
-        $links = array();
-        /** @var Row $row */
-        foreach ($result as $row) {
-            $links[] = $this->buildLink($row->offsetGet('link'));
+        $unprocessedLinks = array();
+        foreach ($resultSet as $row) {
+            $unprocessedLinks[] = $this->buildLink($row->offsetGet('link'));
         }
 
-        return $links;
+        return $unprocessedLinks;
     }
 
     /**
@@ -227,7 +226,7 @@ class LinkModel
         }
 
         if (isset($link['processed']) || !$link['processed'] == 1) {
-            $data['tempId'] = $data['url'];
+            $data['tempId'] = isset($data['tempId']) ? $data['tempId'] : $data['url'];
             $newProcessed = isset($data['processed'])? $data['processed'] : true;
             return $this->updateLink($data, $newProcessed);
         }
@@ -475,44 +474,6 @@ class LinkModel
 
     }
 
-    public function getUnprocessedLinks($conditions = array(), $offset = 0, $limit = 100)
-    {
-        $conditions = array_merge($conditions, array('link.processed = 0'));
-
-        $qb = $this->gm->createQueryBuilder();
-
-        $qb->match('(link:Link)')
-            ->where($conditions)
-            ->returns('link')
-            ->skip('{ offset }')
-            ->limit('{ limit }');
-
-        $qb->setParameters(
-            array(
-                'limit' => (integer)$limit,
-                'offset' => (integer) $offset,
-            )
-        );
-
-        $query = $qb->getQuery();
-
-        $resultSet = $query->getResultSet();
-
-        $unprocessedLinks = array();
-
-        foreach ($resultSet as $row) {
-            $unprocessedLinks[] = array(
-                'url' => $row['link']->getProperty('url'),
-                'description' => $row['link']->getProperty('description'),
-                'title' => $row['link']->getProperty('title'),
-                'tempId' => $row['link']->getProperty('url'),
-            );
-        }
-
-        return $unprocessedLinks;
-
-    }
-
     /**
      * @param integer $userId
      * @param int $limitContent
@@ -580,7 +541,7 @@ class LinkModel
                     'collect(distinct tag.name) as tags',
                     'labels(l) as types',
                     'COLLECT (DISTINCT synonymousLink) AS synonymous')
-                ->orderby('average DESC')
+                ->orderBy('average DESC')
                 ->limit('{limitContent}');
 
             $qb->setParameters($params);
