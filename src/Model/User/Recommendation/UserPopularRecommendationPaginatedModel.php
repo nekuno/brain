@@ -32,7 +32,7 @@ class UserPopularRecommendationPaginatedModel extends AbstractUserPaginatedModel
         $filters = $this->profileFilterModel->splitFilters($filters);
 
         $profileFilters = $this->getProfileFilters($filters['profileFilters']);
-        $userFilters = $this->getUserFilters($filters['userFilters']);
+        $userFilters = $this->getPopularUserFilters($filters['userFilters']);
 
         $qb = $this->gm->createQueryBuilder();
 
