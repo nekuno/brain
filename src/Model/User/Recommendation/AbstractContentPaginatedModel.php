@@ -16,7 +16,7 @@ use Service\Validator;
 
 abstract class AbstractContentPaginatedModel implements PaginatedInterface
 {
-    const POP_LOWER_LIMIT = 0.000001;
+    const POP_LOWER_LIMIT = 0.0000001;
     const POP_UPPER_LIMIT = 0.01;
     /**
      * @var GraphManager
@@ -60,16 +60,15 @@ abstract class AbstractContentPaginatedModel implements PaginatedInterface
         if (!isset($filters['tag'])) {
 
             /// Estimation to avoid calculating in real time ///
-            $baseSize = 1300000;
+            $baseSize = 130000;
             $estimations = array(
                 'type' => array(
-                    'Video' => 0.1,
+                    'Video' => 0.06,
                     'Audio' => 0.02,
-                    'Image' => 0.008,
-                    'Creator' => 0.01,
+                    'Image' => 0.003,
+                    'Creator' => 0.06,
                     'Link' => 1,
                 ),
-                'tag' => 0.001,
             );
 
             if (empty($types)) {
