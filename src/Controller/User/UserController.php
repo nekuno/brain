@@ -143,6 +143,10 @@ class UserController
         $userManager = $app['users.manager'];
         $user = $userManager->create($data);
 
+        if (isset($data['enabled']) && $data['enabled'] === false) {
+            $app['users.ghostuser.manager']->saveAsGhost($user->getId());
+        }
+
         if (isset($oauthData)) {
             /* @var $tokensModel TokensModel */
             $tokensModel = $app['users.tokens.model'];
