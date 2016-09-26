@@ -92,6 +92,29 @@ class GhostUserManager
         return $ghostUser;
     }
 
+    public function saveAsGhost($id)
+    {
+
+        $qb = $this->graphManager->createQueryBuilder();
+        $qb->match('(u:User)')
+            ->where('u.qnoow_id = { id }')
+            ->setParameter('id', (integer)$id)
+            ->set('u:' . $this::LABEL_GHOST_USER)
+            ->returns('u, u.qnoow_id as id');
+
+        $result = $qb->getQuery()->getResultSet();
+
+        if ($result->count() < 1) {
+            throw new NotFoundHttpException(sprintf('User "%d" not found', $id));
+        }
+
+        /* @var $row Row */
+        $row = $result->current();
+
+        return $this->buildOneGhostUser($row);
+    }
+
+
     /**
      * @param ResultSet $result
      * @return array of GhostUser
