@@ -59,7 +59,7 @@ abstract class AbstractUserPaginatedModel implements PaginatedInterface
         $filters = $this->profileFilterModel->splitFilters($filters);
 
         $profileFilters = $this->getProfileFilters($filters['profileFilters']);
-        $userFilters = $this->getUserFilters($filters['userFilters']);
+        $userFilters = $this->getPopularUserFilters($filters['userFilters']);
         $qb = $this->gm->createQueryBuilder();
 
         $qb->setParameters($parameters);
@@ -264,19 +264,46 @@ abstract class AbstractUserPaginatedModel implements PaginatedInterface
                 $value = $filters[$name];
                 switch ($name) {
                     case 'groups':
-                        foreach ($value as $index => $groupId) {
-                            $value[$index] = (int)$groupId;
-                        }
-                        $jsonValues = json_encode($value);
-                        $matches[] = "(anyUser)-[:BELONGS_TO]->(group:Group) WHERE id(group) IN $jsonValues";
+                        $matches[] = $this->buildGroupMatch($value);
                         break;
                     case 'compatibility':
-                        $valuePerOne = intval($value) / 100;
-                        $conditions[] = "($valuePerOne <= matching_questions)";
+                        $conditions[] = $this->buildMatchingCondition($value);
                         break;
                     case 'similarity':
-                        $valuePerOne = intval($value) / 100;
-                        $conditions[] = "($valuePerOne <= similarity)";
+                        $conditions[] = $this->buildsimilarityCondition($value);
+                        break;
+                }
+            }
+        }
+
+        return array(
+            'conditions' => $conditions,
+            'matches' => $matches
+        );
+    }
+
+    /**
+     * @param array $filters
+     * @return array
+     */
+    protected function getPopularUserFilters(array $filters)
+    {
+        $conditions = array();
+        $matches = array();
+
+        $userFilterMetadata = $this->getUserFilterMetadata();
+        foreach ($userFilterMetadata as $name => $filter) {
+            if (isset($filters[$name]) && !empty($filters[$name])) {
+                $value = $filters[$name];
+                switch ($name) {
+                    case 'groups':
+                        $matches[] = $this->buildGroupMatch($value);
+                        break;
+                    case 'compatibility':
+                        $conditions[] = 'false';
+                        break;
+                    case 'similarity':
+                        $conditions[] = 'false';
                         break;
                 }
             }
@@ -324,5 +351,25 @@ abstract class AbstractUserPaginatedModel implements PaginatedInterface
         }
 
         return $response;
+    }
+
+    protected function buildGroupMatch($value) {
+        foreach ($value as $index => $groupId) {
+            $value[$index] = (int)$groupId;
+        }
+        $jsonValues = json_encode($value);
+        return "(anyUser)-[:BELONGS_TO]->(group:Group) WHERE id(group) IN $jsonValues";
+    }
+
+    protected function buildMatchingCondition($value)
+    {
+        $valuePerOne = intval($value) / 100;
+        return "($valuePerOne <= matching_questions)";
+    }
+
+    protected function buildsimilarityCondition($value)
+    {
+        $valuePerOne = intval($value) / 100;
+        return "($valuePerOne <= similarity)";
     }
 }
