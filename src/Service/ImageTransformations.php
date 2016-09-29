@@ -6,12 +6,12 @@ class ImageTransformations
 {
     public function isImage($url)
     {
-        return preg_match('/\.(gif|png|jpe?g|bmp|svg)$/', $url);
+        return preg_match('/\.(gif|png|jpe?g|bmp|svg)$/i', $url);
     }
 
     public function isGif($url)
     {
-        return preg_match('/\.gif$/', $url);
+        return preg_match('/\.gif$/i', $url);
     }
 
     public function gifToPng($url)
