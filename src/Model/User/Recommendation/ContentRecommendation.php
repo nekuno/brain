@@ -14,6 +14,7 @@ class ContentRecommendation implements \JsonSerializable
     protected $types;
     protected $embed;
     protected $match;
+    protected $staticThumbnail;
 
     /**
      * @return mixed
@@ -112,6 +113,22 @@ class ContentRecommendation implements \JsonSerializable
     }
 
     /**
+     * @return mixed
+     */
+    public function getStaticThumbnail()
+    {
+        return $this->staticThumbnail;
+    }
+
+    /**
+     * @param mixed $staticThumbnail
+     */
+    public function setStaticThumbnail($staticThumbnail)
+    {
+        $this->staticThumbnail = $staticThumbnail;
+    }
+
+    /**
      * Specify data which should be serialized to JSON
      * @link http://php.net/manual/en/jsonserializable.jsonserialize.php
      * @return mixed data which can be serialized by <b>json_encode</b>,
@@ -127,6 +144,7 @@ class ContentRecommendation implements \JsonSerializable
           'types' => $this->getTypes(),
           'embed' => $this->getEmbed(),
           'match' => $this->getMatch(),
+          'staticThumbnail' => $this->getStaticThumbnail(),
         );
     }
 }

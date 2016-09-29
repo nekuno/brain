@@ -7,6 +7,7 @@ use Everyman\Neo4j\Query\Row;
 use Model\LinkModel;
 use Model\User\Affinity\AffinityModel;
 use Model\Neo4j\GraphManager;
+use Service\ImageTransformations;
 use Service\Validator;
 
 class ContentRecommendationPaginatedModel extends AbstractContentPaginatedModel
@@ -22,10 +23,11 @@ class ContentRecommendationPaginatedModel extends AbstractContentPaginatedModel
      * @param AffinityModel $am
      * @param LinkModel $lm
      * @param Validator $validator
+     * @param ImageTransformations $it
      */
-    public function __construct(GraphManager $gm, AffinityModel $am, LinkModel $lm, Validator $validator)
+    public function __construct(GraphManager $gm, AffinityModel $am, LinkModel $lm, Validator $validator, ImageTransformations $it)
     {
-        parent::__construct($gm, $lm, $validator);
+        parent::__construct($gm, $lm, $validator, $it);
         $this->am = $am;
     }
 

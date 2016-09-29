@@ -5,13 +5,13 @@
 
 namespace Model\User\Recommendation;
 
-
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\ResultSet;
 use Everyman\Neo4j\Query\Row;
 use Model\LinkModel;
 use Model\Neo4j\GraphManager;
 use Paginator\PaginatedInterface;
+use Service\ImageTransformations;
 use Service\Validator;
 
 abstract class AbstractContentPaginatedModel implements PaginatedInterface
@@ -34,15 +34,22 @@ abstract class AbstractContentPaginatedModel implements PaginatedInterface
     protected $validator;
 
     /**
+     * @var ImageTransformations
+     */
+    protected $it;
+
+    /**
      * @param GraphManager $gm
      * @param LinkModel $lm
      * @param Validator $validator
+     * @param ImageTransformations $it
      */
-    public function __construct(GraphManager $gm, LinkModel $lm, Validator $validator)
+    public function __construct(GraphManager $gm, LinkModel $lm, Validator $validator, ImageTransformations $it)
     {
         $this->gm = $gm;
         $this->lm = $lm;
         $this->validator = $validator;
+        $this->it = $it;
     }
 
     /**
@@ -289,6 +296,14 @@ abstract class AbstractContentPaginatedModel implements PaginatedInterface
         }
 
         $content->setMatch(0);
+
+        if ($content->getContent()['thumbnail']) {
+            $thumbnail = $content->getContent()['thumbnail'];
+            $content->setStaticThumbnail($this->it->isGif($thumbnail) ? $this->it->gifToPng($thumbnail) : $thumbnail);
+        } elseif ($content->getContent()['url'] && $this->it->isImage($content->getContent()['url'])) {
+            $thumbnail = $content->getContent()['url'];
+            $content->setStaticThumbnail($this->it->isGif($thumbnail) ? $this->it->gifToPng($thumbnail) : $thumbnail);
+        }
 
         return $content;
     }
