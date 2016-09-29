@@ -100,7 +100,7 @@ class ContentRecommendationPaginatedModel extends AbstractContentPaginatedModel
         $query = $qb->getQuery();
         $result = $query->getResultSet();
 
-        $response = $this->buildResponseFromResult($result, $id);
+        $response = $this->buildResponseFromResult($result, $id, $offset);
         $return['items'] = array_merge($return['items'], $response['items']);
 
         $needContent = $this->needMoreContent($limit, $return);

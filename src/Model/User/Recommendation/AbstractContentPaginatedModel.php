@@ -206,7 +206,7 @@ abstract class AbstractContentPaginatedModel implements PaginatedInterface
 
             $id = isset($filters['id']) ? $filters['id'] : null;
 
-            $response = $this->buildResponseFromResult($result, $id);
+            $response = $this->buildResponseFromResult($result, $id, $offset);
 
             if (count($response['items']) >= $limit) {
                 break;
@@ -219,12 +219,14 @@ abstract class AbstractContentPaginatedModel implements PaginatedInterface
     /**
      * @param $result ResultSet
      * @param null $id
+     * @param null $offset
      * @return array
      */
-    public function buildResponseFromResult($result, $id = null)
+    public function buildResponseFromResult($result, $id = null, $offset = null)
     {
         $response = array('items' => array());
 
+        $resultCount = 0;
         /** @var Row $row */
         foreach ($result as $row) {
 
@@ -235,6 +237,12 @@ abstract class AbstractContentPaginatedModel implements PaginatedInterface
             $content->setContent($this->lm->buildLink($contentNode));
 
             $content = $this->completeContent($content, $row, $contentNode, $id);
+
+            if (!$offset && $resultCount <= 4) {
+                $thumbnail = $this->getStaticThumbnail($content);
+                $content->setStaticThumbnail($thumbnail);
+            }
+            $resultCount++;
 
             $response['items'][] = $content;
 
@@ -297,14 +305,19 @@ abstract class AbstractContentPaginatedModel implements PaginatedInterface
 
         $content->setMatch(0);
 
+        return $content;
+    }
+
+    private function getStaticThumbnail(ContentRecommendation $content)
+    {
         if (isset($content->getContent()['thumbnail'])) {
             $thumbnail = $content->getContent()['thumbnail'];
-            $content->setStaticThumbnail($this->it->isGif($thumbnail) ? $this->it->gifToPng($thumbnail) : $thumbnail);
+            return $this->it->isGif($thumbnail) ? $this->it->gifToPng($thumbnail) : $thumbnail;
         } elseif (isset($content->getContent()['url']) && $this->it->isImage($content->getContent()['url'])) {
             $thumbnail = $content->getContent()['url'];
-            $content->setStaticThumbnail($this->it->isGif($thumbnail) ? $this->it->gifToPng($thumbnail) : $thumbnail);
+            return $this->it->isGif($thumbnail) ? $this->it->gifToPng($thumbnail) : $thumbnail;
         }
 
-        return $content;
+        return null;
     }
 }
