@@ -10,6 +10,7 @@ use Everyman\Neo4j\Relationship;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
 use Model\Neo4j\Neo4jException;
+use Model\ProfilePhoto;
 use Model\User;
 use Model\User\GhostUser\GhostUserManager;
 use Model\User\LookUpModel;
@@ -46,11 +47,23 @@ class UserManager implements PaginatedInterface
      */
     protected $encoder;
 
-    public function __construct(EventDispatcher $dispatcher, GraphManager $gm, PasswordEncoderInterface $encoder)
+    /**
+     * @var string
+     */
+    protected $base;
+
+    /**
+     * @var string
+     */
+    protected $host;
+
+    public function __construct(EventDispatcher $dispatcher, GraphManager $gm, PasswordEncoderInterface $encoder, $base, $host)
     {
         $this->dispatcher = $dispatcher;
         $this->gm = $gm;
         $this->encoder = $encoder;
+        $this->base = $base;
+        $this->host = $host;
     }
 
     /**
@@ -330,6 +343,11 @@ class UserManager implements PaginatedInterface
                         }
                         break;
                     case 'string':
+                        if (!is_string($fieldValue)) {
+                            $fieldErrors[] = sprintf('"%s" must be an string', $fieldName);
+                        }
+                        break;
+                    case 'photo':
                         if (!is_string($fieldValue)) {
                             $fieldErrors[] = sprintf('"%s" must be an string', $fieldName);
                         }
@@ -1015,7 +1033,7 @@ class UserManager implements PaginatedInterface
         return $count;
     }
 
-    public function getMetadata($isUpdate = false)
+    protected function getMetadata($isUpdate = false)
     {
         $metadata = array(
             'qnoow_id' => array('type' => 'string', 'editable' => false),
@@ -1041,7 +1059,7 @@ class UserManager implements PaginatedInterface
             'updatedAt' => array('type' => 'datetime', 'editable' => false),
             'confirmed' => array('type' => 'boolean', 'default' => false),
             'status' => array('type' => 'string', 'editable' => false),
-            'picture' => array('type' => 'string'),
+            'photo' => array('type' => 'photo'),
         );
 
         if ($isUpdate) {
@@ -1058,7 +1076,7 @@ class UserManager implements PaginatedInterface
 
         $this->updateCanonicalFields($data);
         $this->updatePassword($data);
-        $this->updatePicture($data);
+        $this->updatePhoto($data);
 
         $data['updatedAt'] = (new \DateTime())->format('Y-m-d H:i:s');
 
@@ -1107,6 +1125,11 @@ class UserManager implements PaginatedInterface
             if (method_exists($user, $method)) {
                 if (isset($metadata[$key]['type']) && $metadata[$key]['type'] === 'datetime') {
                     $value = new \DateTime($value);
+                } elseif (isset($metadata[$key]['type']) && $metadata[$key]['type'] === 'photo') {
+                    $path = $value;
+                    $value = new ProfilePhoto($this->base, $this->host);
+                    $value->setPath($path);
+                    $value->setUser($user);
                 }
                 $user->{$method}($value);
             }
@@ -1280,13 +1303,14 @@ class UserManager implements PaginatedInterface
         }
     }
 
-    protected function updatePicture(array &$user)
+    protected function updatePhoto(array &$user)
     {
 
-        if (isset($user['picture']) && filter_var($user['picture'], FILTER_VALIDATE_URL)) {
-            $url = $user['picture'];
-            $user['picture'] = $user['usernameCanonical'] . '_' . time() . '.jpg';
-            $filename = __DIR__ . '/../../../social/web/user/images/' . $user['picture'];
+        if (isset($user['photo']) && filter_var($user['photo'], FILTER_VALIDATE_URL)) {
+            $url = $user['photo'];
+            // TODO: Validate size and set proper extension
+            $user['photo'] = $user['usernameCanonical'] . '_' . time() . '.jpg';
+            $filename = $this->base . 'uploads/user/' . $user['photo'];
             file_put_contents($filename, file_get_contents($url));
         }
     }

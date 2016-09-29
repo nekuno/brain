@@ -5,8 +5,8 @@ namespace Manager;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Exception\ValidationException;
-use Model\Photo;
 use Model\Neo4j\GraphManager;
+use Model\GalleryPhoto;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class PhotoManager
@@ -186,7 +186,7 @@ class PhotoManager
 
     /**
      * @param Row $row
-     * @return Photo
+     * @return GalleryPhoto
      */
     protected function build(Row $row)
     {
@@ -198,7 +198,7 @@ class PhotoManager
         $userNode = $row->offsetGet('u');
         $user = $this->um->getById($userNode->getProperty('qnoow_id'));
 
-        $photo = new Photo($this->base, $this->host);
+        $photo = new GalleryPhoto($this->base, $this->host);
         $photo->setId($node->getId());
         $photo->setCreatedAt(new \DateTime($node->getProperty('createdAt')));
         $photo->setPath($node->getProperty('path'));

@@ -79,7 +79,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.manager'] = $app->share(
             function ($app) {
 
-                return new UserManager($app['dispatcher'], $app['neo4j.graph_manager'], $app['security.password_encoder']);
+                return new UserManager($app['dispatcher'], $app['neo4j.graph_manager'], $app['security.password_encoder'], $app['social_web_dir'], $app['params']['social.host']);
             }
         );
 

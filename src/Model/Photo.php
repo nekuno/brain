@@ -2,10 +2,8 @@
 
 namespace Model;
 
-class Photo implements \JsonSerializable
+abstract class Photo implements \JsonSerializable
 {
-
-    public static $sizes = array('small', 'medium', 'big');
 
     /**
      * @var int
@@ -42,6 +40,14 @@ class Photo implements \JsonSerializable
         $this->base = $base;
         $this->host = $host;
     }
+
+    /**
+     * Returns an array of sizes, with this shape:
+     * array('my_size' => array('cache' => 'path_to_cache_my_size', 'resolve' => 'path_to_resolve_my_size'));
+     *
+     * @return array
+     */
+    abstract protected function getSizes();
 
     /**
      * @return int
@@ -143,8 +149,8 @@ class Photo implements \JsonSerializable
             unlink($this->getFullPath());
         }
 
-        foreach (self::$sizes as $size) {
-            $cache = $this->base . "media/cache/gallery_$size/" . $this->getPath();
+        foreach ($this->getSizes() as $size => $sizePaths) {
+            $cache = $this->base . $sizePaths['cache'] . $this->getPath();
             if (is_writable($cache)) {
                 unlink($cache);
             }
@@ -154,9 +160,9 @@ class Photo implements \JsonSerializable
     public function jsonSerialize()
     {
         $thumbnail = array();
-        foreach (self::$sizes as $size) {
-            $cache = "media/cache/gallery_$size/";
-            $resolve = "media/cache/resolve/gallery_$size/";
+        foreach ($this->getSizes() as $size => $sizePaths) {
+            $cache = $sizePaths['cache'];
+            $resolve = $sizePaths['resolve'];
             $thumbnail[$size] = file_exists($this->base . $cache . $this->getPath()) ? $this->host . $cache . $this->getPath() : $this->host . $resolve . $this->getPath();
         }
 
