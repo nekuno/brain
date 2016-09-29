@@ -21,9 +21,9 @@ abstract class Photo implements \JsonSerializable
     protected $path;
 
     /**
-     * @var User
+     * @var integer
      */
-    protected $user;
+    protected $userId;
 
     /**
      * @var string
@@ -114,20 +114,20 @@ abstract class Photo implements \JsonSerializable
     }
 
     /**
-     * @return User
+     * @return integer
      */
-    public function getUser()
+    public function getUserId()
     {
-        return $this->user;
+        return $this->userId;
     }
 
     /**
-     * @param User $user
+     * @param integer $userId
      * @return Photo
      */
-    public function setUser($user)
+    public function setUserId($userId)
     {
-        $this->user = $user;
+        $this->userId = $userId;
 
         return $this;
     }

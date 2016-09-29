@@ -48,22 +48,16 @@ class UserManager implements PaginatedInterface
     protected $encoder;
 
     /**
-     * @var string
+     * @var PhotoManager
      */
-    protected $base;
+    protected $pm;
 
-    /**
-     * @var string
-     */
-    protected $host;
-
-    public function __construct(EventDispatcher $dispatcher, GraphManager $gm, PasswordEncoderInterface $encoder, $base, $host)
+    public function __construct(EventDispatcher $dispatcher, GraphManager $gm, PasswordEncoderInterface $encoder, PhotoManager $pm)
     {
         $this->dispatcher = $dispatcher;
         $this->gm = $gm;
         $this->encoder = $encoder;
-        $this->base = $base;
-        $this->host = $host;
+        $this->pm = $pm;
     }
 
     /**
@@ -1127,9 +1121,9 @@ class UserManager implements PaginatedInterface
                     $value = new \DateTime($value);
                 } elseif (isset($metadata[$key]['type']) && $metadata[$key]['type'] === 'photo') {
                     $path = $value;
-                    $value = new ProfilePhoto($this->base, $this->host);
+                    $value = $this->pm->createProfilePhoto();
                     $value->setPath($path);
-                    $value->setUser($user);
+                    $value->setUserId($user->getId());
                 }
                 $user->{$method}($value);
             }
@@ -1310,8 +1304,7 @@ class UserManager implements PaginatedInterface
             $url = $user['photo'];
             // TODO: Validate size and set proper extension
             $user['photo'] = $user['usernameCanonical'] . '_' . time() . '.jpg';
-            $filename = $this->base . 'uploads/user/' . $user['photo'];
-            file_put_contents($filename, file_get_contents($url));
+            $this->pm->saveProfilePhoto($user['photo'], file_get_contents($url));
         }
     }
 

@@ -239,7 +239,7 @@ class User implements UserInterface, \JsonSerializable
     /**
      * Returns the user unique id.
      *
-     * @return mixed
+     * @return integer
      */
     public function getId()
     {

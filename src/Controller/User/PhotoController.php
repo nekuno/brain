@@ -58,7 +58,7 @@ class PhotoController
             }
         }
 
-        $photo = $manager->create($user->getId(), $file);
+        $photo = $manager->create($user, $file);
 
         return $app->json($photo, 201);
     }
@@ -68,7 +68,7 @@ class PhotoController
 
         $photo = $app['users.photo.manager']->getById($id);
 
-        if ($photo->getUser()->getId() !== $user->getId()) {
+        if ($photo->getUserId() !== $user->getId()) {
             throw new AccessDeniedHttpException('Photo not allowed');
         }
 
@@ -135,7 +135,7 @@ class PhotoController
 
         $photo = $manager->getById($id);
 
-        if ($photo->getUser()->getId() !== $user->getId()) {
+        if ($photo->getUserId() !== $user->getId()) {
             throw new AccessDeniedHttpException('Photo not allowed');
         }
 
