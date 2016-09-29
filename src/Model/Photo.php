@@ -50,6 +50,13 @@ abstract class Photo implements \JsonSerializable
     abstract protected function getSizes();
 
     /**
+     * Returns default image path
+     *
+     * @return string
+     */
+    abstract protected function getDefaultPath();
+
+    /**
      * @return int
      */
     public function getId()
@@ -132,7 +139,7 @@ abstract class Photo implements \JsonSerializable
 
     public function getUrl()
     {
-        return $this->host . $this->getPath();
+        return file_exists($this->getFullPath()) ? $this->host . $this->getPath() : $this->host . $this->getDefaultPath();
     }
 
     public function getExtension()
