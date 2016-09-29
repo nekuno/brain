@@ -109,9 +109,7 @@ class PrivacySubscriber implements EventSubscriberInterface
                 $this->invitationModel->setAvailableInvitations($group['invitation_token'], InvitationModel::MAX_AVAILABLE);
             } else {
                 $group = $this->groupModel->create($groupData);
-                $picture = $influencer->getPicture() ?
-                    'media/cache/resolve/user_avatar_180x180/user/images/' . $influencer->getPicture()
-                    : 'media/cache/user_avatar_180x180/bundles/qnoowweb/images/user-no-img.jpg';
+                $url = $influencer->getPhoto()->getUrl();
                 $compatibleOrSimilar = $typeMatching === 'compatibility' ? 'compatible' : 'similar';
                 $slogan = $this->translator->trans('followers.invitation_slogan', array('%username%' => $influencer->getUsername(), '%compatible_or_similar%' => $compatibleOrSimilar));
                 $invitationData = array(
@@ -119,7 +117,7 @@ class PrivacySubscriber implements EventSubscriberInterface
                     'groupId' => $group['id'],
                     'available' => InvitationModel::MAX_AVAILABLE,
                     'slogan' => $slogan,
-                    'image_url' => $this->socialhost . $picture,
+                    'image_url' => $url,
                 );
 
                 $this->invitationModel->create($invitationData);

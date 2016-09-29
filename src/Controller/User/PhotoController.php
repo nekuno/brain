@@ -72,9 +72,9 @@ class PhotoController
             throw new AccessDeniedHttpException('Photo not allowed');
         }
 
-        $base = $app['social_web_dir'] . '/user/images/';
+        $base = $app['social_web_dir'] . 'uploads/user/';
 
-        $oldPicture = $base . $user->getPicture();
+        $oldPhoto = $user->getPhoto();
 
         $extension = $photo->getExtension();
         $new = $user->getUsernameCanonical() . '_' . time() . $extension;
@@ -118,13 +118,11 @@ class PhotoController
             'userId' => $user->getId(),
             'username' => $user->getUsername(),
             'email' => $user->getEmail(),
-            'picture' => $new,
+            'photo' => $new,
         );
         $user = $app['users.manager']->update($data);
 
-        if (file_exists($oldPicture)) {
-            unlink($oldPicture);
-        }
+        $oldPhoto->delete();
 
         return $app->json($user);
 
