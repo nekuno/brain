@@ -297,10 +297,10 @@ abstract class AbstractContentPaginatedModel implements PaginatedInterface
 
         $content->setMatch(0);
 
-        if ($content->getContent()['thumbnail']) {
+        if (isset($content->getContent()['thumbnail'])) {
             $thumbnail = $content->getContent()['thumbnail'];
             $content->setStaticThumbnail($this->it->isGif($thumbnail) ? $this->it->gifToPng($thumbnail) : $thumbnail);
-        } elseif ($content->getContent()['url'] && $this->it->isImage($content->getContent()['url'])) {
+        } elseif (isset($content->getContent()['url']) && $this->it->isImage($content->getContent()['url'])) {
             $thumbnail = $content->getContent()['url'];
             $content->setStaticThumbnail($this->it->isGif($thumbnail) ? $this->it->gifToPng($thumbnail) : $thumbnail);
         }
