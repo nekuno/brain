@@ -5,13 +5,13 @@
 
 namespace Model\User\Recommendation;
 
-
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\ResultSet;
 use Everyman\Neo4j\Query\Row;
 use Model\LinkModel;
 use Model\Neo4j\GraphManager;
 use Paginator\PaginatedInterface;
+use Service\ImageTransformations;
 use Service\Validator;
 
 abstract class AbstractContentPaginatedModel implements PaginatedInterface
@@ -34,15 +34,22 @@ abstract class AbstractContentPaginatedModel implements PaginatedInterface
     protected $validator;
 
     /**
+     * @var ImageTransformations
+     */
+    protected $it;
+
+    /**
      * @param GraphManager $gm
      * @param LinkModel $lm
      * @param Validator $validator
+     * @param ImageTransformations $it
      */
-    public function __construct(GraphManager $gm, LinkModel $lm, Validator $validator)
+    public function __construct(GraphManager $gm, LinkModel $lm, Validator $validator, ImageTransformations $it)
     {
         $this->gm = $gm;
         $this->lm = $lm;
         $this->validator = $validator;
+        $this->it = $it;
     }
 
     /**
@@ -199,7 +206,7 @@ abstract class AbstractContentPaginatedModel implements PaginatedInterface
 
             $id = isset($filters['id']) ? $filters['id'] : null;
 
-            $response = $this->buildResponseFromResult($result, $id);
+            $response = $this->buildResponseFromResult($result, $id, $offset);
 
             if (count($response['items']) >= $limit) {
                 break;
@@ -212,12 +219,14 @@ abstract class AbstractContentPaginatedModel implements PaginatedInterface
     /**
      * @param $result ResultSet
      * @param null $id
+     * @param null $offset
      * @return array
      */
-    public function buildResponseFromResult($result, $id = null)
+    public function buildResponseFromResult($result, $id = null, $offset = null)
     {
         $response = array('items' => array());
 
+        $resultCount = 0;
         /** @var Row $row */
         foreach ($result as $row) {
 
@@ -228,6 +237,12 @@ abstract class AbstractContentPaginatedModel implements PaginatedInterface
             $content->setContent($this->lm->buildLink($contentNode));
 
             $content = $this->completeContent($content, $row, $contentNode, $id);
+
+            if (!$offset && $resultCount <= 4) {
+                $thumbnail = $this->getStaticThumbnail($content);
+                $content->setStaticThumbnail($thumbnail);
+            }
+            $resultCount++;
 
             $response['items'][] = $content;
 
@@ -291,5 +306,18 @@ abstract class AbstractContentPaginatedModel implements PaginatedInterface
         $content->setMatch(0);
 
         return $content;
+    }
+
+    private function getStaticThumbnail(ContentRecommendation $content)
+    {
+        if (isset($content->getContent()['thumbnail'])) {
+            $thumbnail = $content->getContent()['thumbnail'];
+            return $this->it->isGif($thumbnail) ? $this->it->gifToPng($thumbnail) : $thumbnail;
+        } elseif (isset($content->getContent()['url']) && $this->it->isImage($content->getContent()['url'])) {
+            $thumbnail = $content->getContent()['url'];
+            return $this->it->isGif($thumbnail) ? $this->it->gifToPng($thumbnail) : $thumbnail;
+        }
+
+        return null;
     }
 }

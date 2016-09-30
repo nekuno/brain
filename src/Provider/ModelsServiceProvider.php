@@ -240,14 +240,14 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.recommendation.content.model'] = $app->share(
             function ($app) {
 
-                return new ContentRecommendationPaginatedModel($app['neo4j.graph_manager'], $app['users.affinity.model'], $app['links.model'], $app['validator.service']);
+                return new ContentRecommendationPaginatedModel($app['neo4j.graph_manager'], $app['users.affinity.model'], $app['links.model'], $app['validator.service'], $app['imageTransformations.service']);
             }
         );
 
         $app['users.recommendation.popularcontent.model'] = $app->share(
             function ($app) {
 
-                return new ContentPopularRecommendationPaginatedModel($app['neo4j.graph_manager'], $app['links.model'], $app['validator.service']);
+                return new ContentPopularRecommendationPaginatedModel($app['neo4j.graph_manager'], $app['links.model'], $app['validator.service'], $app['imageTransformations.service']);
             }
         );
 
