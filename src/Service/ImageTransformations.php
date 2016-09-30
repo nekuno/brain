@@ -14,15 +14,27 @@ class ImageTransformations
         return preg_match('/\.gif$/i', $url);
     }
 
-    public function gifToPng($url)
+    public function gifToPng($url, $newWidth = 60)
     {
         $img = imagecreatefromgif($url);
+        $newImage = $this->resize($img, $newWidth);
         ob_start();
-        imagepng($img, null, 5, PNG_NO_FILTER);
+        imagepng($newImage, null, 5, PNG_NO_FILTER);
         $pngData = ob_get_contents();
         ob_end_clean();
         unset($img);
 
         return 'data:image/jpg;base64,' . base64_encode($pngData);
+    }
+
+    public function resize($img, $newWidth)
+    {
+        list($width, $height) = getimagesize($img);
+        $ratio = $width / $height;
+        $newHeight = $newWidth / $ratio;
+        $newImage = imagecreatetruecolor($newWidth, $newHeight);
+        imagecopyresampled($newImage, $img, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+
+        return $newImage;
     }
 }
