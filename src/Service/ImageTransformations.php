@@ -34,6 +34,9 @@ class ImageTransformations
         $newHeight = $newWidth / $ratio;
         $newImage = imagecreatetruecolor($newWidth, $newHeight);
         imagecopyresampled($newImage, $img, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+        $transparent = imagecolorallocatealpha($newImage, 0, 0, 0, 127);
+        imagefill($newImage, 0, 0, $transparent);
+        imagealphablending($newImage, true);
 
         return $newImage;
     }
