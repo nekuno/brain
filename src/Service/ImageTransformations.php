@@ -16,28 +16,29 @@ class ImageTransformations
 
     public function gifToPng($url, $newWidth = 60)
     {
-        $img = imagecreatefromgif($url);
-        $newImage = $this->resize($img, $newWidth);
+        $image = $this->resize($url, $newWidth);
         ob_start();
-        imagepng($newImage, null, 5, PNG_NO_FILTER);
+        imagepng($image, null, 5, PNG_NO_FILTER);
         $pngData = ob_get_contents();
         ob_end_clean();
-        unset($img);
+        unset($image);
 
         return 'data:image/jpg;base64,' . base64_encode($pngData);
     }
 
-    public function resize($img, $newWidth)
+    public function resize($url, $newWidth)
     {
-        list($width, $height) = getimagesize($img);
+        $img = imagecreatefromgif($url);
+        list($width, $height) = getimagesize($url);
         $ratio = $width / $height;
         $newHeight = $newWidth / $ratio;
-        $newImage = imagecreatetruecolor($newWidth, $newHeight);
-        imagecopyresampled($newImage, $img, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
-        $transparent = imagecolorallocatealpha($newImage, 0, 0, 0, 127);
-        imagefill($newImage, 0, 0, $transparent);
-        imagealphablending($newImage, true);
+        $newImg = imagecreatetruecolor($newWidth, $newHeight);
+        imagecopyresampled($newImg, $img, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+        unset($img);
+        $transparent = imagecolorallocatealpha($newImg, 0, 0, 0, 127);
+        imagefill($newImg, 0, 0, $transparent);
+        imagealphablending($newImg, true);
 
-        return $newImage;
+        return $newImg;
     }
 }
