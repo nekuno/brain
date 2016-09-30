@@ -14,7 +14,7 @@ class ImageTransformations
         return preg_match('/\.gif$/i', $url);
     }
 
-    public function gifToPng($url, $newWidth = 60)
+    public function gifToPng($url, $newWidth = 76)
     {
         $image = $this->resize($url, $newWidth);
         ob_start();
