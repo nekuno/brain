@@ -16,7 +16,9 @@ class ImageTransformations
 
     public function gifToPng($url, $newWidth = 76)
     {
-        $image = $this->resize($url, $newWidth);
+        // TODO: Not enabled because slows down
+        //$image = $this->resize($url, $newWidth);
+        $image = imagecreatefromgif($url);
         ob_start();
         imagepng($image, null, 5, PNG_NO_FILTER);
         $pngData = ob_get_contents();
