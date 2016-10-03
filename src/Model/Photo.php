@@ -139,7 +139,7 @@ abstract class Photo implements \JsonSerializable
 
     public function getUrl()
     {
-        return file_exists($this->getFullPath()) ? $this->host . $this->getPath() : $this->host . $this->getDefaultPath();
+        return is_file($this->getFullPath()) ? $this->host . $this->getPath() : $this->host . $this->getDefaultPath();
     }
 
     public function getExtension()
@@ -170,7 +170,8 @@ abstract class Photo implements \JsonSerializable
         foreach ($this->getSizes() as $size => $sizePaths) {
             $cache = $sizePaths['cache'];
             $resolve = $sizePaths['resolve'];
-            $thumbnail[$size] = file_exists($this->base . $cache . $this->getPath()) ? $this->host . $cache . $this->getPath() : $this->host . $resolve . $this->getPath();
+            $path = $this->getPath() ? $this->getPath() : $this->getDefaultPath();
+            $thumbnail[$size] = is_file($this->base . $cache . $path) ? $this->host . $cache . $this->getPath() : $this->host . $resolve . $path;
         }
 
         return array(
