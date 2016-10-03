@@ -171,7 +171,7 @@ abstract class Photo implements \JsonSerializable
             $cache = $sizePaths['cache'];
             $resolve = $sizePaths['resolve'];
             $path = $this->getPath() ? $this->getPath() : $this->getDefaultPath();
-            $thumbnail[$size] = is_file($this->base . $cache . $path) ? $this->host . $cache . $this->getPath() : $this->host . $resolve . $path;
+            $thumbnail[$size] = is_file($this->base . $cache . $path) ? $this->host . $cache . $path : $this->host . $resolve . $path;
         }
 
         return array(
