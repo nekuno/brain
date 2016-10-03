@@ -10,7 +10,6 @@ use Everyman\Neo4j\Relationship;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
 use Model\Neo4j\Neo4jException;
-use Model\ProfilePhoto;
 use Model\User;
 use Model\User\GhostUser\GhostUserManager;
 use Model\User\LookUpModel;
@@ -1113,6 +1112,9 @@ class UserManager implements PaginatedInterface
         }
         $metadata = $this->getMetadata();
         $user = $this->createUser();
+        $photo = $this->pm->createProfilePhoto();
+        $photo->setUserId($user->getId());
+        $user->setPhoto($photo);
 
         foreach ($properties as $key => $value) {
             $method = 'set' . ucfirst($key);
@@ -1120,10 +1122,8 @@ class UserManager implements PaginatedInterface
                 if (isset($metadata[$key]['type']) && $metadata[$key]['type'] === 'datetime') {
                     $value = new \DateTime($value);
                 } elseif (isset($metadata[$key]['type']) && $metadata[$key]['type'] === 'photo') {
-                    $path = $value;
-                    $value = $this->pm->createProfilePhoto();
-                    $value->setPath($path);
-                    $value->setUserId($user->getId());
+                    $photo->setPath($value);
+                    continue;
                 }
                 $user->{$method}($value);
             }
