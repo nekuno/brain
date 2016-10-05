@@ -72,30 +72,28 @@ class PhotoController
             throw new AccessDeniedHttpException('Photo not allowed');
         }
 
-        $base = $app['social_web_dir'] . 'uploads/user/';
-
         $oldPhoto = $user->getPhoto();
 
         $extension = $photo->getExtension();
-        $new = $user->getUsernameCanonical() . '_' . time() . $extension;
+        $new = 'uploads/user/' . $user->getUsernameCanonical() . '_' . time() . $extension;
 
         if (!is_readable($photo->getFullPath())) {
             throw new \RuntimeException(sprintf('Source image "%s" does not exists', $photo->getFullPath()));
         }
 
-        $dest = $base . $new;
+        $dest = $app['social_web_dir'] . $new;
         $file = file_get_contents($photo->getFullPath());
         $size = getimagesizefromstring($file);
-	    $width = $size[0];
-	    $height = $size[1];
+        $width = $size[0];
+        $height = $size[1];
         $xPercent = $request->request->get('x', 0);
         $yPercent = $request->request->get('y', 0);
         $widthPercent = $request->request->get('width', 100);
         $heightPercent = $request->request->get('height', 100);
-		$x = $width * $xPercent/100;
-		$y = $height * $yPercent/100;
-	    $widthCrop = $width * $widthPercent/100;
-	    $heightCrop = $height * $heightPercent/100;
+        $x = $width * $xPercent / 100;
+        $y = $height * $yPercent / 100;
+        $widthCrop = $width * $widthPercent / 100;
+        $heightCrop = $height * $heightPercent / 100;
         $image = imagecreatefromstring($file);
         $crop = imagecrop($image, array('x' => $x, 'y' => $y, 'width' => $widthCrop, 'height' => $heightCrop));
 
