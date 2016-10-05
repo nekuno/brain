@@ -1,9 +1,5 @@
 <?php
 
-/**
- * @author Manolo Salsas (manolez@gmail.com)
- */
-
 namespace Model\User;
 
 use Everyman\Neo4j\Node;
@@ -202,7 +198,7 @@ class InvitationModel
             ->where("u.qnoow_id = { userId }")
             ->optionalMatch('(inv)-[:HAS_GROUP]->(g:Group)')
             ->optionalMatch('(inv)<-[:CONSUMED_INVITATION]-(cu:User)')
-            ->returns('inv AS invitation', 'g AS group', 'cu.qnoow_id as consumedUserId', 'cu.usernameCanonical as consumedUsername')
+            ->returns('inv AS invitation', 'g AS group', 'coalesce(cu.qnoow_id) as consumedUserId', 'coalesce(cu.usernameCanonical) as consumedUsername')
             ->skip("{ offset }")
             ->limit("{ limit }")
             ->setParameters(
