@@ -1303,7 +1303,7 @@ class UserManager implements PaginatedInterface
         if (isset($user['photo']) && filter_var($user['photo'], FILTER_VALIDATE_URL)) {
             $url = $user['photo'];
             // TODO: Validate size and set proper extension
-            $user['photo'] = $user['usernameCanonical'] . '_' . time() . '.jpg';
+            $user['photo'] = 'uploads/user/' . $user['usernameCanonical'] . '_' . time() . '.jpg';
             $this->pm->saveProfilePhoto($user['photo'], file_get_contents($url));
         }
     }
