@@ -48,7 +48,6 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
             ->with('u', 'anyUser')
             ->limit(self::USER_SAFETY_LIMIT)
             ->with('u', 'anyUser')
-            ->where($userFilters['conditions'])
             ->optionalMatch('(u)-[like:LIKES]->(anyUser)')
             ->with('u', 'anyUser', '(CASE WHEN like IS NOT NULL THEN 1 ELSE 0 END) AS like')
             ->optionalMatch('(u)-[m:MATCHES]-(anyUser)')
@@ -63,6 +62,8 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
 
         $qb->with('u, anyUser, like, matching_questions, similarity, p, l');
         $qb->where($profileFilters['conditions'])
+            ->with('u', 'anyUser', 'like', 'matching_questions', 'similarity', 'p', 'l');
+        $qb->where( $userFilters['conditions'])
             ->with('u', 'anyUser', 'like', 'matching_questions', 'similarity', 'p', 'l');
 
         foreach ($profileFilters['matches'] as $match) {
@@ -138,7 +139,6 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
             ->with('u', 'anyUser')
             ->limit(self::USER_SAFETY_LIMIT)
             ->with('u', 'anyUser')
-            ->where($userFilters['conditions'])
             ->optionalMatch('(u)-[like:LIKES]->(anyUser)')
             ->with('u', 'anyUser', '(CASE WHEN like IS NOT NULL THEN 1 ELSE 0 END) AS like')
             ->optionalMatch('(u)-[m:MATCHES]-(anyUser)')
@@ -153,6 +153,8 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
 
         $qb->with('u, anyUser, like, matching_questions, similarity, p, l');
         $qb->where($profileFilters['conditions'])
+            ->with('u', 'anyUser', 'like', 'matching_questions', 'similarity', 'p', 'l');
+        $qb->where( $userFilters['conditions'])
             ->with('u', 'anyUser', 'like', 'matching_questions', 'similarity', 'p', 'l');
 
         foreach ($profileFilters['matches'] as $match) {
