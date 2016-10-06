@@ -150,9 +150,9 @@ class User implements UserInterface, \JsonSerializable
     protected $updatedAt;
 
     /**
-     * @var string
+     * @var ProfilePhoto
      */
-    protected $picture;
+    protected $photo;
 
     public function __construct()
     {
@@ -239,7 +239,7 @@ class User implements UserInterface, \JsonSerializable
     /**
      * Returns the user unique id.
      *
-     * @return mixed
+     * @return integer
      */
     public function getId()
     {
@@ -582,24 +582,24 @@ class User implements UserInterface, \JsonSerializable
     }
 
     /**
-     * Get picture
+     * Get photo
      *
-     * @return string
+     * @return ProfilePhoto
      */
-    public function getPicture()
+    public function getPhoto()
     {
-        return $this->picture;
+        return $this->photo;
     }
 
     /**
-     * Set picture
+     * Set photo
      *
-     * @param string $picture
+     * @param ProfilePhoto $photo
      * @return $this
      */
-    public function setPicture($picture)
+    public function setPhoto(ProfilePhoto $photo)
     {
-        $this->picture = $picture;
+        $this->photo = $photo;
 
         return $this;
     }

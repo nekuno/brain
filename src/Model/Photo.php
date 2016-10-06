@@ -2,10 +2,8 @@
 
 namespace Model;
 
-class Photo implements \JsonSerializable
+abstract class Photo implements \JsonSerializable
 {
-
-    public static $sizes = array('small', 'medium', 'big');
 
     /**
      * @var int
@@ -23,9 +21,9 @@ class Photo implements \JsonSerializable
     protected $path;
 
     /**
-     * @var User
+     * @var integer
      */
-    protected $user;
+    protected $userId;
 
     /**
      * @var string
@@ -42,6 +40,21 @@ class Photo implements \JsonSerializable
         $this->base = $base;
         $this->host = $host;
     }
+
+    /**
+     * Returns an array of sizes, with this shape:
+     * array('my_size' => array('cache' => 'path_to_cache_my_size', 'resolve' => 'path_to_resolve_my_size'));
+     *
+     * @return array
+     */
+    abstract protected function getSizes();
+
+    /**
+     * Returns default image path
+     *
+     * @return string
+     */
+    abstract protected function getDefaultPath();
 
     /**
      * @return int
@@ -101,20 +114,20 @@ class Photo implements \JsonSerializable
     }
 
     /**
-     * @return User
+     * @return integer
      */
-    public function getUser()
+    public function getUserId()
     {
-        return $this->user;
+        return $this->userId;
     }
 
     /**
-     * @param User $user
+     * @param integer $userId
      * @return Photo
      */
-    public function setUser($user)
+    public function setUserId($userId)
     {
-        $this->user = $user;
+        $this->userId = $userId;
 
         return $this;
     }
@@ -126,7 +139,7 @@ class Photo implements \JsonSerializable
 
     public function getUrl()
     {
-        return $this->host . $this->getPath();
+        return is_file($this->getFullPath()) ? $this->host . $this->getPath() : $this->host . $this->getDefaultPath();
     }
 
     public function getExtension()
@@ -143,8 +156,8 @@ class Photo implements \JsonSerializable
             unlink($this->getFullPath());
         }
 
-        foreach (self::$sizes as $size) {
-            $cache = $this->base . "media/cache/gallery_$size/" . $this->getPath();
+        foreach ($this->getSizes() as $size => $sizePaths) {
+            $cache = $this->base . $sizePaths['cache'] . $this->getPath();
             if (is_writable($cache)) {
                 unlink($cache);
             }
@@ -154,10 +167,11 @@ class Photo implements \JsonSerializable
     public function jsonSerialize()
     {
         $thumbnail = array();
-        foreach (self::$sizes as $size) {
-            $cache = "media/cache/gallery_$size/";
-            $resolve = "media/cache/resolve/gallery_$size/";
-            $thumbnail[$size] = file_exists($this->base . $cache . $this->getPath()) ? $this->host . $cache . $this->getPath() : $this->host . $resolve . $this->getPath();
+        foreach ($this->getSizes() as $size => $sizePaths) {
+            $cache = $sizePaths['cache'];
+            $resolve = $sizePaths['resolve'];
+            $path = $this->getPath() ? $this->getPath() : $this->getDefaultPath();
+            $thumbnail[$size] = is_file($this->base . $cache . $path) ? $this->host . $cache . $path : $this->host . $resolve . $path;
         }
 
         return array(

@@ -5,8 +5,10 @@ namespace Manager;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Exception\ValidationException;
-use Model\Photo;
 use Model\Neo4j\GraphManager;
+use Model\GalleryPhoto;
+use Model\ProfilePhoto;
+use Model\User;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class PhotoManager
@@ -18,11 +20,6 @@ class PhotoManager
     protected $gm;
 
     /**
-     * @var UserManager
-     */
-    protected $um;
-
-    /**
      * @var string
      */
     protected $base;
@@ -32,12 +29,27 @@ class PhotoManager
      */
     protected $host;
 
-    public function __construct(GraphManager $gm, UserManager $um, $base, $host)
+    public function __construct(GraphManager $gm, $base, $host)
     {
         $this->gm = $gm;
-        $this->um = $um;
         $this->base = $base;
         $this->host = $host;
+    }
+
+    public function createProfilePhoto()
+    {
+        return new ProfilePhoto($this->base, $this->host);
+    }
+
+    public function saveProfilePhoto($file, $photo)
+    {
+        $filename = $this->base . $file;
+        file_put_contents($filename, $photo);
+    }
+
+    public function createGalleryPhoto()
+    {
+        return new GalleryPhoto($this->base, $this->host);
     }
 
     public function getAll($userId)
@@ -84,10 +96,8 @@ class PhotoManager
         return $this->build($row);
     }
 
-    public function create($userId, $file)
+    public function create(User $user, $file)
     {
-
-        $user = $this->um->getById($userId);
 
         // Validate
         $extension = $this->validate($file);
@@ -112,7 +122,7 @@ class PhotoManager
             ->set('i.createdAt = { createdAt }', 'i.path = { path }')
             ->setParameters(
                 array(
-                    'id' => (int)$userId,
+                    'id' => (int)$user->getId(),
                     'createdAt' => (new \DateTime())->format('Y-m-d H:i:s'),
                     'path' => $path,
                 )
@@ -186,7 +196,7 @@ class PhotoManager
 
     /**
      * @param Row $row
-     * @return Photo
+     * @return GalleryPhoto
      */
     protected function build(Row $row)
     {
@@ -196,13 +206,12 @@ class PhotoManager
 
         /* @var $userNode Node */
         $userNode = $row->offsetGet('u');
-        $user = $this->um->getById($userNode->getProperty('qnoow_id'));
 
-        $photo = new Photo($this->base, $this->host);
+        $photo = $this->createGalleryPhoto();
         $photo->setId($node->getId());
         $photo->setCreatedAt(new \DateTime($node->getProperty('createdAt')));
         $photo->setPath($node->getProperty('path'));
-        $photo->setUser($user);
+        $photo->setUserId($userNode->getProperty('qnoow_id'));
 
         return $photo;
     }
