@@ -3,6 +3,7 @@
 namespace Model\User\Recommendation;
 
 use Everyman\Neo4j\Query\ResultSet;
+use Manager\PhotoManager;
 use Model\Neo4j\GraphManager;
 use Model\User\GhostUser\GhostUserManager;
 use Model\User\ProfileFilterModel;
@@ -26,11 +27,17 @@ abstract class AbstractUserPaginatedModel implements PaginatedInterface
      */
     protected $userFilterModel;
 
-    public function __construct(GraphManager $gm, ProfileFilterModel $profileFilterModel, UserFilterModel $userFilterModel)
+    /**
+     * @var PhotoManager
+     */
+    protected $pm;
+
+    public function __construct(GraphManager $gm, ProfileFilterModel $profileFilterModel, UserFilterModel $userFilterModel, PhotoManager $pm)
     {
         $this->gm = $gm;
         $this->profileFilterModel = $profileFilterModel;
         $this->userFilterModel = $userFilterModel;
+        $this->pm = $pm;
     }
 
     /**
@@ -93,13 +100,13 @@ abstract class AbstractUserPaginatedModel implements PaginatedInterface
 
         $qb->returns(
             'anyUser.qnoow_id AS id,
-                    anyUser.username AS username,
-                    anyUser.picture AS picture,
-                    p.birthday AS birthday,
-                    l.locality + ", " + l.country AS location',
-                    '0.01 AS matching_questions',
-                    '0 AS similarity',
-                    '0 AS like',
+             anyUser.username AS username,
+             anyUser.photo AS photo,
+             p.birthday AS birthday,
+             l.locality + ", " + l.country AS location',
+            '0.01 AS matching_questions',
+            '0 AS similarity',
+            '0 AS like',
             'popularity'
         )
             ->orderBy('popularity DESC')
@@ -176,19 +183,19 @@ abstract class AbstractUserPaginatedModel implements PaginatedInterface
                         $profileLabelName = $this->profileFilterModel->typeToLabel($name);
                         $matchQuery = "(p)<-[rel$name:OPTION_OF]-(option$name:$profileLabelName)";
                         $whereQueries = array();
-                        foreach ($value as $dataValue){
+                        foreach ($value as $dataValue) {
                             $choice = $dataValue['choice'];
                             $detail = isset($dataValue['detail']) ? $dataValue['detail'] : null;
 
                             $whereQuery = " option$name.id = '$choice'";
-                            if (!(null==$detail)){
-                                $whereQuery.= " AND rel$name.detail = '$detail'";
+                            if (!(null == $detail)) {
+                                $whereQuery .= " AND rel$name.detail = '$detail'";
                             }
 
                             $whereQueries[] = $whereQuery;
                         }
 
-                        $matches[] = $matchQuery.' WHERE (' . implode('OR', $whereQueries) . ')';
+                        $matches[] = $matchQuery . ' WHERE (' . implode('OR', $whereQueries) . ')';
                         break;
                     case 'tags':
                         $tagLabelName = $this->profileFilterModel->typeToLabel($name);
@@ -204,13 +211,13 @@ abstract class AbstractUserPaginatedModel implements PaginatedInterface
                                 $dataValue['tag'];
                             $choice = isset($dataValue['choices']) ? $dataValue['choices'] : null;
                             $whereQuery = " tag$name.name = '$tagValue'";
-                            if (!null==$choice){
-                                $whereQuery.= " AND rel$name.detail = '$choice'";
+                            if (!null == $choice) {
+                                $whereQuery .= " AND rel$name.detail = '$choice'";
                             }
 
                             $whereQueries[] = $whereQuery;
                         }
-                        $matches[] = $matchQuery.' WHERE (' . implode('OR', $whereQueries . ')');
+                        $matches[] = $matchQuery . ' WHERE (' . implode('OR', $whereQueries . ')');
                         break;
                     case 'tags_and_multiple_choices':
                         $tagLabelName = $this->profileFilterModel->typeToLabel($name);
@@ -223,13 +230,13 @@ abstract class AbstractUserPaginatedModel implements PaginatedInterface
                             $choices = isset($dataValue['choices']) ? $dataValue['choices'] : array();
 
                             $whereQuery = " tag$name.name = '$tagValue'";
-                            if (!empty($choices)){
+                            if (!empty($choices)) {
                                 $choices = json_encode($choices);
                                 $whereQuery .= " AND rel$name.detail IN $choices ";
                             }
                             $whereQueries[] = $whereQuery;
                         }
-                        $matches[] = $matchQuery.' WHERE (' . implode('OR', $whereQueries) . ')';
+                        $matches[] = $matchQuery . ' WHERE (' . implode('OR', $whereQueries) . ')';
                         break;
                     default:
                         break;
@@ -243,7 +250,8 @@ abstract class AbstractUserPaginatedModel implements PaginatedInterface
         );
     }
 
-    protected function getProfileFilterMetadata(){
+    protected function getProfileFilterMetadata()
+    {
         return $this->profileFilterModel->getFilters();
     }
 
@@ -335,10 +343,14 @@ abstract class AbstractUserPaginatedModel implements PaginatedInterface
                 $age = $interval->y;
             }
 
+            $photo = $this->pm->createProfilePhoto();
+            $photo->setPath($row->offsetGet('photo'));
+            $photo->setUserId($row->offsetGet('id'));
+
             $user = new UserRecommendation();
             $user->setId($row->offsetGet('id'));
             $user->setUsername($row->offsetGet('username'));
-            $user->setPicture($row->offsetGet('picture'));
+            $user->setPhoto($photo);
             $user->setMatching($row->offsetGet('matching_questions'));
             $user->setSimilarity($row->offsetGet('similarity'));
             $user->setAge($age);
@@ -351,23 +363,27 @@ abstract class AbstractUserPaginatedModel implements PaginatedInterface
         return $response;
     }
 
-    protected function buildGroupMatch($value) {
+    protected function buildGroupMatch($value)
+    {
         foreach ($value as $index => $groupId) {
             $value[$index] = (int)$groupId;
         }
         $jsonValues = json_encode($value);
+
         return "(anyUser)-[:BELONGS_TO]->(group:Group) WHERE id(group) IN $jsonValues";
     }
 
     protected function buildMatchingCondition($value)
     {
         $valuePerOne = intval($value) / 100;
+
         return "($valuePerOne <= matching_questions)";
     }
 
     protected function buildsimilarityCondition($value)
     {
         $valuePerOne = intval($value) / 100;
+
         return "($valuePerOne <= similarity)";
     }
 }

@@ -1,16 +1,17 @@
 <?php
-/**
- * @author yawmoght <yawmoght@gmail.com>
- */
 
 namespace Model\User\Recommendation;
 
+use Model\ProfilePhoto;
 
 class UserRecommendation implements \JsonSerializable
 {
     protected $id;
     protected $username;
-    protected $picture;
+    /**
+     * @var ProfilePhoto
+     */
+    protected $photo;
     protected $matching;
     protected $similarity;
     protected $age;
@@ -50,19 +51,19 @@ class UserRecommendation implements \JsonSerializable
     }
 
     /**
-     * @return mixed
+     * @return ProfilePhoto
      */
-    public function getPicture()
+    public function getPhoto()
     {
-        return $this->picture;
+        return $this->photo;
     }
 
     /**
-     * @param mixed $picture
+     * @param ProfilePhoto $photo
      */
-    public function setPicture($picture)
+    public function setPhoto(ProfilePhoto $photo)
     {
-        $this->picture = $picture;
+        $this->photo = $photo;
     }
 
     /**
@@ -145,7 +146,6 @@ class UserRecommendation implements \JsonSerializable
         $this->like = $like;
     }
 
-
     /**
      * Specify data which should be serialized to JSON
      * @link http://php.net/manual/en/jsonserializable.jsonserialize.php
@@ -158,7 +158,7 @@ class UserRecommendation implements \JsonSerializable
         return array(
             'id' => $this->getId(),
             'username' => $this->getUsername(),
-            'picture' => $this->getPicture(),
+            'photo' => $this->getPhoto(),
             'matching' => $this->getMatching(),
             'similarity' => $this->getSimilarity(),
             'age' => $this->getAge(),

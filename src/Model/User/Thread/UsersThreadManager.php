@@ -5,7 +5,6 @@
 
 namespace Model\User\Thread;
 
-
 use Model\Neo4j\GraphManager;
 use Model\User\Filters\FilterUsersManager;
 use Manager\UserManager;
@@ -21,7 +20,7 @@ class UsersThreadManager
 
     /** @var FilterUsersManager */
     protected $filterUsersManager;
-    
+
     /** @var UserRecommendationPaginatedModel */
     protected $userRecommendationPaginatedModel;
 
@@ -33,7 +32,8 @@ class UsersThreadManager
         $this->userRecommendationPaginatedModel = $urpm;
     }
 
-    public function getFilterUsersManager(){
+    public function getFilterUsersManager()
+    {
         return $this->filterUsersManager;
     }
 
@@ -80,11 +80,16 @@ class UsersThreadManager
             ->match('(u)<-[:PROFILE_OF]-(p:Profile)')
             ->with('similarity', 'matching_questions', 'p', 'like', 'u')
             ->optionalMatch('(p)-[:LOCATION]-(l:Location)')
-            ->returns('similarity', 'matching_questions',
-                        'u.qnoow_id AS id', 'u.username AS username',
-                        'u.picture AS picture', 'p.birthday AS birthday',
-                        'l.locality + ", " + l.country AS location',
-                        'like');
+            ->returns(
+                'similarity',
+                'matching_questions',
+                'u.qnoow_id AS id',
+                'u.username AS username',
+                'u.photo AS photo',
+                'p.birthday AS birthday',
+                'l.locality + ", " + l.country AS location',
+                'like'
+            );
         $qb->setParameters($parameters);
         $result = $qb->getQuery()->getResultSet();
 

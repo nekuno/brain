@@ -134,61 +134,65 @@ class UserController
      */
     public function postAction(Application $app, Request $request)
     {
-	    $data = $request->request->all();
-	    if (isset($data['oauth'])) {
-		    $oauthData = $data['oauth'];
-		    unset($data['oauth']);
-	    }
+        $data = $request->request->all();
+        if (isset($data['oauth'])) {
+            $oauthData = $data['oauth'];
+            unset($data['oauth']);
+        }
         /* @var $userManager UserManager */
         $userManager = $app['users.manager'];
         $user = $userManager->create($data);
 
-	    if (isset($oauthData)) {
-		    /* @var $tokensModel TokensModel */
-		    $tokensModel = $app['users.tokens.model'];
-		    $resourceOwner = $oauthData['resourceOwner'];
+        if (isset($data['enabled']) && $data['enabled'] === false) {
+            $app['users.ghostuser.manager']->saveAsGhost($user->getId());
+        }
 
-		    $token = $tokensModel->create($user->getId(), $resourceOwner, $oauthData);
+        if (isset($oauthData)) {
+            /* @var $tokensModel TokensModel */
+            $tokensModel = $app['users.tokens.model'];
+            $resourceOwner = $oauthData['resourceOwner'];
 
-		    /* @var $resourceOwnerFactory ResourceOwnerFactory */
-		    $resourceOwnerFactory = $app['api_consumer.resource_owner_factory'];
+            $token = $tokensModel->create($user->getId(), $resourceOwner, $oauthData);
 
-		    if ($resourceOwner === TokensModel::FACEBOOK) {
+            /* @var $resourceOwnerFactory ResourceOwnerFactory */
+            $resourceOwnerFactory = $app['api_consumer.resource_owner_factory'];
 
-			    /* @var $facebookResourceOwner FacebookResourceOwner */
-			    $facebookResourceOwner = $resourceOwnerFactory->build(TokensModel::FACEBOOK);
+            if ($resourceOwner === TokensModel::FACEBOOK) {
 
-				$token = $facebookResourceOwner->extend($token);
+                /* @var $facebookResourceOwner FacebookResourceOwner */
+                $facebookResourceOwner = $resourceOwnerFactory->build(TokensModel::FACEBOOK);
 
-			    if (array_key_exists('refreshToken', $token) && is_null($token['refreshToken'])) {
-				    $token = $facebookResourceOwner->forceRefreshAccessToken($token);
-			    }
-		    }
+                $token = $facebookResourceOwner->extend($token);
 
-		    // TODO: This will not be executed since we only use Facebook for registration
-		    if ($resourceOwner == TokensModel::TWITTER) {
-			    $resourceOwnerObject = $resourceOwnerFactory->build($resourceOwner);
-			    $profileUrl = $resourceOwnerObject->getProfileUrl($token);
-			    if (!$profileUrl) {
-				    //TODO: Add information about this if it happens
-				    return $app->json($token, 201);
-			    }
-			    $profile = new SocialProfile($user->getId(), $profileUrl, $resourceOwner);
+                if (array_key_exists('refreshToken', $token) && is_null($token['refreshToken'])) {
+                    $token = $facebookResourceOwner->forceRefreshAccessToken($token);
+                }
+            }
 
-			    /* @var $ghostUserManager GhostUserManager */
-			    $ghostUserManager = $app['users.ghostuser.manager'];
-			    if ($ghostUser = $ghostUserManager->getBySocialProfile($profile)) {
-				    /* @var $userManager UserManager */
-				    $userManager = $app['users.manager'];
-				    $userManager->fuseUsers($user->getId(), $ghostUser->getId());
-				    $ghostUserManager->saveAsUser($user->getId());
-			    } else {
-				    /** @var $socialProfilesManager SocialProfileManager */
-				    $socialProfilesManager = $app['users.socialprofile.manager'];
-				    $socialProfilesManager->addSocialProfile($profile);
-			    }
-		    }
-	    }
+            // TODO: This will not be executed since we only use Facebook for registration
+            if ($resourceOwner == TokensModel::TWITTER) {
+                $resourceOwnerObject = $resourceOwnerFactory->build($resourceOwner);
+                $profileUrl = $resourceOwnerObject->getProfileUrl($token);
+                if (!$profileUrl) {
+                    //TODO: Add information about this if it happens
+                    return $app->json($token, 201);
+                }
+                $profile = new SocialProfile($user->getId(), $profileUrl, $resourceOwner);
+
+                /* @var $ghostUserManager GhostUserManager */
+                $ghostUserManager = $app['users.ghostuser.manager'];
+                if ($ghostUser = $ghostUserManager->getBySocialProfile($profile)) {
+                    /* @var $userManager UserManager */
+                    $userManager = $app['users.manager'];
+                    $userManager->fuseUsers($user->getId(), $ghostUser->getId());
+                    $ghostUserManager->saveAsUser($user->getId());
+                } else {
+                    /** @var $socialProfilesManager SocialProfileManager */
+                    $socialProfilesManager = $app['users.socialprofile.manager'];
+                    $socialProfilesManager->addSocialProfile($profile);
+                }
+            }
+        }
 
         return $app->json($user, 201);
     }
@@ -207,14 +211,17 @@ class UserController
         $model = $app['users.manager'];
         $user = $model->update($data);
 
-	    /* @var $authService AuthService */
-	    $authService = $app['auth.service'];
-	    $jwt = $authService->getToken($data['userId']);
+        /* @var $authService AuthService */
+        $authService = $app['auth.service'];
+        $jwt = $authService->getToken($data['userId']);
 
-        return $app->json(array(
-	        'user' => $user,
-	        'jwt' => $jwt,
-        ), 200);
+        return $app->json(
+            array(
+                'user' => $user,
+                'jwt' => $jwt,
+            ),
+            200
+        );
     }
 
     /**

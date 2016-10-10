@@ -8,6 +8,7 @@ use Service\AuthService;
 use Service\ChatMessageNotifications;
 use Service\Consistency\ConsistencyCheckerService;
 use Service\EmailNotifications;
+use Service\ImageTransformations;
 use Service\MigrateSocialInvitations;
 use Service\NotificationManager;
 use Service\Recommendator;
@@ -62,6 +63,12 @@ class ServicesServiceProvider implements ServiceProviderInterface
         $app['emailNotification.service'] = $app->share(
             function (Application $app) {
                 return new EmailNotifications($app['mailer'], $app['orm.ems']['mysql_brain'], $app['twig']);
+            }
+        );
+
+        $app['imageTransformations.service'] = $app->share(
+            function () {
+                return new ImageTransformations();
             }
         );
 

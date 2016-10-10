@@ -61,7 +61,7 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
         $qb->optionalMatch('(p)-[:LOCATION]->(l:Location)');
 
         $qb->with('u, anyUser, like, matching_questions, similarity, p, l');
-        $qb->where( $profileFilters['conditions'])
+        $qb->where($profileFilters['conditions'])
             ->with('u', 'anyUser', 'like', 'matching_questions', 'similarity', 'p', 'l');
         $qb->where( $userFilters['conditions'])
             ->with('u', 'anyUser', 'like', 'matching_questions', 'similarity', 'p', 'l');
@@ -77,13 +77,13 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
 
         $qb->returns(
             'anyUser.qnoow_id AS id,
-                    anyUser.username AS username,
-                    anyUser.picture AS picture,
-                    p.birthday AS birthday,
-                    l.locality + ", " + l.country AS location,
-                    matching_questions,
-                    similarity,
-                    like'
+             anyUser.username AS username,
+             anyUser.photo AS photo,
+             p.birthday AS birthday,
+             l.locality + ", " + l.country AS location,
+             matching_questions,
+             similarity,
+             like'
         )
             ->orderBy($orderQuery)
             ->skip('{ offset }')
@@ -107,6 +107,7 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
             $return['items'] = array_merge($return['items'], $foreignResult['items']);
             $return['newForeign'] = $foreignResult['foreign'];
         }
+
         //Works with ContentPaginator (accepts $result), not Paginator (accepts $result['items'])
         return $return;
     }
@@ -151,7 +152,7 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
         $qb->optionalMatch('(p)-[:LOCATION]->(l:Location)');
 
         $qb->with('u, anyUser, like, matching_questions, similarity, p, l');
-        $qb->where( $profileFilters['conditions'])
+        $qb->where($profileFilters['conditions'])
             ->with('u', 'anyUser', 'like', 'matching_questions', 'similarity', 'p', 'l');
         $qb->where( $userFilters['conditions'])
             ->with('u', 'anyUser', 'like', 'matching_questions', 'similarity', 'p', 'l');
@@ -174,7 +175,8 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
         return $count;
     }
 
-    public function buildResponseFromResult(ResultSet $result) {
+    public function buildResponseFromResult(ResultSet $result)
+    {
         return array('items' => $this->buildUserRecommendations($result));
     }
 
@@ -208,7 +210,7 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
 
         $items = $this->getUsersByPopularity($filters, $foreign, $limit, $condition);
 
-        $return = array('items' => array_slice($items, 0, $limit) );
+        $return = array('items' => array_slice($items, 0, $limit));
         $return['foreign'] = $foreign + count($return['items']);
 
         return $return;
