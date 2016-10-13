@@ -26,22 +26,19 @@ abstract class AbstractTweetsFetcher extends BasicPaginationFetcher
 
     protected function getPaginationIdFromResponse($response)
     {
+        if (!is_array($response) || empty($response)) {
+            return null;
+        }
 
-        $paginationId = null;
+        $lastItem = end($response);
+        $paginationId = isset($lastItem['id_str']) ? $lastItem : null;
 
-        $itemsCount = count($response);
-        if ($itemsCount > 0 ) {
-            $lastItem = $response[count($response) - 1];
-            $paginationId = $lastItem['id_str'];
-
-            if ($paginationId == $this->lastPaginationId){
-                return null;
-            }
-        } else {
+        if ($paginationId == $this->lastPaginationId) {
             return null;
         }
 
         $this->lastPaginationId = $paginationId;
+
         return $paginationId;
     }
 
