@@ -30,13 +30,13 @@ class TwitterFollowingFetcher extends BasicPaginationFetcher
 
     protected function getItemsFromResponse($response)
     {
-        return $response['ids'];
+        return isset($response['ids']) ? $response['ids'] : array();
 
     }
 
     protected function getPaginationIdFromResponse($response)
     {
-        $paginationId = $response['next_cursor'];
+        $paginationId = isset($response['next_cursor']) ? $response['next_cursor'] : null;
         if ($paginationId == 0) {
             return null;
         }
