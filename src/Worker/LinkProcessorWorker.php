@@ -72,8 +72,8 @@ class LinkProcessorWorker extends LoggerAwareWorker implements RabbitMQConsumerI
                                 Connection $connectionSocial,
                                 Connection $connectionBrain)
     {
-
         $this->channel = $channel;
+        $this->dispatcher = $dispatcher;
         $this->fetcherService = $fetcherService;
         $this->resourceOwnerFactory = $resourceOwnerFactory;
         $this->tm = $tm;
