@@ -54,7 +54,7 @@ abstract class BasicPaginationFetcher extends AbstractFetcher
                 if (!$public) {
                     $response = $this->resourceOwner->authorizedHttpRequest($this->getUrl(), $query, $this->user);
                 } else {
-                    $response = $this->resourceOwner->authorizedApiRequest($this->getUrl(), $query, $this->user);
+                    $response = $this->resourceOwner->authorizedAPIRequest($this->getUrl(), $query, $this->user);
                 }
             } catch (\Exception $e) {
                 throw new PaginatedFetchingException($this->rawFeed, $e);
