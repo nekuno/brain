@@ -154,10 +154,16 @@ class LinkProcessorWorker extends LoggerAwareWorker implements RabbitMQConsumerI
                         /** @var TwitterResourceOwner $twitterResourceOwner */
                         $twitterResourceOwner = $this->resourceOwnerFactory->build($resourceOwner);
                         $username = $twitterResourceOwner->getUsername(array('url' => $profile->getUrl()));
-                        $twitterResourceOwner->dispatchChannel(array(
-                            'url' => $profile->getUrl(),
-                            'username' => $username,
-                        ));
+                        try{
+                            $twitterResourceOwner->dispatchChannel(array(
+                                'url' => $profile->getUrl(),
+                                'username' => $username,
+                            ));
+                        } catch (\Exception $e){
+                            $this->dispatchError($e, 'Error adding twitter channel');
+                            $this->logger->error('Error adding twitter channel: '. $e->getMessage());
+                        }
+
                         $this->logger->info(sprintf('Enqueued fetching old tweets for username %s', $username));
                     };
                 }
