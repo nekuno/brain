@@ -429,13 +429,13 @@ filters:
             type: multiple_choices
             max_choices: 5
             label:
-                en: 'Type'
-                es: 'Tipo'
+                en: 'Type of content (Music, images, etc…)'
+                es: 'Tipo de contenido (Música, imágenes, etc…)'
         tags:
             type: tags
             label:
-                en: 'Tags'
-                es: 'Etiquetas'
+                en: 'Keywords'
+                es: 'Palabras clave'
     user:
         groups:
             type: multiple_choices
