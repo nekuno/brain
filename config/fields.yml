@@ -405,13 +405,13 @@ content:
     type:
         type: choice
         label:
-            en: 'Type'
-            es: 'Tipo'
+            en: 'Type of content'
+            es: 'Tipo de contenido'
     tags:
         type: tags
         label:
-            en: 'Tags'
-            es: 'Etiquetas'
+            en: 'Keywords'
+            es: 'Palabras clave'
 threads:
     name:
         type: textarea
