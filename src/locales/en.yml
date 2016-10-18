@@ -33,11 +33,11 @@ followers:
 messages:
   register: 'Welcome! You can start exploring the web using the yarns we have created for you. If you want to improve them, you can always connect more social media to let us know what you like!'
 types:
-  audio: 'Audio'
-  video: 'Video'
-  image: 'Image'
-  creator: 'Channel'
-  link: 'Link'
+  audio: 'Music'
+  video: 'Videos'
+  image: 'Images & Gifs'
+  creator: 'Channels of Twitter'
+  link: 'Web & links'
 threads:
   default:
     twitter_channels: 'Amazing Twitter channels'
