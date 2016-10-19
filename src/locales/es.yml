@@ -33,11 +33,11 @@ followers:
 messages:
   register: '¡Bienvenido! Puedes empezar a explorar la red a través de los hilos que hemos creado para ti. Si quieres mejorarlos, puedes añadir más redes sociales para dejarnos saber lo que te gusta.'
 types:
-  audio: 'Audio'
-  video: 'Video'
-  image: 'Imagen'
-  creator: 'Canal'
-  link: 'Enlace'
+  audio: 'Música'
+  video: 'Vídeos'
+  image: 'Imagenes & Gifs'
+  creator: 'Canales de Twitter'
+  link: 'Webs & enlaces'
 threads:
   default:
     twitter_channels: 'Canales de Twitter Increíbles'
