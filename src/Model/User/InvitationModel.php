@@ -258,13 +258,13 @@ class InvitationModel
                     continue;
                 }
             }
-	        if ($index === 'available') {
-		        if (isset($data['userId'])) {
-			        $data['available'] = 1;
-		        }
-		        $qb->set('inv.available = ' . $data['available']);
-		        continue;
-	        }
+            if ($index === 'available') {
+                if (isset($data['userId'])) {
+                    $data['available'] = 1;
+                }
+                $qb->set('inv.available = ' . $data['available']);
+                continue;
+            }
             if (array_key_exists($index, $data)) {
                 if (ctype_digit((string)$parameter)) {
                     $parameter = (integer)$parameter;
@@ -281,12 +281,8 @@ class InvitationModel
             $qb->with('inv')
                 ->match('(g:Group)')
                 ->where('id(g) = { groupId }')
-                ->createUnique('(inv)-[:HAS_GROUP]->(g)')
-                ->setParameters(
-                    array(
-                        'groupId' => (integer)$data['groupId'],
-                    )
-                );
+                ->createUnique('(inv)-[:HAS_GROUP]->(g)');
+            $qb->setParameter('groupId', (integer)$data['groupId']);
         }
         if (isset($data['userId'])) {
             isset($data['groupId']) ? $qb->with('inv', 'g') : $qb->with('inv');
@@ -296,19 +292,17 @@ class InvitationModel
                 ->set('user.available_invitations = { userAvailable } - 1');
 
             if (isset($data['groupId'])) {
-                $qb->with('user', 'inv', 'g');
-                $qb->optionalMatch('(gf:GroupFollowers)');
-                $qb->with('user', 'inv', 'g', 'collect(gf) as gfs');
-                $qb->add('FOREACH', '( g in gfs | SET user.available_invitations = { userAvailable } )');
+                $qb->with('user', 'inv', 'g')
+                    ->optionalMatch('(gf:GroupFollowers)')
+                    ->with('user', 'inv', 'g', 'collect(gf) as gfs')
+                    ->add('FOREACH', '( g in gfs | SET user.available_invitations = { userAvailable } )');
             }
-            $qb->setParameters(
-                array(
-                    'userId' => (integer)$data['userId'],
-                    'userAvailable' => (integer)$userAvailable,
-                    'groupId' => (integer)$data['groupId'],
-                )
-            );
+
+            $qb->setParameter('userId', (integer)$data['userId']);
+            $qb->setParameter('userAvailable', (integer)$userAvailable);
+
         }
+
         if (isset($data['groupId'])) {
             $qb->returns('inv AS invitation', 'g AS group');
         } else {
@@ -822,10 +816,10 @@ class InvitationModel
 
         $userId = $row->offsetExists('userId') ? $row->offsetGet('userId') : null;
 
-	    $consumedUserId = $row->offsetExists('consumedUserId') ? $row->offsetGet('consumedUserId') : null;
-	    $consumedUsername = $row->offsetExists('consumedUsername') ? $row->offsetGet('consumedUsername') : null;
+        $consumedUserId = $row->offsetExists('consumedUserId') ? $row->offsetGet('consumedUserId') : null;
+        $consumedUsername = $row->offsetExists('consumedUsername') ? $row->offsetGet('consumedUsername') : null;
 
-	    $optionalKeys = array('email', 'expiresAt', 'htmlText', 'slogan', 'image_url', 'image_path', 'orientationRequired');
+        $optionalKeys = array('email', 'expiresAt', 'htmlText', 'slogan', 'image_url', 'image_path', 'orientationRequired');
         $requiredKeys = array('token', 'available', 'consumed', 'createdAt');
         $invitationArray = array();
 
@@ -850,9 +844,9 @@ class InvitationModel
             $invitationArray += array('userId' => $userId);
         }
 
-	    if (!$group && $consumedUserId && $consumedUsername) {
-		    $invitationArray += array('consumedUserId' => $consumedUserId, 'consumedUsername' => $consumedUsername);
-	    }
+        if (!$group && $consumedUserId && $consumedUsername) {
+            $invitationArray += array('consumedUserId' => $consumedUserId, 'consumedUsername' => $consumedUsername);
+        }
 
         if (isset($invitationArray['image_path'])) {
             $invitationArray['image_url'] = $this->adminDomain . $invitationArray['image_path'];
