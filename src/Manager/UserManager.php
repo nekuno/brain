@@ -337,12 +337,12 @@ class UserManager implements PaginatedInterface
                         break;
                     case 'string':
                         if (!is_string($fieldValue)) {
-                            $fieldErrors[] = sprintf('"%s" must be an string', $fieldName);
+                            $fieldErrors[] = sprintf('"%s" must be a string', $fieldName);
                         }
                         break;
                     case 'photo':
                         if (!is_string($fieldValue)) {
-                            $fieldErrors[] = sprintf('"%s" must be an string', $fieldName);
+                            $fieldErrors[] = sprintf('"%s" must be a string', $fieldName);
                         }
                         break;
                     case 'boolean':
@@ -354,6 +354,11 @@ class UserManager implements PaginatedInterface
                         $date = \DateTime::createFromFormat('Y-m-d H:i:s', $fieldValue);
                         if (!($date && $date->format('Y-m-d H:i:s') == $fieldValue)) {
                             $fieldErrors[] = 'Invalid datetime format, valid format is "Y-m-d H:i:s".';
+                        }
+                        break;
+                    case 'array':
+                        if (!is_array($fieldValue)) {
+                            $fieldErrors[] = sprintf('"%s" must be an array', $fieldName);
                         }
                         break;
                 }
@@ -1053,6 +1058,7 @@ class UserManager implements PaginatedInterface
             'confirmed' => array('type' => 'boolean', 'default' => false),
             'status' => array('type' => 'string', 'editable' => false),
             'photo' => array('type' => 'photo'),
+            'tutorials' => array('type' => 'array'),
         );
 
         if ($isUpdate) {
