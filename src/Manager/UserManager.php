@@ -1086,16 +1086,8 @@ class UserManager implements PaginatedInterface
             ->with('u');
 
         foreach ($data as $key => $value) {
-            if (is_array($value)) {
-                $qb->set("u.$key = []");
-                foreach ($value as $index => $singleValue) {
-                    $qb->set("u.$key.$index = { $key$index }")
-                        ->setParameter($key.$index, $singleValue);
-                }
-            } else {
-                $qb->set("u.$key = { $key }")
-                    ->setParameter($key, $value);
-            }
+            $qb->set("u.$key = { $key }")
+                ->setParameter($key, $value);
         }
 
         $qb->returns('u');
