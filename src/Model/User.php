@@ -154,6 +154,11 @@ class User implements UserInterface, \JsonSerializable
      */
     protected $photo;
 
+    /**
+     * @var array
+     */
+    protected $tutorials;
+
     public function __construct()
     {
         $this->salt = base_convert(sha1(uniqid(mt_rand(), true)), 16, 36);
@@ -163,6 +168,7 @@ class User implements UserInterface, \JsonSerializable
         $this->roles = array();
         $this->credentialsExpired = false;
         $this->confirmed = false;
+        $this->tutorials = array();
     }
 
     public function addRole($role)
@@ -821,13 +827,38 @@ class User implements UserInterface, \JsonSerializable
     /**
      * Set updatedAt
      *
-     * @param \DateTime $createdAt
+     * @param \DateTime $updatedAt
      * @return $this
      */
     public function setUpdatedAt(\DateTime $updatedAt = null)
     {
 
         $this->updatedAt = $updatedAt;
+
+        return $this;
+    }
+
+    /**
+     * Returns the user tutorials
+     *
+     * @return array The tutorials
+     */
+    public function getTutorials()
+    {
+
+        return $this->tutorials;
+    }
+
+    /**
+     * Set the user tutorials
+     *
+     * @param array $tutorials
+     *
+     * @return $this
+     */
+    public function setTutorials($tutorials)
+    {
+        $this->tutorials = $tutorials;
 
         return $this;
     }
