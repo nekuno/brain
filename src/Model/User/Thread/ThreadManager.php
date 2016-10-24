@@ -8,7 +8,7 @@ use Everyman\Neo4j\Query\Row;
 use Model\Neo4j\GraphManager;
 use Manager\UserManager;
 use Model\User;
-use Model\User\GroupModel;
+use Model\User\Group\GroupModel;
 use Model\User\ProfileModel;
 use Service\Validator;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;

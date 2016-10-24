@@ -114,6 +114,7 @@ $app->delete('/threads/{id}', 'users.threads.controller:deleteAction');
 
 /** Group routes */
 $app->get('/groups/{id}', 'users.groups.controller:getAction');
+$app->post('/groups', 'users.groups.controller:postAction');
 $app->get('/groups/{id}/members', 'users.groups.controller:getMembersAction');
 $app->post('/groups/{id}/members', 'users.groups.controller:addUserAction');
 $app->delete('/groups/{id}/members', 'users.groups.controller:removeUserAction');

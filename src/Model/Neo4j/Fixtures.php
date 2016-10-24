@@ -10,7 +10,7 @@ use Model\User\ProfileModel;
 use Model\User\RateModel;
 use Manager\UserManager;
 use Model\EnterpriseUser\EnterpriseUserModel;
-use Model\User\GroupModel;
+use Model\User\Group\GroupModel;
 use Model\User\InvitationModel;
 use Model\User\PrivacyModel;
 use Psr\Log\LoggerInterface;

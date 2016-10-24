@@ -27,6 +27,27 @@ class GroupController
         return $app->json($group);
     }
 
+    public function postAction(Request $request, Application $app, User $user)
+    {
+        $data = $request->request->all();
+
+        $data['createdBy'] = $user->getId();
+        $createdGroup = $app['users.groups.model']->create($data);
+        $app['users.groups.model']->addUser($createdGroup['id'], $user->getId());
+
+        $data['groupId'] = $createdGroup['id'];
+        $invitationData = array(
+            'userId' => $user->getId(),
+            'groupId' => $createdGroup['id'],
+            'available' => 999999999
+        );
+        $createdInvitation = $app['users.invitations.model']->create($invitationData);
+
+        $createdGroup['invitation'] = $createdInvitation;
+        return $app->json($createdGroup, 201);
+    }
+
+
     /**
      * @param Request $request
      * @param Application $app

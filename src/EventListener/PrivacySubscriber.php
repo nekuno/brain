@@ -6,7 +6,7 @@
 namespace EventListener;
 
 use Event\PrivacyEvent;
-use Model\User\GroupModel;
+use Model\User\Group\GroupModel;
 use Model\User\InvitationModel;
 use Model\User\ProfileModel;
 use Manager\UserManager;

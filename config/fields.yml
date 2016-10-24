@@ -423,6 +423,60 @@ threads:
         required: true
     default:
         type: boolean
+groups:
+    name:
+        type: textarea
+        required: true
+    html:
+        type: textarea
+        required: false
+    date:
+        type: date
+        required: false
+    location:
+        type: location
+        required: false
+
+invitations:
+    invitationId:
+        required: false
+    token:
+        required: false
+    available:
+        required: true
+        type: integer
+        min: 1
+    consumed:
+        required: false
+    email:
+        required: false
+        type: email
+    expiresAt:
+        required: false
+    createdAt:
+        required: false
+    userId:
+        required: false
+        type: integer
+    groupId:
+        required: false
+        type: integer
+    htmlText:
+        required: false
+        type: string
+    slogan:
+        required: false
+        type: string
+    image_url:
+        required: false
+        type: url
+    image_path:
+        required: false
+        type: image_path
+    orientationRequired:
+        required: false
+        type: boolean
+
 filters:
     content:
         type:

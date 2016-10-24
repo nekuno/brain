@@ -18,7 +18,7 @@ use Model\User\ContentTagModel;
 use Model\User\Filters\FilterContentManager;
 use Model\User\Filters\FilterUsersManager;
 use Model\User\GhostUser\GhostUserManager;
-use Model\User\GroupModel;
+use Model\User\Group\GroupModel;
 use Model\User\InvitationModel;
 use Model\User\LookUpModel;
 use Model\User\Matching\MatchingModel;
@@ -330,7 +330,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.groups.model'] = $app->share(
             function ($app) {
 
-                return new GroupModel($app['neo4j.graph_manager'], $app['dispatcher'], $app['users.manager'], $app['users.filterusers.manager']);
+                return new GroupModel($app['neo4j.graph_manager'], $app['dispatcher'], $app['users.manager'], $app['users.filterusers.manager'], $app['validator.service']);
             }
         );
 
@@ -368,7 +368,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
 
         $app['users.invitations.model'] = $app->share(
             function ($app) {
-                return new InvitationModel($app['tokenGenerator.service'], $app['neo4j.graph_manager'], $app['users.groups.model'], $app['users.manager'], $app['admin_domain_plus_post']);
+                return new InvitationModel($app['tokenGenerator.service'], $app['neo4j.graph_manager'], $app['validator.service'], $app['admin_domain_plus_post']);
             }
         );
 

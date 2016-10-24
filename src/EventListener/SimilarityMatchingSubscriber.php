@@ -6,7 +6,7 @@ use Event\MatchingEvent;
 use Event\SimilarityEvent;
 use Model\Entity\EmailNotification;
 use Model\User\Filters\FilterUsers;
-use Model\User\GroupModel;
+use Model\User\Group\GroupModel;
 use Model\User\ProfileModel;
 use Manager\UserManager;
 use Service\EmailNotifications;

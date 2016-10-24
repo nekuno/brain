@@ -2,7 +2,7 @@
 
 namespace Controller\Social;
 
-use Model\User\GroupModel;
+use Model\User\Group\GroupModel;
 use Manager\UserManager;
 use Model\User;
 use Model\User\ProfileFilterModel;
@@ -107,7 +107,7 @@ class UserController
         $userFilterModel = $app['users.userFilter.model'];
         $userFilters = $userFilterModel->getSocialFilters($locale);
 
-        /* @var $groupModel User\GroupModel */
+        /* @var $groupModel \Model\User\Group\GroupModel */
         $groupModel = $app['users.groups.model'];
         $groups = $groupModel->getByUser($user->getId());
 

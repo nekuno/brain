@@ -7,7 +7,7 @@
 namespace Service;
 
 
-use Model\User\GroupModel;
+use Model\User\Group\GroupModel;
 use Model\User\Recommendation\ContentPopularRecommendationPaginatedModel;
 use Model\User\Recommendation\ContentRecommendationPaginatedModel;
 use Model\User\Recommendation\SocialUserRecommendationPaginatedModel;

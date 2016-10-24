@@ -3,7 +3,7 @@
 namespace Controller\User;
 
 use Model\User\ContentPaginatedModel;
-use Model\User\GroupModel;
+use Model\User\Group\GroupModel;
 use Model\User\ProfileFilterModel;
 use Model\User\RateModel;
 use Model\User\UserStatsManager;
@@ -620,7 +620,7 @@ class UserController
         $userFilters = $userFilterModel->getFilters($locale);
 
         //TODO: Move this logic to userFilter during/after QS-982 (remove filter logic from GroupModel)
-        /* @var $groupModel User\GroupModel */
+        /* @var $groupModel \Model\User\Group\GroupModel */
         $groupModel = $app['users.groups.model'];
         $groups = $groupModel->getByUser($user->getId());
 

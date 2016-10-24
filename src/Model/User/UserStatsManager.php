@@ -13,6 +13,7 @@ use Doctrine\ORM\EntityManager;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Neo4j\GraphManager;
+use Model\User\Group\GroupModel;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class UserStatsManager

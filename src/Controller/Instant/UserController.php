@@ -2,7 +2,7 @@
 
 namespace Controller\Instant;
 
-use Model\User\GroupModel;
+use Model\User\Group\GroupModel;
 use Manager\UserManager;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\JsonResponse;

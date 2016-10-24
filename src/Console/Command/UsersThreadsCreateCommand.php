@@ -6,7 +6,7 @@ use Console\ApplicationAwareCommand;
 use Model\Exception\ValidationException;
 use Model\Neo4j\Neo4jException;
 use Model\User;
-use Model\User\GroupModel;
+use Model\User\Group\GroupModel;
 use Model\User\Thread\ThreadManager;
 use Manager\UserManager;
 use Service\Recommendator;

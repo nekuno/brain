@@ -7,7 +7,7 @@ use Everyman\Neo4j\Query\Row;
 use Model\Neo4j\GraphManager;
 use Model\Popularity\PopularityManager;
 use Model\User\ContentPaginatedModel;
-use Model\User\GroupModel;
+use Model\User\Group\GroupModel;
 use Model\User\ProfileModel;
 use Model\User\QuestionPaginatedModel;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
