@@ -5,7 +5,7 @@ namespace Worker;
 
 use ApiConsumer\Fetcher\FetcherService;
 use ApiConsumer\Fetcher\GetOldTweets\GetOldTweets;
-use ApiConsumer\LinkProcessor\PreprocessedLink;
+use ApiConsumer\Fetcher\ProcessorService;
 use Doctrine\DBAL\Connection;
 use Model\Neo4j\Neo4jException;
 use Model\User\SocialNetwork\SocialProfileManager;
@@ -32,6 +32,11 @@ class ChannelWorker extends LoggerAwareWorker implements RabbitMQConsumerInterfa
     protected $fetcherService;
 
     /**
+     * @var ProcessorService
+     */
+    protected $processorService;
+
+    /**
      * @var Connection
      */
     protected $connectionBrain;
@@ -46,6 +51,7 @@ class ChannelWorker extends LoggerAwareWorker implements RabbitMQConsumerInterfa
     public function __construct(AMQPChannel $channel,
                                 EventDispatcher $dispatcher,
                                 FetcherService $fetcherService,
+                                ProcessorService $processorService,
                                 GetOldTweets $getOldTweets,
                                 SocialProfileManager $socialProfileManager,
                                 TokensModel $tokensModel,
@@ -55,6 +61,7 @@ class ChannelWorker extends LoggerAwareWorker implements RabbitMQConsumerInterfa
         $this->channel = $channel;
         $this->dispatcher = $dispatcher;
         $this->fetcherService = $fetcherService;
+        $this->processorService = $processorService;
         $this->getOldTweets = $getOldTweets;
         $this->socialProfileManager = $socialProfileManager;
         $this->tokensModel = $tokensModel;
@@ -123,7 +130,8 @@ class ChannelWorker extends LoggerAwareWorker implements RabbitMQConsumerInterfa
                         $this->logger->info(sprintf('Fetching from user %d', $socialProfile->getUserId()));
                         $token = $this->tokensModel->buildFromSocialProfile($socialProfile);
                         $token['public'] = true;
-                        $this->fetcherService->fetch($token, $exclude);
+                        $links = $this->fetcherService->fetch($token, $exclude);
+                        $this->processorService->process($links, $userId);
                     }
 
 //                    $links = $this->getOldTweets->fetchFromUser($username);

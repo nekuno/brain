@@ -2,6 +2,7 @@
 
 namespace Console\Command;
 
+use ApiConsumer\LinkProcessor\LinkAnalyzer;
 use ApiConsumer\LinkProcessor\LinkProcessor;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
 use ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser;
@@ -78,27 +79,32 @@ class LinksProcessDatabaseCommand extends ApplicationAwareCommand
                     /* @var LinkProcessor $processor */
                     $processor = $this->app['api_consumer.link_processor'];
 
-                    $cleanUrl = $processor->cleanURL($preprocessedLink->getFetched());
-                    if ($twitterParser->getUrlType($cleanUrl) === TwitterUrlParser::TWITTER_PROFILE) {
-                        $preprocessedLink->setCanonical($cleanUrl);
-                        $twitterProfiles[] = $preprocessedLink;
-                        if (count($twitterProfiles) >= 100) {
-                            $processedLinks = $this->app['api_consumer.link_processor.processor.twitter']->processMultipleProfiles($twitterProfiles);
-                            $twitterProfiles = array();
-                        } else {
-                            continue;
-                        }
-                    } else if ($twitterParser->getUrlType($cleanUrl) === TwitterUrlParser::TWITTER_INTENT){
-                        $preprocessedLink->setCanonical($cleanUrl);
-                        $twitterIntents[] = $preprocessedLink;
-                        if (count($twitterIntents) >= 100) {
-                            $processedLinks = $this->app['api_consumer.link_processor.processor.twitter']->processMultipleIntents($twitterIntents);
-                            $twitterIntents = array();
-                        } else {
-                            continue;
-                        }
-                    } else {
-                        $processedLinks = array($processor->process($preprocessedLink, $all));
+                    $cleanUrl = LinkAnalyzer::cleanUrl($preprocessedLink->getFetched());
+
+                    switch ($twitterParser->getUrlType($cleanUrl)){
+                        case TwitterUrlParser::TWITTER_PROFILE:
+                            $preprocessedLink->setCanonical($cleanUrl);
+                            $twitterProfiles[] = $preprocessedLink;
+                            if (count($twitterProfiles) >= 100) {
+                                $processedLinks = $this->app['api_consumer.processor.factory']->build(TwitterUrlParser::TWITTER_PROFILE)->processMultipleProfiles($twitterProfiles);
+                                $twitterProfiles = array();
+                            } else {
+                                continue;
+                            }
+                            break;
+                        case TwitterUrlParser::TWITTER_INTENT:
+                            $preprocessedLink->setCanonical($cleanUrl);
+                            $twitterIntents[] = $preprocessedLink;
+                            if (count($twitterIntents) >= 100) {
+                                $processedLinks = $this->app['api_consumer.processor_factory']->build(TwitterUrlParser::TWITTER_INTENT)->processMultipleIntents($twitterIntents);
+                                $twitterIntents = array();
+                            } else {
+                                continue;
+                            }
+                            break;
+                        default:
+                            $processedLinks = array($processor->process($preprocessedLink));
+                            break;
                     }
 
                     foreach ($processedLinks as $processedLink) {

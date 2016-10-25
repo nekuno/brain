@@ -1,22 +1,29 @@
 <?php
 
 namespace ApiConsumer\LinkProcessor\Processor;
-use ApiConsumer\LinkProcessor\PreprocessedLink;
-use ApiConsumer\LinkProcessor\UrlParser\UrlParser;
 
-/**
- * @author Juan Luis Martínez <juanlu@comakai.com>
- */
+use ApiConsumer\Exception\CannotProcessException;
+use ApiConsumer\LinkProcessor\PreprocessedLink;
+use ApiConsumer\LinkProcessor\SynonymousParameters;
+use Symfony\Component\DomCrawler\Crawler;
+
 interface ProcessorInterface
 {
     /**
-     * @param $link PreprocessedLink
-     * @return array|false Returns the processed link as array or false if the processor can not process the link
+     * @param PreprocessedLink $preprocessedLink
+     * @return array|Crawler
+     * @throws CannotProcessException
      */
-    public function process(PreprocessedLink $link);
+    function requestItem(PreprocessedLink $preprocessedLink);
+
+    function hydrateLink(PreprocessedLink $preprocessedLink, array $data);
+
+    function addTags(PreprocessedLink $preprocessedLink, array $data);
 
     /**
-     * @return UrlParser
+     * @param PreprocessedLink $preprocessedLink
+     * @param array $data
      */
-    public function getParser();
+    function getSynonymousParameters(PreprocessedLink $preprocessedLink, array $data);
+
 } 

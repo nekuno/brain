@@ -415,12 +415,12 @@ class Fixtures
         $likes = $this->scenario['likes'];
 
         foreach ($createdLinks as $link) {
-            $this->rm->userRateLink(1, $link, RateModel::LIKE);
+            $this->rm->userRateLink(1, $link['id']);
         }
 
         foreach ($likes as $like) {
             foreach (range($like['linkFrom'], $like['linkTo']) as $i) {
-                $this->rm->userRateLink($like['user'], $createdLinks[$i], RateModel::LIKE);
+                $this->rm->userRateLink($like['user'], $createdLinks[$i]['id']);
             }
         }
     }

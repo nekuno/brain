@@ -50,6 +50,7 @@ abstract class LoggerAwareWorker implements LoggerAwareInterface
         return $parts[2];
     }
 
+    //TODO: Move to dispatcher to make it available everywhere
     protected function dispatchError(\Exception $e, $message)
     {
         $this->dispatcher->dispatch(\AppEvents::EXCEPTION_ERROR, new ExceptionEvent($e, $message));

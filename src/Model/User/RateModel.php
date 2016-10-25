@@ -52,22 +52,24 @@ class RateModel
     /**
      * For post-like actions
      * @param $userId
-     * @param $data array
-     * @param $rate
+     * @param $linkId
+     * @param string $resource
+     * @param $timestamp
+     * @param string $rate
      * @param bool $fireEvent
      * @return array
-     * @throws \Exception
+     * //TODO: Refactor to accept Rate object
      */
-    public function userRateLink($userId, array $data, $rate, $fireEvent = true)
+    public function userRateLink($userId, $linkId, $resource = 'nekuno', $timestamp = null, $rate = self::LIKE, $fireEvent = true)
     {
         $this->validate($rate);
 
         switch ($rate) {
             case $this::LIKE :
-                $result = $this->userLikeLink($userId, $data);
+                $result = $this->userLikeLink($userId, $linkId, $resource, $timestamp);
                 break;
             case $this::DISLIKE :
-                $result = $this->userDislikeLink($userId, $data);
+                $result = $this->userDislikeLink($userId, $linkId, $timestamp);
                 break;
             default:
                 return array();
@@ -149,24 +151,23 @@ class RateModel
 
     /**
      * @param $userId
-     * @param array $data
+     * @param $linkId
+     * @param string $resource
+     * @param null $timestamp
      * @return array
-     * @throws \Exception
      */
-    protected function userLikeLink($userId, array $data = array())
+    protected function userLikeLink($userId, $linkId, $resource = 'nekuno', $timestamp = null)
     {
 
-        if (empty($userId) || empty($data['id'])) return array('empty thing' => 'true'); //TODO: Fix this return
+        if (empty($userId) || empty($linkId)) return array('empty thing' => 'true'); //TODO: Fix this return
 
         $qb = $this->gm->createQueryBuilder();
 
         $qb->setParameters(array(
             'userId' => (integer)$userId,
-            'linkId' => (integer)$data['id'],
-            'timestamp' => isset($data['timestamp']) ? $data['timestamp'] : null,
+            'linkId' => (integer)$linkId,
+            'timestamp' => $timestamp,
         ));
-
-        $resource = !empty($data['resource']) ? $data['resource'] : 'nekuno';
 
         $qb->match('(u:User)', '(l:Link)')
             ->where('u.qnoow_id = { userId }', 'id(l) = { linkId }')
@@ -194,16 +195,16 @@ class RateModel
 
     }
 
-    private function userDislikeLink($userId, $data)
+    private function userDislikeLink($userId, $linkId, $timestamp = null)
     {
-        if (empty($userId) || empty($data['id'])) return array('empty thing' => 'true');
+        if (empty($userId) || empty($linkId)) return array('empty thing' => 'true'); //TODO: Fix this return
 
         $qb = $this->gm->createQueryBuilder();
 
         $qb->setParameters(array(
             'userId' => (integer)$userId,
-            'linkId' => (integer)$data['id'],
-            'timestamp' => isset($data['timestamp']) ? $data['timestamp'] : 1000*time(),
+            'linkId' => (integer)$linkId,
+            'timestamp' => $timestamp,
         ));
 
         $qb->match('(u:User)', '(l:Link)')

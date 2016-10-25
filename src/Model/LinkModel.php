@@ -216,8 +216,7 @@ class LinkModel
             return array();
         }
 
-        $data['title'] = isset($data['title']) ? $data['title'] : '';
-        $data['description'] = isset($data['description']) ? $data['description'] : '';
+        $data = $this->limitTextLengths($data);
 
         $link = $this->findLinkByUrl($data['url']);
 
@@ -267,7 +266,7 @@ class LinkModel
                 'l.description = { description }',
                 'l.language = { language }',
                 'l.processed = { processed }',
-                'l.created =  timestamp()'
+                'l.created =  timestamp()' //TODO: If there is created, use this instead (coalesce)
             );
 
         if (isset($data['thumbnail']) && $data['thumbnail']) {
@@ -779,6 +778,17 @@ class LinkModel
         }
 
         return $link;
+    }
+
+    private function limitTextLengths(array $data)
+    {
+        $description = isset($data['description']) ? $data['description'] : '';
+        $data['description'] = strlen($description) >= 25 ? mb_substr($description, 0, 22) . '...' : $description;
+
+        $title = isset($data['title']) ? $data['title'] : '';
+        $data['title'] = strlen($title) >= 25 ? mb_substr($title, 0, 22) . '...' : $title;
+
+        return $data;
     }
 
     //TODO: Refactor this to use locale keys or move them to fields.yml

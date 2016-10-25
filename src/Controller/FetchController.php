@@ -36,13 +36,10 @@ class FetchController
                 $link = $linkModel->findLinkByUrl($data['url']);
             }
 
-            $link['resource'] = $data['resource'];
-            $link['timestamp'] = $data['timestamp'];
-
             if (isset($data['userId'])) {
                 /* @var $rateModel RateModel */
                 $rateModel = $app['users.rate.model'];
-                $rateModel->userRateLink($data['userId'], $link, RateModel::LIKE);
+                $rateModel->userRateLink($data['userId'], $link['id'], $data['resource'], $data['timestamp'], RateModel::LIKE);
             }
 
         } catch (\Exception $e) {

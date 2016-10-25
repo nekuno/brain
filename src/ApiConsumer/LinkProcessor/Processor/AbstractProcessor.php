@@ -2,59 +2,47 @@
 
 namespace ApiConsumer\LinkProcessor\Processor;
 
+use ApiConsumer\Exception\CannotProcessException;
+use ApiConsumer\Exception\UrlNotValidException;
+use ApiConsumer\LinkProcessor\PreprocessedLink;
+use ApiConsumer\LinkProcessor\SynonymousParameters;
 use ApiConsumer\LinkProcessor\UrlParser\UrlParserInterface;
-use GuzzleHttp\Client;
+use ApiConsumer\ResourceOwner\AbstractResourceOwnerTrait;
 use HWI\Bundle\OAuthBundle\OAuth\ResourceOwnerInterface;
-use Service\UserAggregator;
 
 abstract class AbstractProcessor implements ProcessorInterface
 {
-
-    protected $userAggregator;
-
-    /** @var  ResourceOwnerInterface */
+    /** @var  ResourceOwnerInterface | AbstractResourceOwnerTrait */
     protected $resourceOwner;
-
-    /** @var  $parser UrlParserInterface */
     protected $parser;
 
-    protected $scraperProcessor;
-
-	protected $client;
-
-    public function __construct(UserAggregator $userAggregator, ScraperProcessor $scraperProcessor, ResourceOwnerInterface $resourceOwner, UrlParserInterface $urlParser, Client $client)
+    public function __construct(ResourceOwnerInterface $resourceOwner, UrlParserInterface $urlParser)
     {
-        $this->userAggregator = $userAggregator;
-        $this->scraperProcessor = $scraperProcessor;
-	    $this->resourceOwner = $resourceOwner;
-	    $this->parser = $urlParser;
-	    $this->client = $client;
+        $this->resourceOwner = $resourceOwner;
+        $this->parser = $urlParser;
     }
 
-    protected function addCreator($username)
+    function addTags(PreprocessedLink $preprocessedLink, array $data)
     {
-        $this->userAggregator->addUser($username, $this->resourceOwner->getName());
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function getParser()
+    function getSynonymousParameters(PreprocessedLink $preprocessedLink, array $data)
     {
-        return $this->parser;
     }
 
-	protected function getClient() {
-		return $this->client;
-	}
-
-    public function isCorrectResponse($url)
+    protected function getItemId($url)
     {
-        $response = $this->getClient()->head($url);
-        if (200 <= $response->getStatusCode() && $response->getStatusCode() < 300 && strpos($response->getHeader('Content-Type'), 'image') !== false ){
-            return true;
+        try{
+            $id = $this->getItemIdFromParser($url);
+        } catch (UrlNotValidException $e){
+            throw new CannotProcessException($url);
         }
 
-        return false;
+        return $id;
     }
+
+    protected function getItemIdFromParser($url){
+        return $url;
+    }
+
 }

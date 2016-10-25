@@ -2,37 +2,60 @@
 
 namespace ApiConsumer\LinkProcessor\UrlParser;
 
+use ApiConsumer\Exception\UrlNotValidException;
 
 class TwitterUrlParser extends UrlParser
 {
-    const TWITTER_INTENT = 'intent';
-    const TWITTER_PROFILE = 'profile';
-    const TWITTER_IMAGE = 'image';
-    const TWITTER_TWEET = 'tweet';
+    const TWITTER_INTENT = 'twitter_intent';
+    const TWITTER_PROFILE = 'twitter_profile';
+    const TWITTER_PIC = 'twitter_pic';
+    const TWITTER_TWEET = 'twitter_tweet';
 
     public function getUrlType($url)
     {
         if ($this->isTwitterImageUrl($url)) {
-            return self::TWITTER_IMAGE;
+            return self::TWITTER_PIC;
         }
-        if ($this->getStatusIdFromTweetUrl($url)) {
+        try{
+            $this->getStatusId($url);
             return self::TWITTER_TWEET;
-        }
-        if ($this->getProfileIdFromIntentUrl($url)) {
-            return self::TWITTER_INTENT;
-        }
-        if ($this->getProfileNameFromProfileUrl($url)) {
-            return self::TWITTER_PROFILE;
-        }
+        } catch (\Exception $e){}
 
-        return false;
+        try{
+            $this->getProfileIdFromIntentUrl($url);
+            return self::TWITTER_INTENT;
+        } catch (\Exception $e){}
+
+        try{
+            $this->getProfileNameFromProfileUrl($url);
+            return self::TWITTER_PROFILE;
+        } catch (\Exception $e){}
+
+        throw new UrlNotValidException($url);
     }
 
-    public function getProfileIdFromIntentUrl($url)
+    /**
+     * @param $url
+     * @return array
+     */
+    public function getProfileId($url)
     {
-        if (!$this->isUrlValid($url)) {
-            return false;
-        }
+        try{
+            $intentId = $this->getProfileIdFromIntentUrl($url);
+            return $intentId;
+        } catch (\Exception $e){}
+
+        try{
+            $profileName = $this->getProfileNameFromProfileUrl($url);
+            return $profileName;
+        } catch (\Exception $e){}
+
+        throw new UrlNotValidException($url);
+    }
+
+    protected function getProfileIdFromIntentUrl($url)
+    {
+        $this->checkUrlValid($url);
 
         $parts = parse_url($url);
 
@@ -44,56 +67,56 @@ class TwitterUrlParser extends UrlParser
             if (!empty($path) && $path[0] === 'intent') {
                 if (isset($qs['user_id'])) {
                     return array('user_id' => $qs['user_id']);
-                } else if (isset($qs['screen_name'])) {
-                    return array('screen_name' => $qs['screen_name']);
+                } else {
+                    if (isset($qs['screen_name'])) {
+                        return array('screen_name' => $qs['screen_name']);
+                    }
                 }
             }
 
         }
 
-        return false;
+        throw new UrlNotValidException($url);
     }
 
-    public function getProfileNameFromProfileUrl($url)
+    protected function getProfileNameFromProfileUrl($url)
     {
-        if (!$this->isUrlValid($url)) {
-            return false;
-        }
+        $this->checkUrlValid($url);
 
         $parts = parse_url($url);
-
-        if (isset($parts['host'])) {
-            $host = explode('.', $parts['host']);
-            if ($host[0] !== 'twitter') {
-                return false;
-            }
-        }
 
         if (isset($parts['path'])) {
 
             $path = explode('/', trim($parts['path'], '/'));
 
-            $reserved = array('i', 'intent', 'hashtag', 'search',
-                'who_to_follow', 'about', 'tos', 'privacy', 'settings', '#', 'login');
+            $reserved = array(
+                'i',
+                'intent',
+                'hashtag',
+                'search',
+                'who_to_follow',
+                'about',
+                'tos',
+                'privacy',
+                'settings',
+                '#',
+                'login'
+            );
 
             if (!empty($path) && !in_array($path[0], $reserved) && !isset($path[1])) {
-                return $path[0];
+                return array('screen_name' => $path[0]);
             }
         }
 
-        return false;
+        throw new UrlNotValidException($url);
     }
 
-    public function getStatusIdFromTweetUrl($url)
+    public function getStatusId($url)
     {
-        $parts = parse_url($url);
-        if (isset($parts['host'])) {
+        $this->checkUrlValid($url);
 
-            $host = explode('.', $parts['host']);
-            if ($host[0] !== 'twitter') {
-                return false;
-            }
-        }
+        $parts = parse_url($url);
+
         if (isset($parts['path'])) {
 
             $path = explode('/', trim($parts['path'], '/'));
@@ -103,12 +126,26 @@ class TwitterUrlParser extends UrlParser
             }
         }
 
-        return false;
+        throw new UrlNotValidException($url);
+    }
+
+    private function isTwitterUrl($url)
+    {
+        $parts = parse_url($url);
+
+        if (!isset($parts['host'])) {
+            throw new UrlNotValidException($url);
+        }
+
+        $host = explode('.', $parts['host']);
+
+        return in_array('twitter', array($host[0], $host[1]));
     }
 
     private function isTwitterImageUrl($url)
     {
         $host = parse_url($url, PHP_URL_HOST);
+
         return $host === 'pic.twitter.com';
     }
 
@@ -116,7 +153,7 @@ class TwitterUrlParser extends UrlParser
     {
         $urls = parent::extractURLsFromText($string);
 
-        foreach ($urls as $key=>$url){
+        foreach ($urls as $key => $url) {
             if (strpos($url, 'pic.twitter.com') > 0) {
                 $urls[$key] = substr($url, strpos($url, 'pic.twitter.com'));
             }
@@ -131,11 +168,21 @@ class TwitterUrlParser extends UrlParser
 
         $parts = parse_url($url);
 
-        if (isset($parts['host']) && $parts['host'] === 'www.twitter.com'){
+        if (isset($parts['host']) && $parts['host'] === 'www.twitter.com') {
             $parts['host'] = 'twitter.com';
             $url = http_build_url($parts);
         }
 
         return $url;
     }
+
+    public function checkUrlValid($url)
+    {
+        parent::checkUrlValid($url);
+
+        if (!$this->isTwitterUrl($url)){
+            throw new UrlNotValidException($url);
+        }
+    }
+
 }

@@ -97,6 +97,7 @@ class TwitterResourceOwner extends TwitterResourceOwnerBase
 			$query = array($parameter => implode(',', $chunk));
             /** @var Response $response */
 			$response = $this->sendAuthorizedRequest($url, $query, $token);
+            //TODO: Generalize "if too many requests, wait this->time_window and retry"
             if ($response->getStatusCode() === 429){
                 sleep(60*15);
                 $response = $this->sendAuthorizedRequest($url, $query, $token);
@@ -143,6 +144,14 @@ class TwitterResourceOwner extends TwitterResourceOwnerBase
 
 		return LookUp::TWITTER_BASE_URL . $screenName;
 	}
+
+	public function requestStatus($statusId)
+    {
+        $query = array('id' => (int)$statusId);
+        $apiResponse = $this->authorizedAPIRequest('statuses/show.json', $query);
+
+        return $apiResponse;
+    }
 
 	public function dispatchChannel(array $data)
 	{

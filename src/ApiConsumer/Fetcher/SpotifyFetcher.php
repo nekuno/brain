@@ -3,6 +3,7 @@
 namespace ApiConsumer\Fetcher;
 
 use ApiConsumer\LinkProcessor\PreprocessedLink;
+use Model\Link;
 
 class SpotifyFetcher extends BasicPaginationFetcher
 {
@@ -81,6 +82,7 @@ class SpotifyFetcher extends BasicPaginationFetcher
 
         foreach ($response as $item) {
             if (isset($item['track']) && null !== $item['track']['id']) {
+                $link = array();
                 $link['url'] = $item['track']['external_urls']['spotify'];
                 $link['title'] = $item['track']['name'];
 
@@ -98,12 +100,11 @@ class SpotifyFetcher extends BasicPaginationFetcher
                 $preprocessedLink = new PreprocessedLink($link['url']);
 
                 $link['description'] = $item['track']['album']['name'] . ' : ' . implode(', ', $artistList);
-                $link['resourceItemId'] = $item['track']['id'];
                 $link['timestamp'] = $timestamp;
 
-                $link['resource'] = $this->resourceOwner->getName();
-
-                $preprocessedLink->setLink($link);
+                $preprocessedLink->setLink(Link::buildFromArray($link));
+                $preprocessedLink->setResourceItemId($item['track']['id']);
+                $preprocessedLink->setSource($this->resourceOwner->getName());
 
                 $parsed[] = $preprocessedLink;
             }

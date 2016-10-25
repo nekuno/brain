@@ -3,6 +3,7 @@
 namespace ApiConsumer\Fetcher;
 
 use ApiConsumer\LinkProcessor\PreprocessedLink;
+use Model\Link;
 
 class GoogleFetcher extends BasicPaginationFetcher
 {
@@ -91,13 +92,12 @@ class GoogleFetcher extends BasicPaginationFetcher
             $link['url'] = $item['url'];
             $link['title'] = array_key_exists('displayName', $item) ? $item['displayName'] : null;
             $link['description'] = array_key_exists('content', $item) ? $item['content'] : null;
-            $link['resourceItemId'] = array_key_exists('id', $item) ? $item['id'] : null;
             $link['timestamp'] = $timestamp;
-            $link['resource'] = $this->resourceOwner->getName();
 
             $preprocessedLink = new PreprocessedLink($link['url']);
-            $preprocessedLink->setLink($link);
-
+            $preprocessedLink->setLink(Link::buildFromArray($link));
+            $preprocessedLink->setResourceItemId(array_key_exists('id', $item) ? $item['id'] : null);
+            $preprocessedLink->setSource($this->resourceOwner->getName());
             $parsed[] = $preprocessedLink;
         }
 

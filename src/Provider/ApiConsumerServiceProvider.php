@@ -3,6 +3,7 @@
 namespace Provider;
 
 use ApiConsumer\Factory\FetcherFactory;
+use ApiConsumer\Factory\ProcessorFactory;
 use ApiConsumer\Fetcher\FetcherService;
 use ApiConsumer\Fetcher\GetOldTweets\GetOldTweets;
 use ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser;
@@ -35,50 +36,6 @@ class ApiConsumerServiceProvider implements ServiceProviderInterface
             }
         );
 
-        $app['api_consumer.resource_owner.google'] = $app->share(
-            function ($app) {
-
-                $resourceOwnerFactory = $app['api_consumer.resource_owner_factory'];
-
-                /* @var $resourceOwnerFactory ResourceOwnerFactory */
-
-                return $resourceOwnerFactory->build('google');
-            }
-        );
-
-        $app['api_consumer.resource_owner.twitter'] = $app->share(
-            function ($app) {
-
-                $resourceOwnerFactory = $app['api_consumer.resource_owner_factory'];
-
-                /* @var $resourceOwnerFactory ResourceOwnerFactory */
-
-                return $resourceOwnerFactory->build('twitter');
-            }
-        );
-
-        $app['api_consumer.resource_owner.spotify'] = $app->share(
-            function ($app) {
-
-                $resourceOwnerFactory = $app['api_consumer.resource_owner_factory'];
-
-                /* @var $resourceOwnerFactory ResourceOwnerFactory */
-
-                return $resourceOwnerFactory->build('spotify');
-            }
-        );
-
-        $app['api_consumer.resource_owner.facebook'] = $app->share(
-            function ($app) {
-
-                $resourceOwnerFactory = $app['api_consumer.resource_owner_factory'];
-
-                /* @var $resourceOwnerFactory \ApiConsumer\Factory\ResourceOwnerFactory */
-
-                return $resourceOwnerFactory->build('facebook');
-            }
-        );
-
         //Registry
         $app['api_consumer.registry'] = $app->share(
             function ($app) {
@@ -96,6 +53,14 @@ class ApiConsumerServiceProvider implements ServiceProviderInterface
                 $resourceOwnerFactory = new FetcherFactory($app['api_consumer.config']['fetcher'], $app['api_consumer.resource_owner_factory']);
 
                 return $resourceOwnerFactory;
+            }
+        );
+
+        $app['api_consumer.processor_factory'] = $app->share(
+            function ($app) {
+                $processorFactory = new ProcessorFactory($app['api_consumer.resource_owner_factory'], $app['api_consumer.link_processor.processor.scrapper'], $app['api_consumer.config']['processor']);
+
+                return $processorFactory;
             }
         );
 
