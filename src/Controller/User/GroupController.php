@@ -106,8 +106,8 @@ class GroupController
      */
     public function removeUserAction(Application $app, User $user, $id)
     {
-        $app['users.groups.model']->removeUser($id, $user->getId());
+        $removed = $app['users.groups.model']->removeUser($id, $user->getId());
 
-        return $app->json();
+        return $app->json($removed, 204);
     }
 }

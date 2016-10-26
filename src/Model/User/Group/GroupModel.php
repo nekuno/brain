@@ -386,8 +386,8 @@ class GroupModel
 
     public function addUser($id, $userId)
     {
-        $this->getById($id);
-        $this->um->getById($userId);
+        $this->validator->validateGroupId($id);
+        $this->validator->validateUserId($userId);
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(g:Group)')
@@ -404,9 +404,8 @@ class GroupModel
 
         if ($result->count() > 0) {
             $group = $this->getById($id);
-            $user = $this->um->getById($userId);
 
-            $this->dispatcher->dispatch(\AppEvents::GROUP_ADDED, new GroupEvent($group, $user));
+            $this->dispatcher->dispatch(\AppEvents::GROUP_ADDED, new GroupEvent($group, $userId));
 
             return true;
         }
@@ -416,8 +415,8 @@ class GroupModel
 
     public function addGhostUser($id, $userId)
     {
-        $this->getById($id);
-        $this->um->getById($userId, true);
+        $this->validator->validateGroupId($id);
+        $this->validator->validateUserId($userId);
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(g:Group)')
@@ -437,8 +436,8 @@ class GroupModel
 
     public function removeUser($id, $userId)
     {
-        $this->getById($id);
-        $this->um->getById($userId);
+        $this->validator->validateGroupId($id);
+        $this->validator->validateUserId($userId);
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(g:Group)')

@@ -46,10 +46,10 @@ class UserSubscriber implements EventSubscriberInterface
 
     public function onGroupAdded(GroupEvent $groupEvent)
     {
-        $user = $groupEvent->getUser();
+        $userId = $groupEvent->getUserId();
         $group = $groupEvent->getGroup();
 
-        $this->threadManager->create($user->getId(), $this->threadManager->getGroupThreadData($group, $user->getId()));
+        $this->threadManager->create($userId, $this->threadManager->getGroupThreadData($group, $userId));
     }
 
     public function onProfileCreated(ProfileEvent $profileEvent)

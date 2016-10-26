@@ -283,7 +283,7 @@ class ProcessorService implements LoggerAwareInterface
 
         try {
             $linkCreated = $this->linkModel->addOrUpdateLink($link->toArray());
-            $this->rateModel->userRateLink($userId, $linkCreated['id'], $preprocessedLink->getSource(), RateModel::LIKE, false);
+            $this->rateModel->userRateLink($userId, $linkCreated['id'], $preprocessedLink->getSource(), null, RateModel::LIKE, false);
         } catch (Neo4jException $e) {
             //dispatch log
             $this->logger->error(sprintf('Query: %s' . "\n" . 'Data: %s', $e->getQuery(), print_r($e->getData(), true)));

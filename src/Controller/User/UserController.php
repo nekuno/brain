@@ -441,7 +441,7 @@ class UserController
         try {
             /* @var RateModel $model */
             $model = $app['users.rate.model'];
-            $result = $model->userRateLink($user->getId(), $data['id'], $rate);
+            $result = $model->userRateLink($user->getId(), $data['id'], 'nekuno', null, $rate);
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;
