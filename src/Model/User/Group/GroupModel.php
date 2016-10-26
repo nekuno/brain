@@ -127,7 +127,7 @@ class GroupModel
         /* @var $row Row */
         $row = $result->current();
 
-        return $this->build($row)->jsonSerialize();
+        return $this->build($row);
     }
 
     public function getAllByEnterpriseUserId($enterpriseUserId)
@@ -623,33 +623,33 @@ class GroupModel
         $group->setDate($groupNode->getProperty('date'));
         $group->setUsersCount($usersCount);
 
-        $additionalLabels = $this->getAdditionalGroupLabels($groupNode);
-        if (in_array('GroupFollowers', $additionalLabels)) {
-            $user = $this->um->getByCreatedGroup($groupNode->getId());
-            $group->setCreatedBy(
-                array(
-                    'username' => $user->getUsername(),
-                    'id' => $user->getId(),
-                )
-            );
-        }
+//        $additionalLabels = $this->getAdditionalGroupLabels($groupNode);
+//        if (in_array('GroupFollowers', $additionalLabels)) {
+//            $user = $this->um->getByCreatedGroup($groupNode->getId());
+//            $group->setCreatedBy(
+//                array(
+//                    'username' => $user->getUsername(),
+//                    'id' => $user->getId(),
+//                )
+//            );
+//        }
 
         return $group;
     }
 
-    private function getAdditionalGroupLabels(Node $groupNode)
-    {
-        $additionalLabels = array();
-        $labels = $groupNode->getLabels();
-        /* @var $label Label */
-        foreach ($labels as $label) {
-            if ($label->getName() !== 'Group') {
-                $additionalLabels[] = $label->getName();
-            }
-        }
-
-        return $additionalLabels;
-    }
+//    private function getAdditionalGroupLabels(Node $groupNode)
+//    {
+//        $additionalLabels = array();
+//        $labels = $groupNode->getLabels();
+//        /* @var $label Label */
+//        foreach ($labels as $label) {
+//            if ($label->getName() !== 'Group') {
+//                $additionalLabels[] = $label->getName();
+//            }
+//        }
+//
+//        return $additionalLabels;
+//    }
 
     private function buildLocation(Node $locationNode = null)
     {
