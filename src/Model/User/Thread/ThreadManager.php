@@ -535,7 +535,7 @@ class ThreadManager
         $labels = $rs->current()->offsetGet('labels');
         /** @var Label $label */
         foreach ($labels as $label) {
-            if ($label != ThreadManager::LABEL_THREAD) {
+            if ($label != ThreadManager::LABEL_THREAD && $label != 'ThreadDefault') {
                 return $label;
             }
         }
