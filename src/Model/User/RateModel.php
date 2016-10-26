@@ -19,7 +19,9 @@ class RateModel
 {
 
     const LIKE = 'LIKES';
+    const UNLIKE = 'UNLIKES';
     const DISLIKE = 'DISLIKES';
+    const UNDISLIKE = 'UNDISLIKES';
     const IGNORE = 'IGNORE';
 
     /**
@@ -65,11 +67,17 @@ class RateModel
         $this->validate($rate);
 
         switch ($rate) {
-            case $this::LIKE :
+            case $this::LIKE:
                 $result = $this->userLikeLink($userId, $linkId, $resource, $timestamp);
                 break;
-            case $this::DISLIKE :
+            case $this::UNLIKE:
+                $result = $this->userUnlikeLink($userId, $linkId);
+                break;
+            case $this::DISLIKE:
                 $result = $this->userDislikeLink($userId, $linkId, $timestamp);
+                break;
+            case $this::UNDISLIKE:
+                $result = $this->userUnlikeLink($userId, $linkId);
                 break;
             default:
                 return array();
@@ -134,7 +142,7 @@ class RateModel
         $qb = $this->gm->createQueryBuilder();
         $qb->match("(u:User)-[r:$rate]->(l:Link)")
             ->where('id(r)={likeId}')
-            ->set('r.nekuno = timestamp()', 'r.last_liked = timestamp()')
+            ->set('r.nekuno = timestamp()', 'r.updateAt = timestamp()')
             ->returns('r','l.url');
         $qb->setParameters(array(
             'likeId' => (integer)$likeId
@@ -174,8 +182,8 @@ class RateModel
             ->merge('(u)-[r:LIKES]->(l)')
             ->set('r.' . $resource . '= COALESCE({ timestamp }, timestamp())')
             //max(x,y)=(x+y+abs(x-y))/2
-            ->set('r.last_liked=( COALESCE(r.last_liked, 0) + COALESCE({ timestamp }, timestamp())
-                                    + ABS(COALESCE(r.last_liked, 0) -  COALESCE({ timestamp }, timestamp()))
+            ->set('r.updateAt=( COALESCE(r.updateAt, 0) + COALESCE({ timestamp }, timestamp())
+                                    + ABS(COALESCE(r.updateAt, 0) -  COALESCE({ timestamp }, timestamp()))
                                     )/2 ');
 
         $qb->with('u, r, l')
@@ -192,7 +200,6 @@ class RateModel
         }
 
         return $return;
-
     }
 
     private function userDislikeLink($userId, $linkId, $timestamp = null)
@@ -210,11 +217,41 @@ class RateModel
         $qb->match('(u:User)', '(l:Link)')
             ->where('u.qnoow_id = { userId }', 'id(l) = { linkId }')
             ->merge('(u)-[r:DISLIKES]->(l)')
-            ->set('r.disliked={timestamp}');
+            ->set('r.updatedAt={timestamp}');
 
         $qb->with('u, r, l')
             ->optionalMatch('(u)-[a:AFFINITY|LIKES]-(l)')
             ->delete('a');
+
+        $qb->returns('r');
+
+        $result = $qb->getQuery()->getResultSet();
+
+        $return = array();
+        foreach ($result as $row) {
+            $return[] = $this->buildDislike($row);
+        }
+
+        return $return;
+    }
+
+    private function userUnlikeLink($userId, $linkId)
+    {
+        if (empty($userId) || empty($linkId)) return array('empty thing' => 'true'); //TODO: Fix this return
+
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->setParameters(array(
+            'userId' => (integer)$userId,
+            'linkId' => (integer)$linkId,
+        ));
+
+        $qb->match('(u:User)-[r:LIKES|DISLIKES]-(l:Link)')
+            ->where('u.qnoow_id = { userId }', 'id(l) = { linkId }');
+
+        $qb->with('u, r, l')
+            ->optionalMatch('(u)-[a:AFFINITY]-(l)')
+            ->delete('r, a');
 
         $qb->returns('r');
 
@@ -241,8 +278,7 @@ class RateModel
         $resources = array();
         $resourceOwners = array_merge(array('nekuno'), TokensModel::getResourceOwners());
         foreach ($resourceOwners as $resourceOwner){
-            if ($relationship->getProperty($resourceOwner))
-            {
+            if ($relationship->getProperty($resourceOwner)) {
                 $resources[$resourceOwner] = $relationship->getProperty($resourceOwner);
             }
         }
@@ -251,7 +287,7 @@ class RateModel
         return array(
             'id' => $relationship->getId(),
             'resources' => $resources,
-            'timestamp' => $relationship->getProperty('last_liked'),
+            'timestamp' => $relationship->getProperty('updateAt'),
             'linkUrl' => $row->offsetGet('linkUrl'),
         );
     }
@@ -268,7 +304,7 @@ class RateModel
 
         return array(
             'id' => $relationship->getId(),
-            'timestamp' => $relationship->getProperty('timestamp'),
+            'timestamp' => $relationship->getProperty('updatedAt'),
         );
     }
 
@@ -279,7 +315,7 @@ class RateModel
     private function validate($rate)
     {
         $errors = array();
-        if ($rate !== self::LIKE && $rate != self::DISLIKE && $rate != self::IGNORE) {
+        if ($rate !== self::LIKE && $rate !== self::UNLIKE && $rate != self::DISLIKE && $rate !== self::UNDISLIKE && $rate != self::IGNORE) {
             $errors['rate'] = array(sprintf('%s is not a valid rate', $rate));
         }
 
