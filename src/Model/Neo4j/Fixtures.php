@@ -232,10 +232,10 @@ class Fixtures
                     )
                 )
             );
-            $this->gpm->setCreatedByEnterpriseUser($group['id'], $i);
+            $this->gpm->setCreatedByEnterpriseUser($group->getId(), $i);
 
             $invitationData = array(
-                'groupId' => $group['id'],
+                'groupId' => $group->getId(),
                 'orientationRequired' => false,
                 'available' => 100,
             );
@@ -247,7 +247,7 @@ class Fixtures
                     break;
                 }
                 $this->im->consume($invitation['invitation']['token'], $user->getId());
-                $this->gpm->addUser($group['id'], $user->getId());
+                $this->gpm->addUser($group->getId(), $user->getId());
             }
         }
 

@@ -33,17 +33,17 @@ class GroupController
 
         $data['createdBy'] = $user->getId();
         $createdGroup = $app['users.groups.model']->create($data);
-        $app['users.groups.model']->addUser($createdGroup['id'], $user->getId());
+        $app['users.groups.model']->addUser($createdGroup->getId(), $user->getId());
 
-        $data['groupId'] = $createdGroup['id'];
+        $data['groupId'] = $createdGroup->getId();
         $invitationData = array(
             'userId' => $user->getId(),
-            'groupId' => $createdGroup['id'],
+            'groupId' => $createdGroup->getId(),
             'available' => 999999999
         );
         $createdInvitation = $app['users.invitations.model']->create($invitationData);
 
-        $createdGroup['invitation'] = $createdInvitation;
+        $createdGroup->setInvitation($createdInvitation);
         return $app->json($createdGroup, 201);
     }
 

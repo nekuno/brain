@@ -1,16 +1,9 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: yawmoght
- * Date: 22/10/15
- * Time: 14:44
- */
 
 namespace Model\User;
 
 
 use Doctrine\ORM\EntityManager;
-use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Neo4j\GraphManager;
 use Model\User\Group\GroupModel;

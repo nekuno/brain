@@ -12,6 +12,7 @@ use Model\Neo4j\GraphManager;
 use Model\Neo4j\Neo4jException;
 use Model\User;
 use Model\User\GhostUser\GhostUserManager;
+use Model\User\Group\Group;
 use Model\User\LookUpModel;
 use Model\User\SocialNetwork\SocialProfile;
 use Model\User\TokensModel;
@@ -804,15 +805,9 @@ class UserManager implements PaginatedInterface
         /* @var $row Row */
         $row = $result->current();
 
-        //TODO: Change $groups array to Group[]
         $groups = array();
-        foreach ($row->offsetGet('groupsBelonged') as $group) {
-            /* @var $group Node */
-            $groups[] = array(
-                'id' => $group->getId(),
-                'name' => $group->getProperty('name'),
-                'html' => $group->getProperty('html'),
-            );
+        foreach ($row->offsetGet('groupsBelonged') as $groupNode) {
+            $groups[] = Group::createFromNode($groupNode);
         }
 
         $resourceOwners = array();

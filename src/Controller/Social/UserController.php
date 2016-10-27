@@ -86,7 +86,7 @@ class UserController
     /**
      * @param Request $request
      * @param Application $app
-     * @param User $user
+     * @param $id
      * @return JsonResponse
      */
     public function getAllFiltersAction(Request $request, Application $app, $id)
@@ -113,7 +113,7 @@ class UserController
 
         $userFilters['groups']['choices'] = array();
         foreach ($groups as $group) {
-            $userFilters['groups']['choices'][$group['id']] = $group['name'];
+            $userFilters['groups']['choices'][$group->getId()] = $group->getName();
         }
 
         if ($groups = null || $groups == array()) {
