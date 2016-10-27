@@ -135,6 +135,38 @@ class LinkModel
         return $links;
     }
 
+    public function findPopularLinksByGroup($groupId, $limit = 5)
+    {
+        //TODO: $this->validator->validateGroupId($groupId);
+
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(g:Group)')
+            ->where('id(g) = {groupId}')
+            ->with('g');
+        $qb->setParameter('groupId', $groupId);
+
+        $qb->match('(g)-[:BELONGS_TO]-(:User)-[r:LIKES]-(l:Link)')
+            ->returns('l', 'count(r) AS likes')
+            ->orderBy('likes DESC')
+            ->limit('{limit}')
+            ->setParameter('limit', (int)$limit);
+
+        $result = $qb->getQuery()->getResultSet();
+
+        $links = array();
+        /** @var Row $row */
+        foreach ($result as $row) {
+            $links[] = array(
+                'link' => $this->buildLink($row->offsetGet('l')),
+                'likes' => $row->offsetGet('likes'),
+            );
+        }
+
+        return $links;
+
+    }
+
     /**
      * @param array $conditions
      * @param int $offset

@@ -24,6 +24,9 @@ class GroupController
     {
         $group = $app['users.groups.model']->getById($id);
 
+        $links = $app['links.model']->findPopularLinksByGroup($group->getId());
+        $group->setPopularContents($links);
+
         return $app->json($group);
     }
 
