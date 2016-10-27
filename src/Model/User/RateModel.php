@@ -19,10 +19,9 @@ class RateModel
 {
 
     const LIKE = 'LIKES';
-    const UNLIKE = 'UNLIKES';
     const DISLIKE = 'DISLIKES';
-    const UNDISLIKE = 'UNDISLIKES';
-    const IGNORE = 'IGNORE';
+    const UNRATE = 'UNRATES';
+    const IGNORE = 'IGNORES';
 
     /**
      * @var EventDispatcher
@@ -67,17 +66,17 @@ class RateModel
         $this->validate($rate);
 
         switch ($rate) {
-            case $this::LIKE:
+            case self::LIKE:
                 $result = $this->userLikeLink($userId, $linkId, $resource, $timestamp);
                 break;
-            case $this::UNLIKE:
-                $result = $this->userUnlikeLink($userId, $linkId);
-                break;
-            case $this::DISLIKE:
+            case self::DISLIKE:
                 $result = $this->userDislikeLink($userId, $linkId, $timestamp);
                 break;
-            case $this::UNDISLIKE:
-                $result = $this->userUnlikeLink($userId, $linkId);
+            case self::UNRATE:
+                $result = $this->userUnRateLink($userId, $linkId);
+                break;
+            case self::IGNORE:
+                $result = $this->userIgnoreLink($userId, $linkId, $timestamp);
                 break;
             default:
                 return array();
@@ -105,7 +104,7 @@ class RateModel
 
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match('(u:User{qnoow_id: {userId} })')
+        $qb->match('(u:User {qnoow_id: { userId }})')
             ->match("(u)-[r:$rate]->(l:Link)")
             ->returns('r', 'l.url as linkUrl')
             ->limit('{limit}');
@@ -123,7 +122,7 @@ class RateModel
             if ($rate == $this::LIKE){
                 $rates[] = $this->buildLike($row);
             } else if ($rate == $this::DISLIKE){
-                $rates[] = $this->buildDislike($row);
+                $rates[] = $this->buildUnLike($row);
             }
         }
 
@@ -138,12 +137,12 @@ class RateModel
      */
     public function completeLikeById($likeId){
 
-        $rate = $this::LIKE;
+        $rate = self::LIKE;
         $qb = $this->gm->createQueryBuilder();
         $qb->match("(u:User)-[r:$rate]->(l:Link)")
             ->where('id(r)={likeId}')
             ->set('r.nekuno = timestamp()', 'r.updateAt = timestamp()')
-            ->returns('r','l.url');
+            ->returns('r', 'l.url AS linkUrl');
         $qb->setParameters(array(
             'likeId' => (integer)$likeId
         ));
@@ -177,9 +176,9 @@ class RateModel
             'timestamp' => $timestamp,
         ));
 
-        $qb->match('(u:User)', '(l:Link)')
-            ->where('u.qnoow_id = { userId }', 'id(l) = { linkId }')
-            ->merge('(u)-[r:LIKES]->(l)')
+        $qb->match('(u:User {qnoow_id: { userId }})', '(l:Link)')
+            ->where('id(l) = { linkId }')
+            ->merge('(u)-[r:' . self::LIKE . ']->(l)')
             ->set('r.' . $resource . '= COALESCE({ timestamp }, timestamp())')
             //max(x,y)=(x+y+abs(x-y))/2
             ->set('r.updateAt=( COALESCE(r.updateAt, 0) + COALESCE({ timestamp }, timestamp())
@@ -187,7 +186,7 @@ class RateModel
                                     )/2 ');
 
         $qb->with('u, r, l')
-            ->optionalMatch('(u)-[a:AFFINITY|DISLIKES]-(l)')
+            ->optionalMatch('(u)-[a:AFFINITY|' . self::DISLIKE . '|' . self::IGNORE . ']-(l)')
             ->delete('a');
 
         $qb->returns('r', 'l.url as linkUrl');
@@ -214,13 +213,13 @@ class RateModel
             'timestamp' => $timestamp,
         ));
 
-        $qb->match('(u:User)', '(l:Link)')
-            ->where('u.qnoow_id = { userId }', 'id(l) = { linkId }')
-            ->merge('(u)-[r:DISLIKES]->(l)')
+        $qb->match('(u:User {qnoow_id: { userId }})', '(l:Link)')
+            ->where('id(l) = { linkId }')
+            ->merge('(u)-[r:' . self::DISLIKE . ']->(l)')
             ->set('r.updatedAt={timestamp}');
 
         $qb->with('u, r, l')
-            ->optionalMatch('(u)-[a:AFFINITY|LIKES]-(l)')
+            ->optionalMatch('(u)-[a:AFFINITY|' . self::LIKE . '|' . self::IGNORE . ']-(l)')
             ->delete('a');
 
         $qb->returns('r');
@@ -229,13 +228,13 @@ class RateModel
 
         $return = array();
         foreach ($result as $row) {
-            $return[] = $this->buildDislike($row);
+            $return[] = $this->buildUnLike($row);
         }
 
         return $return;
     }
 
-    private function userUnlikeLink($userId, $linkId)
+    private function userUnRateLink($userId, $linkId)
     {
         if (empty($userId) || empty($linkId)) return array('empty thing' => 'true'); //TODO: Fix this return
 
@@ -246,22 +245,48 @@ class RateModel
             'linkId' => (integer)$linkId,
         ));
 
-        $qb->match('(u:User)-[r:LIKES|DISLIKES]-(l:Link)')
-            ->where('u.qnoow_id = { userId }', 'id(l) = { linkId }');
+        $qb->match('(u:User {qnoow_id: { userId }})-[r:' . self::LIKE . '|' . self::DISLIKE . ']-(l:Link)')
+            ->where('id(l) = { linkId }')
+            ->delete('r');
 
-        $qb->with('u, r, l')
+        $qb->with('u, l')
             ->optionalMatch('(u)-[a:AFFINITY]-(l)')
-            ->delete('r, a');
+            ->delete('a');
 
-        $qb->returns('r');
+        $qb->getQuery()->getResultSet();
 
-        $result = $qb->getQuery()->getResultSet();
+        return array();
+    }
+
+    private function userIgnoreLink($userId, $linkId, $timestamp = null)
+    {
+        if (empty($userId) || empty($linkId)) return array('empty thing' => 'true'); //TODO: Fix this return
 
         $return = array();
-        foreach ($result as $row) {
-            $return[] = $this->buildDislike($row);
-        }
+        if (!$this->likesOrDislikes($userId, $linkId)) {
+            $qb = $this->gm->createQueryBuilder();
 
+            $qb->setParameters(array(
+                'userId' => (integer)$userId,
+                'linkId' => (integer)$linkId,
+                'timestamp' => $timestamp,
+            ));
+
+            $qb->match('(u:User {qnoow_id: { userId }})', '(l:Link)')
+                ->where('id(l) = { linkId }')
+                ->merge('(u)-[r:' . self::IGNORE . ']->(l)')
+                ->set('r.updateAt=( COALESCE(r.updateAt, 0) + COALESCE({ timestamp }, timestamp())
+                                    + ABS(COALESCE(r.updateAt, 0) -  COALESCE({ timestamp }, timestamp()))
+                                    )/2 ');
+
+            $qb->returns('r', 'l.url as linkUrl');
+
+            $result = $qb->getQuery()->getResultSet();
+
+            foreach ($result as $row) {
+                $return[] = $this->buildUnLike($row);
+            }
+        }
         return $return;
     }
 
@@ -283,7 +308,6 @@ class RateModel
             }
         }
 
-
         return array(
             'id' => $relationship->getId(),
             'resources' => $resources,
@@ -297,7 +321,7 @@ class RateModel
      * @param Row $row with r as Dislike relationship
      * @return array
      */
-    protected function buildDislike($row)
+    protected function buildUnLike($row)
     {
         /* @var $relationship Relationship */
         $relationship = $row->offsetGet('r');
@@ -315,13 +339,32 @@ class RateModel
     private function validate($rate)
     {
         $errors = array();
-        if ($rate !== self::LIKE && $rate !== self::UNLIKE && $rate != self::DISLIKE && $rate !== self::UNDISLIKE && $rate != self::IGNORE) {
+        if ($rate !== self::LIKE && $rate != self::DISLIKE && $rate !== self::UNRATE && $rate != self::IGNORE) {
             $errors['rate'] = array(sprintf('%s is not a valid rate', $rate));
         }
 
         if (count($errors) > 0) {
             throw new ValidationException($errors);
         }
+    }
+
+    private function likesOrDislikes($userId, $linkId)
+    {
+        $qb = $this->gm->createQueryBuilder()
+            ->match("(u:User {qnoow_id: { userId }})-[r:" . self::LIKE . '|' . self::DISLIKE . "]->(l:Link)")
+            ->where("id(l) = { linkId }")
+            ->setParameters(array(
+                'userId' => (integer)$userId,
+                'linkId' => (integer)$linkId,
+            ))
+            ->returns('COUNT(r) AS relCount');
+
+        $result = $qb->getQuery()->getResultSet();
+        /* @var $row Row */
+        $row = $result->current();
+        $count = $row->offsetGet('relCount');
+
+        return $count > 0;
     }
 
 }

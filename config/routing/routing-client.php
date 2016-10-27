@@ -51,6 +51,16 @@ $app->get('/likes/{to}', 'users.relations.controller:getAction')->value('relatio
 $app->post('/likes/{to}', 'users.relations.controller:postAction')->value('relation', RelationsModel::LIKES);
 $app->delete('/likes/{to}', 'users.relations.controller:deleteAction')->value('relation', RelationsModel::LIKES);
 
+$app->get('/dislikes', 'users.relations.controller:indexAction')->value('relation', RelationsModel::DISLIKES);
+$app->get('/dislikes/{to}', 'users.relations.controller:getAction')->value('relation', RelationsModel::DISLIKES);
+$app->post('/dislikes/{to}', 'users.relations.controller:postAction')->value('relation', RelationsModel::DISLIKES);
+$app->delete('/dislikes/{to}', 'users.relations.controller:deleteAction')->value('relation', RelationsModel::DISLIKES);
+
+$app->get('/ignores', 'users.relations.controller:indexAction')->value('relation', RelationsModel::IGNORES);
+$app->get('/ignores/{to}', 'users.relations.controller:getAction')->value('relation', RelationsModel::IGNORES);
+$app->post('/ignores/{to}', 'users.relations.controller:postAction')->value('relation', RelationsModel::IGNORES);
+$app->delete('/ignores/{to}', 'users.relations.controller:deleteAction')->value('relation', RelationsModel::IGNORES);
+
 $app->get('/reports', 'users.relations.controller:indexAction')->value('relation', RelationsModel::REPORTS);
 $app->get('/reports/{to}', 'users.relations.controller:getAction')->value('relation', RelationsModel::REPORTS);
 $app->post('/reports/{to}', 'users.relations.controller:postAction')->value('relation', RelationsModel::REPORTS);
