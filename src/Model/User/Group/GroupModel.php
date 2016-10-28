@@ -458,7 +458,15 @@ class GroupModel
         $query = $qb->getQuery();
         $result = $query->getResultSet();
 
-        return $result->count() > 0;
+        if ($result->count() > 0)
+        {
+            $group = $this->getById($id);
+            $this->dispatcher->dispatch(\AppEvents::GROUP_REMOVED, new GroupEvent($group, $userId));
+
+            return true;
+        }
+
+        return false;
     }
 
     public function isUserFromGroup($id, $userId)

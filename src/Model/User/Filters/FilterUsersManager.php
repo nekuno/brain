@@ -1,7 +1,4 @@
 <?php
-/**
- * @author yawmoght <yawmoght@gmail.com>
- */
 
 namespace Model\User\Filters;
 
@@ -178,7 +175,6 @@ class FilterUsersManager
         }
 
         return $result->current()->offsetGet('filterId');
-
     }
 
     protected function getFilterUsersIdByGroupId($id)
@@ -197,7 +193,27 @@ class FilterUsersManager
         }
 
         return $result->current()->offsetGet('filterId');
+    }
 
+    public function getByGroupAndUser($groupId, $userId)
+    {
+        $qb = $this->graphManager->createQueryBuilder();
+        $qb->match('(group:Group)')
+            ->where('id(group) = groupId}')
+            ->with('group')
+            ->setParameter('groupId', (int)$groupId);
+        $qb->match('(user:User{qnoow_id:{userId}})')
+            ->with('group', 'user')
+            ->setParameter('userId', (int)$userId);
+
+        $qb->match('(user)');
+        $result = $qb->getQuery()->getResultSet();
+
+        if ($result->count() == 0) {
+            return null;
+        }
+
+        return $result->current()->offsetGet('filterId');
     }
 
     private function saveProfileFilters($profileFilters, $id)
@@ -649,7 +665,6 @@ class FilterUsersManager
      */
     private function getUserFilters($id)
     {
-
         $qb = $this->graphManager->createQueryBuilder();
         $qb->match('(filter:FilterUsers)')
             ->where('id(filter) = {id}')
@@ -672,8 +687,8 @@ class FilterUsersManager
         $row = $result->current();
 
         $userFilters['groups'] = array();
-        foreach ($row->offsetGet('groups') as $group) {
-            $userFilters['groups'][] = $group;
+        foreach ($row->offsetGet('groups') as $groupNode) {
+            $userFilters['groups'][] = $groupNode;
         }
 
         if (empty($userFilters['groups'])) {
