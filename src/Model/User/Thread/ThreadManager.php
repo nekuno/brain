@@ -118,6 +118,24 @@ class ThreadManager
         return $threads;
     }
 
+    public function getByFilter($filterId)
+    {
+        $qb = $this->graphManager->createQueryBuilder();
+
+        $qb->match('(filter:Filter{filter:{filterId}})')
+            ->with('filter')
+            ->setParameter('filterId', (integer)$filterId);
+
+        $qb->match('(thread:Thread)-[:HAS_FILTER]->(filter)')
+            ->returns('thread');
+
+        $result = $qb->getQuery()->getResultSet();
+
+        $threadNode = $result->current()->offsetExists('thread') ? $result->offsetGet('thread') : null;
+
+        return $this->buildThread($threadNode);
+    }
+
     /**
      * Builds a complete Thread object from a neo4j node
      * @param Node $threadNode
@@ -480,6 +498,30 @@ class ThreadManager
         return $result->current()->offsetGet('amount');
     }
 
+    public function deleteGroupThreads($userId, $groupId)
+    {
+        $threads = $this->getByUser($userId);
+
+        foreach ($threads as $thread){
+
+            if (!$thread instanceof UsersThread){
+                continue;
+            }
+
+            $filter = $thread->getFilterUsers();
+            if (!$filter || !isset($filter->getUserFilters()['groups']) || !is_array($filter->getUserFilters()['groups'])) {
+                continue;
+            }
+
+            /** @var Node $groupNode */
+            foreach ($filter->getUserFilters()['groups'] as $groupNode)
+            {
+                if ($groupNode->getId() == $groupId){
+                    $this->deleteById($thread->getId());
+                }
+            }
+        }
+    }
 
     public function getGroupThreadData(Group $group, $userId)
     {
