@@ -195,21 +195,18 @@ class RelationsModel
     {
         $this->validate($relation);
         $relationsToDelete = $this->getRelationsToDelete($relation);
-
+        $relationsToDelete[] = $relation;
+        $relationsString = implode($relationsToDelete, '|');
         $return = $this->get($from, $to, $relation);
 
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match('(from:User {qnoow_id: { from }})-[r:' . $relation . ']-(to:User {qnoow_id: { to }})')
+        $qb->match('(from:User {qnoow_id: { from }})-[r:' . $relationsString . ']-(to:User {qnoow_id: { to }})')
             ->setParameter('from', (integer)$from)
             ->setParameter('to', (integer)$to)
             ->delete('r')
             ->with('from', 'to');
-        foreach ($relationsToDelete as $index => $relation) {
-            $qb->optionalMatch('(from)-[rToDel' . $index . ':' . $relation . ']->(to)')
-                ->delete('rToDel' . $index)
-                ->with('from', 'to');
-        }
+
         $qb->returns('from', 'to');
         $qb->getQuery()->getResultSet();
 
