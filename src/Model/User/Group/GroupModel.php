@@ -3,7 +3,6 @@
 namespace Model\User\Group;
 
 use Event\GroupEvent;
-use Everyman\Neo4j\Label;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Neo4j\GraphManager;
@@ -78,6 +77,10 @@ class GroupModel
         return $return;
     }
 
+    /**
+     * @param $userId
+     * @return Group[]
+     */
     public function getAllByUserId($userId)
     {
         $qb = $this->gm->createQueryBuilder();
@@ -97,7 +100,7 @@ class GroupModel
         $return = array();
 
         foreach ($result as $row) {
-            $return[] = $this->build($row)->jsonSerialize();
+            $return[] = $this->build($row);
         }
 
         return $return;
@@ -127,7 +130,7 @@ class GroupModel
         /* @var $row Row */
         $row = $result->current();
 
-        return $this->build($row)->jsonSerialize();
+        return $this->build($row);
     }
 
     public function getAllByEnterpriseUserId($enterpriseUserId)
@@ -147,7 +150,7 @@ class GroupModel
         $return = array();
 
         foreach ($result as $row) {
-            $return[] = $this->build($row)->jsonSerialize();
+            $return[] = $this->build($row);
         }
 
         return $return;
@@ -179,7 +182,7 @@ class GroupModel
         /* @var $row Row */
         $row = $result->current();
 
-        return $this->build($row)->jsonSerialize();
+        return $this->build($row);
     }
 
     public function create(array $data)
@@ -250,7 +253,7 @@ class GroupModel
 
         $this->updateFilterUsers($group, $data);
 
-        return $group->jsonSerialize();
+        return $group;
     }
 
     public function update($id, array $data)
@@ -295,14 +298,14 @@ class GroupModel
 
         $this->updateFilterUsers($group, $data);
 
-        return $group->jsonSerialize();
+        return $group;
     }
 
     private function updateFilterUsers(Group $group, array $data)
     {
         if (isset($data['followers'])) {
             $filterUsers = $this->filterUsersManager->updateFilterUsersByGroupId(
-                $group['id'],
+                $group->getId(),
                 array(
                     'userFilters' => array(
                         $data['type_matching'] => $data['min_matching']
@@ -356,10 +359,14 @@ class GroupModel
         /* @var $row Row */
         $row = $result->current();
 
-        return $this->build($row)->jsonSerialize();
+        return $this->build($row);
 
     }
 
+    /**
+     * @param $userId
+     * @return Group[]
+     */
     public function getByUser($userId)
     {
         $qb = $this->gm->createQueryBuilder();
@@ -378,7 +385,7 @@ class GroupModel
         $return = array();
 
         foreach ($result as $row) {
-            $return[] = $this->build($row)->jsonSerialize();
+            $return[] = $this->build($row);
         }
 
         return $return;
@@ -623,33 +630,33 @@ class GroupModel
         $group->setDate($groupNode->getProperty('date'));
         $group->setUsersCount($usersCount);
 
-        $additionalLabels = $this->getAdditionalGroupLabels($groupNode);
-        if (in_array('GroupFollowers', $additionalLabels)) {
-            $user = $this->um->getByCreatedGroup($groupNode->getId());
-            $group->setCreatedBy(
-                array(
-                    'username' => $user->getUsername(),
-                    'id' => $user->getId(),
-                )
-            );
-        }
+//        $additionalLabels = $this->getAdditionalGroupLabels($groupNode);
+//        if (in_array('GroupFollowers', $additionalLabels)) {
+//            $user = $this->um->getByCreatedGroup($groupNode->getId());
+//            $group->setCreatedBy(
+//                array(
+//                    'username' => $user->getUsername(),
+//                    'id' => $user->getId(),
+//                )
+//            );
+//        }
 
         return $group;
     }
 
-    private function getAdditionalGroupLabels(Node $groupNode)
-    {
-        $additionalLabels = array();
-        $labels = $groupNode->getLabels();
-        /* @var $label Label */
-        foreach ($labels as $label) {
-            if ($label->getName() !== 'Group') {
-                $additionalLabels[] = $label->getName();
-            }
-        }
-
-        return $additionalLabels;
-    }
+//    private function getAdditionalGroupLabels(Node $groupNode)
+//    {
+//        $additionalLabels = array();
+//        $labels = $groupNode->getLabels();
+//        /* @var $label Label */
+//        foreach ($labels as $label) {
+//            if ($label->getName() !== 'Group') {
+//                $additionalLabels[] = $label->getName();
+//            }
+//        }
+//
+//        return $additionalLabels;
+//    }
 
     private function buildLocation(Node $locationNode = null)
     {

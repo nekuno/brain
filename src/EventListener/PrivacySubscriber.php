@@ -106,7 +106,7 @@ class PrivacySubscriber implements EventSubscriberInterface
             if (isset($groupsFollowers[0])) {
                 $groupId = $groupsFollowers[0];
                 $group = $this->groupModel->update($groupId, $groupData);
-                $this->invitationModel->setAvailableInvitations($group['invitation_token'], InvitationModel::MAX_AVAILABLE);
+                $this->invitationModel->setAvailableInvitations($group->getInvitation()['invitation_token'], InvitationModel::MAX_AVAILABLE);
             } else {
                 $group = $this->groupModel->create($groupData);
                 $url = $influencer->getPhoto()->getUrl();
@@ -114,7 +114,7 @@ class PrivacySubscriber implements EventSubscriberInterface
                 $slogan = $this->translator->trans('followers.invitation_slogan', array('%username%' => $influencer->getUsername(), '%compatible_or_similar%' => $compatibleOrSimilar));
                 $invitationData = array(
                     'userId' => $event->getUserId(),
-                    'groupId' => $group['id'],
+                    'groupId' => $group->getId(),
                     'available' => InvitationModel::MAX_AVAILABLE,
                     'slogan' => $slogan,
                     'image_url' => $url,

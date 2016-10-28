@@ -222,7 +222,7 @@ abstract class AbstractContentPaginatedModel implements PaginatedInterface
      * @param null $offset
      * @return array
      */
-    public function buildResponseFromResult($result, $id = null, $offset = null)
+    public function buildResponseFromResult(ResultSet $result, $id = null, $offset = null)
     {
         $response = array('items' => array());
 

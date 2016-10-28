@@ -16,6 +16,7 @@ class Group implements \JsonSerializable
     protected $createdBy;
     protected $filterUsers;
     protected $invitation = array();
+    protected $popularContents = array();
 
     public static function createFromNode(Node $groupNode)
     {
@@ -176,6 +177,22 @@ class Group implements \JsonSerializable
         $this->invitation = $invitation;
     }
 
+    /**
+     * @return mixed
+     */
+    public function getPopularContents()
+    {
+        return $this->popularContents;
+    }
+
+    /**
+     * @param mixed $popularContents
+     */
+    public function setPopularContents($popularContents)
+    {
+        $this->popularContents = $popularContents;
+    }
+
     function jsonSerialize()
     {
         return array(
@@ -188,6 +205,7 @@ class Group implements \JsonSerializable
             'createdBy' => $this->getCreatedBy(),
             'filter' => $this->getFilterUsers(),
             'invitation' => $this->getInvitation(),
+            'popularContents' => $this->getPopularContents(),
         );
     }
 

@@ -8,6 +8,7 @@ use Everyman\Neo4j\Query\Row;
 use Model\Neo4j\GraphManager;
 use Manager\UserManager;
 use Model\User;
+use Model\User\Group\Group;
 use Model\User\Group\GroupModel;
 use Model\User\ProfileModel;
 use Service\Validator;
@@ -480,7 +481,7 @@ class ThreadManager
     }
 
 
-    public function getGroupThreadData($group, $userId)
+    public function getGroupThreadData(Group $group, $userId)
     {
         try {
             $profile = $this->profileModel->getById($userId);
@@ -491,11 +492,11 @@ class ThreadManager
         $locale = isset($profile['interfaceLanguage']) ? $profile['interfaceLanguage'] : 'es';
         $this->translator->setLocale($locale);
         return array(
-            'name' => str_replace('%group%', $group['name'], $this->translator->trans('threads.default.people_from_group')),
+            'name' => str_replace('%group%', $group->getName(), $this->translator->trans('threads.default.people_from_group')),
             'category' => ThreadManager::LABEL_THREAD_USERS,
             'filters' => array(
                 'userFilters' => array(
-                    'groups' => array($group['id']),
+                    'groups' => array($group->getId()),
                 )
             ),
             'default' => true,
@@ -535,7 +536,7 @@ class ThreadManager
         $labels = $rs->current()->offsetGet('labels');
         /** @var Label $label */
         foreach ($labels as $label) {
-            if ($label != ThreadManager::LABEL_THREAD) {
+            if ($label != ThreadManager::LABEL_THREAD && $label != 'ThreadDefault') {
                 return $label;
             }
         }
