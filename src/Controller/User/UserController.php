@@ -438,10 +438,12 @@ class UserController
             return $app->json(array('text' => 'Link Not Found', 'id' => $user->getId(), 'linkId' => $data['linkId']), 400);
         }
 
+        $originContext = isset($data['originContext']) ? $data['originContext'] : null;
+        $originName = isset($data['originName']) ? $data['originName'] : null;
         try {
             /* @var RateModel $model */
             $model = $app['users.rate.model'];
-            $result = $model->userRateLink($user->getId(), $data['id'], 'nekuno', null, $rate);
+            $result = $model->userRateLink($user->getId(), $data['id'], 'nekuno', null, $rate, true, $originContext, $originName);
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;

@@ -17,6 +17,8 @@ class RelationsModel
     const BLOCKS = 'BLOCKS';
     const FAVORITES = 'FAVORITES';
     const LIKES = 'LIKES';
+    const DISLIKES = 'DISLIKES';
+    const IGNORES = 'IGNORES';
     const REPORTS = 'REPORTS';
 
     /**
@@ -48,6 +50,8 @@ class RelationsModel
             self::BLOCKS,
             self::FAVORITES,
             self::LIKES,
+            self::DISLIKES,
+            self::IGNORES,
             self::REPORTS,
         );
     }
@@ -59,8 +63,7 @@ class RelationsModel
 
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match('(from:User)-[r:' . $relation . ']->(to:User)')
-            ->where('from.qnoow_id = { from }')
+        $qb->match('(from:User {qnoow_id: { from }})-[r:' . $relation . ']->(to:User)')
             ->setParameter('from', (integer)$from)
             ->returns('from', 'to', 'r');
 
@@ -82,8 +85,7 @@ class RelationsModel
 
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match('(from:User)-[r:' . $relation . ']->(to:User)')
-            ->where('from.qnoow_id = { from }', 'to.qnoow_id = { to }')
+        $qb->match('(from:User {qnoow_id: { from }})-[r:' . $relation . ']->(to:User {qnoow_id: { to }})')
             ->setParameter('from', (integer)$from)
             ->setParameter('to', (integer)$to)
             ->returns('from', 'to', 'r');
@@ -91,7 +93,8 @@ class RelationsModel
         $result = $qb->getQuery()->getResultSet();
 
         if ($result->count() === 0) {
-            throw new NotFoundHttpException(sprintf('There is no relation "%s" from user "%s" to "%s"', $relation, $from, $to));
+            //throw new NotFoundHttpException(sprintf('There is no relation "%s" from user "%s" to "%s"', $relation, $from, $to));
+            return array();
         }
 
         /* @var $row Row */
@@ -106,8 +109,7 @@ class RelationsModel
 
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match('(from:User)-[r:' . $relation . ']->(to:User)')
-            ->where('from.qnoow_id = { from }')
+        $qb->match('(from:User {qnoow_id: { from }})-[r:' . $relation . ']->(to:User)')
             ->setParameter('from', (integer)$from)
             ->returns('COUNT(r) as count');
 
@@ -125,8 +127,7 @@ class RelationsModel
 
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match('(from:User)-[r:' . $relation . ']->(to:User)')
-            ->where('to.qnoow_id = { to }')
+        $qb->match('(from:User)-[r:' . $relation . ']->(to:User {qnoow_id: { to }})')
             ->setParameter('to', (integer)$to)
             ->returns('COUNT(r) as count');
 
@@ -143,58 +144,70 @@ class RelationsModel
 
         $this->validate($relation);
 
-        $qb = $this->gm->createQueryBuilder();
+        if ($this->relationMustBeCreated($from, $to, $relation)) {
+            $relationsToDelete = $this->getRelationsToDelete($relation);
 
-        $qb->match('(from:User)', '(to:User)')
-            ->where('from.qnoow_id = { from }', 'to.qnoow_id = { to }')
-            ->setParameter('from', (integer)$from)
-            ->setParameter('to', (integer)$to)
-            ->merge('(from)-[r:' . $relation . ']->(to)');
+            $qb = $this->gm->createQueryBuilder();
 
-        if (isset($data['timestamp'])) {
-            $date = new \DateTime($data['timestamp']);
-            $timestamp = ($date->getTimestamp()) * 1000;
-            unset($data['timestamp']);
-            $qb->set('r.timestamp = { timestamp }')
-                ->setParameter('timestamp', $timestamp);
-        } else {
-            $qb->set('r.timestamp = timestamp()');
+            $qb->match('(from:User {qnoow_id: { from }})', '(to:User {qnoow_id: { to }})')
+                ->setParameter('from', (integer)$from)
+                ->setParameter('to', (integer)$to)
+                ->merge('(from)-[r:' . $relation . ']->(to)');
+
+            if (isset($data['timestamp'])) {
+                $date = new \DateTime($data['timestamp']);
+                $timestamp = ($date->getTimestamp()) * 1000;
+                unset($data['timestamp']);
+                $qb->set('r.timestamp = { timestamp }')
+                    ->setParameter('timestamp', $timestamp);
+            } else {
+                $qb->set('r.timestamp = timestamp()');
+            }
+
+            foreach ($data as $key => $value) {
+                $qb->set("r.$key = { $key }")
+                    ->setParameter($key, $value);
+            }
+            $qb->with('from', 'to', 'r');
+            foreach ($relationsToDelete as $index => $relation) {
+                $qb->optionalMatch('(from)-[rToDel' . $index . ':' . $relation . ']->(to)')
+                    ->delete('rToDel' . $index)
+                    ->with('from', 'to', 'r');
+            }
+            $qb->returns('from', 'to', 'r');
+
+            $result = $qb->getQuery()->getResultSet();
+
+            if ($result->count() === 0) {
+                throw new NotFoundHttpException(sprintf('Unable to create relation "%s" from user "%s" to "%s"', $relation, $from, $to));
+            }
+
+            /* @var $row Row */
+            $row = $result->current();
+
+            return $this->build($row);
         }
 
-        foreach ($data as $key => $value) {
-            $qb->set("r.$key = { $key }")
-                ->setParameter($key, $value);
-        }
-
-        $qb->returns('from', 'to', 'r');
-
-        $result = $qb->getQuery()->getResultSet();
-
-        if ($result->count() === 0) {
-            throw new NotFoundHttpException(sprintf('Unable to create relation "%s" from user "%s" to "%s"', $relation, $from, $to));
-        }
-
-        /* @var $row Row */
-        $row = $result->current();
-
-        return $this->build($row);
-
+        return array();
     }
 
     public function remove($from, $to, $relation)
     {
         $this->validate($relation);
-
+        $relationsToDelete = $this->getRelationsToDelete($relation);
+        $relationsToDelete[] = $relation;
+        $relationsString = implode($relationsToDelete, '|');
         $return = $this->get($from, $to, $relation);
 
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match('(from:User)-[r:' . $relation . ']-(to:User)')
-            ->where('from.qnoow_id = { from }', 'to.qnoow_id = { to }')
+        $qb->match('(from:User {qnoow_id: { from }})-[r:' . $relationsString . ']-(to:User {qnoow_id: { to }})')
             ->setParameter('from', (integer)$from)
             ->setParameter('to', (integer)$to)
-            ->delete('r');
+            ->delete('r')
+            ->with('from', 'to');
 
+        $qb->returns('from', 'to');
         $qb->getQuery()->getResultSet();
 
         return $return;
@@ -208,8 +221,8 @@ class RelationsModel
 
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match('(from:User)', '(to:User)')
-            ->where('from.qnoow_id = { id }', 'to.qnoow_id <> { id }')
+        $qb->match('(from:User {qnoow_id: { id }})', '(to:User)')
+            ->where('to.qnoow_id <> { id }')
             ->optionalMatch('(from)-[fav:FAVORITES]->(to)')
             ->setParameter('id', (integer)$id)
             ->with('from', 'to', 'fav')
@@ -238,8 +251,8 @@ class RelationsModel
 
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match('(from:User)', '(to:User)')
-            ->where('from.qnoow_id = { id }', 'to.qnoow_id <> { id }')
+        $qb->match('(from:User {qnoow_id: { id }})', '(to:User)')
+            ->where('to.qnoow_id <> { id }')
             ->optionalMatch('(from)<-[fav:FAVORITES]-(to)')
             ->setParameter('id', (integer)$id)
             ->with('from', 'to', 'fav')
@@ -266,8 +279,7 @@ class RelationsModel
 
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match('(from:User)-[r:' . RelationsModel::BLOCKS . ']-(to:User)')
-            ->where('from.qnoow_id = { from }', 'to.qnoow_id = { to }')
+        $qb->match('(from:User {qnoow_id: { from }})-[r:' . RelationsModel::BLOCKS . ']-(to:User {qnoow_id: { to }})')
             ->setParameter('from', (integer)$from)
             ->setParameter('to', (integer)$to)
             ->returns('from', 'to', 'r');
@@ -333,4 +345,28 @@ class RelationsModel
         }
     }
 
+    private function relationMustBeCreated($from, $to, $relation)
+    {
+        if ($relation === self::IGNORES) {
+            $likes = $this->get($from, $to, self::LIKES);
+            $dislikes = $this->get($from, $to, self::DISLIKES);
+            if (count($likes) + count($dislikes) > 0) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function getRelationsToDelete($relation)
+    {
+        switch ($relation) {
+            case self::LIKES:
+                return array(self::DISLIKES, self::IGNORES);
+            case self::DISLIKES:
+                return array(self::LIKES, self::IGNORES);
+        }
+
+        return array();
+    }
 }
