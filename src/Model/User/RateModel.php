@@ -58,25 +58,27 @@ class RateModel
      * @param $timestamp
      * @param string $rate
      * @param bool $fireEvent
+     * @param string $originContext
+     * @param string $originName
      * @return array
      * //TODO: Refactor to accept Rate object
      */
-    public function userRateLink($userId, $linkId, $resource = 'nekuno', $timestamp = null, $rate = self::LIKE, $fireEvent = true)
+    public function userRateLink($userId, $linkId, $resource = 'nekuno', $timestamp = null, $rate = self::LIKE, $fireEvent = true, $originContext = null, $originName = null)
     {
         $this->validate($rate);
 
         switch ($rate) {
             case self::LIKE:
-                $result = $this->userLikeLink($userId, $linkId, $resource, $timestamp);
+                $result = $this->userLikeLink($userId, $linkId, $resource, $timestamp, $originContext, $originName);
                 break;
             case self::DISLIKE:
-                $result = $this->userDislikeLink($userId, $linkId, $timestamp);
+                $result = $this->userDislikeLink($userId, $linkId, $timestamp, $originContext, $originName);
                 break;
             case self::UNRATE:
                 $result = $this->userUnRateLink($userId, $linkId);
                 break;
             case self::IGNORE:
-                $result = $this->userIgnoreLink($userId, $linkId, $timestamp);
+                $result = $this->userIgnoreLink($userId, $linkId, $timestamp, $originContext, $originName);
                 break;
             default:
                 return array();
@@ -88,8 +90,6 @@ class RateModel
 
         return $result;
     }
-
-    //TODO: Add $this->unrate for delete-like actions
 
     /**
      * @param $userId
@@ -119,11 +119,7 @@ class RateModel
         $rates = array();
         foreach ($rs as $row)
         {
-            if ($rate == $this::LIKE){
-                $rates[] = $this->buildLike($row);
-            } else if ($rate == $this::DISLIKE){
-                $rates[] = $this->buildUnLike($row);
-            }
+            $rates[] = $this->buildLike($row);
         }
 
         return $rates;
@@ -161,9 +157,11 @@ class RateModel
      * @param $linkId
      * @param string $resource
      * @param null $timestamp
+     * @param null $originContext
+     * @param null $originName
      * @return array
      */
-    protected function userLikeLink($userId, $linkId, $resource = 'nekuno', $timestamp = null)
+    protected function userLikeLink($userId, $linkId, $resource = 'nekuno', $timestamp, $originContext, $originName)
     {
 
         if (empty($userId) || empty($linkId)) return array('empty thing' => 'true'); //TODO: Fix this return
@@ -174,6 +172,8 @@ class RateModel
             'userId' => (integer)$userId,
             'linkId' => (integer)$linkId,
             'timestamp' => $timestamp,
+            'originContext' => $originContext,
+            'originName' => $originName,
         ));
 
         $qb->match('(u:User {qnoow_id: { userId }})', '(l:Link)')
@@ -181,9 +181,13 @@ class RateModel
             ->merge('(u)-[r:' . self::LIKE . ']->(l)')
             ->set('r.' . $resource . '= COALESCE({ timestamp }, timestamp())')
             //max(x,y)=(x+y+abs(x-y))/2
-            ->set('r.updateAt=( COALESCE(r.updateAt, 0) + COALESCE({ timestamp }, timestamp())
+            ->set('r.updateAt = ( COALESCE(r.updateAt, 0) + COALESCE({ timestamp }, timestamp())
                                     + ABS(COALESCE(r.updateAt, 0) -  COALESCE({ timestamp }, timestamp()))
                                     )/2 ');
+        if ($originContext) {
+            $qb->set('r.originContext = { originContext }')
+                ->set('r.originName = { originName }');
+        }
 
         $qb->with('u, r, l')
             ->optionalMatch('(u)-[a:AFFINITY|' . self::DISLIKE . '|' . self::IGNORE . ']-(l)')
@@ -201,7 +205,7 @@ class RateModel
         return $return;
     }
 
-    private function userDislikeLink($userId, $linkId, $timestamp = null)
+    private function userDislikeLink($userId, $linkId, $timestamp, $originContext, $originName)
     {
         if (empty($userId) || empty($linkId)) return array('empty thing' => 'true'); //TODO: Fix this return
 
@@ -211,6 +215,8 @@ class RateModel
             'userId' => (integer)$userId,
             'linkId' => (integer)$linkId,
             'timestamp' => $timestamp,
+            'originContext' => $originContext,
+            'originName' => $originName,
         ));
 
         $qb->match('(u:User {qnoow_id: { userId }})', '(l:Link)')
@@ -218,17 +224,22 @@ class RateModel
             ->merge('(u)-[r:' . self::DISLIKE . ']->(l)')
             ->set('r.updatedAt={timestamp}');
 
+        if ($originContext) {
+            $qb->set('r.originContext = { originContext }')
+                ->set('r.originName = { originName }');
+        }
+
         $qb->with('u, r, l')
             ->optionalMatch('(u)-[a:AFFINITY|' . self::LIKE . '|' . self::IGNORE . ']-(l)')
             ->delete('a');
 
-        $qb->returns('r');
+        $qb->returns('r', 'l.url as linkUrl');
 
         $result = $qb->getQuery()->getResultSet();
 
         $return = array();
         foreach ($result as $row) {
-            $return[] = $this->buildUnLike($row);
+            $return[] = $this->buildLike($row);
         }
 
         return $return;
@@ -258,7 +269,7 @@ class RateModel
         return array();
     }
 
-    private function userIgnoreLink($userId, $linkId, $timestamp = null)
+    private function userIgnoreLink($userId, $linkId, $timestamp, $originContext, $originName)
     {
         if (empty($userId) || empty($linkId)) return array('empty thing' => 'true'); //TODO: Fix this return
 
@@ -270,6 +281,8 @@ class RateModel
                 'userId' => (integer)$userId,
                 'linkId' => (integer)$linkId,
                 'timestamp' => $timestamp,
+                'originContext' => $originContext,
+                'originName' => $originName,
             ));
 
             $qb->match('(u:User {qnoow_id: { userId }})', '(l:Link)')
@@ -279,12 +292,17 @@ class RateModel
                                     + ABS(COALESCE(r.updateAt, 0) -  COALESCE({ timestamp }, timestamp()))
                                     )/2 ');
 
+            if ($originContext) {
+                $qb->set('r.originContext = { originContext }')
+                    ->set('r.originName = { originName }');
+            }
+
             $qb->returns('r', 'l.url as linkUrl');
 
             $result = $qb->getQuery()->getResultSet();
 
             foreach ($result as $row) {
-                $return[] = $this->buildUnLike($row);
+                $return[] = $this->buildLike($row);
             }
         }
         return $return;
@@ -313,22 +331,8 @@ class RateModel
             'resources' => $resources,
             'timestamp' => $relationship->getProperty('updateAt'),
             'linkUrl' => $row->offsetGet('linkUrl'),
-        );
-    }
-
-    /**
-     * Intended to mimic a Dislike object
-     * @param Row $row with r as Dislike relationship
-     * @return array
-     */
-    protected function buildUnLike($row)
-    {
-        /* @var $relationship Relationship */
-        $relationship = $row->offsetGet('r');
-
-        return array(
-            'id' => $relationship->getId(),
-            'timestamp' => $relationship->getProperty('updatedAt'),
+            'originContext' => $relationship->getProperty('originContext'),
+            'originName' => $relationship->getProperty('originName'),
         );
     }
 
