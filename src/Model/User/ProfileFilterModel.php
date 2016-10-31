@@ -223,7 +223,7 @@ class ProfileFilterModel extends FilterModel
         $return = array();
         if ($min){
             $now = new \DateTime();
-            $maxBirthday = $now->modify('-'.$min.' years')->format('Y-m-d');
+            $maxBirthday = $now->modify('-'.($min-1).' years')->format('Y-m-d');
             $return ['max'] = $maxBirthday;
         }
         if ($max){
