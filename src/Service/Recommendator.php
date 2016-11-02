@@ -160,6 +160,10 @@ class Recommendator
                     $filters['foreign'] = urldecode($request->get('foreign'));
                 }
 
+                if ($request->get('ignored')) {
+                    $filters['ignored'] = urldecode($request->get('ignored'));
+                }
+
                 if ($user->isGuest())
                 {
                     return $this->getPopularContentRecommendation($filters, $request);
@@ -239,6 +243,7 @@ class Recommendator
         $tag = $request->get('tag', array());
         $type = $request->get('type', array());
         $foreign = $request->get('foreign', null);
+        $ignored = $request->get('ignored', null);
 
         $filters = array('id' => $id);
 
@@ -252,6 +257,10 @@ class Recommendator
 
         if ($foreign) {
             $filters['foreign'] = urldecode($foreign);
+        }
+
+        if ($ignored) {
+            $filters['ignored'] = urldecode($ignored);
         }
 
         return $this->getContentRecommendation($filters, $request);

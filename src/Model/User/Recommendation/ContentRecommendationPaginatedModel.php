@@ -71,7 +71,7 @@ class ContentRecommendationPaginatedModel extends AbstractContentPaginatedModel
         $qb = $this->gm->createQueryBuilder();
 
         $qb->match('(user:User {qnoow_id: { userId }})-[affinity:AFFINITY]->(content:Link)')
-            ->where('NOT (user)-[:LIKES|:DISLIKES]->(content) AND affinity.affinity > 0 AND content.processed = 1');
+            ->where('NOT (user)-[:LIKES|:DISLIKES|:IGNORES]->(content) AND affinity.affinity > 0 AND content.processed = 1');
         $qb->filterContentByType($types, 'content', array('affinity'));
 
         if (isset($filters['tag'])) {
@@ -124,6 +124,18 @@ class ContentRecommendationPaginatedModel extends AbstractContentPaginatedModel
             $return['items'] = array_merge($return['items'], $foreignResult['items']);
             $return['newForeign'] = $foreignResult['foreign'];
         }
+
+        $needContent = $this->needMoreContent($limit, $return);
+        if ($needContent) {
+            $ignored = 0;
+            if (isset($filters['ignored'])) {
+                $ignored = $filters['ignored'];
+            }
+
+            $ignoredResult = $this->getIgnoredContent($filters, $needContent, $ignored);
+            $return['items'] = array_merge($return['items'], $ignoredResult['items']);
+            $return['newIgnored'] = $ignoredResult['ignored'];
+        }
         //Works with ContentPaginator (accepts $result), not Paginator (accepts $result['items'])
         return $return;
     }
@@ -145,6 +157,27 @@ class ContentRecommendationPaginatedModel extends AbstractContentPaginatedModel
         
         $return = array('items' => array_slice($items, 0, $limit) );
         $return['foreign'] = $foreign + count($return['items']);
+
+        return $return;
+    }
+
+    /**
+     * @param $filters
+     * @param $limit
+     * @param $ignored
+     * @return array (items, ignored = # of links database searched, -1 if total)
+     * @throws \Exception
+     * @throws \Model\Neo4j\Neo4jException
+     */
+    public function getIgnoredContent($filters, $limit, $ignored)
+    {
+        $id = $filters['id'];
+        $condition = "MATCH (u:User{qnoow_id:$id})-[:IGNORES]-(content)";
+
+        $items = $this->getContentsByPopularity($filters, $limit, $ignored, $condition);
+
+        $return = array('items' => array_slice($items, 0, $limit) );
+        $return['ignored'] = $ignored + count($return['items']);
 
         return $return;
     }

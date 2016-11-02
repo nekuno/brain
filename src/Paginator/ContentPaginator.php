@@ -57,8 +57,15 @@ class ContentPaginator extends Paginator
             }
         }
 
-        $prevLink = $this->createContentPrevLink($request, $offset, $limit, $newForeign, $foreignContent);
-        $nextLink = $this->createContentNextLink($request, $offset, $limit, $total, $newForeign, $foreignContent);
+        $ignored = 0;
+        if (isset($filters['ignored'])) {
+            $ignored = $filters['ignored'];
+        }
+
+        $newIgnored = isset($slice['newIgnored']) ? $slice['newIgnored'] : $ignored;
+
+        $prevLink = $this->createContentPrevLink($request, $offset, $limit, $newForeign, $foreignContent, $newIgnored);
+        $nextLink = $this->createContentNextLink($request, $offset, $limit, $total, $newForeign, $foreignContent, $newIgnored);
 
         $pagination = array();
         $pagination['total'] = $total;
@@ -80,13 +87,15 @@ class ContentPaginator extends Paginator
      * @param $limit
      * @param $foreign
      * @param $foreignContent
+     * @param $ignored
      * @return string
      */
-    protected function createContentPrevLink(Request $request, $offset, $limit, $foreign, $foreignContent)
+    protected function createContentPrevLink(Request $request, $offset, $limit, $foreign, $foreignContent, $ignored)
     {
         $parentPrev = parent::createPrevLink($request, $offset, $limit);
+        $prevLink = $this->addForeign($parentPrev, $foreign, false, $foreignContent);
 
-        return $this->addForeign($parentPrev, $foreign, false, $foreignContent);
+        return $this->addIgnored($prevLink, $ignored, false);
     }
 
     /**
@@ -96,14 +105,15 @@ class ContentPaginator extends Paginator
      * @param $total
      * @param $foreign
      * @param $foreignContent
+     * @param $ignored
      * @return string
      */
-    protected function createContentNextLink(Request $request, $offset, $limit, $total, $foreign, $foreignContent)
+    protected function createContentNextLink(Request $request, $offset, $limit, $total, $foreign, $foreignContent, $ignored)
     {
         $parentNext = parent::createNextLink($request, $offset, $limit, $total);
+        $nextLink = $this->addForeign($parentNext, $foreign, true, $foreignContent);
 
-        return $this->addForeign($parentNext, $foreign, true, $foreignContent);
-
+        return $this->addIgnored($nextLink, $ignored, true);
     }
 
     /**
@@ -136,6 +146,45 @@ class ContentPaginator extends Paginator
 
             if (isset($params['foreign']) && $params['foreign']) {
                 $params['foreign'] = max($foreign - 2 * $params['limit'], 0); //best approximation
+                $params['offset'] += $params['limit'];
+            }
+
+        }
+
+        $url_parts['query'] = http_build_query($params);
+
+        return http_build_url($url_parts);
+    }
+
+    /**
+     * @param $url
+     * @param $ignored
+     * @param bool $next
+     * @return string
+     */
+    protected function addIgnored($url, $ignored, $next = false)
+    {
+        if (!$url || $ignored === 0) {
+            return $url;
+        }
+
+        if ($next && $ignored < 0) {
+            return null; //database completely searched
+        }
+
+        $url_parts = parse_url($url);
+        parse_str($url_parts['query'], $params);
+
+        $params['offset'] = isset($params['offset']) ? $params['offset'] : 0;
+        if ($next) {
+
+            $params['offset'] -= $ignored;
+            $params['ignored'] = $ignored;
+
+        } else {
+
+            if (isset($params['ignored']) && $params['ignored']) {
+                $params['ignored'] = $ignored;
                 $params['offset'] += $params['limit'];
             }
 
