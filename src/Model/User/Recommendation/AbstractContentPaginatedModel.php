@@ -61,70 +61,41 @@ abstract class AbstractContentPaginatedModel implements PaginatedInterface
     public function countTotal(array $filters)
     {
         $id = $filters['id'];
-        $types = isset($filters['type']) ? $filters['type'] : array();
+        $types = isset($filters['type']) ? $filters['type'] : array('Link');
         $count = 0;
+        $typesString = implode(':', $types);
 
-        if (!isset($filters['tag'])) {
-
-            /// Estimation to avoid calculating in real time ///
-            $baseSize = 130000;
-            $estimations = array(
-                'type' => array(
-                    'Video' => 0.06,
-                    'Audio' => 0.02,
-                    'Image' => 0.003,
-                    'Creator' => 0.06,
-                    'Link' => 1,
-                ),
-            );
-
-            if (empty($types)) {
-                return $baseSize;
-            }
-
-            if (empty($types)) {
-                $types = array('Link');
-            }
-
-            foreach ($types as $type) {
-                $count += $baseSize * $estimations['type'][$type];
-            }
-
-            ///End estimation ///
-
-        } else {
-            $params = array(
-                'userId' => (integer)$id,
-                'filterTags' => $filters['tag'],
-            );
-
-            $qb = $this->gm->createQueryBuilder();
-
+        $qb = $this->gm->createQueryBuilder();
+        $params = array(
+            'userId' => (integer)$id
+        );
+        $qb->match('(content:' . $typesString . ')')
+            ->with('content');
+        if (isset($filters['tag'])) {
+            $params['filterTags'] = $filters['tag'];
             $qb->match('(filterTag:Tag)')
                 ->where('filterTag.name IN { filterTags }')
                 ->with('filterTag');
 
-            $qb->match('(filterTag)<-[:TAGGED]-(content:Link)')
+            $qb->match('(filterTag)<-[:TAGGED]-(content)')
                 ->with('content');
 
-            $qb->filterContentByType($types, 'content');
+        }
+        $qb->match('(u:User {qnoow_id: {userId }})')
+            ->with('content', 'u');
+        $qb->optionalMatch('(u)-[l:LIKES]->(content)');
+        $qb->with('u', 'count(l) AS likes', 'content');
+        $qb->optionalMatch('(u)-[d:DISLIKES]->(content)');
+        $qb->with('likes', 'count(d) AS dislikes', 'count(content) as total');
+        $qb->returns('total-(likes+dislikes) AS total');
 
-            $qb->match('(u:User {qnoow_id: {userId }})')
-                ->with('content', 'u');
-            $qb->optionalMatch('(u)-[l:LIKES]->(content)');
-            $qb->with('u', 'count(l) AS likes', 'content');
-            $qb->optionalMatch('(u)-[l:DISLIKES]->(content)');
-            $qb->with('likes', 'count(l) AS dislikes', 'count(content) as total');
-            $qb->returns('total-(likes+dislikes) AS total');
+        $qb->setParameters($params);
 
-            $qb->setParameters($params);
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
 
-            $query = $qb->getQuery();
-            $result = $query->getResultSet();
-
-            foreach ($result as $row) {
-                $count = $row['total'];
-            }
+        foreach ($result as $row) {
+            $count = $row['total'];
         }
 
         return $count;

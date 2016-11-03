@@ -39,23 +39,6 @@ class ContentPaginator extends Paginator
         }
 
         $newForeign = isset($slice['newForeign']) ? $slice['newForeign'] : $foreign;
-        $foreignContent = 0;
-        foreach ($slice['items'] as $item) {
-            if ($item instanceof ContentRecommendation) {
-                if ($item->getMatch() == 0) {
-                    $foreignContent++;
-                }
-            } else if ($item instanceof UserRecommendation) {
-                if ($item->getSimilarity() == 0) {
-                    $foreignContent++;
-                }
-                //TODO: This should not happen when revised
-            } else if (is_array($item)){
-                if (isset($item['similarity']) && $item['similarity'] == 0) {
-                    $foreignContent++;
-                }
-            }
-        }
 
         $ignored = 0;
         if (isset($filters['ignored'])) {
@@ -64,9 +47,12 @@ class ContentPaginator extends Paginator
 
         $newIgnored = isset($slice['newIgnored']) ? $slice['newIgnored'] : $ignored;
 
-        $prevLink = $this->createContentPrevLink($request, $offset, $limit, $newForeign, $foreignContent, $newIgnored);
-        $nextLink = $this->createContentNextLink($request, $offset, $limit, $total, $newForeign, $foreignContent, $newIgnored);
-
+        $prevLink = $this->createContentPrevLink($request, $offset, $limit, $foreign, $newForeign, $newIgnored);
+        if (count($slice['items']) < $limit) {
+            $nextLink = null;
+        } else {
+            $nextLink = $this->createContentNextLink($request, $offset, $limit, $total, $foreign, $newForeign, $ignored, $newIgnored);
+        }
         $pagination = array();
         $pagination['total'] = $total;
         $pagination['offset'] = $offset;
@@ -106,26 +92,27 @@ class ContentPaginator extends Paginator
      * @param $foreign
      * @param $foreignContent
      * @param $ignored
+     * @param $newIgnored
      * @return string
      */
-    protected function createContentNextLink(Request $request, $offset, $limit, $total, $foreign, $foreignContent, $ignored)
+    protected function createContentNextLink(Request $request, $offset, $limit, $total, $foreign, $foreignContent, $ignored, $newIgnored)
     {
         $parentNext = parent::createNextLink($request, $offset, $limit, $total);
-        $nextLink = $this->addForeign($parentNext, $foreign, true, $foreignContent);
+        $nextLink = $this->addForeign($parentNext, $foreign, true, $foreignContent - $foreign);
 
-        return $this->addIgnored($nextLink, $ignored, true);
+        return $this->addIgnored($nextLink, $ignored, true, $newIgnored - $ignored);
     }
 
     /**
      * @param $url
      * @param $foreign
      * @param bool $next
-     * @param int $foreignContent
+     * @param int $newForeign
      * @return string
      */
-    protected function addForeign($url, $foreign, $next = false, $foreignContent = 0)
+    protected function addForeign($url, $foreign, $next = false, $newForeign = 0)
     {
-        if (!$url || $foreignContent === 0) {
+        if (!$url || $newForeign === 0) {
             return $url;
         }
 
@@ -136,19 +123,15 @@ class ContentPaginator extends Paginator
         $url_parts = parse_url($url);
         parse_str($url_parts['query'], $params);
 
-        $params['offset'] = isset($params['offset'])? $params['offset'] : 0;
+        $params['offset'] = isset($params['offset']) ? $params['offset'] : 0;
         if ($next) {
-
-            $params['offset'] -= $foreignContent;
-            $params['foreign'] = $foreign;
-
+            $params['offset'] -= $newForeign;
+            $params['foreign'] = $foreign + $newForeign;
         } else {
-
             if (isset($params['foreign']) && $params['foreign']) {
-                $params['foreign'] = max($foreign - 2 * $params['limit'], 0); //best approximation
+                $params['foreign'] = $foreign;
                 $params['offset'] += $params['limit'];
             }
-
         }
 
         $url_parts['query'] = http_build_query($params);
@@ -160,16 +143,13 @@ class ContentPaginator extends Paginator
      * @param $url
      * @param $ignored
      * @param bool $next
+     * @param $newIgnored
      * @return string
      */
-    protected function addIgnored($url, $ignored, $next = false)
+    protected function addIgnored($url, $ignored, $next = false, $newIgnored = 0)
     {
-        if (!$url || $ignored === 0) {
+        if (!$url || $newIgnored === 0) {
             return $url;
-        }
-
-        if ($next && $ignored < 0) {
-            return null; //database completely searched
         }
 
         $url_parts = parse_url($url);
@@ -177,17 +157,14 @@ class ContentPaginator extends Paginator
 
         $params['offset'] = isset($params['offset']) ? $params['offset'] : 0;
         if ($next) {
-
-            $params['offset'] -= $ignored;
-            $params['ignored'] = $ignored;
+            $params['offset'] = ($params['offset'] - $newIgnored) >= 0 ? $params['offset'] - $newIgnored : $params['offset'];
+            $params['ignored'] = $ignored + $newIgnored;
 
         } else {
-
             if (isset($params['ignored']) && $params['ignored']) {
                 $params['ignored'] = $ignored;
                 $params['offset'] += $params['limit'];
             }
-
         }
 
         $url_parts['query'] = http_build_query($params);

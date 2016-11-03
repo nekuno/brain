@@ -100,12 +100,22 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
             if (isset($filters['foreign'])) {
                 $foreign = $filters['foreign'];
             }
-
             $foreignResult = $this->getForeignContent($filters, $needContent, $foreign);
             $return['items'] = array_merge($return['items'], $foreignResult['items']);
             $return['newForeign'] = $foreignResult['foreign'];
         }
 
+        $needContent = $this->needMoreContent($limit, $return);
+        if ($needContent) {
+            $ignored = 0;
+            if (isset($filters['ignored'])) {
+                $ignored = $filters['ignored'];
+            }
+
+            $ignoredResult = $this->getIgnoredContent($filters, $needContent, $ignored);
+            $return['items'] = array_merge($return['items'], $ignoredResult['items']);
+            $return['newIgnored'] = $ignoredResult['ignored'];
+        }
         //Works with ContentPaginator (accepts $result), not Paginator (accepts $result['items'])
         return $return;
     }
@@ -204,12 +214,33 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
     public function getForeignContent($filters, $limit, $foreign)
     {
         $id = $filters['id'];
-        $condition = "MATCH (u:User{qnoow_id:$id}) WHERE NOT (u)-[:SIMILARITY|:MATCHES]-(anyUser)";
+        $condition = "MATCH (u:User{qnoow_id:$id}) WHERE NOT (u)-[:LIKES|:DISLIKES|:IGNORES]->(anyUser) AND NOT (u)-[:SIMILARITY|:MATCHES]-(anyUser)";
 
         $items = $this->getUsersByPopularity($filters, $foreign, $limit, $condition);
 
         $return = array('items' => array_slice($items, 0, $limit));
         $return['foreign'] = $foreign + count($return['items']);
+
+        return $return;
+    }
+
+    /**
+     * @param $filters
+     * @param $limit
+     * @param $ignored
+     * @return array (items, foreign = # of links database searched, -1 if total)
+     * @throws \Exception
+     * @throws \Model\Neo4j\Neo4jException
+     */
+    public function getIgnoredContent($filters, $limit, $ignored)
+    {
+        $id = $filters['id'];
+        $condition = "MATCH (u:User{qnoow_id:$id})-[:IGNORES]->(anyUser)";
+
+        $items = $this->getUsersByPopularity($filters, $ignored, $limit, $condition);
+
+        $return = array('items' => array_slice($items, 0, $limit));
+        $return['ignored'] = $ignored + count($return['items']);
 
         return $return;
     }

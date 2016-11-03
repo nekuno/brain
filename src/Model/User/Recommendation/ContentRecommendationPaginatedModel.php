@@ -60,19 +60,20 @@ class ContentRecommendationPaginatedModel extends AbstractContentPaginatedModel
         $return = array('items' => array());
 
         $id = $filters['id'];
-        $types = isset($filters['type']) ? $filters['type'] : array();
+        $types = isset($filters['type']) ? $filters['type'] : array('Link');
 
         $params = array(
             'userId' => (integer)$id,
             'offset' => (integer)$offset,
             'limit' => (integer)$limit
         );
+        $typesString = implode(':', $types);
 
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match('(user:User {qnoow_id: { userId }})-[affinity:AFFINITY]->(content:Link)')
-            ->where('NOT (user)-[:LIKES|:DISLIKES|:IGNORES]->(content) AND affinity.affinity > 0 AND content.processed = 1');
-        $qb->filterContentByType($types, 'content', array('affinity'));
+        $qb->match('(user:User {qnoow_id: { userId }})-[affinity:AFFINITY]->(content:' . $typesString . ')')
+            ->where('NOT (user)-[:LIKES|:DISLIKES|:IGNORES]->(content) AND affinity.affinity > 0 AND content.processed = 1')
+            ->with('affinity, content');
 
         if (isset($filters['tag'])) {
             $qb->match('(content)-[:TAGGED]->(filterTag:Tag)')
@@ -119,7 +120,6 @@ class ContentRecommendationPaginatedModel extends AbstractContentPaginatedModel
             if (isset($filters['foreign'])) {
                 $foreign = $filters['foreign'];
             }
-
             $foreignResult = $this->getForeignContent($filters, $needContent, $foreign);
             $return['items'] = array_merge($return['items'], $foreignResult['items']);
             $return['newForeign'] = $foreignResult['foreign'];
@@ -151,7 +151,7 @@ class ContentRecommendationPaginatedModel extends AbstractContentPaginatedModel
     public function getForeignContent($filters, $limit, $foreign)
     {
         $id = $filters['id'];
-        $condition = "MATCH (u:User{qnoow_id:$id}) WHERE NOT(u)-[:LIKES|:AFFINITY]-(content)";
+        $condition = "MATCH (u:User{qnoow_id:$id}) WHERE NOT(u)-[:LIKES|:DISLIKES|:IGNORES|:AFFINITY]-(content)";
 
         $items = $this->getContentsByPopularity($filters, $limit, $foreign, $condition);
         
@@ -172,7 +172,7 @@ class ContentRecommendationPaginatedModel extends AbstractContentPaginatedModel
     public function getIgnoredContent($filters, $limit, $ignored)
     {
         $id = $filters['id'];
-        $condition = "MATCH (u:User{qnoow_id:$id})-[:IGNORES]-(content)";
+        $condition = "MATCH (u:User{qnoow_id:$id})-[:IGNORES]->(content)";
 
         $items = $this->getContentsByPopularity($filters, $limit, $ignored, $condition);
 
