@@ -414,7 +414,7 @@ class UserManager implements PaginatedInterface
         $query = $qb->getQuery();
         $result = $query->getResultSet();
 
-        if ($result->count() > 0) {
+        if ($result->count() > 0 || !$username) {
             throw new ValidationException(
                 array(
                     'username' => array('Invalid username')
