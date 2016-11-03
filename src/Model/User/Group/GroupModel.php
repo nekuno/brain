@@ -117,7 +117,8 @@ class GroupModel
             ->with('g', 'l')
             ->optionalMatch('(g)-[:HAS_FILTER]->(f:FilterUsers)')
             ->optionalMatch('(u:User)-[:BELONGS_TO]->(g)')
-            ->returns('g', 'l', 'f', 'COUNT(u) AS usersCount');
+            ->optionalMatch('(g)<-[:HAS_GROUP]-(i:Invitation)')
+            ->returns('g', 'l', 'f', 'i', 'COUNT(u) AS usersCount');
 
         $query = $qb->getQuery();
 
