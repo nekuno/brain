@@ -137,7 +137,7 @@ class RateModel
         $qb = $this->gm->createQueryBuilder();
         $qb->match("(u:User)-[r:$rate]->(l:Link)")
             ->where('id(r)={likeId}')
-            ->set('r.nekuno = timestamp()', 'r.updateAt = timestamp()')
+            ->set('r.nekuno = timestamp()', 'r.updatedAt = timestamp()')
             ->returns('r', 'l.url AS linkUrl');
         $qb->setParameters(array(
             'likeId' => (integer)$likeId
@@ -181,8 +181,8 @@ class RateModel
             ->merge('(u)-[r:' . self::LIKE . ']->(l)')
             ->set('r.' . $resource . '= COALESCE({ timestamp }, timestamp())')
             //max(x,y)=(x+y+abs(x-y))/2
-            ->set('r.updateAt = ( COALESCE(r.updateAt, 0) + COALESCE({ timestamp }, timestamp())
-                                    + ABS(COALESCE(r.updateAt, 0) -  COALESCE({ timestamp }, timestamp()))
+            ->set('r.updatedAt = ( COALESCE(r.updatedAt, 0) + COALESCE({ timestamp }, timestamp())
+                                    + ABS(COALESCE(r.updatedAt, 0) -  COALESCE({ timestamp }, timestamp()))
                                     )/2 ');
         if ($originContext) {
             $qb->set('r.originContext = { originContext }')
@@ -288,8 +288,8 @@ class RateModel
             $qb->match('(u:User {qnoow_id: { userId }})', '(l:Link)')
                 ->where('id(l) = { linkId }')
                 ->merge('(u)-[r:' . self::IGNORE . ']->(l)')
-                ->set('r.updateAt=( COALESCE(r.updateAt, 0) + COALESCE({ timestamp }, timestamp())
-                                    + ABS(COALESCE(r.updateAt, 0) -  COALESCE({ timestamp }, timestamp()))
+                ->set('r.updatedAt=( COALESCE(r.updatedAt, 0) + COALESCE({ timestamp }, timestamp())
+                                    + ABS(COALESCE(r.updatedAt, 0) -  COALESCE({ timestamp }, timestamp()))
                                     )/2 ');
 
             if ($originContext) {
@@ -329,7 +329,7 @@ class RateModel
         return array(
             'id' => $relationship->getId(),
             'resources' => $resources,
-            'timestamp' => $relationship->getProperty('updateAt'),
+            'timestamp' => $relationship->getProperty('updatedAt'),
             'linkUrl' => $row->offsetGet('linkUrl'),
             'originContext' => $relationship->getProperty('originContext'),
             'originName' => $relationship->getProperty('originName'),
