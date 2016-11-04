@@ -3,8 +3,6 @@
 namespace Controller\User;
 
 use Model\User;
-use Model\User\ProfileModel;
-use Manager\UserManager;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -63,27 +61,46 @@ class GroupController
     {
         $data = $request->query->all();
         $data['userId'] = $user->getId();
-        /* @var UserManager $userManager */
+
         $userManager = $app['users.manager'];
+        $profileModel = $app['users.profile.model'];
+        $matchingModel = $app['users.matching.model'];
+
         $usersByGroup = $userManager->getByGroup($id, $data);
 
-        // TODO: Refactor this action, getByGroups returns now objects
-        $users = array();
-        foreach ($usersByGroup as $u) {
-            /* @var $u User */
-            $users[] = $u->jsonSerialize();
+        $members = array();
+        foreach ($usersByGroup as $userByGroup) {
+            $member = User\Recommendation\UserRecommendation::buildFromUser($userByGroup);
+
+            $profile = $profileModel->getById($userByGroup->getId());
+            $member->setLocation($profile['location']);
+            $member->setMatching($matchingModel->getMatchingBetweenTwoUsers($user->getId(), $userByGroup->getId()));
+
+            $members[] = $member;
         }
 
-        foreach ($users as &$user){
-            $user['id'] = $user['qnoow_id'];
-        }
-        /* @var ProfileModel $profileModel */
-        $profileModel = $app['users.profile.model'];
-        foreach ($users as &$user){
-            $user = array_merge($user, $profileModel->getById($user['qnoow_id']));
-            $user['location'] = $user['location']['locality'].', '.$user['location']['country'];
-        }
-        return $app->json(array('items' => $users));
+        return $app->json($members);
+
+//        foreach ($users as &$user){
+//            $user['id'] = $user['qnoow_id'];
+//        }
+//        /* @var ProfileModel $profileModel */
+//        foreach ($users as &$user){
+//            $user = array_merge($user, $profileModel->getById($user['qnoow_id']));
+//            $user['location'] = $user['location']['locality'].', '.$user['location']['country'];
+//        }
+//        return $app->json(array('items' => $users));
+    }
+
+    public function getContentAction(Request $request, Application $app, $id)
+    {
+        $contentPaginator = $app['paginator.content'];
+        $groupContentModel = $app['users.group.content.model'];
+        $filters = array('groupId' => (int)$id);
+
+        $content = $contentPaginator->paginate($filters, $groupContentModel, $request);
+
+        return $app->json($content);
     }
 
     /**
