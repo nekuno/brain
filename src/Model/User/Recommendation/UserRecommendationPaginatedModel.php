@@ -43,7 +43,7 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
 
         $qb->setParameters($parameters);
 
-        $qb->match('(u:User {qnoow_id: {userId}})-[:MATCHES|SIMILARITY]-(anyUser:User)')
+        $qb->match('(u:User {qnoow_id: {userId}})-[:MATCHES|:SIMILARITY]-(anyUser:User)')
             ->where('u <> anyUser', 'NOT (anyUser:' . GhostUserManager::LABEL_GHOST_USER . ')', 'NOT (u)-[:LIKES|:DISLIKES|:IGNORES]->(anyUser)')
             ->with('u', 'anyUser')
             ->limit(self::USER_SAFETY_LIMIT)
@@ -143,27 +143,23 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
         $qb->setParameters($parameters);
 
         $qb->match('(u:User {qnoow_id: {userId}}), (anyUser:User)')
-            ->where('u <> anyUser', 'NOT (anyUser:' . GhostUserManager::LABEL_GHOST_USER . ')')
+            ->where('u <> anyUser', 'NOT (anyUser:' . GhostUserManager::LABEL_GHOST_USER . ')', 'NOT (u)-[:LIKES|:DISLIKES]->(anyUser)')
             ->with('u', 'anyUser')
             ->limit(self::USER_SAFETY_LIMIT)
             ->with('u', 'anyUser')
-            ->optionalMatch('(u)-[like:LIKES]->(anyUser)')
-            ->with('u', 'anyUser', '(CASE WHEN like IS NOT NULL THEN 1 ELSE 0 END) AS like')
             ->optionalMatch('(u)-[m:MATCHES]-(anyUser)')
-            ->with('u', 'anyUser', 'like', '(CASE WHEN EXISTS(m.matching_questions) THEN m.matching_questions ELSE 0 END) AS matching_questions')
+            ->with('u', 'anyUser', '(CASE WHEN EXISTS(m.matching_questions) THEN m.matching_questions ELSE 0 END) AS matching_questions')
             ->optionalMatch('(u)-[s:SIMILARITY]-(anyUser)')
-            ->with('u', 'anyUser', 'like', 'matching_questions', '(CASE WHEN EXISTS(s.similarity) THEN s.similarity ELSE 0 END) AS similarity')
-            ->where('(matching_questions > 0 OR similarity > 0)')
-            ->with('u', 'anyUser', 'like', 'matching_questions', 'similarity')
+            ->with('u', 'anyUser', 'matching_questions', '(CASE WHEN EXISTS(s.similarity) THEN s.similarity ELSE 0 END) AS similarity')
             ->match('(anyUser)<-[:PROFILE_OF]-(p:Profile)');
 
         $qb->optionalMatch('(p)-[:LOCATION]->(l:Location)');
 
-        $qb->with('u, anyUser, like, matching_questions, similarity, p, l');
+        $qb->with('u, anyUser, matching_questions, similarity, p, l');
         $qb->where($profileFilters['conditions'])
-            ->with('u', 'anyUser', 'like', 'matching_questions', 'similarity', 'p', 'l');
+            ->with('u', 'anyUser', 'matching_questions', 'similarity', 'p', 'l');
         $qb->where( $userFilters['conditions'])
-            ->with('u', 'anyUser', 'like', 'matching_questions', 'similarity', 'p', 'l');
+            ->with('u', 'anyUser', 'matching_questions', 'similarity', 'p', 'l');
 
         foreach ($profileFilters['matches'] as $match) {
             $qb->match($match);

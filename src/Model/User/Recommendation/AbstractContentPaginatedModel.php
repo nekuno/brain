@@ -62,43 +62,50 @@ abstract class AbstractContentPaginatedModel implements PaginatedInterface
     {
         $id = $filters['id'];
         $types = isset($filters['type']) ? $filters['type'] : array('Link');
-        $count = 0;
         $typesString = implode(':', $types);
 
         $qb = $this->gm->createQueryBuilder();
-        $params = array(
-            'userId' => (integer)$id
-        );
-        $qb->match('(content:' . $typesString . ')')
-            ->with('content');
         if (isset($filters['tag'])) {
-            $params['filterTags'] = $filters['tag'];
             $qb->match('(filterTag:Tag)')
                 ->where('filterTag.name IN { filterTags }')
+                ->setParameter('filterTags', $filters['tag'])
                 ->with('filterTag');
 
-            $qb->match('(filterTag)<-[:TAGGED]-(content)')
-                ->with('content');
-
+            $qb->match('(filterTag)<-[:TAGGED]-(content:' . $typesString . ')');
+        } else {
+            $qb->match('(content:' . $typesString . ')');
         }
-        $qb->match('(u:User {qnoow_id: {userId }})')
-            ->with('content', 'u');
-        $qb->optionalMatch('(u)-[l:LIKES]->(content)');
-        $qb->with('u', 'count(l) AS likes', 'content');
-        $qb->optionalMatch('(u)-[d:DISLIKES]->(content)');
-        $qb->with('likes', 'count(d) AS dislikes', 'count(content) as total');
-        $qb->returns('total-(likes+dislikes) AS total');
-
-        $qb->setParameters($params);
+        $qb->returns('COUNT(DISTINCT content) AS total');
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();
-
+        $total = 0;
         foreach ($result as $row) {
-            $count = $row['total'];
+            $total = $row['total'];
         }
 
-        return $count;
+        $qb = $this->gm->createQueryBuilder();
+        if (isset($filters['tag'])) {
+            $qb->match('(filterTag:Tag)')
+                ->where('filterTag.name IN { filterTags }')
+                ->setParameter('filterTags', $filters['tag'])
+                ->with('filterTag');
+
+            $qb->match('(filterTag)<-[:TAGGED]-(content:' . $typesString . ')<-[l:LIKES|:DISLIKES]-(u:User {qnoow_id: { userId }})');
+        } else {
+            $qb->match('(content:' . $typesString . ')<-[l:LIKES|:DISLIKES]-(u:User {qnoow_id: { userId }})');
+        }
+        $qb->setParameter('userId', (integer)$id)
+            ->returns('count(DISTINCT l) as total');
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+        $totalNotIncluded = 0;
+        foreach ($result as $row) {
+            $totalNotIncluded = $row['total'];
+        }
+
+        return $total - $totalNotIncluded > 0 ? $total - $totalNotIncluded : 0;
     }
 
     /**
