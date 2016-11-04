@@ -210,7 +210,7 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
     public function getForeignContent($filters, $limit, $foreign)
     {
         $id = $filters['id'];
-        $condition = "MATCH (u:User{qnoow_id:$id}) WHERE NOT (u)-[:LIKES|:DISLIKES|:IGNORES]->(anyUser) AND NOT (u)-[:SIMILARITY|:MATCHES]-(anyUser)";
+        $condition = "MATCH (u:User{qnoow_id:$id}) WHERE NOT (u)-[:LIKES|:DISLIKES|:IGNORES]->(anyUser) OR NOT (u)-[:SIMILARITY|:MATCHES]-(anyUser)";
 
         $items = $this->getUsersByPopularity($filters, $foreign, $limit, $condition);
 
