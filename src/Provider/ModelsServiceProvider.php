@@ -19,6 +19,7 @@ use Model\User\Filters\FilterContentManager;
 use Model\User\Filters\FilterUsersManager;
 use Model\User\GhostUser\GhostUserManager;
 use Model\User\Group\GroupContentPaginatedModel;
+use Model\User\Group\GroupMembersPaginatedModel;
 use Model\User\Group\GroupModel;
 use Model\User\InvitationModel;
 use Model\User\LookUpModel;
@@ -256,6 +257,13 @@ class ModelsServiceProvider implements ServiceProviderInterface
             function ($app) {
 
                 return new GroupContentPaginatedModel($app['neo4j.graph_manager'], $app['links.model'], $app['validator.service'], $app['imageTransformations.service']);
+            }
+        );
+
+        $app['users.group.members.model'] = $app->share(
+            function ($app) {
+
+                return new GroupMembersPaginatedModel($app['neo4j.graph_manager'], $app['users.profileFilter.model'], $app['users.userFilter.model'], $app['users.photo.manager']);
             }
         );
 

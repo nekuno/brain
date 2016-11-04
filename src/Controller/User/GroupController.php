@@ -59,46 +59,22 @@ class GroupController
      */
     public function getMembersAction(Request $request, Application $app, User $user, $id)
     {
-        $data = $request->query->all();
-        $data['userId'] = $user->getId();
+        $paginator = $app['paginator'];
+        $groupContentModel = $app['users.group.members.model'];
+        $filters = array('groupId' => (int)$id, 'userId' => $user->getId());
 
-        $userManager = $app['users.manager'];
-        $profileModel = $app['users.profile.model'];
-        $matchingModel = $app['users.matching.model'];
+        $content = $paginator->paginate($filters, $groupContentModel, $request);
 
-        $usersByGroup = $userManager->getByGroup($id, $data);
-
-        $members = array();
-        foreach ($usersByGroup as $userByGroup) {
-            $member = User\Recommendation\UserRecommendation::buildFromUser($userByGroup);
-
-            $profile = $profileModel->getById($userByGroup->getId());
-            $member->setLocation($profile['location']);
-            $member->setMatching($matchingModel->getMatchingBetweenTwoUsers($user->getId(), $userByGroup->getId()));
-
-            $members[] = $member;
-        }
-
-        return $app->json($members);
-
-//        foreach ($users as &$user){
-//            $user['id'] = $user['qnoow_id'];
-//        }
-//        /* @var ProfileModel $profileModel */
-//        foreach ($users as &$user){
-//            $user = array_merge($user, $profileModel->getById($user['qnoow_id']));
-//            $user['location'] = $user['location']['locality'].', '.$user['location']['country'];
-//        }
-//        return $app->json(array('items' => $users));
+        return $app->json($content);
     }
 
     public function getContentAction(Request $request, Application $app, $id)
     {
-        $contentPaginator = $app['paginator.content'];
+        $paginator = $app['paginator'];
         $groupContentModel = $app['users.group.content.model'];
         $filters = array('groupId' => (int)$id);
 
-        $content = $contentPaginator->paginate($filters, $groupContentModel, $request);
+        $content = $paginator->paginate($filters, $groupContentModel, $request);
 
         return $app->json($content);
     }
