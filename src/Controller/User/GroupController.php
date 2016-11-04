@@ -3,8 +3,6 @@
 namespace Controller\User;
 
 use Model\User;
-use Model\User\ProfileModel;
-use Manager\UserManager;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -61,29 +59,24 @@ class GroupController
      */
     public function getMembersAction(Request $request, Application $app, User $user, $id)
     {
-        $data = $request->query->all();
-        $data['userId'] = $user->getId();
-        /* @var UserManager $userManager */
-        $userManager = $app['users.manager'];
-        $usersByGroup = $userManager->getByGroup($id, $data);
+        $paginator = $app['paginator'];
+        $groupContentModel = $app['users.group.members.model'];
+        $filters = array('groupId' => (int)$id, 'userId' => $user->getId());
 
-        // TODO: Refactor this action, getByGroups returns now objects
-        $users = array();
-        foreach ($usersByGroup as $u) {
-            /* @var $u User */
-            $users[] = $u->jsonSerialize();
-        }
+        $content = $paginator->paginate($filters, $groupContentModel, $request);
 
-        foreach ($users as &$user){
-            $user['id'] = $user['qnoow_id'];
-        }
-        /* @var ProfileModel $profileModel */
-        $profileModel = $app['users.profile.model'];
-        foreach ($users as &$user){
-            $user = array_merge($user, $profileModel->getById($user['qnoow_id']));
-            $user['location'] = $user['location']['locality'].', '.$user['location']['country'];
-        }
-        return $app->json(array('items' => $users));
+        return $app->json($content);
+    }
+
+    public function getContentAction(Request $request, Application $app, $id)
+    {
+        $paginator = $app['paginator'];
+        $groupContentModel = $app['users.group.content.model'];
+        $filters = array('groupId' => (int)$id);
+
+        $content = $paginator->paginate($filters, $groupContentModel, $request);
+
+        return $app->json($content);
     }
 
     /**
