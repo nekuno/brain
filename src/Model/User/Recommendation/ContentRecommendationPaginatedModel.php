@@ -72,7 +72,7 @@ class ContentRecommendationPaginatedModel extends AbstractContentPaginatedModel
         $qb = $this->gm->createQueryBuilder();
 
         $qb->match('(user:User {qnoow_id: { userId }})-[affinity:AFFINITY]->(content:' . $typesString . ')')
-            ->where('affinity.affinity > 0 AND content.processed = 1 AND NOT (user)-[:LIKES|:DISLIKES|:IGNORES]->(content)')
+            ->where('content.processed = 1 AND NOT (user)-[:LIKES|:DISLIKES|:IGNORES]->(content)')
             ->with('affinity, content');
 
         if (isset($filters['tag'])) {
