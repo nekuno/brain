@@ -22,9 +22,6 @@ class GroupController
     {
         $group = $app['users.groups.model']->getById($id);
 
-        $links = $app['links.model']->findPopularLinksByGroup($group->getId());
-        $group->setPopularContents($links);
-
         return $app->json($group);
     }
 
@@ -68,7 +65,7 @@ class GroupController
         return $app->json($content);
     }
 
-    public function getContentAction(Request $request, Application $app, $id)
+    public function getContentsAction(Request $request, Application $app, $id)
     {
         $paginator = $app['paginator'];
         $groupContentModel = $app['users.group.content.model'];

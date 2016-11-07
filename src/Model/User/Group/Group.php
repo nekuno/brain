@@ -26,9 +26,10 @@ class Group implements \JsonSerializable
         if ($name = $groupNode->getProperty('name')){
             $group->setName($name);
         }
-        if ($name = $groupNode->getProperty('html')){
-            $group->setHtml($name);
-        }
+        // Not used for now, and might be too long
+//        if ($name = $groupNode->getProperty('html')){
+//            $group->setHtml($name);
+//        }
 
         return $group;
     }
