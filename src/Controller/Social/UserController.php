@@ -28,13 +28,6 @@ class UserController
         $model = $app['users.manager'];
         $userArray = $model->getById($id)->jsonSerialize();
 
-        if (empty($userArray)) {
-            return $app->json([], 404);
-        }
-        /* @var $groupModel GroupModel */
-        $groupModel = $app['users.groups.model'];
-        $userArray['groups'] = $groupModel->getByUser($id);
-
         return $app->json($userArray);
     }
 

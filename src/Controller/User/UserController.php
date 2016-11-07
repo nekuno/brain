@@ -66,9 +66,6 @@ class UserController
         /* @var $model UserManager */
         $model = $app['users.manager'];
         $userArray = $model->getById($user->getId())->jsonSerialize();
-        /* @var $groupModel GroupModel */
-        $groupModel = $app['users.groups.model'];
-        $userArray['groups'] = $groupModel->getByUser($user->getId());
 
         return $app->json($userArray);
     }
