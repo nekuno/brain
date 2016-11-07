@@ -22,7 +22,7 @@ class GroupMembersPaginatedModel extends AbstractUserPaginatedModel
             ->with('anyUser');
         $qb->match('(u2:User{qnoow_id:{userId}})')
             ->setParameter('userId', (int)$userId);
-        $qb->optionalMatch('(anyUser)-[m:MATCHING]-(u2)')
+        $qb->optionalMatch('(anyUser)-[m:MATCHES]-(u2)')
             ->with('m.matching_questions as matching_questions, anyUser')
             ->orderBy('matching_questions DESC')
             ->skip('{offset}')
