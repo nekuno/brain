@@ -151,7 +151,7 @@ class ContentRecommendationPaginatedModel extends AbstractContentPaginatedModel
     public function getForeignContent($filters, $limit, $foreign)
     {
         $id = $filters['id'];
-        $condition = "MATCH (u:User{qnoow_id:$id}) WHERE NOT(u)-[:LIKES|:DISLIKES|:IGNORES|:AFFINITY]-(content)";
+        $condition = "MATCH (u:User{qnoow_id:$id}) WHERE NOT(u)-[:LIKES|:DISLIKES|:IGNORES|:AFFINITY]->(content)";
 
         $items = $this->getContentsByPopularity($filters, $limit, $foreign, $condition);
         
