@@ -49,9 +49,9 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
             ->limit(self::USER_SAFETY_LIMIT)
             ->with('u', 'anyUser')
             ->optionalMatch('(u)-[m:MATCHES]-(anyUser)')
-            ->with('u', 'anyUser', '(CASE WHEN EXISTS(m.matching_questions) THEN m.matching_questions ELSE 0 END) AS matching_questions')
+            ->with('u', 'anyUser', '(CASE WHEN EXISTS(m.matching_questions) THEN m.matching_questions ELSE 0.01 END) AS matching_questions')
             ->optionalMatch('(u)-[s:SIMILARITY]-(anyUser)')
-            ->with('u', 'anyUser', 'matching_questions', '(CASE WHEN EXISTS(s.similarity) THEN s.similarity ELSE 0 END) AS similarity')
+            ->with('u', 'anyUser', 'matching_questions', '(CASE WHEN EXISTS(s.similarity) THEN s.similarity ELSE 0.01 END) AS similarity')
             ->match('(anyUser)<-[:PROFILE_OF]-(p:Profile)');
 
         $qb->optionalMatch('(p)-[:LOCATION]->(l:Location)');
