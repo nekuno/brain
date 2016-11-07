@@ -57,11 +57,13 @@ abstract class AbstractContentPaginatedModel implements PaginatedInterface
      */
     public function countTotal(array $filters)
     {
+        $popLimit = count($filters['type']) > 1 || $filters['type'][0] != 'Link' ? self::POP_UPPER_LIMIT * 10 : self::POP_UPPER_LIMIT;
         $id = $filters['id'];
         $types = isset($filters['type']) ? $filters['type'] : array('Link');
         $typesString = implode(':', $types);
 
-        $qb = $this->gm->createQueryBuilder();
+        $qb = $this->gm->createQueryBuilder()
+            ->setParameter('popLimit', $popLimit);
         if (isset($filters['tag'])) {
             $qb->match('(filterTag:Tag)')
                 ->where('filterTag.name IN { filterTags }')
@@ -72,7 +74,9 @@ abstract class AbstractContentPaginatedModel implements PaginatedInterface
         } else {
             $qb->match('(content:' . $typesString . ')');
         }
-        $qb->returns('COUNT(DISTINCT content) AS total');
+        $qb->optionalMatch('(content)-[:HAS_POPULARITY]-(popularity:Popularity)')
+            ->where('popularity.popularity > {popLimit}')
+            ->returns('COUNT(DISTINCT content) AS total');
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();
@@ -92,6 +96,7 @@ abstract class AbstractContentPaginatedModel implements PaginatedInterface
         } else {
             $qb->match('(content:' . $typesString . ')<-[l:LIKES|:DISLIKES]-(u:User {qnoow_id: { userId }})');
         }
+        $qb->where('content.processed = 1');
         $qb->setParameter('userId', (integer)$id)
             ->returns('count(DISTINCT l) as total');
 
@@ -142,7 +147,7 @@ abstract class AbstractContentPaginatedModel implements PaginatedInterface
 
             if (isset($filters['tag'])) {
                 $qb->match('(filterTag:Tag)<-[:TAGGED]-(content:Link)-[:HAS_POPULARITY]-(popularity:Popularity)')
-                    ->where('filterTag.name IN { filterTags } ')
+                    ->where('filterTag.name IN { filterTags }')
                     ->with('content', 'popularity.popularity AS popularity');
                 $qb->setParameter('filterTags', $filters['tag']);
 
