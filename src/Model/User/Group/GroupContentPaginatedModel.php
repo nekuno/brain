@@ -28,7 +28,9 @@ class GroupContentPaginatedModel extends AbstractContentPaginatedModel
 
         $result = $qb->getQuery()->getResultSet();
 
-        return $this->buildResponseFromResult($result);
+        $response = $this->buildResponseFromResult($result);
+
+        return $response['items'];
     }
 
     public function countTotal(array $filters)
