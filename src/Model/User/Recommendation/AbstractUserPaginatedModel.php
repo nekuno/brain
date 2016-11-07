@@ -66,7 +66,7 @@ abstract class AbstractUserPaginatedModel implements PaginatedInterface
         $filters = $this->profileFilterModel->splitFilters($filters);
 
         $profileFilters = $this->getProfileFilters($filters['profileFilters']);
-        $userFilters = $this->getPopularUserFilters($filters['userFilters']);
+        $userFilters = $this->getUserFilters($filters['userFilters']);
         $qb = $this->gm->createQueryBuilder();
 
         $qb->setParameters($parameters);
