@@ -141,7 +141,8 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
         $qb->setParameters($parameters);
 
         $qb->match('(u:User {qnoow_id: {userId}}), (anyUser:User)')
-            ->where('u <> anyUser', 'NOT (anyUser:' . GhostUserManager::LABEL_GHOST_USER . ')', 'NOT (u)-[:LIKES|:DISLIKES]->(anyUser)')
+            ->where('u <> anyUser', 'NOT (anyUser:' . GhostUserManager::LABEL_GHOST_USER . ')', 'NOT (u)-[:LIKES|:DISLIKES]->(anyUser)',
+                '((u)-[:MATCHES|:SIMILARITY]-(anyUser) AND NOT (u)-[:IGNORES]->(anyUser) OR (u)-[:IGNORES]->(anyUser))')
             ->with('DISTINCT anyUser as anyUser', 'u')
             ->limit(self::USER_SAFETY_LIMIT)
             ->with('u', 'anyUser')
