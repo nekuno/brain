@@ -229,7 +229,7 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
     public function getIgnoredContent($filters, $limit, $ignored)
     {
         $id = $filters['id'];
-        $condition = "MATCH (u:User{qnoow_id:$id})-[:IGNORES]->(anyUser)";
+        $condition = "MATCH (:User{qnoow_id:$id})-[:IGNORES]->(anyUser)";
         $items = $this->getUsersByPopularity($filters, $ignored, $limit, $condition);
 
         $return = array('items' => array_slice($items, 0, $limit));
