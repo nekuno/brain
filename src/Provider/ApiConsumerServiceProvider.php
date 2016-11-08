@@ -6,6 +6,7 @@ use ApiConsumer\Factory\FetcherFactory;
 use ApiConsumer\Factory\ProcessorFactory;
 use ApiConsumer\Fetcher\FetcherService;
 use ApiConsumer\Fetcher\GetOldTweets\GetOldTweets;
+use ApiConsumer\Fetcher\ProcessorService;
 use ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser;
 use ApiConsumer\Registry\Registry;
 use ApiConsumer\Factory\ResourceOwnerFactory;
@@ -53,6 +54,12 @@ class ApiConsumerServiceProvider implements ServiceProviderInterface
                 $resourceOwnerFactory = new FetcherFactory($app['api_consumer.config']['fetcher'], $app['api_consumer.resource_owner_factory']);
 
                 return $resourceOwnerFactory;
+            }
+        );
+
+        $app['api_consumer.processor'] = $app->share(
+            function($app) {
+                return new ProcessorService($app['api_consumer.fetcher'], $app['api_consumer.link_processor'], $app['links.model'], $app['dispatcher'], $app['users.rate.model']);
             }
         );
 

@@ -92,9 +92,9 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
                     $channel,
                     $dispatcher,
                     $fetcher,
+                    $this->app['api_consumer.processor'],
                     $this->app['api_consumer.resource_owner_factory'],
                     $this->app['users.tokens.model'],
-                    $this->app['users.lookup.model'],
                     $this->app['users.socialprofile.manager'],
                     $this->app['dbs']['mysql_social'],
                     $this->app['dbs']['mysql_brain']);
