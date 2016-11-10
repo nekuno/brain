@@ -30,7 +30,7 @@ class GroupMembersPaginatedModel extends AbstractUserPaginatedModel
             ->setParameter('offset', (int)$offset)
             ->setParameter('limit', (int)$limit);
 
-        $qb->match('(anyUser)<-[:PROFILE_OF]-(p:Profile)')
+        $qb->match('(anyUser)<-[:PROFILE_OF]-(profile:Profile)')
             ->optionalMatch('(profile)-[:LOCATION]->(l:Location)')
             ->optionalMatch('(profile)<-[:OPTION_OF]-(option:ProfileOption)')
             ->optionalMatch('(profile)-[:TAGGED]-(tag:ProfileTag)');
