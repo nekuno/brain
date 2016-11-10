@@ -110,7 +110,7 @@ class FetcherService implements LoggerAwareInterface
                     }
                     $newLinks = $e->getLinks();
                     $this->logger->warning(sprintf('Fetcher: Error fetching feed for user "%s" with fetcher "%s" from resource "%s". Reason: %s', $userId, get_class($fetcher), $resourceOwner, $originalException->getMessage()));
-                    $this->dispatcher->dispatch(\AppEvents::EXCEPTION_WARNING, new ExceptionEvent($e, sprintf('Fetcher: Error fetching feed for user "%s" with fetcher "%s" from resource "%s". Reason: %s', $userId, $fetcher, $resourceOwner, $originalException->getMessage())));
+                    $this->dispatcher->dispatch(\AppEvents::EXCEPTION_WARNING, new ExceptionEvent($e, sprintf('Fetcher: Error fetching feed for user "%s" with fetcher "%s" from resource "%s". Reason: %s', $userId, get_class($fetcher), $resourceOwner, $originalException->getMessage())));
                     if (!empty($newLinks)) {
                         $this->logger->info(sprintf('%d links were fetched before the exception happened and are going to be processed.', count($newLinks)));
                         $links = array_merge($links, $newLinks);
