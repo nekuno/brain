@@ -59,7 +59,7 @@ class ApiConsumerServiceProvider implements ServiceProviderInterface
 
         $app['api_consumer.processor'] = $app->share(
             function($app) {
-                return new ProcessorService($app['api_consumer.fetcher'], $app['api_consumer.link_processor'], $app['links.model'], $app['dispatcher'], $app['users.rate.model']);
+                return new ProcessorService($app['api_consumer.fetcher'], $app['api_consumer.link_processor'], $app['links.model'], $app['dispatcher'], $app['users.rate.model'], $app['api_consumer.link_processor.link_resolver']);
             }
         );
 
