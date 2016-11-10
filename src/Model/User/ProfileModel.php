@@ -309,7 +309,7 @@ class ProfileModel
         }
     }
 
-    protected function build(Row $row, $locale = null)
+    public function build(Row $row, $locale = null)
     {
         /* @var $node Node */
         $node = $row->offsetGet('profile');

@@ -52,15 +52,17 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
             ->with('u', 'anyUser', '(CASE WHEN EXISTS(m.matching_questions) THEN m.matching_questions ELSE 0.01 END) AS matching_questions')
             ->optionalMatch('(u)-[s:SIMILARITY]-(anyUser)')
             ->with('u', 'anyUser', 'matching_questions', '(CASE WHEN EXISTS(s.similarity) THEN s.similarity ELSE 0.01 END) AS similarity')
-            ->match('(anyUser)<-[:PROFILE_OF]-(p:Profile)');
+            ->match('(anyUser)<-[:PROFILE_OF]-(p:Profile)')
+            ->optionalMatch('(p)<-[:OPTION_OF]-(option:ProfileOption)')
+            ->optionalMatch('(p)-[:TAGGED]-(tag:ProfileTag)');
 
         $qb->optionalMatch('(p)-[:LOCATION]->(l:Location)');
 
-        $qb->with('u, anyUser, matching_questions, similarity, p, l');
+        $qb->with('u, anyUser, matching_questions, similarity, p, collect(distinct option) AS options, collect(distinct tag) as tags, l');
         $qb->where($profileFilters['conditions'])
-            ->with('u', 'anyUser', 'matching_questions', 'similarity', 'p', 'l');
+            ->with('u', 'anyUser', 'matching_questions', 'similarity', 'p', 'options', 'tags', 'l');
         $qb->where( $userFilters['conditions'])
-            ->with('u', 'anyUser', 'matching_questions', 'similarity', 'p', 'l');
+            ->with('u', 'anyUser', 'matching_questions', 'similarity', 'p', 'options', 'tags', 'l');
 
         foreach ($profileFilters['matches'] as $match) {
             $qb->match($match);
@@ -69,14 +71,17 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
             $qb->match($match);
         }
 
-        $qb->with('DISTINCT anyUser AS anyUser, u, matching_questions, similarity, p, l');
+        $qb->with('DISTINCT anyUser AS anyUser, u, matching_questions, similarity, p, options, tags, l');
 
         $qb->returns(
             'anyUser.qnoow_id AS id,
              anyUser.username AS username,
              anyUser.photo AS photo,
              p.birthday AS birthday,
-             l.locality + ", " + l.country AS location,
+             p AS profile,
+             options,
+             tags,
+             l AS location,
              matching_questions,
              similarity,
              0 AS like'
