@@ -52,17 +52,15 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
             ->with('u', 'anyUser', '(CASE WHEN EXISTS(m.matching_questions) THEN m.matching_questions ELSE 0.01 END) AS matching_questions')
             ->optionalMatch('(u)-[s:SIMILARITY]-(anyUser)')
             ->with('u', 'anyUser', 'matching_questions', '(CASE WHEN EXISTS(s.similarity) THEN s.similarity ELSE 0.01 END) AS similarity')
-            ->match('(anyUser)<-[:PROFILE_OF]-(p:Profile)')
-            ->optionalMatch('(p)<-[:OPTION_OF]-(option:ProfileOption)')
-            ->optionalMatch('(p)-[:TAGGED]-(tag:ProfileTag)');
+            ->match('(anyUser)<-[:PROFILE_OF]-(p:Profile)');
 
         $qb->optionalMatch('(p)-[:LOCATION]->(l:Location)');
 
-        $qb->with('u, anyUser, matching_questions, similarity, p, collect(distinct option) AS options, collect(distinct tag) as tags, l');
+        $qb->with('u, anyUser, matching_questions, similarity, p, l');
         $qb->where($profileFilters['conditions'])
-            ->with('u', 'anyUser', 'matching_questions', 'similarity', 'p', 'options', 'tags', 'l');
+            ->with('u', 'anyUser', 'matching_questions', 'similarity', 'p', 'l');
         $qb->where( $userFilters['conditions'])
-            ->with('u', 'anyUser', 'matching_questions', 'similarity', 'p', 'options', 'tags', 'l');
+            ->with('u', 'anyUser', 'matching_questions', 'similarity', 'p', 'l');
 
         foreach ($profileFilters['matches'] as $match) {
             $qb->match($match);
@@ -71,7 +69,9 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
             $qb->match($match);
         }
 
-        $qb->with('anyUser, u, matching_questions, similarity, p, options, tags, l');
+        $qb->with('anyUser, u, matching_questions, similarity, p, l')
+            ->optionalMatch('(p)<-[optionOf:OPTION_OF]-(option:ProfileOption)')
+            ->optionalMatch('(p)-[tagged:TAGGED]-(tag:ProfileTag)');
 
         $qb->returns(
             'anyUser.qnoow_id AS id,
@@ -79,8 +79,8 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
              anyUser.photo AS photo,
              p.birthday AS birthday,
              p AS profile,
-             options,
-             tags,
+             collect(distinct {option: option, detail: (CASE WHEN EXISTS(optionOf.detail) THEN optionOf.detail ELSE null END)}) AS options,
+             collect(distinct {tag: tag, tagged: tagged}) AS tags,
              l AS location,
              matching_questions,
              similarity,
@@ -171,7 +171,7 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
             $qb->match($match);
         }
 
-        $qb->returns('COUNT(DISTINCT anyUser) as total');
+        $qb->returns('COUNT(anyUser) as total');
         $query = $qb->getQuery();
         $result = $query->getResultSet();
 

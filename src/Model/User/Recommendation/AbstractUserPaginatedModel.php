@@ -84,20 +84,18 @@ abstract class AbstractUserPaginatedModel implements PaginatedInterface
             ->optionalMatch('(:User {qnoow_id: { userId }})-[m:MATCHES]-(anyUser)')
             ->optionalMatch('(:User {qnoow_id: { userId }})-[s:SIMILARITY]-(anyUser)')
             ->with(
-                'anyUser,
+                'distinct anyUser,
                 (CASE WHEN EXISTS(m.matching_questions) THEN m.matching_questions ELSE 0.01 END) AS matching_questions,
                 (CASE WHEN EXISTS(s.similarity) THEN s.similarity ELSE 0.01 END) AS similarity'
             )
             ->where($userFilters['conditions'])
             ->match('(anyUser)<-[:PROFILE_OF]-(p:Profile)');
 
-        $qb->optionalMatch('(p)-[:LOCATION]->(l:Location)')
-            ->optionalMatch('(p)<-[:OPTION_OF]-(option:ProfileOption)')
-            ->optionalMatch('(p)-[:TAGGED]-(tag:ProfileTag)');
+        $qb->optionalMatch('(p)-[:LOCATION]->(l:Location)');
 
-        $qb->with('anyUser, p, l, collect(distinct option) AS options, collect(distinct tag) as tags, matching_questions', 'similarity');
+        $qb->with('anyUser, p, l, matching_questions', 'similarity');
         $qb->where($profileFilters['conditions'])
-            ->with('anyUser', 'p', 'l', 'options', 'tags', 'matching_questions', 'similarity');
+            ->with('anyUser', 'p', 'l', 'matching_questions', 'similarity');
 
         if (null !== $additionalCondition) {
             $qb->add('', $additionalCondition);
@@ -110,9 +108,11 @@ abstract class AbstractUserPaginatedModel implements PaginatedInterface
             $qb->match($match);
         }
 
-        $qb->with('DISTINCT anyUser, p, l, options, tags, matching_questions', 'similarity')
+        $qb->with('anyUser, p, l, matching_questions', 'similarity')
+            ->optionalMatch('(p)<-[optionOf:OPTION_OF]-(option:ProfileOption)')
+            ->optionalMatch('(p)-[tagged:TAGGED]-(tag:ProfileTag)')
             ->optionalMatch('(anyUser)<-[likes:LIKES]-(:User)')
-            ->with('anyUser', 'count(likes) as popularity', 'p', 'l', 'options', 'tags', 'matching_questions', 'similarity');
+            ->with('anyUser', 'collect(distinct {option: option, detail: (CASE WHEN EXISTS(optionOf.detail) THEN optionOf.detail ELSE null END)}) AS options', 'collect(distinct {tag: tag, tagged: tagged}) AS tags', 'count(likes) as popularity', 'p', 'l', 'matching_questions', 'similarity');
 
         $qb->returns(
             'anyUser.qnoow_id AS id',
