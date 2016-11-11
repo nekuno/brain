@@ -55,13 +55,14 @@ class ProcessorService implements LoggerAwareInterface
      * @param EventDispatcher $dispatcher
      * @param RateModel $rateModel
      */
-    public function __construct(FetcherService $fetcherService, LinkProcessor $linkProcessor, LinkModel $linkModel, EventDispatcher $dispatcher, RateModel $rateModel)
+    public function __construct(FetcherService $fetcherService, LinkProcessor $linkProcessor, LinkModel $linkModel, EventDispatcher $dispatcher, RateModel $rateModel, LinkResolver $resolver)
     {
         $this->fetcherService = $fetcherService;
         $this->linkProcessor = $linkProcessor;
         $this->linkModel = $linkModel;
         $this->dispatcher = $dispatcher;
         $this->rateModel = $rateModel;
+        $this->resolver = $resolver;
     }
 
     public function setLogger(LoggerInterface $logger)
@@ -76,6 +77,9 @@ class ProcessorService implements LoggerAwareInterface
      */
     public function process(array $preprocessedLinks, $userId)
     {
+        if (empty($preprocessedLinks)){
+            return array();
+        }
         $source = $this->getCommonSource($preprocessedLinks);
         $this->dispatcher->dispatch(\AppEvents::PROCESS_START, new ProcessLinksEvent($userId, $source, $preprocessedLinks));
 
