@@ -28,6 +28,8 @@ class TwitterTweetProcessor extends AbstractProcessor
         if ($url) {
             $preprocessedLink->setCanonical($url);
         }
+
+        return array();
     }
 
     /**
