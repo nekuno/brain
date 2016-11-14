@@ -319,6 +319,8 @@ class ProfileModel
             if (isset($profile['location']['locality']) && $profile['location']['locality'] === 'N/A') {
                 $profile['location']['locality'] = $profile['location']['address'];
             }
+        } else {
+            $location = null;
         }
 
         $profile += $this->buildOptions($row);
