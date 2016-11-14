@@ -5,6 +5,7 @@ namespace Console\Command;
 use ApiConsumer\EventListener\FetchLinksInstantSubscriber;
 use ApiConsumer\EventListener\FetchLinksSubscriber;
 use ApiConsumer\Fetcher\FetcherService;
+use ApiConsumer\Fetcher\ProcessorService;
 use Console\ApplicationAwareCommand;
 use EventListener\ExceptionLoggerSubscriber;
 use EventListener\SimilarityMatchingProcessSubscriber;
@@ -14,7 +15,6 @@ use PhpAmqpLib\Connection\AMQPStreamConnection;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 use Service\AMQPManager;
-use Silex\Application;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Logger\ConsoleLogger;
@@ -87,12 +87,15 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
                 /* @var $fetcher FetcherService */
                 $fetcher = $this->app['api_consumer.fetcher'];
                 $fetcher->setLogger($logger);
+                /* @var $processorService ProcessorService */
+                $processorService = $this->app['api_consumer.processor'];
+                $processorService->setLogger($logger);
 
                 $worker = new LinkProcessorWorker(
                     $channel,
                     $dispatcher,
                     $fetcher,
-                    $this->app['api_consumer.processor'],
+                    $processorService,
                     $this->app['api_consumer.resource_owner_factory'],
                     $this->app['users.tokens.model'],
                     $this->app['users.socialprofile.manager'],
@@ -150,8 +153,11 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
                 /* @var $fetcher FetcherService */
                 $fetcher = $this->app['api_consumer.fetcher'];
                 $fetcher->setLogger($logger);
+                /* @var $processorService ProcessorService */
+                $processorService = $this->app['api_consumer.processor'];
+                $processorService->setLogger($logger);
 
-                $worker = new ChannelWorker($channel, $dispatcher, $fetcher, $this->app['get_old_tweets'],
+                $worker = new ChannelWorker($channel, $dispatcher, $fetcher, $processorService, $this->app['get_old_tweets'],
                     $this->app['users.socialprofile.manager'], $this->app['users.tokens.model'], $this->app['dbs']['mysql_brain']);
                 $worker->setLogger($logger);
                 $logger->notice('Processing channel queue');

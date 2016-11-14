@@ -97,6 +97,7 @@ class LinksFetchCommand extends ApplicationAwareCommand
 
         $logger = new ConsoleLogger($output, array(LogLevel::NOTICE => OutputInterface::VERBOSITY_NORMAL));
         $fetcherService->setLogger($logger);
+        $processorService->setLogger($logger);
 
         $fetchLinksSubscriber = new FetchLinksSubscriber($output);
         $fetchLinksInstantSubscriber = new FetchLinksInstantSubscriber($this->app['guzzle.client'], $this->app['instant.host']);
