@@ -327,7 +327,6 @@ class LinkModel
 
     public function updateLink(array $data, $processed = false)
     {
-
         $qb = $this->gm->createQueryBuilder();
 
         $qb->match('(l:Link)');
@@ -386,8 +385,14 @@ class LinkModel
 
         $result = $query->getResultSet();
 
-        /* @var $row Row */
         $linkArray = array();
+        if ($result->count() == 0)
+        {
+            $link = $this->findLinkByUrl($data['url']);
+            $linkArray['id'] = $link['id'];
+        }
+
+        /* @var $row Row */
         foreach ($result as $row) {
 
             /** @var $link Node */
@@ -782,11 +787,10 @@ class LinkModel
 
     private function limitTextLengths(array $data)
     {
-        $description = isset($data['description']) ? $data['description'] : '';
-        $data['description'] = strlen($description) >= 25 ? mb_substr($description, 0, 22) . '...' : $description;
-
-        $title = isset($data['title']) ? $data['title'] : '';
-        $data['title'] = strlen($title) >= 25 ? mb_substr($title, 0, 22) . '...' : $title;
+        foreach (array('title', 'description') as $key) {
+            $value = isset($data[$key]) ? $data[$key] : '';
+            $data[$key] = strlen($value) >= 25 ? mb_substr($value, 0, 22, 'UTF-8') . '...' : $value;;
+        }
 
         return $data;
     }
