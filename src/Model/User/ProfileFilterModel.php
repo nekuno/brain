@@ -13,6 +13,8 @@ class ProfileFilterModel extends FilterModel
 {
     protected $profileMetadata;
     protected $profileCategories;
+    protected $profileOptions = array();
+    protected $profileTags = array();
 
     public function __construct(GraphManager $gm, array $metadata, array $profileMetadata, array $profileCategories, array $socialMetadata, $defaultLocale)
     {
@@ -83,7 +85,9 @@ class ProfileFilterModel extends FilterModel
     public function getChoiceOptions($locale)
     {
         $translationField = 'name_' . $locale;
-
+        if (isset($this->profileOptions[$translationField])) {
+            return $this->profileOptions[$translationField];
+        }
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(option:ProfileOption)')
             ->returns("head(filter(x IN labels(option) WHERE x <> 'ProfileOption')) AS labelName, option.id AS id, option." . $translationField . " AS name")
@@ -101,6 +105,8 @@ class ProfileFilterModel extends FilterModel
 
             $choiceOptions[$typeName][$optionId] = $optionName;
         }
+
+        $this->profileOptions[$translationField] = $choiceOptions;
 
         return $choiceOptions;
     }
@@ -326,11 +332,12 @@ class ProfileFilterModel extends FilterModel
 
     protected function getTopProfileTags($tagType)
     {
-
         $tagLabelName = $this->typeToLabel($tagType);
-
+        if (isset($this->profileTags[$tagLabelName])) {
+            return $this->profileTags[$tagLabelName];
+        }
         $qb = $this->gm->createQueryBuilder();
-        $qb->match('(tag:' . $tagLabelName . ')-[tagged:TAGGED]-(profile:Profile)')
+        $qb->match('(tag:' . $tagLabelName . ')-[tagged:TAGGED]->(profile:Profile)')
             ->returns('tag.name AS tag, count(*) as count')
             ->limit(5);
 
@@ -342,6 +349,8 @@ class ProfileFilterModel extends FilterModel
             /* @var $row Row */
             $tags[] = $row->offsetGet('tag');
         }
+
+        $this->profileTags[$tagLabelName] = $tags;
 
         return $tags;
     }

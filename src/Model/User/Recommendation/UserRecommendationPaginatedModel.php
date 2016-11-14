@@ -45,7 +45,7 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
 
         $qb->match('(u:User {qnoow_id: {userId}})-[:MATCHES|:SIMILARITY]-(anyUser:User)')
             ->where('u <> anyUser', 'NOT (anyUser:' . GhostUserManager::LABEL_GHOST_USER . ')', 'NOT (u)-[:LIKES|:DISLIKES|:IGNORES]->(anyUser)')
-            ->with('u', 'anyUser')
+            ->with('DISTINCT anyUser', 'u')
             ->limit(self::USER_SAFETY_LIMIT)
             ->with('u', 'anyUser')
             ->optionalMatch('(u)-[m:MATCHES]-(anyUser)')
@@ -69,14 +69,19 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
             $qb->match($match);
         }
 
-        $qb->with('DISTINCT anyUser AS anyUser, u, matching_questions, similarity, p, l');
+        $qb->with('anyUser, u, matching_questions, similarity, p, l')
+            ->optionalMatch('(p)<-[optionOf:OPTION_OF]-(option:ProfileOption)')
+            ->optionalMatch('(p)-[tagged:TAGGED]-(tag:ProfileTag)');
 
         $qb->returns(
             'anyUser.qnoow_id AS id,
              anyUser.username AS username,
              anyUser.photo AS photo,
              p.birthday AS birthday,
-             l.locality + ", " + l.country AS location,
+             p AS profile,
+             collect(distinct {option: option, detail: (CASE WHEN EXISTS(optionOf.detail) THEN optionOf.detail ELSE null END)}) AS options,
+             collect(distinct {tag: tag, tagged: tagged}) AS tags,
+             l AS location,
              matching_questions,
              similarity,
              0 AS like'
@@ -166,7 +171,7 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
             $qb->match($match);
         }
 
-        $qb->returns('COUNT(DISTINCT anyUser) as total');
+        $qb->returns('COUNT(anyUser) as total');
         $query = $qb->getQuery();
         $result = $query->getResultSet();
 

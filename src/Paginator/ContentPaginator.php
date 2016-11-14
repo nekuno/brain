@@ -25,6 +25,8 @@ class ContentPaginator extends Paginator
         $limit = min($limit, $this->getMaxLimit());
 
         $offset = $request->get('offset', 0);
+        $locale = $request->get('locale', null);
+        $filters['locale'] = $locale;
 
         if (!$paginated->validateFilters($filters)) {
             throw new ValidationException(array(), sprintf('Invalid filters in "%s"', get_class($paginated)));

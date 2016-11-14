@@ -17,6 +17,7 @@ class UserRecommendation implements \JsonSerializable
     protected $age;
     protected $location;
     protected $like;
+    protected $profile;
 
     /**
      * @return mixed
@@ -147,6 +148,22 @@ class UserRecommendation implements \JsonSerializable
     }
 
     /**
+     * @return mixed $profile
+     */
+    public function getProfile()
+    {
+        return $this->profile;
+    }
+
+    /**
+     * @param mixed $profile
+     */
+    public function setProfile($profile)
+    {
+        $this->profile = $profile;
+    }
+
+    /**
      * Specify data which should be serialized to JSON
      * @link http://php.net/manual/en/jsonserializable.jsonserialize.php
      * @return mixed data which can be serialized by <b>json_encode</b>,
@@ -164,6 +181,7 @@ class UserRecommendation implements \JsonSerializable
             'age' => $this->getAge(),
             'location' => $this->getLocation(),
             'like' => $this->getLike(),
+            'profile' => $this->getProfile(),
         );
     }
 }

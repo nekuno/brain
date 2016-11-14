@@ -31,14 +31,20 @@ class GroupMembersPaginatedModel extends AbstractUserPaginatedModel
             ->setParameter('limit', (int)$limit);
 
         $qb->match('(anyUser)<-[:PROFILE_OF]-(p:Profile)')
-            ->optionalMatch('(p)-[:LOCATION]->(l:Location)');
+            ->optionalMatch('(p)-[:LOCATION]->(l:Location)')
+            ->optionalMatch('(p)<-[optionOf:OPTION_OF]-(option:ProfileOption)')
+            ->optionalMatch('(p)-[tagged:TAGGED]-(tag:ProfileTag)')
+            ->with('anyUser', 'matching_questions', 'p', 'l', 'collect(distinct {option: option, detail: (CASE WHEN EXISTS(optionOf.detail) THEN optionOf.detail ELSE null END)}) AS options', 'collect(distinct {tag: tag, tagged: tagged}) AS tags');
 
         $qb->returns(
             'anyUser.qnoow_id AS id,
              anyUser.username AS username,
              anyUser.photo AS photo,
              p.birthday AS birthday,
-             l.locality + ", " + l.country AS location',
+             p,
+             options,
+             tags,
+             l AS location',
             'matching_questions',
             '0 AS similarity',
             '0 AS like',

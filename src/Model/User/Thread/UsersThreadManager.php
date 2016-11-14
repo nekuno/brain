@@ -86,9 +86,12 @@ class UsersThreadManager
                 'u.qnoow_id AS id',
                 'u.username AS username',
                 'u.photo AS photo',
+                'like',
                 'p.birthday AS birthday',
-                'l.locality + ", " + l.country AS location',
-                'like'
+                'l AS location',
+                'p AS profile',
+                '[] AS options',
+                '[] AS tags'
             );
         $qb->setParameters($parameters);
         $result = $qb->getQuery()->getResultSet();
