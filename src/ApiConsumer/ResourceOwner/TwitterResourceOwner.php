@@ -153,14 +153,14 @@ class TwitterResourceOwner extends TwitterResourceOwnerBase
         return $apiResponse;
     }
 
-	public function dispatchChannel(array $data)
-	{
-		$url = isset($data['url']) ? $data['url'] : null;
-		$username = isset($data['username']) ? $data['username'] : null;
-		if (!$username && $url) {
-			throw new \Exception ('Cannot add twitter channel with username and url not set');
-		}
-
-		$this->dispatcher->dispatch(\AppEvents::CHANNEL_ADDED, new ChannelEvent($this->getName(), $url, $username));
-	}
+//	public function dispatchChannel(array $data)
+//	{
+//		$url = isset($data['url']) ? $data['url'] : null;
+//		$username = isset($data['username']) ? $data['username'] : null;
+//		if (!$username && $url) {
+//			throw new \Exception ('Cannot add twitter channel with username and url not set');
+//		}
+//
+//		$this->dispatcher->dispatch(\AppEvents::CHANNEL_ADDED, new ChannelEvent($this->getName(), $url, $username));
+//	}
 }
