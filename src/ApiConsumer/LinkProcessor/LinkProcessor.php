@@ -9,9 +9,6 @@ class LinkProcessor
 {
     private $processorFactory;
 
-    private $lastResponse = array();
-
-
     public function __construct(ProcessorFactory $processorFactory)
     {
         $this->processorFactory = $processorFactory;
@@ -36,7 +33,6 @@ class LinkProcessor
         $processor = $this->selectProcessor($preprocessedLink);
 
         $response = $processor->requestItem($preprocessedLink);
-//        $this->lastResponse = $response;
 
         $processor->hydrateLink($preprocessedLink, $response);
         $processor->addTags($preprocessedLink, $response);
@@ -56,13 +52,4 @@ class LinkProcessor
 
         return $this->processorFactory->build($processorName);
     }
-
-    public function getSynonymousParametersFromCache(PreprocessedLink $preprocessedLink)
-    {
-        $processor = $this->selectProcessor($preprocessedLink);
-        $synonymousParameters = $processor->getSynonymousParameters($preprocessedLink, $this->lastResponse);
-
-        return $synonymousParameters;
-    }
-
 }
