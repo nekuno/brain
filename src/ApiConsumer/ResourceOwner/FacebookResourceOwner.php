@@ -73,8 +73,12 @@ class FacebookResourceOwner extends FacebookResourceOwnerBase
 		}
 
 		$getAccessURL = 'https://graph.facebook.com/oauth/access_token';
+        $content = $this->getResponseContent($response);
+        if (!isset($content['code'])) {
+            throw new \Exception(sprintf('Unable to refresh token: "%s"', $content['error']['message']));
+        }
 		$query = array(
-			'code' => $this->getResponseContent($response)['code'],
+			'code' => $content['code'],
 			'client_id' => $this->getOption('consumer_key'),
 			'redirect_uri' => $this->getOption('redirect_uri'),
 		);
