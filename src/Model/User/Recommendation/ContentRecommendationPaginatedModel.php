@@ -60,14 +60,14 @@ class ContentRecommendationPaginatedModel extends AbstractContentPaginatedModel
         $return = array('items' => array());
 
         $id = $filters['id'];
-        $types = isset($filters['type']) ? $filters['type'] : array('Link');
+        $filters['type'] = isset($filters['type']) ? $filters['type'] : array('Link');
 
         $params = array(
             'userId' => (integer)$id,
             'offset' => (integer)$offset,
             'limit' => (integer)$limit
         );
-        $typesString = implode(':', $types);
+        $typesString = implode(':', $filters['type']);
 
         $qb = $this->gm->createQueryBuilder();
 
