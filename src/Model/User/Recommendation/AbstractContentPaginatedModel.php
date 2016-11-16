@@ -57,10 +57,10 @@ abstract class AbstractContentPaginatedModel implements PaginatedInterface
      */
     public function countTotal(array $filters)
     {
-        $popLimit = count($filters['type']) > 1 || $filters['type'][0] != 'Link' ? self::POP_UPPER_LIMIT * 10 : self::POP_UPPER_LIMIT;
         $id = $filters['id'];
-        $types = isset($filters['type']) ? $filters['type'] : array('Link');
-        $typesString = implode(':', $types);
+        $filters['type'] = isset($filters['type']) ? $filters['type'] : array('Link');
+        $typesString = implode(':', $filters['type']);
+        $popLimit = count($filters['type']) > 1 || $filters['type'][0] != 'Link' ? self::POP_UPPER_LIMIT * 10 : self::POP_UPPER_LIMIT;
 
         $qb = $this->gm->createQueryBuilder()
             ->setParameter('popLimit', $popLimit);
