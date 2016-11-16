@@ -288,6 +288,28 @@ class ThreadManager
                     ),
                     'default' => true,
                 ),
+            ),
+            'default_lite' => array(
+                array(
+                    'name' => str_replace(array('%desired%', '%location%'), array($nounDesired, $location['locality']),
+                        $this->translator->trans('threads.default.desired_from_location')),
+                    'category' => ThreadManager::LABEL_THREAD_USERS,
+                    'filters' => array(
+                        'userFilters' => array(
+                            'birthday' => array(
+                                'min' => $birthdayRange['min'],
+                                'max' => $birthdayRange['max'],
+                            ),
+                            'location' => array(
+                                'distance' => 50,
+                                'location' => $location
+                            ),
+                            'gender' => array($genderDesired !== 'people' ? $genderDesired : null),
+                        ),
+                        'order' => 'content',
+                    ),
+                    'default' => true,
+                ),
             )
         );
         if ($threads['default'][5]['filters']['userFilters']['gender'] == array(null)) {
