@@ -2,12 +2,10 @@
 
 namespace ApiConsumer\ResourceOwner;
 
-use ApiConsumer\LinkProcessor\LinkAnalyzer;
 use Model\User\TokensModel;
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
 use HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\GoogleResourceOwner as GoogleResourceOwnerBase;
 use Buzz\Message\RequestInterface as HttpRequestInterface;
-
 
 /**
  * Class GoogleResourceOwner
@@ -32,7 +30,6 @@ class GoogleResourceOwner extends GoogleResourceOwnerBase
     {
         $query['key'] = $this->getOption('client_credential')['application_token'];
 
-        $url = $this->options['base_url'].$url;
         return $this->httpRequest($this->normalizeUrl($url, $query));
     }
 
@@ -72,8 +69,8 @@ class GoogleResourceOwner extends GoogleResourceOwnerBase
             'client_secret' => $this->options['consumer_secret'],
         );
 
-		$response = $this->httpRequest($this->normalizeUrl($url, $parameters), null, array(), HttpRequestInterface::METHOD_POST);
-		$data = $this->getResponseContent($response);
+        $response = $this->httpRequest($this->normalizeUrl($url, $parameters), null, array(), HttpRequestInterface::METHOD_POST);
+        $data = $this->getResponseContent($response);
 
         return $data;
     }
@@ -86,7 +83,7 @@ class GoogleResourceOwner extends GoogleResourceOwnerBase
             'part' => 'id,snippet',
             'type' => 'video'
         );
-        $response = $this->sendAuthorizedRequest($url, $query);
+        $response = $this->sendAuthorizedRequest($this->options['base_url'] . $url, $query);
 
         return $this->getResponseContent($response);
     }
@@ -124,7 +121,8 @@ class GoogleResourceOwner extends GoogleResourceOwnerBase
             $itemKey => $itemId[$itemKey],
         );
 
-        $response = $this->sendAuthorizedRequest($url, $query);
+        $response = $this->sendAuthorizedRequest($this->options['base_url'] . $url, $query);
+
         return $this->getResponseContent($response);
 
     }

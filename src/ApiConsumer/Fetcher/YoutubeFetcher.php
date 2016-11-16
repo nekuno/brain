@@ -23,19 +23,6 @@ class YoutubeFetcher extends BasicPaginationFetcher
 
     static public $PLAYLISTS_TO_EXCLUDE = array('watchHistory', 'watchLater');
 
-    /**
-     * {@inheritDoc}
-     */
-    public function getUrl()
-    {
-        return $this->url;
-
-    }
-
-    public function setUrl($url)
-    {
-        $this->url = $url;
-    }
 
     /**
      * {@inheritDoc}

@@ -41,7 +41,7 @@ class GoogleFetcher extends BasicPaginationFetcher
 
     protected function getItemsFromResponse($response)
     {
-        return $response['items'] ?: array();
+        return isset($response['items']) && $response['items'] ? $response['items'] : array();
     }
 
     /**
