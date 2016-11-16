@@ -98,22 +98,22 @@ class LinkAnalyzer
     }
     
     //TODO: Improve detection on host, not whole url
-    private function isFacebook($url)
+    private static function isFacebook($url)
     {
         return strpos($url, 'facebook.com') !== false;
     }
 
-    private function isTwitter($url)
+    private static function isTwitter($url)
     {
         return strpos($url, 'twitter.com') !== false;
     }
 
-    private function isSpotify($url)
+    private static function isSpotify($url)
     {
         return strpos($url, 'spotify.com') !== false;
     }
 
-    private function isYouTube($url)
+    private static function isYouTube($url)
     {
         return strpos($url, 'youtube.com') !== false || strpos($url, 'youtu.be') !== false;
     }

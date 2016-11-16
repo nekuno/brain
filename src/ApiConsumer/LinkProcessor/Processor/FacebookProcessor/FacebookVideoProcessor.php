@@ -9,21 +9,21 @@ use Model\Video;
 
 class FacebookVideoProcessor extends AbstractFacebookProcessor
 {
-    function requestItem(PreprocessedLink $preprocessedLink)
+    public function requestItem(PreprocessedLink $preprocessedLink)
     {
-        $id = $this->getItemId($preprocessedLink);
+        $id = $this->getItemId($preprocessedLink->getCanonical());
         $preprocessedLink->setResourceItemId($id);
 
         if ($preprocessedLink->getSource() == TokensModel::FACEBOOK) {
             $response = $this->resourceOwner->requestVideo($id, $preprocessedLink->getToken());
         } else {
-           $response = array();
+            $response = array();
         }
 
         return $response;
     }
 
-    function hydrateLink(PreprocessedLink $preprocessedLink, array $data)
+    public function hydrateLink(PreprocessedLink $preprocessedLink, array $data)
     {
         $video = new Video();
         $video->setDescription(isset($data['description']) ? $data['description'] : null);

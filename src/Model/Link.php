@@ -229,7 +229,7 @@ class Link implements \JsonSerializable
     }
 
     public function isComplete() {
-        return $this->getUrl() && $this->getTitle() && $this->getDescription() && $this->getThumbnail();
+        return $this->getUrl() && $this->getTitle() && $this->getThumbnail();
     }
 
     /**

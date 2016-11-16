@@ -409,6 +409,25 @@ class LinkModel
 
     }
 
+    public function setProcessed($url, $processed = true) {
+
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(l:Link{url: {url}})')
+            ->with('l')
+            ->limit(1)
+            ->setParameter('url', $url);
+
+        $qb->set('l.processed = {processed}')
+            ->setParameter('processed', $processed);
+
+        $qb->returns('l');
+
+        $result = $qb->getQuery()->getResultSet();
+
+        return $result->count() > 0 && $result->current()->offsetExists('l');
+    }
+
     public function removeLink($linkId)
     {
         $qb = $this->gm->createQueryBuilder();
