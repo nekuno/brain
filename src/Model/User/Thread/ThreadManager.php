@@ -333,7 +333,7 @@ class ThreadManager
     }
 
     private function fixGenderFilter(&$threads) {
-        foreach ($threads as $thread) {
+        foreach ($threads as &$thread) {
             if (isset($thread['filters']['userFilters']) && isset($thread['filters']['userFilters']['gender']) && $thread['filters']['userFilters']['gender'] == array(null)) {
                 unset($thread['filters']['userFilters']['gender']);
             }
