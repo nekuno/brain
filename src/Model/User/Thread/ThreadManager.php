@@ -21,8 +21,9 @@ class ThreadManager
     const LABEL_THREAD_USERS = 'ThreadUsers';
     const LABEL_THREAD_CONTENT = 'ThreadContent';
     const SCENARIO_DEFAULT = 'default';
+    const SCENARIO_DEFAULT_LITE = 'default_lite';
 
-    static public $scenarios = array(ThreadManager::SCENARIO_DEFAULT);
+    static public $scenarios = array(ThreadManager::SCENARIO_DEFAULT, ThreadManager::SCENARIO_DEFAULT_LITE);
 
     /** @var  GraphManager */
     protected $graphManager;
@@ -48,10 +49,14 @@ class ThreadManager
      * @param Translator $translator
      * @param Validator $validator
      */
-    public function __construct(GraphManager $graphManager, UsersThreadManager $um,
-                                ContentThreadManager $cm, ProfileModel $profileModel,
-                                Translator $translator, Validator $validator)
-    {
+    public function __construct(
+        GraphManager $graphManager,
+        UsersThreadManager $um,
+        ContentThreadManager $cm,
+        ProfileModel $profileModel,
+        Translator $translator,
+        Validator $validator
+    ) {
         $this->graphManager = $graphManager;
         $this->usersThreadManager = $um;
         $this->contentThreadManager = $cm;
@@ -217,7 +222,7 @@ class ThreadManager
 
         //specific order to be created from bottom to top
         $threads = array(
-            'default' => array(
+            ThreadManager::SCENARIO_DEFAULT => array(
                 array(
                     'name' => $this->translator->trans('threads.default.twitter_channels'),
                     'category' => ThreadManager::LABEL_THREAD_CONTENT,
@@ -269,8 +274,11 @@ class ThreadManager
                     'default' => true,
                 ),
                 array(
-                    'name' => str_replace(array('%desired%', '%location%'), array($nounDesired, $location['locality']),
-                        $this->translator->trans('threads.default.desired_from_location')),
+                    'name' => str_replace(
+                        array('%desired%', '%location%'),
+                        array($nounDesired, $location['locality']),
+                        $this->translator->trans('threads.default.desired_from_location')
+                    ),
                     'category' => ThreadManager::LABEL_THREAD_USERS,
                     'filters' => array(
                         'userFilters' => array(
@@ -289,10 +297,13 @@ class ThreadManager
                     'default' => true,
                 ),
             ),
-            'default_lite' => array(
+            ThreadManager::SCENARIO_DEFAULT_LITE => array(
                 array(
-                    'name' => str_replace(array('%desired%', '%location%'), array($nounDesired, $location['locality']),
-                        $this->translator->trans('threads.default.desired_from_location')),
+                    'name' => str_replace(
+                        array('%desired%', '%location%'),
+                        array($nounDesired, $location['locality']),
+                        $this->translator->trans('threads.default.desired_from_location')
+                    ),
                     'category' => ThreadManager::LABEL_THREAD_USERS,
                     'filters' => array(
                         'userFilters' => array(
@@ -365,9 +376,11 @@ class ThreadManager
 
         $qb->match('(u:User{qnoow_id:{userId}})')
             ->create('(thread:' . ThreadManager::LABEL_THREAD . ':' . $category . ')')
-            ->set('thread.name = {name}',
+            ->set(
+                'thread.name = {name}',
                 'thread.createdAt = timestamp()',
-                'thread.updatedAt = timestamp()')
+                'thread.updatedAt = timestamp()'
+            )
             ->create('(u)-[:HAS_THREAD]->(thread)');
         if (isset($data['default']) && $data['default'] === true) {
             $qb->set('thread :ThreadDefault');
@@ -414,8 +427,10 @@ class ThreadManager
             ->where('id(thread) = {id}')
             ->remove('thread:' . $this::LABEL_THREAD_USERS . ':' . $this::LABEL_THREAD_CONTENT . ':ThreadDefault')
             ->set('thread:' . $category)
-            ->set('thread.name = {name}',
-                'thread.updatedAt = timestamp()');
+            ->set(
+                'thread.name = {name}',
+                'thread.updatedAt = timestamp()'
+            );
         $qb->returns('thread');
         $qb->setParameters(
             array(
@@ -524,9 +539,9 @@ class ThreadManager
     {
         $threads = $this->getByUser($userId);
 
-        foreach ($threads as $thread){
+        foreach ($threads as $thread) {
 
-            if (!$thread instanceof UsersThread){
+            if (!$thread instanceof UsersThread) {
                 continue;
             }
 
@@ -536,9 +551,8 @@ class ThreadManager
             }
 
             /** @var Node $groupNode */
-            foreach ($filter->getUserFilters()['groups'] as $groupNode)
-            {
-                if ($groupNode->getId() == $groupId){
+            foreach ($filter->getUserFilters()['groups'] as $groupNode) {
+                if ($groupNode->getId() == $groupId) {
                     $this->deleteById($thread->getId());
                 }
             }
@@ -555,6 +569,7 @@ class ThreadManager
 
         $locale = isset($profile['interfaceLanguage']) ? $profile['interfaceLanguage'] : 'es';
         $this->translator->setLocale($locale);
+
         return array(
             'name' => str_replace('%group%', $group->getName(), $this->translator->trans('threads.default.people_from_group')),
             'category' => ThreadManager::LABEL_THREAD_USERS,
