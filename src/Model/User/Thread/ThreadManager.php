@@ -323,15 +323,21 @@ class ThreadManager
                 ),
             )
         );
-        if ($threads['default'][5]['filters']['userFilters']['gender'] == array(null)) {
-            unset($threads['default'][5]['filters']['userFilters']['gender']);
-        }
 
         if (!isset($threads[$scenario])) {
             return array();
         }
 
+        $this->fixGenderFilter($threads[$scenario]);
         return $threads[$scenario];
+    }
+
+    private function fixGenderFilter(&$threads) {
+        foreach ($threads as $thread) {
+            if (isset($thread['filters']['userFilters']) && isset($thread['filters']['userFilters']['gender']) && $thread['filters']['userFilters']['gender'] == array(null)) {
+                unset($thread['filters']['userFilters']['gender']);
+            }
+        }
     }
 
     /**
