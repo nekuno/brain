@@ -70,6 +70,10 @@ class UsersThreadsCreateCommand extends ApplicationAwareCommand
 
         foreach ($users as $user) {
 
+            if ($user->isGuest()){
+                continue;
+            }
+
             $output->writeln('-----------------------------------------------------------------------');
             $threads = $threadManager->getDefaultThreads($user, $scenario);
 
