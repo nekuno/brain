@@ -49,7 +49,7 @@ class UserSubscriber implements EventSubscriberInterface
         $userId = $groupEvent->getUserId();
         $group = $groupEvent->getGroup();
 
-        $this->threadManager->create($userId, $this->threadManager->getGroupThreadData($group, $userId));
+//        $this->threadManager->create($userId, $this->threadManager->getGroupThreadData($group, $userId));
     }
 
     public function onGroupRemoved(GroupEvent $groupEvent)
@@ -57,7 +57,7 @@ class UserSubscriber implements EventSubscriberInterface
         $groupId = $groupEvent->getGroup()->getId();
         $userId = $groupEvent->getUserId();
 
-        $this->threadManager->deleteGroupThreads($userId, $groupId);
+//        $this->threadManager->deleteGroupThreads($userId, $groupId);
     }
 
     public function onProfileCreated(ProfileEvent $profileEvent)

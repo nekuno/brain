@@ -81,7 +81,7 @@ class ThreadController
     {
         $threadManager = $app['users.threads.manager'];
 
-        $threads = $threadManager->getDefaultThreads($user);
+        $threads = $threadManager->getDefaultThreads($user, User\Thread\ThreadManager::SCENARIO_DEFAULT_LITE);
         try{
             $createdThreads = $threadManager->createBatchForUser($user->getId(), $threads);
         } catch (\Exception $e) {
