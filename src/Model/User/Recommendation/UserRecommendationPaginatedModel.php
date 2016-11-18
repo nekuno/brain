@@ -71,7 +71,7 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
 
         $qb->with('anyUser, u, matching_questions, similarity, p, l')
             ->optionalMatch('(u)-[likes:LIKES]->(anyUser)')
-            ->with('anyUser, u, matching_questions, similarity, p, l, (CASE WHEN likes IS NULL THEN 1 ELSE 0 END) AS like')
+            ->with('anyUser, u, matching_questions, similarity, p, l, (CASE WHEN likes IS NULL THEN 0 ELSE 1 END) AS like')
             ->optionalMatch('(p)<-[optionOf:OPTION_OF]-(option:ProfileOption)')
             ->optionalMatch('(p)-[tagged:TAGGED]-(tag:ProfileTag)');
 
