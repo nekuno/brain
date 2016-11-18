@@ -27,10 +27,10 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
             'userId' => (integer)$id
         );
 
-        $orderQuery = '  similarity DESC, matching_questions DESC, id ';
-        if (isset($filters['order']) && $filters['order'] == 'questions') {
+//        $orderQuery = '  similarity DESC, matching_questions DESC, id ';
+//        if (isset($filters['order']) && $filters['order'] == 'questions') {
             $orderQuery = ' matching_questions DESC, similarity DESC, id ';
-        }
+//        }
 
         $filters = $this->profileFilterModel->splitFilters($filters);
 
