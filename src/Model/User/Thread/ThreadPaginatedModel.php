@@ -56,8 +56,7 @@ class ThreadPaginatedModel implements PaginatedInterface
             )
         );
 
-        $qb->match('(user:User)')
-            ->where('user.qnoow_id= {userId}')
+        $qb->match('(user:User {qnoow_id: { userId }})')
             ->match('(user)-[:HAS_THREAD]->(thread:Thread)')
             ->returns('thread')
             ->orderBy('thread.updatedAt DESC')

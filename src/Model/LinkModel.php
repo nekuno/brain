@@ -216,8 +216,7 @@ class LinkModel
             return array();
         }
 
-        $data['title'] = isset($data['title']) ? $data['title'] : '';
-        $data['description'] = isset($data['description']) ? $data['description'] : '';
+        $data = $this->limitTextLengths($data);
 
         $link = $this->findLinkByUrl($data['url']);
 
@@ -267,7 +266,7 @@ class LinkModel
                 'l.description = { description }',
                 'l.language = { language }',
                 'l.processed = { processed }',
-                'l.created =  timestamp()'
+                'l.created =  timestamp()' //TODO: If there is created, use this instead (coalesce)
             );
 
         if (isset($data['thumbnail']) && $data['thumbnail']) {
@@ -328,7 +327,6 @@ class LinkModel
 
     public function updateLink(array $data, $processed = false)
     {
-
         $qb = $this->gm->createQueryBuilder();
 
         $qb->match('(l:Link)');
@@ -387,8 +385,14 @@ class LinkModel
 
         $result = $query->getResultSet();
 
-        /* @var $row Row */
         $linkArray = array();
+        if ($result->count() == 0)
+        {
+            $link = $this->findLinkByUrl($data['url']);
+            $linkArray['id'] = $link['id'];
+        }
+
+        /* @var $row Row */
         foreach ($result as $row) {
 
             /** @var $link Node */
@@ -403,6 +407,25 @@ class LinkModel
 
         return $linkArray;
 
+    }
+
+    public function setProcessed($url, $processed = true) {
+
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(l:Link{url: {url}})')
+            ->with('l')
+            ->limit(1)
+            ->setParameter('url', $url);
+
+        $qb->set('l.processed = {processed}')
+            ->setParameter('processed', $processed);
+
+        $qb->returns('l');
+
+        $result = $qb->getQuery()->getResultSet();
+
+        return $result->count() > 0 && $result->current()->offsetExists('l');
     }
 
     public function removeLink($linkId)
@@ -779,6 +802,16 @@ class LinkModel
         }
 
         return $link;
+    }
+
+    private function limitTextLengths(array $data)
+    {
+        foreach (array('title', 'description') as $key) {
+            $value = isset($data[$key]) ? $data[$key] : '';
+            $data[$key] = strlen($value) >= 25 ? mb_substr($value, 0, 22, 'UTF-8') . '...' : $value;;
+        }
+
+        return $data;
     }
 
     //TODO: Refactor this to use locale keys or move them to fields.yml

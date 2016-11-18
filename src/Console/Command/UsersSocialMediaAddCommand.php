@@ -60,6 +60,13 @@ class UsersSocialMediaAddCommand extends ApplicationAwareCommand
             /** @var UserAggregator $userAggregator */
             $userAggregator = $this->app['userAggregator.service'];
 
+            switch($resource){
+                case TokensModel::TWITTER:
+                    $username = array('screenName' => $username);
+                    break;
+                default:
+                    break;
+            }
             $socialProfiles = $userAggregator->addUser($username, $resource, $id, $url);
 
             if (!$socialProfiles){

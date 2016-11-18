@@ -6,6 +6,7 @@ use ApiConsumer\EventListener\FetchLinksInstantSubscriber;
 use ApiConsumer\EventListener\FetchLinksSubscriber;
 use ApiConsumer\EventListener\OAuthTokenSubscriber;
 use ApiConsumer\Fetcher\FetcherService;
+use ApiConsumer\Fetcher\ProcessorService;
 use Console\ApplicationAwareCommand;
 use Model\User\SocialNetwork\SocialProfileManager;
 use Model\User\TokensModel;
@@ -89,11 +90,14 @@ class LinksFetchCommand extends ApplicationAwareCommand
             }
         }
 
-        /* @var FetcherService $fetcher */
-        $fetcher = $this->app['api_consumer.fetcher'];
+        /* @var FetcherService $fetcherService */
+        $fetcherService = $this->app['api_consumer.fetcher'];
+        /* @var ProcessorService $processorService */
+        $processorService = $this->app['api_consumer.processor'];
 
         $logger = new ConsoleLogger($output, array(LogLevel::NOTICE => OutputInterface::VERBOSITY_NORMAL));
-        $fetcher->setLogger($logger);
+        $fetcherService->setLogger($logger);
+        $processorService->setLogger($logger);
 
         $fetchLinksSubscriber = new FetchLinksSubscriber($output);
         $fetchLinksInstantSubscriber = new FetchLinksInstantSubscriber($this->app['guzzle.client'], $this->app['instant.host']);
@@ -107,7 +111,8 @@ class LinksFetchCommand extends ApplicationAwareCommand
         foreach ($tokens as $token) {
             try {
                 $token['public'] = $public;
-                $fetcher->fetch( $token);
+                $links = $fetcherService->fetch( $token);
+                $processorService->process($links, $userId);
 
             } catch (\Exception $e) {
                 $output->writeln(

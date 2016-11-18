@@ -61,7 +61,7 @@ class UserAggregator
 
 		    //if not implemented for resource or request error when asking API
 		    try {
-			    $url = $url ?: $resourceOwner->getProfileUrl(array('screenName'=>$username));
+			    $url = $url ?: $resourceOwner->getProfileUrl($username);
 		    } catch (\Exception $e){
 			    //$output->writeln('ERROR: Could not get profile url for user '.$username. ' and resource '.$resource);
 			    //$output->writeln('Reason: '.$e->getMessage());

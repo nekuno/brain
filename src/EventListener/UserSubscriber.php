@@ -5,7 +5,6 @@ namespace EventListener;
 use Event\GroupEvent;
 use Event\ProfileEvent;
 use Event\UserEvent;
-use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\RequestException;
 use Model\User\Thread\ThreadManager;
 use Service\ChatMessageNotifications;
@@ -31,6 +30,7 @@ class UserSubscriber implements EventSubscriberInterface
         return array(
             \AppEvents::USER_CREATED => array('onUserCreated'),
             \AppEvents::GROUP_ADDED => array('onGroupAdded'),
+            \AppEvents::GROUP_REMOVED => array('onGroupRemoved'),
             \AppEvents::PROFILE_CREATED => array('onProfileCreated'),
         );
     }
@@ -46,10 +46,18 @@ class UserSubscriber implements EventSubscriberInterface
 
     public function onGroupAdded(GroupEvent $groupEvent)
     {
-        $user = $groupEvent->getUser();
+        $userId = $groupEvent->getUserId();
         $group = $groupEvent->getGroup();
 
-        $this->threadManager->create($user->getId(), $this->threadManager->getGroupThreadData($group, $user->getId()));
+//        $this->threadManager->create($userId, $this->threadManager->getGroupThreadData($group, $userId));
+    }
+
+    public function onGroupRemoved(GroupEvent $groupEvent)
+    {
+        $groupId = $groupEvent->getGroup()->getId();
+        $userId = $groupEvent->getUserId();
+
+//        $this->threadManager->deleteGroupThreads($userId, $groupId);
     }
 
     public function onProfileCreated(ProfileEvent $profileEvent)

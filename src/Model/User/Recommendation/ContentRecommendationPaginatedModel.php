@@ -60,19 +60,20 @@ class ContentRecommendationPaginatedModel extends AbstractContentPaginatedModel
         $return = array('items' => array());
 
         $id = $filters['id'];
-        $types = isset($filters['type']) ? $filters['type'] : array();
+        $filters['type'] = isset($filters['type']) ? $filters['type'] : array('Link');
 
         $params = array(
             'userId' => (integer)$id,
             'offset' => (integer)$offset,
             'limit' => (integer)$limit
         );
+        $typesString = implode(':', $filters['type']);
 
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match('(user:User {qnoow_id: { userId }})-[affinity:AFFINITY]->(content:Link)')
-            ->where('NOT (user)-[:LIKES|:DISLIKES]->(content) AND affinity.affinity > 0 AND content.processed = 1');
-        $qb->filterContentByType($types, 'content', array('affinity'));
+        $qb->match('(user:User {qnoow_id: { userId }})-[affinity:AFFINITY]->(content:' . $typesString . ')')
+            ->where('content.processed = 1 AND NOT (user)-[:LIKES|:DISLIKES|:IGNORES]->(content)')
+            ->with('affinity, content');
 
         if (isset($filters['tag'])) {
             $qb->match('(content)-[:TAGGED]->(filterTag:Tag)')
@@ -119,10 +120,21 @@ class ContentRecommendationPaginatedModel extends AbstractContentPaginatedModel
             if (isset($filters['foreign'])) {
                 $foreign = $filters['foreign'];
             }
-
             $foreignResult = $this->getForeignContent($filters, $needContent, $foreign);
             $return['items'] = array_merge($return['items'], $foreignResult['items']);
             $return['newForeign'] = $foreignResult['foreign'];
+        }
+
+        $needContent = $this->needMoreContent($limit, $return);
+        if ($needContent) {
+            $ignored = 0;
+            if (isset($filters['ignored'])) {
+                $ignored = $filters['ignored'];
+            }
+
+            $ignoredResult = $this->getIgnoredContent($filters, $needContent, $ignored);
+            $return['items'] = array_merge($return['items'], $ignoredResult['items']);
+            $return['newIgnored'] = $ignoredResult['ignored'];
         }
         //Works with ContentPaginator (accepts $result), not Paginator (accepts $result['items'])
         return $return;
@@ -139,12 +151,33 @@ class ContentRecommendationPaginatedModel extends AbstractContentPaginatedModel
     public function getForeignContent($filters, $limit, $foreign)
     {
         $id = $filters['id'];
-        $condition = "MATCH (u:User{qnoow_id:$id}) WHERE NOT(u)-[:LIKES|:AFFINITY]-(content)";
+        $condition = "MATCH (u:User{qnoow_id:$id}) WHERE NOT(u)-[:LIKES|:DISLIKES|:IGNORES|:AFFINITY]->(content)";
 
         $items = $this->getContentsByPopularity($filters, $limit, $foreign, $condition);
         
         $return = array('items' => array_slice($items, 0, $limit) );
         $return['foreign'] = $foreign + count($return['items']);
+
+        return $return;
+    }
+
+    /**
+     * @param $filters
+     * @param $limit
+     * @param $ignored
+     * @return array (items, ignored = # of links database searched, -1 if total)
+     * @throws \Exception
+     * @throws \Model\Neo4j\Neo4jException
+     */
+    public function getIgnoredContent($filters, $limit, $ignored)
+    {
+        $id = $filters['id'];
+        $condition = "MATCH (u:User{qnoow_id:$id})-[:IGNORES]->(content)";
+
+        $items = $this->getContentsByPopularity($filters, $limit, $ignored, $condition);
+
+        $return = array('items' => array_slice($items, 0, $limit) );
+        $return['ignored'] = $ignored + count($return['items']);
 
         return $return;
     }

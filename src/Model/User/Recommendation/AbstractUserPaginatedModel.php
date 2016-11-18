@@ -3,10 +3,12 @@
 namespace Model\User\Recommendation;
 
 use Everyman\Neo4j\Query\ResultSet;
+use Everyman\Neo4j\Query\Row;
 use Manager\PhotoManager;
 use Model\Neo4j\GraphManager;
 use Model\User\GhostUser\GhostUserManager;
 use Model\User\ProfileFilterModel;
+use Model\User\ProfileModel;
 use Model\User\UserFilterModel;
 use Paginator\PaginatedInterface;
 
@@ -32,12 +34,18 @@ abstract class AbstractUserPaginatedModel implements PaginatedInterface
      */
     protected $pm;
 
-    public function __construct(GraphManager $gm, ProfileFilterModel $profileFilterModel, UserFilterModel $userFilterModel, PhotoManager $pm)
+    /**
+     * @var ProfileModel
+     */
+    protected $profileModel;
+
+    public function __construct(GraphManager $gm, ProfileFilterModel $profileFilterModel, UserFilterModel $userFilterModel, PhotoManager $pm, ProfileModel $profileModel)
     {
         $this->gm = $gm;
         $this->profileFilterModel = $profileFilterModel;
         $this->userFilterModel = $userFilterModel;
         $this->pm = $pm;
+        $this->profileModel = $profileModel;
     }
 
     /**
@@ -66,22 +74,28 @@ abstract class AbstractUserPaginatedModel implements PaginatedInterface
         $filters = $this->profileFilterModel->splitFilters($filters);
 
         $profileFilters = $this->getProfileFilters($filters['profileFilters']);
-        $userFilters = $this->getPopularUserFilters($filters['userFilters']);
+        $userFilters = $this->getUserFilters($filters['userFilters']);
         $qb = $this->gm->createQueryBuilder();
 
         $qb->setParameters($parameters);
 
         $qb->match('(anyUser:User)')
             ->where('{userId} <> anyUser.qnoow_id', 'NOT (anyUser:' . GhostUserManager::LABEL_GHOST_USER . ')')
-            ->with('anyUser')
+            ->optionalMatch('(:User {qnoow_id: { userId }})-[m:MATCHES]-(anyUser)')
+            ->optionalMatch('(:User {qnoow_id: { userId }})-[s:SIMILARITY]-(anyUser)')
+            ->with(
+                'distinct anyUser,
+                (CASE WHEN EXISTS(m.matching_questions) THEN m.matching_questions ELSE 0.01 END) AS matching_questions,
+                (CASE WHEN EXISTS(s.similarity) THEN s.similarity ELSE 0.01 END) AS similarity'
+            )
             ->where($userFilters['conditions'])
             ->match('(anyUser)<-[:PROFILE_OF]-(p:Profile)');
 
         $qb->optionalMatch('(p)-[:LOCATION]->(l:Location)');
 
-        $qb->with('anyUser, p, l');
+        $qb->with('anyUser, p, l, matching_questions', 'similarity');
         $qb->where($profileFilters['conditions'])
-            ->with('anyUser', 'p', 'l');
+            ->with('anyUser', 'p', 'l', 'matching_questions', 'similarity');
 
         if (null !== $additionalCondition) {
             $qb->add('', $additionalCondition);
@@ -94,18 +108,23 @@ abstract class AbstractUserPaginatedModel implements PaginatedInterface
             $qb->match($match);
         }
 
-        $qb->with('DISTINCT anyUser, p, l')
+        $qb->with('anyUser, p, l, matching_questions', 'similarity')
+            ->optionalMatch('(p)<-[optionOf:OPTION_OF]-(option:ProfileOption)')
+            ->optionalMatch('(p)-[tagged:TAGGED]-(tag:ProfileTag)')
             ->optionalMatch('(anyUser)<-[likes:LIKES]-(:User)')
-            ->with('anyUser', 'count(likes) as popularity', 'p', 'l');
+            ->with('anyUser', 'collect(distinct {option: option, detail: (CASE WHEN EXISTS(optionOf.detail) THEN optionOf.detail ELSE null END)}) AS options', 'collect(distinct {tag: tag, tagged: tagged}) AS tags', 'count(likes) as popularity', 'p', 'l', 'matching_questions', 'similarity');
 
         $qb->returns(
-            'anyUser.qnoow_id AS id,
-             anyUser.username AS username,
-             anyUser.photo AS photo,
-             p.birthday AS birthday,
-             l.locality + ", " + l.country AS location',
-            '0.01 AS matching_questions',
-            '0 AS similarity',
+            'anyUser.qnoow_id AS id',
+            'anyUser.username AS username',
+            'anyUser.photo AS photo',
+            'p.birthday AS birthday',
+            'p AS profile',
+            'l AS location',
+            'options',
+            'tags',
+            'matching_questions',
+            'similarity',
             '0 AS like',
             'popularity'
         )
@@ -333,6 +352,7 @@ abstract class AbstractUserPaginatedModel implements PaginatedInterface
     public function buildUserRecommendations(ResultSet $result)
     {
         $response = array();
+        /** @var Row $row */
         foreach ($result as $row) {
 
             $age = null;
@@ -356,6 +376,7 @@ abstract class AbstractUserPaginatedModel implements PaginatedInterface
             $user->setAge($age);
             $user->setLocation($row->offsetGet('location'));
             $user->setLike($row->offsetGet('like'));
+            $user->setProfile($this->profileModel->build($row));
 
             $response[] = $user;
         }

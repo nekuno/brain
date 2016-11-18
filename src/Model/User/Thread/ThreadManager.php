@@ -8,7 +8,8 @@ use Everyman\Neo4j\Query\Row;
 use Model\Neo4j\GraphManager;
 use Manager\UserManager;
 use Model\User;
-use Model\User\GroupModel;
+use Model\User\Group\Group;
+use Model\User\Group\GroupModel;
 use Model\User\ProfileModel;
 use Service\Validator;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -20,8 +21,9 @@ class ThreadManager
     const LABEL_THREAD_USERS = 'ThreadUsers';
     const LABEL_THREAD_CONTENT = 'ThreadContent';
     const SCENARIO_DEFAULT = 'default';
+    const SCENARIO_DEFAULT_LITE = 'default_lite';
 
-    static public $scenarios = array(ThreadManager::SCENARIO_DEFAULT);
+    static public $scenarios = array(ThreadManager::SCENARIO_DEFAULT, ThreadManager::SCENARIO_DEFAULT_LITE);
 
     /** @var  GraphManager */
     protected $graphManager;
@@ -47,10 +49,14 @@ class ThreadManager
      * @param Translator $translator
      * @param Validator $validator
      */
-    public function __construct(GraphManager $graphManager, UsersThreadManager $um,
-                                ContentThreadManager $cm, ProfileModel $profileModel,
-                                Translator $translator, Validator $validator)
-    {
+    public function __construct(
+        GraphManager $graphManager,
+        UsersThreadManager $um,
+        ContentThreadManager $cm,
+        ProfileModel $profileModel,
+        Translator $translator,
+        Validator $validator
+    ) {
         $this->graphManager = $graphManager;
         $this->usersThreadManager = $um;
         $this->contentThreadManager = $cm;
@@ -115,6 +121,24 @@ class ThreadManager
         }
 
         return $threads;
+    }
+
+    public function getByFilter($filterId)
+    {
+        $qb = $this->graphManager->createQueryBuilder();
+
+        $qb->match('(filter:Filter{filter:{filterId}})')
+            ->with('filter')
+            ->setParameter('filterId', (integer)$filterId);
+
+        $qb->match('(thread:Thread)-[:HAS_FILTER]->(filter)')
+            ->returns('thread');
+
+        $result = $qb->getQuery()->getResultSet();
+
+        $threadNode = $result->current()->offsetExists('thread') ? $result->offsetGet('thread') : null;
+
+        return $this->buildThread($threadNode);
     }
 
     /**
@@ -198,7 +222,7 @@ class ThreadManager
 
         //specific order to be created from bottom to top
         $threads = array(
-            'default' => array(
+            ThreadManager::SCENARIO_DEFAULT => array(
                 array(
                     'name' => $this->translator->trans('threads.default.twitter_channels'),
                     'category' => ThreadManager::LABEL_THREAD_CONTENT,
@@ -250,8 +274,11 @@ class ThreadManager
                     'default' => true,
                 ),
                 array(
-                    'name' => str_replace(array('%desired%', '%location%'), array($nounDesired, $location['locality']),
-                        $this->translator->trans('threads.default.desired_from_location')),
+                    'name' => str_replace(
+                        array('%desired%', '%location%'),
+                        array($nounDesired, $location['locality']),
+                        $this->translator->trans('threads.default.desired_from_location')
+                    ),
                     'category' => ThreadManager::LABEL_THREAD_USERS,
                     'filters' => array(
                         'userFilters' => array(
@@ -269,17 +296,44 @@ class ThreadManager
                     ),
                     'default' => true,
                 ),
+            ),
+            ThreadManager::SCENARIO_DEFAULT_LITE => array(
+                array(
+                    'name' => str_replace(
+                        array('%desired%', '%location%'),
+                        array($nounDesired, $location['locality']),
+                        $this->translator->trans('threads.default.desired_from_location')
+                    ),
+                    'category' => ThreadManager::LABEL_THREAD_USERS,
+                    'filters' => array(
+                        'userFilters' => array(
+                            'birthday' => array(
+                                'min' => 18,
+                                'max' => 80,
+                            ),
+                            'gender' => array($genderDesired !== 'people' ? $genderDesired : null),
+                        ),
+                        'order' => 'content',
+                    ),
+                    'default' => true,
+                ),
             )
         );
-        if ($threads['default'][5]['filters']['userFilters']['gender'] == array(null)) {
-            unset($threads['default'][5]['filters']['userFilters']['gender']);
-        }
 
         if (!isset($threads[$scenario])) {
             return array();
         }
 
+        $this->fixGenderFilter($threads[$scenario]);
         return $threads[$scenario];
+    }
+
+    private function fixGenderFilter(&$threads) {
+        foreach ($threads as &$thread) {
+            if (isset($thread['filters']['userFilters']) && isset($thread['filters']['userFilters']['gender']) && $thread['filters']['userFilters']['gender'] == array(null)) {
+                unset($thread['filters']['userFilters']['gender']);
+            }
+        }
     }
 
     /**
@@ -324,9 +378,11 @@ class ThreadManager
 
         $qb->match('(u:User{qnoow_id:{userId}})')
             ->create('(thread:' . ThreadManager::LABEL_THREAD . ':' . $category . ')')
-            ->set('thread.name = {name}',
+            ->set(
+                'thread.name = {name}',
                 'thread.createdAt = timestamp()',
-                'thread.updatedAt = timestamp()')
+                'thread.updatedAt = timestamp()'
+            )
             ->create('(u)-[:HAS_THREAD]->(thread)');
         if (isset($data['default']) && $data['default'] === true) {
             $qb->set('thread :ThreadDefault');
@@ -373,8 +429,10 @@ class ThreadManager
             ->where('id(thread) = {id}')
             ->remove('thread:' . $this::LABEL_THREAD_USERS . ':' . $this::LABEL_THREAD_CONTENT . ':ThreadDefault')
             ->set('thread:' . $category)
-            ->set('thread.name = {name}',
-                'thread.updatedAt = timestamp()');
+            ->set(
+                'thread.name = {name}',
+                'thread.updatedAt = timestamp()'
+            );
         $qb->returns('thread');
         $qb->setParameters(
             array(
@@ -479,8 +537,31 @@ class ThreadManager
         return $result->current()->offsetGet('amount');
     }
 
+    public function deleteGroupThreads($userId, $groupId)
+    {
+        $threads = $this->getByUser($userId);
 
-    public function getGroupThreadData($group, $userId)
+        foreach ($threads as $thread) {
+
+            if (!$thread instanceof UsersThread) {
+                continue;
+            }
+
+            $filter = $thread->getFilterUsers();
+            if (!$filter || !isset($filter->getUserFilters()['groups']) || !is_array($filter->getUserFilters()['groups'])) {
+                continue;
+            }
+
+            /** @var Node $groupNode */
+            foreach ($filter->getUserFilters()['groups'] as $groupNode) {
+                if ($groupNode->getId() == $groupId) {
+                    $this->deleteById($thread->getId());
+                }
+            }
+        }
+    }
+
+    public function getGroupThreadData(Group $group, $userId)
     {
         try {
             $profile = $this->profileModel->getById($userId);
@@ -490,12 +571,13 @@ class ThreadManager
 
         $locale = isset($profile['interfaceLanguage']) ? $profile['interfaceLanguage'] : 'es';
         $this->translator->setLocale($locale);
+
         return array(
-            'name' => str_replace('%group%', $group['name'], $this->translator->trans('threads.default.people_from_group')),
+            'name' => str_replace('%group%', $group->getName(), $this->translator->trans('threads.default.people_from_group')),
             'category' => ThreadManager::LABEL_THREAD_USERS,
             'filters' => array(
                 'userFilters' => array(
-                    'groups' => array($group['id']),
+                    'groups' => array($group->getId()),
                 )
             ),
             'default' => true,

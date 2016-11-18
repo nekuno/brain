@@ -5,8 +5,7 @@ namespace Console\Command;
 use Console\ApplicationAwareCommand;
 use Model\Exception\ValidationException;
 use Model\Neo4j\Neo4jException;
-use Model\User;
-use Model\User\GroupModel;
+use Model\User\Group\GroupModel;
 use Model\User\Thread\ThreadManager;
 use Manager\UserManager;
 use Service\Recommendator;
@@ -22,6 +21,7 @@ class UsersThreadsCreateCommand extends ApplicationAwareCommand
         $this->setName('users:threads:create')
             ->setDescription('Creates threads for users')
             ->addArgument('scenario', InputArgument::REQUIRED, sprintf('Set of threads to add. Options available: "%s"', implode('", "', ThreadManager::$scenarios)))
+            ->addOption('groups', null, InputOption::VALUE_NONE, 'Add threads for each group belonged to')
             ->addOption('clear', null, InputOption::VALUE_NONE, 'Delete existing threads before creating new ones', null)
             ->addOption('all', null, InputOption::VALUE_NONE, 'Create them to all users', null)
             ->addOption('userId', null, InputOption::VALUE_REQUIRED, 'Id of thread owner', null);
@@ -30,6 +30,7 @@ class UsersThreadsCreateCommand extends ApplicationAwareCommand
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $scenario = $input->getArgument('scenario');
+        $groupsOption = $input->getOption('groups');
         $clear = $input->getOption('clear');
         $all = $input->getOption('all');
         $userId = $input->getOption('userId');
@@ -69,24 +70,32 @@ class UsersThreadsCreateCommand extends ApplicationAwareCommand
 
         foreach ($users as $user) {
 
+            if ($user->isGuest()){
+                continue;
+            }
+
             $output->writeln('-----------------------------------------------------------------------');
             $threads = $threadManager->getDefaultThreads($user, $scenario);
 
-            $groups = $groupModel->getAllByUserId($user->getId());
-            foreach ($groups as $group){
-                $threads[] = $threadManager->getGroupThreadData($group, $user->getId());
+            if ($groupsOption) {
+                $groups = $groupModel->getAllByUserId($user->getId());
+
+                foreach ($groups as $group) {
+                    $threads[] = $threadManager->getGroupThreadData($group, $user->getId());
+                }
             }
 
             if ($clear) {
                 $existingThreads = $threadManager->getByUser($user->getId());
-                foreach ($existingThreads as $existingThread){
-                    if ($existingThread->getDefault() == true){
+                foreach ($existingThreads as $existingThread) {
+//                    if ($existingThread->getDefault() == true) {
                         $threadManager->deleteById($existingThread->getId());
-                    }
+//                    }
                 }
                 $output->writeln(sprintf('Deleted threads for user %d', $user->getId()));
             }
-            try{
+
+            try {
                 $createdThreads = $threadManager->createBatchForUser($user->getId(), $threads);
                 $output->writeln('Added threads for scenario ' . $scenario . ' and user with id ' . $user->getId());
                 foreach ($createdThreads as $createdThread) {
@@ -99,7 +108,7 @@ class UsersThreadsCreateCommand extends ApplicationAwareCommand
                         $result['pagination']['total']
                     );
                 }
-            } catch (\Exception $e){
+            } catch (\Exception $e) {
                 $output->writeln('--------------EXCEPTION:');
                 $output->writeln($e->getTraceAsString());
                 $output->writeln($e->getMessage());

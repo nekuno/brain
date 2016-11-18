@@ -62,26 +62,26 @@ class LinksProcessNewCommand extends ApplicationAwareCommand
             try {
 
                 $preprocessedLink = new PreprocessedLink($url);
+                $preprocessedLink->setCanonical($url);
                 $preprocessedLink->setSource($resource);
 
-                if ($userId && $resource)
-                {
+                if ($userId && $resource) {
                     /* @var TokensModel $tokensModel */
                     $tokensModel = $this->app['users.tokens.model'];
                     $tokens = $tokensModel->getByUserOrResource($userId, $resource);
-                    if (count($tokens) !== 0){
+                    if (count($tokens) !== 0) {
                         $preprocessedLink->setToken($tokens[0]);
                     }
                 }
                 /* @var LinkProcessor $processor */
                 $processor = $this->app['api_consumer.link_processor'];
-                $processedLink = $processor->process($preprocessedLink, true);
+                $processedLink = $processor->process($preprocessedLink);
 
                 if (OutputInterface::VERBOSITY_NORMAL < $output->getVerbosity()) {
                     $output->writeln('----------Link outputted------------');
-                    foreach ($processedLink as $key => $value)
-                    {
-                        $value = is_array($value)? json_encode($value) : $value;
+                    $output->writeln('Type: ' . get_class($processedLink));
+                    foreach ($processedLink->toArray() as $key => $value) {
+                        $value = is_array($value) ? json_encode($value) : $value;
                         $output->writeln(sprintf('%s => %s', $key, $value));
                     }
                     $output->writeln('-----------------------------------');
@@ -101,23 +101,21 @@ class LinksProcessNewCommand extends ApplicationAwareCommand
             }
 
             if (!$userId) {
-                $output->writeln(sprintf('Link with url %s was not saved in the database', $processedLink['url']));
+                $output->writeln(sprintf('Link with url %s was not saved in the database', $processedLink->getUrl()));
             } else {
                 try {
                     $addedLink = $linksModel->addOrUpdateLink($processedLink);
-                    $processedLink['id'] = $addedLink['id'];
-                    $rateModel->userRateLink($userId, $processedLink, RateModel::LIKE);
-                    if (isset($processedLink['tags'])) {
-                        foreach ($processedLink['tags'] as $tag) {
-                            $linksModel->createTag($tag);
-                            $linksModel->addTag($processedLink, $tag);
-                        }
+                    $processedLink->setId($addedLink['id']);
+                    $rateModel->userRateLink($userId, $processedLink->getId());
+                    foreach ($processedLink->getTags() as $tag) {
+                        $linksModel->createTag($tag);
+                        $linksModel->addTag($processedLink, $tag);
                     }
 
-                    $output->writeln(sprintf('Success: Link %s saved', $processedLink['url']));
+                    $output->writeln(sprintf('Success: Link %s saved', $processedLink->getUrl()));
 
                 } catch (\Exception $e) {
-                    $output->writeln(sprintf('Error: Link %s not saved', $processedLink['url']));
+                    $output->writeln(sprintf('Error: Link %s not saved', $processedLink->getUrl()));
                     $output->writeln($e->getMessage());
                 }
             }

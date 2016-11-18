@@ -15,11 +15,6 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 class ChannelSubscriber implements EventSubscriberInterface
 {
 
-    /**
-     * @var OutputInterface
-     */
-    protected $output;
-
     protected $userAggregator;
 
     public function __construct( UserAggregator $userAggregator)

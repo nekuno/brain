@@ -1,7 +1,4 @@
 <?php
-/**
- * @author yawmoght <yawmoght@gmail.com>
- */
 
 namespace Model\User\Recommendation;
 
@@ -61,73 +58,56 @@ abstract class AbstractContentPaginatedModel implements PaginatedInterface
     public function countTotal(array $filters)
     {
         $id = $filters['id'];
-        $types = isset($filters['type']) ? $filters['type'] : array();
-        $count = 0;
+        $filters['type'] = isset($filters['type']) ? $filters['type'] : array('Link');
+        $typesString = implode(':', $filters['type']);
+        $popLimit = count($filters['type']) > 1 || $filters['type'][0] != 'Link' ? self::POP_UPPER_LIMIT * 10 : self::POP_UPPER_LIMIT;
 
-        if (!isset($filters['tag'])) {
-
-            /// Estimation to avoid calculating in real time ///
-            $baseSize = 130000;
-            $estimations = array(
-                'type' => array(
-                    'Video' => 0.06,
-                    'Audio' => 0.02,
-                    'Image' => 0.003,
-                    'Creator' => 0.06,
-                    'Link' => 1,
-                ),
-            );
-
-            if (empty($types)) {
-                return $baseSize;
-            }
-
-            if (empty($types)) {
-                $types = array('Link');
-            }
-
-            foreach ($types as $type) {
-                $count += $baseSize * $estimations['type'][$type];
-            }
-
-            ///End estimation ///
-
-        } else {
-            $params = array(
-                'userId' => (integer)$id,
-                'filterTags' => $filters['tag'],
-            );
-
-            $qb = $this->gm->createQueryBuilder();
-
+        $qb = $this->gm->createQueryBuilder()
+            ->setParameter('popLimit', $popLimit);
+        if (isset($filters['tag'])) {
             $qb->match('(filterTag:Tag)')
                 ->where('filterTag.name IN { filterTags }')
+                ->setParameter('filterTags', $filters['tag'])
                 ->with('filterTag');
 
-            $qb->match('(filterTag)<-[:TAGGED]-(content:Link)')
-                ->with('content');
+            $qb->match('(filterTag)<-[:TAGGED]-(content:' . $typesString . ')');
+        } else {
+            $qb->match('(content:' . $typesString . ')');
+        }
+        $qb->optionalMatch('(content)-[:HAS_POPULARITY]-(popularity:Popularity)')
+            ->where('popularity.popularity > {popLimit}')
+            ->returns('COUNT(DISTINCT content) AS total');
 
-            $qb->filterContentByType($types, 'content');
-
-            $qb->match('(u:User {qnoow_id: {userId }})')
-                ->with('content', 'u');
-            $qb->optionalMatch('(u)-[l:LIKES]->(content)');
-            $qb->with('u', 'count(l) AS likes', 'content');
-            $qb->optionalMatch('(u)-[l:DISLIKES]->(content)');
-            $qb->with('likes', 'count(l) AS dislikes', 'count(content) as total');
-            $qb->returns('total-(likes+dislikes) AS total');
-
-            $qb->setParameters($params);
-
-            $query = $qb->getQuery();
-            $result = $query->getResultSet();
-
-            foreach ($result as $row) {
-                $count = $row['total'];
-            }
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+        $total = 0;
+        foreach ($result as $row) {
+            $total = $row['total'];
         }
 
-        return $count;
+        $qb = $this->gm->createQueryBuilder();
+        if (isset($filters['tag'])) {
+            $qb->match('(filterTag:Tag)')
+                ->where('filterTag.name IN { filterTags }')
+                ->setParameter('filterTags', $filters['tag'])
+                ->with('filterTag');
+
+            $qb->match('(filterTag)<-[:TAGGED]-(content:' . $typesString . ')<-[l:LIKES|:DISLIKES]-(u:User {qnoow_id: { userId }})');
+        } else {
+            $qb->match('(content:' . $typesString . ')<-[l:LIKES|:DISLIKES]-(u:User {qnoow_id: { userId }})');
+        }
+        $qb->where('content.processed = 1');
+        $qb->setParameter('userId', (integer)$id)
+            ->returns('count(DISTINCT l) as total');
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+        $totalNotIncluded = 0;
+        foreach ($result as $row) {
+            $totalNotIncluded = $row['total'];
+        }
+
+        return $total - $totalNotIncluded > 0 ? $total - $totalNotIncluded : 0;
     }
 
     /**
@@ -167,7 +147,7 @@ abstract class AbstractContentPaginatedModel implements PaginatedInterface
 
             if (isset($filters['tag'])) {
                 $qb->match('(filterTag:Tag)<-[:TAGGED]-(content:Link)-[:HAS_POPULARITY]-(popularity:Popularity)')
-                    ->where('filterTag.name IN { filterTags } ')
+                    ->where('filterTag.name IN { filterTags }')
                     ->with('content', 'popularity.popularity AS popularity');
                 $qb->setParameter('filterTags', $filters['tag']);
 
@@ -222,7 +202,7 @@ abstract class AbstractContentPaginatedModel implements PaginatedInterface
      * @param null $offset
      * @return array
      */
-    public function buildResponseFromResult($result, $id = null, $offset = null)
+    public function buildResponseFromResult(ResultSet $result, $id = null, $offset = null)
     {
         $response = array('items' => array());
 

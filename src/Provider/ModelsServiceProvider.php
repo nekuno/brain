@@ -18,7 +18,9 @@ use Model\User\ContentTagModel;
 use Model\User\Filters\FilterContentManager;
 use Model\User\Filters\FilterUsersManager;
 use Model\User\GhostUser\GhostUserManager;
-use Model\User\GroupModel;
+use Model\User\Group\GroupContentPaginatedModel;
+use Model\User\Group\GroupMembersPaginatedModel;
+use Model\User\Group\GroupModel;
 use Model\User\InvitationModel;
 use Model\User\LookUpModel;
 use Model\User\Matching\MatchingModel;
@@ -212,21 +214,21 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.recommendation.users.model'] = $app->share(
             function ($app) {
 
-                return new UserRecommendationPaginatedModel($app['neo4j.graph_manager'], $app['users.profileFilter.model'], $app['users.userFilter.model'], $app['users.photo.manager']);
+                return new UserRecommendationPaginatedModel($app['neo4j.graph_manager'], $app['users.profileFilter.model'], $app['users.userFilter.model'], $app['users.photo.manager'], $app['users.profile.model']);
             }
         );
 
         $app['users.socialRecommendation.users.model'] = $app->share(
             function ($app) {
 
-                return new SocialUserRecommendationPaginatedModel($app['neo4j.graph_manager'], $app['users.profileFilter.model'], $app['users.userFilter.model'], $app['users.photo.manager']);
+                return new SocialUserRecommendationPaginatedModel($app['neo4j.graph_manager'], $app['users.profileFilter.model'], $app['users.userFilter.model'], $app['users.photo.manager'], $app['users.profile.model']);
             }
         );
 
         $app['users.recommendation.popularusers.model'] = $app->share(
             function ($app) {
 
-                return new UserPopularRecommendationPaginatedModel($app['neo4j.graph_manager'], $app['users.profileFilter.model'], $app['users.userFilter.model'], $app['users.photo.manager']);
+                return new UserPopularRecommendationPaginatedModel($app['neo4j.graph_manager'], $app['users.profileFilter.model'], $app['users.userFilter.model'], $app['users.photo.manager'], $app['users.profile.model']);
             }
         );
 
@@ -248,6 +250,20 @@ class ModelsServiceProvider implements ServiceProviderInterface
             function ($app) {
 
                 return new ContentPopularRecommendationPaginatedModel($app['neo4j.graph_manager'], $app['links.model'], $app['validator.service'], $app['imageTransformations.service']);
+            }
+        );
+
+        $app['users.group.content.model'] = $app->share(
+            function ($app) {
+
+                return new GroupContentPaginatedModel($app['neo4j.graph_manager'], $app['links.model'], $app['validator.service'], $app['imageTransformations.service']);
+            }
+        );
+
+        $app['users.group.members.model'] = $app->share(
+            function ($app) {
+
+                return new GroupMembersPaginatedModel($app['neo4j.graph_manager'], $app['users.profileFilter.model'], $app['users.userFilter.model'], $app['users.photo.manager'], $app['users.profile.model']);
             }
         );
 
@@ -330,7 +346,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.groups.model'] = $app->share(
             function ($app) {
 
-                return new GroupModel($app['neo4j.graph_manager'], $app['dispatcher'], $app['users.manager'], $app['users.filterusers.manager']);
+                return new GroupModel($app['neo4j.graph_manager'], $app['dispatcher'], $app['users.manager'], $app['users.filterusers.manager'], $app['validator.service']);
             }
         );
 
@@ -368,7 +384,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
 
         $app['users.invitations.model'] = $app->share(
             function ($app) {
-                return new InvitationModel($app['tokenGenerator.service'], $app['neo4j.graph_manager'], $app['users.groups.model'], $app['users.manager'], $app['admin_domain_plus_post']);
+                return new InvitationModel($app['tokenGenerator.service'], $app['neo4j.graph_manager'], $app['validator.service'], $app['admin_domain_plus_post']);
             }
         );
 

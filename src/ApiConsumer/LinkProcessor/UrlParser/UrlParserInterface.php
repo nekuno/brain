@@ -2,9 +2,16 @@
 
 namespace ApiConsumer\LinkProcessor\UrlParser;
 
+use ApiConsumer\Exception\UrlNotValidException;
+
 interface UrlParserInterface
 {
-	public function isUrlValid($url);
+    /**
+     * @param $url
+     * @return string
+     * @throws UrlNotValidException on not-classificable URL
+     */
+    public function getUrlType($url);
 
 	public function cleanURL($url);
 
@@ -13,4 +20,5 @@ interface UrlParserInterface
 	 * @return array
 	 */
 	public function extractURLsFromText($string);
+
 }

@@ -3,7 +3,7 @@
 namespace Controller\User;
 
 use Model\User\ContentPaginatedModel;
-use Model\User\GroupModel;
+use Model\User\Group\GroupModel;
 use Model\User\ProfileFilterModel;
 use Model\User\RateModel;
 use Model\User\UserStatsManager;
@@ -66,9 +66,6 @@ class UserController
         /* @var $model UserManager */
         $model = $app['users.manager'];
         $userArray = $model->getById($user->getId())->jsonSerialize();
-        /* @var $groupModel GroupModel */
-        $groupModel = $app['users.groups.model'];
-        $userArray['groups'] = $groupModel->getByUser($user->getId());
 
         return $app->json($userArray);
     }
@@ -438,10 +435,12 @@ class UserController
             return $app->json(array('text' => 'Link Not Found', 'id' => $user->getId(), 'linkId' => $data['linkId']), 400);
         }
 
+        $originContext = isset($data['originContext']) ? $data['originContext'] : null;
+        $originName = isset($data['originName']) ? $data['originName'] : null;
         try {
             /* @var RateModel $model */
             $model = $app['users.rate.model'];
-            $result = $model->userRateLink($user->getId(), $data, $rate);
+            $result = $model->userRateLink($user->getId(), $data['id'], 'nekuno', null, $rate, true, $originContext, $originName);
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;
@@ -620,13 +619,13 @@ class UserController
         $userFilters = $userFilterModel->getFilters($locale);
 
         //TODO: Move this logic to userFilter during/after QS-982 (remove filter logic from GroupModel)
-        /* @var $groupModel User\GroupModel */
+        /* @var $groupModel \Model\User\Group\GroupModel */
         $groupModel = $app['users.groups.model'];
         $groups = $groupModel->getByUser($user->getId());
 
         $userFilters['groups']['choices'] = array();
         foreach ($groups as $group) {
-            $userFilters['groups']['choices'][$group['id']] = $group['name'];
+            $userFilters['groups']['choices'][$group->getId()] = $group->getName();
         }
 
         if ($groups = null || $groups == array()) {

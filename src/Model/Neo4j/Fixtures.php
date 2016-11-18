@@ -10,7 +10,7 @@ use Model\User\ProfileModel;
 use Model\User\RateModel;
 use Manager\UserManager;
 use Model\EnterpriseUser\EnterpriseUserModel;
-use Model\User\GroupModel;
+use Model\User\Group\GroupModel;
 use Model\User\InvitationModel;
 use Model\User\PrivacyModel;
 use Psr\Log\LoggerInterface;
@@ -232,10 +232,10 @@ class Fixtures
                     )
                 )
             );
-            $this->gpm->setCreatedByEnterpriseUser($group['id'], $i);
+            $this->gpm->setCreatedByEnterpriseUser($group->getId(), $i);
 
             $invitationData = array(
-                'groupId' => $group['id'],
+                'groupId' => $group->getId(),
                 'orientationRequired' => false,
                 'available' => 100,
             );
@@ -247,7 +247,7 @@ class Fixtures
                     break;
                 }
                 $this->im->consume($invitation['invitation']['token'], $user->getId());
-                $this->gpm->addUser($group['id'], $user->getId());
+                $this->gpm->addUser($group->getId(), $user->getId());
             }
         }
 
@@ -415,12 +415,12 @@ class Fixtures
         $likes = $this->scenario['likes'];
 
         foreach ($createdLinks as $link) {
-            $this->rm->userRateLink(1, $link, RateModel::LIKE);
+            $this->rm->userRateLink(1, $link['id']);
         }
 
         foreach ($likes as $like) {
             foreach (range($like['linkFrom'], $like['linkTo']) as $i) {
-                $this->rm->userRateLink($like['user'], $createdLinks[$i], RateModel::LIKE);
+                $this->rm->userRateLink($like['user'], $createdLinks[$i]['id']);
             }
         }
     }

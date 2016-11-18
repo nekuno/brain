@@ -1,15 +1,14 @@
 <?php
 
-namespace Tests\ApiConsumer\LinkProcessor\Processor;
+namespace Tests\ApiConsumer\LinkProcessor\Processor\YoutubeProcessor;
 
-use Http\OAuth\ResourceOwner\GoogleResourceOwner;
-use ApiConsumer\LinkProcessor\Processor\YoutubeProcessor;
+use ApiConsumer\Exception\UrlNotValidException;
+use ApiConsumer\LinkProcessor\PreprocessedLink;
+use ApiConsumer\LinkProcessor\Processor\YoutubeProcessor\YoutubeVideoProcessor;
+use ApiConsumer\ResourceOwner\GoogleResourceOwner;
 use ApiConsumer\LinkProcessor\UrlParser\YoutubeUrlParser;
 
-/**
- * @author Juan Luis Martínez <juanlu@comakai.com>
- */
-class YoutubeProcessorTest extends \PHPUnit_Framework_TestCase
+class YoutubeVideoProcessorTest extends \PHPUnit_Framework_TestCase
 {
 
     /**
@@ -22,137 +21,142 @@ class YoutubeProcessorTest extends \PHPUnit_Framework_TestCase
      */
     protected $parser;
 
+    /**
+     * @var YoutubeVideoProcessor
+     */
+    protected $processor;
+
     public function setUp()
     {
 
-        $this->resourceOwner = $this->getMockBuilder('Http\OAuth\ResourceOwner\GoogleResourceOwner')
+        $this->resourceOwner = $this->getMockBuilder('ApiConsumer\ResourceOwner\GoogleResourceOwner')
             ->disableOriginalConstructor()
             ->getMock();
-
-        $this->resourceOwner
-            ->expects($this->any())
-            ->method('authorizedAPIRequest')
-            ->will($this->returnCallback(function ($url, $query) {
-                return $this->getResponse($query['id']);
-            }));
 
         $this->parser = $this->getMockBuilder('ApiConsumer\LinkProcessor\UrlParser\YoutubeUrlParser')
             ->getMock();
 
-        $this->parser
-            ->expects($this->any())
-            ->method('getUrlType')
-            ->will($this->returnCallback(function ($url) {
-                return $this->getUrlType($url);
-            }));
-
-        $this->parser->expects($this->any())
-            ->method('getYoutubeIdFromUrl')
-            ->will($this->returnCallback(function () {
-                return $this->getVideoId();
-            }));
-
-        $this->parser->expects($this->any())
-            ->method('getChannelIdFromUrl')
-            ->will($this->returnCallback(function () {
-                return $this->getChannelId();
-            }));
-
-        $this->parser->expects($this->any())
-            ->method('getPlaylistIdFromUrl')
-            ->will($this->returnCallback(function () {
-                return $this->getPlaylistId();
-            }));
-
-    }
-
-    public function testProcessVideoUrl()
-    {
-
-        $processer = new YoutubeProcessor($this->resourceOwner, $this->parser);
-        $processed = $processer->process(array(
-            'url' => $this->getVideoUrl(),
-        ));
-        $this->assertEquals($this->getVideoUrl(), $processed['url']);
-        $this->assertEquals('Tu peor error', $processed['title']);
-        $this->assertEquals('En Mawi', $processed['description']);
-        $this->assertEquals(array('Video'), $processed['additionalLabels']);
-        $this->assertEquals('youtube', $processed['additionalFields']['embed_type']);
-        $this->assertEquals('zLgY05beCnY', $processed['additionalFields']['embed_id']);
-        $tags = array(
-            0 =>
-                array(
-                    'name' => '/m/0xgt51b',
-                    'additionalLabels' =>
-                        array(
-                            0 => 'Freebase',
-                        ),
-                ),
-        );
-        $this->assertEquals($tags, $processed['tags']);
-    }
-
-    public function testProcessChannelUrl()
-    {
-
-        $processer = new YoutubeProcessor($this->resourceOwner, $this->parser);
-        $processed = $processer->process(array(
-            'url' => $this->getChannelUrl(),
-        ));
-        $this->assertEquals($this->getChannelUrl(), $processed['url']);
-        $this->assertEquals('Efecto Pasillo', $processed['title']);
-        $this->assertEquals('Canal Oficial de Youtube de Efecto Pasillo.', $processed['description']);
-
-        $tags = array(
-            0 => array('name' => '"efecto pasillo"'),
-            1 => array('name' => '"pan y mantequilla"'),
-            2 => array('name' => '"no importa que llueva"'),
-        );
-        $sortedTags = sort($tags);
-        $sortedProcessedTags = sort($processed['tags']);
-        $this->assertEquals($sortedTags, $sortedProcessedTags);
-    }
-
-    public function testProcesPlaylistUrl()
-    {
-
-        $processer = new YoutubeProcessor($this->resourceOwner, $this->parser);
-        $processed = $processer->process(array(
-            'url' => $this->getPlaylistUrl(),
-        ));
-        $this->assertEquals($this->getPlaylistUrl(), $processed['url']);
-        $this->assertEquals('PelleK plays bad NES-games', $processed['title']);
-        $this->assertEquals('', $processed['description']);
-        $this->assertEquals(array('Video'), $processed['additionalLabels']);
-        $this->assertEquals('youtube_playlist', $processed['additionalFields']['embed_type']);
-        $this->assertEquals('PLcB-8ayo3tzddinO3ob7cEHhUtyyo66mN', $processed['additionalFields']['embed_id']);
-        $this->assertEmpty($processed['tags']);
+        $this->processor = new YoutubeVideoProcessor($this->resourceOwner, $this->parser);
     }
 
     /**
-     * @param $response
-     * @dataProvider getEmptyResponses
+     * @dataProvider getBadUrls
      */
-    public function testProcessEmptyResponse($response)
+    public function testBadUrlRequestItem($url)
     {
+        $this->setExpectedException('ApiConsumer\Exception\CannotProcessException', 'Could not process url ' . $url);
 
-        $resourceOwner = $this->getMockBuilder('Http\OAuth\ResourceOwner\GoogleResourceOwner')
-            ->disableOriginalConstructor()
-            ->getMock();
+        $this->parser->expects($this->once())
+            ->method('getVideoId')
+            ->will($this->throwException(new UrlNotValidException($url)));
 
-        $resourceOwner
-            ->expects($this->any())
-            ->method('authorizedAPIRequest')
-            ->will($this->returnCallback(function () use ($response) {
-                return $response;
-            }));
+        $link = new PreprocessedLink($url);
+        $link->setCanonical($url);
+        $this->processor->requestItem($link);
+    }
 
-        $processer = new YoutubeProcessor($resourceOwner, $this->parser);
-        $processed = $processer->process(array(
-            'url' => $this->getVideoUrl(),
-        ));
-        $this->assertEquals($this->getVideoUrl(), $processed['url']);
-        $this->assertEquals(array(), $processed['tags']);
+    /**
+     * @dataProvider getVideoForRequestItem
+     */
+    public function testRequestItem($url, $id, $video)
+    {
+        $this->parser->expects($this->once())
+            ->method('getVideoId')
+            ->will($this->returnValue(array('id' => $id)));
+
+        $this->resourceOwner->expects($this->once())
+            ->method('requestVideo')
+            ->will($this->returnValue($video));
+
+        $link = new PreprocessedLink($url);
+        $link->setCanonical($url);
+        $response = $this->processor->requestItem($link);
+
+        $this->assertEquals($this->getVideoItemResponse(), $response, 'Asserting correct video response for ' . $url);
+    }
+
+    /**
+     * @dataProvider getResponseHydration
+     */
+    public function testHydrateLink($url, $id, $response, $expectedArray)
+    {
+        $link = new PreprocessedLink($url);
+        $link->setCanonical($url);
+        $link->setResourceItemId($id);
+
+        $this->processor->hydrateLink($link, $response);
+
+        $this->assertEquals($expectedArray, $link->getLink()->toArray(), 'Asserting correct hydrated link for ' . $url);
+    }
+
+    /**
+     * @dataProvider getResponseTags
+     */
+    public function testAddTags($url, $response, $expectedTags)
+    {
+        $link = new PreprocessedLink($url);
+        $link->setCanonical($url);
+        $this->processor->addTags($link, $response);
+
+        $tags = $expectedTags;
+        sort($tags);
+        $resultTags = $link->getLink()->getTags();
+        sort($resultTags);
+        $this->assertEquals($tags, $resultTags);
+    }
+
+    public function getBadUrls()
+    {
+        return array(
+            array('this is not an url')
+        );
+    }
+
+    public function getVideoForRequestItem()
+    {
+        return array(
+            array(
+                $this->getVideoUrl(),
+                $this->getVideoId(),
+                $this->getVideoResponse(),
+            )
+        );
+    }
+
+    public function getResponseHydration()
+    {
+        return array(
+            array(
+                $this->getVideoUrl(),
+                $this->getVideoId(),
+                $this->getVideoItemResponse(),
+                array(
+                    'title' => 'Tu peor error',
+                    'description' => 'En Mawi',
+                    'thumbnail' => 'https://img.youtube.com/vi/zLgY05beCnY/mqdefault.jpg',
+                    'url' => null,
+                    'id' => null,
+                    'tags' => array(),
+                    'created' => null,
+                    'processed' => true,
+                    'language' => null,
+                    'synonymous' => array(),
+                    'embed_type' => 'youtube',
+                    'embed_id' => 'zLgY05beCnY',
+                )
+            )
+        );
+    }
+
+    public function getResponseTags()
+    {
+        return array(
+            array(
+                $this->getVideoUrl(),
+                $this->getVideoItemResponse(),
+                $this->getVideoTags(),
+            )
+        );
     }
 
     public function getEmptyResponses()
@@ -165,42 +169,6 @@ class YoutubeProcessorTest extends \PHPUnit_Framework_TestCase
         );
     }
 
-    public function getResponse($id)
-    {
-
-        switch ($id) {
-            case $this->getVideoId():
-                return $this->getVideoResponse();
-                break;
-            case $this->getChannelId():
-                return $this->getChannelResponse();
-                break;
-            case $this->getPlaylistId():
-                return $this->getPlaylistResponse();
-                break;
-        }
-
-        return array();
-    }
-
-    public function getUrlType($url)
-    {
-
-        switch ($url) {
-            case $this->getVideoUrl():
-                return YoutubeUrlParser::VIDEO_URL;
-                break;
-            case $this->getChannelUrl():
-                return YoutubeUrlParser::CHANNEL_URL;
-                break;
-            case $this->getPlaylistUrl():
-                return YoutubeUrlParser::PLAYLIST_URL;
-                break;
-        }
-
-        return false;
-    }
-
     public function getVideoId()
     {
         return 'zLgY05beCnY';
@@ -209,6 +177,20 @@ class YoutubeProcessorTest extends \PHPUnit_Framework_TestCase
     public function getVideoUrl()
     {
         return 'https://www.youtube.com/watch?v=zLgY05beCnY';
+    }
+
+    public function getVideoTags()
+    {
+        return array(
+            0 =>
+                array(
+                    'name' => '/m/0xgt51b',
+                    'additionalLabels' =>
+                        array(
+                            0 => 'Freebase',
+                        ),
+                ),
+        );
     }
 
     public function getVideoResponse()
@@ -223,74 +205,78 @@ class YoutubeProcessorTest extends \PHPUnit_Framework_TestCase
                 ),
             'items' =>
                 array(
-                    0 =>
+                    0 => $this->getVideoItemResponse()
+                ),
+        );
+    }
+
+    public function getVideoItemResponse()
+    {
+        return array(
+            'kind' => 'youtube#video',
+            'etag' => '"gMjDJfS6nsym0T-NKCXALC_u_rM/58qh92rlFH2F5H_uIGQnJ4pDfFM"',
+            'id' => 'zLgY05beCnY',
+            'snippet' =>
+                array(
+                    'publishedAt' => '2014-03-16T17:20:58.000Z',
+                    'channelId' => 'UCSi3NhHZWE7xXAs2NDDAxDg',
+                    'title' => 'Tu peor error',
+                    'description' => 'En Mawi',
+                    'thumbnails' =>
                         array(
-                            'kind' => 'youtube#video',
-                            'etag' => '"gMjDJfS6nsym0T-NKCXALC_u_rM/58qh92rlFH2F5H_uIGQnJ4pDfFM"',
-                            'id' => 'zLgY05beCnY',
-                            'snippet' =>
+                            'default' =>
                                 array(
-                                    'publishedAt' => '2014-03-16T17:20:58.000Z',
-                                    'channelId' => 'UCSi3NhHZWE7xXAs2NDDAxDg',
-                                    'title' => 'Tu peor error',
-                                    'description' => 'En Mawi',
-                                    'thumbnails' =>
-                                        array(
-                                            'default' =>
-                                                array(
-                                                    'url' => 'https://i.ytimg.com/vi/zLgY05beCnY/default.jpg',
-                                                    'width' => 120,
-                                                    'height' => 90,
-                                                ),
-                                            'medium' =>
-                                                array(
-                                                    'url' => 'https://i.ytimg.com/vi/zLgY05beCnY/mqdefault.jpg',
-                                                    'width' => 320,
-                                                    'height' => 180,
-                                                ),
-                                            'high' =>
-                                                array(
-                                                    'url' => 'https://i.ytimg.com/vi/zLgY05beCnY/hqdefault.jpg',
-                                                    'width' => 480,
-                                                    'height' => 360,
-                                                ),
-                                            'standard' =>
-                                                array(
-                                                    'url' => 'https://i.ytimg.com/vi/zLgY05beCnY/sddefault.jpg',
-                                                    'width' => 640,
-                                                    'height' => 480,
-                                                ),
-                                            'maxres' =>
-                                                array(
-                                                    'url' => 'https://i.ytimg.com/vi/zLgY05beCnY/maxresdefault.jpg',
-                                                    'width' => 1280,
-                                                    'height' => 720,
-                                                ),
-                                        ),
-                                    'channelTitle' => 'Juan Luis Martinez',
-                                    'categoryId' => '10',
-                                    'liveBroadcastContent' => 'none',
+                                    'url' => 'https://i.ytimg.com/vi/zLgY05beCnY/default.jpg',
+                                    'width' => 120,
+                                    'height' => 90,
                                 ),
-                            'statistics' =>
+                            'medium' =>
                                 array(
-                                    'viewCount' => '117',
-                                    'likeCount' => '1',
-                                    'dislikeCount' => '1',
-                                    'favoriteCount' => '0',
-                                    'commentCount' => '1',
+                                    'url' => 'https://i.ytimg.com/vi/zLgY05beCnY/mqdefault.jpg',
+                                    'width' => 320,
+                                    'height' => 180,
                                 ),
-                            'topicDetails' =>
+                            'high' =>
                                 array(
-                                    'topicIds' =>
-                                        array(
-                                            0 => '/m/0xgt51b',
-                                        ),
-                                    'relevantTopicIds' =>
-                                        array(
-                                            0 => '/m/0h20xml',
-                                            1 => '/m/04rlf',
-                                        ),
+                                    'url' => 'https://i.ytimg.com/vi/zLgY05beCnY/hqdefault.jpg',
+                                    'width' => 480,
+                                    'height' => 360,
                                 ),
+                            'standard' =>
+                                array(
+                                    'url' => 'https://i.ytimg.com/vi/zLgY05beCnY/sddefault.jpg',
+                                    'width' => 640,
+                                    'height' => 480,
+                                ),
+                            'maxres' =>
+                                array(
+                                    'url' => 'https://i.ytimg.com/vi/zLgY05beCnY/maxresdefault.jpg',
+                                    'width' => 1280,
+                                    'height' => 720,
+                                ),
+                        ),
+                    'channelTitle' => 'Juan Luis Martinez',
+                    'categoryId' => '10',
+                    'liveBroadcastContent' => 'none',
+                ),
+            'statistics' =>
+                array(
+                    'viewCount' => '117',
+                    'likeCount' => '1',
+                    'dislikeCount' => '1',
+                    'favoriteCount' => '0',
+                    'commentCount' => '1',
+                ),
+            'topicDetails' =>
+                array(
+                    'topicIds' =>
+                        array(
+                            0 => '/m/0xgt51b',
+                        ),
+                    'relevantTopicIds' =>
+                        array(
+                            0 => '/m/0h20xml',
+                            1 => '/m/04rlf',
                         ),
                 ),
         );

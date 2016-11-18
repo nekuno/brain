@@ -28,7 +28,7 @@ class FacebookResourceOwner extends FacebookResourceOwnerBase
 	public function __construct($httpClient, $httpUtils, $options, $name, $storage, $dispatcher)
 	{
 		$this->traitConstructor($httpClient, $httpUtils, $options, $name, $storage, $dispatcher);
-        $this->expire_time_margin = 1728000;
+        $this->expire_time_margin = 1728000; //20 days
 	}
 
 	/**
@@ -73,8 +73,12 @@ class FacebookResourceOwner extends FacebookResourceOwnerBase
 		}
 
 		$getAccessURL = 'https://graph.facebook.com/oauth/access_token';
+        $content = $this->getResponseContent($response);
+        if (!isset($content['code'])) {
+            throw new \Exception(sprintf('Unable to refresh token: "%s"', $content['error']['message']));
+        }
 		$query = array(
-			'code' => $this->getResponseContent($response)['code'],
+			'code' => $content['code'],
 			'client_id' => $this->getOption('consumer_key'),
 			'redirect_uri' => $this->getOption('redirect_uri'),
 		);
@@ -128,8 +132,10 @@ class FacebookResourceOwner extends FacebookResourceOwnerBase
 		return $token;
 	}
 
-	public function getPicture($id, $token, $size = 'large')
+	//Not needed now but useful later
+	public function requestPicture($id, $token, $size = 'large')
 	{
+	    //TODO: Try to move out of here
 		if ($this->getParser()->isStatusId($id)){
 			return null;
 		}
@@ -143,7 +149,6 @@ class FacebookResourceOwner extends FacebookResourceOwnerBase
 		try {
 			$response = $this->sendAuthorizedRequest($this->options['base_url'] . $url, $query, $token);
 		} catch (RequestException $e) {
-			var_dump($e->getMessage());
 			$this->dispatcher->dispatch(\AppEvents::EXCEPTION_ERROR, new ExceptionEvent($e, 'Error getting facebook image by API'));
 			throw $e;
 		}
@@ -152,4 +157,38 @@ class FacebookResourceOwner extends FacebookResourceOwnerBase
 
 		return isset($response['data']['url']) ? $response['data']['url'] : null;
 	}
+
+	public function requestVideo($id, $token)
+    {
+        $url = (string)$id;
+        $query = array(
+            'fields' => 'description,picture.type(large)'
+        );
+
+        return $this->authorizedHttpRequest($url, $query, $token);
+    }
+
+    public function requestPage($id, $token)
+    {
+        $fields = array('name', 'description', 'picture.type(large)');
+        $query = array('fields' => implode(',', $fields));
+
+        return $this->authorizedHttpRequest($id, $query, $token);
+    }
+
+    public function requestStatus($id, $token)
+    {
+        $fields = array('name', 'description', 'picture.type(large)');
+        $query = array('fields' => implode(',', $fields));
+
+        return $this->authorizedHttpRequest($id, $query, $token);
+    }
+
+    public function requestProfile($id, $token)
+    {
+        $fields = array('name', 'picture.type(large)');
+        $query = array('fields' => implode(',', $fields));
+
+        return $this->authorizedHttpRequest($id, $query, $token);
+    }
 }

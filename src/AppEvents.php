@@ -119,6 +119,11 @@ final class AppEvents
     const GROUP_ADDED = 'group.added';
 
     /**
+     * Fired when a user is removed from a group
+     */
+    const GROUP_REMOVED = 'group.removed';
+
+    /**
      * Fired when a profile is created
      */
     const PROFILE_CREATED = 'profile.created';

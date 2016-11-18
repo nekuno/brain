@@ -5,6 +5,7 @@ namespace ApiConsumer\ResourceOwner;
 use ApiConsumer\Event\ChannelEvent;
 use Buzz\Exception\RequestException;
 use Buzz\Message\Response;
+use Event\ExceptionEvent;
 use Model\User\TokensModel;
 use Service\LookUp\LookUp;
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
@@ -97,15 +98,27 @@ class TwitterResourceOwner extends TwitterResourceOwnerBase
 			$query = array($parameter => implode(',', $chunk));
             /** @var Response $response */
 			$response = $this->sendAuthorizedRequest($url, $query, $token);
+            //TODO: Generalize "if too many requests, wait this->time_window and retry"
             if ($response->getStatusCode() === 429){
                 sleep(60*15);
                 $response = $this->sendAuthorizedRequest($url, $query, $token);
             }
-			$users = array_merge($users, $this->getResponseContent($response));
+			$users = array_merge($users, $this->buildProfilesFromLookup($response));
 		}
 
 		return $users;
 	}
+
+	private function buildProfilesFromLookup($response)
+    {
+        $content = $this->getResponseContent($response);
+
+        foreach ($content as &$user){
+            $user = $this->buildProfileFromLookup($user);
+        }
+
+        return $content;
+    }
 
 	public function buildProfileFromLookup($user)
 	{
@@ -138,20 +151,31 @@ class TwitterResourceOwner extends TwitterResourceOwnerBase
 				return null;
 			}
 
+			if (!isset($account['screen_name'])){
+                return null;
+            }
 			$screenName = $account['screen_name'];
 		}
 
 		return LookUp::TWITTER_BASE_URL . $screenName;
 	}
 
-	public function dispatchChannel(array $data)
-	{
-		$url = isset($data['url']) ? $data['url'] : null;
-		$username = isset($data['username']) ? $data['username'] : null;
-		if (!$username && $url) {
-			throw new \Exception ('Cannot add twitter channel with username and url not set');
-		}
+	public function requestStatus($statusId)
+    {
+        $query = array('id' => (int)$statusId);
+        $apiResponse = $this->authorizedAPIRequest('statuses/show.json', $query);
 
-		$this->dispatcher->dispatch(\AppEvents::CHANNEL_ADDED, new ChannelEvent($this->getName(), $url, $username));
-	}
+        return $apiResponse;
+    }
+
+//	public function dispatchChannel(array $data)
+//	{
+//		$url = isset($data['url']) ? $data['url'] : null;
+//		$username = isset($data['username']) ? $data['username'] : null;
+//		if (!$username && $url) {
+//			throw new \Exception ('Cannot add twitter channel with username and url not set');
+//		}
+//
+//		$this->dispatcher->dispatch(\AppEvents::CHANNEL_ADDED, new ChannelEvent($this->getName(), $url, $username));
+//	}
 }

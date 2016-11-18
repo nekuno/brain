@@ -35,14 +35,14 @@ abstract class AbstractFetcher implements FetcherInterface
         $this->resourceOwner = $resourceOwner;
     }
 
-    /**
-     * Get url
-     *
-     * @return string
-     */
     public function getUrl()
     {
         return $this->url;
+    }
+
+    public function setUrl($url)
+    {
+        $this->url = $url;
     }
 
     /**

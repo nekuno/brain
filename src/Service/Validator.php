@@ -1,17 +1,13 @@
 <?php
-/**
- * @author yawmoght <yawmoght@gmail.com>
- */
 
 namespace Service;
 
 
-use Manager\UserManager;
 use Model\Exception\ValidationException;
+use Model\Neo4j\GraphManager;
 use Model\User\ContentFilterModel;
 use Model\User\ProfileFilterModel;
 use Model\User\UserFilterModel;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class Validator
 {
@@ -30,9 +26,9 @@ class Validator
     protected $profileFilterModel;
 
     /**
-     * @var UserManager
+     * @var GraphManager
      */
-    protected $userManager;
+    protected $graphManager;
 
     /**
      * @var UserFilterModel
@@ -44,7 +40,7 @@ class Validator
      */
     protected $contentFilterModel;
 
-    public function __construct(UserManager $userManager,
+    public function __construct(GraphManager $graphManager,
                                 ProfileFilterModel $profileFilterModel,
                                 UserFilterModel $userFilterModel,
                                 ContentFilterModel $contentFilterModel,
@@ -54,24 +50,59 @@ class Validator
         $this->profileFilterModel = $profileFilterModel;
         $this->userFilterModel = $userFilterModel;
         $this->contentFilterModel = $contentFilterModel;
-        $this->userManager = $userManager;
+        $this->graphManager = $graphManager;
     }
 
     public function validateUserId($userId)
     {
-        $errors = array();
+        $errors = array('userId' => array());
 
-        if (empty($userId)) {
-            $errors['userId'] = array('User identification not supplied');
+        if (!is_int($userId)){
+            $errors['userId'][] = array('User Id must be an integer');
         }
 
-        try {
-            $this->userManager->getById((integer)$userId, true);
-        } catch (NotFoundHttpException $e) {
-            $errors['userId'] = array($e->getMessage());
+        $qb = $this->graphManager->createQueryBuilder();
+
+        $qb->match('(u:User)')
+            ->where('u.qnoow_id = {userId}')
+            ->setParameter('userId', $userId);
+        $qb->returns('u.qnoow_id');
+
+        $result = $qb->getQuery()->getResultSet();
+
+        if ($result->count() == 0)
+        {
+            $errors['userId'][] = array(sprintf('User with id %d not found', $userId));
         }
 
-        if (count($errors) > 0) {
+        if (count($errors['userId']) > 0) {
+            throw new ValidationException($errors);
+        }
+    }
+
+    public function validateGroupId($groupId)
+    {
+        $errors = array('groupId' => array());
+
+        if (!is_int($groupId)){
+            $errors['groupId'][] = array('Group Id must be an integer');
+        }
+
+        $qb = $this->graphManager->createQueryBuilder();
+
+        $qb->match('(g:Group)')
+            ->where('id(g) = {groupId}')
+            ->setParameter('groupId', $groupId);
+        $qb->returns('id(g)');
+
+        $result = $qb->getQuery()->getResultSet();
+
+        if ($result->count() == 0)
+        {
+            $errors['groupId'][] = array(sprintf('Group with id %d not found', $groupId));
+        }
+
+        if (count($errors['groupId']) > 0) {
             throw new ValidationException($errors);
         }
     }
@@ -79,6 +110,60 @@ class Validator
     public function validateEditThread(array $data, array $choices = array())
     {
         return $this->validate($data, $this->metadata['threads'], $choices);
+    }
+
+    public function validateGroup(array $data)
+    {
+        $this->validate($data, $this->metadata['groups']);
+
+        $errors = array();
+        if (isset($data['followers']) && $data['followers']) {
+            if (!is_bool($data['followers'])) {
+                $errors['followers'] = array('"followers" must be boolean');
+            }
+            if (!isset($data['influencer_id'])) {
+                $errors['influencer_id'] = array('"influencer_id" is required for followers groups');
+            } elseif (!is_int($data['influencer_id'])) {
+                $errors['influencer_id'] = array('"influencer_id" must be integer');
+            }
+            if (!isset($data['min_matching'])) {
+                $errors['min_matching'] = array('"min_matching" is required for followers groups');
+            } elseif (!is_int($data['min_matching'])) {
+                $errors['min_matching'] = array('"min_matching" must be integer');
+            }
+            if (!isset($data['type_matching'])) {
+                $errors['type_matching'] = array('"type_matching" is required for followers groups');
+            } elseif ($data['type_matching'] !== 'similarity' && $data['type_matching'] !== 'compatibility') {
+                $errors['type_matching'] = array('"type_matching" must be "similarity" or "compatibility"');
+            }
+        }
+
+        if (count($errors) > 0) {
+            throw new ValidationException($errors);
+        }
+    }
+
+    public function validateInvitation(array $data, $invitationIdRequired = false)
+    {
+        $metadata = $this->metadata['invitations'];
+
+        if ($invitationIdRequired){
+            $metadata['invitationId']['required'] = true;
+        }
+
+        if (isset($data['groupId'])){
+            $groupId = $data['groupId'];
+            if (!(is_int($groupId) || is_double($groupId))) {
+                $fieldErrors[] = 'groupId must be an integer';
+            }
+            $this->validateGroupId($groupId);
+        }
+
+        if (isset($data['userId'])){
+            $this->validateUserId($data['userId']);
+        }
+
+        $this->validate($data, $metadata);
     }
 
     public function validateEditFilterContent(array $data, array $choices = array())
@@ -300,6 +385,32 @@ class Validator
                         foreach ($this->validateLocation($dataValue['location']) as $error){
                             $fieldErrors[] = $error;
                         }
+                        break;
+                    case 'email':
+                        if (!filter_var($dataValue, FILTER_VALIDATE_EMAIL)) {
+                            $fieldErrors[] = 'Value must be a valid email';
+                        }
+                        break;
+                    case 'url':
+                        if (!filter_var($dataValue, FILTER_VALIDATE_URL)) {
+                            $fieldErrors[] = 'Value must be a valid URL';
+                        }
+                        break;
+                    case 'image_path':
+                        if (!preg_match('/^[\w\/\\-]+\.(png|jpe?g|gif|tiff)$/i', $dataValue)) {
+                            $fieldErrors[] = 'Value must be a valid path';
+                        }
+                        break;
+                    case 'timestamp':
+                        if (!(is_int($dataValue) || is_double($dataValue))) {
+                            $fieldErrors[] = 'Value must be a valid timestamp';
+                        }
+                        break;
+                    case 'string':
+                        if (!is_string($dataValue)) {
+                            $fieldErrors[] = 'Value must be a string';
+                        }
+                        break;
                 }
             } else {
                 if (isset($fieldData['required']) && $fieldData['required'] === true) {
