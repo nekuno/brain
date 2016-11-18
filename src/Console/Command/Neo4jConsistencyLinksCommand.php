@@ -66,7 +66,7 @@ class Neo4jConsistencyLinksCommand extends ApplicationAwareCommand
             $maxLimit = 99999999;
             $limit = 1000;
             do {
-
+                $output->writeln('-----------------------------------------------------------------');
                 $output->writeln(sprintf('Getting and analyzing %d links from offset %d.', $limit, $offset));
 
                 $links = $linkModel->getLinks(array(), $offset, $limit);
@@ -76,8 +76,10 @@ class Neo4jConsistencyLinksCommand extends ApplicationAwareCommand
                     $link = Link::buildFromArray($linkArray);
                     if (!$link->isComplete() && $link->getProcessed()) {
                         $linkModel->setProcessed($link->getUrl(), false);
+                        $output->writeln(sprintf('Corrected processed status of link %s', $link->getUrl()));
                     }
                 }
+                $offset += $limit;
 
             } while ($offset < $maxLimit && !empty($links));
             
