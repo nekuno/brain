@@ -44,7 +44,7 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
         $qb->setParameters($parameters);
 
         $qb->match('(u:User {qnoow_id: {userId}})-[:MATCHES|:SIMILARITY]-(anyUser:User)')
-            ->where('u <> anyUser', 'NOT (anyUser:' . GhostUserManager::LABEL_GHOST_USER . ')', 'NOT (u)-[:LIKES|:DISLIKES|:IGNORES]->(anyUser)')
+            ->where('u <> anyUser', 'NOT (anyUser:' . GhostUserManager::LABEL_GHOST_USER . ')', 'NOT (u)-[:DISLIKES|:IGNORES]->(anyUser)')
             ->with('DISTINCT anyUser', 'u')
             ->limit(self::USER_SAFETY_LIMIT)
             ->with('u', 'anyUser')
@@ -70,6 +70,8 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
         }
 
         $qb->with('anyUser, u, matching_questions, similarity, p, l')
+            ->optionalMatch('(u)-[likes:LIKES]->(anyUser)')
+            ->with('anyUser, u, matching_questions, similarity, p, l, (CASE WHEN likes IS NULL THEN 1 ELSE 0 END) AS like')
             ->optionalMatch('(p)<-[optionOf:OPTION_OF]-(option:ProfileOption)')
             ->optionalMatch('(p)-[tagged:TAGGED]-(tag:ProfileTag)');
 
@@ -84,7 +86,7 @@ class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
              l AS location,
              matching_questions,
              similarity,
-             0 AS like'
+             like'
         )
             ->orderBy($orderQuery)
             ->skip('{ offset }')
