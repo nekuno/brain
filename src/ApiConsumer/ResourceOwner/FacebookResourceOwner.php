@@ -28,7 +28,7 @@ class FacebookResourceOwner extends FacebookResourceOwnerBase
 	public function __construct($httpClient, $httpUtils, $options, $name, $storage, $dispatcher)
 	{
 		$this->traitConstructor($httpClient, $httpUtils, $options, $name, $storage, $dispatcher);
-        $this->expire_time_margin = 1728000;
+        $this->expire_time_margin = 1728000; //20 days
 	}
 
 	/**

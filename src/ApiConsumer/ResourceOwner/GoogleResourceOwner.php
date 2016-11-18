@@ -5,7 +5,6 @@ namespace ApiConsumer\ResourceOwner;
 use Model\User\TokensModel;
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
 use HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\GoogleResourceOwner as GoogleResourceOwnerBase;
-use Buzz\Message\RequestInterface as HttpRequestInterface;
 
 /**
  * Class GoogleResourceOwner
@@ -26,9 +25,9 @@ class GoogleResourceOwner extends GoogleResourceOwnerBase
         $this->traitConstructor($httpClient, $httpUtils, $options, $name, $storage, $dispatcher);
     }
 
-    public function sendAuthorizedRequest($url, array $query = array())
+    public function sendAuthorizedRequest($url, array $query = array(), array $token = array())
     {
-        $query['key'] = $this->getOption('client_credential')['application_token'];
+        $query += $this->getOauthToken($token);
 
         return $this->httpRequest($this->normalizeUrl($url, $query));
     }
@@ -41,6 +40,10 @@ class GoogleResourceOwner extends GoogleResourceOwnerBase
         $response = $this->httpRequest($this->normalizeUrl($url, $query), null, $headers);
 
         return $this->getResponseContent($response);
+    }
+
+    protected function getOauthToken($token) {
+        return isset($token['oauthToken']) ? array('access_token' => $token['oauthToken']) : array('key' => $this->getOption('client_credential')['application_token']);
     }
 
     /**
@@ -69,10 +72,19 @@ class GoogleResourceOwner extends GoogleResourceOwnerBase
             'client_secret' => $this->options['consumer_secret'],
         );
 
-        $response = $this->httpRequest($this->normalizeUrl($url, $parameters), null, array(), HttpRequestInterface::METHOD_POST);
+        $response = $this->doGetTokenRequest($url, $parameters);
         $data = $this->getResponseContent($response);
 
         return $data;
+    }
+
+    protected function addOauthData($data, $token)
+    {
+        $token['oauthToken'] = $data['access_token'];
+        $token['expireTime'] = time() + (int)$data['expires_in'] - $this->expire_time_margin;
+        $token['refreshToken'] = isset($data['refreshToken']) ? $data['refreshToken'] : isset($token['refreshToken']) ? $token['refreshToken'] : null;
+
+        return $token;
     }
 
     public function requestVideoSearch($queryString)
