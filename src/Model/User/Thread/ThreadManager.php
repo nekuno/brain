@@ -308,12 +308,8 @@ class ThreadManager
                     'filters' => array(
                         'userFilters' => array(
                             'birthday' => array(
-                                'min' => $birthdayRange['min'],
-                                'max' => $birthdayRange['max'],
-                            ),
-                            'location' => array(
-                                'distance' => 50,
-                                'location' => $location
+                                'min' => 18,
+                                'max' => 80,
                             ),
                             'gender' => array($genderDesired !== 'people' ? $genderDesired : null),
                         ),
