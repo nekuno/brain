@@ -141,6 +141,7 @@ class YoutubeUrlParser extends UrlParser
     public function cleanURL($url)
     {
         $url = parent::cleanURL($url);
+        //TODO: Improve when there is a query "youtube.com/watch/?v=videoid"
 
         $parts = parse_url($url);
         if (array_key_exists('path',$parts) && $parts['path'] == '/watch') {
