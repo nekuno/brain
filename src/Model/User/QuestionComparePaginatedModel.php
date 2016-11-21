@@ -105,6 +105,7 @@ class QuestionComparePaginatedModel implements PaginatedInterface
             OPTIONAL MATCH
             (possible_answers:Answer)-[:IS_ANSWER_OF]-(question)
             RETURN
+            question,
             {
                 question: question,
                 answer: answer,
@@ -122,6 +123,7 @@ class QuestionComparePaginatedModel implements PaginatedInterface
                 acceptedAnswers: collect(distinct acceptedAnswers2)
             } as own_questions
 
+            ORDER BY id(question)
             SKIP {offset}
             LIMIT {limit}
             ;
