@@ -35,7 +35,7 @@ class LinksFindDuplicatesCommand extends ApplicationAwareCommand
 
         $limit = 10000;
         do {
-
+            $output->writeln('--------------------------------------------------------------------------------');
             $output->writeln(sprintf('Getting and analyzing %d urls from offset %d.', $limit, $offset));
 
             $links = $linkModel->getLinks(array(), $offset, $limit);
@@ -138,8 +138,8 @@ class LinksFindDuplicatesCommand extends ApplicationAwareCommand
             $cleanUrl = LinkAnalyzer::cleanUrl($link['url']);
         } catch (UrlNotValidException $e) {
             //TODO: log
-            $output->writeln(sprintf('Could not clean URL ', $link['url']));
-            $cleanUrl = null;
+            $output->writeln(sprintf('Could not clean URL %s', $link['url']));
+            return false;
         }
 
         $linkModel = $this->app['links.model'];
