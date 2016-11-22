@@ -2,6 +2,7 @@
 
 namespace ApiConsumer\LinkProcessor\Processor\TwitterProcessor;
 
+use ApiConsumer\Exception\UrlChangedException;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
 use ApiConsumer\LinkProcessor\Processor\AbstractProcessor;
 use ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser;
@@ -25,11 +26,7 @@ class TwitterTweetProcessor extends AbstractProcessor
 
         $url = $this->processTweetStatus($statusId);
 
-        if ($url) {
-            $preprocessedLink->setCanonical($url);
-        }
-
-        return array();
+        throw new UrlChangedException($preprocessedLink->getCanonical(), $url);
     }
 
     /**

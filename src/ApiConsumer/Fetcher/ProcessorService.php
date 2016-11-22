@@ -5,6 +5,7 @@ namespace ApiConsumer\Fetcher;
 use ApiConsumer\Event\ChannelEvent;
 use ApiConsumer\Exception\CannotProcessException;
 use ApiConsumer\Exception\CouldNotResolveException;
+use ApiConsumer\Exception\UrlChangedException;
 use ApiConsumer\Exception\UrlNotValidException;
 use ApiConsumer\LinkProcessor\LinkAnalyzer;
 use ApiConsumer\LinkProcessor\LinkProcessor;
@@ -77,7 +78,7 @@ class ProcessorService implements LoggerAwareInterface
      */
     public function process(array $preprocessedLinks, $userId)
     {
-        if (empty($preprocessedLinks)){
+        if (empty($preprocessedLinks)) {
             return array();
         }
         $source = $this->getCommonSource($preprocessedLinks);
@@ -88,39 +89,54 @@ class ProcessorService implements LoggerAwareInterface
 
             $this->dispatcher->dispatch(\AppEvents::PROCESS_LINK, new ProcessLinkEvent($userId, $source, $preprocessedLink));
 
-            $resolved = $this->resolve($preprocessedLink);
+            $link = $this->fullProcessSingle($preprocessedLink, $userId);
 
-            if (!$resolved) {
-                $link = $this->save($preprocessedLink, $userId);
+            if ($link) {
                 $links[$key] = $link;
-                continue;
-            }
-
-            try {
-                if ($this->isLinkSavedAndProcessed($preprocessedLink)) {
-                    //log
-                    continue;
-                }
-
-                $this->processLink($preprocessedLink);
-
-                $this->addSynonymous($preprocessedLink);
-                $this->checkCreator($preprocessedLink);
-
-                $link = $this->save($preprocessedLink, $userId);
-
-                $links[$key] = $link;
-
-            } catch (\Exception $e) {
-                if ($e instanceof Neo4jException) {
-                    //log
-                }
             }
         }
 
         $this->dispatcher->dispatch(\AppEvents::PROCESS_FINISH, new ProcessLinksEvent($userId, $source, $preprocessedLinks));
 
         return $links;
+    }
+
+    private function fullProcessSingle(PreprocessedLink $preprocessedLink, $userId)
+    {
+        $resolved = $this->resolve($preprocessedLink);
+
+        if (!$resolved) {
+            $link = $this->save($preprocessedLink, $userId);
+
+            return $link;
+        }
+
+        try {
+            if ($this->isLinkSavedAndProcessed($preprocessedLink)) {
+                return null;
+            }
+
+            $this->processLink($preprocessedLink);
+
+            $this->addSynonymous($preprocessedLink);
+            $this->checkCreator($preprocessedLink);
+
+            $link = $this->save($preprocessedLink, $userId);
+
+            return $link;
+
+        } catch (UrlChangedException $e) {
+            $preprocessedLink->setFetched($e->getNewUrl());
+
+            return $this->fullProcessSingle($preprocessedLink, $userId);
+
+        } catch (\Exception $e) {
+            if ($e instanceof Neo4jException) {
+                //log
+            }
+
+            return null;
+        }
     }
 
     /**
@@ -131,44 +147,51 @@ class ProcessorService implements LoggerAwareInterface
     {
         $links = array();
         foreach ($preprocessedLinks as $key => $preprocessedLink) {
-            $resolved = $this->resolve($preprocessedLink);
+            $link = $this->fullReprocessSingle($preprocessedLink);
 
-            if (!$resolved) {
-                $link = $this->overwrite($preprocessedLink);
+            if ($link) {
                 $links[$key] = $link;
-                continue;
-            }
-
-            try {
-                $this->processLink($preprocessedLink);
-
-//                $this->addSynonymous($preprocessedLink);
-                //$this->checkCreator($preprocessedLink);
-
-                $link = $preprocessedLink->getLink();
-
-                try {
-                    $linkCreated = $this->linkModel->addOrUpdateLink($link->toArray());
-                } catch (Neo4jException $e) {
-                    $this->logger->error(sprintf('Query: %s' . "\n" . 'Data: %s', $e->getQuery(), print_r($e->getData(), true)));
-
-                    return array();
-                } catch (\Exception $e) {
-                    $this->logger->error(sprintf('Fetcher: Unexpected error processing link "%s" from resource "%s". Reason: %s', $preprocessedLink->getFetched(), $preprocessedLink->getSource(), $e->getMessage()));
-
-                    return array();
-                }
-
-                $links[$key] = $linkCreated;
-
-            } catch (\Exception $e) {
-                if ($e instanceof Neo4jException) {
-                    //log
-                }
             }
         }
 
         return $links;
+    }
+
+    private function fullReprocessSingle(PreprocessedLink $preprocessedLink)
+    {
+        $resolved = $this->resolve($preprocessedLink);
+
+        if (!$resolved) {
+            $link = $this->overwrite($preprocessedLink);
+            return $link;
+        }
+
+        try {
+            $this->processLink($preprocessedLink);
+
+//                $this->addSynonymous($preprocessedLink);
+            //$this->checkCreator($preprocessedLink);
+
+            $link = $preprocessedLink->getLink();
+
+            $linkCreated = $this->linkModel->addOrUpdateLink($link->toArray());
+
+            return $linkCreated;
+
+        } catch (Neo4jException $e) {
+            $this->logger->error(sprintf('Query: %s' . "\n" . 'Data: %s', $e->getQuery(), print_r($e->getData(), true)));
+
+            return null;
+        } catch (UrlChangedException $e) {
+            $preprocessedLink->setFetched($e->getNewUrl());
+
+            return $this->fullReprocessSingle($preprocessedLink);
+
+        } catch (\Exception $e) {
+            $this->logger->error(sprintf('Fetcher: Unexpected error processing link "%s" from resource "%s". Reason: %s', $preprocessedLink->getFetched(), $preprocessedLink->getSource(), $e->getMessage()));
+
+            return null;
+        }
     }
 
     private function getCommonSource(array $preprocessedLinks)
@@ -307,7 +330,7 @@ class ProcessorService implements LoggerAwareInterface
     {
         $link = $preprocessedLink->getLink();
 
-        if (!$link->isComplete()){
+        if (!$link->isComplete()) {
             //log
             $link = $this->getUnprocessedLink($preprocessedLink);
         }
