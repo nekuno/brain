@@ -299,8 +299,12 @@ class ProcessorService implements LoggerAwareInterface
         $synonymousPreprocessed = $this->fetcherService->fetchSynonymous($preprocessedLink->getSynonymousParameters());
 
         foreach ($synonymousPreprocessed as $singleSynonymous) {
-            $this->processLink($singleSynonymous);
-            $preprocessedLink->getLink()->addSynonymous($singleSynonymous->getLink());
+            try{
+                $this->processLink($singleSynonymous);
+                $preprocessedLink->getLink()->addSynonymous($singleSynonymous->getLink());
+            } catch (CannotProcessException $e) {
+                //TODO: log
+            }
         }
     }
 
