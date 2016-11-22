@@ -183,6 +183,16 @@ class ProcessorService implements LoggerAwareInterface
 
             return null;
         } catch (UrlChangedException $e) {
+
+            $isOldSaved = $this->linkModel->setProcessed($e->getOldUrl(), false);
+
+            if ($isOldSaved) {
+                $link = $this->linkModel->findLinkByUrl($e->getOldUrl());
+                $link['tempId'] = $e->getOldUrl();
+                $link['url'] = $e->getNewUrl();
+                $this->linkModel->updateLink($link);
+            }
+
             $preprocessedLink->setFetched($e->getNewUrl());
 
             return $this->fullReprocessSingle($preprocessedLink);
