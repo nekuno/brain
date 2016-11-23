@@ -355,7 +355,9 @@ class ProcessorService implements LoggerAwareInterface
     private function overwrite(PreprocessedLink $preprocessedLink)
     {
         $link = $preprocessedLink->getLink();
-        $this->linkModel->updateLink($link->toArray(), true);
+        $linkArray = $link->toArray();
+        $linkArray['tempId'] = $link['url'];
+        $this->linkModel->updateLink($linkArray, true);
     }
 
     private function sanitizeThumbnail(Link $link)
