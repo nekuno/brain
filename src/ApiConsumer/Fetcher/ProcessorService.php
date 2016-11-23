@@ -356,7 +356,7 @@ class ProcessorService implements LoggerAwareInterface
     {
         $link = $preprocessedLink->getLink();
         $linkArray = $link->toArray();
-        $linkArray['tempId'] = $link['url'];
+        $linkArray['tempId'] = $linkArray['url'];
         $this->linkModel->updateLink($linkArray, true);
     }
 
