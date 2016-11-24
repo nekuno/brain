@@ -194,11 +194,7 @@ class MatchingModel
             )
             //'error' == max matching depending on common questions
             ->with(
-                'CASE
-                    WHEN numOfCommonQuestions > 0 THEN
-                        1 - (1 / numOfCommonQuestions)
-                    ELSE tofloat(0)
-                END AS error',
+                'numOfCommonQuestions',
                 $this->rawMatching(
                     'totalRatingCommonAnswersU1',
                     'totalRatingAcceptedAnswersU1',
@@ -211,13 +207,19 @@ class MatchingModel
                 )
             )
             ->with(
-                'error',
+                'numOfCommonQuestions',
                 'tofloat( sqrt(rawMatchingU1 * rawMatchingU2)) AS rawMatching'
             )
             ->with(
                 'CASE
-		        WHEN error < rawMatching THEN error
+		        WHEN numOfCommonQuestions > 0 THEN rawMatching - (1/numOfCommonQuestions)
 		        ELSE rawMatching
+                END AS rawMatching'
+            )
+            ->with(
+                'CASE 
+                WHEN rawMatching > 0 THEN rawMatching
+                ELSE 0
                 END AS matching'
             )
             ->returns('matching');

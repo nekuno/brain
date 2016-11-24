@@ -6,9 +6,6 @@ use ApiConsumer\LinkProcessor\LinkResolver;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
 use ApiConsumer\LinkProcessor\Resolution;
 
-/**
- * @author Juan Luis Martínez <juanlu@comakai.com>
- */
 class LinkResolverTest extends \PHPUnit_Framework_TestCase
 {
 

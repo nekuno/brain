@@ -3,6 +3,7 @@
 namespace ApiConsumer\LinkProcessor\Processor;
 
 use ApiConsumer\Exception\CannotProcessException;
+use ApiConsumer\Exception\UrlChangedException;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
 use ApiConsumer\LinkProcessor\SynonymousParameters;
 use Symfony\Component\DomCrawler\Crawler;
@@ -12,7 +13,7 @@ interface ProcessorInterface
     /**
      * @param PreprocessedLink $preprocessedLink
      * @return array|Crawler
-     * @throws CannotProcessException
+     * @throws CannotProcessException|UrlChangedException
      */
     function requestItem(PreprocessedLink $preprocessedLink);
 
@@ -20,10 +21,6 @@ interface ProcessorInterface
 
     function addTags(PreprocessedLink $preprocessedLink, array $data);
 
-    /**
-     * @param PreprocessedLink $preprocessedLink
-     * @param array $data
-     */
     function getSynonymousParameters(PreprocessedLink $preprocessedLink, array $data);
 
 } 
