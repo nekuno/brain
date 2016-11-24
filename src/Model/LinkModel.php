@@ -467,15 +467,14 @@ class LinkModel
         $oldLink = $this->findLinkByUrl($oldUrl);
         $newLink = $this->findLinkByUrl($newUrl);
 
-        $fusion = $this->gm->fuseNodes($oldLink['id'], $newLink['id']);
+        $this->gm->fuseNodes($oldLink['id'], $newLink['id']);
         $this->changeUrl($oldUrl, $newUrl);
 
-        return $fusion['properties'];
+        return $newLink['id'];
     }
 
     public function createTag(array $tag)
     {
-
         $qb = $this->gm->createQueryBuilder();
         $qb->merge('(tag:Tag {name: { name }})')
             ->setParameter('name', $tag['name'])

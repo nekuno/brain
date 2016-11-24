@@ -2,7 +2,9 @@
 
 namespace Event;
 
-class ConsistencyEvent
+use Symfony\Component\EventDispatcher\Event;
+
+class ConsistencyEvent extends Event
 {
     protected $id;
 

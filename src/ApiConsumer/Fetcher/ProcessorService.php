@@ -148,6 +148,7 @@ class ProcessorService implements LoggerAwareInterface
     {
         $links = array();
         foreach ($preprocessedLinks as $key => $preprocessedLink) {
+            $this->logger->notice(sprintf('Reprocessing link %s', $preprocessedLink->getFetched()));
             $link = $this->fullReprocessSingle($preprocessedLink);
 
             if ($link) {
