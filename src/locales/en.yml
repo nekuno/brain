@@ -1,4 +1,8 @@
 notifications:
+  an_internet_for_you: 'AN INTERNET FOR YOU'
+  unsubscribe: 'Unsubscribe'
+  about_us: 'About us'
+  all_rights_reserved: 'All rights reserved'
   header: 'Hello %name%'
   messages:
     unread:

@@ -1,17 +1,20 @@
-{% include 'email-notifications/partials/header-notification.html.twig' %}
+{% extends 'email-notifications/base.html.twig' %}
 
-<p>{{ 'notifications.messages.unread.body.title'|transchoice(unReadMessagesCount, {'%count%': unReadMessagesCount}) }}</p>
+{% block header %}
+    {% include 'email-notifications/partials/header-notification.html.twig' %}
+    {{ 'notifications.messages.unread.body.title'|transchoice(unReadMessagesCount, {'%count%': unReadMessagesCount}) }}
+{% endblock %}
 
-<p>{{ 'notifications.messages.unread.body.latest'|transchoice(messages|length, {'%count%': messages|length}) }}</p>
+{% block body %}
+    <p>{{ 'notifications.messages.unread.body.latest'|transchoice(messages|length, {'%count%': messages|length}) }}</p>
 
-{% for message in messages %}
+    {% for message in messages %}
 
-    <p>{{ 'notifications.messages.unread.body.message'|trans({'%user%': message.username_from, '%datetime%': message.createdAt}) }}</p>
+        <p>{{ 'notifications.messages.unread.body.message'|trans({'%user%': message.username_from, '%datetime%': message.createdAt}) }}</p>
 
-    <p><strong>{{ message.text }}</strong></p>
+        <p><strong>{{ message.text }}</strong></p>
 
-{% endfor %}
+    {% endfor %}
 
-<p><a href="https://nekuno.com/message/list">{{ 'notifications.messages.unread.body.linkAnchor'|trans }}</a></p>
-
-{% include 'email-notifications/partials/footer-notification.html.twig' %}
+    <p><a href="http://m.nekuno.com/#/conversations">{{ 'notifications.messages.unread.body.linkAnchor'|trans }}</a></p>
+{% endblock %}
