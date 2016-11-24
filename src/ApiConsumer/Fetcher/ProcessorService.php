@@ -12,6 +12,7 @@ use ApiConsumer\LinkProcessor\LinkProcessor;
 use ApiConsumer\LinkProcessor\LinkResolver;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
 use ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser;
+use Event\ConsistencyEvent;
 use Event\ProcessLinkEvent;
 use Event\ProcessLinksEvent;
 use GuzzleHttp\Exception\RequestException;
@@ -184,16 +185,18 @@ class ProcessorService implements LoggerAwareInterface
             return null;
         } catch (UrlChangedException $e) {
 
-            $isOldSaved = $this->linkModel->setProcessed($e->getOldUrl(), false);
+            $oldUrl = $e->getOldUrl();
+            $newUrl = $e->getNewUrl();
 
-            if ($isOldSaved) {
-                $link = $this->linkModel->findLinkByUrl($e->getOldUrl());
-                $link['tempId'] = $e->getOldUrl();
-                $link['url'] = $e->getNewUrl();
-                $this->linkModel->updateLink($link);
+            if ($this->linkModel->findLinkByUrl($newUrl)) {
+                $fusedLink = $this->linkModel->fuseLinks($oldUrl, $newUrl);
+                $this->dispatcher->dispatch(\AppEvents::CONSISTENCY_LINK, new ConsistencyEvent($fusedLink['id']));
+            } else {
+                $this->linkModel->setProcessed($oldUrl, false);
+                $this->linkModel->changeUrl($oldUrl, $newUrl);
             }
 
-            $preprocessedLink->setFetched($e->getNewUrl());
+            $preprocessedLink->setFetched($newUrl);
 
             return $this->fullReprocessSingle($preprocessedLink);
 
@@ -309,7 +312,7 @@ class ProcessorService implements LoggerAwareInterface
         $synonymousPreprocessed = $this->fetcherService->fetchSynonymous($preprocessedLink->getSynonymousParameters());
 
         foreach ($synonymousPreprocessed as $singleSynonymous) {
-            try{
+            try {
                 $this->processLink($singleSynonymous);
                 $preprocessedLink->getLink()->addSynonymous($singleSynonymous->getLink());
             } catch (CannotProcessException $e) {

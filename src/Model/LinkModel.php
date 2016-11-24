@@ -428,19 +428,49 @@ class LinkModel
         return $result->count() > 0 && $result->current()->offsetExists('l');
     }
 
-    public function removeLink($linkId)
+    public function changeUrl($oldUrl, $newUrl)
+    {
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(l:Link{url: {oldUrl}})')
+            ->with('l')
+            ->limit(1)
+            ->setParameter('oldUrl', $oldUrl);
+
+        $qb->set('l.url = {newUrl}')
+            ->setParameter('newUrl', $newUrl);
+
+        $qb->returns('l');
+
+        $result = $qb->getQuery()->getResultSet();
+
+        return $result->count() > 0 && $result->current()->offsetExists('l');
+    }
+
+    public function removeLink($linkUrl)
     {
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(l:Link)')
-            ->where('id(l) = { linkId }')
+            ->where('l.url = { linkUrl }')
             ->optionalMatch('(l)-[r]-()')
             ->delete('l,r');
 
-        $qb->setParameter('linkId', $linkId);
+        $qb->setParameter('linkUrl', $linkUrl);
 
-        $query = $qb->getQuery();
+        $result = $qb->getQuery()->getResultSet();
 
-        return $query->getResultSet();
+        return $result->count() > 0;
+    }
+
+    public function fuseLinks($oldUrl, $newUrl)
+    {
+        $oldLink = $this->findLinkByUrl($oldUrl);
+        $newLink = $this->findLinkByUrl($newUrl);
+
+        $fusion = $this->gm->fuseNodes($oldLink['id'], $newLink['id']);
+        $this->changeUrl($oldUrl, $newUrl);
+
+        return $fusion['properties'];
     }
 
     public function createTag(array $tag)
