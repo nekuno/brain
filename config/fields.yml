@@ -80,44 +80,50 @@ profile:
         type: textarea
         min: 0
         max: 20000
-        label: &description.label
+        label: &descriptionLabel
             en: 'About me'
             es: 'Sobre mí'
+        labelEdit: *descriptionLabel
     birthday:
         type: birthday
-        label:
+        label: &birthdayLabel
             en: 'Birthday'
             es: 'Cumpleaños'
+        labelEdit: *birthdayLabel
         notErasable: true
     zodiacSign:
         type: choice
         editable: false
-        label: &zodiacSign.label
+        label: &zodiacSignLabel
             en: 'Zodiac sign'
             es: 'Signo del zodíaco'
-        labelFilter: &zodiacSign.labelFilter
+        labelFilter: &zodiacSignLabelFilter
             en: 'Zodiac'
             es: 'Zodiaco'
+        labelEdit: *zodiacSignLabelFilter
     height:
         type: integer
         min: 50
         max: 300
-        label: &height.label
+        label: &heightLabel
             en: 'Height (cm)'
             es: 'Altura (cm)'
+        labelEdit: *heightLabel
     allergy:
         type: tags
-        min: 0
-        max: 255
-        label: &allergy.label
+        label:
             en: 'Allergy'
             es: 'Alergia'
+        labelEdit: &allergyLabel
+            en: 'Have you any allergy?'
+            es: '¿Tienes alguna alergia?'
     sons:
         type: double_choice
-        label: &sons.label
+        label: &sonsLabel
             en: 'Sons'
             es: 'Hijos'
-        doubleChoices: &sons.doubleChoices
+        labelEdit: *sonsLabel
+        doubleChoices: &sonsDoubleChoices
             yes:
                 might_want:
                     en: "and might want more"
@@ -141,13 +147,14 @@ profile:
 
     language:
         type: tags_and_choice
-        label: &language.label
+        label: &languageLabel
             en: 'Languages'
             es: 'Idiomas'
-        choiceLabel: &language.choiceLabel
+        labelEdit: *languageLabel
+        choiceLabel: &languageChoiceLabel
             en: 'Level'
             es: 'Nivel'
-        choices: &language.choices
+        choices: &languageChoices
             elementary:
                 en: 'Elementary proficiency'
                 es: 'Competencia básica'
@@ -166,76 +173,102 @@ profile:
 
     gender:
         type: choice
-        label:
+        label: &genderLabel
+            en: 'Gender'
+            es: 'Género'
+        labelEdit:
             en: 'Want to be found in searches by gender'
             es: 'Quiero salir en búsquedas por género'
         notErasable: true
     descriptiveGender:
         type: multiple_choices
-        label: &descriptiveGender.label
+        label: &descriptiveGenderLabel
             en: 'Descriptive gender'
             es: 'Género descriptivo'
+        labelEdit: *descriptiveGenderLabel
         max_choices: 5
     hairColor:
         type: choice
-        label: &hairColor.label
+        label: &hairColorLabel
             en: 'Hair color'
             es: 'Color de pelo'
+        labelEdit: *hairColorLabel
     ethnicGroup:
         type: choice
-        label: &ethnicGroup.label
+        label: &ethnicGroupLabel
             en: 'Ethnic group'
             es: 'Grupo Étnico'
+        labelEdit: *ethnicGroupLabel
     complexion:
         type: choice
-        label: &complexion.label
+        label: &complexionLabel
             en: 'Complexion'
             es: 'Complexión'
+        labelEdit: *complexionLabel
     eyeColor:
         type: choice
-        label: &eyeColor.label
+        label: &eyeColorLabel
             en: 'Eyes color'
             es: 'Color ojos'
+        labelEdit: *eyeColorLabel
     civilStatus:
         type: choice
-        label: &civilStatus.label
+        label: &civilStatusLabel
             en: 'Civil status'
             es: 'Estado civil'
+        labelEdit: *civilStatusLabel
     income:
         type: choice
-        label: &income.label
+        label: &incomeLabel
             en: 'Income'
             es: 'Ingresos'
+        labelEdit: *incomeLabel
     pets:
         type: choice
-        label:
+        label: &petsLabel
+            en: 'Pets'
+            es: 'Mascotas'
+        labelEdit:
             en: 'Do you have pets?'
             es: '¿Tienes mascotas?'
     smoke:
         type: choice
-        label:
+        label: &smokeLabel
+             en: 'Smoker'
+             es: 'Fumador/a'
+        labelEdit:
             en: 'Do you smoke?'
             es: '¿Fumas?'
     alcohol:
         type: choice
-        label:
+        label: &alcoholLabel
+            en: 'Alcohol'
+            es: 'Alcohol'
+        labelEdit:
             en: 'Do you drink alcohol?'
             es: '¿Bebes Alcohol?'
     drugs:
         type: choice
-        label:
+        label: &drugsLabel
+            en: 'Drugs'
+            es: 'Drogas'
+        labelEdit:
             en: 'Do you take drugs?'
             es: '¿Tomas drogas?'
     diet:
         type: choice
-        label:
+        label: &dietLabel
+            en: 'Diet'
+            es: 'Dieta'
+        labelEdit:
             en: 'Are you on a special diet?'
             es: '¿Sigues alguna dieta especial?'
     orientation:
         type: choice
-        label: &orientation.label
+        label: &orientationLabel
             en: 'Orientation'
             es: 'Orientación'
+        labelEdit: *orientationLabel
         notErasable: true
     orientationRequired:
         type: boolean
@@ -245,21 +278,28 @@ profile:
             es: 'Orientación obligatoria'
     relationshipInterest:
         type: choice
-        label:
+        label: &relationshipInterestLabel
+            en: 'Looking for'
+            es: 'Tipo de relación que busca'
+        labelEdit:
             en: 'What are your interests on relations?'
             es: '¿Qué te interesa de las relaciones?'
     interfaceLanguage:
         type: choice
-        label:
+        label: &interfaceLanguageLabel
+            en: 'Interface language'
+            es: 'Idioma de interfaz'
+        labelEdit:
             en: 'What interface language do you prefer?'
             es: '¿Qué lenguaje de interfaz prefieres?'
         notErasable: true
     religion:
         type: double_choice
-        label: &religion.label
+        label: &religionLabel
             en: 'Religion'
             es: 'Religión'
-        doubleChoices: &religion.doubleChoices
+        labelEdit: *religionLabel
+        doubleChoices: &religionDoubleChoices
             agnosticism:
                 important:
                     en: "and it's important"
@@ -370,36 +410,36 @@ profile:
                 laughing_about_it:
                     en: "and laughing about it"
                     es: "y me río de ello"
-    allergy:
-        type: tags
-        label: &allergy.label
-            en: 'Have you any allergy?'
-            es: '¿Tienes alguna alergia?'
     handicap:
         type: tags
-        label: &handicap.label
+        label: &handicapLabel
             en: 'Have you any handicap?'
             es: '¿Tienes alguna discapacidad?'
+        labelEdit: *handicapLabel
     ideology:
         type: tags
-        label: &ideology.label
+        label: &ideologyLabel
             en: 'Ideology'
             es: 'Ideología'
+        labelEdit: *ideologyLabel
     profession:
         type: tags
-        label: &profession.label
+        label: &professionLabel
             en: 'Skills'
             es: 'Habilidades profesionales'
+        labelEdit: *professionLabel
     education:
         type: tags
-        label: &education.label
+        label: &educationLabel
             en: 'Education'
             es: 'Educación'
+        labelEdit: *educationLabel
     location:
         type: location
-        label: &location.label
+        label: &locationLabel
             en: 'Location'
             es: 'Ubicación'
+        labelEdit: *locationLabel
         notErasable: true
 content:
     type:
@@ -527,111 +567,88 @@ filters:
             max: 99
         zodiacSign:
             type: multiple_choices
-            label:
-                en: 'Zodiac'
-                es: 'Zodiaco'
+            label: *zodiacSignLabelFilter
         height:
             type: integer_range
             min: 50
             max: 300
-            label: *height.label
-        allergy:
-            type: tags
-            min: 0
-            max: 255
-            label: *allergy.label
+            label: *heightLabel
         sons:
             type: double_multiple_choices
-            label: *sons.label
-            doubleChoices: *sons.doubleChoices
+            label: *sonsLabel
+            doubleChoices: *sonsDoubleChoices
         language:
             type: tags_and_multiple_choices
-            label: *language.label
-            choiceLabel: *language.choiceLabel
-            choices: *language.choices
+            label: *languageLabel
+            choiceLabel: *languageChoiceLabel
+            choices: *languageChoices
         gender:
             type: multiple_choices
-            label:
-                en: 'Gender'
-                es: 'Género'
+            label: *genderLabel
         descriptiveGender:
             type: multiple_choices
-            label: *descriptiveGender.label
+            label: *descriptiveGenderLabel
         hairColor:
             type: multiple_choices
-            label: *hairColor.label
+            label: *hairColorLabel
         ethnicGroup:
             type: multiple_choices
-            label: *ethnicGroup.label
+            label: *ethnicGroupLabel
         complexion:
             type: multiple_choices
-            label: *complexion.label
+            label: *complexionLabel
         eyeColor:
             type: multiple_choices
-            label: *eyeColor.label
+            label: *eyeColorLabel
         civilStatus:
             type: multiple_choices
-            label: *civilStatus.label
+            label: *civilStatusLabel
         income:
             type: multiple_choices
-            label: *income.label
+            label: *incomeLabel
         pets:
             type: multiple_choices
-            label:
-                en: 'Pets'
-                es: 'Mascotas'
+            label: *petsLabel
         smoke:
             type: multiple_choices
-            label:
-                en: 'Smoker'
-                es: 'Fumador/a'
+            label: *smokeLabel
         alcohol:
             type: multiple_choices
-            label:
-                en: 'Alcohol'
-                es: 'Alcohol'
+            label: *alcoholLabel
         drugs:
             type: multiple_choices
-            label:
-                en: 'Drugs'
-                es: 'Drogas'
+            label: *drugsLabel
         diet:
             type: multiple_choices
-            label:
-                en: 'Diet'
-                es: 'Dieta'
+            label: *dietLabel
         orientation:
             type: multiple_choices
-            label: *orientation.label
+            label: *orientationLabel
         relationshipInterest:
             type: multiple_choices
-            label:
-                en: 'Looking for'
-                es: 'Tipo de relación que busca'
+            label: *relationshipInterestLabel
         interfaceLanguage:
             type: multiple_choices
-            label:
-                en: 'Interface language'
-                es: 'Idioma de interfaz'
+            label: *interfaceLanguageLabel
         religion:
             type: double_multiple_choices
-            label: *religion.label
-            doubleChoices: *religion.doubleChoices
+            label: *religionLabel
+            doubleChoices: *religionDoubleChoices
         allergy:
             type: tags
-            label: *allergy.label
+            label: *allergyLabel
         handicap:
             type: tags
-            label: *handicap.label
+            label: *handicapLabel
         ideology:
             type: tags
-            label: *ideology.label
+            label: *ideologyLabel
         profession:
             type: tags
-            label: *profession.label
+            label: *professionLabel
         education:
             type: tags
-            label: *education.label
+            label: *educationLabel
         location:
             type: location_distance
-            label: *location.label
+            label: *locationLabel

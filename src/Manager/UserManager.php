@@ -1204,6 +1204,35 @@ class UserManager implements PaginatedInterface
         return $this->setLabel($userId, $channelLabel);
     }
 
+    public function deleteOtherUserFields($userArray)
+    {
+        unset($userArray['password']);
+        unset($userArray['salt']);
+        unset($userArray['confirmationToken']);
+        unset($userArray['confirmed']);
+        unset($userArray['createdAt']);
+        unset($userArray['credentialsExpireAt']);
+        unset($userArray['credentialsExpired']);
+        unset($userArray['email']);
+        unset($userArray['emailCanonical']);
+        unset($userArray['enabled']);
+        unset($userArray['expired']);
+        unset($userArray['expiresAt']);
+        unset($userArray['facebookID']);
+        unset($userArray['twitterID']);
+        unset($userArray['googleID']);
+        unset($userArray['spotifyID']);
+        unset($userArray['locked']);
+        unset($userArray['passwordRequestedAt']);
+        unset($userArray['roles']);
+        unset($userArray['status']);
+        unset($userArray['tutorials']);
+        unset($userArray['updatedAt']);
+        unset($userArray['lastLogin']);
+
+        return $userArray;
+    }
+
     protected function buildChannelLabel($resource = null)
     {
         if (in_array($resource, TokensModel::getResourceOwners())) {
