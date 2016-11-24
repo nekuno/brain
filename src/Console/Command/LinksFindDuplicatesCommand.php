@@ -5,6 +5,8 @@ namespace Console\Command;
 use ApiConsumer\Exception\UrlNotValidException;
 use ApiConsumer\LinkProcessor\LinkAnalyzer;
 use Console\ApplicationAwareCommand;
+use Event\ConsistencyEvent;
+use EventListener\ConsistencySubscriber;
 use Everyman\Neo4j\Query\ResultSet;
 use Model\Neo4j\Neo4jException;
 use Symfony\Component\Console\Input\InputInterface;
@@ -69,6 +71,8 @@ class LinksFindDuplicatesCommand extends ApplicationAwareCommand
     {
         $gm = $this->app['neo4j.graph_manager'];
         $linkModel = $this->app['links.model'];
+        $dispatcher = $this->app['dispatcher'];
+        $dispatcher->addSubscriber(new ConsistencySubscriber($this->app['consistency.service'], $this->app['popularity.manager']));
 
         $errors = array();
         foreach ($duplicates as $duplicate) {
@@ -87,9 +91,7 @@ class LinksFindDuplicatesCommand extends ApplicationAwareCommand
                     /* @var ResultSet $deletionRS */
                     $deletionRS = $fusion['deleted'];
                     if ($deletionRS->count() > 0) {
-                        $popularityManager = $this->app['popularity.manager'];
-                        $popularityManager->deleteOneByLink($mainId);
-                        $popularityManager->updatePopularity($mainId);
+                        $dispatcher->dispatch(\AppEvents::CONSISTENCY_LINK, new ConsistencyEvent($mainId));
                         $output->writeln('Duplicate and main node successfully fused');
                     } else {
                         $output->writeln('Nodes were not fused');
@@ -146,9 +148,7 @@ class LinksFindDuplicatesCommand extends ApplicationAwareCommand
 
         if ($cleanUrl !== $link['url']) {
             $output->writeln('Changing ' . $link['url'] . ' to ' . $cleanUrl);
-            $link['tempId'] = $link['url'];
-            $link['url'] = $cleanUrl;
-            $linkModel->updateLink($link, true);
+            $linkModel->changeUrl($link['url'], $cleanUrl);
         }
 
         return $link;
