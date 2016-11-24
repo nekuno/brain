@@ -11,7 +11,7 @@ class UrlParser implements UrlParserInterface
     public function checkUrlValid($url)
     {
         //TODO: Check https://mathiasbynens.be/demo/url-regex for improvements
-        if (!filter_var($url, FILTER_VALIDATE_URL)){
+        if (!filter_var($url, FILTER_VALIDATE_URL)) {
             throw new UrlNotValidException($url);
         }
     }
@@ -19,7 +19,9 @@ class UrlParser implements UrlParserInterface
     public function cleanURL($url)
     {
         $url = $this->removeSpecialEndingChars($url);
+        $url = $this->fixCodification($url);
         $this->checkUrlValid($url);
+
         return $this->removeEndingChars($url);
     }
 
@@ -39,31 +41,38 @@ class UrlParser implements UrlParserInterface
 
     private function removeEndingChars($url)
     {
-        $rules = array('?','&','/');
+        $rules = array('?', '&', '/');
 
-        foreach ($rules as $chars){
-            $length=strlen($chars);
-            if (substr($url, -$length)===$chars){
-                $url= substr($url, 0, -$length);
+        foreach ($rules as $chars) {
+            $length = strlen($chars);
+            if (substr($url, -$length) === $chars) {
+                $url = substr($url, 0, -$length);
             }
         }
 
         return $url;
     }
 
-    private function removeSpecialEndingChars($url){
+    private function removeSpecialEndingChars($url)
+    {
         $excludingOrds = array(128);
 
-        if(in_array(ord(substr($url, -1)), $excludingOrds)){
+        if (in_array(ord(substr($url, -1)), $excludingOrds)) {
             $url = substr($url, 0, -2);
         }
 
         return $url;
     }
 
+    private function fixCodification($url)
+    {
+        return urldecode($url);
+    }
+
     public function getUrlType($url)
     {
         $this->checkUrlValid($url);
+
         return UrlParser::SCRAPPER;
     }
 }
