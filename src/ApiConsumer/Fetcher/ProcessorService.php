@@ -164,7 +164,14 @@ class ProcessorService implements LoggerAwareInterface
 
         if (!$resolved) {
             $link = $this->overwrite($preprocessedLink);
+
             return $link;
+        }
+
+        if ($preprocessedLink->getFetched() != $preprocessedLink->getCanonical()) {
+            $oldUrl = $preprocessedLink->getFetched();
+            $newUrl = $preprocessedLink->getCanonical();
+            $this->manageChangedUrl($oldUrl, $newUrl);
         }
 
         try {
@@ -187,14 +194,7 @@ class ProcessorService implements LoggerAwareInterface
 
             $oldUrl = $e->getOldUrl();
             $newUrl = $e->getNewUrl();
-
-            if ($this->linkModel->findLinkByUrl($newUrl)) {
-                $fusedLink = $this->linkModel->fuseLinks($oldUrl, $newUrl);
-                $this->dispatcher->dispatch(\AppEvents::CONSISTENCY_LINK, new ConsistencyEvent($fusedLink['id']));
-            } else {
-                $this->linkModel->setProcessed($oldUrl, false);
-                $this->linkModel->changeUrl($oldUrl, $newUrl);
-            }
+            $this->manageChangedUrl($oldUrl, $newUrl);
 
             $preprocessedLink->setFetched($newUrl);
 
@@ -204,6 +204,17 @@ class ProcessorService implements LoggerAwareInterface
             $this->logger->error(sprintf('Fetcher: Unexpected error processing link "%s" from resource "%s". Reason: %s', $preprocessedLink->getFetched(), $preprocessedLink->getSource(), $e->getMessage()));
 
             return null;
+        }
+    }
+
+    private function manageChangedUrl($oldUrl, $newUrl)
+    {
+        if ($this->linkModel->findLinkByUrl($newUrl)) {
+            $fusedLink = $this->linkModel->fuseLinks($oldUrl, $newUrl);
+            $this->dispatcher->dispatch(\AppEvents::CONSISTENCY_LINK, new ConsistencyEvent($fusedLink['id']));
+        } else {
+            $this->linkModel->setProcessed($oldUrl, false);
+            $this->linkModel->changeUrl($oldUrl, $newUrl);
         }
     }
 
