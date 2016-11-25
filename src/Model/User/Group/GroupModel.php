@@ -186,9 +186,13 @@ class GroupModel
         return $this->build($row);
     }
 
+    public function validate($data) {
+        $this->validator->validateGroup($data);
+    }
+
     public function create(array $data)
     {
-        $this->validator->validateGroup($data);
+        $this->validate($data);
 
         $qb = $this->gm->createQueryBuilder();
 
@@ -259,7 +263,7 @@ class GroupModel
 
     public function update($id, array $data)
     {
-        $this->validator->validateGroup($data);
+        $this->validate($data);
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(g:Group)')

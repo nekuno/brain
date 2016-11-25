@@ -430,12 +430,12 @@ groups:
     html:
         type: textarea
         required: false
-    date:
-        type: date
-        required: false
-    location:
-        type: location
-        required: false
+#    date:
+#        type: date
+#        required: false
+#    location:
+#        type: location
+#        required: false
 
 invitations:
     invitationId:
