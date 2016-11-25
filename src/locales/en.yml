@@ -11,7 +11,7 @@ notifications:
         title: 'You have %count% unread message.|You have %count% unread messages.'
         latest: 'Latest %count% unread message:|Latest %count% unread messages:'
         message: 'Unread message from user %user% at %datetime%:'
-        linkAnchor: 'See all your messages'
+        linkAnchor: 'Read more'
     exceptional_links:
       subject: 'We found content you want to see'
       body:

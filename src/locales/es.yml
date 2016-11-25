@@ -11,7 +11,7 @@ notifications:
         title: 'Tienes %count% mensaje sin leer.|Tienes %count% mensajes sin leer.'
         latest: 'Último mensaje sin leer:|Últimos %count% mensajes sin leer:'
         message: 'Mensaje sin leer del usuario %user% en %datetime%:'
-        linkAnchor: 'Mira todos tus mensages'
+        linkAnchor: 'Leer más'
     exceptional_links:
       subject: 'Hemos encontrado contenido que querrás ver'
       body:
