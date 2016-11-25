@@ -2,9 +2,7 @@
 
 namespace ApiConsumer\Exception;
 
-/**
- * @author Juan Luis Martínez <juanlu@comakai.com>
- */
+
 class TokenException extends \RuntimeException
 {
     protected $token;

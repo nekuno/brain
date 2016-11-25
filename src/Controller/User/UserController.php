@@ -80,13 +80,11 @@ class UserController
         /* @var $model UserManager */
         $model = $app['users.manager'];
         $userArray = $model->getById($id)->jsonSerialize();
+        $userArray = $model->deleteOtherUserFields($userArray);
 
         if (empty($userArray)) {
             return $app->json([], 404);
         }
-
-        unset($userArray['password']);
-        unset($userArray['salt']);
 
         return $app->json($userArray);
     }

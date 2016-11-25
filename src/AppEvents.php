@@ -183,4 +183,9 @@ final class AppEvents
      */
     const CONSISTENCY_START = 'consistency.start';
     const CONSISTENCY_END = 'consistency.end';
+
+    /**
+     * Fired when a Link needs consistency checked and fixed if necessary
+     */
+    const CONSISTENCY_LINK = 'consistency.link';
 }
