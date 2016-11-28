@@ -19,7 +19,7 @@ $app['security.firewalls'] = array(
         'anonymous' => true,
     ),
     'public_get' => array(
-        'pattern' => new RequestMatcher('(^/profile/metadata$)|(^/profile/categories)|(^/client/)|(^/lookup)', null, 'GET'),
+        'pattern' => new RequestMatcher('(^/profile/metadata$)|(^/profile/categories)|(^/users/available/)|(^/client/)|(^/lookup)', null, 'GET'),
         'anonymous' => true,
     ),
     'public_post' => array(
