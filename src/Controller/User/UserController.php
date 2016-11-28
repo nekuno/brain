@@ -91,12 +91,16 @@ class UserController
 
     /**
      * @param Application $app
+     * @param User $user
      * @param string $username
      * @throws NotFoundHttpException
      * @return JsonResponse
      */
-    public function availableAction(Application $app, $username)
+    public function availableAction(Application $app, User $user, $username)
     {
+        if (mb_strtolower($username) === $user->getUsernameCanonical()) {
+            return $app->json();
+        }
         /* @var $model UserManager */
         $model = $app['users.manager'];
         try {
