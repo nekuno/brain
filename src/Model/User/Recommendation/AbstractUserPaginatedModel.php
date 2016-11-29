@@ -157,9 +157,14 @@ abstract class AbstractUserPaginatedModel implements PaginatedInterface
                         $conditions[] = "p.$name =~ '(?i).*$value.*'";
                         break;
                     case 'integer_range':
-                        $min = (integer)$value['min'];
-                        $max = (integer)$value['max'];
-                        $conditions[] = "($min <= p.$name AND p.$name <= $max)";
+                        $min = isset($value['min']) ? (integer)$value['min'] : isset($filter['min']) ? $filter['min'] : null;
+                        $max = isset($value['max']) ? (integer)$value['min'] : isset($filter['max']) ? $filter['max'] : null;
+                        if ($min) {
+                            $conditions[] = "($min <= p.$name)";
+                        }
+                        if ($max) {
+                            $conditions[] = "(p.$name <= $max)";
+                        }
                         break;
                     case 'date':
 
@@ -171,10 +176,17 @@ abstract class AbstractUserPaginatedModel implements PaginatedInterface
                         $conditions[] = "('$min' <= p.$name AND p.$name <= '$max')";
                         break;
                     case 'birthday_range':
-                        $birthdayRange = $this->profileFilterModel->getBirthdayRangeFromAgeRange($value['min'], $value['max']);
+                        $age_min = isset($value['min']) ? $value['min'] : null;
+                        $age_max = isset($value['max']) ? $value['max'] : null;
+                        $birthdayRange = $this->profileFilterModel->getBirthdayRangeFromAgeRange($age_min, $age_max);
                         $min = $birthdayRange['min'];
                         $max = $birthdayRange['max'];
-                        $conditions[] = "('$min' <= p.$name AND p.$name <= '$max')";
+                        if ($min) {
+                            $conditions[] = "('$min' <= p.$name)";
+                        }
+                        if ($max) {
+                            $conditions[] = "(p.$name <= '$max')";
+                        }
                         break;
                     case 'location_distance':
                     case 'location':

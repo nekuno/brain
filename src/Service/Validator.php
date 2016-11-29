@@ -2,7 +2,6 @@
 
 namespace Service;
 
-
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
 use Model\User\ContentFilterModel;
@@ -40,12 +39,13 @@ class Validator
      */
     protected $contentFilterModel;
 
-    public function __construct(GraphManager $graphManager,
-                                ProfileFilterModel $profileFilterModel,
-                                UserFilterModel $userFilterModel,
-                                ContentFilterModel $contentFilterModel,
-                                array $metadata)
-    {
+    public function __construct(
+        GraphManager $graphManager,
+        ProfileFilterModel $profileFilterModel,
+        UserFilterModel $userFilterModel,
+        ContentFilterModel $contentFilterModel,
+        array $metadata
+    ) {
         $this->metadata = $metadata;
         $this->profileFilterModel = $profileFilterModel;
         $this->userFilterModel = $userFilterModel;
@@ -57,7 +57,7 @@ class Validator
     {
         $errors = array('userId' => array());
 
-        if (!is_int($userId)){
+        if (!is_int($userId)) {
             $errors['userId'][] = array('User Id must be an integer');
         }
 
@@ -70,8 +70,7 @@ class Validator
 
         $result = $qb->getQuery()->getResultSet();
 
-        if ($result->count() == 0)
-        {
+        if ($result->count() == 0) {
             $errors['userId'][] = array(sprintf('User with id %d not found', $userId));
         }
 
@@ -84,7 +83,7 @@ class Validator
     {
         $errors = array('groupId' => array());
 
-        if (!is_int($groupId)){
+        if (!is_int($groupId)) {
             $errors['groupId'][] = array('Group Id must be an integer');
         }
 
@@ -97,8 +96,7 @@ class Validator
 
         $result = $qb->getQuery()->getResultSet();
 
-        if ($result->count() == 0)
-        {
+        if ($result->count() == 0) {
             $errors['groupId'][] = array(sprintf('Group with id %d not found', $groupId));
         }
 
@@ -147,11 +145,11 @@ class Validator
     {
         $metadata = $this->metadata['invitations'];
 
-        if ($invitationIdRequired){
+        if ($invitationIdRequired) {
             $metadata['invitationId']['required'] = true;
         }
 
-        if (isset($data['groupId'])){
+        if (isset($data['groupId'])) {
             $groupId = $data['groupId'];
             if (!(is_int($groupId) || is_double($groupId))) {
                 $fieldErrors[] = 'groupId must be an integer';
@@ -159,7 +157,7 @@ class Validator
             $this->validateGroupId($groupId);
         }
 
-        if (isset($data['userId'])){
+        if (isset($data['userId'])) {
             $this->validateUserId($data['userId']);
         }
 
@@ -231,38 +229,26 @@ class Validator
 
                     case 'birthday_range':
                     case 'integer_range':
-                        if (!is_array($dataValue)){
+                        if (!is_array($dataValue)) {
                             $fieldErrors[] = 'Must be an array';
                             continue;
                         }
-                        if(!isset($dataValue['max'])){
-                            $fieldErrors[] = 'There must be a max value';
-                            continue;
-                        }
-                        if (!is_int($dataValue['max'])){
+                        if (isset($dataValue['max']) && !is_int($dataValue['max'])) {
                             $fieldErrors[] = 'Maximum value must be an integer';
                         }
-                        if(!isset($dataValue['min'])){
-                            $fieldErrors[] = 'There must be a min value';
-                            continue;
-                        }
-                        if (!is_int($dataValue['min'])){
+                        if (isset($dataValue['min']) && !is_int($dataValue['min'])) {
                             $fieldErrors[] = 'Minimum value must be an integer';
                         }
-                        if (isset($fieldData['min'])) {
-                            if ($dataValue['min'] < $fieldData['min']) {
-                                $fieldErrors[] = 'Minimum value must be greater than ' . $fieldData['min'];
-                            }
+                        if (isset($fieldData['min']) && isset($dataValue['min']) && $dataValue['min'] < $fieldData['min']) {
+                            $fieldErrors[] = 'Minimum value must be greater than ' . $fieldData['min'];
                         }
-                        if (isset($fieldData['max'])) {
-                            if ($dataValue['max'] > $fieldData['max']) {
-                                $fieldErrors[] = 'Maximum value must be less than ' . $fieldData['max'];
-                            }
+                        if (isset($fieldData['max']) && isset($dataValue['max']) && $dataValue['max'] > $fieldData['max']) {
+                            $fieldErrors[] = 'Maximum value must be less than ' . $fieldData['max'];
                         }
-                        if ($dataValue['min'] > $dataValue['max']){
+                        if (isset($dataValue['min']) && isset($dataValue['max']) && $dataValue['min'] > $dataValue['max']) {
                             $fieldErrors[] = 'Minimum value must be smaller or equal than maximum value';
                         }
-                    break;
+                        break;
 
                     case 'date':
                         $date = \DateTime::createFromFormat('Y-m-d', $dataValue);
@@ -272,7 +258,7 @@ class Validator
                         break;
 
                     case 'birthday':
-                        if (!is_string($dataValue)){
+                        if (!is_string($dataValue)) {
                             $fieldErrors[] = 'Birthday value must be a string';
                             continue;
                         }
@@ -318,7 +304,7 @@ class Validator
                         }
                         $thisChoices = $choices[$fieldName] + array('' => '');
                         $doubleChoices = $fieldData['doubleChoices'] + array('' => '');
-                        foreach ($dataValue as $singleDataValue){
+                        foreach ($dataValue as $singleDataValue) {
                             if (!in_array($singleDataValue['choice'], $thisChoices)) {
                                 $fieldErrors[] = sprintf('Option with value "%s" is not valid, possible values are "%s"', $singleDataValue['choice'], implode("', '", $thisChoices));
                             }
@@ -364,7 +350,7 @@ class Validator
                         }
                         break;
                     case 'location':
-                        foreach ($this->validateLocation($dataValue) as $error){
+                        foreach ($this->validateLocation($dataValue) as $error) {
                             $fieldErrors[] = $error;
                         }
 
@@ -382,7 +368,7 @@ class Validator
                             continue;
                         }
 
-                        foreach ($this->validateLocation($dataValue['location']) as $error){
+                        foreach ($this->validateLocation($dataValue['location']) as $error) {
                             $fieldErrors[] = $error;
                         }
                         break;
@@ -430,7 +416,8 @@ class Validator
         return true;
     }
 
-    private function validateLocation($dataValue){
+    private function validateLocation($dataValue)
+    {
         $fieldErrors = array();
         if (!is_array($dataValue)) {
             $fieldErrors[] = sprintf('The value "%s" is not valid, it should be an array with "latitude" and "longitude" keys', $dataValue);

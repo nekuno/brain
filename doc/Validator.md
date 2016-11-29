@@ -36,7 +36,7 @@ integer_range:
 
 Comprueba tipo (array)
 
-Comprueba existencia keys min y max y que su tipo (entero)
+Comprueba tipo de min y max si existen
 
 Comprueba que el mínimo no sea superior al máximo
 
