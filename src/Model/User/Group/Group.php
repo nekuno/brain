@@ -10,13 +10,13 @@ class Group implements \JsonSerializable
     protected $id;
     protected $name;
     protected $html;
-    protected $location = array();
+    protected $location;
     protected $date;
     protected $usersCount;
     protected $createdBy;
     protected $filterUsers;
-    protected $invitation = array();
-    protected $popularContents = array();
+    protected $invitation;
+    protected $popularContents;
 
     public static function createFromNode(Node $groupNode)
     {
