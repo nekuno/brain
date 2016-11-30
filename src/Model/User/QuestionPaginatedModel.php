@@ -62,7 +62,7 @@ class QuestionPaginatedModel implements PaginatedInterface
             ->match('(u:User {qnoow_id: { userId }})')
             ->setParameter('userId', $userId)
             ->match('(u)-[ua:ANSWERS]-(a:Answer)-[:IS_ANSWER_OF]-(q:Question)')
-            ->where("HAS(q.text_$locale)")
+            ->where("EXISTS(q.text_$locale)")
             ->optionalMatch('(answers:Answer)-[:IS_ANSWER_OF]-(q)')
             ->optionalMatch('(u)-[:ACCEPTS]-(acceptedAnswers:Answer)-[:IS_ANSWER_OF]-(q)')
             ->optionalMatch('(u)-[r:RATES]-(q)')
@@ -105,7 +105,7 @@ class QuestionPaginatedModel implements PaginatedInterface
             ->match('(u:User {qnoow_id: { id }})')
             ->setParameter('id', $id)
             ->match('(u)-[:ANSWERS]-(answer:Answer)-[:IS_ANSWER_OF]-(question:Question)')
-            ->where("HAS(answer.text_$locale)")
+            ->where("EXISTS(answer.text_$locale)")
             ->returns('COUNT(DISTINCT question) AS total');
 
         $query = $qb->getQuery();

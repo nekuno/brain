@@ -3,7 +3,8 @@
 namespace ApiConsumer\Fetcher;
 
 use ApiConsumer\LinkProcessor\PreprocessedLink;
-use Http\OAuth\ResourceOwner\TwitterResourceOwner;
+use ApiConsumer\ResourceOwner\TwitterResourceOwner;
+use Model\Link;
 
 abstract class AbstractTweetsFetcher extends BasicPaginationFetcher
 {
@@ -26,22 +27,19 @@ abstract class AbstractTweetsFetcher extends BasicPaginationFetcher
 
     protected function getPaginationIdFromResponse($response)
     {
+        if (!is_array($response) || empty($response)) {
+            return null;
+        }
 
-        $paginationId = null;
+        $lastItem = end($response);
+        $paginationId = isset($lastItem['id_str']) ? $lastItem : null;
 
-        $itemsCount = count($response);
-        if ($itemsCount > 0 ) {
-            $lastItem = $response[count($response) - 1];
-            $paginationId = $lastItem['id_str'];
-
-            if ($paginationId == $this->lastPaginationId){
-                return null;
-            }
-        } else {
+        if ($paginationId == $this->lastPaginationId) {
             return null;
         }
 
         $this->lastPaginationId = $paginationId;
+
         return $paginationId;
     }
 
@@ -68,15 +66,17 @@ abstract class AbstractTweetsFetcher extends BasicPaginationFetcher
                 $timestamp = ($date->getTimestamp()) * 1000;
             }
 
-            $link = array();
-            $link['url'] = $url;
-            $link['title'] = array_key_exists('text', $item) ? $item['text'] : null;
-            $link['description'] = null;
-            $link['resourceItemId'] = array_key_exists('id', $item) ? $item['id'] : null;
-            $link['timestamp'] = $timestamp;
-            $link['resource'] = $this->resourceOwner->getName();
+            $preprocessedLink = new PreprocessedLink($url);
+            $preprocessedLink->setResourceItemId(array_key_exists('id', $item) ? $item['id'] : null);
+            $preprocessedLink->setSource($this->resourceOwner->getName());
 
-            $preprocessedLink = new PreprocessedLink($link['url']);
+            $link = new Link();
+            $link->setUrl($url);
+            $link->setTitle(array_key_exists('text', $item) ? $item['text'] : null);
+            $link->setDescription(null);
+            $link->setCreated($timestamp);
+
+            $preprocessedLink = new PreprocessedLink($url);
             $preprocessedLink->setLink($link);
 
             $formatted[] = $preprocessedLink;

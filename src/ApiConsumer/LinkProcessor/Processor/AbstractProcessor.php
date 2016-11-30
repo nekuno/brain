@@ -2,33 +2,47 @@
 
 namespace ApiConsumer\LinkProcessor\Processor;
 
-
-use ApiConsumer\LinkProcessor\UrlParser\UrlParser;
-use Http\OAuth\ResourceOwner\ResourceOwnerInterface;
-use Service\UserAggregator;
+use ApiConsumer\Exception\CannotProcessException;
+use ApiConsumer\Exception\UrlNotValidException;
+use ApiConsumer\LinkProcessor\PreprocessedLink;
+use ApiConsumer\LinkProcessor\SynonymousParameters;
+use ApiConsumer\LinkProcessor\UrlParser\UrlParserInterface;
+use ApiConsumer\ResourceOwner\AbstractResourceOwnerTrait;
+use HWI\Bundle\OAuthBundle\OAuth\ResourceOwnerInterface;
 
 abstract class AbstractProcessor implements ProcessorInterface
 {
-
-    protected $userAggregator;
-
-    /** @var  ResourceOwnerInterface */
+    /** @var  ResourceOwnerInterface | AbstractResourceOwnerTrait */
     protected $resourceOwner;
-
-    /** @var  $parser UrlParser */
     protected $parser;
 
-    protected $scraperProcessor;
-
-    public function __construct(UserAggregator $userAggregator, ScraperProcessor $scraperProcessor)
+    public function __construct(ResourceOwnerInterface $resourceOwner, UrlParserInterface $urlParser)
     {
-        $this->userAggregator = $userAggregator;
-        $this->scraperProcessor = $scraperProcessor;
+        $this->resourceOwner = $resourceOwner;
+        $this->parser = $urlParser;
     }
 
-    protected function addCreator($username)
+    function addTags(PreprocessedLink $preprocessedLink, array $data)
     {
-        $this->userAggregator->addUser($username, $this->resourceOwner->getName());
+    }
+
+    function getSynonymousParameters(PreprocessedLink $preprocessedLink, array $data)
+    {
+    }
+
+    protected function getItemId($url)
+    {
+        try{
+            $id = $this->getItemIdFromParser($url);
+        } catch (UrlNotValidException $e){
+            throw new CannotProcessException($url);
+        }
+
+        return $id;
+    }
+
+    protected function getItemIdFromParser($url){
+        return $url;
     }
 
     /**
@@ -38,4 +52,5 @@ abstract class AbstractProcessor implements ProcessorInterface
     {
         return $this->parser;
     }
+
 }

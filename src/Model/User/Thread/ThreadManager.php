@@ -8,7 +8,8 @@ use Everyman\Neo4j\Query\Row;
 use Model\Neo4j\GraphManager;
 use Manager\UserManager;
 use Model\User;
-use Model\User\GroupModel;
+use Model\User\Group\Group;
+use Model\User\Group\GroupModel;
 use Model\User\ProfileModel;
 use Service\Validator;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -20,8 +21,9 @@ class ThreadManager
     const LABEL_THREAD_USERS = 'ThreadUsers';
     const LABEL_THREAD_CONTENT = 'ThreadContent';
     const SCENARIO_DEFAULT = 'default';
+    const SCENARIO_DEFAULT_LITE = 'default_lite';
 
-    static public $scenarios = array(ThreadManager::SCENARIO_DEFAULT);
+    static public $scenarios = array(ThreadManager::SCENARIO_DEFAULT, ThreadManager::SCENARIO_DEFAULT_LITE);
 
     /** @var  GraphManager */
     protected $graphManager;
@@ -41,24 +43,25 @@ class ThreadManager
     /**
      * ThreadManager constructor.
      * @param GraphManager $graphManager
-     * @param UserManager $userManager
      * @param UsersThreadManager $um
      * @param ContentThreadManager $cm
      * @param ProfileModel $profileModel
-     * @param GroupModel $groupModel
      * @param Translator $translator
      * @param Validator $validator
      */
-    public function __construct(GraphManager $graphManager, UserManager $userManager, UsersThreadManager $um,
-                                ContentThreadManager $cm, ProfileModel $profileModel, GroupModel $groupModel,
-                                Translator $translator, Validator $validator)
-    {
+    public function __construct(
+        GraphManager $graphManager,
+        UsersThreadManager $um,
+        ContentThreadManager $cm,
+        ProfileModel $profileModel,
+        Translator $translator,
+        Validator $validator
+    ) {
         $this->graphManager = $graphManager;
-        $this->userManager = $userManager;
         $this->usersThreadManager = $um;
         $this->contentThreadManager = $cm;
+        //TODO: Move profileModel and translator dependencies to a new Class DefaultThreadManager to create data
         $this->profileModel = $profileModel;
-        $this->groupModel = $groupModel;
         $this->translator = $translator;
         $this->validator = $validator;
     }
@@ -120,6 +123,24 @@ class ThreadManager
         return $threads;
     }
 
+    public function getByFilter($filterId)
+    {
+        $qb = $this->graphManager->createQueryBuilder();
+
+        $qb->match('(filter:Filter{filter:{filterId}})')
+            ->with('filter')
+            ->setParameter('filterId', (integer)$filterId);
+
+        $qb->match('(thread:Thread)-[:HAS_FILTER]->(filter)')
+            ->returns('thread');
+
+        $result = $qb->getQuery()->getResultSet();
+
+        $threadNode = $result->current()->offsetExists('thread') ? $result->offsetGet('thread') : null;
+
+        return $this->buildThread($threadNode);
+    }
+
     /**
      * Builds a complete Thread object from a neo4j node
      * @param Node $threadNode
@@ -146,6 +167,7 @@ class ThreadManager
         }
 
         $thread->setCached($cached);
+        $thread->setRecommendationUrl($this->getRecommendationUrl($thread));
         $thread->setTotalResults($threadNode->getProperty('totalResults'));
         $thread->setCreatedAt($threadNode->getProperty('createdAt'));
         $thread->setUpdatedAt($threadNode->getProperty('updatedAt'));
@@ -200,7 +222,7 @@ class ThreadManager
 
         //specific order to be created from bottom to top
         $threads = array(
-            'default' => array(
+            ThreadManager::SCENARIO_DEFAULT => array(
                 array(
                     'name' => $this->translator->trans('threads.default.twitter_channels'),
                     'category' => ThreadManager::LABEL_THREAD_CONTENT,
@@ -252,8 +274,11 @@ class ThreadManager
                     'default' => true,
                 ),
                 array(
-                    'name' => str_replace(array('%desired%', '%location%'), array($nounDesired, $location['locality']),
-                        $this->translator->trans('threads.default.desired_from_location')),
+                    'name' => str_replace(
+                        array('%desired%', '%location%'),
+                        array($nounDesired, $location['locality']),
+                        $this->translator->trans('threads.default.desired_from_location')
+                    ),
                     'category' => ThreadManager::LABEL_THREAD_USERS,
                     'filters' => array(
                         'userFilters' => array(
@@ -271,17 +296,44 @@ class ThreadManager
                     ),
                     'default' => true,
                 ),
+            ),
+            ThreadManager::SCENARIO_DEFAULT_LITE => array(
+                array(
+                    'name' => str_replace(
+                        array('%desired%', '%location%'),
+                        array($nounDesired, $location['locality']),
+                        $this->translator->trans('threads.default.desired_from_location')
+                    ),
+                    'category' => ThreadManager::LABEL_THREAD_USERS,
+                    'filters' => array(
+                        'userFilters' => array(
+                            'birthday' => array(
+                                'min' => 18,
+                                'max' => 80,
+                            ),
+                            'gender' => array($genderDesired !== 'people' ? $genderDesired : null),
+                        ),
+                        'order' => 'content',
+                    ),
+                    'default' => true,
+                ),
             )
         );
-        if ($threads['default'][5]['filters']['userFilters']['gender'] == array(null)){
-            unset($threads['default'][5]['filters']['userFilters']['gender']);
-        }
 
         if (!isset($threads[$scenario])) {
             return array();
         }
 
+        $this->fixGenderFilter($threads[$scenario]);
         return $threads[$scenario];
+    }
+
+    private function fixGenderFilter(&$threads) {
+        foreach ($threads as &$thread) {
+            if (isset($thread['filters']['userFilters']) && isset($thread['filters']['userFilters']['gender']) && $thread['filters']['userFilters']['gender'] == array(null)) {
+                unset($thread['filters']['userFilters']['gender']);
+            }
+        }
     }
 
     /**
@@ -326,9 +378,11 @@ class ThreadManager
 
         $qb->match('(u:User{qnoow_id:{userId}})')
             ->create('(thread:' . ThreadManager::LABEL_THREAD . ':' . $category . ')')
-            ->set('thread.name = {name}',
+            ->set(
+                'thread.name = {name}',
                 'thread.createdAt = timestamp()',
-                'thread.updatedAt = timestamp()')
+                'thread.updatedAt = timestamp()'
+            )
             ->create('(u)-[:HAS_THREAD]->(thread)');
         if (isset($data['default']) && $data['default'] === true) {
             $qb->set('thread :ThreadDefault');
@@ -375,8 +429,10 @@ class ThreadManager
             ->where('id(thread) = {id}')
             ->remove('thread:' . $this::LABEL_THREAD_USERS . ':' . $this::LABEL_THREAD_CONTENT . ':ThreadDefault')
             ->set('thread:' . $category)
-            ->set('thread.name = {name}',
-                'thread.updatedAt = timestamp()');
+            ->set(
+                'thread.name = {name}',
+                'thread.updatedAt = timestamp()'
+            );
         $qb->returns('thread');
         $qb->setParameters(
             array(
@@ -423,7 +479,8 @@ class ThreadManager
         foreach ($items as $item) {
             switch (get_class($thread)) {
                 case 'Model\User\Thread\ContentThread':
-                    $id = $item['content']['id'];
+                    /** @var $item User\Recommendation\ContentRecommendation */
+                    $id = $item->getContent()['id'];
                     $qb->match('(l:Link)')
                         ->where("id(l) = {$id}")
                         ->merge('(thread)-[:RECOMMENDS]->(l)')
@@ -431,7 +488,8 @@ class ThreadManager
                     $parameters += array($id => $id);
                     break;
                 case 'Model\User\Thread\UsersThread':
-                    $id = $item['id'];
+                    /** @var $item User\Recommendation\UserRecommendation */
+                    $id = $item->getId();
                     $qb->match('(u:User)')
                         ->where("u.qnoow_id = {$id}")
                         ->merge('(thread)-[:RECOMMENDS]->(u)')
@@ -479,8 +537,31 @@ class ThreadManager
         return $result->current()->offsetGet('amount');
     }
 
+    public function deleteGroupThreads($userId, $groupId)
+    {
+        $threads = $this->getByUser($userId);
 
-    public function getGroupThreadData($group, $userId)
+        foreach ($threads as $thread) {
+
+            if (!$thread instanceof UsersThread) {
+                continue;
+            }
+
+            $filter = $thread->getFilterUsers();
+            if (!$filter || !isset($filter->getUserFilters()['groups']) || !is_array($filter->getUserFilters()['groups'])) {
+                continue;
+            }
+
+            /** @var Node $groupNode */
+            foreach ($filter->getUserFilters()['groups'] as $groupNode) {
+                if ($groupNode->getId() == $groupId) {
+                    $this->deleteById($thread->getId());
+                }
+            }
+        }
+    }
+
+    public function getGroupThreadData(Group $group, $userId)
     {
         try {
             $profile = $this->profileModel->getById($userId);
@@ -490,12 +571,13 @@ class ThreadManager
 
         $locale = isset($profile['interfaceLanguage']) ? $profile['interfaceLanguage'] : 'es';
         $this->translator->setLocale($locale);
+
         return array(
-            'name' => str_replace('%group%', $group['name'], $this->translator->trans('threads.default.people_from_group')),
+            'name' => str_replace('%group%', $group->getName(), $this->translator->trans('threads.default.people_from_group')),
             'category' => ThreadManager::LABEL_THREAD_USERS,
             'filters' => array(
                 'userFilters' => array(
-                    'groups' => array($group['id']),
+                    'groups' => array($group->getId()),
                 )
             ),
             'default' => true,
@@ -535,7 +617,7 @@ class ThreadManager
         $labels = $rs->current()->offsetGet('labels');
         /** @var Label $label */
         foreach ($labels as $label) {
-            if ($label != ThreadManager::LABEL_THREAD) {
+            if ($label != ThreadManager::LABEL_THREAD && $label != 'ThreadDefault') {
                 return $label;
             }
         }
@@ -545,6 +627,7 @@ class ThreadManager
 
     private function updateFromFilters(Thread $thread, $data)
     {
+        $this->deleteCachedResults($thread);
         $filters = isset($data['filters']) ? $data['filters'] : array();
         switch (get_class($thread)) {
             case 'Model\User\Thread\ContentThread':
@@ -587,23 +670,29 @@ class ThreadManager
 
     }
 
+    private function getRecommendationUrl(Thread $thread)
+    {
+        return 'threads/' . $thread->getId() . '/recommendation?offset=20';
+    }
+
     private function getDesiredFromProfile(array $profile)
     {
-        if (!isset($profile['orientation']) || !isset($profile['gender'])) {
-            return 'female';
-        }
-
-        if ($profile['orientation'] == 'heterosexual') {
-            return $profile['gender'] === 'male' ? 'female' : 'male';
-        }
-
-        if ($profile['orientation'] == 'homosexual') {
-            return $profile['gender'] === 'male' ? 'male' : 'female';
-        }
-
-        if ($profile['orientation'] == 'bisexual') {
-            return 'people';
-        }
+        //QS-1001: Changed for now
+//        if (!isset($profile['orientation']) || !isset($profile['gender'])) {
+//            return 'people';
+//        }
+//
+//        if ($profile['orientation'] == 'heterosexual') {
+//            return $profile['gender'] === 'male' ? 'female' : 'male';
+//        }
+//
+//        if ($profile['orientation'] == 'homosexual') {
+//            return $profile['gender'] === 'male' ? 'male' : 'female';
+//        }
+//
+//        if ($profile['orientation'] == 'bisexual') {
+//            return 'people';
+//        }
 
         return 'people';
     }

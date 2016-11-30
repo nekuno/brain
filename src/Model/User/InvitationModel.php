@@ -1,17 +1,14 @@
 <?php
 
-/**
- * @author Manolo Salsas (manolez@gmail.com)
- */
-
 namespace Model\User;
 
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
-use Manager\UserManager;
+use Model\User\Group\Group;
 use Service\TokenGenerator;
+use Service\Validator;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
@@ -32,14 +29,9 @@ class InvitationModel
     protected $gm;
 
     /**
-     * @var GroupModel
+     * @var Validator
      */
-    protected $groupM;
-
-    /**
-     * @var UserManager
-     */
-    protected $um;
+    protected $validator;
 
     /**
      * @var string
@@ -48,12 +40,11 @@ class InvitationModel
 
     const MAX_AVAILABLE = 9999999999;
 
-    public function __construct(TokenGenerator $tokenGenerator, GraphManager $gm, GroupModel $groupModel, UserManager $um, $adminDomain)
+    public function __construct(TokenGenerator $tokenGenerator, GraphManager $gm, Validator $validator, $adminDomain)
     {
         $this->tokenGenerator = $tokenGenerator;
         $this->gm = $gm;
-        $this->groupM = $groupModel;
-        $this->um = $um;
+        $this->validator = $validator;
         $this->adminDomain = $adminDomain;
     }
 
@@ -201,7 +192,8 @@ class InvitationModel
         $qb->match("(inv:Invitation)<-[:CREATED_INVITATION]-(u:User)")
             ->where("u.qnoow_id = { userId }")
             ->optionalMatch('(inv)-[:HAS_GROUP]->(g:Group)')
-            ->returns('inv AS invitation', 'g AS group')
+            ->optionalMatch('(inv)<-[:CONSUMED_INVITATION]-(cu:User)')
+            ->returns('inv AS invitation', 'g AS group', 'coalesce(cu.qnoow_id) as consumedUserId', 'coalesce(cu.usernameCanonical) as consumedUsername')
             ->skip("{ offset }")
             ->limit("{ limit }")
             ->setParameters(
@@ -227,7 +219,7 @@ class InvitationModel
 
     public function create(array $data)
     {
-        $this->validate($data, false);
+        $this->validateCreate($data);
 
         $userAvailable = 0;
         if (isset($data['userId'])) {
@@ -261,6 +253,13 @@ class InvitationModel
                     continue;
                 }
             }
+            if ($index === 'available') {
+                if (isset($data['userId'])) {
+                    $data['available'] = 1;
+                }
+                $qb->set('inv.available = ' . $data['available']);
+                continue;
+            }
             if (array_key_exists($index, $data)) {
                 if (ctype_digit((string)$parameter)) {
                     $parameter = (integer)$parameter;
@@ -277,12 +276,8 @@ class InvitationModel
             $qb->with('inv')
                 ->match('(g:Group)')
                 ->where('id(g) = { groupId }')
-                ->createUnique('(inv)-[:HAS_GROUP]->(g)')
-                ->setParameters(
-                    array(
-                        'groupId' => (integer)$data['groupId'],
-                    )
-                );
+                ->createUnique('(inv)-[:HAS_GROUP]->(g)');
+            $qb->setParameter('groupId', (integer)$data['groupId']);
         }
         if (isset($data['userId'])) {
             isset($data['groupId']) ? $qb->with('inv', 'g') : $qb->with('inv');
@@ -292,19 +287,17 @@ class InvitationModel
                 ->set('user.available_invitations = { userAvailable } - 1');
 
             if (isset($data['groupId'])) {
-                $qb->with('user', 'inv', 'g');
-                $qb->optionalMatch('(gf:GroupFollowers)');
-                $qb->with('user', 'inv', 'g', 'collect(gf) as gfs');
-                $qb->add('FOREACH', '( g in gfs | SET user.available_invitations = { userAvailable } )');
+                $qb->with('user', 'inv', 'g')
+                    ->optionalMatch('(gf:GroupFollowers)')
+                    ->with('user', 'inv', 'g', 'collect(gf) as gfs')
+                    ->add('FOREACH', '( g in gfs | SET user.available_invitations = { userAvailable } )');
             }
-            $qb->setParameters(
-                array(
-                    'userId' => (integer)$data['userId'],
-                    'userAvailable' => (integer)$userAvailable,
-                    'groupId' => (integer)$data['groupId'],
-                )
-            );
+
+            $qb->setParameter('userId', (integer)$data['userId']);
+            $qb->setParameter('userAvailable', (integer)$userAvailable);
+
         }
+
         if (isset($data['groupId'])) {
             $qb->returns('inv AS invitation', 'g AS group');
         } else {
@@ -323,7 +316,7 @@ class InvitationModel
 
     public function update(array $data)
     {
-        $this->validate($data, false, true);
+        $this->validateUpdate($data);
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(inv:Invitation)')
@@ -491,16 +484,12 @@ class InvitationModel
         throw new NotFoundHttpException(sprintf('There is not invitation available with token %s', $token));
     }
 
-    public function prepareSend($id, $userId, array $data, $socialHost)
+    public function prepareSend($id, $userName, array $data, $socialHost)
     {
         if (!is_numeric($id)) {
             throw new \RuntimeException('invitation ID must be an integer');
         }
-        if (!is_numeric($userId)) {
-            throw new \RuntimeException('user ID must be an integer');
-        }
 
-        $user = $this->um->getById($userId);
         $invitation = $this->getById($id);
 
         /* TODO should we get the stored email? */
@@ -513,7 +502,7 @@ class InvitationModel
 
         return array(
             'email' => $data['email'],
-            'username' => $user->getUsername(),
+            'username' => $userName,
             'url' => $socialHost . 'invitation/' . (string)$invitation['invitation']['token'],
             'expiresAt' => (integer)$invitation['invitation']['expiresAt'],
         );
@@ -670,137 +659,35 @@ class InvitationModel
         throw new ValidationException(array(), sprintf('There is no invitation available with token %s', $token));
     }
 
+    public function validateUpdate(array $data)
+    {
+        if ( isset($data['invitationId']) && !$this->existsInvitation($data['invitationId'])) {
+                throw new ValidationException(array('invitatonId' => 'Invalid invitation ID'));
+        }
+
+        $this->validator->validateInvitation($data, true);
+    }
+
     /**
      * @param array $data
-     * @param bool $userRequired
-     * @param bool $invitationIdRequired
      * @throws ValidationException
      */
-    public function validate(array $data, $userRequired = true, $invitationIdRequired = false)
+    public function validateCreate(array $data)
     {
-        $errors = array();
-
-        foreach ($this->getFieldsMetadata() as $fieldName => $fieldMetadata) {
-
-            if ($userRequired && $fieldName === 'userId') {
-                $fieldMetadata['required'] = true;
-            }
-            if ($invitationIdRequired && $fieldName === 'invitationId') {
-                $fieldMetadata['required'] = true;
+        if (isset($data['token'])){
+            $token = $data['token'];
+            if (!is_string($token) && !is_numeric($token)) {
+                $fieldErrors[] = 'token must be a string or a numeric';
             }
 
-            $fieldErrors = array();
-
-            if ($fieldMetadata['required'] === true && !isset($data[$fieldName])) {
-
-                $fieldErrors[] = sprintf('The field %s is required', $fieldName);
-
-            } else {
-
-                $fieldValue = isset($data[$fieldName]) ? $data[$fieldName] : null;
-
-                if (null !== $fieldValue) {
-                    switch ($fieldName) {
-                        case 'invitationId':
-                            if ((string)(int)$fieldValue !== (string)$fieldValue) {
-                                $fieldErrors[] = 'invitationId must be an integer';
-                            } elseif (!$this->existsInvitation($fieldValue)) {
-                                $fieldErrors[] = 'Invalid invitation ID';
-                            }
-                            break;
-                        case 'token':
-                            /* Admin can create/update invitation with userId
-                            if(isset($data['userId'])) {
-                                $fieldErrors[] = 'You cannot set the token';
-                            }*/
-                            if (!is_string($fieldValue) && !is_numeric($fieldValue)) {
-                                $fieldErrors[] = 'token must be a string or a numeric';
-                            }
-                            if ($this->existsToken($fieldValue)) {
-                                if (!$this->isAnUpdate($data) || !$this->isTokenFromInvitationId($fieldValue, $data['invitationId'])) {
-                                    $fieldErrors[] = 'token already exists';
-                                }
-                            }
-                            break;
-                        case 'available':
-                            if (!(is_int($fieldValue) || is_double($fieldValue))) {
-                                $fieldErrors[] = 'available must be an integer';
-                            } elseif ((double)$fieldValue < 0) {
-                                $fieldErrors[] = 'available must be equal or greater than zero';
-                            }
-                            break;
-                        case 'email':
-                            if (!filter_var($fieldValue, FILTER_VALIDATE_EMAIL)) {
-                                $fieldErrors[] = 'email must be a valid email';
-                            }
-                            break;
-                        case 'expiresAt':
-                            if (!(is_int($fieldValue) || is_double($fieldValue))) {
-                                $fieldErrors[] = 'expiresAt must be a valid timestamp';
-                            }
-                            break;
-                        case 'groupId':
-                            if (!(is_int($fieldValue) || is_double($fieldValue))) {
-                                $fieldErrors[] = 'groupId must be an integer';
-                            } elseif (!$this->groupM->existsGroup($fieldValue)) {
-                                $fieldErrors[] = 'Invalid group ID';
-                            }
-                            break;
-                        case 'htmlText':
-                            if (!is_string($fieldValue)) {
-                                $fieldErrors[] = 'htmlText must be a string';
-                            }
-                            break;
-                        case 'slogan':
-                            if (!is_string($fieldValue)) {
-                                $fieldErrors[] = 'slogan must be a string';
-                            }
-                            break;
-                        case 'image_url':
-                            if (!filter_var($fieldValue, FILTER_VALIDATE_URL)) {
-                                $fieldErrors[] = 'image_url must be a valid URL';
-                            }
-                            break;
-                        case 'image_path':
-                            if (!preg_match('/^[\w\/\\-]+\.(png|jpe?g|gif|tiff)$/i', $fieldValue)) {
-                                $fieldErrors[] = 'image_path must be a valid path';
-                            }
-                            break;
-                        case 'orientationRequired':
-                            if (!is_bool($fieldValue)) {
-                                $fieldErrors[] = 'orientationRequired must be a boolean';
-                            }
-                            break;
-                        case 'userId':
-                            if ($fieldValue) {
-                                if (!(is_int($fieldValue) || is_double($fieldValue))) {
-                                    $fieldErrors[] = 'userId must be an integer';
-                                } else {
-                                    try {
-                                        $this->um->getById($fieldValue);
-                                    } catch (NotFoundHttpException $e) {
-                                        $fieldErrors[] = $e->getMessage();
-                                    }
-                                }
-                            }
-                            break;
-                        default:
-                            $fieldErrors[] = $fieldName . ' cannot be set';
-                            break;
-                    }
-                }
+            if (isset($data['invitationId']) && $this->existsToken($token) && !$this->isTokenFromInvitationId($token, $data['invitationId'])) {
+                    $fieldErrors[] = 'token already exists';
             }
-
-            if (count($fieldErrors) > 0) {
-                $errors[$fieldName] = $fieldErrors;
-            }
-
         }
 
-        if (count($errors) > 0) {
-            throw new ValidationException($errors);
-        }
+        $this->validator->validateInvitation($data, false);
     }
+
 
     protected function build(Row $row)
     {
@@ -813,10 +700,13 @@ class InvitationModel
     {
         /** @var Node $invitation */
         $invitation = $row->offsetGet('invitation');
-        /** @var Node $group */
-        $group = $row->offsetExists('group') ? $row->offsetGet('group') : null;
+        /** @var Node $groupNode */
+        $groupNode = $row->offsetExists('group') ? $row->offsetGet('group') : null;
 
         $userId = $row->offsetExists('userId') ? $row->offsetGet('userId') : null;
+
+        $consumedUserId = $row->offsetExists('consumedUserId') ? $row->offsetGet('consumedUserId') : null;
+        $consumedUsername = $row->offsetExists('consumedUsername') ? $row->offsetGet('consumedUsername') : null;
 
         $optionalKeys = array('email', 'expiresAt', 'htmlText', 'slogan', 'image_url', 'image_path', 'orientationRequired');
         $requiredKeys = array('token', 'available', 'consumed', 'createdAt');
@@ -835,72 +725,23 @@ class InvitationModel
 
         $invitationArray += array('invitationId' => $invitation->getId());
 
-        if ($group) {
-            $invitationArray['group'] = $this->groupM->getById($group->getId());
+        if ($groupNode) {
+            $invitationArray['group'] = Group::createFromNode($groupNode);
         }
 
         if ($userId) {
             $invitationArray += array('userId' => $userId);
         }
 
+	    if (!$groupNode && $consumedUserId && $consumedUsername) {
+		    $invitationArray += array('consumedUserId' => $consumedUserId, 'consumedUsername' => $consumedUsername);
+	    }
+
         if (isset($invitationArray['image_path'])) {
             $invitationArray['image_url'] = $this->adminDomain . $invitationArray['image_path'];
         }
 
         return $invitationArray;
-    }
-
-    /**
-     * @return array
-     */
-    protected function getFieldsMetadata()
-    {
-        $metadata = array(
-            'invitationId' => array(
-                'required' => false,
-            ),
-            'token' => array(
-                'required' => false,
-            ),
-            'available' => array(
-                'required' => true,
-            ),
-            'consumed' => array(
-                'required' => false,
-            ),
-            'email' => array(
-                'required' => false,
-            ),
-            'expiresAt' => array(
-                'required' => false,
-            ),
-            'createdAt' => array(
-                'required' => false,
-            ),
-            'userId' => array(
-                'required' => false,
-            ),
-            'groupId' => array(
-                'required' => false,
-            ),
-            'htmlText' => array(
-                'required' => false,
-            ),
-            'slogan' => array(
-                'required' => false,
-            ),
-            'image_url' => array(
-                'required' => false,
-            ),
-            'image_path' => array(
-                'required' => false,
-            ),
-            'orientationRequired' => array(
-                'required' => false,
-            ),
-        );
-
-        return $metadata;
     }
 
     /**
@@ -939,10 +780,5 @@ class InvitationModel
         $row = $result->current();
 
         return (integer)$row->offsetGet('available');
-    }
-
-    protected function isAnUpdate($data)
-    {
-        return isset($data['invitationId']);
     }
 }

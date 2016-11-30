@@ -3,18 +3,22 @@
 namespace Tests\ApiConsumer\LinkProcessor;
 
 use ApiConsumer\LinkProcessor\LinkResolver;
+use ApiConsumer\LinkProcessor\PreprocessedLink;
+use ApiConsumer\LinkProcessor\Resolution;
 
-/**
- * @author Juan Luis Martínez <juanlu@comakai.com>
- */
 class LinkResolverTest extends \PHPUnit_Framework_TestCase
 {
 
-    public function testRevolveValidUrlWithRedirections()
+    public function testResolveValidUrlWithRedirections()
     {
 
         $target = 'http://bit.ly/VN34RV';
         $resolved = 'http://instagram.com/p/JXcPW9r2LD/';
+
+        $return = new Resolution();
+        $return->setStartingUrl($target);
+        $return->setFinalUrl($resolved);
+        $return->setStatusCode(200);
 
         $client = $this->getMockBuilder('Goutte\Client')->getMock();
 
@@ -23,7 +27,7 @@ class LinkResolverTest extends \PHPUnit_Framework_TestCase
             ->method('request')
             ->will(
                 $this->returnCallback(
-                    function () {
+                    function () use ($resolved) {
 
                         $crawler = $this->getMockBuilder('Symfony\Component\DomCrawler\Crawler')->getMock();
 
@@ -32,7 +36,7 @@ class LinkResolverTest extends \PHPUnit_Framework_TestCase
                             ->will($this->returnSelf());
                         $crawler->expects($this->any())
                             ->method('attr')
-                            ->will($this->returnValue(null));
+                            ->will($this->returnValue($resolved));
 
                         return $crawler;
                     }
@@ -44,7 +48,7 @@ class LinkResolverTest extends \PHPUnit_Framework_TestCase
             ->method('getResponse')
             ->will(
                 $this->returnCallback(
-                    function () {
+                    function () use($resolved) {
 
                         $response = $this->getMockBuilder('Symfony\Component\BrowserKit\Response')->getMock();
 
@@ -79,7 +83,8 @@ class LinkResolverTest extends \PHPUnit_Framework_TestCase
 
         $linkResolver = new LinkResolver($client);
 
-        $this->assertEquals($resolved, $linkResolver->resolve($target));
+        $link = new PreprocessedLink($target);
+        $this->assertEquals($return, $linkResolver->resolve($link));
 
     }
 
@@ -89,6 +94,11 @@ class LinkResolverTest extends \PHPUnit_Framework_TestCase
         $target = 'http://bit.ly/VN34RV';
         $resolved = 'http://instagr.am/p/JXcPW9r2LD/';
         $canonical = 'http://instagram.com/p/JXcPW9r2LD/';
+
+        $return = new Resolution();
+        $return->setStartingUrl($target);
+        $return->setFinalUrl($canonical);
+        $return->setStatusCode(200);
 
         $crawler = $this->getMockBuilder('Symfony\Component\DomCrawler\Crawler')->getMock();
 
@@ -132,7 +142,8 @@ class LinkResolverTest extends \PHPUnit_Framework_TestCase
 
         $linkResolver = new LinkResolver($client);
 
-        $this->assertEquals($canonical, $linkResolver->resolve($target));
+        $link = new PreprocessedLink($target);
+        $this->assertEquals($return, $linkResolver->resolve($link));
     }
 
     public function testResolveValidUrlWithRelativeCanonical()
@@ -142,6 +153,11 @@ class LinkResolverTest extends \PHPUnit_Framework_TestCase
         $resolved = 'https://vimeo.com/channels/staffpicks/120559169';
         $relativeCanonical = '/120559169';
         $canonical = 'https://vimeo.com/120559169';
+
+        $return = new Resolution();
+        $return->setStartingUrl($target);
+        $return->setFinalUrl($canonical);
+        $return->setStatusCode(200);
 
         $crawler = $this->getMockBuilder('Symfony\Component\DomCrawler\Crawler')->getMock();
 
@@ -185,13 +201,19 @@ class LinkResolverTest extends \PHPUnit_Framework_TestCase
 
         $linkResolver = new LinkResolver($client);
 
-        $this->assertEquals($canonical, $linkResolver->resolve($target));
+        $link = new PreprocessedLink($target);
+        $this->assertEquals($return, $linkResolver->resolve($link));
     }
 
     public function testResolve404Url()
     {
 
-        $target = 'http://bit.ly/VN34RV';
+        $target = 'http://bit.ly/VN34RV8';
+
+        $return = new Resolution();
+        $return->setStartingUrl($target);
+        $return->setFinalUrl(null);
+        $return->setStatusCode(404);
 
         $client = $this->getMockBuilder('Goutte\Client')->getMock();
 
@@ -214,29 +236,10 @@ class LinkResolverTest extends \PHPUnit_Framework_TestCase
                 )
             );
 
-        $client
-            ->expects($this->once())
-            ->method('getRequest')
-            ->will(
-                $this->returnCallback(
-                    function () use ($target) {
-
-                        $request = $this->getMockBuilder('Symfony\Component\BrowserKit\Request')
-                            ->disableOriginalConstructor()
-                            ->getMock();
-
-                        $request->expects($this->once())
-                            ->method('getUri')
-                            ->will($this->returnValue($target));
-
-                        return $request;
-                    }
-                )
-            );
-
         $linkResolver = new LinkResolver($client);
 
-        $this->assertEquals($target, $linkResolver->resolve($target));
+        $link = new PreprocessedLink($target);
+        $this->assertEquals($return, $linkResolver->resolve($link));
     }
 
     public function testResolveTimeoutUrl()
@@ -252,36 +255,18 @@ class LinkResolverTest extends \PHPUnit_Framework_TestCase
             ->will(
                 $this->returnCallback(
                     function () {
-                        $exception = $this->getMockBuilder('GuzzleHttp\Exception\RequestException')
+                        $exception = $this->getMockBuilder('ApiConsumer\Exception\CouldNotResolveException')
                             ->disableOriginalConstructor()
                             ->getMock();
                         throw $exception;
                     }
                 )
             );
-
-        $client
-            ->expects($this->once())
-            ->method('getRequest')
-            ->will(
-                $this->returnCallback(
-                    function () use ($target) {
-
-                        $request = $this->getMockBuilder('Symfony\Component\BrowserKit\Request')
-                            ->disableOriginalConstructor()
-                            ->getMock();
-
-                        $request->expects($this->once())
-                            ->method('getUri')
-                            ->will($this->returnValue($target));
-
-                        return $request;
-                    }
-                )
-            );
+        $this->setExpectedException('ApiConsumer\Exception\CouldNotResolveException', 'Could not resolve url '.$target);
 
         $linkResolver = new LinkResolver($client);
 
-        $this->assertEquals($target, $linkResolver->resolve($target));
+        $link = new PreprocessedLink($target);
+        $linkResolver->resolve($link);
     }
 }

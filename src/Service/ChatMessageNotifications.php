@@ -6,6 +6,7 @@ namespace Service;
 
 use Model\Entity\EmailNotification;
 use Doctrine\ORM\EntityManager;
+use Model\User;
 use Model\User\ProfileModel;
 use Manager\UserManager;
 use Doctrine\DBAL\Connection;
@@ -108,7 +109,7 @@ class ChatMessageNotifications
                 EmailNotification::create()
                     ->setType(EmailNotification::UNREAD_CHAT_MESSAGES)
                     ->setUserId($userId)
-                    ->setRecipient($user['email'])
+                    ->setRecipient($user->getEmail())
                     ->setSubject($this->translator->trans('notifications.messages.unread.subject'))
                     ->setInfo($this->saveInfo($user, $filteredChatMessages, count($chatMessages)))
             );
@@ -117,6 +118,23 @@ class ChatMessageNotifications
                 $output->writeln('Email sent to user ' . $userId . ' with ' . count($filteredChatMessages) . ' messages.');
             }
         }
+    }
+
+    public function createDefaultMessage($to, $locale)
+    {
+        $qb = $this->connectionSocial->createQueryBuilder()
+            ->insert('chat_message')->values(array(
+                'user_to' => $to,
+                'user_from' => 16,
+                'text' => ":text",
+                'readed' => 0,
+                'createdAt' => ':now',
+            ));
+
+        $qb->setParameter('now', new \DateTime('now'), \Doctrine\DBAL\Types\Type::DATETIME);
+        $this->translator->setLocale($locale);
+        $qb->setParameter('text', $this->translator->trans('messages.register'));
+        $qb->execute();
     }
 
     protected function filterMessages(array $chatMessages)
@@ -199,7 +217,7 @@ class ChatMessageNotifications
         return $qb->execute()->fetchAll();
     }
 
-    protected function saveInfo(array $user, array $chatMessages, $totalMessages)
+    protected function saveInfo(User $user, array $chatMessages, $totalMessages)
     {
         foreach ($chatMessages as $index => $chatMessage) {
             $chatMessages[$index]['username_from'] = $this->userManager->getById($chatMessage['user_from'])->getUsername();
@@ -207,8 +225,8 @@ class ChatMessageNotifications
 
         return array(
             'unReadMessagesCount' => $totalMessages,
-            'username' => $user['username'],
-            'email' => $user['email'],
+            'username' => $user->getUsername(),
+            'email' => $user->getEmail(),
             'messages' => $chatMessages
         );
     }

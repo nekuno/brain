@@ -2,15 +2,18 @@
 
 namespace Security;
 
+use HWI\Bundle\OAuthBundle\OAuth\Response\UserResponseInterface;
+use HWI\Bundle\OAuthBundle\Security\Core\User\OAuthAwareUserProviderInterface;
 use Manager\UserManager;
 use Model\User;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\Exception\UsernameNotFoundException;
 use Symfony\Component\Security\Core\User\UserInterface as SecurityUserInterface;
 
-class UserProvider implements UserProviderInterface
+class UserProvider implements UserProviderInterface, OAuthAwareUserProviderInterface
 {
     /**
      * @var UserManager
@@ -40,6 +43,22 @@ class UserProvider implements UserProviderInterface
 
         return $user;
     }
+
+	public function loadUserByOAuthUserResponse(UserResponseInterface $response)
+	{
+		$resourceId = $response->getUsername();
+		$resourceOwner = $response->getResourceOwner()->getName();
+		try {
+			$user = $this->userManager->findUserByResourceOwner($resourceOwner, $resourceId);
+		} catch (NotFoundHttpException $e) {
+            $e = new UsernameNotFoundException();
+            $e->setUsername($response->getUsername());
+            $e->setToken($response->getOAuthToken());
+			throw $e;
+		}
+
+		return $user;
+	}
 
     /**
      * {@inheritDoc}

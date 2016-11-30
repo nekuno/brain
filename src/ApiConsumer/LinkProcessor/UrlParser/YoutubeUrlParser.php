@@ -2,43 +2,43 @@
 
 namespace ApiConsumer\LinkProcessor\UrlParser;
 
-/**
- * @author Juan Luis Martínez <juanlu@comakai.com>
- */
+use ApiConsumer\Exception\UrlNotValidException;
+
+
 class YoutubeUrlParser extends UrlParser
 {
-
-    const VIDEO_URL = 'video';
-    const CHANNEL_URL = 'channel';
-    const PLAYLIST_URL = 'playlist';
+    const VIDEO_URL = 'youtube_video';
+    const CHANNEL_URL = 'youtube_channel';
+    const PLAYLIST_URL = 'youtube_playlist';
 
     public function getUrlType($url)
     {
-        if ($this->getYoutubeIdFromUrl($url)) {
+        try{
+            $this->getVideoId($url);
             return self::VIDEO_URL;
-        }
-        if ($this->getChannelIdFromUrl($url)) {
-            return self::CHANNEL_URL;
-        }
-        if ($this->getPlaylistIdFromUrl($url)) {
-            return self::PLAYLIST_URL;
-        }
+        } catch (\Exception $e){}
 
-        return false;
+        try{
+            $this->getChannelId($url);
+            return self::CHANNEL_URL;
+        } catch (\Exception $e){}
+
+        try{
+            $this->getPlaylistId($url);
+            return self::PLAYLIST_URL;
+        } catch (\Exception $e){}
+
+        throw new UrlNotValidException($url);
     }
 
     /**
-     * Get Youtube video ID from URL
-     *
-     * @param string $url
-     * @return mixed Youtube video ID or FALSE if not found
+     * @param $url
+     * @return array
+     * @throws UrlNotValidException
      */
-    public function getYoutubeIdFromUrl($url)
+    public function getVideoId($url)
     {
-
-        if (!$this->isUrlValid($url)) {
-            return false;
-        }
+        $this->checkUrlValid($url);
 
         $parts = parse_url($url);
 
@@ -48,7 +48,7 @@ class YoutubeUrlParser extends UrlParser
 
             if (!empty($path)) {
                 if (in_array($path[0], array('channel', 'playlist', 'view_play_list'))) {
-                    return false;
+                    throw new UrlNotValidException($url);
                 }
             }
         }
@@ -56,23 +56,23 @@ class YoutubeUrlParser extends UrlParser
         if (isset($parts['query'])) {
             parse_str($parts['query'], $qs);
             if (isset($qs['v'])) {
-                return $qs['v'];
+                return array('id' => $qs['v']);
             } else if (isset($qs['vi'])) {
-                return $qs['vi'];
+                return array('id' => $qs['vi']);
             }
         }
 
         if (isset($parts['path'])) {
             $path = explode('/', trim($parts['path'], '/'));
             if (count($path) >= 2 && in_array($path[0], array('v', 'vi'))) {
-                return $path[1];
+                return array('id' => $path[1]);
             }
             if (count($path) === 1) {
-                return $path[0];
+                return array('id' => $path[0]);
             }
         }
 
-        return false;
+        throw new UrlNotValidException($url);
     }
 
     /**
@@ -81,12 +81,9 @@ class YoutubeUrlParser extends UrlParser
      * @param string $url
      * @return mixed
      */
-    public function getChannelIdFromUrl($url)
+    public function getChannelId($url)
     {
-
-        if (!$this->isUrlValid($url)) {
-            return false;
-        }
+        $this->checkUrlValid($url);
 
         $parts = parse_url($url);
 
@@ -94,12 +91,19 @@ class YoutubeUrlParser extends UrlParser
 
             $path = explode('/', trim($parts['path'], '/'));
 
-            if (!empty($path) && $path[0] === 'channel' && $path[1]) {
-                return $path[1];
+            if (count($path) == 2){
+                switch($path[0]){
+                    case 'channel':
+                        return array('id' => $path[1]);
+                    case 'user':
+                        return array('forUsername' => $path[1]);
+                    default:
+                        break;
+                }
             }
         }
 
-        return false;
+        throw new UrlNotValidException($url);
     }
 
     /**
@@ -108,12 +112,9 @@ class YoutubeUrlParser extends UrlParser
      * @param string $url
      * @return mixed
      */
-    public function getPlaylistIdFromUrl($url)
+    public function getPlaylistId($url)
     {
-
-        if (!$this->isUrlValid($url)) {
-            return false;
-        }
+        $this->checkUrlValid($url);
 
         $parts = parse_url($url);
 
@@ -125,21 +126,22 @@ class YoutubeUrlParser extends UrlParser
                 if (isset($parts['query'])) {
                     parse_str($parts['query'], $qs);
                     if (isset($qs['list'])) {
-                        return $qs['list'];
+                        return array('id' => $qs['list']);
                     }
                     if (isset($qs['p'])) {
-                        return $qs['p'];
+                        return array('id' => $qs['p']);
                     }
                 }
             }
         }
 
-        return false;
+        throw new UrlNotValidException($url);
     }
 
     public function cleanURL($url)
     {
         $url = parent::cleanURL($url);
+        //TODO: Improve when there is a query "youtube.com/watch/?v=videoid"
 
         $parts = parse_url($url);
         if (array_key_exists('path',$parts) && $parts['path'] == '/watch') {

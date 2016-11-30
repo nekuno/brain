@@ -39,7 +39,7 @@ class QuestionModel
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(q:Question)')
-            ->where("HAS(q.text_$locale)")
+            ->where("EXISTS(q.text_$locale)")
             ->match('(q)<-[:IS_ANSWER_OF]-(a:Answer)')
             ->with('q', 'a')
             ->orderBy('id(a)')
@@ -88,7 +88,7 @@ class QuestionModel
             ->optionalMatch('(:User)-[:REPORTS]->(report:Question)')
             ->with('user', 'collect(answered) + collect(skip) + collect(report) AS excluded')
             ->match('(q3:Question)<-[:IS_ANSWER_OF]-(a2:Answer)')
-            ->where('NOT q3 IN excluded', "HAS(q3.text_$locale)")
+            ->where('NOT q3 IN excluded', "EXISTS(q3.text_$locale)")
             ->with('q3 AS question', 'collect(DISTINCT a2) AS answers')
             ->returns('question', 'answers')
             ->orderBy($sortByRanking && $this->sortByRanking() ? 'question.ranking DESC' : 'question.timestamp ASC')
@@ -107,6 +107,25 @@ class QuestionModel
 
         return $this->build($row, $locale);
     }
+
+	public function userHasCompletedRegisterQuestions($userId)
+	{
+		$qb = $this->gm->createQueryBuilder();
+
+		$qb->match('(user:User {qnoow_id: { userId }})', '(a:Answer)-[:IS_ANSWER_OF]->(:RegisterQuestion)')
+		   ->setParameter('userId', (int)$userId)
+		   ->where('NOT (user)-[:ANSWERS]->(a)')
+		   ->returns('COUNT(a)');
+
+		$query = $qb->getQuery();
+		$result = $query->getResultSet();
+
+		if ($result->count() > 0) {
+			return true;
+		}
+
+		return false;
+	}
 
     /**
      * @return bool
@@ -127,7 +146,7 @@ class QuestionModel
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(q:Question)<-[:IS_ANSWER_OF]-(a:Answer)')
-            ->where('id(q) = { id }', "HAS(q.text_$locale)")
+            ->where('id(q) = { id }', "EXISTS(q.text_$locale)")
             ->setParameter('id', (integer)$id)
             ->with('q', 'a')
             ->orderBy('id(a)')
@@ -644,7 +663,7 @@ class QuestionModel
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(q:RegisterQuestion)')
-            ->where("HAS(q.text_$locale)")
+            ->where("EXISTS(q.text_$locale)")
             ->match('(q)<-[:IS_ANSWER_OF]-(a:Answer)')
             ->with('q', 'a')
             ->orderBy('id(a)')
@@ -672,7 +691,7 @@ class QuestionModel
             ->optionalMatch('(user)-[:ANSWERS]->(a:Answer)-[:IS_ANSWER_OF]->(answered:RegisterQuestion)')
             ->with('user', 'collect(answered) AS excluded')
             ->match('(q3:RegisterQuestion)<-[:IS_ANSWER_OF]-(a2:Answer)')
-            ->where('NOT q3 IN excluded', "HAS(q3.text_$locale)")
+            ->where('NOT q3 IN excluded', "EXISTS(q3.text_$locale)")
             ->with('q3 AS question', 'collect(DISTINCT a2) AS answers')
             ->returns('question', 'answers')
             ->limit(1);

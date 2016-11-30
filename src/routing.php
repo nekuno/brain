@@ -19,8 +19,14 @@ $app['security.firewalls'] = array(
         'anonymous' => true,
     ),
     'public_get' => array(
-        'pattern' => new RequestMatcher('(^/profile/metadata$)|(^/users/available/)|(^/client/)|(^/lookup)', null, 'GET'),
+        'pattern' => new RequestMatcher('(^/profile/metadata$)|(^/profile/categories)|(^/users/available/)|(^/client/)|(^/lookup)', null, 'GET'),
         'anonymous' => true,
+        'users' => $app['security.users_provider'],
+        'jwt' => array(
+            'use_forward' => true,
+            'require_previous_session' => false,
+            'stateless' => true,
+        )
     ),
     'public_post' => array(
         'pattern' => new RequestMatcher('(^/users$)|(^/invitations/token/validate/)|(^/lookUp/webHook$)|(^/users/validate$)|(^/profile/validate$)', null, array('POST')),

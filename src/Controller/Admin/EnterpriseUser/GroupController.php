@@ -37,7 +37,7 @@ class GroupController
         }
 
         $group = $app['users.groups.model']->create($data);
-        $app['users.groups.model']->setCreatedByEnterpriseUser($group['id'], $enterpriseUserId);
+        $app['users.groups.model']->setCreatedByEnterpriseUser($group->getId(), $enterpriseUserId);
 
         return $app->json($group, 201);
     }

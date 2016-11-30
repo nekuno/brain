@@ -3,7 +3,7 @@
 namespace Service;
 
 
-use Http\OAuth\Factory\ResourceOwnerFactory;
+use ApiConsumer\Factory\ResourceOwnerFactory;
 use Model\User\GhostUser\GhostUserManager;
 use Model\User\LookUpModel;
 use Model\User\SocialNetwork\SocialProfile;
@@ -17,6 +17,7 @@ class UserAggregator
     protected $ghostUserManager;
     protected $socialProfileManager;
     protected $resourceOwnerFactory;
+    protected $socialNetworkService;
     protected $lookUpModel;
     protected $amqpManager;
 
@@ -24,7 +25,8 @@ class UserAggregator
                                 GhostUserManager $ghostUserManager,
                                 SocialProfileManager $socialProfileManager,
                                 ResourceOwnerFactory $resourceOwnerFactory,
-                                LookUpModel $lookUpModel,
+                                SocialNetwork $socialNetworkService,
+	                            LookUpModel $lookUpModel,
                                 AMQPManager $AMQPManager)
 
     {
@@ -32,6 +34,7 @@ class UserAggregator
         $this->ghostUserManager = $ghostUserManager;
         $this->socialProfileManager = $socialProfileManager;
         $this->resourceOwnerFactory = $resourceOwnerFactory;
+        $this->socialNetworkService = $socialNetworkService;
         $this->lookUpModel = $lookUpModel;
         $this->amqpManager = $AMQPManager;
     }
@@ -40,29 +43,36 @@ class UserAggregator
      * @param $username
      * @param $resource
      * @param null $id
+     * @param null $url
      * @return SocialProfile[]|null
      */
-    public function addUser($username, $resource, $id = null)
+    public function addUser($username, $resource, $id = null, $url = null)
     {
         if (!($username && $resource)){
             return null;
         }
 
-        if (!in_array($resource, TokensModel::getResourceOwners())){
+        if (!in_array($resource, TokensModel::getResourceOwners()) && !$url){
             //$output->writeln('Resource '.$resource.' not supported.');
             return null;
         }
+	    if (in_array($resource, TokensModel::getResourceOwners())) {
+            $resourceOwner = $this->resourceOwnerFactory->build($resource);
 
-        $resourceOwner = $this->resourceOwnerFactory->build($resource);
+		    //if not implemented for resource or request error when asking API
+		    try {
+			    $url = $url ?: $resourceOwner->getProfileUrl($username);
+		    } catch (\Exception $e){
+			    //$output->writeln('ERROR: Could not get profile url for user '.$username. ' and resource '.$resource);
+			    //$output->writeln('Reason: '.$e->getMessage());
+			    return null;
+		    }
+	    }
 
-        //if not implemented for resource or request error when asking API
-        try{
-            $url = $resourceOwner->getProfileUrl(array('screenName'=>$username));
-        } catch (\Exception $e){
-            //$output->writeln('ERROR: Could not get profile url for user '.$username. ' and resource '.$resource);
-            //$output->writeln('Reason: '.$e->getMessage());
-            return null;
-        }
+		if (!$url) {
+			//$output->writeln('url does not exists');
+			return null;
+		}
 
         $socialProfiles = $this->socialProfileManager->getByUrl($url);
 
@@ -82,8 +92,8 @@ class UserAggregator
 
             $socialProfileArray = array($resource => $url);
 
-            $this->lookUpModel->setSocialProfiles($socialProfileArray, $id);
-            $this->lookUpModel->dispatchSocialNetworksAddedEvent($id, $socialProfileArray);
+	        $this->lookUpModel->setSocialProfiles($socialProfileArray, $id);
+            $this->socialNetworkService->setSocialNetworksInfo($id, $socialProfileArray);
 
             $socialProfiles = $this->socialProfileManager->getByUrl($url);
 
@@ -97,25 +107,27 @@ class UserAggregator
     /**
      * @param SocialProfile[] $socialProfiles
      * @param $username
+     * @param bool $force
      */
-    public function enqueueChannel(array $socialProfiles, $username)
+    public function enqueueChannel(array $socialProfiles, $username, $force = false)
     {
         foreach ($socialProfiles as $socialProfile) {
+	        if ($socialProfile->getResource() == TokensModel::TWITTER || $socialProfile->getResource() == TokensModel::GOOGLE) {
+	            $userId = $socialProfile->getUserId();
+	            $resource = $socialProfile->getResource();
 
-            $userId = $socialProfile->getUserId();
-            $resource = $socialProfile->getResource();
+	            if (!$force && $this->userManager->isChannel($userId, $resource)){
+	                continue;
+	            }
 
-            if ($this->userManager->isChannel($userId, $resource)){
-                continue;
-            }
+	            $this->userManager->setAsChannel($userId, $resource);
 
-            $this->userManager->setAsChannel($userId, $resource);
-
-            $this->amqpManager->enqueueMessage(array(
-                'userId' => $socialProfile->getUserId(),
-                'resourceOwner' => $socialProfile->getResource(),
-                'username' => $username,
-            ), 'brain.channel.user_aggregator');
+	            $this->amqpManager->enqueueMessage(array(
+	                'userId' => $socialProfile->getUserId(),
+	                'resourceOwner' => $socialProfile->getResource(),
+	                'username' => $username,
+	            ), 'brain.channel.user_aggregator');
+	        }
         }
     }
 

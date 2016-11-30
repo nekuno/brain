@@ -232,11 +232,13 @@ class FacebookMetadataParserTest extends \PHPUnit_Framework_TestCase
                     'title' => 'My title',
                     'description' => 'Test description',
                     'language' => 'es',
+                    'thumbnail' => null,
                 ),
                 array(
                     'title' => 'My title',
                     'description' => 'Test description',
-                    'language' => 'es'
+                    'language' => 'es',
+                    'thumbnail' => null,
                 ),
             ),
             array(
@@ -244,6 +246,7 @@ class FacebookMetadataParserTest extends \PHPUnit_Framework_TestCase
                     'title' => null,
                     'description' => null,
                     'language' => null,
+                    'thumbnail' => null,
                 ),
                 array(
                     'title' => ' ',

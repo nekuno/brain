@@ -2,17 +2,17 @@
 
 namespace ApiConsumer\LinkProcessor\Processor;
 
-use ApiConsumer\LinkProcessor\ImageAnalyzer;
+use ApiConsumer\Exception\CannotProcessException;
 use ApiConsumer\LinkProcessor\MetadataParser\BasicMetadataParser;
 use ApiConsumer\LinkProcessor\MetadataParser\FacebookMetadataParser;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
-use ApiConsumer\LinkProcessor\UrlParser\UrlParser;
+use ApiConsumer\LinkProcessor\SynonymousParameters;
 use Goutte\Client;
 use GuzzleHttp\Exception\RequestException;
+use Model\Image;
+use Model\Link;
+use Symfony\Component\DomCrawler\Crawler;
 
-/**
- * @author Juan Luis Martínez <juanlu@comakai.com>
- */
 class ScraperProcessor implements ProcessorInterface
 {
     /**
@@ -30,122 +30,101 @@ class ScraperProcessor implements ProcessorInterface
      */
     private $basicMetadataParser;
 
-    protected $parser;
-
     /**
-     * @var ImageAnalyzer
-     */
-    protected $imageAnalyzer;
-
-    /**
-     * @param UrlParser $urlParser
      * @param Client $client
      * @param \ApiConsumer\LinkProcessor\MetadataParser\BasicMetadataParser $basicMetadataParser
      * @param \ApiConsumer\LinkProcessor\MetadataParser\FacebookMetadataParser $facebookMetadataParser
      * @param ImageAnalyzer $imageAnalyzer
      */
     public function __construct(
-        UrlParser $urlParser,
         Client $client,
         BasicMetadataParser $basicMetadataParser,
-        FacebookMetadataParser $facebookMetadataParser,
-        ImageAnalyzer $imageAnalyzer
-    )
-    {
-        $this->parser = $urlParser;
+        FacebookMetadataParser $facebookMetadataParser
+    ) {
         $this->client = $client;
         $this->basicMetadataParser = $basicMetadataParser;
         $this->facebookMetadataParser = $facebookMetadataParser;
         $this->imageAnalyzer = $imageAnalyzer;
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function process(PreprocessedLink $preprocessedLink)
+    function requestItem(PreprocessedLink $preprocessedLink)
     {
         $link = $preprocessedLink->getLink();
 
         $url = $preprocessedLink->getCanonical();
-        $link['url'] = $url;
+        $link->setUrl($url);
 
         try {
+            $this->client->getClient()->setDefaultOption('timeout', 30.0);
             $crawler = $this->client->request('GET', $url);
         } catch (\LogicException $e) {
-            $link['processed'] = 0;
-            return $link;
+            //log
+            throw new CannotProcessException($url);
         } catch (RequestException $e) {
-            $link['processed'] = 0;
-            return $link;
+            throw new CannotProcessException($url);
         }
 
         $responseHeaders = $this->client->getResponse()->getHeaders();
-        if ($responseHeaders) {
-            if (isset($responseHeaders['Content-Type'][0]) && false !== strpos($responseHeaders['Content-Type'][0], "image/")) {
-                $link['additionalLabels'] = array('Image');
-            }
+        //TODO: unify with LinkResolver->isCorrectImageResponse (QS-800)
+        if ($responseHeaders && isset($responseHeaders['Content-Type'][0]) && false !== strpos($responseHeaders['Content-Type'][0], "image/")) {
+            $image = Image::buildFromArray($link->toArray());
+            $preprocessedLink->setLink($image);
         }
+
+        return array('html' => $crawler->html());
+    }
+
+    function hydrateLink(PreprocessedLink $preprocessedLink, array $data)
+    {
+        $link = $preprocessedLink->getLink();
+
+        $crawler = new Crawler();
+        $crawler->addHtmlContent($data['html']);
 
         $basicMetadata = $this->basicMetadataParser->extractMetadata($crawler);
-        $basicMetadata['thumbnail'] = $this->imageAnalyzer->selectImage($basicMetadata['images']);
-        $basicMetadata['tags'] = $this->basicMetadataParser->extractTags($crawler);
-        $link = $this->overrideLinkDataWithScrapedData($link, $basicMetadata);
+        $this->overrideFieldsData($link, $basicMetadata);
 
         $fbMetadata = $this->facebookMetadataParser->extractMetadata($crawler);
-        $fbMetadata['tags'] = $this->facebookMetadataParser->extractTags($crawler);
-        $link = $this->overrideLinkDataWithScrapedData($link, $fbMetadata);
-
-        return $link;
+        $this->overrideFieldsData($link, $fbMetadata);
     }
 
-
-    /**
-     * {@inheritDoc}
-     */
-    public function getParser()
+    private function overrideFieldsData(Link $link, array $scrapedData)
     {
-        return $this->parser;
-    }
-
-    /**
-     * @param array $link
-     * @param array $scrapedData
-     * @return array
-     */
-    private function overrideLinkDataWithScrapedData(array $link, array $scrapedData = array())
-    {
-
-        $this->overrideAttribute('title', $link, $scrapedData);
-        $this->overrideAttribute('description', $link, $scrapedData);
-        $this->overrideAttribute('language', $link, $scrapedData);
-        $this->overrideAttribute('thumbnail', $link, $scrapedData);
-
-        if (array_key_exists('tags', $scrapedData)) {
-            if (!array_key_exists('tags', $link)) {
-                $link['tags'] = array();
-            }
-            foreach ($link['tags'] as $tag) {
-                foreach ($scrapedData['tags'] as $sIndex => $sTag) {
-                    if ($tag['name'] === $sTag['name']) {
-                        unset($scrapedData['tags'][$sIndex]);
-                    }
-                }
-
+        foreach (array('title', 'description', 'language', 'thumbnail') as $field) {
+            if (!isset($scrapedData[$field]) || empty($scrapedData[$field])) {
+                continue;
             }
 
-            $link['tags'] = array_merge($link['tags'], $scrapedData['tags']);
+            $setter = 'set' . ucfirst($field);
+            $link->$setter($scrapedData[$field]);
         }
-
-        return $link;
     }
 
-    private function overrideAttribute($name, &$link, $scrapedData)
+    function addTags(PreprocessedLink $preprocessedLink, array $data)
     {
-        if (array_key_exists($name, $scrapedData)) {
-            if (null !== $scrapedData[$name] && "" !== $scrapedData[$name]) {
-                $link[$name] = $scrapedData[$name];
+        $link = $preprocessedLink->getLink();
+        $crawler = new Crawler();
+        $crawler->addHtmlContent($data['html']);
+
+        $basicMetadata['tags'] = $this->basicMetadataParser->extractTags($crawler);
+        $this->addScrapedTags($link, $basicMetadata);
+
+        $basicMetadata['tags'] = $this->facebookMetadataParser->extractTags($crawler);
+        $this->addScrapedTags($link, $basicMetadata);
+    }
+
+    private function addScrapedTags(Link $link, array $scrapedData)
+    {
+        if (array_key_exists('tags', $scrapedData) && is_array($scrapedData['tags'])) {
+
+            foreach ($scrapedData['tags'] as $tag) {
+                $link->addTag($tag);
             }
         }
     }
 
+    function getSynonymousParameters(PreprocessedLink $preprocessedLink, array $data)
+    {
+        return new SynonymousParameters();
+    }
 }

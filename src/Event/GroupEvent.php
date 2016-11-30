@@ -1,39 +1,32 @@
 <?php
-/**
- * @author yawmoght <yawmoght@gmail.com>
- */
 
 namespace Event;
 
-
-use Model\User;
+use Model\User\Group\Group;
 use Symfony\Component\EventDispatcher\Event;
 
 class GroupEvent extends Event
 {
     protected $group;
-    protected $user;
+    protected $userId;
 
-    public function __construct(array $group, User $user = null)
+    public function __construct(Group $group, $userId = null)
     {
         $this->group = $group;
-        $this->user = $user;
+        $this->userId = $userId;
     }
 
     /**
-     * @return array
+     * @return Group
      */
     public function getGroup()
     {
         return $this->group;
     }
 
-    /**
-     * @return User
-     */
-    public function getUser()
+    public function getUserId()
     {
-        return $this->user;
+        return $this->userId;
     }
 
 }

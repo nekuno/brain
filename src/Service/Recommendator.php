@@ -7,9 +7,11 @@
 namespace Service;
 
 
-use Model\User\GroupModel;
+use Model\User\Group\GroupModel;
+use Model\User\Recommendation\ContentPopularRecommendationPaginatedModel;
 use Model\User\Recommendation\ContentRecommendationPaginatedModel;
 use Model\User\Recommendation\SocialUserRecommendationPaginatedModel;
+use Model\User\Recommendation\UserPopularRecommendationPaginatedModel;
 use Model\User\Recommendation\UserRecommendationPaginatedModel;
 use Model\User\Thread\ContentThread;
 use Model\User\Thread\Thread;
@@ -34,10 +36,13 @@ class Recommendator
     protected $socialUserRecommendationPaginatedModel;
     /** @var  $contentRecommendationPaginatedModel ContentRecommendationPaginatedModel */
     protected $contentRecommendationPaginatedModel;
+    /** @var $contentPopularRecommendationPaginatedModel ContentPopularRecommendationPaginatedModel */
+    protected $contentPopularRecommendationPaginatedModel;
 
     //TODO: Check if user can be passed as argument and remove this dependency
     /** @var  $userManager UserManager */
     protected $userManager;
+    protected $userPopularRecommendationPaginatedModel;
 
     /**
      * Recommendator constructor.
@@ -48,6 +53,8 @@ class Recommendator
      * @param UserRecommendationPaginatedModel $userRecommendationPaginatedModel
      * @param SocialUserRecommendationPaginatedModel $socialUserRecommendationPaginatedModel
      * @param ContentRecommendationPaginatedModel $contentRecommendationPaginatedModel
+     * @param UserPopularRecommendationPaginatedModel $userPopularRecommendationPaginatedModel
+     * @param ContentPopularRecommendationPaginatedModel $contentPopularRecommendationPaginatedModel
      */
     public function __construct(Paginator $paginator,
                                 ContentPaginator $contentPaginator,
@@ -55,7 +62,9 @@ class Recommendator
                                 UserManager $userManager,
                                 UserRecommendationPaginatedModel $userRecommendationPaginatedModel,
                                 SocialUserRecommendationPaginatedModel $socialUserRecommendationPaginatedModel,
-                                ContentRecommendationPaginatedModel $contentRecommendationPaginatedModel)
+                                ContentRecommendationPaginatedModel $contentRecommendationPaginatedModel,
+                                UserPopularRecommendationPaginatedModel $userPopularRecommendationPaginatedModel,
+                                ContentPopularRecommendationPaginatedModel $contentPopularRecommendationPaginatedModel)
     {
         $this->paginator = $paginator;
         $this->contentPaginator = $contentPaginator;
@@ -64,6 +73,8 @@ class Recommendator
         $this->userRecommendationPaginatedModel = $userRecommendationPaginatedModel;
         $this->socialUserRecommendationPaginatedModel = $socialUserRecommendationPaginatedModel;
         $this->contentRecommendationPaginatedModel = $contentRecommendationPaginatedModel;
+        $this->contentPopularRecommendationPaginatedModel = $contentPopularRecommendationPaginatedModel;
+        $this->userPopularRecommendationPaginatedModel = $userPopularRecommendationPaginatedModel;
     }
 
     public function getRecommendationFromThread(Thread $thread)
@@ -87,6 +98,11 @@ class Recommendator
                     $filters['type'][] = urldecode($type);
                 }
 
+                if ($user->isGuest())
+                {
+                    return $this->getPopularContentRecommendation($filters);
+                }
+
                 return $this->getContentRecommendation($filters);
 
                 break;
@@ -98,6 +114,11 @@ class Recommendator
                     'profileFilters' => $threadFilters->getProfileFilters(),
                     'userFilters' => $threadFilters->getUserFilters(),
                 );
+
+                if ($user->isGuest())
+                {
+                    return $this->getPopularUserRecommendation($filters);
+                }
 
                 return $this->getUserRecommendation($filters);
 
@@ -134,9 +155,17 @@ class Recommendator
                     $filters['type'][] = urldecode($type);
                 }
 
-
                 if ($request->get('foreign')) {
                     $filters['foreign'] = urldecode($request->get('foreign'));
+                }
+
+                if ($request->get('ignored')) {
+                    $filters['ignored'] = urldecode($request->get('ignored'));
+                }
+
+                if ($user->isGuest())
+                {
+                    return $this->getPopularContentRecommendation($filters, $request);
                 }
 
                 return $this->getContentRecommendation($filters, $request);
@@ -158,6 +187,18 @@ class Recommendator
                     $filters['order'] = $order;
                 }
 
+                if ($request->get('foreign')) {
+                    $filters['foreign'] = urldecode($request->get('foreign'));
+                }
+
+                if ($request->get('ignored')) {
+                    $filters['ignored'] = urldecode($request->get('ignored'));
+                }
+
+                if ($user->isGuest())
+                {
+                    return $this->getPopularUserRecommendation($filters, $request);
+                }
 
                 return $this->getUserRecommendation($filters, $request);
 
@@ -178,11 +219,13 @@ class Recommendator
      * @param bool $social Whether the Request comes from Social
      * @return array
      */
-    public function getUserRecommendationFromRequest(Request $request, $id, $social =false)
+    public function getUserRecommendationFromRequest(Request $request, $id, $social = false)
     {
 
         //TODO: Validate
         $order = $request->get('order', false);
+        $ignored = $request->get('ignored', null);
+        $foreign = $request->get('foreign', null);
 
         $filters = array(
             'id' => $id,
@@ -192,6 +235,18 @@ class Recommendator
 
         if ($order) {
             $filters['order'] = $order;
+        }
+
+        if ($foreign) {
+            $filters['foreign'] = urldecode($foreign);
+        }
+
+        if ($ignored) {
+            $filters['ignored'] = urldecode($ignored);
+        }
+
+        if (!$social && $this->userManager->getById($id)->isGuest()) {
+            return $this->getPopularUserRecommendation($filters);
         }
 
         return $this->getUserRecommendation($filters, $request, $social);
@@ -205,6 +260,7 @@ class Recommendator
         $tag = $request->get('tag', array());
         $type = $request->get('type', array());
         $foreign = $request->get('foreign', null);
+        $ignored = $request->get('ignored', null);
 
         $filters = array('id' => $id);
 
@@ -220,6 +276,10 @@ class Recommendator
             $filters['foreign'] = urldecode($foreign);
         }
 
+        if ($ignored) {
+            $filters['ignored'] = urldecode($ignored);
+        }
+
         return $this->getContentRecommendation($filters, $request);
 
     }
@@ -232,9 +292,7 @@ class Recommendator
      */
     private function getUserRecommendation($filters, $request = null, $social = false)
     {
-        if ($request == null){
-            $request = new Request();
-        }
+        $request = $this->getRequest($request);
         //TODO: Move to userRecommendationPaginatedModel->validate($filters)
         if (isset($filters['userFilters']['groups']) && null !== $filters['userFilters']['groups']) {
             foreach ($filters['userFilters']['groups'] as $group) {
@@ -245,20 +303,46 @@ class Recommendator
         }
 
         $model = $social ? $this->socialUserRecommendationPaginatedModel : $this->userRecommendationPaginatedModel;
+        $paginator = $social ? $this->paginator : $this->contentPaginator;
 
-        $result = $this->paginator->paginate($filters, $model, $request);
+        $result = $paginator->paginate($filters, $model, $request);
         return $result;
     }
 
     private function getContentRecommendation($filters, $request = null)
     {
-        if ($request == null){
-            $request = new Request();
-        }
+        $request = $this->getRequest($request);
 
         $result = $this->contentPaginator->paginate($filters, $this->contentRecommendationPaginatedModel, $request);
 
         return $result;
+    }
+
+    private function getPopularContentRecommendation($filters, $request = null)
+    {
+        $request = $this->getRequest($request);
+
+        return $this->paginator->paginate($filters, $this->contentPopularRecommendationPaginatedModel , $request);
+    }
+
+    private function getPopularUserRecommendation($filters, $request = null)
+    {
+        $request = $this->getRequest($request);
+        //TODO: Move to userPopularRecommendationPaginatedModel->validate($filters)
+        if (isset($filters['userFilters']['groups']) && null !== $filters['userFilters']['groups']) {
+            foreach ($filters['userFilters']['groups'] as $group) {
+                if (!$this->groupModel->isUserFromGroup($group, $filters['id'])) {
+                    throw new AccessDeniedHttpException(sprintf('Not allowed to filter on group "%s"', $group));
+                }
+            }
+        }
+
+        return $this->paginator->paginate($filters, $this->userPopularRecommendationPaginatedModel , $request);
+    }
+
+    private function getRequest(Request $request = null)
+    {
+        return $request ?: new Request();
     }
 
 }

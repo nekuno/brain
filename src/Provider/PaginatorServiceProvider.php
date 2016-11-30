@@ -25,7 +25,7 @@ class PaginatorServiceProvider implements ServiceProviderInterface
 
         $app['paginator.content'] = $app->share(
             function ($app) {
-                $paginator = new ContentPaginator($app['links.model']);
+                $paginator = new ContentPaginator();
 
                 return $paginator;
             }

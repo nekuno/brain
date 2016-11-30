@@ -2,7 +2,8 @@
 
 namespace ApiConsumer\Fetcher;
 
-use Http\OAuth\ResourceOwner\ResourceOwnerInterface;
+use ApiConsumer\ResourceOwner\AbstractResourceOwnerTrait;
+use HWI\Bundle\OAuthBundle\OAuth\ResourceOwnerInterface;
 
 abstract class AbstractFetcher implements FetcherInterface
 {
@@ -17,7 +18,7 @@ abstract class AbstractFetcher implements FetcherInterface
     protected $rawFeed = array();
 
     /**
-     * @var ResourceOwnerInterface
+     * @var ResourceOwnerInterface|AbstractResourceOwnerTrait
      */
     protected $resourceOwner;
 
@@ -34,14 +35,14 @@ abstract class AbstractFetcher implements FetcherInterface
         $this->resourceOwner = $resourceOwner;
     }
 
-    /**
-     * Get url
-     *
-     * @return string
-     */
     public function getUrl()
     {
         return $this->url;
+    }
+
+    public function setUrl($url)
+    {
+        $this->url = $url;
     }
 
     /**

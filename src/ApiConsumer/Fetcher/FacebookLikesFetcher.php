@@ -4,6 +4,7 @@ namespace ApiConsumer\Fetcher;
 
 
 use ApiConsumer\LinkProcessor\PreprocessedLink;
+use ApiConsumer\LinkProcessor\UrlParser\FacebookUrlParser;
 
 class FacebookLikesFetcher extends AbstractFacebookFetcher
 {
@@ -29,8 +30,9 @@ class FacebookLikesFetcher extends AbstractFacebookFetcher
         /** @var PreprocessedLink[] $parsed */
         $parsed = parent::parseLinks($rawFeed);
 
+        // this endpoint only gives back Facebook Page likes
         foreach ($parsed as $preprocessedLink) {
-            $preprocessedLink->addToLink(array('pageId' => $preprocessedLink->getLink()['resourceItemId']));
+            $preprocessedLink->setType(FacebookUrlParser::FACEBOOK_PAGE);
         }
 
         return $parsed;

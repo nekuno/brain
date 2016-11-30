@@ -333,10 +333,10 @@ class QueryBuilder
 
     /**
      * Equivalents to MATCH (a) WHERE a:Type1 OR a:Type 2, but faster
-
      * @param array $types
      * @param string $name
      * @param array $withs
+     * @return $this
      */
     public function filterContentByType(array $types, $name = 'content', $withs = array())
     {
@@ -380,6 +380,31 @@ class QueryBuilder
         }
 
         $this->with(array_merge($withs, array($name)));
+        
+        return $this;
+    }
+
+    /**
+     * Faster than this->filterContentByType when matching for first time a single type (content not already a low cardinality subset)
+     * @param array $types
+     * @param string $name
+     * @return $this
+     */
+    public function matchContentByType(array $types, $name = 'content')
+    {
+        if (count($types) > 1){
+            return $this->filterContentByType($types, $name);
+        }
+        
+        if (count($types) == 0){
+            $types = array('Link');
+        }
+        
+        $typesString = $types[0] !== 'Link' ? ':'.$types[0] : '';
+        $this->match("($name:Link$typesString)");
+        $this->with($name);
+        
+        return $this;
     }
 
     /**

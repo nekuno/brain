@@ -6,7 +6,9 @@ use Service\AffinityRecalculations;
 use Service\AMQPManager;
 use Service\AuthService;
 use Service\ChatMessageNotifications;
+use Service\Consistency\ConsistencyCheckerService;
 use Service\EmailNotifications;
+use Service\ImageTransformations;
 use Service\MigrateSocialInvitations;
 use Service\NotificationManager;
 use Service\Recommendator;
@@ -30,7 +32,7 @@ class ServicesServiceProvider implements ServiceProviderInterface
 
         $app['auth.service'] = $app->share(
             function (Application $app) {
-                return new AuthService($app['users.manager'], $app['security.password_encoder'], $app['security.jwt.encoder']);
+                return new AuthService($app['users.manager'], $app['security.password_encoder'], $app['security.jwt.encoder'], $app['oauth.service']);
             }
         );
 
@@ -42,7 +44,7 @@ class ServicesServiceProvider implements ServiceProviderInterface
 
         $app['affinityRecalculations.service'] = $app->share(
             function (Application $app) {
-                return new AffinityRecalculations($app['emailNotification.service'], $app['translator'], $app['neo4j.graph_manager'], $app['links.model'], $app['users.manager'], $app['users.affinity.model']);
+                return new AffinityRecalculations($app['dispatcher'], $app['emailNotification.service'], $app['translator'], $app['neo4j.graph_manager'], $app['links.model'], $app['users.manager'], $app['users.affinity.model']);
             }
         );
 
@@ -64,12 +66,19 @@ class ServicesServiceProvider implements ServiceProviderInterface
             }
         );
 
+        $app['imageTransformations.service'] = $app->share(
+            function () {
+                return new ImageTransformations();
+            }
+        );
+
         $app['recommendator.service'] = $app->share(
             function (Application $app) {
                 return new Recommendator(
                     $app['paginator'], $app['paginator.content'], $app['users.groups.model'],
                     $app['users.manager'], $app['users.recommendation.users.model'],
-                    $app['users.socialRecommendation.users.model'], $app['users.recommendation.content.model']
+                    $app['users.socialRecommendation.users.model'], $app['users.recommendation.content.model'],
+                    $app['users.recommendation.popularusers.model'], $app['users.recommendation.popularcontent.model']
                 );
             }
         );
@@ -78,14 +87,14 @@ class ServicesServiceProvider implements ServiceProviderInterface
             function (Application $app) {
                 return new UserAggregator(
                     $app['users.manager'], $app['users.ghostuser.manager'], $app['users.socialprofile.manager'],
-                    $app['api_consumer.resource_owner_factory'], $app['users.lookup.model'], $app['amqpManager.service']
+                    $app['api_consumer.resource_owner_factory'], $app['socialNetwork.service'], $app['users.lookup.model'], $app['amqpManager.service']
                 );
             }
         );
 
         $app['validator.service'] = $app->share(
             function (Application $app) {
-                return new Validator($app['users.manager'], $app['users.profileFilter.model'], $app['users.userFilter.model'], $app['users.contentFilter.model'], $app['fields']);
+                return new Validator($app['neo4j.graph_manager'], $app['users.profileFilter.model'], $app['users.userFilter.model'], $app['users.contentFilter.model'], $app['fields']);
             }
         );
 
@@ -118,6 +127,12 @@ class ServicesServiceProvider implements ServiceProviderInterface
         $app['notificationManager.service'] = $app->share(
             function (Application $app) {
                 return new NotificationManager($app['neo4j.graph_manager']);
+            }
+        );
+
+        $app['consistency.service'] = $app->share(
+            function (Application $app) {
+                return new ConsistencyCheckerService($app['neo4j.graph_manager'], $app['dispatcher'], $app['consistency']);
             }
         );
 

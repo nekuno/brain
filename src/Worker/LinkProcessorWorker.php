@@ -4,11 +4,11 @@
 namespace Worker;
 
 use ApiConsumer\Fetcher\FetcherService;
+use ApiConsumer\Fetcher\ProcessorService;
 use Doctrine\DBAL\Connection;
-use Http\OAuth\Factory\ResourceOwnerFactory;
-use Http\OAuth\ResourceOwner\TwitterResourceOwner;
+use ApiConsumer\Factory\ResourceOwnerFactory;
+use ApiConsumer\ResourceOwner\TwitterResourceOwner;
 use Model\Neo4j\Neo4jException;
-use Model\User\LookUpModel;
 use Model\User\SocialNetwork\SocialProfileManager;
 use Model\User\TokensModel;
 use PhpAmqpLib\Channel\AMQPChannel;
@@ -33,14 +33,11 @@ class LinkProcessorWorker extends LoggerAwareWorker implements RabbitMQConsumerI
     protected $tm;
 
     /**
-     * @var LookupModel
-     */
-    protected $lookupModel;
-
-    /**
      * @var FetcherService
      */
     protected $fetcherService;
+
+    protected $processorService;
 
     /**
      * @var Connection
@@ -65,19 +62,19 @@ class LinkProcessorWorker extends LoggerAwareWorker implements RabbitMQConsumerI
     public function __construct(AMQPChannel $channel,
                                 EventDispatcher $dispatcher,
                                 FetcherService $fetcherService,
+                                ProcessorService $processorService,
                                 ResourceOwnerFactory $resourceOwnerFactory,
                                 TokensModel $tm,
-                                LookUpModel $lm,
                                 SocialProfileManager $socialProfileManager,
                                 Connection $connectionSocial,
                                 Connection $connectionBrain)
     {
-
         $this->channel = $channel;
+        $this->dispatcher = $dispatcher;
         $this->fetcherService = $fetcherService;
+        $this->processorService = $processorService;
         $this->resourceOwnerFactory = $resourceOwnerFactory;
         $this->tm = $tm;
-        $this->lookupModel = $lm;
         $this->socialProfileManager = $socialProfileManager;
         $this->connectionSocial = $connectionSocial;
         $this->connectionBrain = $connectionBrain;
@@ -144,7 +141,8 @@ class LinkProcessorWorker extends LoggerAwareWorker implements RabbitMQConsumerI
             foreach ($tokens as $token) {
 
                 $token['public'] = $public;
-                $this->fetcherService->fetch($token, $exclude);
+                $links = $this->fetcherService->fetch($token, $exclude);
+                $this->processorService->process($links, $userId);
 
                 if ($resourceOwner === TokensModel::TWITTER) {
 
@@ -154,10 +152,16 @@ class LinkProcessorWorker extends LoggerAwareWorker implements RabbitMQConsumerI
                         /** @var TwitterResourceOwner $twitterResourceOwner */
                         $twitterResourceOwner = $this->resourceOwnerFactory->build($resourceOwner);
                         $username = $twitterResourceOwner->getUsername(array('url' => $profile->getUrl()));
-                        $twitterResourceOwner->dispatchChannel(array(
-                            'url' => $profile->getUrl(),
-                            'username' => $username,
-                        ));
+//                        try{
+//                            $twitterResourceOwner->dispatchChannel(array(
+//                                'url' => $profile->getUrl(),
+//                                'username' => $username,
+//                            ));
+//                        } catch (\Exception $e){
+//                            $this->dispatchError($e, 'Error adding twitter channel');
+//                            $this->logger->error('Error adding twitter channel: '. $e->getMessage());
+//                        }
+
                         $this->logger->info(sprintf('Enqueued fetching old tweets for username %s', $username));
                     };
                 }

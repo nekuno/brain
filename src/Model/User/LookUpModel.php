@@ -52,6 +52,7 @@ class LookUpModel
         'TwitterSocialNetwork' => TokensModel::TWITTER,
         'GoogleplusSocialNetwork' => TokensModel::GOOGLE,
         'YoutubeSocialNetwork' => TokensModel::GOOGLE,
+        'LinkedinSocialNetwork' => TokensModel::LINKEDIN,
     );
     const LABEL_SOCIAL_NETWORK = 'SocialNetwork';
 

@@ -6,6 +6,8 @@
 namespace ApiConsumer\LinkProcessor;
 
 
+use Model\Link;
+
 class PreprocessedLink
 {
     protected $fetched;
@@ -13,25 +15,19 @@ class PreprocessedLink
     protected $canonical;
 
     /**
-     * @var $history \Symfony\Component\BrowserKit\History
-     *  */
-    protected $history;
-
-    protected $statusCode;
-
-    /**
      * @var $exceptions \Exception[]
      */
     protected $exceptions = array();
 
-    protected $type = 'Link';
+    /**
+     * @var string
+     */
+    protected $resourceItemId;
 
     /**
-     * @var $additional array ('relation'=> string, 'link' => PreprocessedLink)
+     * @var Link
      */
-    protected $additional = array();
-
-    protected $link = array();
+    protected $link;
 
     /**
      * @var array Token which was used for fetching
@@ -41,12 +37,21 @@ class PreprocessedLink
     protected $source;
 
     /**
+     * @var $type string Extra subtype from fetching data
+     */
+    protected $type;
+
+    protected $synonymousParameters;
+
+    /**
      * PreprocessedLink constructor.
      * @param $fetched
      */
     public function __construct($fetched)
     {
         $this->fetched = $fetched;
+        $this->link = new Link();
+        $this->synonymousParameters = new SynonymousParameters();
     }
 
     /**
@@ -82,38 +87,6 @@ class PreprocessedLink
     }
 
     /**
-     * @return \Symfony\Component\BrowserKit\History
-     */
-    public function getHistory()
-    {
-        return $this->history;
-    }
-
-    /**
-     * @param \Symfony\Component\BrowserKit\History $history
-     */
-    public function setHistory($history)
-    {
-        $this->history = $history;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getStatusCode()
-    {
-        return (int)$this->statusCode;
-    }
-
-    /**
-     * @param mixed $statusCode
-     */
-    public function setStatusCode($statusCode)
-    {
-        $this->statusCode = $statusCode;
-    }
-
-    /**
      * @return \Exception[]
      */
     public function getExceptions()
@@ -140,37 +113,21 @@ class PreprocessedLink
     /**
      * @return string
      */
-    public function getType()
+    public function getResourceItemId()
     {
-        return $this->type;
+        return $this->resourceItemId;
     }
 
     /**
-     * @param string $type
+     * @param string $resourceItemId
      */
-    public function setType($type)
+    public function setResourceItemId($resourceItemId)
     {
-        $this->type = $type;
+        $this->resourceItemId = $resourceItemId;
     }
 
     /**
-     * @return PreprocessedLink[]
-     */
-    public function getAdditional()
-    {
-        return $this->additional;
-    }
-
-    /**
-     * @param PreprocessedLink[] $additional
-     */
-    public function setAdditional($additional)
-    {
-        $this->additional = $additional;
-    }
-
-    /**
-     * @return array
+     * @return Link
      */
     public function getLink()
     {
@@ -178,7 +135,7 @@ class PreprocessedLink
     }
 
     /**
-     * @param array $link
+     * @param Link $link
      */
     public function setLink($link)
     {
@@ -238,6 +195,38 @@ class PreprocessedLink
     public function setSource($source)
     {
         $this->source = $source;
+    }
+
+    /**
+     * @return string
+     */
+    public function getType()
+    {
+        return $this->type;
+    }
+
+    /**
+     * @param string $type
+     */
+    public function setType($type)
+    {
+        $this->type = $type;
+    }
+
+    /**
+     * @return SynonymousParameters
+     */
+    public function getSynonymousParameters()
+    {
+        return $this->synonymousParameters;
+    }
+
+    /**
+     * @param SynonymousParameters $synonymousParameters
+     */
+    public function setSynonymousParameters($synonymousParameters)
+    {
+        $this->synonymousParameters = $synonymousParameters;
     }
 
 

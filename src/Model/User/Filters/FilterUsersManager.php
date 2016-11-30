@@ -1,7 +1,4 @@
 <?php
-/**
- * @author yawmoght <yawmoght@gmail.com>
- */
 
 namespace Model\User\Filters;
 
@@ -178,7 +175,6 @@ class FilterUsersManager
         }
 
         return $result->current()->offsetGet('filterId');
-
     }
 
     protected function getFilterUsersIdByGroupId($id)
@@ -197,7 +193,27 @@ class FilterUsersManager
         }
 
         return $result->current()->offsetGet('filterId');
+    }
 
+    public function getByGroupAndUser($groupId, $userId)
+    {
+        $qb = $this->graphManager->createQueryBuilder();
+        $qb->match('(group:Group)')
+            ->where('id(group) = groupId}')
+            ->with('group')
+            ->setParameter('groupId', (int)$groupId);
+        $qb->match('(user:User{qnoow_id:{userId}})')
+            ->with('group', 'user')
+            ->setParameter('userId', (int)$userId);
+
+        $qb->match('(user)');
+        $result = $qb->getQuery()->getResultSet();
+
+        if ($result->count() == 0) {
+            return null;
+        }
+
+        return $result->current()->offsetGet('filterId');
     }
 
     private function saveProfileFilters($profileFilters, $id)
@@ -231,11 +247,12 @@ class FilterUsersManager
 
                     if (isset($profileFilters[$fieldName])) {
                         $value = $profileFilters[$fieldName];
-                        //We do not support only one of these
-
-                        $qb->set('filter.age_min = ' . $value['min']);
-                        $qb->set('filter.age_max = ' . $value['max']);
-
+                        if (isset($value['min']) && null !== $value['min']){
+                            $qb->set('filter.age_min = ' . $value['min']);
+                        }
+                        if (isset($value['max']) && null !== $value['max']){
+                            $qb->set('filter.age_max = ' . $value['max']);
+                        }
                     }
                     $qb->with('filter');
                     break;
@@ -247,16 +264,14 @@ class FilterUsersManager
 
                     if (isset($profileFilters[$fieldName])) {
                         $value = $profileFilters[$fieldName];
-                        //We do not support only one of these
-                        $min = isset($value['min']) ? (integer)$value['min'] : $metadata[$fieldName]['min'];
-                        $max = isset($value['max']) ? (integer)$value['max'] : $metadata[$fieldName]['max'];
+                        $min = isset($value['min']) ? (integer)$value['min'] : null;
+                        $max = isset($value['max']) ? (integer)$value['max'] : null;
                         if ($min) {
                             $qb->set('filter.' . $fieldNameMin . ' = ' . $min);
                         }
                         if ($max) {
                             $qb->set('filter.' . $fieldNameMax . ' = ' . $max);
                         }
-
                     }
                     $qb->with('filter');
                     break;
@@ -316,9 +331,11 @@ class FilterUsersManager
                         $counter = 0;
                         foreach ($profileFilters[$fieldName] as $value) {
                             $choice = $value['choice'];
-                            $detail = $value['detail'];
+                            $detail = isset($value['detail']) ? $value['detail'] : '';
                             $qb->merge(" (option$fieldName$counter:$profileLabelName{id:'$choice'})");
-                            $qb->merge(" (filter)-[:FILTERS_BY{detail: '$detail'}]->(option$fieldName$counter)");
+                            $qb->merge(" (filter)-[po_rel$fieldName$counter:FILTERS_BY]->(option$fieldName$counter)")
+                                ->set(" po_rel$fieldName$counter.detail = {detail$fieldName$counter}");
+                            $qb->setParameter("detail$fieldName$counter", $detail);
                             $counter++;
                         }
                     }
@@ -361,10 +378,12 @@ class FilterUsersManager
                             $tag = $fieldName === 'language' ?
                                 $this->profileFilterModel->getLanguageFromTag($value['tag']) :
                                 $value['tag'];
-                            $choice = $value['choice'];
+                            $choice = isset($value['choice']) ? $value['choice'] : '';
 
                             $qb->merge("(tag$fieldName$tag:$tagLabelName:ProfileTag{name:'$tag'})");
-                            $qb->merge("(filter)-[:FILTERS_BY{detail:'$choice'}]->(tag$fieldName$tag)");
+                            $qb->merge("(filter)-[tag_rel$fieldName$tag:FILTERS_BY]->(tag$fieldName$tag)")
+                                ->set("tag_rel$fieldName$tag.detail = {detail$fieldName$tag}");
+                            $qb->setParameter("detail$fieldName$tag", $choice);
                         }
                     }
                     $qb->with('filter');
@@ -380,9 +399,11 @@ class FilterUsersManager
                                 $this->profileFilterModel->getLanguageFromTag($value['tag']) :
                                 $value['tag'];
 
+                            $choices = isset($value['choices']) ? $value['choices'] : array();
                             $qb->merge("(tag$fieldName$tag:$tagLabelName:ProfileTag{name:'$tag'})");
-                            $qb->merge("(filter)-[:FILTERS_BY{detail:{detail$fieldName$tag}}]->(tag$fieldName$tag)");
-                            $qb->setParameter("detail$fieldName$tag", $value['choices']);
+                            $qb->merge("(filter)-[tag_rel$fieldName$tag:FILTERS_BY]->(tag$fieldName$tag)")
+                                ->set("tag_rel$fieldName$tag.detail = {detail$fieldName$tag}");
+                            $qb->setParameter("detail$fieldName$tag", $choices);
                         }
                     }
                     $qb->with('filter');
@@ -489,8 +510,8 @@ class FilterUsersManager
         if ($filterNode->getProperty('age_min') || $filterNode->getProperty('age_max')) {
             $profileFilters += array(
                 'birthday' => array(
-                    'min' => $filterNode->getProperty('age_min') ?: 14,
-                    'max' => $filterNode->getProperty('age_max') ?: 99
+                    'min' => $filterNode->getProperty('age_min'),
+                    'max' => $filterNode->getProperty('age_max')
                 ),
                 'description' => $filterNode->getProperty('description')
             );
@@ -643,7 +664,6 @@ class FilterUsersManager
      */
     private function getUserFilters($id)
     {
-
         $qb = $this->graphManager->createQueryBuilder();
         $qb->match('(filter:FilterUsers)')
             ->where('id(filter) = {id}')
@@ -666,8 +686,8 @@ class FilterUsersManager
         $row = $result->current();
 
         $userFilters['groups'] = array();
-        foreach ($row->offsetGet('groups') as $group) {
-            $userFilters['groups'][] = $group;
+        foreach ($row->offsetGet('groups') as $groupNode) {
+            $userFilters['groups'][] = $groupNode;
         }
 
         if (empty($userFilters['groups'])) {

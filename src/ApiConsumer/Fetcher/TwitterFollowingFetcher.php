@@ -3,7 +3,9 @@
 namespace ApiConsumer\Fetcher;
 
 use ApiConsumer\LinkProcessor\PreprocessedLink;
-use Http\OAuth\ResourceOwner\TwitterResourceOwner;
+use ApiConsumer\ResourceOwner\TwitterResourceOwner;
+use Model\Creator;
+use Model\Link;
 
 class TwitterFollowingFetcher extends BasicPaginationFetcher
 {
@@ -18,7 +20,6 @@ class TwitterFollowingFetcher extends BasicPaginationFetcher
      */
     protected $resourceOwner;
 
-
     protected function getQuery()
     {
 
@@ -30,19 +31,21 @@ class TwitterFollowingFetcher extends BasicPaginationFetcher
 
     protected function getItemsFromResponse($response)
     {
-        return $response['ids'];
+        return isset($response['ids']) ? $response['ids'] : array();
 
     }
 
     protected function getPaginationIdFromResponse($response)
     {
-        $paginationId = $response['next_cursor'];
+        $paginationId = isset($response['next_cursor']) ? $response['next_cursor'] : null;
         if ($paginationId == 0) {
             return null;
         }
+
         return $paginationId;
     }
 
+    //TODO: Refactor to use RO->processMultipleProfiles
     /**
      * @inheritdoc
      */
@@ -53,33 +56,36 @@ class TwitterFollowingFetcher extends BasicPaginationFetcher
         $preprocessedLinks = array();
         if ($links == false || empty($links)) {
             foreach ($rawFeed as $id) {
-                $link = array('url' => 'https://twitter.com/intent/user?user_id=' . $id,
-                    'resourceItemId' => $id,
+                $link = array(
+                    'url' => 'https://twitter.com/intent/user?user_id=' . $id,
                     'title' => null,
                     'description' => null,
                     'timestamp' => 1000 * time(),
-                    'resource' => $this->resourceOwner->getName());
+                );
                 $preprocessedLink = new PreprocessedLink($link['url']);
-                $preprocessedLink->setLink($link);
+                $preprocessedLink->setLink(Creator::buildFromArray($link));
+                $preprocessedLink->setSource($this->resourceOwner->getName());
+                $preprocessedLink->setResourceItemId($id);
                 $preprocessedLinks[] = $preprocessedLink;
             }
         } else {
             foreach ($links as &$link) {
-                $screenName = $link['screen_name'];
-                $link = $this->resourceOwner->buildProfileFromLookup($link);
-                $link['processed'] = 1;
-                $this->resourceOwner->dispatchChannel(array(
-                    'url' => $link['url'],
-                    'username' => $screenName,
-                ));
+//                $screenName = $link['screen_name'];
+//                $link = $this->resourceOwner->buildProfileFromLookup($link);
+//                $link['processed'] = 1;
+//                $this->resourceOwner->dispatchChannel(
+//                    array(
+//                        'url' => $link['url'],
+//                        'username' => $screenName,
+//                    )
+//                );
                 $preprocessedLink = new PreprocessedLink($link['url']);
-                $preprocessedLink->setLink($link);
+                $preprocessedLink->setLink(Creator::buildFromArray($link));
                 $preprocessedLinks[] = $preprocessedLink;
             }
         }
 
         return $preprocessedLinks;
     }
-
 
 }

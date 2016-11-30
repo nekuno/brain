@@ -4,16 +4,12 @@ namespace ApiConsumer\Fetcher;
 
 use ApiConsumer\Exception\PaginatedFetchingException;
 use ApiConsumer\Factory\FetcherFactory;
-use ApiConsumer\LinkProcessor\LinkProcessor;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
+use ApiConsumer\LinkProcessor\SynonymousParameters;
+use ApiConsumer\LinkProcessor\UrlParser\YoutubeUrlParser;
 use Event\ExceptionEvent;
 use Event\FetchEvent;
-use Event\ProcessLinkEvent;
-use Event\ProcessLinksEvent;
-use Model\LinkModel;
-use Model\Neo4j\Neo4jException;
-use Model\User\LookUpModel;
-use Model\User\RateModel;
+use GuzzleHttp\Exception\RequestException;
 use Model\User\TokensModel;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
@@ -32,21 +28,6 @@ class FetcherService implements LoggerAwareInterface
     protected $logger;
 
     /**
-     * @var TokensModel
-     */
-    protected $tm;
-
-    /**
-     * @var LinkProcessor
-     */
-    protected $linkProcessor;
-
-    /**
-     * @var LinkModel
-     */
-    protected $linkModel;
-
-    /**
      * @var FetcherFactory
      */
     protected $fetcherFactory;
@@ -62,54 +43,22 @@ class FetcherService implements LoggerAwareInterface
     protected $options;
 
     /**
-     * @var LookUpModel
-     */
-    protected $lookupModel;
-
-    /**
-     * @var RateModel
-     */
-    protected $rateModel;
-
-    /**
-     * @param TokensModel $tm
-     * @param LinkProcessor $linkProcessor
-     * @param LinkModel $linkModel
-     * @param RateModel $rateModel
-     * @param LookUpModel $lookUpModel
      * @param FetcherFactory $fetcherFactory
      * @param EventDispatcher $dispatcher
      * @param array $options
      */
     public function __construct(
-        TokensModel $tm,
-        LinkProcessor $linkProcessor,
-        LinkModel $linkModel,
-        RateModel $rateModel,
-        LookUpModel $lookUpModel,
         FetcherFactory $fetcherFactory,
         EventDispatcher $dispatcher,
         array $options
-    )
-    {
-
-        $this->tm = $tm;
-        $this->linkProcessor = $linkProcessor;
-        $this->linkModel = $linkModel;
-        $this->rateModel = $rateModel;
-        $this->lookupModel = $lookUpModel;
+    ) {
         $this->fetcherFactory = $fetcherFactory;
         $this->dispatcher = $dispatcher;
         $this->options = $options;
     }
 
-    /**
-     * @param LoggerInterface $logger
-     * @return null|void
-     */
     public function setLogger(LoggerInterface $logger)
     {
-
         $this->logger = $logger;
     }
 
@@ -119,9 +68,11 @@ class FetcherService implements LoggerAwareInterface
      * @return \ApiConsumer\LinkProcessor\PreprocessedLink[]
      * @throws \Exception
      */
-    public function fetch($token, $exclude = array() )
+    public function fetch($token, $exclude = array())
     {
-        if (!$token) return array();
+        if (!$token) {
+            return array();
+        }
 
         if (array_key_exists('id', $token)) {
             $userId = $token['id'];
@@ -135,7 +86,7 @@ class FetcherService implements LoggerAwareInterface
             $resourceOwner = null;
         }
 
-        $public = isset($token['public'])? $token['public'] : false;
+        $public = isset($token['public']) ? $token['public'] : false;
 
         /* @var $links PreprocessedLink[] */
         $links = array();
@@ -143,39 +94,42 @@ class FetcherService implements LoggerAwareInterface
 
             $this->dispatcher->dispatch(\AppEvents::FETCH_START, new FetchEvent($userId, $resourceOwner));
 
-            foreach ($this->options as $fetcher => $fetcherConfig) {
+            $fetchers = $this->chooseFetchers($resourceOwner, $exclude);
+            foreach ($fetchers as $fetcher) {
 
-                if (in_array($fetcher, $exclude)){
-                    continue;
-                }
-
-                if ($fetcherConfig['resourceOwner'] === $resourceOwner) {
-                    try {
-                        $links = array_merge($links, $this->fetcherFactory->build($fetcher)->fetchLinksFromUserFeed($token, $public));
-                    } catch (PaginatedFetchingException $e) {
-                        $newLinks = $e->getLinks();
-                        $this->logger->warning(sprintf('Fetcher: Error fetching feed for user "%s" with fetcher "%s" from resource "%s". Reason: %s', $userId, $fetcher, $resourceOwner, $e->getOriginalException()->getMessage()));
-                        $this->dispatcher->dispatch(\AppEvents::EXCEPTION_WARNING, new ExceptionEvent($e, sprintf('Fetcher: Error fetching feed for user "%s" with fetcher "%s" from resource "%s". Reason: %s', $userId, $fetcher, $resourceOwner, $e->getOriginalException()->getMessage())));
-                        if (!empty($newLinks)) {
-                            $this->logger->info(sprintf('%d links were fetched before the exception happened and are going to be processed.', count($newLinks)));
-                            $links = array_merge($links, $newLinks);
+                try {
+                    $links = array_merge($links, $fetcher->fetchLinksFromUserFeed($token, $public));
+                } catch (PaginatedFetchingException $e) {
+                    //TODO: Improve exception management between services, controllers, workers...
+                    $originalException = $e->getOriginalException();
+                    if ($originalException instanceof RequestException && $originalException->getCode() == 429) {
+                        if ($resourceOwner == TokensModel::TWITTER) {
+                            $this->logger->warning('Pausing for 15 minutes due to Too Many Requests Error');
+                            sleep(15 * 60);
                         }
-
-                    } catch (\Exception $e) {
-                        $this->logger->error(sprintf('Fetcher: Error fetching feed for user "%s" with fetcher "%s" from resource "%s". Reason: %s', $userId, $fetcher, $resourceOwner, $e->getMessage()));
-                        continue;
                     }
+                    $newLinks = $e->getLinks();
+                    $this->logger->warning(sprintf('Fetcher: Error fetching feed for user "%s" with fetcher "%s" from resource "%s". Reason: %s', $userId, get_class($fetcher), $resourceOwner, $originalException->getMessage()));
+                    $this->dispatcher->dispatch(\AppEvents::EXCEPTION_WARNING, new ExceptionEvent($e, sprintf('Fetcher: Error fetching feed for user "%s" with fetcher "%s" from resource "%s". Reason: %s', $userId, get_class($fetcher), $resourceOwner, $originalException->getMessage())));
+                    if (!empty($newLinks)) {
+                        $this->logger->info(sprintf('%d links were fetched before the exception happened and are going to be processed.', count($newLinks)));
+                        $links = array_merge($links, $newLinks);
+                    }
+
+                } catch (\Exception $e) {
+                    $this->logger->error(sprintf('Fetcher: Error fetching feed for user "%s" with fetcher "%s" from resource "%s". Reason: %s', $userId, get_class($fetcher), $resourceOwner, $e->getMessage()));
+                    continue;
                 }
             }
 
-            foreach($links as $link){
+            foreach ($links as $link) {
                 $link->setToken($token);
                 $link->setSource($resourceOwner);
             }
 
             $this->dispatcher->dispatch(\AppEvents::FETCH_FINISH, new FetchEvent($userId, $resourceOwner));
 
-            $links = $this->processLinks($links, $userId);
+            //$links = $this->processLinks($links, $userId);
 
         } catch (\Exception $e) {
             throw new \Exception(sprintf('Fetcher: Error fetching from resource "%s" for user "%d". Message: %s on file %s in line %d', $resourceOwner, $userId, $e->getMessage(), $e->getFile(), $e->getLine()), 1);
@@ -185,44 +139,44 @@ class FetcherService implements LoggerAwareInterface
     }
 
     /**
-     * @param PreprocessedLink[] $links
-     * @param int $userId
-     * @return array
+     * @param SynonymousParameters $parameters
+     * @return \ApiConsumer\LinkProcessor\PreprocessedLink[]
      */
-    public function processLinks(array $links, $userId)
+    public function fetchSynonymous(SynonymousParameters $parameters)
     {
-        if (empty($links)){
-            return array();
-        } else {
-            $source = reset($links)->getSource();
+        switch($parameters->getType()){
+            case YoutubeUrlParser::VIDEO_URL:
+                /** @var YoutubeFetcher $fetcher */
+                $fetcher = $this->fetcherFactory->build('youtube');
+                $synonymous = $fetcher->fetchVideos($parameters);
+                break;
+            default:
+                $synonymous = array();
+                break;
         }
+        return $synonymous;
+    }
 
-        $this->dispatcher->dispatch(\AppEvents::PROCESS_START, new ProcessLinksEvent($userId, $source, $links));
+    /**
+     * @param $resourceOwner
+     * @param array $exclude
+     * @return FetcherInterface[]
+     */
+    protected function chooseFetchers($resourceOwner, $exclude = array())
+    {
+        $fetchers = array();
+        foreach ($this->options as $fetcherName => $fetcherConfig) {
 
-        foreach ($links as $key => $link) {
-            try {
+            if (in_array($fetcherName, $exclude)) {
+                continue;
+            }
 
-                $this->dispatcher->dispatch(\AppEvents::PROCESS_LINK, new ProcessLinkEvent($userId, $source, $link));
-
-                $linkProcessed = $this->linkProcessor->process($link);
-
-                $linkCreated = $this->linkModel->addOrUpdateLink($linkProcessed);
-
-                $linkProcessed['id'] = $linkCreated['id'];
-                $this->rateModel->userRateLink($userId, $linkProcessed, RateModel::LIKE, false);
-
-                $links[$key] = $linkProcessed;
-            } catch (\Exception $e) {
-                $this->logger->error(sprintf('Fetcher: Error processing link "%s" from resource "%s". Reason: %s', $link->getFetched(), $source, $e->getMessage()));
-                if ($e instanceof Neo4jException) {
-                    $this->logger->error(sprintf('Query: %s' . "\n" . 'Data: %s', $e->getQuery(), print_r($e->getData(), true)));
-                }
+            if ($fetcherConfig['resourceOwner'] === $resourceOwner) {
+                $fetchers[] = $this->fetcherFactory->build($fetcherName);
             }
         }
 
-        $this->dispatcher->dispatch(\AppEvents::PROCESS_FINISH, new ProcessLinksEvent($userId, $source, $links));
-
-        return $links;
+        return $fetchers;
     }
 
     /**

@@ -2,10 +2,10 @@
 
 namespace Model;
 
-use ApiConsumer\LinkProcessor\PreprocessedLink;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Neo4j\GraphManager;
+use Model\User\Recommendation\ContentRecommendation;
 use Symfony\Component\Translation\Translator;
 
 /**
@@ -150,31 +150,37 @@ class LinkModel
     }
 
     /**
-     * @param array $filters
+     * @param array $conditions
+     * @param int $offset
+     * @param int $limit
      * @return array
-     * @throws Neo4j\Neo4jException
-     * @throws \Exception
      */
-    public function findAllLinks($filters = array())
+    public function getLinks($conditions = array(), $offset = 0, $limit = 100)
     {
-        //todo: add tag filters, probably with an inter-model buildParamsFromFilters
-        $types = isset($filters['type']) ? $filters['type'] : array();
-
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match("(l:Link)")
-            ->returns('l AS link');
-        $qb->filterContentByType($types, 'l');
-        $query = $qb->getQuery();
-        $result = $query->getResultSet();
+        $qb->match('(link:Link)')
+            ->where($conditions)
+            ->returns('link')
+            ->skip('{ offset }')
+            ->limit('{ limit }');
 
-        $links = array();
-        /** @var Row $row */
-        foreach ($result as $row) {
-            $links[] = $this->buildLink($row->offsetGet('link'));
+        $qb->setParameters(
+            array(
+                'limit' => (integer)$limit,
+                'offset' => (integer) $offset,
+            )
+        );
+
+        $query = $qb->getQuery();
+        $resultSet = $query->getResultSet();
+
+        $unprocessedLinks = array();
+        foreach ($resultSet as $row) {
+            $unprocessedLinks[] = $this->buildLink($row->offsetGet('link'));
         }
 
-        return $links;
+        return $unprocessedLinks;
     }
 
     /**
@@ -224,8 +230,7 @@ class LinkModel
             return array();
         }
 
-        $data['title'] = isset($data['title']) ? $data['title'] : '';
-        $data['description'] = isset($data['description']) ? $data['description'] : '';
+        $data = $this->limitTextLengths($data);
 
         $link = $this->findLinkByUrl($data['url']);
 
@@ -234,7 +239,7 @@ class LinkModel
         }
 
         if (isset($link['processed']) || !$link['processed'] == 1) {
-            $data['tempId'] = $data['url'];
+            $data['tempId'] = isset($data['tempId']) ? $data['tempId'] : $data['url'];
             $newProcessed = isset($data['processed'])? $data['processed'] : true;
             return $this->updateLink($data, $newProcessed);
         }
@@ -275,7 +280,7 @@ class LinkModel
                 'l.description = { description }',
                 'l.language = { language }',
                 'l.processed = { processed }',
-                'l.created =  timestamp()'
+                'l.created =  timestamp()' //TODO: If there is created, use this instead (coalesce)
             );
 
         if (isset($data['thumbnail']) && $data['thumbnail']) {
@@ -336,7 +341,6 @@ class LinkModel
 
     public function updateLink(array $data, $processed = false)
     {
-
         $qb = $this->gm->createQueryBuilder();
 
         $qb->match('(l:Link)');
@@ -395,8 +399,14 @@ class LinkModel
 
         $result = $query->getResultSet();
 
-        /* @var $row Row */
         $linkArray = array();
+        if ($result->count() == 0)
+        {
+            $link = $this->findLinkByUrl($data['url']);
+            $linkArray['id'] = $link['id'];
+        }
+
+        /* @var $row Row */
         foreach ($result as $row) {
 
             /** @var $link Node */
@@ -413,24 +423,72 @@ class LinkModel
 
     }
 
-    public function removeLink($linkId)
+    public function setProcessed($url, $processed = true) {
+
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(l:Link{url: {url}})')
+            ->with('l')
+            ->limit(1)
+            ->setParameter('url', $url);
+
+        $qb->set('l.processed = {processed}')
+            ->setParameter('processed', $processed);
+
+        $qb->returns('l');
+
+        $result = $qb->getQuery()->getResultSet();
+
+        return $result->count() > 0 && $result->current()->offsetExists('l');
+    }
+
+    public function changeUrl($oldUrl, $newUrl)
+    {
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(l:Link{url: {oldUrl}})')
+            ->with('l')
+            ->limit(1)
+            ->setParameter('oldUrl', $oldUrl);
+
+        $qb->set('l.url = {newUrl}')
+            ->setParameter('newUrl', $newUrl);
+
+        $qb->returns('l');
+
+        $result = $qb->getQuery()->getResultSet();
+
+        return $result->count() > 0 && $result->current()->offsetExists('l');
+    }
+
+    public function removeLink($linkUrl)
     {
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(l:Link)')
-            ->where('id(l) = { linkId }')
+            ->where('l.url = { linkUrl }')
             ->optionalMatch('(l)-[r]-()')
             ->delete('l,r');
 
-        $qb->setParameter('linkId', $linkId);
+        $qb->setParameter('linkUrl', $linkUrl);
 
-        $query = $qb->getQuery();
+        $result = $qb->getQuery()->getResultSet();
 
-        return $query->getResultSet();
+        return $result->count() > 0;
+    }
+
+    public function fuseLinks($oldUrl, $newUrl)
+    {
+        $oldLink = $this->findLinkByUrl($oldUrl);
+        $newLink = $this->findLinkByUrl($newUrl);
+
+        $this->gm->fuseNodes($oldLink['id'], $newLink['id']);
+        $this->changeUrl($oldUrl, $newUrl);
+
+        return $newLink['id'];
     }
 
     public function createTag(array $tag)
     {
-
         $qb = $this->gm->createQueryBuilder();
         $qb->merge('(tag:Tag {name: { name }})')
             ->setParameter('name', $tag['name'])
@@ -482,125 +540,6 @@ class LinkModel
 
     }
 
-    public function getUnprocessedLinks($limit = 100)
-    {
-
-        $qb = $this->gm->createQueryBuilder();
-
-        $qb->match('(link:Link)')
-            ->where('link.processed = 0')
-            ->returns('link')
-            ->limit('{ limit }');
-
-        $qb->setParameters(
-            array(
-                'limit' => (integer)$limit
-            )
-        );
-
-        $query = $qb->getQuery();
-
-        $resultSet = $query->getResultSet();
-
-        $unprocessedLinks = array();
-
-        foreach ($resultSet as $row) {
-            $unprocessedLinks[] = array(
-                'url' => $row['link']->getProperty('url'),
-                'description' => $row['link']->getProperty('description'),
-                'title' => $row['link']->getProperty('title'),
-                'tempId' => $row['link']->getProperty('url'),
-            );
-        }
-
-        return $unprocessedLinks;
-
-    }
-
-    /**
-     * @param array $filters
-     * @return bool
-     * @throws Neo4j\Neo4jException
-     */
-    public function updatePopularity(array $filters)
-    {
-
-        $qb = $this->gm->createQueryBuilder();
-
-        //get max likes from link with popularity = 1
-        $qb->optionalMatch('(l_max:Link)')
-            ->where('l_max.popularity = 1')
-            ->with('l_max')
-            ->limit(1)
-            ->optionalMatch('(l_max)-[likes:LIKES]-(:User)')
-            //if that link's popularity was calculated more than a day ago, max = 0 as a flag to recalculate
-            ->with('CASE
-                        WHEN l_max.popularity_timestamp > timestamp()-1000*3600*24 THEN
-                            count(likes)
-                        ELSE
-                            0
-                    END as max LIMIT 1
-                        ');
-        //get links from user (or all!) to set popularity
-        if (isset($filters['userId'])) {
-
-            $qb->optionalMatch('(:User {qnoow_id: { id } })-[LIKES]-(l:Link)');
-            $qb->setParameter('id', (integer)$filters['userId']);
-
-        } else {
-
-            $qb->optionalMatch('(l:Link)');
-        }
-
-        $qb->where('l.popularity_timestamp < timestamp() - 1000*3600*24');
-        $qb->with('l', 'max');
-        $qb->optionalMatch('(l)-[r:LIKES]-(:User)')
-            ->with('l', 'count(DISTINCT r) AS total', 'max')
-            ->where('total > 1')
-            ->with('l', 'toFloat(total) AS total', 'toFloat(max) AS max');
-
-        if (isset($filters['limit'])) {
-
-            $qb->orderBy('HAS(l.popularity_timestamp)', 'l.popularity_timestamp')
-                ->limit('{ limit }');
-            $qb->setParameter('limit', (integer)$filters['limit']);
-        }
-
-        //ensures max = 0 gives no problems
-        $qb->set(
-            'l.popularity = CASE max
-                                WHEN 0 THEN 0
-                                ELSE (total/max)^3
-                            END',
-            'l.unpopularity = CASE max
-                                WHEN 0 THEN 1
-                                ELSE (1-(total/max))^3
-                            END',
-            'l.popularity_timestamp =   CASE max
-                                            WHEN 0 THEN 0
-                                            ELSE timestamp()
-                                        END'
-        );
-
-        $qb->returns('max')
-            ->limit(1);
-
-        $query = $qb->getQuery();
-        $result = $query->getResultSet();
-
-        //If user had no links to set popularity, all done
-        if ($result->count() == 0) {
-            return true;
-        }
-
-        $max = $result->current()->offsetGet('max');
-        if ($max == 0) {
-            $this->updateMaxPopularity();
-            return $this->updatePopularity($filters);
-        }
-        return true;
-    }
-
     /**
      * @param integer $userId
      * @param int $limitContent
@@ -634,7 +573,7 @@ class LinkModel
             $qb->match('(u:User {qnoow_id: { userId } })')
                 ->match('(u)-[r:SIMILARITY]-(users:User)')
                 ->with('users,u,r.similarity AS m')
-                ->orderby('m DESC')
+                ->orderBy('m DESC')
                 ->limit('{limitUsers}');
 
             $qb->match('(users)-[:LIKES]->(l:Link)');
@@ -668,7 +607,7 @@ class LinkModel
                     'collect(distinct tag.name) as tags',
                     'labels(l) as types',
                     'COLLECT (DISTINCT synonymousLink) AS synonymous')
-                ->orderby('average DESC')
+                ->orderBy('average DESC')
                 ->limit('{limitContent}');
 
             $qb->setParameters($params);
@@ -693,7 +632,7 @@ class LinkModel
      * @param int $limitContent
      * @param int $maxUsers
      * @param array $filters
-     * @return array
+     * @return ContentRecommendation[]
      */
     public function getLivePredictedContent($userId, $limitContent = 20, $maxUsers = 10, array $filters = array())
     {
@@ -703,7 +642,9 @@ class LinkModel
             $content = array();
             $predictedContents = $this->getPredictedContentForAUser($userId, $limitContent, $users, $filters);
             foreach ($predictedContents as $predictedContent) {
-                $content[] = array('content' => $predictedContent);
+                $eachContent = new ContentRecommendation();
+                $eachContent->setContent($predictedContent);
+                $content[] = $eachContent;
             }
             $users++;
         }
@@ -820,6 +761,7 @@ class LinkModel
         return $row->offsetGet('when');
     }
 
+    //TODO: Move to ConsistencyCheckerService
     /**
      * @param $id
      * @return array
@@ -846,27 +788,27 @@ class LinkModel
     }
 
     /**
-     * @param int $offset
-     * @param int $limit
+     * @param array $links
      * @return array
-     * @throws Neo4j\Neo4jException
      */
-    public function findDuplicates($offset = 0, $limit = 99999999)
+    public function findDuplicates(array $links)
     {
+        $urls = array();
+        foreach ($links as $link){
+            $urls[] = $link['url'];
+        }
+
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->setParameters(array(
-            'offset' => $offset,
-            'limit' => (integer)$limit,
-        ));
+        $qb->match('(l:Link)')
+            ->where('l.url IN { urls }')
+            ->setParameter('urls', $urls)
+            ->with('l.url AS url', 'count(l) AS amount')
+            ->where('amount > 1');
 
         $qb->match('(l:Link)')
-            ->with('l')
-            ->orderBy('l.created DESC')
-            ->skip('{offset}')
-            ->limit('{limit}')
-            ->with('l.url AS url, COLLECT(ID(l)) AS ids, COUNT(*) AS count')
-            ->where('count > 1')
+            ->where('l.url = url')
+            ->with('l.url AS url', 'collect(id(l)) AS ids')
             ->returns('url, ids');
 
         $rs = $qb->getQuery()->getResultSet();
@@ -905,29 +847,29 @@ class LinkModel
         return $link;
     }
 
-    /**
-     * @param array $links
-     * @return array PreprocessedLink[]
-     */
-    public function buildPreprocessedLinks(array $links)
+    private function limitTextLengths(array $data)
     {
-        $preprocessedLinks = array();
-        foreach ($links as $link)
-        {
-            $preprocessedLink = new PreprocessedLink($link['url']);
-            $preprocessedLink->setLink($link);
-            $preprocessedLinks[] = $preprocessedLink;
+        foreach (array('title', 'description') as $key) {
+            $value = isset($data[$key]) ? $data[$key] : '';
+            $data[$key] = strlen($value) >= 25 ? mb_substr($value, 0, 22, 'UTF-8') . '...' : $value;;
         }
 
-        return $preprocessedLinks;
+        return $data;
     }
 
-    public function getValidTypes($locale = 'en')
+    //TODO: Refactor this to use locale keys or move them to fields.yml
+    public function getValidTypes()
+    {
+        return array('Audio', 'Video', 'Image', 'Link', 'Creator');
+    }
+
+    //TODO: Only called from ContentFilterModel. Probably move logic and translator dependency there.
+    public function getValidTypesLabels($locale = 'en')
     {
         $this->translator->setLocale($locale);
 
         $types = array();
-        $keyTypes = array('Audio', 'Video', 'Image', 'Link', 'Creator');
+        $keyTypes = $this->getValidTypes();
 
         foreach ( $keyTypes as $type){
             $types[$type] = $this->translator->trans('types.'.lcfirst($type));
@@ -985,21 +927,6 @@ class LinkModel
         }
 
         return $linkArray;
-    }
-
-    private function updateMaxPopularity()
-    {
-        $qb = $this->gm->createQueryBuilder();
-
-        $qb->match('(l:Link)-[likes:LIKES]-(:User)')
-            ->with('l', 'count(likes) AS amount')
-            ->with('collect(l) as links', 'amount')
-            ->orderBy('amount DESC')
-            ->limit(1)
-            ->add('unwind', 'links as l')
-            ->set('l.popularity = 1', 'l.unpopularity = 0', 'l.popularity_timestamp = timestamp()');
-        $query = $qb->getQuery();
-        $query->getResultSet();
     }
 
 }

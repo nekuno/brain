@@ -5,7 +5,8 @@ namespace Provider;
 use ApiConsumer\EventListener\ChannelSubscriber;
 use ApiConsumer\EventListener\OAuthTokenSubscriber;
 use EventListener\AccountConnectSubscriber;
-use EventListener\FilterClientIpSubscriber;
+use EventListener\ConsistencySubscriber;
+use EventListener\ExceptionLoggerSubscriber;
 use EventListener\InvitationSubscriber;
 use EventListener\LookUpSocialNetworkSubscriber;
 use EventListener\PrivacySubscriber;
@@ -39,14 +40,16 @@ class SubscribersServiceProvider implements ServiceProviderInterface
 
         $dispatcher->addSubscriber(new OAuthTokenSubscriber($app['users.tokens.model'], $app['mailer'], $app['monolog'], $app['amqp']));
         $dispatcher->addSubscriber(new AccountConnectSubscriber($app['amqpManager.service']));
-        $dispatcher->addSubscriber(new UserSubscriber($app['users.threads.manager']));
+        $dispatcher->addSubscriber(new UserSubscriber($app['users.threads.manager'], $app['chatMessageNotifications.service']));
         $dispatcher->addSubscriber(new ChannelSubscriber($app['userAggregator.service']));
         $dispatcher->addSubscriber(new UserDataStatusSubscriber($app['orm.ems']['mysql_brain'], $app['amqpManager.service']));
         $dispatcher->addSubscriber(new UserAnswerSubscriber($app['amqpManager.service']));
-        $dispatcher->addSubscriber(new InvitationSubscriber($app['neo4j.graph_manager']));
+        $dispatcher->addSubscriber(new InvitationSubscriber($app['neo4j.graph_manager'], $app['users.invitations.model']));
         $dispatcher->addSubscriber(new LookUpSocialNetworkSubscriber($app['neo4j.graph_manager'], $app['amqpManager.service']));
         $dispatcher->addSubscriber(new SimilarityMatchingSubscriber($app['emailNotification.service'], $app['users.manager'], $app['users.profile.model'], $app['users.groups.model'], $app['translator'], $app['notificationManager.service'], $app['social_host']));
         $dispatcher->addSubscriber(new PrivacySubscriber($app['translator'], $app['users.groups.model'], $app['users.manager'], $app['users.profile.model'], $app['users.invitations.model'], $app['social_host']));
+        $dispatcher->addSubscriber(new ExceptionLoggerSubscriber($app['monolog']));
+        $dispatcher->addSubscriber(new ConsistencySubscriber($app['consistency.service'], $app['popularity.manager']));
     }
 
 }

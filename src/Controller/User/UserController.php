@@ -3,7 +3,7 @@
 namespace Controller\User;
 
 use Model\User\ContentPaginatedModel;
-use Model\User\GroupModel;
+use Model\User\Group\GroupModel;
 use Model\User\ProfileFilterModel;
 use Model\User\RateModel;
 use Model\User\UserStatsManager;
@@ -14,6 +14,12 @@ use Silex\Application;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Model\User\TokensModel;
+use Model\User\SocialNetwork\SocialProfile;
+use ApiConsumer\Factory\ResourceOwnerFactory;
+use ApiConsumer\ResourceOwner\FacebookResourceOwner;
+use Model\User\GhostUser\GhostUserManager;
+use Model\User\SocialNetwork\SocialProfileManager;
 
 /**
  * Class UserController
@@ -60,9 +66,6 @@ class UserController
         /* @var $model UserManager */
         $model = $app['users.manager'];
         $userArray = $model->getById($user->getId())->jsonSerialize();
-        /* @var $groupModel GroupModel */
-        $groupModel = $app['users.groups.model'];
-        $userArray['groups'] = $groupModel->getByUser($user->getId());
 
         return $app->json($userArray);
     }
@@ -77,13 +80,11 @@ class UserController
         /* @var $model UserManager */
         $model = $app['users.manager'];
         $userArray = $model->getById($id)->jsonSerialize();
+        $userArray = $model->deleteOtherUserFields($userArray);
 
         if (empty($userArray)) {
             return $app->json([], 404);
         }
-
-        unset($userArray['password']);
-        unset($userArray['salt']);
 
         return $app->json($userArray);
     }
@@ -96,6 +97,11 @@ class UserController
      */
     public function availableAction(Application $app, $username)
     {
+        /* @var $user User */
+        $user = $app['user'];
+        if ($user && mb_strtolower($username) === $user->getUsernameCanonical()) {
+            return $app->json();
+        }
         /* @var $model UserManager */
         $model = $app['users.manager'];
         try {
@@ -128,9 +134,65 @@ class UserController
      */
     public function postAction(Application $app, Request $request)
     {
-        /* @var $model UserManager */
-        $model = $app['users.manager'];
-        $user = $model->create($request->request->all());
+        $data = $request->request->all();
+        if (isset($data['oauth'])) {
+            $oauthData = $data['oauth'];
+            unset($data['oauth']);
+        }
+        /* @var $userManager UserManager */
+        $userManager = $app['users.manager'];
+        $user = $userManager->create($data);
+
+        if (isset($data['enabled']) && $data['enabled'] === false) {
+            $app['users.ghostuser.manager']->saveAsGhost($user->getId());
+        }
+
+        if (isset($oauthData)) {
+            /* @var $tokensModel TokensModel */
+            $tokensModel = $app['users.tokens.model'];
+            $resourceOwner = $oauthData['resourceOwner'];
+
+            $token = $tokensModel->create($user->getId(), $resourceOwner, $oauthData);
+
+            /* @var $resourceOwnerFactory ResourceOwnerFactory */
+            $resourceOwnerFactory = $app['api_consumer.resource_owner_factory'];
+
+            if ($resourceOwner === TokensModel::FACEBOOK) {
+
+                /* @var $facebookResourceOwner FacebookResourceOwner */
+                $facebookResourceOwner = $resourceOwnerFactory->build(TokensModel::FACEBOOK);
+
+                $token = $facebookResourceOwner->extend($token);
+
+                if (array_key_exists('refreshToken', $token) && is_null($token['refreshToken'])) {
+                    $token = $facebookResourceOwner->forceRefreshAccessToken($token);
+                }
+            }
+
+            // TODO: This will not be executed since we only use Facebook for registration
+            if ($resourceOwner == TokensModel::TWITTER) {
+                $resourceOwnerObject = $resourceOwnerFactory->build($resourceOwner);
+                $profileUrl = $resourceOwnerObject->getProfileUrl($token);
+                if (!$profileUrl) {
+                    //TODO: Add information about this if it happens
+                    return $app->json($token, 201);
+                }
+                $profile = new SocialProfile($user->getId(), $profileUrl, $resourceOwner);
+
+                /* @var $ghostUserManager GhostUserManager */
+                $ghostUserManager = $app['users.ghostuser.manager'];
+                if ($ghostUser = $ghostUserManager->getBySocialProfile($profile)) {
+                    /* @var $userManager UserManager */
+                    $userManager = $app['users.manager'];
+                    $userManager->fuseUsers($user->getId(), $ghostUser->getId());
+                    $ghostUserManager->saveAsUser($user->getId());
+                } else {
+                    /** @var $socialProfilesManager SocialProfileManager */
+                    $socialProfilesManager = $app['users.socialprofile.manager'];
+                    $socialProfilesManager->addSocialProfile($profile);
+                }
+            }
+        }
 
         return $app->json($user, 201);
     }
@@ -149,7 +211,17 @@ class UserController
         $model = $app['users.manager'];
         $user = $model->update($data);
 
-        return $app->json($user);
+        /* @var $authService AuthService */
+        $authService = $app['auth.service'];
+        $jwt = $authService->getToken($data['userId']);
+
+        return $app->json(
+            array(
+                'user' => $user,
+                'jwt' => $jwt,
+            ),
+            200
+        );
     }
 
     /**
@@ -366,10 +438,12 @@ class UserController
             return $app->json(array('text' => 'Link Not Found', 'id' => $user->getId(), 'linkId' => $data['linkId']), 400);
         }
 
+        $originContext = isset($data['originContext']) ? $data['originContext'] : null;
+        $originName = isset($data['originName']) ? $data['originName'] : null;
         try {
             /* @var RateModel $model */
             $model = $app['users.rate.model'];
-            $result = $model->userRateLink($user->getId(), $data, $rate);
+            $result = $model->userRateLink($user->getId(), $data['id'], 'nekuno', null, $rate, true, $originContext, $originName);
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;
@@ -498,6 +572,37 @@ class UserController
     /**
      * @param Request $request
      * @param Application $app
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @throws \Exception
+     */
+    public function getContentAllTagsAction(Request $request, Application $app)
+    {
+        $search = $request->get('search', '');
+        $limit = $request->get('limit', 0);
+
+        if ($search) {
+            $search = urldecode($search);
+        }
+
+        /* @var $model \Model\User\Recommendation\ContentRecommendationTagModel */
+        $model = $app['users.recommendation.content.tag.model'];
+
+        try {
+            $result = $model->getAllTags($search, $limit);
+        } catch (\Exception $e) {
+            if ($app['env'] == 'dev') {
+                throw $e;
+            }
+
+            return $app->json(array(), 500);
+        }
+
+        return $app->json($result, !empty($result) ? 201 : 200);
+    }
+
+    /**
+     * @param Request $request
+     * @param Application $app
      * @param User $user
      * @return JsonResponse
      */
@@ -517,13 +622,13 @@ class UserController
         $userFilters = $userFilterModel->getFilters($locale);
 
         //TODO: Move this logic to userFilter during/after QS-982 (remove filter logic from GroupModel)
-        /* @var $groupModel User\GroupModel */
+        /* @var $groupModel \Model\User\Group\GroupModel */
         $groupModel = $app['users.groups.model'];
         $groups = $groupModel->getByUser($user->getId());
 
         $userFilters['groups']['choices'] = array();
         foreach ($groups as $group) {
-            $userFilters['groups']['choices'][$group['id']] = $group['name'];
+            $userFilters['groups']['choices'][$group->getId()] = $group->getName();
         }
 
         if ($groups = null || $groups == array()) {

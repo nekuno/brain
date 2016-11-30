@@ -1,13 +1,13 @@
 <?php
 
-
 namespace Console\Command;
 
-use ApiConsumer\LinkProcessor\LinkProcessor;
+use ApiConsumer\Exception\UrlNotValidException;
+use ApiConsumer\LinkProcessor\LinkAnalyzer;
 use Console\ApplicationAwareCommand;
+use Event\ConsistencyEvent;
+use EventListener\ConsistencySubscriber;
 use Everyman\Neo4j\Query\ResultSet;
-use Model\LinkModel;
-use Model\Neo4j\GraphManager;
 use Model\Neo4j\Neo4jException;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -17,7 +17,6 @@ class LinksFindDuplicatesCommand extends ApplicationAwareCommand
 {
     protected function configure()
     {
-
         $this->setName('links:find-duplicates')
             ->setDescription('Return links with identical URLs')
             ->addOption('fuse', null, InputOption::VALUE_NONE, 'Automatically fuse found duplicates')
@@ -27,31 +26,38 @@ class LinksFindDuplicatesCommand extends ApplicationAwareCommand
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-
         $output->writeln('Starting database search.');
 
-        /* @var $linkModel LinkModel */
         $linkModel = $this->app['links.model'];
 
-        $limit = $input->getOption('limit');
+        $maxLimit = $input->getOption('limit');
         $offset = $input->getOption('offset');
 
-        $output->writeln('Updating link URLs');
-        $this->updateURLs($output, $linkModel);
-
         $output->writeln('Finding duplicates');
-        $duplicates = $linkModel->findDuplicates($offset, $limit);
 
-        $numDuplicates = count($duplicates);
+        $limit = 10000;
+        do {
+            $output->writeln('--------------------------------------------------------------------------------');
+            $output->writeln(sprintf('Getting and analyzing %d urls from offset %d.', $limit, $offset));
 
-        if ($numDuplicates > 0) {
-            $output->writeln(sprintf('%d duplicated links found.', $numDuplicates));
+            $links = $linkModel->getLinks(array(), $offset, $limit);
 
-            $this->analyzeDuplicates($duplicates, $input, $output);
+            foreach ($links as &$link) {
+                $link = $this->updateURL($link, $output);
+            }
 
-        } else {
-            $output->writeln('No duplicated links found.');
-        }
+            $duplicates = $linkModel->findDuplicates($links);
+
+            $numDuplicates = count($duplicates);
+
+            if ($numDuplicates > 0) {
+                $output->writeln(sprintf('%d duplicated links found.', $numDuplicates));
+
+                $this->analyzeDuplicates($duplicates, $input, $output);
+            }
+
+            $offset += $limit;
+        } while ($offset < $maxLimit && !empty($links));
 
         $output->writeln('Done.');
     }
@@ -63,20 +69,18 @@ class LinksFindDuplicatesCommand extends ApplicationAwareCommand
      */
     private function analyzeDuplicates(array $duplicates, $input, $output)
     {
-        /* @var $gm GraphManager */
         $gm = $this->app['neo4j.graph_manager'];
-        /* @var $linkModel LinkModel */
         $linkModel = $this->app['links.model'];
+        $dispatcher = $this->app['dispatcher'];
+        $dispatcher->addSubscriber(new ConsistencySubscriber($this->app['consistency.service'], $this->app['popularity.manager']));
 
         $errors = array();
         foreach ($duplicates as $duplicate) {
-            $mainURL = $duplicate['main']['url'];
             $mainId = (integer)$duplicate['main']['id'];
             $duplicateURL = $duplicate['duplicate']['url'];
             $duplicateId = (integer)$duplicate['duplicate']['id'];
 
-            $output->writeln('Link with id ' . $duplicateId . ' and url ' . $duplicateURL .
-                ' is a duplicate of link with id ' . $mainId . ' and url ' . $mainURL);
+            $output->writeln(sprintf('Link with id %d and url %s is a duplicate of link with id %d', $duplicateId, $duplicateURL, $mainId));
 
             if ($input->getOption('fuse')) {
                 $output->writeln('Fusing duplicate into main node');
@@ -87,6 +91,7 @@ class LinksFindDuplicatesCommand extends ApplicationAwareCommand
                     /* @var ResultSet $deletionRS */
                     $deletionRS = $fusion['deleted'];
                     if ($deletionRS->count() > 0) {
+                        $dispatcher->dispatch(\AppEvents::CONSISTENCY_LINK, new ConsistencyEvent($mainId));
                         $output->writeln('Duplicate and main node successfully fused');
                     } else {
                         $output->writeln('Nodes were not fused');
@@ -96,12 +101,14 @@ class LinksFindDuplicatesCommand extends ApplicationAwareCommand
                         'duplicateId' => $duplicateId,
                         'mainId' => $mainId,
                         'reason' => $e->getMessage(),
-                        'query' => $e->getQuery());
+                        'query' => $e->getQuery()
+                    );
                 } catch (\Exception $e) {
                     $errors[] = array(
                         'duplicateId' => $duplicateId,
                         'mainId' => $mainId,
-                        'reason' => $e->getMessage());
+                        'reason' => $e->getMessage()
+                    );
                 }
 
                 $output->writeln('Cleaning inconsistencies');
@@ -123,29 +130,27 @@ class LinksFindDuplicatesCommand extends ApplicationAwareCommand
         $output->writeln('Finished.');
     }
 
-    /**
-     * @param OutputInterface $output
-     * @param LinkModel $linkModel
-     */
-    private function updateURLs($output, $linkModel)
+    private function updateURL($link, OutputInterface $output)
     {
-
-        $links = $linkModel->findAllLinks();
-
-        /** @var $linkProcessor LinkProcessor */
-        $linkProcessor = $this->app['api_consumer.link_processor'];
-
-        foreach ($links as $link) {
-            $cleanUrl = $linkProcessor->cleanURL($link['url']);
-
-            if ($cleanUrl !== $link['url']) {
-                $output->writeln('Changing ' . $link['url'] . ' to ' . $cleanUrl);
-                $link['tempId'] = $link['url'];
-                $link['url'] = $cleanUrl;
-                $processed = isset($link['processed']) ? $link['processed'] : 0;
-                $linkModel->updateLink($link, $processed);
-            }
+        if (!isset($link['url'])) {
+            return false;
         }
 
+        try {
+            $cleanUrl = LinkAnalyzer::cleanUrl($link['url']);
+        } catch (UrlNotValidException $e) {
+            //TODO: log
+            $output->writeln(sprintf('Could not clean URL %s', $link['url']));
+            return false;
+        }
+
+        $linkModel = $this->app['links.model'];
+
+        if ($cleanUrl !== $link['url']) {
+            $output->writeln('Changing ' . $link['url'] . ' to ' . $cleanUrl);
+            $linkModel->changeUrl($link['url'], $cleanUrl);
+        }
+
+        return $link;
     }
 }

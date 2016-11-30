@@ -12,6 +12,7 @@ class User implements UserInterface, \JsonSerializable
     const USER_STATUS_DISABLED = 'disabled';
     const USER_STATUS_INCOMPLETE = 'incomplete';
     const USER_STATUS_COMPLETE = 'complete';
+    const USER_GUEST_NAME = 'guest';
 
     protected $id;
 
@@ -149,9 +150,14 @@ class User implements UserInterface, \JsonSerializable
     protected $updatedAt;
 
     /**
-     * @var string
+     * @var ProfilePhoto
      */
-    protected $picture;
+    protected $photo;
+
+    /**
+     * @var array
+     */
+    protected $tutorials;
 
     public function __construct()
     {
@@ -162,6 +168,7 @@ class User implements UserInterface, \JsonSerializable
         $this->roles = array();
         $this->credentialsExpired = false;
         $this->confirmed = false;
+        $this->tutorials = array();
     }
 
     public function addRole($role)
@@ -238,7 +245,7 @@ class User implements UserInterface, \JsonSerializable
     /**
      * Returns the user unique id.
      *
-     * @return mixed
+     * @return integer
      */
     public function getId()
     {
@@ -253,6 +260,11 @@ class User implements UserInterface, \JsonSerializable
     public function getUsernameCanonical()
     {
         return $this->usernameCanonical;
+    }
+
+    public function isGuest()
+    {
+        return $this->username === User::USER_GUEST_NAME;
     }
 
     public function getSalt()
@@ -576,24 +588,24 @@ class User implements UserInterface, \JsonSerializable
     }
 
     /**
-     * Get picture
+     * Get photo
      *
-     * @return string
+     * @return ProfilePhoto
      */
-    public function getPicture()
+    public function getPhoto()
     {
-        return $this->picture;
+        return $this->photo;
     }
 
     /**
-     * Set picture
+     * Set photo
      *
-     * @param string $picture
+     * @param ProfilePhoto $photo
      * @return $this
      */
-    public function setPicture($picture)
+    public function setPhoto(ProfilePhoto $photo)
     {
-        $this->picture = $picture;
+        $this->photo = $photo;
 
         return $this;
     }
@@ -815,13 +827,38 @@ class User implements UserInterface, \JsonSerializable
     /**
      * Set updatedAt
      *
-     * @param \DateTime $createdAt
+     * @param \DateTime $updatedAt
      * @return $this
      */
     public function setUpdatedAt(\DateTime $updatedAt = null)
     {
 
         $this->updatedAt = $updatedAt;
+
+        return $this;
+    }
+
+    /**
+     * Returns the user tutorials
+     *
+     * @return array The tutorials
+     */
+    public function getTutorials()
+    {
+
+        return $this->tutorials;
+    }
+
+    /**
+     * Set the user tutorials
+     *
+     * @param array $tutorials
+     *
+     * @return $this
+     */
+    public function setTutorials($tutorials)
+    {
+        $this->tutorials = $tutorials;
 
         return $this;
     }

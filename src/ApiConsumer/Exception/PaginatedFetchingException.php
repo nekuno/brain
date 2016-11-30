@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: yawmoght
- * Date: 03/02/2016
- * Time: 14:58
- */
 
 namespace ApiConsumer\Exception;
 

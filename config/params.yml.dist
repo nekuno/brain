@@ -57,8 +57,8 @@ params:
     rabbitmq.pass: guest
 
     ## Twitter
-    twitter.consumer_key: m9NY9ZghlVeYFVk8fbPp8pp1g
-    twitter.consumer_secret: yQ5XBabTj1vzCCBVeJoqX9Bli4zcjVWsF6FxHvPtZwkAJseu1l
+    twitter.consumer_key: 3tn60KgFss8KfVAmCujtUY8vg
+    twitter.consumer_secret: aHYfKX9mGIObjSptfZl5aLJx35UqYQXlVokbf4bnyTJbIUxCgN
     twitter.application_token: AAAAAAAAAAAAAAAAAAAAAFbcXgAAAAAAU6MCuXOOVmSchRXGdTt7O1V1a%2FI%3DT15dTKA8Bdejw65X3C3f73j8yBdrrNtEOYKRCPTpeWANjRZjPb
 
     ## Spotify

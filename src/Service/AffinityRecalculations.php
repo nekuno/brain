@@ -5,6 +5,8 @@
 
 namespace Service;
 
+use Event\AffinityProcessEvent;
+use Event\AffinityProcessStepEvent;
 use Model\Entity\EmailNotification;
 use Model\LinkModel;
 use Model\Neo4j\GraphManager;
@@ -12,9 +14,19 @@ use Model\User;
 use Model\User\Affinity\AffinityModel;
 use Manager\UserManager;
 use Silex\Translator;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 class AffinityRecalculations
 {
+
+    /* @var EventDispatcher */
+    protected $dispatcher;
+
+    /* @var $emailNotifications EmailNotifications */
+    protected $emailNotifications;
+
+    /* @var $translator Translator */
+    protected $translator;
 
     /* @var $graphManager GraphManager */
     protected $graphManager;
@@ -28,24 +40,19 @@ class AffinityRecalculations
     /* @var $affinityModel AffinityModel */
     protected $affinityModel;
 
-    /* @var $emailNotifications EmailNotifications */
-    protected $emailNotifications;
-
-    /* @var $translator Translator */
-    protected $translator;
-
     protected $linksToEmail = 3;
 
     const MIN_AFFINITY = 0.7;
 
-    function __construct($emailNotifications, $translator, $graphManager, $linkModel, $userManager, $affinityModel)
+    public function __construct(EventDispatcher $dispatcher, EmailNotifications $emailNotifications, Translator $translator, GraphManager $graphManager, LinkModel $linkModel, UserManager $userManager, AffinityModel $affinityModel)
     {
+        $this->dispatcher = $dispatcher;
+        $this->emailNotifications = $emailNotifications;
+        $this->translator = $translator;
         $this->graphManager = $graphManager;
         $this->linkModel = $linkModel;
         $this->userManager = $userManager;
         $this->affinityModel = $affinityModel;
-        $this->emailNotifications = $emailNotifications;
-        $this->translator = $translator;
     }
 
     /**
@@ -63,7 +70,12 @@ class AffinityRecalculations
      */
     public function recalculateAffinities($userId, $limitContent = 40, $limitUsers = 20, $notifyLimit = 99999, $seconds = null)
     {
+
         $user = $this->userManager->getById((integer)$userId, true);
+
+        $processId = time();
+        $affinityProcessEvent = new AffinityProcessEvent($userId, $processId);
+        $this->dispatcher->dispatch(\AppEvents::AFFINITY_PROCESS_START, $affinityProcessEvent);
 
         $filters = array('affinity' => true);
         $links = $this->linkModel->getPredictedContentForAUser($userId, (integer)$limitContent, (integer)$limitUsers, $filters);
@@ -72,9 +84,20 @@ class AffinityRecalculations
         $linksToEmail = array();
         $result = array();
         $counterNotified = 0;
-        foreach ($links as $link) {
+        $count = count($links);
+        $prevPercentage = 0;
+        foreach ($links as $index => $link) {
+
             $affinity = $this->affinityModel->getAffinity($userId, $link['id'], $seconds);
-            if ($affinity['affinity'] < $this::MIN_AFFINITY){
+
+            $percentage = round(($index + 1) / $count * 100);
+            if ($percentage > $prevPercentage) {
+                $affinityProcessStepEvent = new AffinityProcessStepEvent($userId, $processId, $percentage);
+                $this->dispatcher->dispatch(\AppEvents::AFFINITY_PROCESS_STEP, $affinityProcessStepEvent);
+                $prevPercentage = $percentage;
+            }
+
+            if ($affinity['affinity'] < $this::MIN_AFFINITY) {
                 continue;
             }
             $affinities[$link['id']] = $affinity['affinity'];
@@ -91,6 +114,8 @@ class AffinityRecalculations
             }
         }
 
+        $this->dispatcher->dispatch(\AppEvents::AFFINITY_PROCESS_FINISH, $affinityProcessEvent);
+
         try {
             if (!empty($linksToEmail)) {
                 $result['emailInfo'] = $this->sendEmail($linksToEmail, $user);
@@ -102,6 +127,7 @@ class AffinityRecalculations
             throw $ex;
         }
         $result['affinities'] = $affinities;
+
         return $result;
     }
 
@@ -121,9 +147,11 @@ class AffinityRecalculations
                 ->setSubject($this->translator->trans('notifications.messages.exceptional_links.subject'))
                 ->setUserId($user->getId())
                 ->setRecipient($user->getEmail())
-                ->setInfo($emailInfo));
+                ->setInfo($emailInfo)
+        );
 
         $emailInfo['recipients'] = $recipients;
+
         return $emailInfo;
     }
 

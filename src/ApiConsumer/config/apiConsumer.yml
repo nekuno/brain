@@ -1,20 +1,17 @@
 api_consumer.config:
     resource_owner:
         twitter:
-            class: Http\OAuth\ResourceOwner\TwitterResourceOwner
-            client_credential_class: Http\OAuth\ResourceOwner\ClientCredential\TwitterClientCredential
+            class: ApiConsumer\ResourceOwner\TwitterResourceOwner
             parser_class: ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser
         facebook:
-            class: Http\OAuth\ResourceOwner\FacebookResourceOwner
+            class: ApiConsumer\ResourceOwner\FacebookResourceOwner
             parser_class: ApiConsumer\LinkProcessor\UrlParser\FacebookUrlParser
         google:
-            class: Http\OAuth\ResourceOwner\GoogleResourceOwner
-            client_credential_class: Http\OAuth\ResourceOwner\ClientCredential\GoogleClientCredentialFromLibrary
+            class: ApiConsumer\ResourceOwner\GoogleResourceOwner
         google_profile:
-            class: Http\OAuth\ResourceOwner\GoogleResourceOwner
-            client_credential_class: Http\OAuth\ResourceOwner\ClientCredential\GoogleClientCredentialFromLibrary
+            class: ApiConsumer\ResourceOwner\GoogleResourceOwner
         spotify:
-            class: Http\OAuth\ResourceOwner\SpotifyResourceOwner
+            class: ApiConsumer\ResourceOwner\SpotifyResourceOwner
             parser_class: ApiConsumer\LinkProcessor\UrlParser\SpotifyUrlParser
     fetcher:
         twitter_links:
@@ -44,3 +41,56 @@ api_consumer.config:
         spotify:
             class: ApiConsumer\Fetcher\SpotifyFetcher
             resourceOwner: spotify
+    processor:
+        twitter_intent:
+            class: ApiConsumer\LinkProcessor\Processor\TwitterProcessor\TwitterIntentProcessor
+            parser: ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser
+            resourceOwner: twitter
+        twitter_profile:
+            class: ApiConsumer\LinkProcessor\Processor\TwitterProcessor\TwitterProfileProcessor
+            parser: ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser
+            resourceOwner: twitter
+        twitter_pic:
+            class: ApiConsumer\LinkProcessor\Processor\TwitterProcessor\TwitterPicProcessor
+            parser: ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser
+            resourceOwner: twitter
+        twitter_tweet:
+            class: ApiConsumer\LinkProcessor\Processor\TwitterProcessor\TwitterTweetProcessor
+            parser: ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser
+            resourceOwner: twitter
+
+        facebook_profile:
+            class: ApiConsumer\LinkProcessor\Processor\FacebookProcessor\FacebookProfileProcessor
+            parser: ApiConsumer\LinkProcessor\UrlParser\FacebookUrlParser
+            resourceOwner: facebook
+        facebook_video:
+            class: ApiConsumer\LinkProcessor\Processor\FacebookProcessor\FacebookVideoProcessor
+            parser: ApiConsumer\LinkProcessor\UrlParser\FacebookUrlParser
+            resourceOwner: facebook
+
+        spotify_album:
+            class: ApiConsumer\LinkProcessor\Processor\SpotifyProcessor\SpotifyAlbumProcessor
+            parser: ApiConsumer\LinkProcessor\UrlParser\SpotifyUrlParser
+            resourceOwner: spotify
+        spotify_artist:
+            class: ApiConsumer\LinkProcessor\Processor\SpotifyProcessor\SpotifyArtistProcessor
+            parser: ApiConsumer\LinkProcessor\UrlParser\SpotifyUrlParser
+            resourceOwner: spotify
+        spotify_track:
+            class: ApiConsumer\LinkProcessor\Processor\SpotifyProcessor\SpotifyTrackProcessor
+            parser: ApiConsumer\LinkProcessor\UrlParser\SpotifyUrlParser
+            resourceOwner: spotify
+
+        youtube_channel:
+            class: ApiConsumer\LinkProcessor\Processor\YoutubeProcessor\YoutubeChannelProcessor
+            parser: ApiConsumer\LinkProcessor\UrlParser\YoutubeUrlParser
+            resourceOwner: google
+        youtube_playlist:
+            class: ApiConsumer\LinkProcessor\Processor\YoutubeProcessor\YoutubePlaylistProcessor
+            parser: ApiConsumer\LinkProcessor\UrlParser\YoutubeUrlParser
+            resourceOwner: google
+        youtube_video:
+            class: ApiConsumer\LinkProcessor\Processor\YoutubeProcessor\YoutubeVideoProcessor
+            parser: ApiConsumer\LinkProcessor\UrlParser\YoutubeUrlParser
+            resourceOwner: google
+

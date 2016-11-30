@@ -2,12 +2,14 @@
 
 namespace Model\User;
 
+use Event\ProfileEvent;
 use Model\Neo4j\GraphManager;
 use Everyman\Neo4j\Node;
-use Everyman\Neo4j\Relationship;
 use Everyman\Neo4j\Query\Row;
 use Everyman\Neo4j\Label;
 use Model\Exception\ValidationException;
+use Service\Validator;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -16,12 +18,14 @@ class ProfileModel
     const MAX_TAGS_AND_CHOICE_LENGTH = 15;
     protected $gm;
     protected $profileFilterModel;
+    protected $dispatcher;
 
-    public function __construct(GraphManager $gm, ProfileFilterModel $profileFilterModel)
+    public function __construct(GraphManager $gm, ProfileFilterModel $profileFilterModel, EventDispatcher $dispatcher)
     {
 
         $this->gm = $gm;
         $this->profileFilterModel = $profileFilterModel;
+        $this->dispatcher = $dispatcher;
     }
 
     /**
@@ -36,14 +40,13 @@ class ProfileModel
         $qb->match('(user:User)<-[:PROFILE_OF]-(profile:Profile)')
             ->where('user.qnoow_id = { id }')
             ->setParameter('id', (integer)$id)
-            ->optionalMatch('(profile)<-[:OPTION_OF]-(option:ProfileOption)')
-            ->optionalMatch('(profile)-[:TAGGED]-(tag:ProfileTag)')
+            ->optionalMatch('(profile)<-[optionOf:OPTION_OF]-(option:ProfileOption)')
+            ->optionalMatch('(profile)<-[tagged:TAGGED]-(tag:ProfileTag)')
             ->optionalMatch('(profile)-[:LOCATION]->(location:Location)')
-            ->returns('profile, location, collect(distinct option) AS options, collect(distinct tag) as tags')
+            ->returns('collect(distinct {option: option, detail: (CASE WHEN EXISTS(optionOf.detail) THEN optionOf.detail ELSE null END)}) AS options, collect(distinct {tag: tag, tagged: tagged}) AS tags, profile, location')
             ->limit(1);
 
         $query = $qb->getQuery();
-
         $result = $query->getResultSet();
 
         if (count($result) < 1) {
@@ -86,7 +89,9 @@ class ProfileModel
 
         $this->saveProfileData($id, $data);
 
-        return $this->getById($id);
+        $profile = $this->getById($id);
+        $this->dispatcher->dispatch(\AppEvents::PROFILE_CREATED,(new ProfileEvent($profile, $id)));
+        return $profile;
     }
 
     /**
@@ -233,7 +238,7 @@ class ProfileModel
                                 if (!isset($tagAndChoice['tag']) || !array_key_exists('choice', $tagAndChoice)) {
                                     $fieldErrors[] = sprintf('Tag and choice must be defined for tags and choice type');
                                 }
-                                if (isset($tagAndChoice['choice']) && !in_array($tagAndChoice['choice'], array_keys($choices))) {
+                                if (isset($tagAndChoice['choice']) && $tagAndChoice['choice'] && !in_array($tagAndChoice['choice'], array_keys($choices))) {
                                     $fieldErrors[] = sprintf('Option with value "%s" is not valid, possible values are "%s"', $tagAndChoice['choice'], implode("', '", array_keys($choices)));
                                 }
                             }
@@ -260,12 +265,12 @@ class ProfileModel
                                 if (!isset($fieldValue['address']) || !$fieldValue['address'] || !is_string($fieldValue['address'])) {
                                     $fieldErrors[] = 'Address required';
                                 } else {
-                                    if (!isset($fieldValue['latitude']) || !preg_match("/^-?([1-8]?[0-9]|[1-9]0)\.{1}\d+$/", $fieldValue['latitude'])) {
+                                    if (!isset($fieldValue['latitude']) || !preg_match(Validator::LATITUDE_REGEX, $fieldValue['latitude'])) {
                                         $fieldErrors[] = 'Latitude not valid';
                                     } elseif (!is_float($fieldValue['latitude'])) {
                                         $fieldErrors[] = 'Latitude must be float';
                                     }
-                                    if (!isset($fieldValue['longitude']) || !preg_match("/^-?([1]?[0-7][1-9]|[1]?[1-8][0]|[1-9]?[0-9])\.{1}\d+$/", $fieldValue['longitude'])) {
+                                    if (!isset($fieldValue['longitude']) || !preg_match(Validator::LONGITUDE_REGEX, $fieldValue['longitude'])) {
                                         $fieldErrors[] = 'Longitude not valid';
                                     } elseif (!is_float($fieldValue['longitude'])) {
                                         $fieldErrors[] = 'Longitude must be float';
@@ -302,19 +307,20 @@ class ProfileModel
         }
     }
 
-    protected function build(Row $row, $locale = null)
+    public function build(Row $row, $locale = null)
     {
         /* @var $node Node */
         $node = $row->offsetGet('profile');
         $profile = $node->getProperties();
-
         /* @var $location Node */
         $location = $row->offsetGet('location');
         if ($location && count($location->getProperties()) > 0) {
             $profile['location'] = $location->getProperties();
-            if (isset($profile['location']['locality']) && $profile['location']['locality'] === 'N/A'){
+            if (isset($profile['location']['locality']) && $profile['location']['locality'] === 'N/A') {
                 $profile['location']['locality'] = $profile['location']['address'];
             }
+        } else {
+            $location = null;
         }
 
         $profile += $this->buildOptions($row);
@@ -326,23 +332,13 @@ class ProfileModel
     protected function buildOptions(Row $row)
     {
         $options = $row->offsetGet('options');
-        /* @var Node $profile */
-        $profile = $row->offsetGet('profile');
-
         $optionsResult = array();
-        /* @var Node $option */
-        foreach ($options as $option) {
-            $labels = $option->getLabels();
-            /* @var Relationship $relationship */
-            //TODO: Can get slow (increments with profile amount), change to cypher specifying id from beginning
-            $relationships = $option->getRelationships('OPTION_OF',  Relationship::DirectionOut);
-            foreach ($relationships as $relationship) {
-                if ($relationship->getStartNode()->getId() === $option->getId() &&
-                    $relationship->getEndNode()->getId() === $profile->getId()
-                ) {
-                    break;
-                }
-            }
+        $metadata = $this->profileFilterModel->getProfileMetadata();
+        /** @var Row $optionData */
+        foreach ($options as $optionData) {
+            $option = $optionData->offsetGet('option');
+            $detail = $optionData->offsetGet('detail');
+            $labels = $option ? $option->getLabels() : array();
             /* @var Label $label */
             foreach ($labels as $label) {
                 if ($label->getName() && $label->getName() != 'ProfileOption') {
@@ -355,12 +351,16 @@ class ProfileModel
                         }
                     } else {
                         $optionsResult[$typeName] = $option->getProperty('id');
-                        $detail = $relationship->getProperty('detail');
                         if (!is_null($detail)) {
                             $optionsResult[$typeName] = array();
                             $optionsResult[$typeName]['choice'] = $option->getProperty('id');
                             $optionsResult[$typeName]['detail'] = $detail;
                         }
+                    }
+                    if (isset($metadata[$typeName]) && $metadata[$typeName]['type'] == 'multiple_choices'
+                        && !empty($optionsResult[$typeName]) && !is_array($optionsResult[$typeName])
+                    ) {
+                        $optionsResult[$typeName] = array($optionsResult[$typeName]);
                     }
                 }
             }
@@ -373,38 +373,29 @@ class ProfileModel
     {
         $locale = $this->profileFilterModel->getLocale($locale);
         $tags = $row->offsetGet('tags');
-        /* @var Node $profile */
-        $profile = $row->offsetGet('profile');
-
         $tagsResult = array();
-        /* @var Node $tag */
-        foreach ($tags as $tag) {
-            $labels = $tag->getLabels();
-            /* @var Relationship $relationship */
-            $relationships = $tag->getRelationships('TAGGED', Relationship::DirectionOut);
-            foreach ($relationships as $relationship) {
-                if ($relationship->getStartNode()->getId() === $tag->getId() &&
-                    $relationship->getEndNode()->getId() === $profile->getId()
-                ) {
-                    break;
-                }
-            }
+        /** @var Row $tagData */
+        foreach ($tags as $tagData) {
+            $tag = $tagData->offsetGet('tag');
+            $tagged = $tagData->offsetGet('tagged');
+            $labels = $tag ? $tag->getLabels() : array();
+
             /* @var Label $label */
             foreach ($labels as $label) {
                 if ($label->getName() && $label->getName() != 'ProfileTag') {
                     $typeName = $this->profileFilterModel->labelToType($label->getName());
                     $tagResult = $tag->getProperty('name');
-                    $detail = $relationship->getProperty('detail');
+                    $detail = $tagged->getProperty('detail');
                     if (!is_null($detail)) {
                         $tagResult = array();
                         $tagResult['tag'] = $tag->getProperty('name');
-                        $tagResult['detail'] = $detail;
+                        $tagResult['choice'] = $detail;
                     }
                     if ($typeName === 'language') {
                         if (is_null($detail)) {
                             $tagResult = array();
                             $tagResult['tag'] = $tag->getProperty('name');
-                            $tagResult['detail'] = '';
+                            $tagResult['choice'] = '';
                         }
                         $tagResult['tag'] = $this->profileFilterModel->translateLanguageToLocale($tagResult['tag'], $locale);
                     }
@@ -625,9 +616,9 @@ class ProfileModel
             }
         }
 
-        $qb->optionalMatch('(profile)<-[:OPTION_OF]-(option:ProfileOption)')
-            ->optionalMatch('(profile)<-[:TAGGED]-(tag:ProfileTag)')
-            ->returns('profile', 'collect(distinct option) AS options', 'collect(distinct tag) AS tags')
+        $qb->optionalMatch('(profile)<-[optionOf:OPTION_OF]-(option:ProfileOption)')
+            ->optionalMatch('(profile)<-[tagged:TAGGED]-(tag:ProfileTag)')
+            ->returns('profile', 'collect(distinct {option: option, detail: (CASE WHEN EXISTS(optionOf.detail) THEN optionOf.detail ELSE null END)}) AS options', 'collect(distinct {tag: tag, tagged: tagged}) AS tags')
             ->limit(1);
 
         $query = $qb->getQuery();
@@ -640,10 +631,10 @@ class ProfileModel
     protected function getProfileNodeOptions($id)
     {
         $qb = $this->gm->createQueryBuilder();
-        $qb->match('(option:ProfileOption)-[:OPTION_OF]->(profile:Profile)-[:PROFILE_OF]->(user:User)')
+        $qb->match('(option:ProfileOption)-[optionOf:OPTION_OF]->(profile:Profile)-[:PROFILE_OF]->(user:User)')
             ->where('user.qnoow_id = { id }')
             ->setParameter('id', $id)
-            ->returns('profile, collect(distinct option) AS options');
+            ->returns('profile, collect(distinct {option: option, detail: (CASE WHEN EXISTS(optionOf.detail) THEN optionOf.detail ELSE null END)}) AS options');
 
         $query = $qb->getQuery();
 
@@ -660,10 +651,10 @@ class ProfileModel
     protected function getProfileNodeTags($id)
     {
         $qb = $this->gm->createQueryBuilder();
-        $qb->match('(tag:ProfileTag)-[:TAGGED]-(profile:Profile)-[:PROFILE_OF]->(user:User)')
+        $qb->match('(tag:ProfileTag)-[tagged:TAGGED]->(profile:Profile)-[:PROFILE_OF]->(user:User)')
             ->where('user.qnoow_id = { id }')
             ->setParameter('id', $id)
-            ->returns('profile', 'collect(distinct tag) as tags');
+            ->returns('profile', 'collect(distinct {tag: tag, tagged: tagged}) AS tags');
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();

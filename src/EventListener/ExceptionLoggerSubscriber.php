@@ -7,21 +7,28 @@ namespace EventListener;
 
 
 use Event\ExceptionEvent;
+use Model\Exception\ValidationException;
 use Model\Neo4j\Neo4jException;
-use Model\Neo4j\Query;
+use Model\Neo4j\Neo4jHandler;
+use Monolog\Logger;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-class ExceptionLoggerSubscriber implements EventSubscriberInterface
+class ExceptionLoggerSubscriber implements EventSubscriberInterface, LoggerAwareInterface
 {
+    protected $logger;
 
-    protected $path;
+    protected $consistency_path;
 
     /**
      * ExceptionLoggerSubscriber constructor.
+     * @param Logger $logger
      */
-    public function __construct()
+    public function __construct(Logger $logger)
     {
-        $this->path = __DIR__ . '/../../var/logs/errors.log';
+        $this->logger = $logger;
+        $this->consistency_path = __DIR__ . '/../../var/logs/consistency_errors.log';
     }
 
     public static function getSubscribedEvents()
@@ -29,62 +36,109 @@ class ExceptionLoggerSubscriber implements EventSubscriberInterface
         return array(
             \AppEvents::EXCEPTION_ERROR => array('onError'),
             \AppEvents::EXCEPTION_WARNING => array('onWarning'),
+            \AppEvents::CONSISTENCY_ERROR => array('onConsistencyError'),
+            \AppEvents::CONSISTENCY_START => array('onConsistencyStart'),
+            \AppEvents::CONSISTENCY_END => array('onConsistencyEnd'),
         );
     }
 
     public function onError(ExceptionEvent $event)
     {
         $exception = $event->getException();
-        $datetime = $event->getDatetime();
+//        $datetime = $event->getDatetime();
         $process = $event->getProcess();
 
-        $string = '-------------------EXCEPTION-------------------' . PHP_EOL .
-            'Time: ' . $datetime->format('Y-m-d H:i:s') . PHP_EOL;
-        if ($process) {
-            $string .= 'While: ' . $process . PHP_EOL;
-        }
-        $string .= 'Error message:' . $exception->getMessage() . PHP_EOL;
+        $context = array('source' => Neo4jHandler::NEO4J_SOURCE,
+            'process' => $process,
+        );
+
         if ($exception instanceof Neo4jException) {
-            $string .= 'Query:' . $exception->getQuery();
+            $context['query'] = $exception->getQuery();
         }
 
-        $this->writeParagraph($string);
+        $this->logger->addRecord(Logger::WARNING, $exception->getMessage(),$context);
 
     }
 
     public function onWarning(ExceptionEvent $event)
     {
         $exception = $event->getException();
-        $datetime = $event->getDatetime();
+//        $datetime = $event->getDatetime();
         $process = $event->getProcess();
 
-        $string = '-------------------WARNING-------------------' . PHP_EOL .
-            'Time: ' . $datetime->format('Y-m-d H:i:s') . PHP_EOL;
-        if ($process) {
-            $string .= 'While: ' . $process . PHP_EOL;
-        }
+        $context = array('source' => Neo4jHandler::NEO4J_SOURCE,
+                        'process' => $process,
+            );
 
-        $string .= 'Error message:' . $exception->getMessage() . PHP_EOL;
         if ($exception instanceof Neo4jException) {
-            /** @var Query $query */
-            $query = $exception->getQuery();
-            $string .= 'Query:' . $query->getExecutableQuery();
+            $context['query'] = $exception->getQuery();
         }
 
-        $this->writeParagraph($string);
+        $this->logger->addRecord(Logger::ERROR, $exception->getMessage(),$context);
     }
 
-    private function writeParagraph($string)
+    public function onConsistencyError(ExceptionEvent $event)
     {
-        $fp = fopen($this->path, "a+");
+        /** @var ValidationException $exception */
+        $exception = $event->getException();
+        $errors = $exception->getErrors();
+
+        foreach ($errors as $field => $error) {
+            $fp = fopen($this->consistency_path, "a+");
+            foreach ($error as $name => $message) {
+                $string = sprintf('%s error related to %s: %s', $field, $name, $message);
+
+                if (flock($fp, LOCK_EX)) {
+                    fwrite($fp, PHP_EOL);
+                    fwrite($fp, $string);
+                    fwrite($fp, PHP_EOL);
+                } else {
+                    //couldn´t block the file
+                };
+            }
+            fclose($fp);
+        }
+    }
+
+    public function onConsistencyStart()
+    {
+        $fp = fopen($this->consistency_path, "a+");
+        $now = (new \DateTime('now'))->format('Y-m-d');
+            if (flock($fp, LOCK_EX)) {
+                fwrite($fp, PHP_EOL);
+                fwrite($fp, '---------------------------------');
+                fwrite($fp, 'Starting consistency check on '. $now);
+                fwrite($fp, '---------------------------------');
+                fwrite($fp, PHP_EOL);
+            } else {
+                //couldn´t block the file
+            };
+        fclose($fp);
+    }
+
+    public function onConsistencyEnd()
+    {
+        $fp = fopen($this->consistency_path, "a+");
+        $now = (new \DateTime('now'))->format('Y-m-d');
         if (flock($fp, LOCK_EX)) {
             fwrite($fp, PHP_EOL);
-            fwrite($fp, $string);
+            fwrite($fp, '---------------------------------');
+            fwrite($fp, 'Ending consistency check on '. $now);
+            fwrite($fp, '---------------------------------');
             fwrite($fp, PHP_EOL);
         } else {
             //couldn´t block the file
-            return false;
         };
-        return true;
+        fclose($fp);
+    }
+    /**
+     * Sets a logger instance on the object
+     *
+     * @param LoggerInterface $logger
+     * @return null
+     */
+    public function setLogger(LoggerInterface $logger)
+    {
+        $this->logger = $logger;
     }
 }

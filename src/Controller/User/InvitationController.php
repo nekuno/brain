@@ -219,7 +219,7 @@ class InvitationController
             $app['translator']->setLocale($data['locale']);
         }
 
-        if ($sendData = $model->prepareSend($id, $user->getId(), $data, $app['social_host'])) {
+        if ($sendData = $model->prepareSend($id, $user->getUsername(), $data, $app['social_host'])) {
             /* @var $emailNotification EmailNotifications */
             $emailNotification = $app['emailNotification.service'];
             $recipients = $emailNotification->send(

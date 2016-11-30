@@ -2,7 +2,7 @@
 
 namespace Controller\Instant;
 
-use Model\User\GroupModel;
+use Model\User\Group\GroupModel;
 use Manager\UserManager;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -24,9 +24,6 @@ class UserController
         /* @var $model UserManager */
         $model = $app['users.manager'];
         $user = $model->getById($id)->jsonSerialize();
-        /* @var $groupModel GroupModel */
-        $groupModel = $app['users.groups.model'];
-        $user['groups'] = $groupModel->getByUser($id);
 
         return $app->json($user);
     }

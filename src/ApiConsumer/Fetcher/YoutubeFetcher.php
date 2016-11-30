@@ -2,10 +2,17 @@
 
 namespace ApiConsumer\Fetcher;
 
+use ApiConsumer\LinkProcessor\LinkAnalyzer;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
+use ApiConsumer\LinkProcessor\SynonymousParameters;
+use ApiConsumer\ResourceOwner\GoogleResourceOwner;
+use Model\Link;
 
 class YoutubeFetcher extends BasicPaginationFetcher
 {
+    /** @var GoogleResourceOwner */
+    protected $resourceOwner;
+
     protected $paginationField = 'pageToken';
 
     protected $pageLength = 20;
@@ -16,19 +23,6 @@ class YoutubeFetcher extends BasicPaginationFetcher
 
     static public $PLAYLISTS_TO_EXCLUDE = array('watchHistory', 'watchLater');
 
-    /**
-     * {@inheritDoc}
-     */
-    public function getUrl()
-    {
-        return $this->url;
-
-    }
-
-    public function setUrl($url)
-    {
-        $this->url = $url;
-    }
 
     /**
      * {@inheritDoc}
@@ -241,6 +235,24 @@ class YoutubeFetcher extends BasicPaginationFetcher
         return $links;
     }
 
+    public function fetchVideos(SynonymousParameters $parameters)
+    {
+        $query = $parameters->getQuery();
+        $amount = $parameters->getQuantity();
+        $comparison = $parameters->getComparison();
+
+        $response = $this->resourceOwner->requestVideoSearch($query);
+        $videos = $this->parseLinks($response);
+
+        foreach ($videos as $key => $video){
+            if (!LinkAnalyzer::isTextSimilar($video->getLink()->getTitle(), $comparison)){
+                unset($videos[$key]);
+            }
+        }
+
+        return array_slice($videos, 0, $amount);
+    }
+
     /**
      * @inheritdoc
      */
@@ -266,13 +278,14 @@ class YoutubeFetcher extends BasicPaginationFetcher
 
             $preprocessedLink = new PreprocessedLink($url);
 
+            $link = array();
             $link['title'] = array_key_exists('title', $item['snippet']) ? $item['snippet']['title'] : '';
             $link['description'] = array_key_exists('description', $item['snippet']) ? $item['snippet']['description'] : '';
-            $link['resourceItemId'] = array_key_exists('id', $item) ? $item['id'] : null;
             $link['timestamp'] = $timestamp;
-            $link['resource'] = $this->resourceOwner->getName();
 
-            $preprocessedLink->setLink($link);
+            $preprocessedLink->setLink(Link::buildFromArray($link));
+            $preprocessedLink->setResourceItemId(array_key_exists('id', $item) ? $item['id'] : null);
+            $preprocessedLink->setSource($this->resourceOwner->getName());
 
             $parsed[] = $preprocessedLink;
         }

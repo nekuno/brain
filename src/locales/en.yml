@@ -1,4 +1,8 @@
 notifications:
+  an_internet_for_you: 'AN INTERNET FOR YOU'
+  unsubscribe: 'Unsubscribe'
+  about_us: 'About us'
+  all_rights_reserved: 'All rights reserved'
   header: 'Hello %name%'
   messages:
     unread:
@@ -7,7 +11,7 @@ notifications:
         title: 'You have %count% unread message.|You have %count% unread messages.'
         latest: 'Latest %count% unread message:|Latest %count% unread messages:'
         message: 'Unread message from user %user% at %datetime%:'
-        linkAnchor: 'See all your messages'
+        linkAnchor: 'Read more'
     exceptional_links:
       subject: 'We found content you want to see'
       body:
@@ -30,12 +34,14 @@ notifications:
 followers:
   invitation_slogan: 'Find out if you are %compatible_or_similar% with %username%!'
   group_name: 'Followers of %username%'
+messages:
+  register: 'Welcome! You can start exploring the web using the yarns we have created for you. If you want to improve them, you can always connect more social media to let us know what you like!'
 types:
-  audio: 'Audio'
-  video: 'Video'
-  image: 'Image'
-  creator: 'Creator'
-  link: 'Link'
+  audio: 'Music'
+  video: 'Videos'
+  image: 'Images & Gifs'
+  creator: 'Channels of Twitter'
+  link: 'Web & links'
 threads:
   default:
     twitter_channels: 'Amazing Twitter channels'

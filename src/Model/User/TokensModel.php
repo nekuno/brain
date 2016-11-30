@@ -6,6 +6,7 @@ use Doctrine\ORM\EntityManager;
 use Event\AccountConnectEvent;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
+use HWI\Bundle\OAuthBundle\DependencyInjection\Configuration;
 use Model\Entity\DataStatus;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
@@ -21,6 +22,7 @@ class TokensModel
     CONST TWITTER = 'twitter';
     CONST GOOGLE = 'google';
     CONST SPOTIFY = 'spotify';
+    CONST LINKEDIN = 'linkedin';
 
     /**
      * @var EventDispatcher
@@ -116,7 +118,6 @@ class TokensModel
      */
     public function create($id, $resourceOwner, array $data)
     {
-
         list($userNode, $tokenNode) = $this->getUserAndTokenNodesById($id, $resourceOwner);
 
         if (!($userNode instanceof Node)) {
@@ -127,7 +128,7 @@ class TokensModel
             throw new MethodNotAllowedHttpException(array('PUT'), 'Token already exists');
         }
 
-        $this->validate($resourceOwner, $data);
+        $this->validate($id, $resourceOwner, $data);
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(user:User)')
@@ -145,7 +146,7 @@ class TokensModel
         $row = $result->current();
         $tokenNode = $row->offsetGet('token');
 
-        $this->saveTokenData($tokenNode, $resourceOwner, $data);
+        $this->saveTokenData($userNode, $tokenNode, $resourceOwner, $data);
 
         $this->dispatcher->dispatch(\AppEvents::ACCOUNT_CONNECTED, new AccountConnectEvent($id, $resourceOwner));
 
@@ -172,9 +173,9 @@ class TokensModel
             throw new NotFoundHttpException('Token not found');
         }
 
-        $this->validate($resourceOwner, $data);
+        $this->validate($id, $resourceOwner, $data);
 
-        $this->saveTokenData($tokenNode, $resourceOwner, $data);
+        $this->saveTokenData($userNode, $tokenNode, $resourceOwner, $data);
 
         return $this->getById($id, $resourceOwner);
     }
@@ -227,11 +228,12 @@ class TokensModel
     }
 
     /**
+     * @param string $id
      * @param string $resourceOwner
      * @param array $data
      * @throws ValidationException
      */
-    public function validate($resourceOwner, array $data)
+    public function validate($id, $resourceOwner, array $data)
     {
 
         $errors = array();
@@ -274,6 +276,24 @@ class TokensModel
                         }
                         break;
                 }
+
+                if ($fieldName === 'resourceId') {
+                    $qb = $this->gm->createQueryBuilder();
+                    $qb->match('(user:User)')
+                        ->where('user.qnoow_id <> { id } AND user.' . $resourceOwner . 'ID = { resourceId }')
+                        ->setParameter('id', (integer)$id)
+                        ->setParameter('resourceId', $fieldValue)
+                        ->returns('user');
+
+                    $query = $qb->getQuery();
+
+                    $result = $query->getResultSet();
+
+                    if ($result->count() > 0) {
+                        $fieldErrors[] = 'There is other user with the same resourceId already registered';
+                    }
+                }
+
             }
 
             if (count($fieldErrors) > 0) {
@@ -440,6 +460,7 @@ class TokensModel
             'updatedTime' => array('type' => 'integer', 'editable' => false),
             'expireTime' => array('type' => 'integer', 'required' => false),
             'refreshToken' => array('type' => 'string', 'required' => false),
+            'resourceId' => array('type' => 'string', 'required' => false),
         );
     }
 
@@ -472,8 +493,22 @@ class TokensModel
         return array($userNode, $tokenNode);
     }
 
-    protected function saveTokenData(Node $tokenNode, $resourceOwner, array $data)
+    protected function saveTokenData(Node $userNode, Node $tokenNode, $resourceOwner, array $data)
     {
+
+        if (isset($data['resourceId'])) {
+            $userNode->setProperty($resourceOwner . 'ID', $data['resourceId']);
+            $userNode->save();
+        }
+
+	    $type = Configuration::getResourceOwnerType($resourceOwner);
+	    if ($type == 'oauth1' && $data['oauthToken']) {
+		    $oauthToken = substr($data['oauthToken'], 0, strpos($data['oauthToken'], ':'));
+		    $oauthTokenSecret = substr($data['oauthToken'], strpos($data['oauthToken'], ':') + 1, strpos($data['oauthToken'], '@') - strpos($data['oauthToken'], ':') - 1);
+
+		    $data['oauthToken'] = $oauthToken;
+		    $data['oauthTokenSecret'] = $oauthTokenSecret;
+	    }
 
         $tokenNode->setProperty('resourceOwner', $resourceOwner);
         $tokenNode->setProperty('updatedTime', time());

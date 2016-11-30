@@ -2,7 +2,7 @@
 
 namespace Controller\Social;
 
-use Model\User\GroupModel;
+use Model\User\Group\GroupModel;
 use Manager\UserManager;
 use Model\User;
 use Model\User\ProfileFilterModel;
@@ -27,13 +27,6 @@ class UserController
         /* @var $model UserManager */
         $model = $app['users.manager'];
         $userArray = $model->getById($id)->jsonSerialize();
-
-        if (empty($userArray)) {
-            return $app->json([], 404);
-        }
-        /* @var $groupModel GroupModel */
-        $groupModel = $app['users.groups.model'];
-        $userArray['groups'] = $groupModel->getByUser($id);
 
         return $app->json($userArray);
     }
@@ -86,7 +79,7 @@ class UserController
     /**
      * @param Request $request
      * @param Application $app
-     * @param User $user
+     * @param $id
      * @return JsonResponse
      */
     public function getAllFiltersAction(Request $request, Application $app, $id)
@@ -107,13 +100,13 @@ class UserController
         $userFilterModel = $app['users.userFilter.model'];
         $userFilters = $userFilterModel->getSocialFilters($locale);
 
-        /* @var $groupModel User\GroupModel */
+        /* @var $groupModel \Model\User\Group\GroupModel */
         $groupModel = $app['users.groups.model'];
         $groups = $groupModel->getByUser($user->getId());
 
         $userFilters['groups']['choices'] = array();
         foreach ($groups as $group) {
-            $userFilters['groups']['choices'][$group['id']] = $group['name'];
+            $userFilters['groups']['choices'][$group->getId()] = $group->getName();
         }
 
         if ($groups = null || $groups == array()) {

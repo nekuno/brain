@@ -5,15 +5,16 @@ namespace Console\Command;
 use ApiConsumer\EventListener\FetchLinksInstantSubscriber;
 use ApiConsumer\EventListener\FetchLinksSubscriber;
 use ApiConsumer\Fetcher\FetcherService;
+use ApiConsumer\Fetcher\ProcessorService;
 use Console\ApplicationAwareCommand;
 use EventListener\ExceptionLoggerSubscriber;
+use EventListener\SimilarityMatchingProcessSubscriber;
 use EventListener\UserStatusSubscriber;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 use Service\AMQPManager;
-use Silex\Application;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Logger\ConsoleLogger;
@@ -74,7 +75,7 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
         /* @var $dispatcher EventDispatcher */
         $dispatcher = $this->app['dispatcher'];
 
-        $dispatcher->addSubscriber(new ExceptionLoggerSubscriber());
+        $dispatcher->addSubscriber(new ExceptionLoggerSubscriber($this->app['monolog']));
 
         switch ($consumer) {
 
@@ -86,14 +87,17 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
                 /* @var $fetcher FetcherService */
                 $fetcher = $this->app['api_consumer.fetcher'];
                 $fetcher->setLogger($logger);
+                /* @var $processorService ProcessorService */
+                $processorService = $this->app['api_consumer.processor'];
+                $processorService->setLogger($logger);
 
                 $worker = new LinkProcessorWorker(
                     $channel,
                     $dispatcher,
                     $fetcher,
+                    $processorService,
                     $this->app['api_consumer.resource_owner_factory'],
                     $this->app['users.tokens.model'],
-                    $this->app['users.lookup.model'],
                     $this->app['users.socialprofile.manager'],
                     $this->app['dbs']['mysql_social'],
                     $this->app['dbs']['mysql_brain']);
@@ -103,13 +107,17 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
 
             case AMQPManager::MATCHING:
                 $userStatusSubscriber = new UserStatusSubscriber($this->app['instant.client']);
+                $similarityMatchingProcessSubscriber = new SimilarityMatchingProcessSubscriber($this->app['instant.client']);
                 $dispatcher->addSubscriber($userStatusSubscriber);
+                $dispatcher->addSubscriber($similarityMatchingProcessSubscriber);
 
                 $worker = new MatchingCalculatorWorker(
                     $channel,
                     $this->app['users.manager'],
                     $this->app['users.matching.model'],
                     $this->app['users.similarity.model'],
+                    $this->app['questionnaire.questions.model'],
+                    $this->app['affinityRecalculations.service'],
                     $this->app['dbs']['mysql_social'],
                     $this->app['dbs']['mysql_brain'],
                     $dispatcher);
@@ -145,8 +153,12 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
                 /* @var $fetcher FetcherService */
                 $fetcher = $this->app['api_consumer.fetcher'];
                 $fetcher->setLogger($logger);
+                /* @var $processorService ProcessorService */
+                $processorService = $this->app['api_consumer.processor'];
+                $processorService->setLogger($logger);
 
-                $worker = new ChannelWorker($channel, $dispatcher, $fetcher, $this->app['get_old_tweets'], $this->app['dbs']['mysql_brain']);
+                $worker = new ChannelWorker($channel, $dispatcher, $fetcher, $processorService, $this->app['get_old_tweets'],
+                    $this->app['users.socialprofile.manager'], $this->app['users.tokens.model'], $this->app['dbs']['mysql_brain']);
                 $worker->setLogger($logger);
                 $logger->notice('Processing channel queue');
                 break;

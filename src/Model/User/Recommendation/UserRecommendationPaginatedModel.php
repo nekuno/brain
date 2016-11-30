@@ -2,43 +2,12 @@
 
 namespace Model\User\Recommendation;
 
-use Model\Neo4j\GraphManager;
+use Everyman\Neo4j\Query\ResultSet;
 use Model\User\GhostUser\GhostUserManager;
-use Model\User\ProfileFilterModel;
-use Model\User\UserFilterModel;
-use Paginator\PaginatedInterface;
 
-class UserRecommendationPaginatedModel implements PaginatedInterface
+class UserRecommendationPaginatedModel extends AbstractUserPaginatedModel
 {
-
-    protected $gm;
-
-    /**
-     * @var ProfileFilterModel
-     */
-    protected $profileFilterModel;
-
-    protected $userFilterModel;
-
-    public function __construct(GraphManager $gm, ProfileFilterModel $profileFilterModel, UserFilterModel $userFilterModel)
-    {
-        $this->gm = $gm;
-        $this->profileFilterModel = $profileFilterModel;
-        $this->userFilterModel = $userFilterModel;
-    }
-
-    /**
-     * Hook point for validating the query.
-     * @param array $filters
-     * @return boolean
-     */
-    public function validateFilters(array $filters)
-    {
-        $hasId = isset($filters['id']);
-        $hasProfileFilters = isset($filters['profileFilters']);
-
-        return $hasId && $hasProfileFilters;
-    }
+    const USER_SAFETY_LIMIT = 5000;
 
     /**
      * Slices the query according to $offset, and $limit.
@@ -51,7 +20,6 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
     public function slice(array $filters, $offset, $limit)
     {
         $id = $filters['id'];
-        $response = array();
 
         $parameters = array(
             'offset' => (integer)$offset,
@@ -59,44 +27,40 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
             'userId' => (integer)$id
         );
 
-        $orderQuery = '  similarity DESC, matching_questions DESC ';
-        if (isset($filters['order']) && $filters['order'] == 'questions') {
-            $orderQuery = ' matching_questions DESC, similarity DESC ';
-        }
+//        $orderQuery = '  similarity DESC, matching_questions DESC, id ';
+//        if (isset($filters['order']) && $filters['order'] == 'questions') {
+            $orderQuery = ' matching_questions DESC, similarity DESC, id ';
+//        }
 
         $filters = $this->profileFilterModel->splitFilters($filters);
 
         $profileFilters = $this->getProfileFilters($filters['profileFilters']);
         $userFilters = $this->getUserFilters($filters['userFilters']);
 
+        $return = array('items' => array());
+
         $qb = $this->gm->createQueryBuilder();
 
         $qb->setParameters($parameters);
 
-        $qb->match('(u:User {qnoow_id: {userId}})-[:MATCHES|SIMILARITY]-(anyUser:User)')
-            ->where('u <> anyUser', 'NOT (anyUser:' . GhostUserManager::LABEL_GHOST_USER . ')')
-            ->optionalMatch('(u)-[like:LIKES]-(anyUser)')
+        $qb->match('(u:User {qnoow_id: {userId}})-[:MATCHES|:SIMILARITY]-(anyUser:User)')
+            ->where('u <> anyUser', 'NOT (anyUser:' . GhostUserManager::LABEL_GHOST_USER . ')', 'NOT (u)-[:DISLIKES|:IGNORES]->(anyUser)')
+            ->with('DISTINCT anyUser', 'u')
+            ->limit(self::USER_SAFETY_LIMIT)
+            ->with('u', 'anyUser')
             ->optionalMatch('(u)-[m:MATCHES]-(anyUser)')
+            ->with('u', 'anyUser', '(CASE WHEN EXISTS(m.matching_questions) THEN m.matching_questions ELSE 0.01 END) AS matching_questions')
             ->optionalMatch('(u)-[s:SIMILARITY]-(anyUser)')
-            ->with(
-                'u, anyUser,
-                (CASE WHEN like IS NOT NULL THEN 1 ELSE 0 END) AS like,
-                (CASE WHEN HAS(m.matching_questions) THEN m.matching_questions ELSE 0 END) AS matching_questions,
-                (CASE WHEN HAS(s.similarity) THEN s.similarity ELSE 0 END) AS similarity'
-            )
-            ->where($userFilters['conditions'])
+            ->with('u', 'anyUser', 'matching_questions', '(CASE WHEN EXISTS(s.similarity) THEN s.similarity ELSE 0.01 END) AS similarity')
             ->match('(anyUser)<-[:PROFILE_OF]-(p:Profile)');
 
         $qb->optionalMatch('(p)-[:LOCATION]->(l:Location)');
 
-        $qb->with('u, anyUser, like, matching_questions, similarity, p, l');
-        $qb->where(
-            array_merge(
-                array('(matching_questions > 0 OR similarity > 0)'),
-                $profileFilters['conditions']
-            )
-        )
-            ->with('u', 'anyUser', 'like', 'matching_questions', 'similarity', 'p', 'l');
+        $qb->with('u, anyUser, matching_questions, similarity, p, l');
+        $qb->where($profileFilters['conditions'])
+            ->with('u', 'anyUser', 'matching_questions', 'similarity', 'p', 'l');
+        $qb->where( $userFilters['conditions'])
+            ->with('u', 'anyUser', 'matching_questions', 'similarity', 'p', 'l');
 
         foreach ($profileFilters['matches'] as $match) {
             $qb->match($match);
@@ -105,15 +69,24 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
             $qb->match($match);
         }
 
+        $qb->with('anyUser, u, matching_questions, similarity, p, l')
+            ->optionalMatch('(u)-[likes:LIKES]->(anyUser)')
+            ->with('anyUser, u, matching_questions, similarity, p, l, (CASE WHEN likes IS NULL THEN 0 ELSE 1 END) AS like')
+            ->optionalMatch('(p)<-[optionOf:OPTION_OF]-(option:ProfileOption)')
+            ->optionalMatch('(p)-[tagged:TAGGED]-(tag:ProfileTag)');
+
         $qb->returns(
-            'DISTINCT anyUser.qnoow_id AS id,
-                    anyUser.username AS username,
-                    anyUser.picture AS picture,
-                    p.birthday AS birthday,
-                    l.locality + ", " + l.country AS location,
-                    matching_questions,
-                    similarity,
-                    like'
+            'anyUser.qnoow_id AS id,
+             anyUser.username AS username,
+             anyUser.photo AS photo,
+             p.birthday AS birthday,
+             p AS profile,
+             collect(distinct {option: option, detail: (CASE WHEN EXISTS(optionOf.detail) THEN optionOf.detail ELSE null END)}) AS options,
+             collect(distinct {tag: tag, tagged: tagged}) AS tags,
+             l AS location,
+             matching_questions,
+             similarity,
+             like'
         )
             ->orderBy($orderQuery)
             ->skip('{ offset }')
@@ -122,31 +95,34 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         $query = $qb->getQuery();
         $result = $query->getResultSet();
 
-        foreach ($result as $row) {
+        $response = $this->buildResponseFromResult($result);
+        $return['items'] = array_merge($return['items'], $response['items']);
 
-            $age = null;
-            if ($row['birthday']) {
-                $date = new \DateTime($row['birthday']);
-                $now = new \DateTime();
-                $interval = $now->diff($date);
-                $age = $interval->y;
+        $needContent = $this->needMoreContent($limit, $return);
+        if ($needContent) {
+
+            $foreign = 0;
+            if (isset($filters['foreign'])) {
+                $foreign = $filters['foreign'];
             }
-
-            $user = array(
-                'id' => $row['id'],
-                'username' => $row['username'],
-                'picture' => $row['picture'],
-                'matching' => $row['matching_questions'],
-                'similarity' => $row['similarity'],
-                'age' => $age,
-                'location' => $row['location'],
-                'like' => $row['like'],
-            );
-
-            $response[] = $user;
+            $foreignResult = $this->getForeignContent($filters, $needContent, $foreign);
+            $return['items'] = array_merge($return['items'], $foreignResult['items']);
+            $return['newForeign'] = $foreignResult['foreign'];
         }
 
-        return $response;
+        $needContent = $this->needMoreContent($limit, $return);
+        if ($needContent) {
+            $ignored = 0;
+            if (isset($filters['ignored'])) {
+                $ignored = $filters['ignored'];
+            }
+
+            $ignoredResult = $this->getIgnoredContent($filters, $needContent, $ignored);
+            $return['items'] = array_merge($return['items'], $ignoredResult['items']);
+            $return['newIgnored'] = $ignoredResult['ignored'];
+        }
+        //Works with ContentPaginator (accepts $result), not Paginator (accepts $result['items'])
+        return $return;
     }
 
     /**
@@ -171,27 +147,23 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
 
         $qb->setParameters($parameters);
 
-        $qb->match('(u:User {qnoow_id: {userId}})-[:MATCHES|SIMILARITY]-(anyUser:User)')
-            ->where('u <> anyUser')
+        $qb->match('(u:User {qnoow_id: {userId}}), (anyUser:User)')
+            ->where('u <> anyUser', 'NOT (anyUser:' . GhostUserManager::LABEL_GHOST_USER . ')', 'NOT (u)-[:LIKES|:DISLIKES]->(anyUser)')
+            ->with('DISTINCT anyUser as anyUser', 'u')
+            ->limit(self::USER_SAFETY_LIMIT)
+            ->with('u', 'anyUser')
             ->optionalMatch('(u)-[m:MATCHES]-(anyUser)')
+            ->with('u', 'anyUser', '(CASE WHEN EXISTS(m.matching_questions) THEN m.matching_questions ELSE 0 END) AS matching_questions')
             ->optionalMatch('(u)-[s:SIMILARITY]-(anyUser)')
-            ->with(
-                'u, anyUser,
-            (CASE WHEN HAS(m.matching_questions) THEN m.matching_questions ELSE 0 END) AS matching_questions,
-            (CASE WHEN HAS(s.similarity) THEN s.similarity ELSE 0 END) AS similarity'
-            )
-            ->where($userFilters['conditions'])
+            ->with('u', 'anyUser', 'matching_questions', '(CASE WHEN EXISTS(s.similarity) THEN s.similarity ELSE 0 END) AS similarity')
             ->match('(anyUser)<-[:PROFILE_OF]-(p:Profile)');
 
         $qb->optionalMatch('(p)-[:LOCATION]->(l:Location)');
 
         $qb->with('u, anyUser, matching_questions, similarity, p, l');
-        $qb->where(
-            array_merge(
-                array('(matching_questions > 0 OR similarity > 0)'),
-                $profileFilters['conditions']
-            )
-        )
+        $qb->where($profileFilters['conditions'])
+            ->with('u', 'anyUser', 'matching_questions', 'similarity', 'p', 'l');
+        $qb->where( $userFilters['conditions'])
             ->with('u', 'anyUser', 'matching_questions', 'similarity', 'p', 'l');
 
         foreach ($profileFilters['matches'] as $match) {
@@ -201,7 +173,7 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
             $qb->match($match);
         }
 
-        $qb->returns('COUNT(DISTINCT anyUser) as total');
+        $qb->returns('COUNT(anyUser) as total');
         $query = $qb->getQuery();
         $result = $query->getResultSet();
 
@@ -212,166 +184,64 @@ class UserRecommendationPaginatedModel implements PaginatedInterface
         return $count;
     }
 
-    /**
-     * @param array $filters
-     * @return array
-     */
-    protected function getProfileFilters(array $filters)
+    public function buildResponseFromResult(ResultSet $result)
     {
-        $conditions = array();
-        $matches = array();
-
-        $profileFilterMetadata = $this->getProfileFilterMetadata();
-        foreach ($profileFilterMetadata as $name => $filter) {
-            if (isset($filters[$name])) {
-                $value = $filters[$name];
-                switch ($filter['type']) {
-                    case 'text':
-                    case 'textarea':
-                        $conditions[] = "p.$name =~ '(?i).*$value.*'";
-                        break;
-                    case 'integer_range':
-                        $min = (integer)$value['min'];
-                        $max = (integer)$value['max'];
-                        $conditions[] = "($min <= p.$name AND p.$name <= $max)";
-                        break;
-                    case 'date':
-
-                        break;
-                    //To use from social
-                    case 'birthday':
-                        $min = $value['min'];
-                        $max = $value['max'];
-                        $conditions[] = "('$min' <= p.$name AND p.$name <= '$max')";
-                        break;
-                    case 'birthday_range':
-                        $birthdayRange = $this->profileFilterModel->getBirthdayRangeFromAgeRange($value['min'], $value['max']);
-                        $min = $birthdayRange['min'];
-                        $max = $birthdayRange['max'];
-                        $conditions[] = "('$min' <= p.$name AND p.$name <= '$max')";
-                        break;
-                    case 'location_distance':
-                    case 'location':
-                        $distance = (int)$value['distance'];
-                        $latitude = (float)$value['location']['latitude'];
-                        $longitude = (float)$value['location']['longitude'];
-                        $conditions[] = "(NOT l IS NULL AND has(l.latitude) AND has(l.longitude) AND
-                        " . $distance . " >= toInt(6371 * acos( cos( radians(" . $latitude . ") ) * cos( radians(l.latitude) ) * cos( radians(l.longitude) - radians(" . $longitude . ") ) + sin( radians(" . $latitude . ") ) * sin( radians(l.latitude) ) )))";
-                        break;
-                    case 'boolean':
-                        $conditions[] = "p.$name = true";
-                        break;
-                    case 'choice':
-                    case 'multiple_choices':
-                        $profileLabelName = $this->profileFilterModel->typeToLabel($name);
-                        $value = implode("', '", $value);
-                        $matches[] = "(p)<-[:OPTION_OF]-(option$name:$profileLabelName) WHERE option$name.id IN ['$value']";
-                        break;
-                    case 'double_choice':
-                        $profileLabelName = $this->profileFilterModel->typeToLabel($name);
-                        $value = implode("', '", $value);
-                        $matches[] = "(p)<-[:OPTION_OF]-(option$name:$profileLabelName) WHERE option$name.id IN ['$value']";
-                        break;
-                    case 'double_multiple_choices':
-                        $profileLabelName = $this->profileFilterModel->typeToLabel($name);
-                        $matchQuery = "(p)<-[rel$name:OPTION_OF]-(option$name:$profileLabelName)";
-                        $whereQueries = array();
-                        foreach ($value as $dataValue){
-                            $choice = $dataValue['choice'];
-                            $detail = $dataValue['detail'];
-                            $whereQueries[] = "( option$name.id = '$choice' AND rel$name.detail = '$detail')";
-                        }
-
-                        $matches[] = $matchQuery.' WHERE ' . implode('OR', $whereQueries);
-                        break;
-                    case 'tags':
-                        $tagLabelName = $this->profileFilterModel->typeToLabel($name);
-                        $matches[] = "(p)<-[:TAGGED]-(tag$name:$tagLabelName) WHERE tag$name.name = '$value'";
-                        break;
-                    case 'tags_and_choice':
-                        $tagLabelName = $this->profileFilterModel->typeToLabel($name);
-                        $matchQuery = "(p)<-[rel$name:TAGGED]-(tag$name:ProfileTag:$tagLabelName)";
-                        $whereQueries = array();
-                        foreach ($value as $dataValue) {
-                            $tagValue = $name === 'language' ?
-                                $this->profileFilterModel->getLanguageFromTag($dataValue['tag']) :
-                                $dataValue['tag'];
-                            $choice = !is_null($dataValue['choice']) ? $dataValue['choice'] : '';
-
-                            $whereQueries[] = "( tag$name.name = '$tagValue' AND rel$name.detail = '$choice')";
-                        }
-                        $matches[] = $matchQuery.' WHERE ' . implode('OR', $whereQueries);
-                        break;
-                    case 'tags_and_multiple_choices':
-                        $tagLabelName = $this->profileFilterModel->typeToLabel($name);
-                        $matchQuery = "(p)<-[rel$name:TAGGED]-(tag$name:ProfileTag:$tagLabelName)";
-                        $whereQueries = array();
-                        foreach ($value as $dataValue) {
-                            $tagValue = $name === 'language' ?
-                                $this->profileFilterModel->getLanguageFromTag($dataValue['tag']) :
-                                $dataValue['tag'];
-                            $choices = !is_null($dataValue['choices']) ? json_encode($dataValue['choices']) : json_encode(array());
-
-                            $whereQueries[] = "( tag$name.name = '$tagValue' AND rel$name.detail IN $choices )";
-                        }
-                        $matches[] = $matchQuery.' WHERE ' . implode('OR', $whereQueries);
-                        break;
-                    default:
-                        break;
-                }
-            }
-        }
-
-        return array(
-            'conditions' => $conditions,
-            'matches' => $matches
-        );
+        return array('items' => $this->buildUserRecommendations($result));
     }
 
     /**
-     * @param array $filters
-     * @return array
+     * @param $limit int
+     * @param $response array
+     * @return int
      */
-    protected function getUserFilters(array $filters)
+    protected function needMoreContent($limit, $response)
     {
-        $conditions = array();
-        $matches = array();
-
-        $userFilterMetadata = $this->getUserFilterMetadata();
-        foreach ($userFilterMetadata as $name => $filter) {
-            if (isset($filters[$name]) && !empty($filters[$name])) {
-                $value = $filters[$name];
-                switch ($name) {
-                    case 'groups':
-                        foreach ($value as $index => $groupId) {
-                            $value[$index] = (int)$groupId;
-                        }
-                        $jsonValues = json_encode($value);
-                        $matches[] = "(anyUser)-[:BELONGS_TO]->(group:Group) WHERE id(group) IN $jsonValues";
-                        break;
-                    case 'compatibility':
-                        $valuePerOne = intval($value) / 100;
-                        $conditions[] = "($valuePerOne <= matching_questions)";
-                        break;
-                    case 'similarity':
-                        $valuePerOne = intval($value) / 100;
-                        $conditions[] = "($valuePerOne <= similarity)";
-                        break;
-                }
-            }
+        $moreContent = $limit - count($response['items']);
+        if ($moreContent <= 0) {
+            return 0;
         }
 
-        return array(
-            'conditions' => $conditions,
-            'matches' => $matches
-        );
+        return $moreContent;
     }
 
-    protected function getProfileFilterMetadata(){
-        return $this->profileFilterModel->getFilters();
+    /**
+     * @param $filters
+     * @param $limit
+     * @param $foreign
+     * @return array (items, foreign = # of links database searched, -1 if total)
+     * @throws \Exception
+     * @throws \Model\Neo4j\Neo4jException
+     */
+    public function getForeignContent($filters, $limit, $foreign)
+    {
+        $id = $filters['id'];
+        $condition = "MATCH (u:User{qnoow_id:$id}) WHERE NOT (u)-[:LIKES|:DISLIKES|:IGNORES]->(anyUser) AND NOT (u)-[:MATCHES|:SIMILARITY]-(anyUser)";
+
+        $items = $this->getUsersByPopularity($filters, $foreign, $limit, $condition);
+
+        $return = array('items' => array_slice($items, 0, $limit));
+        $return['foreign'] = $foreign + count($return['items']);
+
+        return $return;
     }
 
-    protected function getUserFilterMetadata(){
-        return $this->userFilterModel->getFilters();
+    /**
+     * @param $filters
+     * @param $limit
+     * @param $ignored
+     * @return array (items, foreign = # of links database searched, -1 if total)
+     * @throws \Exception
+     * @throws \Model\Neo4j\Neo4jException
+     */
+    public function getIgnoredContent($filters, $limit, $ignored)
+    {
+        $id = $filters['id'];
+        $condition = "MATCH (:User{qnoow_id:$id})-[:IGNORES]->(anyUser)";
+        $items = $this->getUsersByPopularity($filters, $ignored, $limit, $condition);
+
+        $return = array('items' => array_slice($items, 0, $limit));
+        $return['ignored'] = $ignored + count($return['items']);
+
+        return $return;
     }
 } 

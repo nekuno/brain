@@ -12,11 +12,15 @@ use Model\Neo4j\GraphManager;
 class ProfileFilterModel extends FilterModel
 {
     protected $profileMetadata;
+    protected $profileCategories;
+    protected $profileOptions = array();
+    protected $profileTags = array();
 
-    public function __construct(GraphManager $gm, array $metadata, array $profileMetadata, array $socialMetadata, $defaultLocale)
+    public function __construct(GraphManager $gm, array $metadata, array $profileMetadata, array $profileCategories, array $socialMetadata, $defaultLocale)
     {
         parent::__construct($gm, $metadata, $socialMetadata, $defaultLocale);
         $this->profileMetadata = $profileMetadata;
+        $this->profileCategories = $profileCategories;
     }
 
     protected function modifyPublicFieldByType($publicField, $name, $values, $locale)
@@ -81,7 +85,9 @@ class ProfileFilterModel extends FilterModel
     public function getChoiceOptions($locale)
     {
         $translationField = 'name_' . $locale;
-
+        if (isset($this->profileOptions[$translationField])) {
+            return $this->profileOptions[$translationField];
+        }
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(option:ProfileOption)')
             ->returns("head(filter(x IN labels(option) WHERE x <> 'ProfileOption')) AS labelName, option.id AS id, option." . $translationField . " AS name")
@@ -99,6 +105,8 @@ class ProfileFilterModel extends FilterModel
 
             $choiceOptions[$typeName][$optionId] = $optionName;
         }
+
+        $this->profileOptions[$translationField] = $choiceOptions;
 
         return $choiceOptions;
     }
@@ -140,6 +148,7 @@ class ProfileFilterModel extends FilterModel
         foreach ($this->profileMetadata as $name => $values) {
             $publicField = $values;
             $publicField['label'] = $values['label'][$locale];
+            $publicField['labelEdit'] = isset($values['labelEdit'][$locale]) ? $values['labelEdit'][$locale] : $publicField['label'];
             $publicField['required'] = isset($values['required']) ? $values['required'] : false;
             $publicField['editable'] = isset($values['editable']) ? $values['editable'] : true;
             
@@ -158,6 +167,22 @@ class ProfileFilterModel extends FilterModel
         }
 
         return $publicMetadata;
+    }
+
+    public function getProfileCategories($locale = null)
+    {
+        $locale = $this->getLocale($locale);
+
+        $publicCategories = array();
+        foreach ($this->profileCategories as $type => $categories) {
+            foreach ($categories as $category) {
+                $publicField = $category;
+                $publicField['label'] = $category['label'][$locale];
+                $publicCategories[$type][] = $publicField;
+            }
+        }
+
+        return $publicCategories;
     }
 
     public function splitFilters($filters)
@@ -202,10 +227,10 @@ class ProfileFilterModel extends FilterModel
 
     public function getBirthdayRangeFromAgeRange($min = null, $max = null)
     {
-        $return = array();
+        $return = array('max' => null, 'min' => null);
         if ($min){
             $now = new \DateTime();
-            $maxBirthday = $now->modify('-'.$min.' years')->format('Y-m-d');
+            $maxBirthday = $now->modify('-'.($min-1).' years')->format('Y-m-d');
             $return ['max'] = $maxBirthday;
         }
         if ($max){
@@ -308,11 +333,12 @@ class ProfileFilterModel extends FilterModel
 
     protected function getTopProfileTags($tagType)
     {
-
         $tagLabelName = $this->typeToLabel($tagType);
-
+        if (isset($this->profileTags[$tagLabelName])) {
+            return $this->profileTags[$tagLabelName];
+        }
         $qb = $this->gm->createQueryBuilder();
-        $qb->match('(tag:' . $tagLabelName . ')-[tagged:TAGGED]-(profile:Profile)')
+        $qb->match('(tag:' . $tagLabelName . ')-[tagged:TAGGED]->(profile:Profile)')
             ->returns('tag.name AS tag, count(*) as count')
             ->limit(5);
 
@@ -324,6 +350,8 @@ class ProfileFilterModel extends FilterModel
             /* @var $row Row */
             $tags[] = $row->offsetGet('tag');
         }
+
+        $this->profileTags[$tagLabelName] = $tags;
 
         return $tags;
     }

@@ -6,6 +6,7 @@
 namespace Console\Command;
 
 use Console\ApplicationAwareCommand;
+use Model\Link;
 use Model\User;
 use Model\User\RateModel;
 use Manager\UserManager;
@@ -21,21 +22,23 @@ class Neo4jConsistencyLinksCommand extends ApplicationAwareCommand
         $this->setName('neo4j:consistency:links')
             ->setDescription('Ensures links database consistency')
             ->addOption('likes', null, InputOption::VALUE_NONE, 'Check LIKES relationships', null)
+            ->addOption('processed', null, InputOption::VALUE_NONE, 'Disable processed status when recommended', null)
+            ->addOption('offset', null, InputOption::VALUE_OPTIONAL, 'Links to skip from oldest', 0)
             ->addOption('force', null, InputOption::VALUE_NONE, 'Solve problems where possible', null);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $force = $input->getOption('force');
+        $offset = $input->getOption('offset');
+
         $likesOption = $input->getOption('likes');
-
-        /** @var RateModel $rateModel */
-        $rateModel = $this->app['users.rate.model'];
-
-        //checking likes
+        $processedOption = $input->getOption('processed');
 
         if ($likesOption) {
 
+            /** @var RateModel $rateModel */
+            $rateModel = $this->app['users.rate.model'];
 
             $output->writeln('Getting likes list.');
 
@@ -52,6 +55,34 @@ class Neo4jConsistencyLinksCommand extends ApplicationAwareCommand
             $output->writeln(sprintf('Got %d likes', count($likes)));
 
             $this->checkLikes($likes, $force, $output);
+        }
+
+        if ($processedOption) {
+
+            $linkModel = $this->app['links.model'];
+
+            $output->writeln('Checking processed status.');
+
+            $maxLimit = 99999999;
+            $limit = 1000;
+            do {
+                $output->writeln('-----------------------------------------------------------------');
+                $output->writeln(sprintf('Getting and analyzing %d links from offset %d.', $limit, $offset));
+
+                $links = $linkModel->getLinks(array(), $offset, $limit);
+
+                foreach ($links as $linkArray)
+                {
+                    $link = Link::buildFromArray($linkArray);
+                    if (!$link->isComplete() && $link->getProcessed()) {
+                        $linkModel->setProcessed($link->getUrl(), false);
+                        $output->writeln(sprintf('Corrected processed status of link %s', $link->getUrl()));
+                    }
+                }
+                $offset += $limit;
+
+            } while ($offset < $maxLimit && !empty($links));
+            
         }
 
         $output->writeln('Finished.');

@@ -6,7 +6,7 @@ use Event\MatchingEvent;
 use Event\SimilarityEvent;
 use Model\Entity\EmailNotification;
 use Model\User\Filters\FilterUsers;
-use Model\User\GroupModel;
+use Model\User\Group\GroupModel;
 use Model\User\ProfileModel;
 use Manager\UserManager;
 use Service\EmailNotifications;
@@ -102,9 +102,8 @@ class SimilarityMatchingSubscriber implements EventSubscriberInterface
 
         foreach ($groups as $groupId) {
             $group = $this->groupModel->getById($groupId);
-            if (isset($group['filterUsers'])) {
+            if ($filterUsers = $group->getFilterUsers()) {
                 /* @var $filterUsers FilterUsers */
-                $filterUsers = $group['filterUsers'];
                 $userFilters = $filterUsers->getUserFilters();
                 if (isset($userFilters[$filter]) && $userFilters[$filter] <= $value && !$this->notificationManager->areNotified($follower, $influencer)) {
                     // Send mails

@@ -117,4 +117,75 @@ final class AppEvents
      * Fired when a user is added to a group
      */
     const GROUP_ADDED = 'group.added';
+
+    /**
+     * Fired when a user is removed from a group
+     */
+    const GROUP_REMOVED = 'group.removed';
+
+    /**
+     * Fired when a profile is created
+     */
+    const PROFILE_CREATED = 'profile.created';
+
+	/**
+	 * Fired when a similarity process starts
+	 */
+	const SIMILARITY_PROCESS_START = 'similarity.start';
+
+	/**
+	 * Fired for each similarity process step
+	 */
+	const SIMILARITY_PROCESS_STEP = 'similarity.step';
+
+	/**
+	 * Fired when a similarity process finishes
+	 */
+	const SIMILARITY_PROCESS_FINISH = 'similarity.finish';
+
+	/**
+	 * Fired when a matching process starts
+	 */
+	const MATCHING_PROCESS_START = 'matching.start';
+
+	/**
+	 * Fired for each matching process step
+	 */
+	const MATCHING_PROCESS_STEP = 'matching.step';
+
+	/**
+	 * Fired when a matching process finishes
+	 */
+	const MATCHING_PROCESS_FINISH = 'matching.finish';
+
+	/**
+	 * Fired when a affinity process starts
+	 */
+	const AFFINITY_PROCESS_START = 'affinity.start';
+
+	/**
+	 * Fired for each affinity process step
+	 */
+	const AFFINITY_PROCESS_STEP = 'affinity.step';
+
+	/**
+	 * Fired when a affinity process finishes
+	 */
+	const AFFINITY_PROCESS_FINISH = 'affinity.finish';
+
+    /**
+     * Fired when a neo4j consistency error is detected
+     */
+    const CONSISTENCY_ERROR = 'consistency.error';
+
+    /**
+     * Fired when a neo4j consistency check starts or finish
+     */
+    const CONSISTENCY_START = 'consistency.start';
+    const CONSISTENCY_END = 'consistency.end';
+
+    /**
+     * Fired when a Link needs consistency checked and fixed if necessary
+     */
+    const CONSISTENCY_LINK = 'consistency.link';
 }
