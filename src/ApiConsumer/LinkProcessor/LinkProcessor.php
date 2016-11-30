@@ -3,15 +3,18 @@
 namespace ApiConsumer\LinkProcessor;
 
 use ApiConsumer\Factory\ProcessorFactory;
+use ApiConsumer\Images\ImageAnalyzer;
 use ApiConsumer\LinkProcessor\Processor\ProcessorInterface;
 
 class LinkProcessor
 {
     private $processorFactory;
+    private $imageAnalyzer;
 
-    public function __construct(ProcessorFactory $processorFactory)
+    public function __construct(ProcessorFactory $processorFactory, ImageAnalyzer $imageAnalyzer)
     {
         $this->processorFactory = $processorFactory;
+        $this->imageAnalyzer = $imageAnalyzer;
     }
 
     public function scrape(PreprocessedLink $preprocessedLink)
@@ -33,6 +36,10 @@ class LinkProcessor
         $processor = $this->selectProcessor($preprocessedLink);
 
         $response = $processor->requestItem($preprocessedLink);
+
+        $images = $processor->getImages($response);
+        $image = $this->imageAnalyzer->selectImage($images);
+        $preprocessedLink->getLink()->setThumbnail($image);
 
         $processor->hydrateLink($preprocessedLink, $response);
         $processor->addTags($preprocessedLink, $response);

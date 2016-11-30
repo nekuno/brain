@@ -3,6 +3,7 @@
 namespace ApiConsumer\LinkProcessor\Processor;
 
 use ApiConsumer\Exception\CannotProcessException;
+use ApiConsumer\Images\ImageAnalyzer;
 use ApiConsumer\LinkProcessor\MetadataParser\BasicMetadataParser;
 use ApiConsumer\LinkProcessor\MetadataParser\FacebookMetadataParser;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
@@ -30,6 +31,7 @@ class ScraperProcessor implements ProcessorInterface
      */
     private $basicMetadataParser;
 
+    private $imageAnalyzer;
     /**
      * @param Client $client
      * @param \ApiConsumer\LinkProcessor\MetadataParser\BasicMetadataParser $basicMetadataParser
@@ -44,7 +46,6 @@ class ScraperProcessor implements ProcessorInterface
         $this->client = $client;
         $this->basicMetadataParser = $basicMetadataParser;
         $this->facebookMetadataParser = $facebookMetadataParser;
-        $this->imageAnalyzer = $imageAnalyzer;
     }
 
     function requestItem(PreprocessedLink $preprocessedLink)

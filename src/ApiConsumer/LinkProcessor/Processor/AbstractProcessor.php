@@ -22,12 +22,17 @@ abstract class AbstractProcessor implements ProcessorInterface
         $this->parser = $urlParser;
     }
 
-    function addTags(PreprocessedLink $preprocessedLink, array $data)
+    public function addTags(PreprocessedLink $preprocessedLink, array $data)
     {
     }
 
-    function getSynonymousParameters(PreprocessedLink $preprocessedLink, array $data)
+    public function getSynonymousParameters(PreprocessedLink $preprocessedLink, array $data)
     {
+    }
+
+    public function getImages(array $data)
+    {
+        return array();
     }
 
     protected function getItemId($url)
@@ -43,14 +48,6 @@ abstract class AbstractProcessor implements ProcessorInterface
 
     protected function getItemIdFromParser($url){
         return $url;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function getParser()
-    {
-        return $this->parser;
     }
 
 }

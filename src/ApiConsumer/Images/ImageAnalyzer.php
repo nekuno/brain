@@ -1,9 +1,6 @@
 <?php
-/**
- * @author yawmoght <yawmoght@gmail.com>
- */
 
-namespace ApiConsumer\LinkProcessor;
+namespace ApiConsumer\Images;
 
 
 use GuzzleHttp\Client;
@@ -29,18 +26,13 @@ class ImageAnalyzer
 
         $images = $this->sortImages($images);
 
-        if (!empty($images))
-        {
-            return $images[0];
-        }
-
-        return null;
+        return empty($images) ? null : reset($images);
     }
 
     public function isValidImage($url)
     {
         $imageArray = $this->buildResponseArray($url);
-        return $this->isImageResponseValid($imageArray);
+        return $imageArray->isValid();
     }
 
     public function filterToReprocess(array $links)
@@ -70,21 +62,25 @@ class ImageAnalyzer
 
     private function buildResponseArray($imageUrl)
     {
-        $response = $this->client->head($imageUrl);
-        $image = array(
-            'url' => $imageUrl,
-            'status' => $response->getStatusCode(),
-            'type' => $response->getHeader('Content-Type'),
-            'length' => intval($response->getHeader('Content-Length'))
-        );
-        return $image;
+        $head = $this->client->head($imageUrl);
+        $response = new ImageResponse();
+        $response->setUrl($imageUrl);
+        $response->setStatusCode($head->getStatusCode());
+        $response->setType($head->getHeader('Content-Type'));
+        $response->setLength(intval($head->getHeader('Content-Length')));
+
+        return $response;
     }
 
+    /**
+     * @param ImageResponse[] $images
+     * @return ImageResponse[]
+     */
     private function sortImages(array $images)
     {
         $lengths = array();
         foreach ($images as $key => $image){
-            if (!$this->isImageResponseValid($image)) {
+            if (!$image->isValid()) {
                 unset($images[$key]);
             }
             $lengths[$key] = $image['length'];
@@ -93,15 +89,5 @@ class ImageAnalyzer
         array_multisort($lengths, SORT_DESC, $images);
 
         return $images;
-    }
-
-    private function isImageResponseValid(array $image){
-        if (!(200 <= $image['code'] && $image['code'] < 300 //status code
-            && strpos($image['type'], 'image') !== false  //image type
-            && $image['length']!==0 && 10000 < $image['length'] && 200000 > $image['length'])) { //image size
-            return false;
-        }
-
-        return true;
     }
 }
