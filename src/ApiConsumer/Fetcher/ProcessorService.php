@@ -275,8 +275,6 @@ class ProcessorService implements LoggerAwareInterface
 
         try {
             $link = $this->linkProcessor->process($preprocessedLink);
-
-            $this->sanitizeThumbnail($link);
         } catch (CannotProcessException $e) {
             $link = $this->scrape($preprocessedLink);
         } catch (RequestException $e) {
@@ -373,28 +371,6 @@ class ProcessorService implements LoggerAwareInterface
         $linkArray = $link->toArray();
         $linkArray['tempId'] = $linkArray['url'];
         $this->linkModel->updateLink($linkArray, true);
-    }
-
-    private function sanitizeThumbnail(Link $link)
-    {
-        if (!($url = $link->getThumbnail())) {
-            return;
-        }
-
-        $url = LinkAnalyzer::cleanUrl($url);
-
-        try {
-            $isCorrect = $this->resolver->isCorrectImageResponse($url);
-            if ($isCorrect) {
-
-                $link->setThumbnail($url);
-
-                return;
-            }
-        } catch (\Exception $e) {
-        }
-
-        $link->setThumbnail(null);
     }
 
     private function getUnprocessedLink(PreprocessedLink $preprocessedLink)

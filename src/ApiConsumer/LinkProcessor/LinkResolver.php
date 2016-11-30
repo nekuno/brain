@@ -53,17 +53,6 @@ class LinkResolver
         }
 
         return $resolution;
-
-    }
-
-    public function isCorrectImageResponse($url)
-    {
-        $response = $this->client->getClient()->head($url);
-        if (200 <= $response->getStatusCode() && $response->getStatusCode() < 300 && strpos($response->getHeader('Content-Type'), 'image') !== false) {
-            return true;
-        }
-
-        return false;
     }
 
     protected function verifyCanonical($canonical)

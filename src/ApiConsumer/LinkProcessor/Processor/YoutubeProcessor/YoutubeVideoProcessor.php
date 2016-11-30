@@ -15,12 +15,18 @@ class YoutubeVideoProcessor extends AbstractYoutubeProcessor
         $link = $preprocessedLink->getLink();
         $itemId = $preprocessedLink->getResourceItemId();
 
-        $link->setThumbnail('https://img.youtube.com/vi/' . $itemId . '/mqdefault.jpg');
         $link = Video::buildFromLink($link);
         $link->setEmbedId($itemId);
         $link->setEmbedType('youtube');
 
         $preprocessedLink->setLink($link);
+    }
+
+    public function getImages(PreprocessedLink $preprocessedLink, array $data)
+    {
+        $itemId = $preprocessedLink->getResourceItemId();
+
+        return array('https://img.youtube.com/vi/' . $itemId . '/mqdefault.jpg');
     }
 
     function getItemIdFromParser($url)
@@ -34,10 +40,12 @@ class YoutubeVideoProcessor extends AbstractYoutubeProcessor
 
         if (isset($item['topicDetails']['topicIds'])) {
             foreach ($item['topicDetails']['topicIds'] as $tagName) {
-                $link->addTag(array(
-                    'name' => $tagName,
-                    'additionalLabels' => array('Freebase'),
-                ));
+                $link->addTag(
+                    array(
+                        'name' => $tagName,
+                        'additionalLabels' => array('Freebase'),
+                    )
+                );
             }
         }
     }

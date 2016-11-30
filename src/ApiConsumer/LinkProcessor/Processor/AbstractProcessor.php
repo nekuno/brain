@@ -30,7 +30,7 @@ abstract class AbstractProcessor implements ProcessorInterface
     {
     }
 
-    public function getImages(array $data)
+    public function getImages(PreprocessedLink $preprocessedLink, array $data)
     {
         return array();
     }
