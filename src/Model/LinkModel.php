@@ -238,7 +238,7 @@ class LinkModel
             return $this->addLink($data);
         }
 
-        if (isset($link['processed']) || !$link['processed'] == 1) {
+        if (isset($link['processed']) && !$link['processed'] == 1) {
             $data['tempId'] = isset($data['tempId']) ? $data['tempId'] : $data['url'];
             $newProcessed = isset($data['processed'])? $data['processed'] : true;
             return $this->updateLink($data, $newProcessed);

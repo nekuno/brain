@@ -17,7 +17,6 @@ use Event\ProcessLinkEvent;
 use Event\ProcessLinksEvent;
 use GuzzleHttp\Exception\RequestException;
 use Model\Creator;
-use Model\Link;
 use Model\LinkModel;
 use Model\Neo4j\Neo4jException;
 use Model\User\RateModel;
@@ -178,11 +177,8 @@ class ProcessorService implements LoggerAwareInterface
         try {
             $this->processLink($preprocessedLink);
 
-//                $this->addSynonymous($preprocessedLink);
-            //$this->checkCreator($preprocessedLink);
-
             $link = $preprocessedLink->getLink();
-
+            $this->linkModel->setProcessed($link->getUrl(), false);
             $linkCreated = $this->linkModel->addOrUpdateLink($link->toArray());
 
             return $linkCreated;
