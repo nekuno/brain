@@ -8,7 +8,7 @@ notifications:
     unread:
       subject: 'You have unread messages'
       body:
-        title: 'You have %count% unread message.|You have %count% unread messages.'
+        title: ' You have %count% unread message.|You have %count% unread messages.'
         latest: 'Latest %count% unread message:|Latest %count% unread messages:'
         message: 'Unread message from user %user% at %datetime%:'
         linkAnchor: 'Read more'

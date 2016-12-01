@@ -1,6 +1,7 @@
 {% extends 'email-notifications/base.html.twig' %}
 
 {% block header %}
+    {{ username }},
     {{ 'notifications.messages.unread.body.title'|transchoice(unReadMessagesCount, {'%count%': unReadMessagesCount}) }}
 {% endblock %}
 

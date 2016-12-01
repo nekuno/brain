@@ -8,7 +8,7 @@ notifications:
     unread:
       subject: 'Tienes mensajes sin leer'
       body:
-        title: 'Tienes %count% mensaje sin leer.|Tienes %count% mensajes sin leer.'
+        title: ' Tienes %count% mensaje sin leer.|Tienes %count% mensajes sin leer.'
         latest: 'Último mensaje sin leer:|Últimos %count% mensajes sin leer:'
         message: 'Mensaje sin leer del usuario %user% en %datetime%:'
         linkAnchor: 'Leer más'
