@@ -28,7 +28,7 @@ class LinkProcessor
         $scrapper->addTags($preprocessedLink, $response);
 
         if (!$preprocessedLink->getLink()->getThumbnail()) {
-            $image = $this->getThumbnail($scrapper, $response);
+            $image = $this->getThumbnail($preprocessedLink, $scrapper, $response);
             $preprocessedLink->getLink()->setThumbnail($image);
         }
 
