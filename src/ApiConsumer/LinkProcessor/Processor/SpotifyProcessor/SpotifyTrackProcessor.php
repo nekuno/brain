@@ -46,7 +46,15 @@ class SpotifyTrackProcessor extends AbstractSpotifyProcessor
 
     public function getImages(PreprocessedLink $preprocessedLink, array $data)
     {
-        return isset($track['album']['images'][1]['url']) ? array($track['album']['images'][1]['url']) : array();
+        $images = isset($track['album']['images']) && is_array($track['album']['images']) ? $track['album']['images'] : array();
+
+        $imageUrls = array();
+        foreach ($images as $image){
+            if (isset($image['url'])){
+                $imageUrls[] = $image['url'];
+            }
+        }
+        return $imageUrls;
     }
 
     public function addTags(PreprocessedLink $preprocessedLink, array $data)
