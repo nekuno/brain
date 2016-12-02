@@ -26,15 +26,20 @@ class YoutubeVideoProcessor extends AbstractYoutubeProcessor
     {
         $itemId = $preprocessedLink->getResourceItemId();
 
-        return array('https://img.youtube.com/vi/' . $itemId . '/mqdefault.jpg');
+        $imageUrls = array();
+        foreach ($this->imageResolutions() as $resolution) {
+            $imageUrls[] = 'https://img.youtube.com/vi/' . $itemId . '/' . $resolution;
+        }
+
+        return $imageUrls;
     }
 
-    function getItemIdFromParser($url)
+    public function getItemIdFromParser($url)
     {
         return $this->parser->getVideoId($url);
     }
 
-    function addTags(PreprocessedLink $preprocessedLink, array $item)
+    public function addTags(PreprocessedLink $preprocessedLink, array $item)
     {
         $link = $preprocessedLink->getLink();
 
@@ -55,4 +60,8 @@ class YoutubeVideoProcessor extends AbstractYoutubeProcessor
         return $this->resourceOwner->requestVideo($id);
     }
 
+    private function imageResolutions()
+    {
+        return array('default.jpg', 'mqdefault.jpg', 'hqdefault.jpg', 'sddefault.jpg', 'maxresdefault.jpg');
+    }
 }
