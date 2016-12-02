@@ -27,8 +27,8 @@ privacy:
 categories:
     profile:
         - label:
-            en: About me
-            es: Sobre mí
+            en: Description
+            es: Descripción
           fields: [description, descriptionImportant, descriptionTime, descriptionSkills, descriptionNotice, descriptionFan, descriptionLive, descriptionThinking, descriptionFriday, descriptionMessage]
         - label:
             en: Basic
