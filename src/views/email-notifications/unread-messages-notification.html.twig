@@ -8,7 +8,7 @@
 {% block body %}
     <p>
         {% include 'email-notifications/partials/header-notification.html.twig' %}
-        {{ 'notifications.messages.unread.body.title'|transchoice(unReadMessagesCount, {'%count%': unReadMessagesCount}) }}
+        {{ 'notifications.messages.unread.body.unread'|transchoice(unReadMessagesCount, {'%count%': unReadMessagesCount}) }}
     </p>
     <p>{{ 'notifications.messages.unread.body.latest'|transchoice(messages|length, {'%count%': messages|length}) }}</p>
 
@@ -20,6 +20,6 @@
 
     {% endfor %}
 {% endblock %}
-{% block buton %}
+{% block button %}
     <a href="http://m.nekuno.com/#/conversations">{{ 'notifications.messages.unread.body.linkAnchor'|trans }}</a>
 {% endblock %}
