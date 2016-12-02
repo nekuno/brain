@@ -131,12 +131,9 @@ class ChatMessageNotifications
                 'createdAt' => ':now',
             ));
 
-        $user = $this->userManager->getById($to);
         $qb->setParameter('now', new \DateTime('now'), \Doctrine\DBAL\Types\Type::DATETIME);
         $this->translator->setLocale($locale);
-        $qb->setParameter('text', $this->translator->trans('messages.register', array(
-            'username' => $user->getUsernameCanonical(),
-        )));
+        $qb->setParameter('text', $this->translator->trans('messages.register'));
         $qb->execute();
     }
 
