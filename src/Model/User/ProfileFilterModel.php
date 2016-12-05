@@ -227,7 +227,7 @@ class ProfileFilterModel extends FilterModel
 
     public function getBirthdayRangeFromAgeRange($min = null, $max = null)
     {
-        $return = array();
+        $return = array('max' => null, 'min' => null);
         if ($min){
             $now = new \DateTime();
             $maxBirthday = $now->modify('-'.($min-1).' years')->format('Y-m-d');

@@ -27,6 +27,10 @@ privacy:
 categories:
     profile:
         - label:
+            en: Description
+            es: Descripción
+          fields: [description, descriptionImportant, descriptionTime, descriptionSkills, descriptionNotice, descriptionFan, descriptionLive, descriptionThinking, descriptionFriday, descriptionMessage]
+        - label:
             en: Basic
             es: Básicos
           fields: [birthday, gender, descriptiveGender, location, orientation]
@@ -84,6 +88,78 @@ profile:
             en: 'About me'
             es: 'Sobre mí'
         labelEdit: *descriptionLabel
+    descriptionImportant:
+        type: textarea
+        min: 0
+        max: 20000
+        label: &descriptionImportantLabel
+            en: 'The most important thing I would like people to know about me'
+            es: 'Lo más importante que me gustaría que la gente supiera de mi'
+        labelEdit: *descriptionImportantLabel
+    descriptionTime:
+        type: textarea
+        min: 0
+        max: 20000
+        label: &descriptionTimeLabel
+            en: 'What do I usually do with my time'
+            es: 'Qué suelo hacer con mi tiempo'
+        labelEdit: *descriptionTimeLabel
+    descriptionSkills:
+        type: textarea
+        min: 0
+        max: 20000
+        label: &descriptionSkillsLabel
+            en: 'I''m really good at'
+            es: 'Soy realmente bueno en'
+        labelEdit: *descriptionSkillsLabel
+    descriptionNotice:
+        type: textarea
+        min: 0
+        max: 20000
+        label: &descriptionNoticeLabel
+            en: 'The first things people usually notice about me'
+            es: 'Las primeras cosas que la gente suele notar de mi'
+        labelEdit: *descriptionNoticeLabel
+    descriptionFan:
+        type: textarea
+        min: 0
+        max: 20000
+        label: &descriptionFanLabel
+            en: 'I''m very fan of'
+            es: 'Soy muy fan de'
+        labelEdit: *descriptionFanLabel
+    descriptionLive:
+        type: textarea
+        min: 0
+        max: 20000
+        label: &descriptionLiveLabel
+            en: 'The 6 things I need to live'
+            es: 'Las 6 cosas que necesito para vivir'
+        labelEdit: *descriptionLiveLabel
+    descriptionThinking:
+        type: textarea
+        min: 0
+        max: 20000
+        label: &descriptionThinkingLabel
+            en: 'I spend a lot of time thinking about'
+            es: 'Suelo pasar mucho tiempo pensando sobre'
+        labelEdit: *descriptionThinkingLabel
+    descriptionFriday:
+        type: textarea
+        min: 0
+        max: 20000
+        label: &descriptionFridayLabel
+            en: 'On my typical Friday I usually do'
+            es: 'En mi típico viernes suelo'
+        labelEdit: *descriptionFridayLabel
+    descriptionMessage:
+        type: textarea
+        min: 0
+        max: 20000
+        label: &descriptionMessageLabel
+            en: 'You should send me a message if'
+            es: 'Deberías enviarme un mensaje si'
+        labelEdit: *descriptionMessageLabel
     birthday:
         type: birthday
         label: &birthdayLabel
@@ -551,13 +627,6 @@ filters:
                 en: 'Minimum similarity (%)'
                 es: 'Similaridad mínima (%)'
     profile:
-#        description:
-#            type: textarea
-#            min: 0
-#            max: 20000
-#            label:
-#                en: 'About me'
-#                es: 'Sobre mí'
         birthday:
             type: birthday_range
             label:

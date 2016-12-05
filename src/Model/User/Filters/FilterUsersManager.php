@@ -247,11 +247,12 @@ class FilterUsersManager
 
                     if (isset($profileFilters[$fieldName])) {
                         $value = $profileFilters[$fieldName];
-                        //We do not support only one of these
-
-                        $qb->set('filter.age_min = ' . $value['min']);
-                        $qb->set('filter.age_max = ' . $value['max']);
-
+                        if (isset($value['min']) && null !== $value['min']){
+                            $qb->set('filter.age_min = ' . $value['min']);
+                        }
+                        if (isset($value['max']) && null !== $value['max']){
+                            $qb->set('filter.age_max = ' . $value['max']);
+                        }
                     }
                     $qb->with('filter');
                     break;
@@ -263,16 +264,14 @@ class FilterUsersManager
 
                     if (isset($profileFilters[$fieldName])) {
                         $value = $profileFilters[$fieldName];
-                        //We do not support only one of these
-                        $min = isset($value['min']) ? (integer)$value['min'] : $metadata[$fieldName]['min'];
-                        $max = isset($value['max']) ? (integer)$value['max'] : $metadata[$fieldName]['max'];
+                        $min = isset($value['min']) ? (integer)$value['min'] : null;
+                        $max = isset($value['max']) ? (integer)$value['max'] : null;
                         if ($min) {
                             $qb->set('filter.' . $fieldNameMin . ' = ' . $min);
                         }
                         if ($max) {
                             $qb->set('filter.' . $fieldNameMax . ' = ' . $max);
                         }
-
                     }
                     $qb->with('filter');
                     break;
@@ -511,8 +510,8 @@ class FilterUsersManager
         if ($filterNode->getProperty('age_min') || $filterNode->getProperty('age_max')) {
             $profileFilters += array(
                 'birthday' => array(
-                    'min' => $filterNode->getProperty('age_min') ?: 14,
-                    'max' => $filterNode->getProperty('age_max') ?: 99
+                    'min' => $filterNode->getProperty('age_min'),
+                    'max' => $filterNode->getProperty('age_max')
                 ),
                 'description' => $filterNode->getProperty('description')
             );
