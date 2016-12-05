@@ -5,6 +5,7 @@ namespace Controller;
 
 use ApiConsumer\Images\ImageAnalyzer;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
+use Model\Link;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -26,16 +27,16 @@ class LinkController
         /** @var ImageAnalyzer $imageAnalyzer */
         $imageAnalyzer = $app['api_consumer.link_processor.image_analyzer'];
 
-        $links = $linkModel->findLinksByUrl($urls);
+        $links = $linkModel->findLinksByUrls($urls);
         $linksToReprocess = $imageAnalyzer->filterToReprocess($links);
 
         $preprocessedLinks = array();
         foreach ($linksToReprocess as $link){
             $preprocessedLink = new PreprocessedLink($link['url']);
-            $preprocessedLink->setLink($link);
+            $preprocessedLink->setLink(Link::buildFromArray($link));
             $preprocessedLinks[] = $preprocessedLink;
         }
-        $reprocessedLinks = $processorService->reprocess($linksToReprocess);
+        $reprocessedLinks = $processorService->reprocess($preprocessedLinks);
 
         return $app->json($reprocessedLinks);
     }

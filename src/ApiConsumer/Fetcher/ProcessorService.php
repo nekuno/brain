@@ -147,7 +147,7 @@ class ProcessorService implements LoggerAwareInterface
     {
         $links = array();
         foreach ($preprocessedLinks as $key => $preprocessedLink) {
-            $this->logger->notice(sprintf('Reprocessing link %s', $preprocessedLink->getFetched()));
+            $this->logNotice(sprintf('Reprocessing link %s', $preprocessedLink->getFetched()));
             $link = $this->fullReprocessSingle($preprocessedLink);
 
             if ($link) {
@@ -184,7 +184,7 @@ class ProcessorService implements LoggerAwareInterface
             return $linkCreated;
 
         } catch (Neo4jException $e) {
-            $this->logger->error(sprintf('Query: %s' . "\n" . 'Data: %s', $e->getQuery(), print_r($e->getData(), true)));
+            $this->logError(sprintf('Query: %s' . "\n" . 'Data: %s', $e->getQuery(), print_r($e->getData(), true)));
 
             return null;
         } catch (UrlChangedException $e) {
@@ -198,7 +198,7 @@ class ProcessorService implements LoggerAwareInterface
             return $this->fullReprocessSingle($preprocessedLink);
 
         } catch (\Exception $e) {
-            $this->logger->error(sprintf('Fetcher: Unexpected error processing link "%s" from resource "%s". Reason: %s', $preprocessedLink->getFetched(), $preprocessedLink->getSource(), $e->getMessage()));
+            $this->logError(sprintf('Fetcher: Unexpected error processing link "%s" from resource "%s". Reason: %s', $preprocessedLink->getFetched(), $preprocessedLink->getSource(), $e->getMessage()));
 
             return null;
         }
@@ -335,13 +335,11 @@ class ProcessorService implements LoggerAwareInterface
             $linkCreated = $this->linkModel->addOrUpdateLink($link->toArray());
             $this->rateModel->userRateLink($userId, $linkCreated['id'], $preprocessedLink->getSource(), null, RateModel::LIKE, false);
         } catch (Neo4jException $e) {
-            //dispatch log
-            $this->logger->error(sprintf('Query: %s' . "\n" . 'Data: %s', $e->getQuery(), print_r($e->getData(), true)));
+            $this->logError(sprintf('Query: %s' . "\n" . 'Data: %s', $e->getQuery(), print_r($e->getData(), true)));
 
             return array();
         } catch (\Exception $e) {
-            //dispatch log
-            $this->logger->error(sprintf('Fetcher: Unexpected error processing link "%s" from resource "%s". Reason: %s', $preprocessedLink->getFetched(), $preprocessedLink->getSource(), $e->getMessage()));
+            $this->logError(sprintf('Fetcher: Unexpected error processing link "%s" from resource "%s". Reason: %s', $preprocessedLink->getFetched(), $preprocessedLink->getSource(), $e->getMessage()));
 
             return array();
         }
@@ -375,6 +373,30 @@ class ProcessorService implements LoggerAwareInterface
         $link->setProcessed(false);
 
         return $link;
+    }
+
+    private function logNotice($message)
+    {
+        if ($this->logger instanceof LoggerInterface) {
+            $this->logger->notice($message);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private function logError($message)
+    {
+        //dispatch log
+
+        if ($this->logger instanceof LoggerInterface) {
+            $this->logger->error($message);
+
+            return true;
+        }
+
+        return false;
     }
 
 }

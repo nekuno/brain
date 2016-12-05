@@ -68,11 +68,14 @@ class LinkModel
      * @param array $urls
      * @return array
      */
-    public function findLinksByUrl(array $urls)
+    public function findLinksByUrls(array $urls)
     {
         $links = array();
         foreach ($urls as $url){
-            $links[] = $this->findLinkByUrl($url);
+            $link = $this->findLinkByUrl($url);
+            if ($link){
+                $links[] = $link;
+            }
         }
         return $links;
     }
@@ -280,6 +283,7 @@ class LinkModel
                 'l.description = { description }',
                 'l.language = { language }',
                 'l.processed = { processed }',
+                'l.imageProcessed = timestamp()',
                 'l.created =  timestamp()' //TODO: If there is created, use this instead (coalesce)
             );
 
@@ -356,6 +360,7 @@ class LinkModel
                 'l.description = { description }',
                 'l.language = { language }',
                 'l.processed = { processed }',
+                'l.imageProcessed = timestamp()',
                 'l.updated = timestamp()'
             );
 
