@@ -13,6 +13,7 @@ class Link implements \JsonSerializable
     protected $tags = array();
     protected $created;
     protected $processed = true;
+    protected $imageProcessed;
     protected $language;
     /** @var Link[] */
     protected $synonymous = array();
@@ -41,6 +42,9 @@ class Link implements \JsonSerializable
         }
         if (isset($array['processed'])){
             $link->setProcessed((boolean)$array['processed']);
+        }
+        if (isset($array['imageProcessed'])){
+            $link->setImageProcessed($array['imageProcessed']);
         }
         if (isset($array['timestamp'])){
             $link->setCreated($array['timestamp']);
@@ -189,6 +193,22 @@ class Link implements \JsonSerializable
     public function setProcessed($processed)
     {
         $this->processed = $processed;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getImageProcessed()
+    {
+        return $this->imageProcessed;
+    }
+
+    /**
+     * @param mixed $imageProcessed
+     */
+    public function setImageProcessed($imageProcessed)
+    {
+        $this->imageProcessed = $imageProcessed;
     }
 
     /**

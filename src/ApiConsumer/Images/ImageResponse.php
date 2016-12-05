@@ -9,11 +9,11 @@ class ImageResponse
     protected $type;
     protected $length;
 
-    const MIN_SIZE = 10000;
-    const MAX_SIZE = 200000;
+    const MIN_SIZE = 1000;
+    const MAX_SIZE = 1000000;
 
-    const MIN_RECOMMENDED_SIZE = 1000;
-    const MAX_RECOMMENDED_SIZE = 1000000;
+    const MIN_RECOMMENDED_SIZE = 10000;
+    const MAX_RECOMMENDED_SIZE = 200000;
 
     /**
      * @return mixed

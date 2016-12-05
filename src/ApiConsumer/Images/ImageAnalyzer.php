@@ -38,10 +38,10 @@ class ImageAnalyzer
      */
     private function getRecommendedImage(array $imageResponses)
     {
-        $recommended = reset($imageResponses);
+        $recommended = null;
 
         foreach ($imageResponses as $imageResponse) {
-            if ($imageResponse->isRecommended() && $imageResponse->getLength() > $recommended->getLength()) {
+            if ($imageResponse->isRecommended() && (null == $recommended || ($imageResponse->getLength() < $recommended->getLength()))) {
                 $recommended = $imageResponse;
             }
         }
@@ -91,25 +91,29 @@ class ImageAnalyzer
             }
         }
 
-        array_multisort($lengths, SORT_DESC, $imageResponses);
+        array_multisort($lengths, SORT_ASC, $imageResponses);
 
         return $imageResponses;
     }
 
     public function filterToReprocess(array $links)
     {
+        $toReprocess = array();
         foreach ($links as $key => $link) {
-            if (!$this->needsReprocessing($link)) {
-                unset($links[$key]);
+            if ($this->needsReprocessing($link)) {
+                $toReprocess[] = $link;
             }
         }
 
-        return $links;
+        return $toReprocess;
     }
 
     private function needsReprocessing(array $link)
     {
-        return $this->isImageOld($link) || !$this->isValidThumbnail($link);
+        $isOld = $this->isImageOld($link);
+        $isInvalid = !$this->isValidThumbnail($link);
+
+        return $isOld || $isInvalid;
     }
 
     private function isImageOld(array $link)
@@ -127,7 +131,7 @@ class ImageAnalyzer
     {
         $thumbnailUrl = $this->getThumbnailFromLink($link);
 
-        return !$this->isValidImage($thumbnailUrl);
+        return $this->isValidImage($thumbnailUrl);
     }
 
     //this logic could go in Link->getImageUrl()
