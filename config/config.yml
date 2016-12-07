@@ -16,14 +16,14 @@ dbs.options:
         dbname: %dbs.mysql_social.dbname%
         user: %dbs.mysql_social.user%
         password: %dbs.mysql_social.pass%
-        charset: utf8
+        charset: utf8mb4
     mysql_brain:
         driver: %dbs.mysql_brain.driver%
         host: %dbs.mysql_brain.host%
         dbname: %dbs.mysql_brain.dbname%
         user: %dbs.mysql_brain.user%
         password: %dbs.mysql_brain.pass%
-        charset: utf8
+        charset: utf8mb4
 
 orm.proxies_dir: "%app_root_dir%/../cache/DoctrineProxy"
 orm.ems.default: mysql_brain
