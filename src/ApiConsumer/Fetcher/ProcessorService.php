@@ -361,10 +361,12 @@ class ProcessorService implements LoggerAwareInterface
 
     private function overwrite(PreprocessedLink $preprocessedLink)
     {
-        $link = $preprocessedLink->getLink();
+        $link = $this->getUnprocessedLink($preprocessedLink);
+        $this->linkModel->setProcessed($link->getUrl(), false);
+
         $linkArray = $link->toArray();
         $linkArray['tempId'] = $linkArray['url'];
-        $this->linkModel->updateLink($linkArray, true);
+        $this->linkModel->updateLink($linkArray);
     }
 
     private function getUnprocessedLink(PreprocessedLink $preprocessedLink)
