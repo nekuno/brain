@@ -3,6 +3,7 @@
 namespace ApiConsumer\Images;
 
 use GuzzleHttp\Client;
+use GuzzleHttp\Message\Response;
 use GuzzleHttp\Message\ResponseInterface;
 
 class ImageAnalyzer
@@ -143,7 +144,11 @@ class ImageAnalyzer
 
     private function buildResponse($imageUrl)
     {
-        $head = $this->client->head($imageUrl);
+        try {
+            $head = $this->client->head($imageUrl);
+        } catch (\Exception $e) {
+            $head = new Response(404);
+        }
 
         $length = $this->getLength($head, $imageUrl);
 
