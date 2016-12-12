@@ -38,6 +38,10 @@ class LinkController
         }
         $reprocessedLinks = $processorService->reprocess($preprocessedLinks);
 
+        foreach ($reprocessedLinks as &$reprocessedLink) {
+            $reprocessedLink['contentId'] = $reprocessedLink['id'];
+            $reprocessedLink['types'] = $linkModel->getTypes($reprocessedLink['url']);
+        }
         return $app->json($reprocessedLinks);
     }
 }

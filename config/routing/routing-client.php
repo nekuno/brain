@@ -109,7 +109,7 @@ $app->post('/questions/{id}/report', 'questionnaire.questions.controller:reportA
 
 /** Content routes */
 $app->post('/add/links', 'fetch.controller:addLinkAction');
-$app->patch('links/images', 'links.controller:checkImagesAction');
+$app->put('links/images', 'links.controller:checkImagesAction');
 
 /** LookUp routes */
 $app->get('/lookUp', 'lookUp.controller:getAction');
