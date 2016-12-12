@@ -2,7 +2,6 @@
 
 namespace Controller;
 
-
 use ApiConsumer\Images\ImageAnalyzer;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
 use Model\Link;
@@ -31,7 +30,7 @@ class LinkController
         $linksToReprocess = $imageAnalyzer->filterToReprocess($links);
 
         $preprocessedLinks = array();
-        foreach ($linksToReprocess as $link){
+        foreach ($linksToReprocess as $link) {
             $preprocessedLink = new PreprocessedLink($link['url']);
             $preprocessedLink->setLink(Link::buildFromArray($link));
             $preprocessedLinks[] = $preprocessedLink;
@@ -41,7 +40,9 @@ class LinkController
         foreach ($reprocessedLinks as &$reprocessedLink) {
             $reprocessedLink['contentId'] = $reprocessedLink['id'];
             $reprocessedLink['types'] = $linkModel->getTypes($reprocessedLink['url']);
+            $reprocessedLink['synonymous'] = array();
         }
+
         return $app->json($reprocessedLinks);
     }
 }

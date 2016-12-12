@@ -177,7 +177,7 @@ class ProcessorService implements LoggerAwareInterface
         try {
             $this->processLink($preprocessedLink);
 
-            $link = $preprocessedLink->getLink();
+            $link = $this->readyToSave($preprocessedLink);
             $this->linkModel->setProcessed($link->getUrl(), false);
             $linkCreated = $this->linkModel->addOrUpdateLink($link->toArray());
 
