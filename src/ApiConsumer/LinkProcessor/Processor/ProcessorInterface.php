@@ -23,4 +23,11 @@ interface ProcessorInterface
 
     function getSynonymousParameters(PreprocessedLink $preprocessedLink, array $data);
 
+    /**
+     * @param PreprocessedLink $preprocessedLink
+     * @param array $data
+     * @return array
+     */
+    function getImages(PreprocessedLink $preprocessedLink, array $data);
+
 } 

@@ -6,7 +6,7 @@ use ApiConsumer\LinkProcessor\PreprocessedLink;
 
 class SpotifyArtistProcessor extends AbstractSpotifyProcessor
 {
-    function requestItem(PreprocessedLink $preprocessedLink)
+    public function requestItem(PreprocessedLink $preprocessedLink)
     {
         $id = $this->getItemId($preprocessedLink->getCanonical());
 
@@ -15,7 +15,7 @@ class SpotifyArtistProcessor extends AbstractSpotifyProcessor
         return $artist;
     }
 
-    function hydrateLink(PreprocessedLink $preprocessedLink, array $data)
+    public function hydrateLink(PreprocessedLink $preprocessedLink, array $data)
     {
         $link = $preprocessedLink->getLink();
 
@@ -23,7 +23,7 @@ class SpotifyArtistProcessor extends AbstractSpotifyProcessor
         //TODO: Check thumbnail & description from scrapper
     }
 
-    function addTags(PreprocessedLink $preprocessedLink, array $data)
+    public function addTags(PreprocessedLink $preprocessedLink, array $data)
     {
         parent::addTags($preprocessedLink, $data);
 

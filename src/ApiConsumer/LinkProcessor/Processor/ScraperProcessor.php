@@ -3,6 +3,7 @@
 namespace ApiConsumer\LinkProcessor\Processor;
 
 use ApiConsumer\Exception\CannotProcessException;
+use ApiConsumer\Images\ImageAnalyzer;
 use ApiConsumer\LinkProcessor\MetadataParser\BasicMetadataParser;
 use ApiConsumer\LinkProcessor\MetadataParser\FacebookMetadataParser;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
@@ -29,7 +30,6 @@ class ScraperProcessor implements ProcessorInterface
      * @var BasicMetadataParser
      */
     private $basicMetadataParser;
-
     /**
      * @param Client $client
      * @param \ApiConsumer\LinkProcessor\MetadataParser\BasicMetadataParser $basicMetadataParser
@@ -45,7 +45,7 @@ class ScraperProcessor implements ProcessorInterface
         $this->facebookMetadataParser = $facebookMetadataParser;
     }
 
-    function requestItem(PreprocessedLink $preprocessedLink)
+    public function requestItem(PreprocessedLink $preprocessedLink)
     {
         $link = $preprocessedLink->getLink();
 
@@ -72,7 +72,7 @@ class ScraperProcessor implements ProcessorInterface
         return array('html' => $crawler->html());
     }
 
-    function hydrateLink(PreprocessedLink $preprocessedLink, array $data)
+    public function hydrateLink(PreprocessedLink $preprocessedLink, array $data)
     {
         $link = $preprocessedLink->getLink();
 
@@ -84,6 +84,15 @@ class ScraperProcessor implements ProcessorInterface
 
         $fbMetadata = $this->facebookMetadataParser->extractMetadata($crawler);
         $this->overrideFieldsData($link, $fbMetadata);
+    }
+
+    function getImages(PreprocessedLink $preprocessedLink, array $data)
+    {
+        $crawler = new Crawler();
+        $crawler->addHtmlContent($data['html']);
+
+        $basicMetadata = $this->basicMetadataParser->extractMetadata($crawler);
+        return $basicMetadata['images'];
     }
 
     private function overrideFieldsData(Link $link, array $scrapedData)
@@ -98,7 +107,7 @@ class ScraperProcessor implements ProcessorInterface
         }
     }
 
-    function addTags(PreprocessedLink $preprocessedLink, array $data)
+    public function addTags(PreprocessedLink $preprocessedLink, array $data)
     {
         $link = $preprocessedLink->getLink();
         $crawler = new Crawler();
@@ -121,7 +130,7 @@ class ScraperProcessor implements ProcessorInterface
         }
     }
 
-    function getSynonymousParameters(PreprocessedLink $preprocessedLink, array $data)
+    public function getSynonymousParameters(PreprocessedLink $preprocessedLink, array $data)
     {
         return new SynonymousParameters();
     }

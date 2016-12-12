@@ -10,8 +10,7 @@ use Model\Audio;
 
 class SpotifyTrackProcessor extends AbstractSpotifyProcessor
 {
-
-    function requestItem(PreprocessedLink $preprocessedLink)
+    public function requestItem(PreprocessedLink $preprocessedLink)
     {
         $id = $this->getItemId($preprocessedLink->getCanonical());
         $preprocessedLink->setResourceItemId($id);
@@ -27,7 +26,7 @@ class SpotifyTrackProcessor extends AbstractSpotifyProcessor
         return array('track' => $track, 'album' => $album);
     }
 
-    function hydrateLink(PreprocessedLink $preprocessedLink, array $data)
+    public function hydrateLink(PreprocessedLink $preprocessedLink, array $data)
     {
         $link = $preprocessedLink->getLink();
 
@@ -37,7 +36,6 @@ class SpotifyTrackProcessor extends AbstractSpotifyProcessor
 
         $link->setTitle($track['name']);
         $link->setDescription($track['album']['name'] . ' : ' . implode(', ', $artistList));
-        $link->setThumbnail(isset($track['album']['images'][1]['url']) ? $track['album']['images'][1]['url'] : null);
 
         $link = Audio::buildFromLink($link);
         $link->setEmbedType('spotify');
@@ -46,7 +44,20 @@ class SpotifyTrackProcessor extends AbstractSpotifyProcessor
         $preprocessedLink->setLink($link);
     }
 
-    function addTags(PreprocessedLink $preprocessedLink, array $data)
+    public function getImages(PreprocessedLink $preprocessedLink, array $data)
+    {
+        $images = isset($track['album']['images']) && is_array($track['album']['images']) ? $track['album']['images'] : array();
+
+        $imageUrls = array();
+        foreach ($images as $image){
+            if (isset($image['url'])){
+                $imageUrls[] = $image['url'];
+            }
+        }
+        return $imageUrls;
+    }
+
+    public function addTags(PreprocessedLink $preprocessedLink, array $data)
     {
         $link = $preprocessedLink->getLink();
 
@@ -66,7 +77,7 @@ class SpotifyTrackProcessor extends AbstractSpotifyProcessor
         $link->addTag($this->buildSongTag($track));
     }
 
-    function getSynonymousParameters(PreprocessedLink $preprocessedLink, array $data)
+    public function getSynonymousParameters(PreprocessedLink $preprocessedLink, array $data)
     {
         $track = $data['track'];
         $artistList = $this->buildArtistList($track);

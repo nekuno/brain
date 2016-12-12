@@ -17,7 +17,6 @@ use Event\ProcessLinkEvent;
 use Event\ProcessLinksEvent;
 use GuzzleHttp\Exception\RequestException;
 use Model\Creator;
-use Model\Link;
 use Model\LinkModel;
 use Model\Neo4j\Neo4jException;
 use Model\User\RateModel;
@@ -148,7 +147,7 @@ class ProcessorService implements LoggerAwareInterface
     {
         $links = array();
         foreach ($preprocessedLinks as $key => $preprocessedLink) {
-            $this->logger->notice(sprintf('Reprocessing link %s', $preprocessedLink->getFetched()));
+            $this->logNotice(sprintf('Reprocessing link %s', $preprocessedLink->getFetched()));
             $link = $this->fullReprocessSingle($preprocessedLink);
 
             if ($link) {
@@ -178,17 +177,14 @@ class ProcessorService implements LoggerAwareInterface
         try {
             $this->processLink($preprocessedLink);
 
-//                $this->addSynonymous($preprocessedLink);
-            //$this->checkCreator($preprocessedLink);
-
-            $link = $preprocessedLink->getLink();
-
+            $link = $this->readyToSave($preprocessedLink);
+            $this->linkModel->setProcessed($link->getUrl(), false);
             $linkCreated = $this->linkModel->addOrUpdateLink($link->toArray());
 
             return $linkCreated;
 
         } catch (Neo4jException $e) {
-            $this->logger->error(sprintf('Query: %s' . "\n" . 'Data: %s', $e->getQuery(), print_r($e->getData(), true)));
+            $this->logError(sprintf('Query: %s' . "\n" . 'Data: %s', $e->getQuery(), print_r($e->getData(), true)));
 
             return null;
         } catch (UrlChangedException $e) {
@@ -202,7 +198,7 @@ class ProcessorService implements LoggerAwareInterface
             return $this->fullReprocessSingle($preprocessedLink);
 
         } catch (\Exception $e) {
-            $this->logger->error(sprintf('Fetcher: Unexpected error processing link "%s" from resource "%s". Reason: %s', $preprocessedLink->getFetched(), $preprocessedLink->getSource(), $e->getMessage()));
+            $this->logError(sprintf('Fetcher: Unexpected error processing link "%s" from resource "%s". Reason: %s', $preprocessedLink->getFetched(), $preprocessedLink->getSource(), $e->getMessage()));
 
             return null;
         }
@@ -275,8 +271,6 @@ class ProcessorService implements LoggerAwareInterface
 
         try {
             $link = $this->linkProcessor->process($preprocessedLink);
-
-            $this->sanitizeThumbnail($link);
         } catch (CannotProcessException $e) {
             $link = $this->scrape($preprocessedLink);
         } catch (RequestException $e) {
@@ -341,13 +335,11 @@ class ProcessorService implements LoggerAwareInterface
             $linkCreated = $this->linkModel->addOrUpdateLink($link->toArray());
             $this->rateModel->userRateLink($userId, $linkCreated['id'], $preprocessedLink->getSource(), null, RateModel::LIKE, false);
         } catch (Neo4jException $e) {
-            //dispatch log
-            $this->logger->error(sprintf('Query: %s' . "\n" . 'Data: %s', $e->getQuery(), print_r($e->getData(), true)));
+            $this->logError(sprintf('Query: %s' . "\n" . 'Data: %s', $e->getQuery(), print_r($e->getData(), true)));
 
             return array();
         } catch (\Exception $e) {
-            //dispatch log
-            $this->logger->error(sprintf('Fetcher: Unexpected error processing link "%s" from resource "%s". Reason: %s', $preprocessedLink->getFetched(), $preprocessedLink->getSource(), $e->getMessage()));
+            $this->logError(sprintf('Fetcher: Unexpected error processing link "%s" from resource "%s". Reason: %s', $preprocessedLink->getFetched(), $preprocessedLink->getSource(), $e->getMessage()));
 
             return array();
         }
@@ -369,32 +361,12 @@ class ProcessorService implements LoggerAwareInterface
 
     private function overwrite(PreprocessedLink $preprocessedLink)
     {
-        $link = $preprocessedLink->getLink();
+        $link = $this->getUnprocessedLink($preprocessedLink);
+        $this->linkModel->setProcessed($link->getUrl(), false);
+
         $linkArray = $link->toArray();
         $linkArray['tempId'] = $linkArray['url'];
-        $this->linkModel->updateLink($linkArray, true);
-    }
-
-    private function sanitizeThumbnail(Link $link)
-    {
-        if (!($url = $link->getThumbnail())) {
-            return;
-        }
-
-        $url = LinkAnalyzer::cleanUrl($url);
-
-        try {
-            $isCorrect = $this->resolver->isCorrectImageResponse($url);
-            if ($isCorrect) {
-
-                $link->setThumbnail($url);
-
-                return;
-            }
-        } catch (\Exception $e) {
-        }
-
-        $link->setThumbnail(null);
+        return $this->linkModel->updateLink($linkArray);
     }
 
     private function getUnprocessedLink(PreprocessedLink $preprocessedLink)
@@ -403,6 +375,30 @@ class ProcessorService implements LoggerAwareInterface
         $link->setProcessed(false);
 
         return $link;
+    }
+
+    private function logNotice($message)
+    {
+        if ($this->logger instanceof LoggerInterface) {
+            $this->logger->notice($message);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private function logError($message)
+    {
+        //dispatch log
+
+        if ($this->logger instanceof LoggerInterface) {
+            $this->logger->error($message);
+
+            return true;
+        }
+
+        return false;
     }
 
 }

@@ -7,8 +7,7 @@ use Model\Audio;
 
 class SpotifyAlbumProcessor extends AbstractSpotifyProcessor
 {
-
-    function requestItem(PreprocessedLink $preprocessedLink)
+    public function requestItem(PreprocessedLink $preprocessedLink)
     {
         $id = $this->getItemId($preprocessedLink->getCanonical());
 
@@ -17,7 +16,7 @@ class SpotifyAlbumProcessor extends AbstractSpotifyProcessor
         return $album;
     }
 
-    function hydrateLink(PreprocessedLink $preprocessedLink, array $data)
+    public function hydrateLink(PreprocessedLink $preprocessedLink, array $data)
     {
         $link = $preprocessedLink->getLink();
 
@@ -33,7 +32,7 @@ class SpotifyAlbumProcessor extends AbstractSpotifyProcessor
         $preprocessedLink->setLink($link);
     }
 
-    function addTags(PreprocessedLink $preprocessedLink, array $data)
+    public function addTags(PreprocessedLink $preprocessedLink, array $data)
     {
         parent::addTags($preprocessedLink, $data);
 
