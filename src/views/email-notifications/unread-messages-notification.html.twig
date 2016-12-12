@@ -1,13 +1,14 @@
 {% extends 'email-notifications/base.html.twig' %}
 
 {% block header %}
+    {{ username }},
     {{ 'notifications.messages.unread.body.title'|transchoice(unReadMessagesCount, {'%count%': unReadMessagesCount}) }}
 {% endblock %}
 
 {% block body %}
     <p>
         {% include 'email-notifications/partials/header-notification.html.twig' %}
-        {{ 'notifications.messages.unread.body.title'|transchoice(unReadMessagesCount, {'%count%': unReadMessagesCount}) }}
+        {{ 'notifications.messages.unread.body.unread'|transchoice(unReadMessagesCount, {'%count%': unReadMessagesCount}) }}
     </p>
     <p>{{ 'notifications.messages.unread.body.latest'|transchoice(messages|length, {'%count%': messages|length}) }}</p>
 
@@ -18,7 +19,7 @@
         <p><strong>{{ message.text }}</strong></p>
 
     {% endfor %}
-
-    <table border="0" align="center" cellpadding="0" cellspacing="0" style="border-radius:50px; border: 2px solid #6342b1;"></table>
-    <p><a href="http://m.nekuno.com/#/conversations">{{ 'notifications.messages.unread.body.linkAnchor'|trans }}</a></p>
+{% endblock %}
+{% block button %}
+    <a href="http://m.nekuno.com/#/conversations">{{ 'notifications.messages.unread.body.linkAnchor'|trans }}</a>
 {% endblock %}
