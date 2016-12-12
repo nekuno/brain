@@ -178,5 +178,4 @@ class FetcherService implements LoggerAwareInterface
 
         return $fetchers;
     }
-
 }

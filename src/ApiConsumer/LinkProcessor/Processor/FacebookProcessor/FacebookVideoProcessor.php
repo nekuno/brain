@@ -27,12 +27,16 @@ class FacebookVideoProcessor extends AbstractFacebookProcessor
     {
         $video = new Video();
         $video->setDescription(isset($data['description']) ? $data['description'] : null);
-        $video->setThumbnail(isset($data['picture']) ? $data['picture'] : null);
         $video->setTitle($this->buildTitleFromDescription($data));
         $video->setEmbedType(TokensModel::FACEBOOK);
         $video->setEmbedId($preprocessedLink->getResourceItemId());
 
         $preprocessedLink->setLink($video);
+    }
+
+    public function getImages(PreprocessedLink $preprocessedLink, array $data)
+    {
+        return isset($data['picture']) ? array($data['picture']) : array();
     }
 
     protected function getItemIdFromParser($url)

@@ -47,6 +47,12 @@ $app['users.data.controller'] = $app->share(
     }
 );
 
+$app['links.controller'] = $app->share(
+    function () {
+        return new \Controller\LinkController;
+    }
+);
+
 $app['questionnaire.questions.controller'] = $app->share(
     function () {
 

@@ -15,7 +15,6 @@ class YoutubeVideoProcessor extends AbstractYoutubeProcessor
         $link = $preprocessedLink->getLink();
         $itemId = $preprocessedLink->getResourceItemId();
 
-        $link->setThumbnail('https://img.youtube.com/vi/' . $itemId . '/mqdefault.jpg');
         $link = Video::buildFromLink($link);
         $link->setEmbedId($itemId);
         $link->setEmbedType('youtube');
@@ -23,21 +22,35 @@ class YoutubeVideoProcessor extends AbstractYoutubeProcessor
         $preprocessedLink->setLink($link);
     }
 
-    function getItemIdFromParser($url)
+    public function getImages(PreprocessedLink $preprocessedLink, array $data)
+    {
+        $itemId = $preprocessedLink->getResourceItemId();
+
+        $imageUrls = array();
+        foreach ($this->imageResolutions() as $resolution) {
+            $imageUrls[] = 'https://img.youtube.com/vi/' . $itemId . '/' . $resolution;
+        }
+
+        return $imageUrls;
+    }
+
+    public function getItemIdFromParser($url)
     {
         return $this->parser->getVideoId($url);
     }
 
-    function addTags(PreprocessedLink $preprocessedLink, array $item)
+    public function addTags(PreprocessedLink $preprocessedLink, array $item)
     {
         $link = $preprocessedLink->getLink();
 
         if (isset($item['topicDetails']['topicIds'])) {
             foreach ($item['topicDetails']['topicIds'] as $tagName) {
-                $link->addTag(array(
-                    'name' => $tagName,
-                    'additionalLabels' => array('Freebase'),
-                ));
+                $link->addTag(
+                    array(
+                        'name' => $tagName,
+                        'additionalLabels' => array('Freebase'),
+                    )
+                );
             }
         }
     }
@@ -47,4 +60,8 @@ class YoutubeVideoProcessor extends AbstractYoutubeProcessor
         return $this->resourceOwner->requestVideo($id);
     }
 
+    private function imageResolutions()
+    {
+        return array('default.jpg', 'mqdefault.jpg', 'hqdefault.jpg', 'sddefault.jpg', 'maxresdefault.jpg');
+    }
 }

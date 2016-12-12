@@ -27,6 +27,11 @@ abstract class AbstractTwitterProfileProcessor extends AbstractProcessor
         $preprocessedLink->setLink(Creator::buildFromArray($this->resourceOwner->buildProfileFromLookup($data)));
     }
 
+    public function getImages(PreprocessedLink $preprocessedLink, array $data)
+    {
+        return isset($data['profile_image_url']) ? array(str_replace('_normal', '', $data['profile_image_url'])) : array();
+    }
+
     protected function getItemIdFromParser($url)
     {
         $bla = $this->parser->getProfileId($url);

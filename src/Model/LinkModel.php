@@ -65,6 +65,24 @@ class LinkModel
     }
 
     /**
+     * @param array $urls
+     * @return array
+     */
+    public function findLinksByUrls(array $urls)
+    {
+        $links = array();
+        foreach ($urls as $url) {
+            $link = $this->findLinkByUrl($url);
+            if ($link) {
+                $links[] = $link;
+            }
+        }
+
+        return $links;
+    }
+
+    //TODO: Check if findLinkById not used and delete
+    /**
      * @param integer $linkId
      * @return array|boolean the link or false
      * @throws \Exception on failure
@@ -154,7 +172,7 @@ class LinkModel
         $qb->setParameters(
             array(
                 'limit' => (integer)$limit,
-                'offset' => (integer) $offset,
+                'offset' => (integer)$offset,
             )
         );
 
@@ -181,7 +199,7 @@ class LinkModel
 
         $qb->match('(user:User {qnoow_id: { userId }})');
         $qb->setParameter('userId', (integer)$filters['id']);
-        if (isset($filters['tag'])){
+        if (isset($filters['tag'])) {
             $qb->match('(l:Link{processed: 1})-[:TAGGED]->(filterTag:Tag)')
                 ->where('filterTag.name IN { filterTags } ');
             $qb->setParameter('filterTags', $filters['tag']);
@@ -202,6 +220,7 @@ class LinkModel
 
         /* @var $row Row */
         $row = $result->current();
+
         return $row->offsetGet('c');
 
     }
@@ -224,9 +243,10 @@ class LinkModel
             return $this->addLink($data);
         }
 
-        if (isset($link['processed']) || !$link['processed'] == 1) {
+        if (isset($link['processed']) && !$link['processed'] == 1) {
             $data['tempId'] = isset($data['tempId']) ? $data['tempId'] : $data['url'];
-            $newProcessed = isset($data['processed'])? $data['processed'] : true;
+            $newProcessed = isset($data['processed']) ? $data['processed'] : true;
+
             return $this->updateLink($data, $newProcessed);
         }
 
@@ -266,6 +286,7 @@ class LinkModel
                 'l.description = { description }',
                 'l.language = { language }',
                 'l.processed = { processed }',
+                'l.imageProcessed = timestamp()',
                 'l.created =  timestamp()' //TODO: If there is created, use this instead (coalesce)
             );
 
@@ -342,6 +363,7 @@ class LinkModel
                 'l.description = { description }',
                 'l.language = { language }',
                 'l.processed = { processed }',
+                'l.imageProcessed = timestamp()',
                 'l.updated = timestamp()'
             );
 
@@ -386,8 +408,7 @@ class LinkModel
         $result = $query->getResultSet();
 
         $linkArray = array();
-        if ($result->count() == 0)
-        {
+        if ($result->count() == 0) {
             $link = $this->findLinkByUrl($data['url']);
             $linkArray['id'] = $link['id'];
         }
@@ -409,8 +430,8 @@ class LinkModel
 
     }
 
-    public function setProcessed($url, $processed = true) {
-
+    public function setProcessed($url, $processed = true)
+    {
         $qb = $this->gm->createQueryBuilder();
 
         $qb->match('(l:Link{url: {url}})')
@@ -419,7 +440,7 @@ class LinkModel
             ->setParameter('url', $url);
 
         $qb->set('l.processed = {processed}')
-            ->setParameter('processed', $processed);
+            ->setParameter('processed', $processed ? 1 : 0);
 
         $qb->returns('l');
 
@@ -445,6 +466,30 @@ class LinkModel
         $result = $qb->getQuery()->getResultSet();
 
         return $result->count() > 0 && $result->current()->offsetExists('l');
+    }
+
+    public function getTypes($url)
+    {
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(l:Link {url: { url }})')
+            ->with('l')
+            ->limit(1)
+            ->setParameter('url', $url);
+
+        $qb->returns('labels(l) as types');
+
+        $result = $qb->getQuery()->getResultSet();
+        $row = $result->current();
+
+        $types = array();
+        if (isset($row['types'])) {
+            foreach ($row['types'] as $type) {
+                $types[] = $type;
+            }
+        }
+
+        return $types;
     }
 
     public function removeLink($linkUrl)
@@ -587,12 +632,14 @@ class LinkModel
             $qb->with('l', 'average');
             $qb->optionalMatch('(l)-[:TAGGED]->(tag:Tag)')
                 ->optionalMatch("(l)-[:SYNONYMOUS]->(synonymousLink:Link)")
-                ->returns('id(l) as id',
+                ->returns(
+                    'id(l) as id',
                     'l as link',
                     'average',
                     'collect(distinct tag.name) as tags',
                     'labels(l) as types',
-                    'COLLECT (DISTINCT synonymousLink) AS synonymous')
+                    'COLLECT (DISTINCT synonymousLink) AS synonymous'
+                )
                 ->orderBy('average DESC')
                 ->limit('{limitContent}');
 
@@ -634,6 +681,7 @@ class LinkModel
             }
             $users++;
         }
+
         return $content;
     }
 
@@ -647,10 +695,12 @@ class LinkModel
         $qb->match('(users)-[:LIKES]->(l:Link)')
             ->where('NOT (u)-[:LIKES]-(l)', 'NOT (u)-[:DISLIKES]-(l)', 'NOT (u)-[:AFFINITY]-(l)');
         $qb->returns('count(l) AS c');
-        $qb->setParameters(array(
-            'userId' => (integer)$userId,
-            'limitUsers' => $users,
-        ));
+        $qb->setParameters(
+            array(
+                'userId' => (integer)$userId,
+                'limitUsers' => $users,
+            )
+        );
 
         $resultSet = $qb->getQuery()->getResultSet();
 
@@ -674,16 +724,23 @@ class LinkModel
         $qb->match('(l:Link), (u:User{qnoow_id:{userId}})')
             ->where('id(l)={linkId}')
             ->optionalMatch('(u)-[n2:NOTIFIED]->(l)')
-            ->merge('(u)-[n:NOTIFIED]->(l)
-                        ON CREATE SET n.timestamp = timestamp()')
+            ->merge(
+                '(u)-[n:NOTIFIED]->(l)
+                        ON CREATE SET n.timestamp = timestamp()'
+            )
             ->returns('(NOT n2 IS NULL) as existed');
-        $qb->setParameters(array('userId' => (integer)$userId,
-            'linkId' => (integer)$linkId));
+        $qb->setParameters(
+            array(
+                'userId' => (integer)$userId,
+                'linkId' => (integer)$linkId
+            )
+        );
 
         $query = $qb->getQuery();
         $resultSet = $query->getResultSet();
         /* @var $row Row */
         $row = $resultSet->current();
+
         return $row->offsetGet('existed');
     }
 
@@ -706,13 +763,18 @@ class LinkModel
             ->optionalMatch('(u)-[n:NOTIFIED]->(l)')
             ->delete('n')
             ->returns('(NOT (n IS NULL)) as existed');
-        $qb->setParameters(array('userId' => (integer)$userId,
-            'linkId' => (integer)$linkId));
+        $qb->setParameters(
+            array(
+                'userId' => (integer)$userId,
+                'linkId' => (integer)$linkId
+            )
+        );
 
         $query = $qb->getQuery();
         $resultSet = $query->getResultSet();
         /* @var $row Row */
         $row = $resultSet->current();
+
         return $row->offsetGet('existed');
     }
 
@@ -734,8 +796,12 @@ class LinkModel
             ->where('id(l)={linkId}')
             ->optionalMatch('(u)-[n:NOTIFIED]->(l)')
             ->returns('n.timestamp as when');
-        $qb->setParameters(array('userId' => (integer)$userId,
-            'linkId' => (integer)$linkId));
+        $qb->setParameters(
+            array(
+                'userId' => (integer)$userId,
+                'linkId' => (integer)$linkId
+            )
+        );
 
         $query = $qb->getQuery();
         $resultSet = $query->getResultSet();
@@ -744,6 +810,7 @@ class LinkModel
             return null;
         }
         $row = $resultSet->current();
+
         return $row->offsetGet('when');
     }
 
@@ -770,6 +837,7 @@ class LinkModel
         $result = array();
         $result['affinities'] = $row->offsetGet('affinities');
         $result['dislikes'] = $row->offsetGet('dislikes');
+
         return $result;
     }
 
@@ -780,7 +848,7 @@ class LinkModel
     public function findDuplicates(array $links)
     {
         $urls = array();
-        foreach ($links as $link){
+        foreach ($links as $link) {
             $urls[] = $link['url'];
         }
 
@@ -803,13 +871,18 @@ class LinkModel
         foreach ($rs as $row) {
             for ($i = 1; $i < count($row->offsetGet('ids')); $i++) {
                 $duplicate = array();
-                $duplicate['main'] = array('id' => $row->offsetGet('ids')[0],
-                    'url' => $row->offsetGet('url'));
-                $duplicate['duplicate'] = array('id' => $row->offsetGet('ids')[$i],
-                    'url' => $row->offsetGet('url'));
+                $duplicate['main'] = array(
+                    'id' => $row->offsetGet('ids')[0],
+                    'url' => $row->offsetGet('url')
+                );
+                $duplicate['duplicate'] = array(
+                    'id' => $row->offsetGet('ids')[$i],
+                    'url' => $row->offsetGet('url')
+                );
                 $result[] = $duplicate;
             }
         }
+
         return $result;
     }
 
@@ -857,13 +930,15 @@ class LinkModel
         $types = array();
         $keyTypes = $this->getValidTypes();
 
-        foreach ( $keyTypes as $type){
-            $types[$type] = $this->translator->trans('types.'.lcfirst($type));
+        foreach ($keyTypes as $type) {
+            $types[$type] = $this->translator->trans('types.' . lcfirst($type));
         };
+
         return $types;
     }
 
-    public function buildOptionalTypesLabel($filters){
+    public function buildOptionalTypesLabel($filters)
+    {
         $linkTypes = array('Link');
         if (isset($filters['type'])) {
             $linkTypes = $filters['type'];
