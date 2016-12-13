@@ -325,6 +325,7 @@ class UserController
 
         try {
             $result = $paginator->paginate($filters, $model, $request);
+            $result['totals'] = $model->countAll($user->getId());
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;
