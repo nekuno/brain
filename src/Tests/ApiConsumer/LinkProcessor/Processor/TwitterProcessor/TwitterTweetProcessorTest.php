@@ -2,6 +2,8 @@
 
 namespace Tests\ApiConsumer\LinkProcessor\Processor\TwitterProcessor;
 
+use ApiConsumer\Exception\CannotProcessException;
+use ApiConsumer\Exception\UrlChangedException;
 use ApiConsumer\Exception\UrlNotValidException;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
 use ApiConsumer\LinkProcessor\Processor\TwitterProcessor\TwitterTweetProcessor;
@@ -50,7 +52,6 @@ class TwitterTweetProcessorTest extends \PHPUnit_Framework_TestCase
             ->will($this->throwException(new UrlNotValidException($url)));
 
         $link = new PreprocessedLink($url);
-        $link->setUrl($url);
         $this->processor->requestItem($link);
     }
 
@@ -67,11 +68,12 @@ class TwitterTweetProcessorTest extends \PHPUnit_Framework_TestCase
             ->method('requestStatus')
             ->will($this->returnValue($status));
 
+        $this->setExpectedException(CannotProcessException::class, sprintf('Could not process url %s', $url));
+
         $link = new PreprocessedLink($url);
-        $link->setUrl($url);
         $this->processor->requestItem($link);
 
-        $this->assertEquals($url, $link->getUrl(), 'Asserting correct track response for ' . $url);
+//        $this->assertEquals($url, $link->getUrl(), 'Asserting correct track response for ' . $url);
     }
 
     /**
@@ -87,11 +89,10 @@ class TwitterTweetProcessorTest extends \PHPUnit_Framework_TestCase
             ->method('requestStatus')
             ->will($this->returnValue($status));
 
-        $link = new PreprocessedLink($url);
-        $link->setUrl($url);
-        $this->processor->requestItem($link);
+        $this->setExpectedException(UrlChangedException::class, sprintf('Url changed from %s to  %s', $url, $newUrl));
 
-        $this->assertEquals($newUrl, $link->getUrl(), 'Asserting correct url extraction from tweet ' . $url);
+        $link = new PreprocessedLink($url);
+        $this->processor->requestItem($link);
     }
 
     /**
@@ -100,7 +101,6 @@ class TwitterTweetProcessorTest extends \PHPUnit_Framework_TestCase
     public function testHydrateLink($url, $response, $expectedArray)
     {
         $link = new PreprocessedLink($url);
-        $link->setUrl($url);
         $this->processor->hydrateLink($link, $response);
 
         $this->assertEquals($expectedArray, $link->getLink()->toArray(), 'Asserting correct hydrated link for ' . $url);
@@ -112,7 +112,6 @@ class TwitterTweetProcessorTest extends \PHPUnit_Framework_TestCase
     public function testAddTags($url, $response, $expectedTags)
     {
         $link = new PreprocessedLink($url);
-        $link->setUrl($url);
         $this->processor->addTags($link, $response);
 
         $tags = $expectedTags;
@@ -169,6 +168,7 @@ class TwitterTweetProcessorTest extends \PHPUnit_Framework_TestCase
                     'processed' => true,
                     'language' => null,
                     'synonymous' => array(),
+                    'imageProcessed' => null,
                 )
             )
         );
@@ -382,6 +382,11 @@ class TwitterTweetProcessorTest extends \PHPUnit_Framework_TestCase
     public function getStatusTags()
     {
         return array();
+    }
+
+    public function getThumbnail()
+    {
+        return 'https://pbs.twimg.com/profile_images/639462703858380800/ZxusSbUW.png';
     }
 
 }

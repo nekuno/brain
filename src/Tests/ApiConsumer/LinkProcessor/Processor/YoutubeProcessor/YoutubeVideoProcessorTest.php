@@ -51,7 +51,6 @@ class YoutubeVideoProcessorTest extends \PHPUnit_Framework_TestCase
             ->will($this->throwException(new UrlNotValidException($url)));
 
         $link = new PreprocessedLink($url);
-        $link->setUrl($url);
         $this->processor->requestItem($link);
     }
 
@@ -69,7 +68,6 @@ class YoutubeVideoProcessorTest extends \PHPUnit_Framework_TestCase
             ->will($this->returnValue($video));
 
         $link = new PreprocessedLink($url);
-        $link->setUrl($url);
         $response = $this->processor->requestItem($link);
 
         $this->assertEquals($this->getVideoItemResponse(), $response, 'Asserting correct video response for ' . $url);
@@ -81,7 +79,6 @@ class YoutubeVideoProcessorTest extends \PHPUnit_Framework_TestCase
     public function testHydrateLink($url, $id, $response, $expectedArray)
     {
         $link = new PreprocessedLink($url);
-        $link->setUrl($url);
         $link->setResourceItemId($id);
 
         $this->processor->hydrateLink($link, $response);
@@ -95,7 +92,6 @@ class YoutubeVideoProcessorTest extends \PHPUnit_Framework_TestCase
     public function testAddTags($url, $response, $expectedTags)
     {
         $link = new PreprocessedLink($url);
-        $link->setUrl($url);
         $this->processor->addTags($link, $response);
 
         $tags = $expectedTags;
@@ -133,7 +129,7 @@ class YoutubeVideoProcessorTest extends \PHPUnit_Framework_TestCase
                 array(
                     'title' => 'Tu peor error',
                     'description' => 'En Mawi',
-                    'thumbnail' => 'https://img.youtube.com/vi/zLgY05beCnY/mqdefault.jpg',
+                    'thumbnail' => null,
                     'url' => null,
                     'id' => null,
                     'tags' => array(),
@@ -141,6 +137,7 @@ class YoutubeVideoProcessorTest extends \PHPUnit_Framework_TestCase
                     'processed' => true,
                     'language' => null,
                     'synonymous' => array(),
+                    'imageProcessed' => null,
                     'embed_type' => 'youtube',
                     'embed_id' => 'zLgY05beCnY',
                 )
@@ -489,6 +486,11 @@ class YoutubeVideoProcessorTest extends \PHPUnit_Framework_TestCase
                         ),
                 ),
         );
+    }
+
+    public function getThumbnailUrl()
+    {
+        return 'https://img.youtube.com/vi/zLgY05beCnY/mqdefault.jpg';
     }
 
 }

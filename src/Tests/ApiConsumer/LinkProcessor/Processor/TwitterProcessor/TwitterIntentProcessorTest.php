@@ -50,7 +50,6 @@ class TwitterIntentProcessorTest extends \PHPUnit_Framework_TestCase
             ->will($this->throwException(new UrlNotValidException($url)));
 
         $link = new PreprocessedLink($url);
-        $link->setUrl($url);
         $this->processor->requestItem($link);
     }
 
@@ -68,7 +67,6 @@ class TwitterIntentProcessorTest extends \PHPUnit_Framework_TestCase
             ->will($this->returnValue($profiles));
 
         $link = new PreprocessedLink($url);
-        $link->setUrl($url);
         $response = $this->processor->requestItem($link);
 
         $this->assertEquals($response, $profiles[0], 'Asserting correct response for ' . $url);
@@ -84,7 +82,6 @@ class TwitterIntentProcessorTest extends \PHPUnit_Framework_TestCase
             ->will($this->returnValue($response));
 
         $link = new PreprocessedLink($url);
-        $link->setUrl($url);
         $this->processor->hydrateLink($link, $response);
 
         $this->assertEquals($expectedArray, $link->getLink()->toArray(), 'Asserting correct hydrated link for ' . $url);
@@ -96,7 +93,6 @@ class TwitterIntentProcessorTest extends \PHPUnit_Framework_TestCase
     public function testAddTags($url, $response, $expectedTags)
     {
         $link = new PreprocessedLink($url);
-        $link->setUrl($url);
         $this->processor->addTags($link, $response);
 
         $tags = $expectedTags;
@@ -141,6 +137,7 @@ class TwitterIntentProcessorTest extends \PHPUnit_Framework_TestCase
                     'processed' => true,
                     'language' => null,
                     'synonymous' => array(),
+                    'imageProcessed' => null,
                 )
             )
         );

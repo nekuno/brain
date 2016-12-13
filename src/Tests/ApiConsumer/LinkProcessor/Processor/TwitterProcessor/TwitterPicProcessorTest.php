@@ -43,7 +43,6 @@ class TwitterPicProcessorTest extends \PHPUnit_Framework_TestCase
     public function testRequestItem($url)
     {
         $link = new PreprocessedLink($url);
-        $link->setUrl($url);
         $response = $this->processor->requestItem($link);
 
         $this->assertEquals(array(), $response, 'Asserting response for ' . $url);
@@ -55,7 +54,6 @@ class TwitterPicProcessorTest extends \PHPUnit_Framework_TestCase
     public function testHydrateLink($url, $expectedArray)
     {
         $link = new PreprocessedLink($url);
-        $link->setUrl($url);
         $this->processor->hydrateLink($link, array());
 
         $this->assertEquals($expectedArray, $link->getLink()->toArray(), 'Asserting correct hydrated link for ' . $url);
@@ -67,7 +65,6 @@ class TwitterPicProcessorTest extends \PHPUnit_Framework_TestCase
     public function testAddTags($url, $response, $expectedTags)
     {
         $link = new PreprocessedLink($url);
-        $link->setUrl($url);
         $this->processor->addTags($link, $response);
 
         $tags = $expectedTags;
@@ -118,6 +115,7 @@ class TwitterPicProcessorTest extends \PHPUnit_Framework_TestCase
                     'processed' => true,
                     'language' => null,
                     'synonymous' => array(),
+                    'imageProcessed' => null,
                 )
             )
         );

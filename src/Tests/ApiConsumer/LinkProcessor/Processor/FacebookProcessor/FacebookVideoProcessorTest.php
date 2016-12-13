@@ -52,7 +52,6 @@ class FacebookVideoProcessorTest extends \PHPUnit_Framework_TestCase
             ->will($this->returnValue($video));
 
         $link = new PreprocessedLink($url);
-        $link->setUrl($url);
         $link->setSource(TokensModel::FACEBOOK);
         $response = $this->processor->requestItem($link);
 
@@ -65,7 +64,6 @@ class FacebookVideoProcessorTest extends \PHPUnit_Framework_TestCase
     public function testHydrateLink($url, $id, $response, $expectedArray)
     {
         $link = new PreprocessedLink($url);
-        $link->setUrl($url);
         $link->setResourceItemId($id);
         $this->processor->hydrateLink($link, $response);
 
@@ -78,7 +76,6 @@ class FacebookVideoProcessorTest extends \PHPUnit_Framework_TestCase
     public function testAddTags($url, $response, $expectedTags)
     {
         $link = new PreprocessedLink($url);
-        $link->setUrl($url);
         $this->processor->addTags($link, $response);
 
         $tags = $expectedTags;
@@ -116,7 +113,7 @@ class FacebookVideoProcessorTest extends \PHPUnit_Framework_TestCase
                 array(
                     'title' => '¡Tu combo de likes más...',
                     'description' => "¡Tu combo de likes más rápido con el nuevo WIFI! A conectar! #wifigratis",
-                    'thumbnail' => "https://scontent.xx.fbcdn.net/v/t15.0-10/p160x160/14510760_1184087194980692_2357859444034895872_n.jpg?oh=33727306f052fcee096c281c15c429bf&oe=586D5F95",
+                    'thumbnail' => null,
                     'url' => null,
                     'id' => null,
                     'tags' => array(),
@@ -124,6 +121,7 @@ class FacebookVideoProcessorTest extends \PHPUnit_Framework_TestCase
                     'processed' => true,
                     'language' => null,
                     'synonymous' => array(),
+                    'imageProcessed' => null,
                     'embed_type' => 'facebook',
                     'embed_id' => '1184085874980824'
                 )
@@ -151,7 +149,7 @@ class FacebookVideoProcessorTest extends \PHPUnit_Framework_TestCase
     {
         return array(
             "description" => "¡Tu combo de likes más rápido con el nuevo WIFI! A conectar! #wifigratis",
-            "picture" => "https://scontent.xx.fbcdn.net/v/t15.0-10/p160x160/14510760_1184087194980692_2357859444034895872_n.jpg?oh=33727306f052fcee096c281c15c429bf&oe=586D5F95",
+            "picture" => $this->getThumbnailUrl(),
             "permalink_url" => "/vips/videos/1184085874980824/",
             "id" => "1184085874980824"
         );
@@ -170,6 +168,11 @@ class FacebookVideoProcessorTest extends \PHPUnit_Framework_TestCase
     public function getVideoTags()
     {
         return array();
+    }
+
+    public function getThumbnailUrl()
+    {
+        return "https://scontent.xx.fbcdn.net/v/t15.0-10/p160x160/14510760_1184087194980692_2357859444034895872_n.jpg?oh=33727306f052fcee096c281c15c429bf&oe=586D5F95";
     }
 
 }

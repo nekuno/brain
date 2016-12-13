@@ -50,7 +50,6 @@ class SpotifyAlbumProcessorTest extends \PHPUnit_Framework_TestCase
             ->will($this->throwException(new UrlNotValidException($url)));
 
         $link = new PreprocessedLink($url);
-        $link->setUrl($url);
         $this->processor->requestItem($link);
     }
 
@@ -68,7 +67,6 @@ class SpotifyAlbumProcessorTest extends \PHPUnit_Framework_TestCase
             ->will($this->returnValue($album));
 
         $link = new PreprocessedLink($url);
-        $link->setUrl($url);
         $response = $this->processor->requestItem($link);
 
         $this->assertEquals($response, $album);
@@ -80,7 +78,6 @@ class SpotifyAlbumProcessorTest extends \PHPUnit_Framework_TestCase
     public function testHydrateLink($url, $response, $expectedArray)
     {
         $link = new PreprocessedLink($url);
-        $link->setUrl($url);
         $this->processor->hydrateLink($link, $response);
 
         $this->assertEquals($expectedArray, $link->getLink()->toArray(), 'Asserting correct hydrated link for ' . $url);
@@ -92,7 +89,6 @@ class SpotifyAlbumProcessorTest extends \PHPUnit_Framework_TestCase
     public function testAddTags($url, $response, $expectedTags)
     {
         $link = new PreprocessedLink($url);
-        $link->setUrl($url);
         $this->processor->addTags($link, $response);
 
         $tags = $expectedTags;
@@ -156,6 +152,7 @@ class SpotifyAlbumProcessorTest extends \PHPUnit_Framework_TestCase
                     'processed' => true,
                     'language' => null,
                     'synonymous' => array(),
+                    'imageProcessed' => null,
                     'embed_type' => 'spotify',
                     'embed_id' => 'spotify:album:4sb0eMpDn3upAFfyi4q2rw',
                 )
