@@ -13,7 +13,7 @@ class TwitterIntentProcessor extends AbstractTwitterProfileProcessor
         $userId = $preprocessedLink->getResourceItemId() ?
             array('user_id' => $preprocessedLink->getResourceItemId())
             :
-            $this->getItemId($preprocessedLink->getCanonical());
+            $this->getItemId($preprocessedLink->getUrl());
 
         $key = array_keys($userId)[0];
 
@@ -22,7 +22,7 @@ class TwitterIntentProcessor extends AbstractTwitterProfileProcessor
 
         //Response validation
         if (empty($users)) {
-            throw new CannotProcessException($preprocessedLink->getCanonical());
+            throw new CannotProcessException($preprocessedLink->getUrl());
         }
 
         return $users[0];
@@ -46,7 +46,7 @@ class TwitterIntentProcessor extends AbstractTwitterProfileProcessor
 
             $userId = $preprocessedLink->getResourceItemId() ?
                 array('user_id' => $preprocessedLink->getResourceItemId()) :
-                $this->parser->getProfileId($preprocessedLink->getCanonical());
+                $this->parser->getProfileId($preprocessedLink->getUrl());
 
             $key = array_keys($userId)[0];
             $userIds[$key][] = $userId;

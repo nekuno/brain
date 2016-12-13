@@ -26,7 +26,7 @@ class LinkResolver
     public function resolve(PreprocessedLink $preprocessedLink)
     {
         $resolution = new Resolution();
-        $resolution->setStartingUrl($preprocessedLink->getFetched());
+        $resolution->setStartingUrl($preprocessedLink->getUrl());
 
         try {
 
@@ -49,7 +49,7 @@ class LinkResolver
             }
 
         } catch (\Exception $e) {
-            throw new CouldNotResolveException($preprocessedLink->getFetched());
+            throw new CouldNotResolveException($preprocessedLink->getUrl());
         }
 
         return $resolution;

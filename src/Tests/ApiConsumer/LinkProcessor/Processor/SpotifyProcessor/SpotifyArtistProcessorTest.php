@@ -50,7 +50,7 @@ class SpotifyArtistProcessorTest extends \PHPUnit_Framework_TestCase
             ->will($this->throwException(new UrlNotValidException($url)));
 
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
+        $link->setUrl($url);
         $this->processor->requestItem($link);
     }
 
@@ -68,7 +68,7 @@ class SpotifyArtistProcessorTest extends \PHPUnit_Framework_TestCase
             ->will($this->returnValue($artist));
 
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
+        $link->setUrl($url);
         $response = $this->processor->requestItem($link);
 
         $this->assertEquals($artist, $response, 'Asserting correct artist response for ' . $url);
@@ -80,7 +80,7 @@ class SpotifyArtistProcessorTest extends \PHPUnit_Framework_TestCase
     public function testHydrateLink($url, $response, $expectedArray)
     {
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
+        $link->setUrl($url);
         $this->processor->hydrateLink($link, $response);
 
         $this->assertEquals($expectedArray, $link->getLink()->toArray(), 'Asserting correct hydrated link for ' . $url);
@@ -92,7 +92,7 @@ class SpotifyArtistProcessorTest extends \PHPUnit_Framework_TestCase
     public function testAddTags($url, $response, $expectedTags)
     {
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
+        $link->setUrl($url);
         $this->processor->addTags($link, $response);
 
         $tags = $expectedTags;

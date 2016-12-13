@@ -23,7 +23,7 @@ class LinkAnalyzer
             return $link->getType();
         }
 
-        $url = $link->getCanonical();
+        $url = $link->getUrl();
 
         (new UrlParser())->checkUrlValid($url);
 
@@ -39,7 +39,7 @@ class LinkAnalyzer
 
     public static function mustResolve(PreprocessedLink $link)
     {
-        return !self::isSpotify($link->getFetched());
+        return !self::isSpotify($link->getUrl());
     }
 
     /**

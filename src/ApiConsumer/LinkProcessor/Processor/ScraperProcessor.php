@@ -49,7 +49,7 @@ class ScraperProcessor implements ProcessorInterface
     {
         $link = $preprocessedLink->getLink();
 
-        $url = $preprocessedLink->getCanonical();
+        $url = $preprocessedLink->getUrl();
         $link->setUrl($url);
 
         try {

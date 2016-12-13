@@ -50,7 +50,7 @@ class TwitterTweetProcessorTest extends \PHPUnit_Framework_TestCase
             ->will($this->throwException(new UrlNotValidException($url)));
 
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
+        $link->setUrl($url);
         $this->processor->requestItem($link);
     }
 
@@ -68,10 +68,10 @@ class TwitterTweetProcessorTest extends \PHPUnit_Framework_TestCase
             ->will($this->returnValue($status));
 
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
+        $link->setUrl($url);
         $this->processor->requestItem($link);
 
-        $this->assertEquals($url, $link->getCanonical(), 'Asserting correct track response for ' . $url);
+        $this->assertEquals($url, $link->getUrl(), 'Asserting correct track response for ' . $url);
     }
 
     /**
@@ -88,10 +88,10 @@ class TwitterTweetProcessorTest extends \PHPUnit_Framework_TestCase
             ->will($this->returnValue($status));
 
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
+        $link->setUrl($url);
         $this->processor->requestItem($link);
 
-        $this->assertEquals($newUrl, $link->getCanonical(), 'Asserting correct url extraction from tweet ' . $url);
+        $this->assertEquals($newUrl, $link->getUrl(), 'Asserting correct url extraction from tweet ' . $url);
     }
 
     /**
@@ -100,7 +100,7 @@ class TwitterTweetProcessorTest extends \PHPUnit_Framework_TestCase
     public function testHydrateLink($url, $response, $expectedArray)
     {
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
+        $link->setUrl($url);
         $this->processor->hydrateLink($link, $response);
 
         $this->assertEquals($expectedArray, $link->getLink()->toArray(), 'Asserting correct hydrated link for ' . $url);
@@ -112,7 +112,7 @@ class TwitterTweetProcessorTest extends \PHPUnit_Framework_TestCase
     public function testAddTags($url, $response, $expectedTags)
     {
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
+        $link->setUrl($url);
         $this->processor->addTags($link, $response);
 
         $tags = $expectedTags;

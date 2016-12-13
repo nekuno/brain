@@ -12,13 +12,13 @@ class SpotifyTrackProcessor extends AbstractSpotifyProcessor
 {
     public function requestItem(PreprocessedLink $preprocessedLink)
     {
-        $id = $this->getItemId($preprocessedLink->getCanonical());
+        $id = $this->getItemId($preprocessedLink->getUrl());
         $preprocessedLink->setResourceItemId($id);
 
         $track = $this->resourceOwner->requestTrack($id);
 
         if (!(isset($track['album']) && isset($track['name']) && isset($track['artists']))) {
-            throw new CannotProcessException($preprocessedLink->getCanonical());
+            throw new CannotProcessException($preprocessedLink->getUrl());
         }
 
         $album = $this->resourceOwner->requestAlbum($track['album']['id']);

@@ -12,12 +12,12 @@ class TwitterProfileProcessor extends AbstractTwitterProfileProcessor
 
     public function requestItem(PreprocessedLink $preprocessedLink)
     {
-        $userName = $this->getItemId($preprocessedLink->getCanonical());
+        $userName = $this->getItemId($preprocessedLink->getUrl());
         $users = $this->resourceOwner->lookupUsersBy('screen_name', $userName);
 
         //Response validation
         if (empty($users)) {
-            throw new CannotProcessException($preprocessedLink->getCanonical());
+            throw new CannotProcessException($preprocessedLink->getUrl());
         }
 
         return $users[0];
@@ -42,7 +42,7 @@ class TwitterProfileProcessor extends AbstractTwitterProfileProcessor
                 unset($preprocessedLinks[$key]);
             }
 
-            $userName = $this->parser->getProfileId($preprocessedLink->getCanonical());
+            $userName = $this->parser->getProfileId($preprocessedLink->getUrl());
             $userNames[] = $userName['screen_name'];
         }
 

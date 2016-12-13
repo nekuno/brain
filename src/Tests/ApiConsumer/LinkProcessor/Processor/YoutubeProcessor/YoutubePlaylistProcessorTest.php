@@ -52,7 +52,7 @@ class YoutubePlaylistProcessorTest extends \PHPUnit_Framework_TestCase
             ->will($this->throwException(new UrlNotValidException($url)));
 
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
+        $link->setUrl($url);
         $this->processor->requestItem($link);
     }
 
@@ -70,7 +70,7 @@ class YoutubePlaylistProcessorTest extends \PHPUnit_Framework_TestCase
             ->will($this->returnValue($playlist));
 
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
+        $link->setUrl($url);
         $response = $this->processor->requestItem($link);
 
         $this->assertEquals($this->getPlaylistItemResponse(), $response, 'Asserting correct playlistresponse for ' . $url);
@@ -82,7 +82,7 @@ class YoutubePlaylistProcessorTest extends \PHPUnit_Framework_TestCase
     public function testHydrateLink($url, $id, $response, $expectedArray)
     {
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
+        $link->setUrl($url);
         $link->setResourceItemId($id);
 
         $this->processor->hydrateLink($link, $response);
@@ -96,7 +96,7 @@ class YoutubePlaylistProcessorTest extends \PHPUnit_Framework_TestCase
     public function testAddTags($url, $response, $expectedTags)
     {
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
+        $link->setUrl($url);
         $this->processor->addTags($link, $response);
 
         $tags = $expectedTags;

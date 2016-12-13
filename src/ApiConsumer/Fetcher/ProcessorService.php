@@ -125,7 +125,7 @@ class ProcessorService implements LoggerAwareInterface
             return $link;
 
         } catch (UrlChangedException $e) {
-            $preprocessedLink->setFetched($e->getNewUrl());
+            $preprocessedLink->setUrl($e->getNewUrl());
 
             return $this->fullProcessSingle($preprocessedLink, $userId);
 
@@ -146,7 +146,7 @@ class ProcessorService implements LoggerAwareInterface
     {
         $links = array();
         foreach ($preprocessedLinks as $key => $preprocessedLink) {
-            $this->logNotice(sprintf('Reprocessing link %s', $preprocessedLink->getFetched()));
+            $this->logNotice(sprintf('Reprocessing link %s', $preprocessedLink->getUrl()));
             $link = $this->fullReprocessSingle($preprocessedLink);
 
             if ($link) {
@@ -188,12 +188,12 @@ class ProcessorService implements LoggerAwareInterface
             $newUrl = $e->getNewUrl();
             $this->manageChangedUrl($oldUrl, $newUrl);
 
-            $preprocessedLink->setFetched($newUrl);
+            $preprocessedLink->setUrl($newUrl);
 
             return $this->fullReprocessSingle($preprocessedLink);
 
         } catch (\Exception $e) {
-            $this->logError(sprintf('Fetcher: Unexpected error processing link "%s" from resource "%s". Reason: %s', $preprocessedLink->getFetched(), $preprocessedLink->getSource(), $e->getMessage()));
+            $this->logError(sprintf('Fetcher: Unexpected error processing link "%s" from resource "%s". Reason: %s', $preprocessedLink->getUrl(), $preprocessedLink->getSource(), $e->getMessage()));
 
             return null;
         }
@@ -224,18 +224,16 @@ class ProcessorService implements LoggerAwareInterface
     private function resolve(PreprocessedLink $preprocessedLink)
     {
         if (!LinkAnalyzer::mustResolve($preprocessedLink)) {
-            $preprocessedLink->setCanonical($preprocessedLink->getFetched());
-
             return;
         }
 
         $resolution = $this->resolver->resolve($preprocessedLink);
 
         if (null == $resolution->getFinalUrl()) {
-            throw new CouldNotResolveException($preprocessedLink->getFetched());
+            throw new CouldNotResolveException($preprocessedLink->getUrl());
         }
 
-        $preprocessedLink->setCanonical($resolution->getFinalUrl());
+        $preprocessedLink->setUrl($resolution->getFinalUrl());
 
         if ($resolution->getStartingUrl() !== $resolution->getFinalUrl()) {
             throw new UrlChangedException($resolution->getStartingUrl(), $resolution->getFinalUrl());
@@ -245,8 +243,8 @@ class ProcessorService implements LoggerAwareInterface
     private function processLink(PreprocessedLink $preprocessedLink)
     {
         try {
-            $cleanURL = LinkAnalyzer::cleanUrl($preprocessedLink->getCanonical());
-            $preprocessedLink->setCanonical($cleanURL);
+            $cleanURL = LinkAnalyzer::cleanUrl($preprocessedLink->getUrl());
+            $preprocessedLink->setUrl($cleanURL);
         } catch (UrlNotValidException $e) {
             //log
             $link = $this->getUnprocessedLink($preprocessedLink);
@@ -278,7 +276,7 @@ class ProcessorService implements LoggerAwareInterface
     private function isLinkSavedAndProcessed(PreprocessedLink $preprocessedLink)
     {
         try {
-            $linkUrl = $preprocessedLink->getCanonical() ?: $preprocessedLink->getFetched();
+            $linkUrl = $preprocessedLink->getUrl() ?: $preprocessedLink->getUrl();
             $storedLink = $this->linkModel->findLinkByUrl($linkUrl);
 
             return $storedLink && isset($storedLink['processed']) && $storedLink['processed'] == '1';
@@ -325,7 +323,7 @@ class ProcessorService implements LoggerAwareInterface
 
             return array();
         } catch (\Exception $e) {
-            $this->logError(sprintf('Fetcher: Unexpected error processing link "%s" from resource "%s". Reason: %s', $preprocessedLink->getFetched(), $preprocessedLink->getSource(), $e->getMessage()));
+            $this->logError(sprintf('Fetcher: Unexpected error processing link "%s" from resource "%s". Reason: %s', $preprocessedLink->getUrl(), $preprocessedLink->getSource(), $e->getMessage()));
 
             return array();
         }

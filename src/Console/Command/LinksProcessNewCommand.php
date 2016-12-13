@@ -62,7 +62,7 @@ class LinksProcessNewCommand extends ApplicationAwareCommand
             try {
 
                 $preprocessedLink = new PreprocessedLink($url);
-                $preprocessedLink->setCanonical($url);
+                $preprocessedLink->setUrl($url);
                 $preprocessedLink->setSource($resource);
 
                 if ($userId && $resource) {
@@ -89,9 +89,9 @@ class LinksProcessNewCommand extends ApplicationAwareCommand
 
                 $processed = array_key_exists('processed', $processedLink) ? $processedLink['processed'] : 1;
                 if ($processed) {
-                    $output->writeln(sprintf('Success: Link %s processed', $preprocessedLink->getFetched()));
+                    $output->writeln(sprintf('Success: Link %s processed', $preprocessedLink->getUrl()));
                 } else {
-                    $output->writeln(sprintf('Failed request: Link %s not processed', $preprocessedLink->getFetched()));
+                    $output->writeln(sprintf('Failed request: Link %s not processed', $preprocessedLink->getUrl()));
                 }
 
             } catch (\Exception $e) {

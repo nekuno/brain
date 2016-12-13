@@ -19,7 +19,7 @@ class LinkProcessor
 
     public function scrape(PreprocessedLink $preprocessedLink)
     {
-        $preprocessedLink->getLink()->setUrl($preprocessedLink->getCanonical());
+        $preprocessedLink->getLink()->setUrl($preprocessedLink->getUrl());
 
         $scrapper = $this->processorFactory->getScrapperProcessor();
         $response = $scrapper->requestItem($preprocessedLink);
@@ -37,7 +37,7 @@ class LinkProcessor
 
     public function process(PreprocessedLink $preprocessedLink)
     {
-        $preprocessedLink->getLink()->setUrl($preprocessedLink->getCanonical());
+        $preprocessedLink->getLink()->setUrl($preprocessedLink->getUrl());
 
         $processor = $this->selectProcessor($preprocessedLink);
 

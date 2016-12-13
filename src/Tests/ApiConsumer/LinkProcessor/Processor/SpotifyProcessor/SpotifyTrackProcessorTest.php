@@ -51,7 +51,7 @@ class SpotifyTrackProcessorTest extends \PHPUnit_Framework_TestCase
             ->will($this->throwException(new UrlNotValidException($url)));
 
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
+        $link->setUrl($url);
         $this->processor->requestItem($link);
     }
 
@@ -71,7 +71,7 @@ class SpotifyTrackProcessorTest extends \PHPUnit_Framework_TestCase
             ->will($this->returnValue($response));
 
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
+        $link->setUrl($url);
         $this->processor->requestItem($link);
     }
 
@@ -93,7 +93,7 @@ class SpotifyTrackProcessorTest extends \PHPUnit_Framework_TestCase
             ->will($this->returnValue($album));
 
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
+        $link->setUrl($url);
         $response = $this->processor->requestItem($link);
 
         $this->assertEquals(array('track' => $track, 'album' => $album), $response, 'Asserting correct track response for ' . $url);
@@ -105,7 +105,7 @@ class SpotifyTrackProcessorTest extends \PHPUnit_Framework_TestCase
     public function testHydrateLink($url, $response, $expectedArray)
     {
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
+        $link->setUrl($url);
         $this->processor->hydrateLink($link, $response);
 
         $this->assertEquals($expectedArray, $link->getLink()->toArray(), 'Asserting correct hydrated link for ' . $url);
@@ -117,7 +117,7 @@ class SpotifyTrackProcessorTest extends \PHPUnit_Framework_TestCase
     public function testAddTags($url, $response, $expectedTags)
     {
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
+        $link->setUrl($url);
         $this->processor->addTags($link, $response);
 
         $tags = $expectedTags;
@@ -133,7 +133,7 @@ class SpotifyTrackProcessorTest extends \PHPUnit_Framework_TestCase
     public function testSynonymousParameters($url, $response, $expectedParameters)
     {
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
+        $link->setUrl($url);
         $this->processor->getSynonymousParameters($link, $response);
 
         $this->assertEquals($expectedParameters, $link->getSynonymousParameters(), 'Asserting track synonymous parameters');

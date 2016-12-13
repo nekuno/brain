@@ -51,7 +51,7 @@ class YoutubeVideoProcessorTest extends \PHPUnit_Framework_TestCase
             ->will($this->throwException(new UrlNotValidException($url)));
 
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
+        $link->setUrl($url);
         $this->processor->requestItem($link);
     }
 
@@ -69,7 +69,7 @@ class YoutubeVideoProcessorTest extends \PHPUnit_Framework_TestCase
             ->will($this->returnValue($video));
 
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
+        $link->setUrl($url);
         $response = $this->processor->requestItem($link);
 
         $this->assertEquals($this->getVideoItemResponse(), $response, 'Asserting correct video response for ' . $url);
@@ -81,7 +81,7 @@ class YoutubeVideoProcessorTest extends \PHPUnit_Framework_TestCase
     public function testHydrateLink($url, $id, $response, $expectedArray)
     {
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
+        $link->setUrl($url);
         $link->setResourceItemId($id);
 
         $this->processor->hydrateLink($link, $response);
@@ -95,7 +95,7 @@ class YoutubeVideoProcessorTest extends \PHPUnit_Framework_TestCase
     public function testAddTags($url, $response, $expectedTags)
     {
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
+        $link->setUrl($url);
         $this->processor->addTags($link, $response);
 
         $tags = $expectedTags;

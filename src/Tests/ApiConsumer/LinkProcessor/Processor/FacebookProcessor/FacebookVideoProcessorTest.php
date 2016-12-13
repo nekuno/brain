@@ -52,7 +52,7 @@ class FacebookVideoProcessorTest extends \PHPUnit_Framework_TestCase
             ->will($this->returnValue($video));
 
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
+        $link->setUrl($url);
         $link->setSource(TokensModel::FACEBOOK);
         $response = $this->processor->requestItem($link);
 
@@ -65,7 +65,7 @@ class FacebookVideoProcessorTest extends \PHPUnit_Framework_TestCase
     public function testHydrateLink($url, $id, $response, $expectedArray)
     {
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
+        $link->setUrl($url);
         $link->setResourceItemId($id);
         $this->processor->hydrateLink($link, $response);
 
@@ -78,7 +78,7 @@ class FacebookVideoProcessorTest extends \PHPUnit_Framework_TestCase
     public function testAddTags($url, $response, $expectedTags)
     {
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
+        $link->setUrl($url);
         $this->processor->addTags($link, $response);
 
         $tags = $expectedTags;

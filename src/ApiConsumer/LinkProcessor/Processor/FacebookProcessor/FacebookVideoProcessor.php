@@ -11,7 +11,7 @@ class FacebookVideoProcessor extends AbstractFacebookProcessor
 {
     public function requestItem(PreprocessedLink $preprocessedLink)
     {
-        $id = $this->getItemId($preprocessedLink->getCanonical());
+        $id = $this->getItemId($preprocessedLink->getUrl());
         $preprocessedLink->setResourceItemId($id);
 
         if ($preprocessedLink->getSource() == TokensModel::FACEBOOK) {

@@ -25,13 +25,13 @@ abstract class AbstractYoutubeProcessor extends AbstractProcessor
 
     public function requestItem(PreprocessedLink $preprocessedLink)
     {
-        $itemId = $this->getItemId($preprocessedLink->getCanonical());
+        $itemId = $this->getItemId($preprocessedLink->getUrl());
         $preprocessedLink->setResourceItemId(reset($itemId));
 
         $response = $this->requestSpecificItem($itemId);
 
         if (!((isset($response['items']) && is_array($response['items']) && count($response['items']) > 0 && isset($response['items'][0]['snippet'])))) {
-            throw new CannotProcessException($preprocessedLink->getCanonical());
+            throw new CannotProcessException($preprocessedLink->getUrl());
         }
 
         return $response['items'][0];

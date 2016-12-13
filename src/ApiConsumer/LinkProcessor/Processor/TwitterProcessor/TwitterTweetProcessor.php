@@ -22,11 +22,11 @@ class TwitterTweetProcessor extends AbstractProcessor
 
     public function requestItem(PreprocessedLink $preprocessedLink)
     {
-        $statusId = $this->getItemId($preprocessedLink->getCanonical());
+        $statusId = $this->getItemId($preprocessedLink->getUrl());
 
         $url = $this->processTweetStatus($statusId);
 
-        throw new UrlChangedException($preprocessedLink->getCanonical(), $url);
+        throw new UrlChangedException($preprocessedLink->getUrl(), $url);
     }
 
     /**

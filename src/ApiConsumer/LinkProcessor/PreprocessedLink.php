@@ -1,7 +1,4 @@
 <?php
-/**
- * @author yawmoght <yawmoght@gmail.com>
- */
 
 namespace ApiConsumer\LinkProcessor;
 
@@ -10,9 +7,7 @@ use Model\Link;
 
 class PreprocessedLink
 {
-    protected $fetched;
-
-    protected $canonical;
+    protected $url;
 
     /**
      * @var $exceptions \Exception[]
@@ -45,11 +40,12 @@ class PreprocessedLink
 
     /**
      * PreprocessedLink constructor.
-     * @param $fetched
+     * @param $url
      */
-    public function __construct($fetched)
+    public function __construct($url)
     {
-        $this->fetched = $fetched;
+        $this->url = $url;
+
         $this->link = new Link();
         $this->synonymousParameters = new SynonymousParameters();
     }
@@ -57,33 +53,17 @@ class PreprocessedLink
     /**
      * @return mixed
      */
-    public function getFetched()
+    public function getUrl()
     {
-        return $this->fetched;
+        return $this->url;
     }
 
     /**
-     * @param mixed $fetched
+     * @param mixed $url
      */
-    public function setFetched($fetched)
+    public function setUrl($url)
     {
-        $this->fetched = $fetched;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getCanonical()
-    {
-        return $this->canonical;
-    }
-
-    /**
-     * @param mixed $canonical
-     */
-    public function setCanonical($canonical)
-    {
-        $this->canonical = $canonical;
+        $this->url = $url;
     }
 
     /**
