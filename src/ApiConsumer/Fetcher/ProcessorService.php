@@ -41,9 +41,6 @@ class ProcessorService implements LoggerAwareInterface
 
     protected $rateModel;
 
-    /**
-     * @var LinkResolver
-     */
     protected $resolver;
 
     protected $linkProcessor;
@@ -103,12 +100,14 @@ class ProcessorService implements LoggerAwareInterface
 
     private function fullProcessSingle(PreprocessedLink $preprocessedLink, $userId)
     {
-        $resolved = $this->resolve($preprocessedLink);
-
-        if (!$resolved) {
+        try {
+            $this->resolve($preprocessedLink);
+        } catch (CouldNotResolveException $e) {
+            $preprocessedLink->setLink($this->getUnprocessedLink($preprocessedLink));
             $link = $this->save($preprocessedLink, $userId);
 
             return $link;
+        } catch (UrlChangedException $e) {
         }
 
         try {
@@ -160,18 +159,14 @@ class ProcessorService implements LoggerAwareInterface
 
     private function fullReprocessSingle(PreprocessedLink $preprocessedLink)
     {
-        $resolved = $this->resolve($preprocessedLink);
-
-        if (!$resolved) {
+        try {
+            $this->resolve($preprocessedLink);
+        } catch (CouldNotResolveException $e) {
             $link = $this->overwrite($preprocessedLink);
 
             return $link;
-        }
-
-        if ($preprocessedLink->getFetched() != $preprocessedLink->getCanonical()) {
-            $oldUrl = $preprocessedLink->getFetched();
-            $newUrl = $preprocessedLink->getCanonical();
-            $this->manageChangedUrl($oldUrl, $newUrl);
+        } catch (UrlChangedException $e) {
+            $this->manageChangedUrl($e->getOldUrl(), $e->getNewUrl());
         }
 
         try {
@@ -231,29 +226,20 @@ class ProcessorService implements LoggerAwareInterface
         if (!LinkAnalyzer::mustResolve($preprocessedLink)) {
             $preprocessedLink->setCanonical($preprocessedLink->getFetched());
 
-            return true;
+            return;
         }
 
-        try {
-            $resolution = $this->resolver->resolve($preprocessedLink);
+        $resolution = $this->resolver->resolve($preprocessedLink);
 
-            if (null == $resolution->getFinalUrl()) {
-                $preprocessedLink->setLink($this->getUnprocessedLink($preprocessedLink));
-
-                return false;
-            }
-
-            $preprocessedLink->setCanonical($resolution->getFinalUrl());
-
-            return true;
-
-        } catch (CouldNotResolveException $e) {
-//log
-            $preprocessedLink->setLink($this->getUnprocessedLink($preprocessedLink));
-
-            return false;
+        if (null == $resolution->getFinalUrl()) {
+            throw new CouldNotResolveException($preprocessedLink->getFetched());
         }
 
+        $preprocessedLink->setCanonical($resolution->getFinalUrl());
+
+        if ($resolution->getStartingUrl() !== $resolution->getFinalUrl()) {
+            throw new UrlChangedException($resolution->getStartingUrl(), $resolution->getFinalUrl());
+        }
     }
 
     private function processLink(PreprocessedLink $preprocessedLink)
@@ -366,6 +352,7 @@ class ProcessorService implements LoggerAwareInterface
 
         $linkArray = $link->toArray();
         $linkArray['tempId'] = $linkArray['url'];
+
         return $this->linkModel->updateLink($linkArray);
     }
 
