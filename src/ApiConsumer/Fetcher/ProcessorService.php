@@ -103,8 +103,8 @@ class ProcessorService implements LoggerAwareInterface
         try {
             $this->resolve($preprocessedLink);
         } catch (CouldNotResolveException $e) {
-            $preprocessedLink->setLink($this->getUnprocessedLink($preprocessedLink));
-            $link = $this->save($preprocessedLink, $userId);
+            $link = $this->save($preprocessedLink);
+            $this->like($userId, $link['id'], $preprocessedLink);
 
             return $link;
         } catch (UrlChangedException $e) {
@@ -120,7 +120,8 @@ class ProcessorService implements LoggerAwareInterface
             $this->addSynonymous($preprocessedLink);
             $this->checkCreator($preprocessedLink);
 
-            $link = $this->save($preprocessedLink, $userId);
+            $link = $this->save($preprocessedLink);
+            $this->like($userId, $link['id'], $preprocessedLink);
 
             return $link;
 
@@ -172,12 +173,9 @@ class ProcessorService implements LoggerAwareInterface
         try {
             $this->processLink($preprocessedLink);
 
-            $link = $this->readyToSave($preprocessedLink);
-            $this->linkModel->setProcessed($link->getUrl(), false);
-            $linkCreated = $this->linkModel->addOrUpdateLink($link->toArray());
+            $link = $this->save($preprocessedLink);
 
-            return $linkCreated;
-
+            return $link;
         } catch (Neo4jException $e) {
             $this->logError(sprintf('Query: %s' . "\n" . 'Data: %s', $e->getQuery(), print_r($e->getData(), true)));
 
@@ -311,13 +309,12 @@ class ProcessorService implements LoggerAwareInterface
         }
     }
 
-    private function save(PreprocessedLink $preprocessedLink, $userId)
+    private function save(PreprocessedLink $preprocessedLink)
     {
         $link = $this->readyToSave($preprocessedLink);
 
         try {
             $linkCreated = $this->linkModel->addOrUpdateLink($link->toArray());
-            $this->rateModel->userRateLink($userId, $linkCreated['id'], $preprocessedLink->getSource(), null, RateModel::LIKE, false);
         } catch (Neo4jException $e) {
             $this->logError(sprintf('Query: %s' . "\n" . 'Data: %s', $e->getQuery(), print_r($e->getData(), true)));
 
@@ -360,6 +357,11 @@ class ProcessorService implements LoggerAwareInterface
         $link->setProcessed(false);
 
         return $link;
+    }
+
+    private function like($userId, $linkId, PreprocessedLink $preprocessedLink)
+    {
+        return $this->rateModel->userRateLink($userId, $linkId, $preprocessedLink->getSource(), null, RateModel::LIKE, false);
     }
 
     private function logNotice($message)
