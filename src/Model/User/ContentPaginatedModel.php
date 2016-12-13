@@ -219,16 +219,15 @@ class ContentPaginatedModel implements PaginatedInterface
         $qb = $this->gm->createQueryBuilder();
         $qb->match("(u:User {qnoow_id: { userId }})")
             ->setParameter('userId', $userId);
-
+        $with = 'u,';
         foreach ($types as $type) {
             $qb->optionalMatch("(u)-[:LIKES]->(content$type:$type)")
                 ->where('content' . $type . '.processed = 1');
+            $qb->with($with . "count(DISTINCT content$type) AS count$type");
+            $with .= "count$type,";
         }
-        $returnString = '';
-        foreach ($types as $type) {
-            $returnString .= 'count(DISTINCT content' . $type . ') AS ' . $type . 'Count,';
-        }
-        $qb->returns(trim($returnString, ','));
+
+        $qb->returns(trim($with, ','));
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();
@@ -236,7 +235,7 @@ class ContentPaginatedModel implements PaginatedInterface
         $totals = array();
         foreach ($result as $row) {
             foreach ($types as $type) {
-                $totals[$type] = $row[$type . 'Count'];
+                $totals[$type] = $row["count$type"];
             }
         }
 

@@ -377,6 +377,7 @@ class UserController
 
         try {
             $result = $paginator->paginate($filters, $model, $request);
+            $result['totals'] = $model->countAll($otherUserId, $user->getId(), $showOnlyCommon);
         } catch (\Exception $e) {
             if ($app['env'] == 'dev') {
                 throw $e;
