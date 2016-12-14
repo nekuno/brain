@@ -266,6 +266,43 @@ class ContentComparePaginatedModel implements PaginatedInterface
         return $count;
     }
 
+    public function countAll($userId, $ownUserId, $showOnlyCommon = false)
+    {
+        $types = $this->linkModel->getValidTypes();
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match("(u:User {qnoow_id: { userId }})")
+            ->setParameter('userId', $userId);
+        $with = 'u,';
+        if ($showOnlyCommon) {
+            $qb->with(trim($with, ','))
+                ->match("(ownU:User {qnoow_id: { ownUserId }})")
+                ->setParameter('ownUserId', $ownUserId);
+            $with .= 'ownU,';
+        }
+        foreach ($types as $type) {
+            $qb->optionalMatch("(u)-[:LIKES]->(content$type:$type {processed: 1})");
+            if ($showOnlyCommon) {
+                $qb->where("(ownU)-[:LIKES]->(content$type)");
+            }
+            $qb->with($with . "count(DISTINCT content$type) AS count$type");
+            $with .= "count$type,";
+        }
+
+        $qb->returns(trim($with, ','));
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        $totals = array();
+        foreach ($result as $row) {
+            foreach ($types as $type) {
+                $totals[$type] = $row["count$type"];
+            }
+        }
+
+        return $totals;
+    }
+
     private function buildConditions($relationship, array $socialNetworks = array())
     {
         $conditions = array("content.processed = 1");

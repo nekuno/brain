@@ -213,6 +213,35 @@ class ContentPaginatedModel implements PaginatedInterface
         return $count;
     }
 
+    public function countAll($userId)
+    {
+        $types = $this->linkModel->getValidTypes();
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match("(u:User {qnoow_id: { userId }})")
+            ->setParameter('userId', $userId);
+        $with = 'u,';
+        foreach ($types as $type) {
+            $qb->optionalMatch("(u)-[:LIKES]->(content$type:$type)")
+                ->where('content' . $type . '.processed = 1');
+            $qb->with($with . "count(DISTINCT content$type) AS count$type");
+            $with .= "count$type,";
+        }
+
+        $qb->returns(trim($with, ','));
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        $totals = array();
+        foreach ($result as $row) {
+            foreach ($types as $type) {
+                $totals[$type] = $row["count$type"];
+            }
+        }
+
+        return $totals;
+    }
+
     private function buildConditions(array $socialNetworks)
     {
         $conditions = array("content.processed = 1");
