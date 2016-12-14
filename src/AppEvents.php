@@ -188,4 +188,9 @@ final class AppEvents
      * Fired when a Link needs consistency checked and fixed if necessary
      */
     const CONSISTENCY_LINK = 'consistency.link';
+
+    /**
+     * Fired when processing of an url fails
+     */
+    const URL_UNPROCESSED = 'url.unprocessed';
 }
