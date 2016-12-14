@@ -74,26 +74,10 @@ class ContentComparePaginatedModel implements PaginatedInterface
             $showOnlyCommon = $filters['showOnlyCommon'];
         }
 
-        $tokens1 = $this->tokensModel->getByUserOrResource($id);
-        $socialNetworks1 = array();
-        foreach ($tokens1 as $token) {
-            $socialNetworks1[] = $token['resourceOwner'];
-        }
-
-        $tokens2 = $this->tokensModel->getByUserOrResource($id2);
-        $socialNetworks2 = array();
-        foreach ($tokens2 as $token) {
-            $socialNetworks2[] = $token['resourceOwner'];
-        }
-
         $qb->match("(u:User), (u2:User)")
             ->where("u.qnoow_id = { userId }","u2.qnoow_id = { userId2 }")
-            ->match("(u)-[r:LIKES]->(content:Link)");
+            ->match("(u)-[r:LIKES]->(content:Link {processed: 1})");
         $qb->filterContentByType($types, 'content', array('u2', 'r'));
-
-        $conditions = $this->buildConditions('r', $socialNetworks1);
-
-        $qb->where($conditions);
 
         if (isset($filters['tag'])) {
             $names = json_encode($filters['tag']);
@@ -107,10 +91,6 @@ class ContentComparePaginatedModel implements PaginatedInterface
         } else {
             $qb->optionalMatch("(u2)-[r2:LIKES]->(content)");
         }
-
-        $conditions = $this->buildConditions('r2', $socialNetworks2);
-
-        $qb->where($conditions);
 
         $qb->optionalMatch("(content)-[:TAGGED]->(tag:Tag)")
             ->optionalMatch("(u2)-[a:AFFINITY]->(content)")
@@ -204,18 +184,6 @@ class ContentComparePaginatedModel implements PaginatedInterface
         $count = 0;
         $qb = $this->gm->createQueryBuilder();
 
-        $tokens1 = $this->tokensModel->getByUserOrResource($id);
-        $socialNetworks1 = array();
-        foreach ($tokens1 as $token) {
-            $socialNetworks1[] = $token['resourceOwner'];
-        }
-
-        $tokens2 = $this->tokensModel->getByUserOrResource($id2);
-        $socialNetworks2 = array();
-        foreach ($tokens2 as $token) {
-            $socialNetworks2[] = $token['resourceOwner'];
-        }
-
         $showOnlyCommon = false;
         if (isset($filters['showOnlyCommon'])) {
             $showOnlyCommon = $filters['showOnlyCommon'];
@@ -223,19 +191,11 @@ class ContentComparePaginatedModel implements PaginatedInterface
 
         $qb->match("(u:User)","(u2:User)")
             ->where("u.qnoow_id = { userId }", "u2.qnoow_id = { userId2 }")
-            ->match("(u)-[r:LIKES]->(content:Link)");
+            ->match("(u)-[r:LIKES]->(content:Link {processed: 1})");
         $qb->filterContentByType($types, 'content', array('u2', 'r'));
-
-        $conditions = $this->buildConditions('r', $socialNetworks1);
-
-        $qb->where($conditions);
 
         if ($showOnlyCommon) {
             $qb->match("(u2)-[r2:LIKES]->(content)");
-
-            $conditions = $this->buildConditions('r2', $socialNetworks2);
-
-            $qb->where($conditions);
         }
 
         if (isset($filters['tag'])) {
@@ -303,18 +263,20 @@ class ContentComparePaginatedModel implements PaginatedInterface
         return $totals;
     }
 
-    private function buildConditions($relationship, array $socialNetworks = array())
+    // TODO: Useful for filtering by social networks
+    private function buildSocialNetworkCondition($userId, $relationship)
     {
-        $conditions = array("content.processed = 1");
-
-        $whereSocialNetwork[] = "EXISTS ($relationship.nekuno)";
-        foreach ($socialNetworks as $socialNetwork) {
-            $whereSocialNetwork [] = "EXISTS ($relationship.$socialNetwork)";
+        $tokens = $this->tokensModel->getByUserOrResource($userId);
+        $socialNetworks = array();
+        foreach ($tokens as $token) {
+            $socialNetworks[] = $token['resourceOwner'];
         }
-        $socialNetworkQuery = implode(' OR ', $whereSocialNetwork);
-        $conditions[] = $socialNetworkQuery;
+        $whereSocialNetwork = array();
+        foreach ($socialNetworks as $socialNetwork) {
+            $whereSocialNetwork[] = "EXISTS ($relationship.$socialNetwork)";
+        }
 
-        return $conditions;
+        return implode(' OR ', $whereSocialNetwork);
     }
 
     protected function getChoices()
