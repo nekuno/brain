@@ -134,4 +134,9 @@ class ScraperProcessor implements ProcessorInterface
     {
         return new SynonymousParameters();
     }
+
+    public function getNewUrls(array $data)
+    {
+        return array();
+    }
 }

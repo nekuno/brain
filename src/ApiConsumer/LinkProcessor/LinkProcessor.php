@@ -2,6 +2,7 @@
 
 namespace ApiConsumer\LinkProcessor;
 
+use ApiConsumer\Exception\NewUrlsException;
 use ApiConsumer\Factory\ProcessorFactory;
 use ApiConsumer\Images\ImageAnalyzer;
 use ApiConsumer\LinkProcessor\Processor\ProcessorInterface;
@@ -32,6 +33,7 @@ class LinkProcessor
             $preprocessedLink->getLink()->setThumbnail($image);
         }
 
+        $this->checkNewUrls($scrapper, $response);
         return $preprocessedLink->getLink();
     }
 
@@ -54,6 +56,8 @@ class LinkProcessor
             $this->scrape($preprocessedLink);
         }
 
+        $this->checkNewUrls($processor, $response);
+
         return $preprocessedLink->getLink();
     }
 
@@ -69,5 +73,14 @@ class LinkProcessor
         $images = $processor->getImages($preprocessedLink, $response);
 
         return $this->imageAnalyzer->selectImage($images);
+    }
+
+    protected function checkNewUrls(ProcessorInterface $processor, array $response)
+    {
+        $newUrls = $processor->getNewUrls($response);
+
+        if (!empty($newUrls)){
+            throw new NewUrlsException($newUrls);
+        }
     }
 }

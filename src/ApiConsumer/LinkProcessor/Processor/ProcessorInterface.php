@@ -30,4 +30,10 @@ interface ProcessorInterface
      */
     function getImages(PreprocessedLink $preprocessedLink, array $data);
 
+    /**
+     * @param array $data
+     * @return array
+     */
+    function getNewUrls(array $data);
+
 } 

@@ -5,6 +5,7 @@ namespace ApiConsumer\Fetcher;
 use ApiConsumer\Event\ChannelEvent;
 use ApiConsumer\Exception\CannotProcessException;
 use ApiConsumer\Exception\CouldNotResolveException;
+use ApiConsumer\Exception\NewUrlsException;
 use ApiConsumer\Exception\UrlChangedException;
 use ApiConsumer\Exception\UrlNotValidException;
 use ApiConsumer\LinkProcessor\LinkAnalyzer;
@@ -103,15 +104,19 @@ class ProcessorService implements LoggerAwareInterface
         } catch (UrlChangedException $e) {
         }
 
+        if ($this->isLinkSavedAndProcessed($preprocessedLink)) {
+            $link = $this->linkModel->findLinkByUrl($preprocessedLink->getUrl());
+            $this->like($userId, $link['id'], $preprocessedLink);
+            return null;
+        }
+
         try {
-            if ($this->isLinkSavedAndProcessed($preprocessedLink)) {
-                return null;
-            }
-
             $this->processLink($preprocessedLink);
-
-            $this->addSynonymous($preprocessedLink);
-            $this->checkCreator($preprocessedLink);
+        } catch (NewUrlsException $e) {
+            foreach ($e->getNewUrls() as $newUrl) {
+                $newPreprocessedLink = new PreprocessedLink($newUrl);
+                $this->fullProcessSingle($newPreprocessedLink, $userId);
+            }
 
         } catch (UrlChangedException $e) {
             $preprocessedLink->setUrl($e->getNewUrl());
@@ -123,6 +128,9 @@ class ProcessorService implements LoggerAwareInterface
 
             return null;
         }
+
+        $this->addSynonymous($preprocessedLink);
+        $this->checkCreator($preprocessedLink);
 
         $link = $this->save($preprocessedLink);
         $this->like($userId, $link['id'], $preprocessedLink);
@@ -177,6 +185,24 @@ class ProcessorService implements LoggerAwareInterface
             $preprocessedLink->setUrl($newUrl);
 
             return $this->fullReprocessSingle($preprocessedLink);
+
+        } catch (NewUrlsException $e) {
+
+            $likes = $this->rateModel->getRatesByLink($preprocessedLink->getUrl(), RateModel::LIKE);
+
+            $newPreprocessedLinks = array();
+            foreach ($e->getNewUrls() as $newUrl){
+                $newPreprocessedLink = new PreprocessedLink($newUrl);
+                $newPreprocessedLink->setSource($preprocessedLink->getSource());
+                $newPreprocessedLink->setToken($preprocessedLink->getToken());
+
+                $newPreprocessedLinks[] = $newPreprocessedLink;
+            }
+
+            foreach ($likes as $like)
+            {
+                $this->process($newPreprocessedLinks, $like['userId']);
+            }
 
         } catch (\Exception $e) {
             $this->manageError($e, sprintf('saving link %s from resource %s', $preprocessedLink->getUrl(), $preprocessedLink->getSource()));
@@ -234,6 +260,13 @@ class ProcessorService implements LoggerAwareInterface
         } catch (UrlNotValidException $e) {
             $url = $preprocessedLink->getUrl();
             $this->manageUrlUnprocessed($e, sprintf('cleaning while processing %s', $url), $url);
+
+            $link = $this->getUnprocessedLink($preprocessedLink);
+            $preprocessedLink->setLink($link);
+
+            return;
+        } catch (\Exception $e) {
+            $this->manageError($e, sprintf('cleaning while processing %s', $preprocessedLink->getUrl()));
 
             $link = $this->getUnprocessedLink($preprocessedLink);
             $preprocessedLink->setLink($link);
@@ -301,17 +334,12 @@ class ProcessorService implements LoggerAwareInterface
         } catch (\Exception $e) {
             $this->manageError($e, sprintf('fetching synonymous for %s', $preprocessedLink->getUrl()));
 
-            return false;
+            return;
         }
 
         foreach ($synonymousPreprocessed as $singleSynonymous) {
-            try {
-                $this->processLink($singleSynonymous);
-                $preprocessedLink->getLink()->addSynonymous($singleSynonymous->getLink());
-            } catch (CannotProcessException $e) {
-                $url = $singleSynonymous->getUrl();
-                $this->manageUrlUnprocessed($e, sprintf('processing synonymous link $s', $url), $url);
-            }
+            $this->processLink($singleSynonymous);
+            $preprocessedLink->getLink()->addSynonymous($singleSynonymous->getLink());
         }
     }
 
