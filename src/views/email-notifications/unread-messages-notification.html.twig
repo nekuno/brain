@@ -23,3 +23,8 @@
 {% block button %}
     <a href="http://m.nekuno.com/#/conversations">{{ 'notifications.messages.unread.body.linkAnchor'|trans }}</a>
 {% endblock %}
+{% block footer_images %}
+    {% for message in messages|slice(0,2) %}
+        <img style="display:inline-block; line-height:0px; font-size:0px; border:0px; margin:0 5%;" src="{{ message.picture_from }}" alt="img" />
+    {% endfor %}
+{% endblock %}
