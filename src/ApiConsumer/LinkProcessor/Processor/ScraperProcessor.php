@@ -3,7 +3,7 @@
 namespace ApiConsumer\LinkProcessor\Processor;
 
 use ApiConsumer\Exception\CannotProcessException;
-use ApiConsumer\Images\ImageAnalyzer;
+use ApiConsumer\Images\ImageResponse;
 use ApiConsumer\LinkProcessor\MetadataParser\BasicMetadataParser;
 use ApiConsumer\LinkProcessor\MetadataParser\FacebookMetadataParser;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
@@ -47,25 +47,20 @@ class ScraperProcessor implements ProcessorInterface
 
     public function requestItem(PreprocessedLink $preprocessedLink)
     {
-        $link = $preprocessedLink->getFirstLink();
-
         $url = $preprocessedLink->getUrl();
-        $link->setUrl($url);
 
         try {
             $this->client->getClient()->setDefaultOption('timeout', 30.0);
             $crawler = $this->client->request('GET', $url);
         } catch (\LogicException $e) {
-            //log
             throw new CannotProcessException($url);
         } catch (RequestException $e) {
             throw new CannotProcessException($url);
         }
 
-        $responseHeaders = $this->client->getResponse()->getHeaders();
-        //TODO: unify with LinkResolver->isCorrectImageResponse (QS-800)
-        if ($responseHeaders && isset($responseHeaders['Content-Type'][0]) && false !== strpos($responseHeaders['Content-Type'][0], "image/")) {
-            $image = Image::buildFromArray($link->toArray());
+        $imageResponse = new ImageResponse($url, 200, $this->client->getResponse()->getHeader('Content-Type'));
+        if ($imageResponse->isImage()) {
+            $image = Image::buildFromArray($preprocessedLink->getFirstLink()->toArray());
             $preprocessedLink->addLink($image);
         }
 
