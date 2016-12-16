@@ -96,16 +96,16 @@ class ProcessorService implements LoggerAwareInterface
         } catch (CouldNotResolveException $e) {
             $this->manageUrlUnprocessed($e, sprintf('resolving url %s while processing for user %d', $preprocessedLink->getUrl(), $userId), $preprocessedLink->getUrl());
 
-            $link = $this->save($preprocessedLink);
-            $this->like($userId, $link['id'], $preprocessedLink);
+            $links = $this->save($preprocessedLink);
+            $this->like($userId, $links, $preprocessedLink);
 
-            return $link;
+            return $links;
         } catch (UrlChangedException $e) {
         }
 
         if ($this->isLinkSavedAndProcessed($preprocessedLink)) {
             $link = $this->linkModel->findLinkByUrl($preprocessedLink->getUrl());
-            $this->like($userId, $link['id'], $preprocessedLink);
+            $this->like($userId, array($link), $preprocessedLink);
 
             return null;
         }
@@ -126,10 +126,10 @@ class ProcessorService implements LoggerAwareInterface
         $this->addSynonymous($preprocessedLink);
         $this->checkCreator($preprocessedLink);
 
-        $link = $this->save($preprocessedLink);
-        $this->like($userId, $link['id'], $preprocessedLink);
+        $links = $this->save($preprocessedLink);
+        $this->like($userId, $links, $preprocessedLink);
 
-        return $link;
+        return $links;
     }
 
     /**
@@ -166,10 +166,9 @@ class ProcessorService implements LoggerAwareInterface
 
         try {
             $this->processLink($preprocessedLink);
+            $links = $this->save($preprocessedLink);
 
-            $link = $this->save($preprocessedLink);
-
-            return $link;
+            return $links;
         } catch (UrlChangedException $e) {
 
             $oldUrl = $e->getOldUrl();
@@ -378,16 +377,20 @@ class ProcessorService implements LoggerAwareInterface
         return $preprocessedLink->getLinks();
     }
 
-    private function like($userId, $linkId, PreprocessedLink $preprocessedLink)
+    private function like($userId, array $links, PreprocessedLink $preprocessedLink)
     {
-        try {
-            $like = $this->rateModel->userRateLink($userId, $linkId, $preprocessedLink->getSource(), null, RateModel::LIKE, false);
-        } catch (\Exception $e) {
-            $this->manageError($e, sprintf('liking while processing link with id %d for user $d', $linkId, $userId));
-            $like = array();
+        $likes = array();
+        foreach ($links as $link) {
+            $linkId = $link['id'];
+            try {
+                $like = $this->rateModel->userRateLink($userId, $linkId, $preprocessedLink->getSource(), null, RateModel::LIKE, false);
+                $likes[] = $like;
+            } catch (\Exception $e) {
+                $this->manageError($e, sprintf('liking while processing link with id %d for user $d', $linkId, $userId));
+            }
         }
 
-        return $like;
+        return $likes;
     }
 
     private function logNotice($message)
