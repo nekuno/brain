@@ -18,7 +18,7 @@ class YoutubePlaylistProcessor extends AbstractYoutubeProcessor
         $link->setEmbedId($preprocessedLink->getResourceItemId());
         $link->setEmbedType('youtube');
 
-        $preprocessedLink->addLink($link);
+        $preprocessedLink->setFirstLink($link);
     }
 
     function getItemIdFromParser($url)

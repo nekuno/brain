@@ -77,7 +77,7 @@ abstract class AbstractTweetsFetcher extends BasicPaginationFetcher
             $link->setCreated($timestamp);
 
             $preprocessedLink = new PreprocessedLink($url);
-            $preprocessedLink->addLink($link);
+            $preprocessedLink->setFirstLink($link);
 
             $formatted[] = $preprocessedLink;
         }

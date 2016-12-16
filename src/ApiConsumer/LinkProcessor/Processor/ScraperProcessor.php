@@ -61,7 +61,7 @@ class ScraperProcessor implements ProcessorInterface
         $imageResponse = new ImageResponse($url, 200, $this->client->getResponse()->getHeader('Content-Type'));
         if ($imageResponse->isImage()) {
             $image = Image::buildFromArray($preprocessedLink->getFirstLink()->toArray());
-            $preprocessedLink->addLink($image);
+            $preprocessedLink->setFirstLink($image);
         }
 
         return array('html' => $crawler->html());

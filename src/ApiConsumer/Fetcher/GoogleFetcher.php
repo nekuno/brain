@@ -95,7 +95,7 @@ class GoogleFetcher extends BasicPaginationFetcher
             $link['timestamp'] = $timestamp;
 
             $preprocessedLink = new PreprocessedLink($link['url']);
-            $preprocessedLink->addLink(Link::buildFromArray($link));
+            $preprocessedLink->setFirstLink(Link::buildFromArray($link));
             $preprocessedLink->setResourceItemId(array_key_exists('id', $item) ? $item['id'] : null);
             $preprocessedLink->setSource($this->resourceOwner->getName());
             $parsed[] = $preprocessedLink;

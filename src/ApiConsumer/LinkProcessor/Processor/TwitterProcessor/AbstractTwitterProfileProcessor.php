@@ -46,7 +46,7 @@ abstract class AbstractTwitterProfileProcessor extends AbstractProcessor impleme
 
     public function hydrateLink(PreprocessedLink $preprocessedLink, array $data)
     {
-        $preprocessedLink->addLink(Creator::buildFromArray($this->resourceOwner->buildProfileFromLookup($data)));
+        $preprocessedLink->setFirstLink(Creator::buildFromArray($this->resourceOwner->buildProfileFromLookup($data)));
     }
 
     public function getImages(PreprocessedLink $preprocessedLink, array $data)

@@ -283,7 +283,7 @@ class YoutubeFetcher extends BasicPaginationFetcher
             $link['description'] = array_key_exists('description', $item['snippet']) ? $item['snippet']['description'] : '';
             $link['timestamp'] = $timestamp;
 
-            $preprocessedLink->addLink(Link::buildFromArray($link));
+            $preprocessedLink->setFirstLink(Link::buildFromArray($link));
             $preprocessedLink->setResourceItemId(array_key_exists('id', $item) ? $item['id'] : null);
             $preprocessedLink->setSource($this->resourceOwner->getName());
 

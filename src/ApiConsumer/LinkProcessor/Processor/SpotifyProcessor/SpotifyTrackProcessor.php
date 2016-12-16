@@ -41,7 +41,7 @@ class SpotifyTrackProcessor extends AbstractSpotifyProcessor
         $link->setEmbedType('spotify');
         $link->setEmbedId($track['uri']);
 
-        $preprocessedLink->addLink($link);
+        $preprocessedLink->setFirstLink($link);
     }
 
     public function getImages(PreprocessedLink $preprocessedLink, array $data)

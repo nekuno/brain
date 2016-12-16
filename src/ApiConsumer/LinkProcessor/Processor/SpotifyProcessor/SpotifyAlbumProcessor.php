@@ -29,7 +29,7 @@ class SpotifyAlbumProcessor extends AbstractSpotifyProcessor
         $link->setEmbedId($data['uri']);
         $link->setEmbedType('spotify');
 
-        $preprocessedLink->addLink($link);
+        $preprocessedLink->setFirstLink($link);
     }
 
     public function addTags(PreprocessedLink $preprocessedLink, array $data)

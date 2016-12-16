@@ -19,7 +19,7 @@ class YoutubeVideoProcessor extends AbstractYoutubeProcessor
         $link->setEmbedId($itemId);
         $link->setEmbedType('youtube');
 
-        $preprocessedLink->addLink($link);
+        $preprocessedLink->setFirstLink($link);
     }
 
     public function getImages(PreprocessedLink $preprocessedLink, array $data)

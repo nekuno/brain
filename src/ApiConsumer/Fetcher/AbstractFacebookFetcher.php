@@ -124,7 +124,7 @@ abstract class AbstractFacebookFetcher extends BasicPaginationFetcher
 
         $parsedLink = new PreprocessedLink($link->getUrl());
         $parsedLink->setResourceItemId($id);
-        $parsedLink->addLink($link);
+        $parsedLink->setFirstLink($link);
         $parsedLink->setSource($this->resourceOwner->getName());
 
         $this->addAdditionalType($parsedLink, $item);

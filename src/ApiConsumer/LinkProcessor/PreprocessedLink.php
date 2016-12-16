@@ -117,9 +117,9 @@ class PreprocessedLink
     /**
      * @param Link $link
      */
-    public function addLink($link)
+    public function setFirstLink($link)
     {
-        $this->links[] = $link;
+        $this->links[0] = $link;
     }
 
     /**

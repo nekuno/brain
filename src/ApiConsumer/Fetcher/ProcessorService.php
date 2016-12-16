@@ -229,27 +229,7 @@ class ProcessorService implements LoggerAwareInterface
 
     private function processLink(PreprocessedLink $preprocessedLink)
     {
-        try {
-            $cleanURL = LinkAnalyzer::cleanUrl($preprocessedLink->getUrl());
-            $preprocessedLink->setUrl($cleanURL);
-        } catch (UrlNotValidException $e) {
-            $url = $preprocessedLink->getUrl();
-            $this->manageUrlUnprocessed($e, sprintf('cleaning while processing %s', $url), $url);
-
-            $links = $this->getUnprocessedLinks($preprocessedLink);
-            foreach ($links as $link) {
-                $preprocessedLink->addLink($link);
-            }
-
-            return;
-        } catch (\Exception $e) {
-            $this->manageError($e, sprintf('cleaning while processing %s', $preprocessedLink->getUrl()));
-
-            $links = $this->getUnprocessedLinks($preprocessedLink);
-            foreach ($links as $link) {
-                $preprocessedLink->addLink($link);
-            }
-
+        if (!$this->cleanUrl($preprocessedLink)) {
             return;
         }
 
@@ -263,6 +243,27 @@ class ProcessorService implements LoggerAwareInterface
         }
 
         $preprocessedLink->setLinks($links);
+    }
+
+    private function cleanUrl(PreprocessedLink $preprocessedLink)
+    {
+        try {
+            $cleanURL = LinkAnalyzer::cleanUrl($preprocessedLink->getUrl());
+            $preprocessedLink->setUrl($cleanURL);
+        } catch (UrlNotValidException $e) {
+            $url = $preprocessedLink->getUrl();
+            $this->manageUrlUnprocessed($e, sprintf('cleaning while processing %s', $url), $url);
+            $this->getUnprocessedLinks($preprocessedLink);
+
+            return false;
+        } catch (\Exception $e) {
+            $this->manageError($e, sprintf('cleaning while processing %s', $preprocessedLink->getUrl()));
+            $this->getUnprocessedLinks($preprocessedLink);
+
+            return false;
+        }
+
+        return true;
     }
 
     private function scrape(PreprocessedLink $preprocessedLink)
