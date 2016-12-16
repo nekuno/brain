@@ -2,10 +2,8 @@
 
 namespace ApiConsumer\ResourceOwner;
 
-use ApiConsumer\Event\ChannelEvent;
 use Buzz\Exception\RequestException;
 use Buzz\Message\Response;
-use Event\ExceptionEvent;
 use Model\User\TokensModel;
 use Service\LookUp\LookUp;
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
@@ -24,6 +22,8 @@ class TwitterResourceOwner extends TwitterResourceOwnerBase
 	}
 
 	protected $name = TokensModel::TWITTER;
+
+	const PROFILES_PER_LOOKUP = 100;
 
 	public function __construct($httpClient, $httpUtils, $options, $name, $storage, $dispatcher)
 	{
@@ -89,7 +89,7 @@ class TwitterResourceOwner extends TwitterResourceOwnerBase
 			return false;
 		}
 
-		$chunks = array_chunk($userIds, 100);
+		$chunks = array_chunk($userIds, self::PROFILES_PER_LOOKUP);
 		$baseUrl = $this->getOption('base_url');
 		$url = $baseUrl . 'users/lookup.json';
 
