@@ -1,7 +1,4 @@
 <?php
-/**
- * @author yawmoght <yawmoght@gmail.com>
- */
 
 namespace Model\User;
 
@@ -225,17 +222,17 @@ class ProfileFilterModel extends FilterModel
         return $minInterval->y;
     }
 
-    public function getBirthdayRangeFromAgeRange($min = null, $max = null)
+    public function getBirthdayRangeFromAgeRange($min = null, $max = null, $nowDate = null)
     {
         $return = array('max' => null, 'min' => null);
         if ($min){
-            $now = new \DateTime();
-            $maxBirthday = $now->modify('-'.($min-1).' years')->format('Y-m-d');
+            $now = new \DateTime($nowDate);
+            $maxBirthday = $now->modify('-'.($min).' years')->format('Y-m-d');
             $return ['max'] = $maxBirthday;
         }
         if ($max){
-            $now = new \DateTime();
-            $minBirthday = $now->modify('-'.$max.' years')->format('Y-m-d');
+            $now = new \DateTime($nowDate);
+            $minBirthday = $now->modify('-'.($max + 1).' years')->modify('+ 1 days')->format('Y-m-d');
             $return['min'] = $minBirthday;
         }
 
