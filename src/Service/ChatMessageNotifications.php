@@ -221,7 +221,7 @@ class ChatMessageNotifications
     {
         foreach ($chatMessages as $index => $chatMessage) {
             $chatMessages[$index]['username_from'] = $this->userManager->getById($chatMessage['user_from'])->getUsername();
-            $chatMessages[$index]['picture_from'] = $this->userManager->getById($chatMessage['user_from'])->getPhoto()->getFullPath();
+            $chatMessages[$index]['picture_from'] = $this->userManager->getById($chatMessage['user_from'])->getPhoto()->getUrl();
         }
 
         return array(
