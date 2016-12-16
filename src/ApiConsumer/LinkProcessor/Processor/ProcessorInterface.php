@@ -15,25 +15,19 @@ interface ProcessorInterface
      * @return array|Crawler
      * @throws CannotProcessException|UrlChangedException
      */
-    function requestItem(PreprocessedLink $preprocessedLink);
+    public function requestItem(PreprocessedLink $preprocessedLink);
 
-    function hydrateLink(PreprocessedLink $preprocessedLink, array $data);
+    public function hydrateLink(PreprocessedLink $preprocessedLink, array $data);
 
-    function addTags(PreprocessedLink $preprocessedLink, array $data);
+    public function addTags(PreprocessedLink $preprocessedLink, array $data);
 
-    function getSynonymousParameters(PreprocessedLink $preprocessedLink, array $data);
+    public function getSynonymousParameters(PreprocessedLink $preprocessedLink, array $data);
 
     /**
      * @param PreprocessedLink $preprocessedLink
      * @param array $data
      * @return array
      */
-    function getImages(PreprocessedLink $preprocessedLink, array $data);
-
-    /**
-     * @param array $data
-     * @return array
-     */
-    function getNewUrls(array $data);
+    public function getImages(PreprocessedLink $preprocessedLink, array $data);
 
 } 

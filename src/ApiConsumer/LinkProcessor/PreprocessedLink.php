@@ -20,9 +20,9 @@ class PreprocessedLink
     protected $resourceItemId;
 
     /**
-     * @var Link
+     * @var Link[]
      */
-    protected $link;
+    protected $links;
 
     /**
      * @var array Token which was used for fetching
@@ -46,7 +46,7 @@ class PreprocessedLink
     {
         $this->url = $url;
 
-        $this->link = new Link();
+        $this->links = array(new Link());
         $this->synonymousParameters = new SynonymousParameters();
     }
 
@@ -109,40 +109,33 @@ class PreprocessedLink
     /**
      * @return Link
      */
-    public function getLink()
+    public function getFirstLink()
     {
-        return $this->link;
+        return reset($this->links);
     }
 
     /**
      * @param Link $link
      */
-    public function setLink($link)
+    public function addLink($link)
     {
-        $this->link = $link;
-    }
-
-    public function addToLink($array)
-    {
-        foreach ($array as $key=>$value)
-        {
-            $this->link[$key] = $value;
-        }
-
-        return $this->getLink();
+        $this->links[] = $link;
     }
 
     /**
-     * TODO: Refactor to Link object whenever available
-     * @param $label
+     * @return Link[]
      */
-    public function addAdditionalLabel($label)
+    public function getLinks()
     {
-        if (!isset($this->link['additionalLabels'])){
-            $this->link['additionalLabels'] = array();
-        }
+        return $this->links;
+    }
 
-        $this->link['additionalLabels'][] = $label;
+    /**
+     * @param Link[] $links
+     */
+    public function setLinks($links)
+    {
+        $this->links = $links;
     }
 
     /**

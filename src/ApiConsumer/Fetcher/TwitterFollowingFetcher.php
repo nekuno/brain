@@ -63,7 +63,7 @@ class TwitterFollowingFetcher extends BasicPaginationFetcher
                     'timestamp' => 1000 * time(),
                 );
                 $preprocessedLink = new PreprocessedLink($link['url']);
-                $preprocessedLink->setLink(Creator::buildFromArray($link));
+                $preprocessedLink->addLink(Creator::buildFromArray($link));
                 $preprocessedLink->setSource($this->resourceOwner->getName());
                 $preprocessedLink->setResourceItemId($id);
                 $preprocessedLinks[] = $preprocessedLink;
@@ -80,7 +80,7 @@ class TwitterFollowingFetcher extends BasicPaginationFetcher
 //                    )
 //                );
                 $preprocessedLink = new PreprocessedLink($link['url']);
-                $preprocessedLink->setLink(Creator::buildFromArray($link));
+                $preprocessedLink->addLink(Creator::buildFromArray($link));
                 $preprocessedLinks[] = $preprocessedLink;
             }
         }

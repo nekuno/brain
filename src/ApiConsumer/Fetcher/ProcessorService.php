@@ -5,7 +5,6 @@ namespace ApiConsumer\Fetcher;
 use ApiConsumer\Event\ChannelEvent;
 use ApiConsumer\Exception\CannotProcessException;
 use ApiConsumer\Exception\CouldNotResolveException;
-use ApiConsumer\Exception\NewUrlsException;
 use ApiConsumer\Exception\UrlChangedException;
 use ApiConsumer\Exception\UrlNotValidException;
 use ApiConsumer\LinkProcessor\LinkAnalyzer;
@@ -107,17 +106,12 @@ class ProcessorService implements LoggerAwareInterface
         if ($this->isLinkSavedAndProcessed($preprocessedLink)) {
             $link = $this->linkModel->findLinkByUrl($preprocessedLink->getUrl());
             $this->like($userId, $link['id'], $preprocessedLink);
+
             return null;
         }
 
         try {
             $this->processLink($preprocessedLink);
-        } catch (NewUrlsException $e) {
-            foreach ($e->getNewUrls() as $newUrl) {
-                $newPreprocessedLink = new PreprocessedLink($newUrl);
-                $this->fullProcessSingle($newPreprocessedLink, $userId);
-            }
-
         } catch (UrlChangedException $e) {
             $preprocessedLink->setUrl($e->getNewUrl());
 
@@ -186,24 +180,6 @@ class ProcessorService implements LoggerAwareInterface
 
             return $this->fullReprocessSingle($preprocessedLink);
 
-        } catch (NewUrlsException $e) {
-
-            $likes = $this->rateModel->getRatesByLink($preprocessedLink->getUrl(), RateModel::LIKE);
-
-            $newPreprocessedLinks = array();
-            foreach ($e->getNewUrls() as $newUrl){
-                $newPreprocessedLink = new PreprocessedLink($newUrl);
-                $newPreprocessedLink->setSource($preprocessedLink->getSource());
-                $newPreprocessedLink->setToken($preprocessedLink->getToken());
-
-                $newPreprocessedLinks[] = $newPreprocessedLink;
-            }
-
-            foreach ($likes as $like)
-            {
-                $this->process($newPreprocessedLinks, $like['userId']);
-            }
-
         } catch (\Exception $e) {
             $this->manageError($e, sprintf('saving link %s from resource %s', $preprocessedLink->getUrl(), $preprocessedLink->getSource()));
 
@@ -261,29 +237,33 @@ class ProcessorService implements LoggerAwareInterface
             $url = $preprocessedLink->getUrl();
             $this->manageUrlUnprocessed($e, sprintf('cleaning while processing %s', $url), $url);
 
-            $link = $this->getUnprocessedLink($preprocessedLink);
-            $preprocessedLink->setLink($link);
+            $links = $this->getUnprocessedLinks($preprocessedLink);
+            foreach ($links as $link) {
+                $preprocessedLink->addLink($link);
+            }
 
             return;
         } catch (\Exception $e) {
             $this->manageError($e, sprintf('cleaning while processing %s', $preprocessedLink->getUrl()));
 
-            $link = $this->getUnprocessedLink($preprocessedLink);
-            $preprocessedLink->setLink($link);
+            $links = $this->getUnprocessedLinks($preprocessedLink);
+            foreach ($links as $link) {
+                $preprocessedLink->addLink($link);
+            }
 
             return;
         }
 
         try {
-            $link = $this->linkProcessor->process($preprocessedLink);
+            $links = $this->linkProcessor->process($preprocessedLink);
         } catch (CannotProcessException $e) {
-            $link = $this->scrape($preprocessedLink);
+            $links = array($this->scrape($preprocessedLink));
         } catch (RequestException $e) {
             $this->manageError($e, 'requesting while processing from linkProcessor');
-            $link = $this->scrape($preprocessedLink);
+            $links = array($this->scrape($preprocessedLink));
         }
 
-        $preprocessedLink->setLink($link);
+        $preprocessedLink->setLinks($links);
     }
 
     private function scrape(PreprocessedLink $preprocessedLink)
@@ -293,7 +273,7 @@ class ProcessorService implements LoggerAwareInterface
         } catch (CannotProcessException $e) {
             $this->manageError($e, sprintf('scraping %s', $preprocessedLink->getUrl()));
 
-            return $this->getUnprocessedLink($preprocessedLink);
+            return $this->getUnprocessedLinks($preprocessedLink);
         }
     }
 
@@ -314,17 +294,16 @@ class ProcessorService implements LoggerAwareInterface
 
     private function checkCreator(PreprocessedLink $preprocessedLink)
     {
-        $link = $preprocessedLink->getLink();
-
-        try {
+        foreach ($preprocessedLink->getLinks() as $link) {
             if ($link instanceof Creator && $preprocessedLink->getSource() == TokensModel::TWITTER) {
-                $username = (new TwitterUrlParser())->getProfileId($link->getUrl());
-                $this->dispatcher->dispatch(\AppEvents::CHANNEL_ADDED, new ChannelEvent(TokensModel::TWITTER, $link->getUrl(), $username));
+                try {
+                    $username = (new TwitterUrlParser())->getProfileId($link->getUrl());
+                    $this->dispatcher->dispatch(\AppEvents::CHANNEL_ADDED, new ChannelEvent(TokensModel::TWITTER, $link->getUrl(), $username));
+                } catch (\Exception $e) {
+                    $this->manageError($e, sprintf('checking creator for url %s', $link->getUrl()));
+                }
             }
-        } catch (\Exception $e) {
-            $this->manageError($e, sprintf('checking creator for url %s', $preprocessedLink->getUrl()));
         }
-
     }
 
     private function addSynonymous(PreprocessedLink $preprocessedLink)
@@ -339,54 +318,64 @@ class ProcessorService implements LoggerAwareInterface
 
         foreach ($synonymousPreprocessed as $singleSynonymous) {
             $this->processLink($singleSynonymous);
-            $preprocessedLink->getLink()->addSynonymous($singleSynonymous->getLink());
+            $preprocessedLink->getFirstLink()->addSynonymous($singleSynonymous->getFirstLink());
         }
     }
 
     private function save(PreprocessedLink $preprocessedLink)
     {
-        $link = $this->readyToSave($preprocessedLink);
+        $links = array();
+        $this->readyToSave($preprocessedLink);
+        foreach ($preprocessedLink->getLinks() as $link) {
+            try {
+                $linkCreated = $this->linkModel->addOrUpdateLink($link->toArray());
+                $links[] = $linkCreated;
+            } catch (\Exception $e) {
+                $this->manageError($e, sprintf('saving link %s from resource %s', $preprocessedLink->getUrl(), $preprocessedLink->getSource()));
 
-        try {
-            $linkCreated = $this->linkModel->addOrUpdateLink($link->toArray());
-        } catch (\Exception $e) {
-            $this->manageError($e, sprintf('saving link %s from resource %s', $preprocessedLink->getUrl(), $preprocessedLink->getSource()));
-
-            return array();
+                continue;
+            }
         }
 
-        return $linkCreated;
+        return $links;
     }
 
     private function readyToSave(PreprocessedLink $preprocessedLink)
     {
-        $link = $preprocessedLink->getLink();
-
-        if (!$link->isComplete()) {
-            //log
-            $link = $this->getUnprocessedLink($preprocessedLink);
+        foreach ($preprocessedLink->getLinks() as $link) {
+            if (!$link->isComplete()) {
+                //log
+                $this->getUnprocessedLinks($preprocessedLink);
+            }
         }
 
-        return $link;
+        return $preprocessedLink->getLinks();
     }
 
     private function overwrite(PreprocessedLink $preprocessedLink)
     {
-        $link = $this->getUnprocessedLink($preprocessedLink);
-        $this->linkModel->setProcessed($link->getUrl(), false);
+        $links = $this->getUnprocessedLinks($preprocessedLink);
+        $updatedLinks = array();
 
-        $linkArray = $link->toArray();
-        $linkArray['tempId'] = $linkArray['url'];
+        foreach ($links as $link) {
+            $this->linkModel->setProcessed($link->getUrl(), false);
 
-        return $this->linkModel->updateLink($linkArray);
+            $linkArray = $link->toArray();
+            $linkArray['tempId'] = $linkArray['url'];
+
+            $updatedLinks[] = $this->linkModel->updateLink($linkArray);
+        }
+
+        return $updatedLinks;
     }
 
-    private function getUnprocessedLink(PreprocessedLink $preprocessedLink)
+    private function getUnprocessedLinks(PreprocessedLink $preprocessedLink)
     {
-        $link = $preprocessedLink->getLink();
-        $link->setProcessed(false);
+        foreach ($preprocessedLink->getLinks() as $link) {
+            $link->setProcessed(false);
+        }
 
-        return $link;
+        return $preprocessedLink->getLinks();
     }
 
     private function like($userId, $linkId, PreprocessedLink $preprocessedLink)

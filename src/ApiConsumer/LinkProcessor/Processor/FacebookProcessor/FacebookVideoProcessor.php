@@ -31,7 +31,7 @@ class FacebookVideoProcessor extends AbstractFacebookProcessor
         $video->setEmbedType(TokensModel::FACEBOOK);
         $video->setEmbedId($preprocessedLink->getResourceItemId());
 
-        $preprocessedLink->setLink($video);
+        $preprocessedLink->addLink($video);
     }
 
     public function getImages(PreprocessedLink $preprocessedLink, array $data)

@@ -32,7 +32,7 @@ class LinkController
         $preprocessedLinks = array();
         foreach ($linksToReprocess as $link) {
             $preprocessedLink = new PreprocessedLink($link['url']);
-            $preprocessedLink->setLink(Link::buildFromArray($link));
+            $preprocessedLink->addLink(Link::buildFromArray($link));
             $preprocessedLinks[] = $preprocessedLink;
         }
         $reprocessedLinks = $processorService->reprocess($preprocessedLinks);

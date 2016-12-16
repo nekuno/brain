@@ -4,12 +4,13 @@ namespace ApiConsumer\LinkProcessor\Processor\TwitterProcessor;
 
 use ApiConsumer\LinkProcessor\PreprocessedLink;
 use ApiConsumer\LinkProcessor\Processor\AbstractProcessor;
+use ApiConsumer\LinkProcessor\Processor\BatchProcessorInterface;
 use ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser;
 use ApiConsumer\ResourceOwner\TwitterResourceOwner;
 use Model\Creator;
 use Model\User\TokensModel;
 
-abstract class AbstractTwitterProfileProcessor extends AbstractProcessor
+abstract class AbstractTwitterProfileProcessor extends AbstractProcessor implements BatchProcessorInterface
 {
     /**
      * @var TwitterResourceOwner
@@ -21,10 +22,14 @@ abstract class AbstractTwitterProfileProcessor extends AbstractProcessor
      */
     protected $parser;
 
+    /**
+     * @var PreprocessedLink[]
+     */
+    protected $batch = array();
 
     function hydrateLink(PreprocessedLink $preprocessedLink, array $data)
     {
-        $preprocessedLink->setLink(Creator::buildFromArray($this->resourceOwner->buildProfileFromLookup($data)));
+        $preprocessedLink->addLink(Creator::buildFromArray($this->resourceOwner->buildProfileFromLookup($data)));
     }
 
     public function getImages(PreprocessedLink $preprocessedLink, array $data)
@@ -36,6 +41,11 @@ abstract class AbstractTwitterProfileProcessor extends AbstractProcessor
     {
         $bla = $this->parser->getProfileId($url);
         return $bla;
+    }
+
+    public function addToBatch(PreprocessedLink $preprocessedLink)
+    {
+        $this->batch[] = $preprocessedLink;
     }
 
 }

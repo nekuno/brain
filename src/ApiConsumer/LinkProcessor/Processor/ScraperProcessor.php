@@ -47,7 +47,7 @@ class ScraperProcessor implements ProcessorInterface
 
     public function requestItem(PreprocessedLink $preprocessedLink)
     {
-        $link = $preprocessedLink->getLink();
+        $link = $preprocessedLink->getFirstLink();
 
         $url = $preprocessedLink->getUrl();
         $link->setUrl($url);
@@ -66,7 +66,7 @@ class ScraperProcessor implements ProcessorInterface
         //TODO: unify with LinkResolver->isCorrectImageResponse (QS-800)
         if ($responseHeaders && isset($responseHeaders['Content-Type'][0]) && false !== strpos($responseHeaders['Content-Type'][0], "image/")) {
             $image = Image::buildFromArray($link->toArray());
-            $preprocessedLink->setLink($image);
+            $preprocessedLink->addLink($image);
         }
 
         return array('html' => $crawler->html());
@@ -74,7 +74,7 @@ class ScraperProcessor implements ProcessorInterface
 
     public function hydrateLink(PreprocessedLink $preprocessedLink, array $data)
     {
-        $link = $preprocessedLink->getLink();
+        $link = $preprocessedLink->getFirstLink();
 
         $crawler = new Crawler();
         $crawler->addHtmlContent($data['html']);
@@ -109,7 +109,7 @@ class ScraperProcessor implements ProcessorInterface
 
     public function addTags(PreprocessedLink $preprocessedLink, array $data)
     {
-        $link = $preprocessedLink->getLink();
+        $link = $preprocessedLink->getFirstLink();
         $crawler = new Crawler();
         $crawler->addHtmlContent($data['html']);
 
@@ -133,10 +133,5 @@ class ScraperProcessor implements ProcessorInterface
     public function getSynonymousParameters(PreprocessedLink $preprocessedLink, array $data)
     {
         return new SynonymousParameters();
-    }
-
-    public function getNewUrls(array $data)
-    {
-        return array();
     }
 }

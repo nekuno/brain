@@ -66,7 +66,7 @@ class LinksProcessDatabaseCommand extends ApplicationAwareCommand
             $preprocessedLinks = array();
             foreach ($links as $link) {
                 $preprocessedLink = new PreprocessedLink($link['url']);
-                $preprocessedLink->setLink(Link::buildFromArray($link));
+                $preprocessedLink->addLink(Link::buildFromArray($link));
                 $preprocessedLinks[] = $preprocessedLink;
             }
 

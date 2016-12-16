@@ -17,7 +17,7 @@ class SpotifyArtistProcessor extends AbstractSpotifyProcessor
 
     public function hydrateLink(PreprocessedLink $preprocessedLink, array $data)
     {
-        $link = $preprocessedLink->getLink();
+        $link = $preprocessedLink->getFirstLink();
 
         $link->setTitle($data['name']);
         //TODO: Check thumbnail & description from scrapper
@@ -27,7 +27,7 @@ class SpotifyArtistProcessor extends AbstractSpotifyProcessor
     {
         parent::addTags($preprocessedLink, $data);
 
-        $link = $preprocessedLink->getLink();
+        $link = $preprocessedLink->getFirstLink();
 
         if (isset($data['name']) && isset($data['genres'])) {
             foreach ($data['genres'] as $genre) {

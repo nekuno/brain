@@ -13,7 +13,7 @@ class YoutubeChannelProcessor extends AbstractYoutubeProcessor
 
     function addTags(PreprocessedLink $preprocessedLink, array $item)
     {
-        $link = $preprocessedLink->getLink();
+        $link = $preprocessedLink->getFirstLink();
 
         if (isset($item['brandingSettings']['channel']['keywords'])) {
             $tags = $item['brandingSettings']['channel']['keywords'];

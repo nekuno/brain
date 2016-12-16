@@ -84,7 +84,7 @@ class TwitterIntentProcessorTest extends \PHPUnit_Framework_TestCase
         $link = new PreprocessedLink($url);
         $this->processor->hydrateLink($link, $response);
 
-        $this->assertEquals($expectedArray, $link->getLink()->toArray(), 'Asserting correct hydrated link for ' . $url);
+        $this->assertEquals($expectedArray, $link->getFirstLink()->toArray(), 'Asserting correct hydrated link for ' . $url);
     }
 
     /**
@@ -97,7 +97,7 @@ class TwitterIntentProcessorTest extends \PHPUnit_Framework_TestCase
 
         $tags = $expectedTags;
         sort($tags);
-        $resultTags = $link->getLink()->getTags();
+        $resultTags = $link->getFirstLink()->getTags();
         sort($resultTags);
         $this->assertEquals($tags, $resultTags);
     }

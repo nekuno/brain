@@ -23,23 +23,17 @@ class TwitterProfileProcessor extends AbstractTwitterProfileProcessor
         return $users[0];
     }
 
-    /**
-     * @param $preprocessedLinks PreprocessedLink[]
-     * @return array|bool
-     * //TODO: Generalize "batch processing" logic?
-     */
-    public function processMultipleProfiles($preprocessedLinks)
+    public function requestBatchLinks()
     {
-
         $userNames = array();
-        foreach ($preprocessedLinks as $key => $preprocessedLink) {
+        foreach ($this->batch as $key => $preprocessedLink) {
 
-            $link = $preprocessedLink->getLink();
+            $link = $preprocessedLink->getFirstLink();
 
             if ($preprocessedLink->getSource() == TokensModel::TWITTER
                 && $link->isComplete() && !($link->getProcessed() !== false)
             ) {
-                unset($preprocessedLinks[$key]);
+                unset($this->batch[$key]);
             }
 
             $userName = $this->parser->getProfileId($preprocessedLink->getUrl());
@@ -58,4 +52,5 @@ class TwitterProfileProcessor extends AbstractTwitterProfileProcessor
 
         return $links;
     }
+
 }

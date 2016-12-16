@@ -35,11 +35,6 @@ abstract class AbstractProcessor implements ProcessorInterface
         return array();
     }
 
-    public function getNewUrls(array $data)
-    {
-        return array();
-    }
-
     protected function getItemId($url)
     {
         try{

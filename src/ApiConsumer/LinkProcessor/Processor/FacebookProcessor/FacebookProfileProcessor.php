@@ -32,7 +32,7 @@ class FacebookProfileProcessor extends AbstractFacebookProcessor
 
     public function hydrateLink(PreprocessedLink $preprocessedLink, array $data)
     {
-        $link = $preprocessedLink->getLink();
+        $link = $preprocessedLink->getFirstLink();
         $link->setDescription(isset($data['description']) ? $data['description'] : $this->buildDescriptionFromTitle($data));
         $link->setTitle(isset($data['name']) ? $data['name'] : $this->buildTitleFromDescription($data));
     }

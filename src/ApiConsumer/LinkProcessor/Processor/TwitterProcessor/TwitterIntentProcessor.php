@@ -28,20 +28,15 @@ class TwitterIntentProcessor extends AbstractTwitterProfileProcessor
         return $users[0];
     }
 
-    /**
-     * @param $preprocessedLinks PreprocessedLink[]
-     * @return array|bool
-     */
-    public function processMultipleIntents($preprocessedLinks)
+    public function requestBatchLinks()
     {
-
         $userIds = array('user_id' => array(), 'screen_name' => array());
-        foreach ($preprocessedLinks as $key => $preprocessedLink) {
+        foreach ($this->batch as $key => $preprocessedLink) {
 
-            $link = $preprocessedLink->getLink();
+            $link = $preprocessedLink->getFirstLink();
 
             if ($link->isComplete() && $link->getProcessed() !== false) {
-                unset($preprocessedLinks[$key]);
+                unset($this->batch[$key]);
             }
 
             $userId = $preprocessedLink->getResourceItemId() ?

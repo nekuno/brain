@@ -39,7 +39,7 @@ abstract class AbstractYoutubeProcessor extends AbstractProcessor
 
     function hydrateLink(PreprocessedLink $preprocessedLink, array $data)
     {
-        $link = $preprocessedLink->getLink();
+        $link = $preprocessedLink->getFirstLink();
 
         $snippet = $data['snippet'];
         $link->setTitle($snippet['title']);
