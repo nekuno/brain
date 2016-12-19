@@ -2,11 +2,10 @@
 
 namespace ApiConsumer\LinkProcessor\Processor\TwitterProcessor;
 
-use ApiConsumer\Exception\CannotProcessException;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
-use Model\User\TokensModel;
+use ApiConsumer\LinkProcessor\Processor\AbstractProcessor;
 
-class TwitterIntentProcessor extends AbstractTwitterProfileProcessor
+class TwitterIntentProcessor extends AbstractProcessor
 {
     protected function getUserId(PreprocessedLink $preprocessedLink)
     {
@@ -15,4 +14,15 @@ class TwitterIntentProcessor extends AbstractTwitterProfileProcessor
             :
             parent::getUserId($preprocessedLink);
     }
+
+    public function hydrateLink(PreprocessedLink $preprocessedLink, array $data)
+    {
+
+    }
+
+    protected function requestItem(PreprocessedLink $preprocessedLink)
+    {
+        // TODO: Implement requestItem() method.
+    }
+
 }
