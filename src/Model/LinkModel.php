@@ -232,9 +232,7 @@ class LinkModel
      */
     public function addOrUpdateLink(array $data)
     {
-        if (!isset($data['url'])) {
-            throw new \Exception(sprintf('Url not present while saving link %s', json_encode($data)));
-        }
+        $this->validateLinkData($data);
 
         $data = $this->limitTextLengths($data);
 
@@ -265,9 +263,7 @@ class LinkModel
      */
     public function addLink(array $data)
     {
-        if (!isset($data['url'])) {
-            return array();
-        }
+        $this->validateLinkData($data);
 
         if ($saved = $this->findLinkByUrl($data['url'])) {
             $saved = isset($data['synonymous']) ? array_merge($saved, $this->addSynonymousLink($saved['id'], $data['synonymous'])) : $saved;
@@ -353,6 +349,8 @@ class LinkModel
 
     public function updateLink(array $data, $processed = false)
     {
+        $this->validateLinkData($data);
+
         $qb = $this->gm->createQueryBuilder();
 
         $qb->match('(l:Link)');
@@ -432,6 +430,13 @@ class LinkModel
         $linkArray = isset($data['synonymous']) ? array_merge($linkArray, $this->addSynonymousLink($linkArray['id'], $data['synonymous'])) : $linkArray;
 
         return $linkArray;
+    }
+
+    private function validateLinkData($data)
+    {
+        if (!isset($data['url'])) {
+            throw new \Exception(sprintf('Url not present while saving link %s', json_encode($data)));
+        }
     }
 
     private function partialUpdate(array $oldLink, array $newLink)
@@ -959,7 +964,6 @@ class LinkModel
 
     private function addSynonymousLink($id, $synonymousLinks)
     {
-
         $linkArray = array();
 
         if (!empty($synonymousLinks)) {
