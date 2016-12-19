@@ -7,7 +7,7 @@ use Model\Audio;
 
 class SpotifyAlbumProcessor extends AbstractSpotifyProcessor
 {
-    public function requestItem(PreprocessedLink $preprocessedLink)
+    protected function requestItem(PreprocessedLink $preprocessedLink)
     {
         $id = $this->getItemId($preprocessedLink->getUrl());
 

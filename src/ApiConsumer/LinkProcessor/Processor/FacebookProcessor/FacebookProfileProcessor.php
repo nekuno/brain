@@ -8,7 +8,7 @@ use Model\User\TokensModel;
 
 class FacebookProfileProcessor extends AbstractFacebookProcessor
 {
-    public function requestItem(PreprocessedLink $preprocessedLink)
+    protected function requestItem(PreprocessedLink $preprocessedLink)
     {
         //TODO: When Facebook App Token is implemented, include option to request public if source != facebook
         if (!($preprocessedLink->getSource() == TokensModel::FACEBOOK && $preprocessedLink->getResourceItemId())) {
@@ -27,7 +27,6 @@ class FacebookProfileProcessor extends AbstractFacebookProcessor
         }
 
         return $this->resourceOwner->requestProfile($id, $token);
-
     }
 
     public function hydrateLink(PreprocessedLink $preprocessedLink, array $data)

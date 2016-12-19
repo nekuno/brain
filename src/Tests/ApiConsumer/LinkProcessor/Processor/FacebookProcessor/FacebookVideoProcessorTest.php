@@ -4,7 +4,6 @@ namespace Tests\ApiConsumer\LinkProcessor\Processor\TwitterProcessor;
 
 use ApiConsumer\LinkProcessor\PreprocessedLink;
 use ApiConsumer\LinkProcessor\Processor\FacebookProcessor\FacebookVideoProcessor;
-use ApiConsumer\LinkProcessor\SynonymousParameters;
 use ApiConsumer\LinkProcessor\UrlParser\FacebookUrlParser;
 use ApiConsumer\ResourceOwner\FacebookResourceOwner;
 use Model\User\TokensModel;
@@ -53,7 +52,7 @@ class FacebookVideoProcessorTest extends \PHPUnit_Framework_TestCase
 
         $link = new PreprocessedLink($url);
         $link->setSource(TokensModel::FACEBOOK);
-        $response = $this->processor->requestItem($link);
+        $response = $this->processor->getResponse($link);
 
         $this->assertEquals($response, $video, 'Asserting correct response for ' . $url);
     }

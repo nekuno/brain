@@ -4,7 +4,6 @@ namespace Tests\ApiConsumer\LinkProcessor\Processor\TwitterProcessor;
 
 use ApiConsumer\LinkProcessor\PreprocessedLink;
 use ApiConsumer\LinkProcessor\Processor\TwitterProcessor\TwitterPicProcessor;
-use ApiConsumer\LinkProcessor\SynonymousParameters;
 use ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser;
 use ApiConsumer\ResourceOwner\TwitterResourceOwner;
 
@@ -42,10 +41,9 @@ class TwitterPicProcessorTest extends \PHPUnit_Framework_TestCase
      */
     public function testRequestItem($url)
     {
+        $this->setExpectedException('ApiConsumer\Exception\CannotProcessException', 'Twitter pic needs to be scraped');
         $link = new PreprocessedLink($url);
-        $response = $this->processor->requestItem($link);
-
-        $this->assertEquals(array(), $response, 'Asserting response for ' . $url);
+        $this->processor->getResponse($link);
     }
 
     /**

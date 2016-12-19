@@ -2,7 +2,6 @@
 
 namespace ApiConsumer\LinkProcessor\Processor\YoutubeProcessor;
 
-use ApiConsumer\Exception\CannotProcessException;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
 use ApiConsumer\LinkProcessor\Processor\AbstractProcessor;
 use ApiConsumer\LinkProcessor\UrlParser\YoutubeUrlParser;
@@ -23,25 +22,26 @@ abstract class AbstractYoutubeProcessor extends AbstractProcessor
     protected $itemApiUrl;
     protected $itemApiParts;
 
-    public function requestItem(PreprocessedLink $preprocessedLink)
+    protected function requestItem(PreprocessedLink $preprocessedLink)
     {
         $itemId = $this->getItemId($preprocessedLink->getUrl());
         $preprocessedLink->setResourceItemId(reset($itemId));
 
         $response = $this->requestSpecificItem($itemId);
 
-        if (!((isset($response['items']) && is_array($response['items']) && count($response['items']) > 0 && isset($response['items'][0]['snippet'])))) {
-            throw new CannotProcessException($preprocessedLink->getUrl());
-        }
+        return $response;
+    }
 
-        return $response['items'][0];
+    protected function isValidResponse(array $response)
+    {
+        return isset($response['items']) && is_array($response['items']) && count($response['items']) > 0 && isset($response['items'][0]['snippet']);
     }
 
     function hydrateLink(PreprocessedLink $preprocessedLink, array $data)
     {
         $link = $preprocessedLink->getFirstLink();
 
-        $snippet = $data['snippet'];
+        $snippet = $data['items'][0]['snippet'];
         $link->setTitle($snippet['title']);
         $link->setDescription($snippet['description']);
     }

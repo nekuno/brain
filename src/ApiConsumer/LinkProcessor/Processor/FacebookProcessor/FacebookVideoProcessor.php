@@ -9,7 +9,7 @@ use Model\Video;
 
 class FacebookVideoProcessor extends AbstractFacebookProcessor
 {
-    public function requestItem(PreprocessedLink $preprocessedLink)
+    protected function requestItem(PreprocessedLink $preprocessedLink)
     {
         $id = $this->getItemId($preprocessedLink->getUrl());
         $preprocessedLink->setResourceItemId($id);

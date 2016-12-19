@@ -23,7 +23,7 @@ class LinkProcessor
         $preprocessedLink->getFirstLink()->setUrl($preprocessedLink->getUrl());
 
         $scrapper = $this->processorFactory->getScrapperProcessor();
-        $response = $scrapper->requestItem($preprocessedLink);
+        $response = $scrapper->getResponse($preprocessedLink);
 
         $scrapper->hydrateLink($preprocessedLink, $response);
         $scrapper->addTags($preprocessedLink, $response);
@@ -70,7 +70,7 @@ class LinkProcessor
 
     protected function processSingle(PreprocessedLink $preprocessedLink, ProcessorInterface $processor)
     {
-        $response = $processor->requestItem($preprocessedLink);
+        $response = $processor->getResponse($preprocessedLink);
 
         $image = $this->getThumbnail($preprocessedLink, $processor, $response);
         $preprocessedLink->getFirstLink()->setThumbnail($image);

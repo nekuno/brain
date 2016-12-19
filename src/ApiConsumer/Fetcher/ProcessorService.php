@@ -236,10 +236,10 @@ class ProcessorService implements LoggerAwareInterface
         try {
             $links = $this->linkProcessor->process($preprocessedLink);
         } catch (CannotProcessException $e) {
-            $links = array($this->scrape($preprocessedLink));
+            $links = $this->scrape($preprocessedLink);
         } catch (RequestException $e) {
             $this->manageError($e, 'requesting while processing from linkProcessor');
-            $links = array($this->scrape($preprocessedLink));
+            $links = $this->scrape($preprocessedLink);
         }
 
         $preprocessedLink->setLinks($links);

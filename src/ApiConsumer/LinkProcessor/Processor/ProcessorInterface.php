@@ -15,7 +15,7 @@ interface ProcessorInterface
      * @return array|Crawler
      * @throws CannotProcessException|UrlChangedException
      */
-    public function requestItem(PreprocessedLink $preprocessedLink);
+    public function getResponse(PreprocessedLink $preprocessedLink);
 
     public function hydrateLink(PreprocessedLink $preprocessedLink, array $data);
 

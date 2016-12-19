@@ -5,7 +5,6 @@ namespace Tests\ApiConsumer\LinkProcessor\Processor\SpotifyProcessor;
 use ApiConsumer\Exception\UrlNotValidException;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
 use ApiConsumer\LinkProcessor\Processor\SpotifyProcessor\SpotifyAlbumProcessor;
-use ApiConsumer\LinkProcessor\SynonymousParameters;
 use ApiConsumer\ResourceOwner\SpotifyResourceOwner;
 use ApiConsumer\LinkProcessor\UrlParser\SpotifyUrlParser;
 
@@ -50,7 +49,7 @@ class SpotifyAlbumProcessorTest extends \PHPUnit_Framework_TestCase
             ->will($this->throwException(new UrlNotValidException($url)));
 
         $link = new PreprocessedLink($url);
-        $this->processor->requestItem($link);
+        $this->processor->getResponse($link);
     }
 
     /**
@@ -67,7 +66,7 @@ class SpotifyAlbumProcessorTest extends \PHPUnit_Framework_TestCase
             ->will($this->returnValue($album));
 
         $link = new PreprocessedLink($url);
-        $response = $this->processor->requestItem($link);
+        $response = $this->processor->getResponse($link);
 
         $this->assertEquals($response, $album);
     }

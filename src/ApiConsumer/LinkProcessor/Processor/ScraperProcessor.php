@@ -45,7 +45,7 @@ class ScraperProcessor implements ProcessorInterface
         $this->facebookMetadataParser = $facebookMetadataParser;
     }
 
-    public function requestItem(PreprocessedLink $preprocessedLink)
+    public function getResponse(PreprocessedLink $preprocessedLink)
     {
         $url = $preprocessedLink->getUrl();
 

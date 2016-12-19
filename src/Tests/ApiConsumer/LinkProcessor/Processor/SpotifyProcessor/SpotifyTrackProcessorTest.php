@@ -51,7 +51,7 @@ class SpotifyTrackProcessorTest extends \PHPUnit_Framework_TestCase
             ->will($this->throwException(new UrlNotValidException($url)));
 
         $link = new PreprocessedLink($url);
-        $this->processor->requestItem($link);
+        $this->processor->getResponse($link);
     }
 
     /**
@@ -70,7 +70,7 @@ class SpotifyTrackProcessorTest extends \PHPUnit_Framework_TestCase
             ->will($this->returnValue($response));
 
         $link = new PreprocessedLink($url);
-        $this->processor->requestItem($link);
+        $this->processor->getResponse($link);
     }
 
     /**
@@ -91,7 +91,7 @@ class SpotifyTrackProcessorTest extends \PHPUnit_Framework_TestCase
             ->will($this->returnValue($album));
 
         $link = new PreprocessedLink($url);
-        $response = $this->processor->requestItem($link);
+        $response = $this->processor->getResponse($link);
 
         $this->assertEquals(array('track' => $track, 'album' => $album), $response, 'Asserting correct track response for ' . $url);
     }

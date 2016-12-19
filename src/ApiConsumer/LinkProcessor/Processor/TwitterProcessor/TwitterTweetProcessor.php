@@ -31,7 +31,7 @@ class TwitterTweetProcessor extends AbstractProcessor
         if (isset($link['url'])) {
             throw new UrlChangedException($preprocessedLink->getUrl(), $link['url']);
         } else {
-            throw new CannotProcessException($preprocessedLink->getUrl());
+            throw new CannotProcessException($preprocessedLink->getUrl(), 'We do not want tweets without url content');
         }
     }
 

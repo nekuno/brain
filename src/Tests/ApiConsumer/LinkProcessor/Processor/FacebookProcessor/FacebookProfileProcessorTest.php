@@ -54,7 +54,7 @@ class FacebookProfileProcessorTest extends \PHPUnit_Framework_TestCase
         $link->setResourceItemId($id);
         $link->setType(FacebookUrlParser::FACEBOOK_PAGE);
         $link->setSource(TokensModel::FACEBOOK);
-        $response = $this->processor->requestItem($link);
+        $response = $this->processor->getResponse($link);
 
         $this->assertEquals($response, $profiles, 'Asserting correct response for ' . $url);
     }

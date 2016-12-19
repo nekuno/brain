@@ -7,7 +7,6 @@ use ApiConsumer\Exception\UrlChangedException;
 use ApiConsumer\Exception\UrlNotValidException;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
 use ApiConsumer\LinkProcessor\Processor\TwitterProcessor\TwitterTweetProcessor;
-use ApiConsumer\LinkProcessor\SynonymousParameters;
 use ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser;
 use ApiConsumer\ResourceOwner\TwitterResourceOwner;
 
@@ -52,7 +51,7 @@ class TwitterTweetProcessorTest extends \PHPUnit_Framework_TestCase
             ->will($this->throwException(new UrlNotValidException($url)));
 
         $link = new PreprocessedLink($url);
-        $this->processor->requestItem($link);
+        $this->processor->getResponse($link);
     }
 
     /**
@@ -68,12 +67,10 @@ class TwitterTweetProcessorTest extends \PHPUnit_Framework_TestCase
             ->method('requestStatus')
             ->will($this->returnValue($status));
 
-        $this->setExpectedException(CannotProcessException::class, sprintf('Could not process url %s', $url));
+        $this->setExpectedException(CannotProcessException::class, 'We do not want tweets without url content');
 
         $link = new PreprocessedLink($url);
-        $this->processor->requestItem($link);
-
-//        $this->assertEquals($url, $link->getUrl(), 'Asserting correct track response for ' . $url);
+        $this->processor->getResponse($link);
     }
 
     /**
@@ -92,7 +89,7 @@ class TwitterTweetProcessorTest extends \PHPUnit_Framework_TestCase
         $this->setExpectedException(UrlChangedException::class, sprintf('Url changed from %s to  %s', $url, $newUrl));
 
         $link = new PreprocessedLink($url);
-        $this->processor->requestItem($link);
+        $this->processor->getResponse($link);
     }
 
     /**

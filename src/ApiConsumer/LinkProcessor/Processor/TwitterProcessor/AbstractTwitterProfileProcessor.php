@@ -28,7 +28,7 @@ abstract class AbstractTwitterProfileProcessor extends AbstractProcessor impleme
      */
     protected $batch = array();
 
-    public function requestItem(PreprocessedLink $preprocessedLink)
+    protected function requestItem(PreprocessedLink $preprocessedLink)
     {
         $userId = $this->getUserId($preprocessedLink);
         $token = $preprocessedLink->getSource() == TokensModel::TWITTER ? $preprocessedLink->getToken() : array();

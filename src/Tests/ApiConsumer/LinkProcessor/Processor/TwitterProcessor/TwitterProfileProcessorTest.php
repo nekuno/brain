@@ -5,7 +5,6 @@ namespace Tests\ApiConsumer\LinkProcessor\Processor\TwitterProcessor;
 use ApiConsumer\Exception\UrlNotValidException;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
 use ApiConsumer\LinkProcessor\Processor\TwitterProcessor\TwitterProfileProcessor;
-use ApiConsumer\LinkProcessor\SynonymousParameters;
 use ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser;
 use ApiConsumer\ResourceOwner\TwitterResourceOwner;
 
@@ -50,7 +49,7 @@ class TwitterProfileProcessorTest extends \PHPUnit_Framework_TestCase
             ->will($this->throwException(new UrlNotValidException($url)));
 
         $link = new PreprocessedLink($url);
-        $this->processor->requestItem($link);
+        $this->processor->getResponse($link);
     }
 
     /**
@@ -67,7 +66,7 @@ class TwitterProfileProcessorTest extends \PHPUnit_Framework_TestCase
             ->will($this->returnValue($profiles));
 
         $link = new PreprocessedLink($url);
-        $response = $this->processor->requestItem($link);
+        $response = $this->processor->getResponse($link);
 
         $this->assertEquals($response, $profiles[0], 'Asserting correct response for ' . $url);
     }

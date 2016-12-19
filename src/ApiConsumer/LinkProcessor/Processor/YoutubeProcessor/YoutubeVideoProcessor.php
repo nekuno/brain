@@ -7,7 +7,6 @@ use Model\Video;
 
 class YoutubeVideoProcessor extends AbstractYoutubeProcessor
 {
-
     public function hydrateLink(PreprocessedLink $preprocessedLink, array $data)
     {
         parent::hydrateLink($preprocessedLink, $data);
