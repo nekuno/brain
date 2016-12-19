@@ -228,29 +228,34 @@ class LinkModel
     /**
      * @param array $data
      * @return array
+     * @throws \Exception
      */
     public function addOrUpdateLink(array $data)
     {
         if (!isset($data['url'])) {
-            return array();
+            throw new \Exception(sprintf('Url not present while saving link %s', json_encode($data)));
         }
 
         $data = $this->limitTextLengths($data);
 
-        $link = $this->findLinkByUrl($data['url']);
+        $savedLink = $this->findLinkByUrl($data['url']);
 
-        if (!$link) {
+        if (!$savedLink) {
             return $this->addLink($data);
         }
 
-        if (isset($link['processed']) && !$link['processed'] == 1) {
+        if (isset($savedLink['processed']) && !$savedLink['processed'] == 1) {
             $data['tempId'] = isset($data['tempId']) ? $data['tempId'] : $data['url'];
             $newProcessed = isset($data['processed']) ? $data['processed'] : true;
 
             return $this->updateLink($data, $newProcessed);
-        }
+        } else if (isset($data['processed']) && $data['processed'] == 1) {
+            $changedCount = $this->partialUpdate($savedLink, $data);
 
-        return array();
+            return $changedCount > 0 ? $this->findLinkByUrl($data['url']) : $savedLink;
+        } else {
+            return $savedLink;
+        }
     }
 
     /**
@@ -427,10 +432,22 @@ class LinkModel
         $linkArray = isset($data['synonymous']) ? array_merge($linkArray, $this->addSynonymousLink($linkArray['id'], $data['synonymous'])) : $linkArray;
 
         return $linkArray;
-
     }
 
-    public function setProcessed($url, $processed = true)
+    private function partialUpdate(array $oldLink, array $newLink)
+    {
+        $changedCount = 0;
+        foreach (array('title', 'description', 'thumbnail') as $field) {
+            if (!isset($oldLink[$field]) && isset($newLink[$field]) && null != $newLink[$field]) {
+                $hasChanged = $this->setLinkProperty($newLink['url'], $field, $newLink[$field]);
+                $changedCount += (integer)$hasChanged;
+            }
+        }
+
+        return $changedCount;
+    }
+
+    private function setLinkProperty($url, $key, $value)
     {
         $qb = $this->gm->createQueryBuilder();
 
@@ -439,8 +456,8 @@ class LinkModel
             ->limit(1)
             ->setParameter('url', $url);
 
-        $qb->set('l.processed = {processed}')
-            ->setParameter('processed', $processed ? 1 : 0);
+        $qb->set("l.$key = { value }")
+            ->setParameter('value ', $value);
 
         $qb->returns('l');
 
@@ -449,23 +466,16 @@ class LinkModel
         return $result->count() > 0 && $result->current()->offsetExists('l');
     }
 
+    public function setProcessed($url, $processed = true)
+    {
+        $processedParameter = $processed ? 1 : 0;
+
+        return $this->setLinkProperty($url, 'processed', $processedParameter);
+    }
+
     public function changeUrl($oldUrl, $newUrl)
     {
-        $qb = $this->gm->createQueryBuilder();
-
-        $qb->match('(l:Link{url: {oldUrl}})')
-            ->with('l')
-            ->limit(1)
-            ->setParameter('oldUrl', $oldUrl);
-
-        $qb->set('l.url = {newUrl}')
-            ->setParameter('newUrl', $newUrl);
-
-        $qb->returns('l');
-
-        $result = $qb->getQuery()->getResultSet();
-
-        return $result->count() > 0 && $result->current()->offsetExists('l');
+        return $this->setLinkProperty($oldUrl, 'url', $newUrl);
     }
 
     public function getTypes($url)
