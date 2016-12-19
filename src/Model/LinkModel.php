@@ -380,6 +380,7 @@ class LinkModel
             }
         }
 
+        $qb->remove('l:Audio:Video:Image:Creator');
         if (isset($data['additionalLabels'])) {
             foreach ($data['additionalLabels'] as $label) {
                 $qb->set('l:' . $label);
@@ -436,6 +437,14 @@ class LinkModel
     {
         if (!isset($data['url'])) {
             throw new \Exception(sprintf('Url not present while saving link %s', json_encode($data)));
+        }
+
+        if (isset( $data['additionalLabels'])){
+            foreach ($data['additionalLabels'] as $label){
+                if (!in_array($label, $this->getValidTypes())){
+                    throw new \Exception(sprintf('Trying to set invalid link label %s', $label));
+                }
+            }
         }
     }
 
