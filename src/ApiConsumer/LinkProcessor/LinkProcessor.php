@@ -20,26 +20,15 @@ class LinkProcessor
 
     public function scrape(PreprocessedLink $preprocessedLink)
     {
-        $preprocessedLink->getFirstLink()->setUrl($preprocessedLink->getUrl());
-
         $scrapper = $this->processorFactory->getScrapperProcessor();
-        $response = $scrapper->getResponse($preprocessedLink);
 
-        $scrapper->hydrateLink($preprocessedLink, $response);
-        $scrapper->addTags($preprocessedLink, $response);
-
-        if (!$preprocessedLink->getFirstLink()->getThumbnail()) {
-            $image = $this->getThumbnail($preprocessedLink, $scrapper, $response);
-            $preprocessedLink->getFirstLink()->setThumbnail($image);
-        }
+        $this->executeProcessing($preprocessedLink, $scrapper);
 
         return $preprocessedLink->getLinks();
     }
 
     public function process(PreprocessedLink $preprocessedLink)
     {
-        $preprocessedLink->getFirstLink()->setUrl($preprocessedLink->getUrl());
-
         $processor = $this->selectProcessor($preprocessedLink);
 
         if ($processor instanceof BatchProcessorInterface) {
@@ -48,7 +37,12 @@ class LinkProcessor
             $links = $processor->needToRequest() ? $processor->requestBatchLinks() : array();
 
         } else {
-            $links = $this->processSingle($preprocessedLink, $processor);
+            $this->processSingle($preprocessedLink, $processor);
+
+            if (!$preprocessedLink->getFirstLink()->isComplete()) {
+                $this->scrape($preprocessedLink);
+            }
+            $links = $preprocessedLink->getLinks();
         }
 
         return $links;
@@ -70,19 +64,22 @@ class LinkProcessor
 
     protected function processSingle(PreprocessedLink $preprocessedLink, ProcessorInterface $processor)
     {
-        $response = $processor->getResponse($preprocessedLink);
+        $this->executeProcessing($preprocessedLink, $processor);
+    }
 
-        $image = $this->getThumbnail($preprocessedLink, $processor, $response);
-        $preprocessedLink->getFirstLink()->setThumbnail($image);
+    protected function executeProcessing(PreprocessedLink $preprocessedLink, ProcessorInterface $processor)
+    {
+        $preprocessedLink->getFirstLink()->setUrl($preprocessedLink->getUrl());
+
+        $response = $processor->getResponse($preprocessedLink);
 
         $processor->hydrateLink($preprocessedLink, $response);
         $processor->addTags($preprocessedLink, $response);
         $processor->getSynonymousParameters($preprocessedLink, $response);
 
-        if (!$preprocessedLink->getFirstLink()->isComplete()) {
-            $this->scrape($preprocessedLink);
+        if (!$preprocessedLink->getFirstLink()->getThumbnail()) {
+            $image = $this->getThumbnail($preprocessedLink, $processor, $response);
+            $preprocessedLink->getFirstLink()->setThumbnail($image);
         }
-
-        return $preprocessedLink->getLinks();
     }
 }
