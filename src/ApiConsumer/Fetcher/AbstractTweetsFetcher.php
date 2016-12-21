@@ -52,13 +52,13 @@ abstract class AbstractTweetsFetcher extends BasicPaginationFetcher
         $formatted = array();
 
         foreach ($rawFeed as $item) {
-            if (empty($item['entities']) || empty($item['entities']['urls'][0])) {
-                continue;
-            }
+            $urls  =$this->getUrlsFromResponse($item);
 
-            $url = $item['entities']['urls'][0]['expanded_url']
-                ? $item['entities']['urls'][0]['expanded_url']
-                : $item['entities']['urls'][0]['url'];
+            if (empty($urls)){
+                continue;
+            } else {
+                $url = $urls[0];
+            }
 
             $timestamp = null;
             if (array_key_exists('created_at', $item)) {
@@ -83,5 +83,26 @@ abstract class AbstractTweetsFetcher extends BasicPaginationFetcher
         }
 
         return $formatted;
+    }
+
+    protected function getUrlsFromResponse($item){
+        $urls = array();
+        if (isset($item['entities']) && !empty($item['entities']['urls'])){
+            $urls = array_merge($urls, $this->getExpandedUrl($item['entities']['urls']));
+        }
+
+        if (isset($item['extended_entities']) && !empty($item['extended_entities']['media'])){
+            $urls = array_merge($urls, $this->getExpandedUrl($item['extended_entities']['media']));
+        }
+        return $urls;
+    }
+
+    protected function getExpandedUrl(array $entity)
+    {
+        $urls = array();
+        foreach ($entity as $url){
+            $urls[] = $url['expanded_url'];
+        }
+        return $urls;
     }
 }
