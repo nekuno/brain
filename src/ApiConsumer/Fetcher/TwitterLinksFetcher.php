@@ -10,7 +10,6 @@ class TwitterLinksFetcher extends AbstractTweetsFetcher
     {
         return array(
             'count' => $this->pageLength,
-            'trim_user' => 'true',
             'exclude_replies' => 'false',
             'contributor_details' => 'false',
             'include_rts' => 'true',
