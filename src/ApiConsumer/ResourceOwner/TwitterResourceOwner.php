@@ -2,6 +2,7 @@
 
 namespace ApiConsumer\ResourceOwner;
 
+use ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser;
 use Buzz\Exception\RequestException;
 use Buzz\Message\Response;
 use Model\User\TokensModel;
@@ -22,6 +23,9 @@ class TwitterResourceOwner extends TwitterResourceOwnerBase
 	}
 
 	protected $name = TokensModel::TWITTER;
+
+	/** @var  TwitterUrlParser */
+	protected $urlParser;
 
 	const PROFILES_PER_LOOKUP = 100;
 
@@ -93,7 +97,7 @@ class TwitterResourceOwner extends TwitterResourceOwnerBase
 		$baseUrl = $this->getOption('base_url');
 		$url = $baseUrl . 'users/lookup.json';
 
-		$users = array();
+		$responses = array();
 		foreach ($chunks as $chunk) {
 			$query = array($parameter => implode(',', $chunk));
             /** @var Response $response */
@@ -103,13 +107,13 @@ class TwitterResourceOwner extends TwitterResourceOwnerBase
                 sleep(60*15);
                 $response = $this->sendAuthorizedRequest($url, $query, $token);
             }
-			$users = array_merge($users, $this->buildProfilesFromLookup($response));
+			$responses[] = $response;
 		}
 
-		return $users;
+		return $responses;
 	}
 
-	private function buildProfilesFromLookup($response)
+	public function buildProfilesFromLookup($response)
     {
         $content = $this->getResponseContent($response);
 
@@ -128,7 +132,7 @@ class TwitterResourceOwner extends TwitterResourceOwnerBase
 
 		$profile = array(
 			'description' => isset($user['description']) ? $user['description'] : $user['name'],
-			'url' => isset($user['screen_name']) ? 'https://twitter.com/' . $user['screen_name'] : null,
+			'url' => isset($user['screen_name']) ? $this->urlParser->buildUserUrl($user['screen_name']) : null,
 			'thumbnail' => isset($user['profile_image_url']) ? str_replace('_normal', '', $user['profile_image_url']) : null,
 			'additionalLabels' => array('Creator'),
 			'resource' => TokensModel::TWITTER,

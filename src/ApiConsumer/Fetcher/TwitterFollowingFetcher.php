@@ -5,7 +5,6 @@ namespace ApiConsumer\Fetcher;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
 use ApiConsumer\ResourceOwner\TwitterResourceOwner;
 use Model\Creator;
-use Model\Link;
 
 class TwitterFollowingFetcher extends BasicPaginationFetcher
 {
@@ -51,7 +50,13 @@ class TwitterFollowingFetcher extends BasicPaginationFetcher
      */
     protected function parseLinks(array $rawFeed)
     {
-        $links = $this->resourceOwner->lookupUsersBy('user_id', $rawFeed);
+        $lookups = $this->resourceOwner->lookupUsersBy('user_id', $rawFeed);
+
+        $links = array();
+        foreach ($lookups as $lookupResponse){
+            $links = array_merge($links, $this->resourceOwner->buildProfilesFromLookup($lookupResponse));
+        }
+
 
         $preprocessedLinks = array();
         if ($links == false || empty($links)) {

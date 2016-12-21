@@ -310,15 +310,15 @@ class ProcessorService implements LoggerAwareInterface
     {
         try {
             $synonymousPreprocessed = $this->fetcherService->fetchSynonymous($preprocessedLink->getSynonymousParameters());
+
+            foreach ($synonymousPreprocessed as $singleSynonymous) {
+                $this->processLink($singleSynonymous);
+                $preprocessedLink->getFirstLink()->addSynonymous($singleSynonymous->getFirstLink());
+            }
         } catch (\Exception $e) {
             $this->manageError($e, sprintf('fetching synonymous for %s', $preprocessedLink->getUrl()));
 
             return;
-        }
-
-        foreach ($synonymousPreprocessed as $singleSynonymous) {
-            $this->processLink($singleSynonymous);
-            $preprocessedLink->getFirstLink()->addSynonymous($singleSynonymous->getFirstLink());
         }
     }
 

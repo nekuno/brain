@@ -67,7 +67,7 @@ abstract class AbstractTweetsFetcher extends BasicPaginationFetcher
             }
 
             $preprocessedLink = new PreprocessedLink($url);
-            $preprocessedLink->setResourceItemId(array_key_exists('id', $item) ? $item['id'] : null);
+            $preprocessedLink->setResourceItemId(array_key_exists('id', $item) ? $item['id'] : null); //For intent urls
             $preprocessedLink->setSource($this->resourceOwner->getName());
 
             $link = new Link();
