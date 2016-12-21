@@ -26,7 +26,13 @@ class TwitterTweetProcessor extends AbstractProcessor
 
         $url = $this->processTweetStatus($statusId);
 
-        throw new UrlChangedException($preprocessedLink->getCanonical(), $url);
+        $url = $this->parser->cleanURL($url);
+
+        if (!in_array($url, array($preprocessedLink->getCanonical(), $preprocessedLink->getFetched()))) {
+            throw new UrlChangedException($preprocessedLink->getCanonical(), $url);
+        } else {
+            return array();
+        }
     }
 
     /**
