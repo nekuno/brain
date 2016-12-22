@@ -1,7 +1,4 @@
 <?php
-/**
- * @author yawmoght <yawmoght@gmail.com>
- */
 
 namespace Model;
 
@@ -24,6 +21,13 @@ class Video extends Link
         }
 
         return $me;
+    }
+
+    public function toArray()
+    {
+        $array = parent::toArray();
+        $array['additionalLabels'] = array('Video');
+        return $array;
     }
 
     /**

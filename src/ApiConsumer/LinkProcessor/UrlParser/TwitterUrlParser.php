@@ -16,20 +16,26 @@ class TwitterUrlParser extends UrlParser
         if ($this->isTwitterImageUrl($url)) {
             return self::TWITTER_PIC;
         }
-        try{
+        try {
             $this->getStatusId($url);
+
             return self::TWITTER_TWEET;
-        } catch (\Exception $e){}
+        } catch (\Exception $e) {
+        }
 
-        try{
+        try {
             $this->getProfileIdFromIntentUrl($url);
-            return self::TWITTER_INTENT;
-        } catch (\Exception $e){}
 
-        try{
+            return self::TWITTER_INTENT;
+        } catch (\Exception $e) {
+        }
+
+        try {
             $this->getProfileNameFromProfileUrl($url);
+
             return self::TWITTER_PROFILE;
-        } catch (\Exception $e){}
+        } catch (\Exception $e) {
+        }
 
         throw new UrlNotValidException($url);
     }
@@ -40,15 +46,19 @@ class TwitterUrlParser extends UrlParser
      */
     public function getProfileId($url)
     {
-        try{
+        try {
             $intentId = $this->getProfileIdFromIntentUrl($url);
-            return $intentId;
-        } catch (\Exception $e){}
 
-        try{
+            return $intentId;
+        } catch (\Exception $e) {
+        }
+
+        try {
             $profileName = $this->getProfileNameFromProfileUrl($url);
+
             return $profileName;
-        } catch (\Exception $e){}
+        } catch (\Exception $e) {
+        }
 
         throw new UrlNotValidException($url);
     }
@@ -166,12 +176,20 @@ class TwitterUrlParser extends UrlParser
     {
         $url = parent::cleanURL($url);
 
-        $parts = parse_url($url);
+        $url = strtolower($url);
 
+        $parts = parse_url($url);
         if (isset($parts['host']) && $parts['host'] === 'www.twitter.com') {
             $parts['host'] = 'twitter.com';
-            $url = http_build_url($parts);
         }
+
+        $path = explode('/', trim($parts['path'], '/'));
+        if (isset($path[3]) && in_array($path[3], array('photo', 'video'))) {
+            $path = array_slice($path, 0, 3);
+            $parts['path'] = implode('/', $path);
+        }
+
+        $url = http_build_url($parts);
 
         return $url;
     }
@@ -180,7 +198,7 @@ class TwitterUrlParser extends UrlParser
     {
         parent::checkUrlValid($url);
 
-        if (!$this->isTwitterUrl($url)){
+        if (!$this->isTwitterUrl($url)) {
             throw new UrlNotValidException($url);
         }
     }

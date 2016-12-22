@@ -28,7 +28,7 @@ class TwitterTweetProcessor extends AbstractProcessor
         $apiResponse = $this->resourceOwner->requestStatus($statusId);
 
         $link = $this->extractLinkFromResponse($apiResponse);
-        if (isset($link['url'])) {
+        if (isset($link['url']) && $link['url'] != $preprocessedLink->getUrl()) {
             throw new UrlChangedException($preprocessedLink->getUrl(), $link['url']);
         } else {
             throw new CannotProcessException($preprocessedLink->getUrl(), 'We do not want tweets without url content');

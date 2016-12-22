@@ -23,6 +23,13 @@ class Audio extends Link
         return $me;
     }
 
+    public function toArray()
+    {
+        $array = parent::toArray();
+        $array['additionalLabels'] = array('Audio');
+        return $array;
+    }
+
     /**
      * @return mixed
      */
