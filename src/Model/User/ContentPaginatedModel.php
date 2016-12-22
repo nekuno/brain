@@ -65,22 +65,12 @@ class ContentPaginatedModel implements PaginatedInterface
         $id = $filters['id'];
         $types = isset($filters['type']) ? $filters['type'] : array();
 
-        $tokens = $this->tokensModel->getByUserOrResource($id);
-        $socialNetworks = array();
-        foreach ($tokens as $token) {
-            $socialNetworks[] = $token['resourceOwner'];
-        }
-
         $response = array();
 
         $qb->match("(u:User)")
             ->where("u.qnoow_id = { userId }")
-            ->match("(u)-[r:LIKES]->(content:Link)");
+            ->match("(u)-[r:LIKES]->(content:Link {processed: 1})");
         $qb->filterContentByType($types, 'content', array('u', 'r'));
-
-        $conditions = $this->buildConditions($socialNetworks);
-
-        $qb->where($conditions);
 
         if (isset($filters['tag'])) {
             $qb->match('(content)-[:TAGGED]->(filterTag:Tag)')
@@ -172,21 +162,11 @@ class ContentPaginatedModel implements PaginatedInterface
         $qb = $this->gm->createQueryBuilder();
         $count = 0;
 
-        $tokens = $this->tokensModel->getByUserOrResource($id);
-        $socialNetworks = array();
-        foreach ($tokens as $token) {
-            $socialNetworks[] = $token['resourceOwner'];
-        }
-
         $qb->match("(u:User)")
             ->where("u.qnoow_id = { userId }")
-            ->match("(u)-[r:LIKES]->(content:Link)");
+            ->match("(u)-[r:LIKES]->(content:Link {processed: 1})");
 
         $qb->filterContentByType($types,'content', array('r'));
-
-        $conditions = $this->buildConditions($socialNetworks);
-
-        $qb->where($conditions);
 
         if (isset($filters['tag'])) {
             $qb->match('(content)-[:TAGGED]->(filterTag:Tag)')
@@ -213,18 +193,49 @@ class ContentPaginatedModel implements PaginatedInterface
         return $count;
     }
 
-    private function buildConditions(array $socialNetworks)
+    public function countAll($userId)
     {
-        $conditions = array("content.processed = 1");
-
-        $whereSocialNetwork[] = "EXISTS (r.nekuno)";
-        foreach ($socialNetworks as $socialNetwork) {
-            $whereSocialNetwork [] = "EXISTS (r.$socialNetwork)";
+        $types = $this->linkModel->getValidTypes();
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match("(u:User {qnoow_id: { userId }})")
+            ->setParameter('userId', $userId);
+        $with = 'u,';
+        foreach ($types as $type) {
+            $qb->optionalMatch("(u)-[:LIKES]->(content$type:$type)")
+                ->where('content' . $type . '.processed = 1');
+            $qb->with($with . "count(DISTINCT content$type) AS count$type");
+            $with .= "count$type,";
         }
-        $socialNetworkQuery = implode(' OR ', $whereSocialNetwork);
-        $conditions[] = $socialNetworkQuery;
 
-        return $conditions;
+        $qb->returns(trim($with, ','));
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        $totals = array();
+        foreach ($result as $row) {
+            foreach ($types as $type) {
+                $totals[$type] = $row["count$type"];
+            }
+        }
+
+        return $totals;
+    }
+
+    // TODO: Useful for filtering by social networks
+    private function buildSocialNetworkCondition($userId, $relationship)
+    {
+        $tokens = $this->tokensModel->getByUserOrResource($userId);
+        $socialNetworks = array();
+        foreach ($tokens as $token) {
+            $socialNetworks[] = $token['resourceOwner'];
+        }
+        $whereSocialNetwork = array();
+        foreach ($socialNetworks as $socialNetwork) {
+            $whereSocialNetwork[] = "EXISTS ($relationship.$socialNetwork)";
+        }
+
+        return implode(' OR ', $whereSocialNetwork);
     }
 
     protected function getChoices()
