@@ -2,10 +2,9 @@
 
 namespace ApiConsumer\ResourceOwner;
 
-use ApiConsumer\Event\ChannelEvent;
+use ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser;
 use Buzz\Exception\RequestException;
 use Buzz\Message\Response;
-use Event\ExceptionEvent;
 use Model\User\TokensModel;
 use Service\LookUp\LookUp;
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
@@ -24,6 +23,11 @@ class TwitterResourceOwner extends TwitterResourceOwnerBase
 	}
 
 	protected $name = TokensModel::TWITTER;
+
+    /** @var  TwitterUrlParser */
+    protected $urlParser;
+
+    const PROFILES_PER_LOOKUP = 100;
 
 	public function __construct($httpClient, $httpUtils, $options, $name, $storage, $dispatcher)
 	{
@@ -83,35 +87,35 @@ class TwitterResourceOwner extends TwitterResourceOwnerBase
 		return $data;
 	}
 
-	public function lookupUsersBy($parameter, array $userIds, array $token = array())
-	{
-		if ($parameter !== 'user_id' && $parameter !== 'screen_name') {
-			return false;
-		}
+    public function lookupUsersBy($parameter, array $userIds, array $token = array())
+    {
+        if ($parameter !== 'user_id' && $parameter !== 'screen_name') {
+            return false;
+        }
 
-		$chunks = array_chunk($userIds, 100);
-		$baseUrl = $this->getOption('base_url');
-		$url = $baseUrl . 'users/lookup.json';
+        $chunks = array_chunk($userIds, self::PROFILES_PER_LOOKUP);
+        $baseUrl = $this->getOption('base_url');
+        $url = $baseUrl . 'users/lookup.json';
 
-		$users = array();
-		foreach ($chunks as $chunk) {
-			$query = array($parameter => implode(',', $chunk));
+        $responses = array();
+        foreach ($chunks as $chunk) {
+            $query = array($parameter => implode(',', $chunk));
             /** @var Response $response */
-			$response = $this->sendAuthorizedRequest($url, $query, $token);
+            $response = $this->sendAuthorizedRequest($url, $query, $token);
             //TODO: Generalize "if too many requests, wait this->time_window and retry"
-            if ($response->getStatusCode() === 429){
-                sleep(60*15);
+            if ($response->getStatusCode() === 429) {
+                sleep(60 * 15);
                 $response = $this->sendAuthorizedRequest($url, $query, $token);
             }
-			$users = array_merge($users, $this->buildProfilesFromLookup($response));
-		}
+            $responses[] = $this->getResponseContent($response);
+        }
 
-		return $users;
-	}
+        return $responses;
+    }
 
-	private function buildProfilesFromLookup($response)
+	public function buildProfilesFromLookup($response)
     {
-        $content = $this->getResponseContent($response);
+        $content = $response;
 
         foreach ($content as &$user){
             $user = $this->buildProfileFromLookup($user);
