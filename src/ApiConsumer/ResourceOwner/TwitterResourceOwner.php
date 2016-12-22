@@ -107,7 +107,7 @@ class TwitterResourceOwner extends TwitterResourceOwnerBase
                 sleep(60 * 15);
                 $response = $this->sendAuthorizedRequest($url, $query, $token);
             }
-            $responses[] = $response;
+            $responses[] = $this->getResponseContent($response);
         }
 
         return $responses;
