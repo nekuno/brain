@@ -91,7 +91,7 @@ class ProcessorService implements LoggerAwareInterface
         return $links;
     }
 
-    private function fullProcessSingle(PreprocessedLink $preprocessedLink, $userId)
+    private function fullProcessSingle(PreprocessedLink $preprocessedLink, $userId, $processedTimes = 0)
     {
         try {
             $this->resolve($preprocessedLink);
@@ -115,9 +115,15 @@ class ProcessorService implements LoggerAwareInterface
         try {
             $this->processLink($preprocessedLink);
         } catch (UrlChangedException $e) {
-            $preprocessedLink->setUrl($e->getNewUrl());
 
-            return $this->fullProcessSingle($preprocessedLink, $userId);
+            if ($processedTimes <= 10)
+            {
+                $preprocessedLink->setUrl($e->getNewUrl());
+
+                return $this->fullProcessSingle($preprocessedLink, $userId, ++$processedTimes);
+            } else {
+                return $this->scrape($preprocessedLink);
+            }
 
         } catch (\Exception $e) {
             $this->manageError($e, sprintf('processing url %s for user %d', $preprocessedLink->getUrl(), $userId));
@@ -331,6 +337,11 @@ class ProcessorService implements LoggerAwareInterface
         $links = array();
         $this->readyToSave($preprocessedLink);
         foreach ($preprocessedLink->getLinks() as $link) {
+
+            if (!$link->getUrl()){
+                continue;
+            }
+
             try {
                 $linkCreated = $this->linkModel->addOrUpdateLink($link->toArray());
                 $links[] = $linkCreated;

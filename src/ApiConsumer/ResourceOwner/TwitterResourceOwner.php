@@ -98,6 +98,7 @@ class TwitterResourceOwner extends TwitterResourceOwnerBase
 		$url = $baseUrl . 'users/lookup.json';
 
 		$responses = array();
+		//TODO: Array to string conversion here
 		foreach ($chunks as $chunk) {
 			$query = array($parameter => implode(',', $chunk));
             /** @var Response $response */

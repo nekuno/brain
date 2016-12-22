@@ -11,7 +11,7 @@ use ApiConsumer\ResourceOwner\TwitterResourceOwner;
 use Model\Creator;
 use Model\User\TokensModel;
 
-abstract class TwitterProfileProcessor extends AbstractProcessor implements BatchProcessorInterface
+class TwitterProfileProcessor extends AbstractProcessor implements BatchProcessorInterface
 {
     /**
      * @var TwitterResourceOwner

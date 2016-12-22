@@ -6,6 +6,7 @@ use ApiConsumer\Factory\ProcessorFactory;
 use ApiConsumer\Images\ImageAnalyzer;
 use ApiConsumer\LinkProcessor\Processor\BatchProcessorInterface;
 use ApiConsumer\LinkProcessor\Processor\ProcessorInterface;
+use Model\Link;
 
 class LinkProcessor
 {
@@ -38,14 +39,14 @@ class LinkProcessor
             $this->batch[$processorName] = $this->batch[$processorName] ?: array();
             $this->batch[$processorName][] = $preprocessedLink;
 
-            $links = array();
+            $links = array(new Link());
             if ($processor->needToRequest($this->batch[$processorName])) {
                 $links = $processor->requestBatchLinks($this->batch[$processorName]);
                 $this->batch[$processorName] = array();
             }
 
         } else {
-            $this->processSingle($preprocessedLink, $processor);
+            $this->executeProcessing($preprocessedLink, $processor);
 
             if (!$preprocessedLink->getFirstLink()->isComplete()) {
                 $this->scrape($preprocessedLink);
@@ -81,11 +82,6 @@ class LinkProcessor
         $images = $processor->getImages($preprocessedLink, $response);
 
         return $this->imageAnalyzer->selectImage($images);
-    }
-
-    protected function processSingle(PreprocessedLink $preprocessedLink, ProcessorInterface $processor)
-    {
-        $this->executeProcessing($preprocessedLink, $processor);
     }
 
     protected function executeProcessing(PreprocessedLink $preprocessedLink, ProcessorInterface $processor)
