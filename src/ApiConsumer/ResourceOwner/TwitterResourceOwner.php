@@ -115,7 +115,7 @@ class TwitterResourceOwner extends TwitterResourceOwnerBase
 
 	public function buildProfilesFromLookup($response)
     {
-        $content = $this->getResponseContent($response);
+        $content = $response;
 
         foreach ($content as &$user){
             $user = $this->buildProfileFromLookup($user);

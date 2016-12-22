@@ -250,7 +250,7 @@ class LinkModel
             return $this->updateLink($data, $newProcessed);
         }
 
-        return array();
+        return $link;
     }
 
     /**
