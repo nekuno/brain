@@ -6,14 +6,15 @@ use ApiConsumer\LinkProcessor\PreprocessedLink;
 
 interface BatchProcessorInterface
 {
-    public function addToBatch(PreprocessedLink $preprocessedLink);
+    /**
+     * @param $batch PreprocessedLink[]
+     * @return bool
+     */
+    public function needToRequest(array $batch);
 
     /**
-     * @return boolean
-     */
-    public function needToRequest();
-    /**
+     * @param $batch PreprocessedLink[]
      * @return array
      */
-    public function requestBatchLinks();
+    public function requestBatchLinks(array $batch);
 }

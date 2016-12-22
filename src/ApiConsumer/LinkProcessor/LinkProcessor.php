@@ -11,6 +11,7 @@ class LinkProcessor
 {
     private $processorFactory;
     private $imageAnalyzer;
+    private $batch;
 
     public function __construct(ProcessorFactory $processorFactory, ImageAnalyzer $imageAnalyzer)
     {
@@ -32,9 +33,16 @@ class LinkProcessor
         $processor = $this->selectProcessor($preprocessedLink);
 
         if ($processor instanceof BatchProcessorInterface) {
-            $processor->addToBatch($preprocessedLink);
+            $processorName = LinkAnalyzer::getProcessorName($preprocessedLink);
 
-            $links = $processor->needToRequest() ? $processor->requestBatchLinks() : array();
+            $this->batch[$processorName] = $this->batch[$processorName] ?: array();
+            $this->batch[$processorName][] = $preprocessedLink;
+
+            $links = array();
+            if ($processor->needToRequest($this->batch[$processorName])) {
+                $links = $processor->requestBatchLinks($this->batch[$processorName]);
+                $this->batch[$processorName] = array();
+            }
 
         } else {
             $this->processSingle($preprocessedLink, $processor);
@@ -43,6 +51,19 @@ class LinkProcessor
                 $this->scrape($preprocessedLink);
             }
             $links = $preprocessedLink->getLinks();
+        }
+
+        return $links;
+    }
+
+    public function getLastLinks()
+    {
+        $links = array();
+        foreach ($this->batch as $name => $batch)
+        {
+            /** @var BatchProcessorInterface $processor */
+            $processor = $this->processorFactory->build($name);
+            $links = array_merge($links, $processor->requestBatchLinks($batch));
         }
 
         return $links;

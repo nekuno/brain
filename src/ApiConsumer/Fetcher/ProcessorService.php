@@ -84,6 +84,8 @@ class ProcessorService implements LoggerAwareInterface
             }
         }
 
+        $links = array_merge($links, $this->linkProcessor->getLastLinks());
+
         $this->dispatcher->dispatch(\AppEvents::PROCESS_FINISH, new ProcessLinksEvent($userId, $source, $preprocessedLinks));
 
         return $links;
@@ -147,6 +149,8 @@ class ProcessorService implements LoggerAwareInterface
                 $links[$key] = $link;
             }
         }
+
+        $links = array_merge($links, $this->linkProcessor->getLastLinks());
 
         return $links;
     }

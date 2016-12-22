@@ -64,19 +64,9 @@ abstract class TwitterProfileProcessor extends AbstractProcessor implements Batc
         return $this->parser->getProfileId($url);
     }
 
-    public function addToBatch(PreprocessedLink $preprocessedLink)
+    public function needToRequest(array $batch)
     {
-        $this->batch[] = $preprocessedLink;
-    }
-
-    public function needToRequest()
-    {
-        return count($this->batch) >= TwitterResourceOwner::PROFILES_PER_LOOKUP;
-    }
-
-    protected function cleanBatch()
-    {
-        $this->batch = array();
+        return count($batch) >= TwitterResourceOwner::PROFILES_PER_LOOKUP;
     }
 
     protected function buildLinks(array $responses)
@@ -93,29 +83,30 @@ abstract class TwitterProfileProcessor extends AbstractProcessor implements Batc
             }
         }
 
-
         return $links;
     }
 
-    public function requestBatchLinks()
+    public function requestBatchLinks(array $batch)
     {
-        $userIds = $this->getUserIdsFromBatch();
+        $userIds = $this->getUserIdsFromBatch($batch);
 
-        $token = $this->getTokenFromBatch();
+        $token = $this->getTokenFromBatch($batch);
 
         $responses = $this->requestLookup($userIds, $token);
 
         $links = $this->buildLinks($responses);
 
-        $this->cleanBatch();
-
         return $links;
     }
 
-    protected function getUserIdsFromBatch()
+    /**
+     * @param PreprocessedLink[] $batch
+     * @return array
+     */
+    protected function getUserIdsFromBatch(array $batch)
     {
         $userIds = array('user_id' => array(), 'screen_name' => array());
-        foreach ($this->batch as $key => $preprocessedLink) {
+        foreach ($batch as $key => $preprocessedLink) {
 
             $link = $preprocessedLink->getFirstLink();
 
@@ -133,9 +124,13 @@ abstract class TwitterProfileProcessor extends AbstractProcessor implements Batc
         return $userIds;
     }
 
-    protected function getTokenFromBatch()
+    /**
+     * @param $batch PreprocessedLink[]
+     * @return array
+     */
+    protected function getTokenFromBatch(array $batch)
     {
-        foreach ($this->batch as $preprocessedLink) {
+        foreach ($batch as $preprocessedLink) {
             if (!empty($token = $preprocessedLink->getToken())) {
                 return $token;
             }
