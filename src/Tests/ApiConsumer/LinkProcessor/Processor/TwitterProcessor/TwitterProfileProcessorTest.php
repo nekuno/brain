@@ -7,6 +7,7 @@ use ApiConsumer\LinkProcessor\PreprocessedLink;
 use ApiConsumer\LinkProcessor\Processor\TwitterProcessor\TwitterProfileProcessor;
 use ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser;
 use ApiConsumer\ResourceOwner\TwitterResourceOwner;
+use Model\User\TokensModel;
 
 class TwitterProfileProcessorTest extends \PHPUnit_Framework_TestCase
 {
@@ -74,16 +75,17 @@ class TwitterProfileProcessorTest extends \PHPUnit_Framework_TestCase
     /**
      * @dataProvider getResponseHydration
      */
-    public function testHydrateLink($url, $response, $expectedArray)
+    public function testHydrateLink($url, $response, $linkArray, $expectedArray, $expectedId)
     {
         $this->resourceOwner->expects($this->once())
             ->method('buildProfileFromLookup')
-            ->will($this->returnValue($response));
+            ->will($this->returnValue($linkArray));
 
         $link = new PreprocessedLink($url);
         $this->processor->hydrateLink($link, $response);
 
         $this->assertEquals($expectedArray, $link->getFirstLink()->toArray(), 'Asserting correct hydrated link for ' . $url);
+        $this->assertEquals($expectedId, $link->getResourceItemId(), 'Asserting correct resourceItemId while hydrating ' . $url);
     }
 
     /**
@@ -125,19 +127,22 @@ class TwitterProfileProcessorTest extends \PHPUnit_Framework_TestCase
             array(
                 $this->getProfileUrl(),
                 $this->getProfileItemResponse(),
+                $this->getProfileLink(),
                 array(
-                    'title' => null,
+                    'title' => 'yawmoght',
                     'description' => 'Tool developer & data junkie',
-                    'thumbnail' => null,
-                    'url' => null,
-                    'id' => 34529134,
+                    'thumbnail' => 'http://pbs.twimg.com/profile_images/639462703858380800/ZxusSbUW.png',
+                    'url' => 'https://twitter.com/yawmoght',
+                    'id' => null,
                     'tags' => array(),
-                    'created' => null,
+                    'created' => time() * 1000,
                     'processed' => true,
                     'language' => null,
                     'synonymous' => array(),
                     'imageProcessed' => null,
-                )
+                    'additionalLabels' => array('Creator'),
+                ),
+                34529134,
             )
         );
     }
@@ -248,6 +253,20 @@ class TwitterProfileProcessorTest extends \PHPUnit_Framework_TestCase
             "following" => false,
             "follow_request_sent" => false,
             "notifications" => false
+        );
+    }
+
+    public function getProfileLink()
+    {
+        return array(
+            'description' => 'Tool developer & data junkie',
+            'url' => 'https://twitter.com/yawmoght',
+            'thumbnail' => "http://pbs.twimg.com/profile_images/639462703858380800/ZxusSbUW.png",
+            'additionalLabels' => array('Creator'),
+            'resource' => TokensModel::TWITTER,
+            'timestamp' => 1000 * time(),
+            'processed' => 1,
+            'title' => 'yawmoght',
         );
     }
 

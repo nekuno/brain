@@ -152,6 +152,7 @@ class SpotifyAlbumProcessorTest extends \PHPUnit_Framework_TestCase
                     'language' => null,
                     'synonymous' => array(),
                     'imageProcessed' => null,
+                    'additionalLabels' => array('Audio'),
                     'embed_type' => 'spotify',
                     'embed_id' => 'spotify:album:4sb0eMpDn3upAFfyi4q2rw',
                 )

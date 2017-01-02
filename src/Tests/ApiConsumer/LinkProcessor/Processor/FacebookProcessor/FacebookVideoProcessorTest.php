@@ -121,6 +121,7 @@ class FacebookVideoProcessorTest extends \PHPUnit_Framework_TestCase
                     'language' => null,
                     'synonymous' => array(),
                     'imageProcessed' => null,
+                    'additionalLabels' => array('Video'),
                     'embed_type' => 'facebook',
                     'embed_id' => '1184085874980824'
                 )

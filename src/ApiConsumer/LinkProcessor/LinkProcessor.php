@@ -34,17 +34,7 @@ class LinkProcessor
         $processor = $this->selectProcessor($preprocessedLink);
 
         if ($processor instanceof BatchProcessorInterface) {
-            $processorName = LinkAnalyzer::getProcessorName($preprocessedLink);
-
-            $this->batch[$processorName] = $this->batch[$processorName] ?: array();
-            $this->batch[$processorName][] = $preprocessedLink;
-
-            $links = array(new Link());
-            if ($processor->needToRequest($this->batch[$processorName])) {
-                $links = $processor->requestBatchLinks($this->batch[$processorName]);
-                $this->batch[$processorName] = array();
-            }
-
+            $links = $this->executeBatchProcessing($preprocessedLink, $processor);
         } else {
             $this->executeProcessing($preprocessedLink, $processor);
 
@@ -60,8 +50,7 @@ class LinkProcessor
     public function getLastLinks()
     {
         $links = array();
-        foreach ($this->batch as $name => $batch)
-        {
+        foreach ($this->batch as $name => $batch) {
             /** @var BatchProcessorInterface $processor */
             $processor = $this->processorFactory->build($name);
             $links = array_merge($links, $processor->requestBatchLinks($batch));
@@ -98,5 +87,21 @@ class LinkProcessor
             $image = $this->getThumbnail($preprocessedLink, $processor, $response);
             $preprocessedLink->getFirstLink()->setThumbnail($image);
         }
+    }
+
+    protected function executeBatchProcessing(PreprocessedLink $preprocessedLink, BatchProcessorInterface $processor)
+    {
+        $processorName = LinkAnalyzer::getProcessorName($preprocessedLink);
+
+        $this->batch[$processorName] = $this->batch[$processorName] ?: array();
+        $this->batch[$processorName][] = $preprocessedLink;
+
+        $links = array(new Link());
+        if ($processor->needToRequest($this->batch[$processorName])) {
+            $links = $processor->requestBatchLinks($this->batch[$processorName]);
+            $this->batch[$processorName] = array();
+        }
+
+        return $links;
     }
 }

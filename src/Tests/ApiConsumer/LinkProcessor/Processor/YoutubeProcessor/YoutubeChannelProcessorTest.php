@@ -71,7 +71,7 @@ class YoutubeChannelProcessorTest extends \PHPUnit_Framework_TestCase
         $link = new PreprocessedLink($url);
         $response = $this->processor->getResponse($link);
 
-        $this->assertEquals($this->getChannelItemResponse(), $response, 'Asserting correct video response for ' . $url);
+        $this->assertEquals($this->getChannelResponse(), $response, 'Asserting correct video response for ' . $url);
     }
 
     /**
@@ -126,7 +126,7 @@ class YoutubeChannelProcessorTest extends \PHPUnit_Framework_TestCase
             array(
                 $this->getChannelUrl(),
                 $this->getChannelId(),
-                $this->getChannelItemResponse(),
+                $this->getChannelResponse(),
                 array(
                     'title' => 'Efecto Pasillo',
                     'description' => 'Canal Oficial de Youtube de Efecto Pasillo.',

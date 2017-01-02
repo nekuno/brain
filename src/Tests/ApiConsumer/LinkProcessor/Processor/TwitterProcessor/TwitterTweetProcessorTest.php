@@ -86,7 +86,7 @@ class TwitterTweetProcessorTest extends \PHPUnit_Framework_TestCase
             ->method('requestStatus')
             ->will($this->returnValue($status));
 
-        $this->setExpectedException(UrlChangedException::class, sprintf('Url changed from %s to  %s', $url, $newUrl));
+        $this->setExpectedException(UrlChangedException::class, sprintf('Url changed from %s to %s', $url, $newUrl));
 
         $link = new PreprocessedLink($url);
         $this->processor->getResponse($link);

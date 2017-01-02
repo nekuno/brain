@@ -70,7 +70,7 @@ class YoutubeVideoProcessorTest extends \PHPUnit_Framework_TestCase
         $link = new PreprocessedLink($url);
         $response = $this->processor->getResponse($link);
 
-        $this->assertEquals($this->getVideoItemResponse(), $response, 'Asserting correct video response for ' . $url);
+        $this->assertEquals($this->getVideoResponse(), $response, 'Asserting correct video response for ' . $url);
     }
 
     /**
@@ -125,7 +125,7 @@ class YoutubeVideoProcessorTest extends \PHPUnit_Framework_TestCase
             array(
                 $this->getVideoUrl(),
                 $this->getVideoId(),
-                $this->getVideoItemResponse(),
+                $this->getVideoResponse(),
                 array(
                     'title' => 'Tu peor error',
                     'description' => 'En Mawi',
@@ -140,6 +140,7 @@ class YoutubeVideoProcessorTest extends \PHPUnit_Framework_TestCase
                     'imageProcessed' => null,
                     'embed_type' => 'youtube',
                     'embed_id' => 'zLgY05beCnY',
+                    'additionalLabels' => array('Video')
                 )
             )
         );

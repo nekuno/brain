@@ -23,11 +23,6 @@ class TwitterProfileProcessor extends AbstractProcessor implements BatchProcesso
      */
     protected $parser;
 
-    /**
-     * @var PreprocessedLink[]
-     */
-    protected $batch = array();
-
     protected function requestItem(PreprocessedLink $preprocessedLink)
     {
         $userId = $this->getUserId($preprocessedLink);
@@ -41,12 +36,16 @@ class TwitterProfileProcessor extends AbstractProcessor implements BatchProcesso
             throw new CannotProcessException($preprocessedLink->getUrl());
         }
 
-        return $response;
+        return reset($response);
     }
 
     public function hydrateLink(PreprocessedLink $preprocessedLink, array $data)
     {
-        $preprocessedLink->setFirstLink(Creator::buildFromArray($this->resourceOwner->buildProfileFromLookup($data)));
+        $profileArray = $this->resourceOwner->buildProfileFromLookup($data);
+        $preprocessedLink->setFirstLink(Creator::buildFromArray($profileArray));
+
+        $id = isset($data['id_str']) ? (int)$data['id_str'] : $data['id'];
+        $preprocessedLink->setResourceItemId($id);
     }
 
     public function getImages(PreprocessedLink $preprocessedLink, array $data)
@@ -67,23 +66,6 @@ class TwitterProfileProcessor extends AbstractProcessor implements BatchProcesso
     public function needToRequest(array $batch)
     {
         return count($batch) >= TwitterResourceOwner::PROFILES_PER_LOOKUP;
-    }
-
-    protected function buildLinks(array $responses)
-    {
-        if (empty($responses)) {
-            return array();
-        }
-
-        $links = array();
-        foreach ($responses as $response)
-        {
-            foreach ($response as $user) {
-                $links[] = Creator::buildFromArray($this->resourceOwner->buildProfileFromLookup($user));
-            }
-        }
-
-        return $links;
     }
 
     public function requestBatchLinks(array $batch)
@@ -113,7 +95,7 @@ class TwitterProfileProcessor extends AbstractProcessor implements BatchProcesso
             if ($preprocessedLink->getSource() == TokensModel::TWITTER
                 && $link->isComplete() && !($link->getProcessed() !== false)
             ) {
-                unset($this->batch[$key]);
+                unset($batch[$key]);
             }
 
             $userId = $this->parser->getProfileId($preprocessedLink->getUrl());
@@ -147,6 +129,23 @@ class TwitterProfileProcessor extends AbstractProcessor implements BatchProcesso
         }
 
         return $lookupResponses;
+    }
+
+    protected function buildLinks(array $responses)
+    {
+        if (empty($responses)) {
+            return array();
+        }
+
+        $links = array();
+        foreach ($responses as $response)
+        {
+            foreach ($response as $user) {
+                $links[] = Creator::buildFromArray($this->resourceOwner->buildProfileFromLookup($user));
+            }
+        }
+
+        return $links;
     }
 
 }

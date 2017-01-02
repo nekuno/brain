@@ -71,7 +71,7 @@ class YoutubePlaylistProcessorTest extends \PHPUnit_Framework_TestCase
         $link = new PreprocessedLink($url);
         $response = $this->processor->getResponse($link);
 
-        $this->assertEquals($this->getPlaylistItemResponse(), $response, 'Asserting correct playlistresponse for ' . $url);
+        $this->assertEquals($this->getPlaylistResponse(), $response, 'Asserting correct playlistresponse for ' . $url);
     }
 
     /**
@@ -126,7 +126,7 @@ class YoutubePlaylistProcessorTest extends \PHPUnit_Framework_TestCase
             array(
                 $this->getPlaylistUrl(),
                 $this->getPlaylistId(),
-                $this->getPlaylistItemResponse(),
+                $this->getPlaylistResponse(),
                 array(
                     'title' => 'PelleK plays bad NES-games',
                     'description' => '',
@@ -141,6 +141,7 @@ class YoutubePlaylistProcessorTest extends \PHPUnit_Framework_TestCase
                     'imageProcessed' => null,
                     'embed_type' => 'youtube',
                     'embed_id' => 'PLcB-8ayo3tzddinO3ob7cEHhUtyyo66mN',
+                    'additionalLabels' => array('Video'),
                 )
             )
         );

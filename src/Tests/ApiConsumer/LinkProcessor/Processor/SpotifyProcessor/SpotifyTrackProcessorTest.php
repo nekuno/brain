@@ -192,6 +192,7 @@ class SpotifyTrackProcessorTest extends \PHPUnit_Framework_TestCase
                     'language' => null,
                     'synonymous' => array(),
                     'imageProcessed' => null,
+                    'additionalLabels' => array('Audio'),
                     'embed_type' => 'spotify',
                     'embed_id' => 'spotify:track:4vLYewWIvqHfKtJDk8c8tq',
                 )
