@@ -83,7 +83,7 @@ class ProcessorService implements LoggerAwareInterface
                 $links[$key] = $link;
             }
         }
-        $links = array_merge($links, $this->processLastLinks($userId));
+        $links = array_merge($links, $this->processLastLinks($userId, $source));
 
         $this->dispatcher->dispatch(\AppEvents::PROCESS_FINISH, new ProcessLinksEvent($userId, $source, $preprocessedLinks));
 
@@ -139,7 +139,7 @@ class ProcessorService implements LoggerAwareInterface
         return $links;
     }
 
-    private function processLastLinks($userId)
+    private function processLastLinks($userId, $source)
     {
         $processedLinks = $this->linkProcessor->processLastLinks();
 
@@ -147,6 +147,7 @@ class ProcessorService implements LoggerAwareInterface
         {
             $preprocessedLink = new PreprocessedLink($processedLink->getUrl());
             $preprocessedLink->setFirstLink($processedLink);
+            $preprocessedLink->setSource($source);
 
             $links = $this->save($preprocessedLink);
             $this->like($userId, $links, $preprocessedLink);
@@ -161,6 +162,8 @@ class ProcessorService implements LoggerAwareInterface
      */
     public function reprocess(array $preprocessedLinks)
     {
+        $source = $this->getCommonSource($preprocessedLinks);
+
         $links = array();
         foreach ($preprocessedLinks as $key => $preprocessedLink) {
             $this->logNotice(sprintf('Reprocessing link %s', $preprocessedLink->getUrl()));
@@ -171,12 +174,12 @@ class ProcessorService implements LoggerAwareInterface
             }
         }
 
-        $links = array_merge($links, $this->reprocessLastLinks());
+        $links = array_merge($links, $this->reprocessLastLinks($source));
 
         return $links;
     }
 
-    private function reprocessLastLinks()
+    private function reprocessLastLinks($source)
     {
         $processedLinks = $this->linkProcessor->processLastLinks();
 
@@ -184,6 +187,7 @@ class ProcessorService implements LoggerAwareInterface
         {
             $preprocessedLink = new PreprocessedLink($processedLink->getUrl());
             $preprocessedLink->setFirstLink($processedLink);
+            $preprocessedLink->setSource($source);
 
             $this->save($preprocessedLink);
         }
@@ -426,10 +430,11 @@ class ProcessorService implements LoggerAwareInterface
     private function like($userId, array $links, PreprocessedLink $preprocessedLink)
     {
         $likes = array();
+        $source = $preprocessedLink->getSource()?: 'nekuno';
         foreach ($links as $link) {
             $linkId = $link['id'];
             try {
-                $like = $this->rateModel->userRateLink($userId, $linkId, $preprocessedLink->getSource(), null, RateModel::LIKE, false);
+                $like = $this->rateModel->userRateLink($userId, $linkId, $source, null, RateModel::LIKE, false);
                 $likes[] = $like;
             } catch (\Exception $e) {
                 $this->manageError($e, sprintf('liking while processing link with id %d for user $d', $linkId, $userId));

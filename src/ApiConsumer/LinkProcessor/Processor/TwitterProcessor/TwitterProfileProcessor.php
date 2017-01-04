@@ -142,12 +142,16 @@ class TwitterProfileProcessor extends AbstractProcessor implements BatchProcesso
             return array();
         }
 
-        $links = array();
+        $linkArrays = array();
         foreach ($responses as $response)
         {
-            foreach ($response as $user) {
-                $links[] = Creator::buildFromArray($this->resourceOwner->buildProfileFromLookup($user));
-            }
+            $linkArrays = array_merge($linkArrays, $this->resourceOwner->buildProfilesFromLookup($response));
+        }
+
+        $links = array();
+        foreach ($linkArrays as $linkArray)
+        {
+            $links[] = Creator::buildFromArray($linkArray);
         }
 
         return $links;
