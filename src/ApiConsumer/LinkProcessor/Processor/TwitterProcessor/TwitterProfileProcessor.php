@@ -9,6 +9,7 @@ use ApiConsumer\LinkProcessor\Processor\BatchProcessorInterface;
 use ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser;
 use ApiConsumer\ResourceOwner\TwitterResourceOwner;
 use Model\Creator;
+use Model\Link;
 use Model\User\TokensModel;
 
 class TwitterProfileProcessor extends AbstractProcessor implements BatchProcessorInterface
@@ -68,6 +69,10 @@ class TwitterProfileProcessor extends AbstractProcessor implements BatchProcesso
         return count($batch) >= TwitterResourceOwner::PROFILES_PER_LOOKUP;
     }
 
+    /**
+     * @param array $batch
+     * @return Link[]
+     */
     public function requestBatchLinks(array $batch)
     {
         $userIds = $this->getUserIdsFromBatch($batch);
@@ -100,7 +105,7 @@ class TwitterProfileProcessor extends AbstractProcessor implements BatchProcesso
 
             $userId = $this->parser->getProfileId($preprocessedLink->getUrl());
             $key = array_keys($userId)[0];
-            $userIds[$key][] = $userId;
+            $userIds[$key][] = $userId[$key];
         }
 
         return $userIds;

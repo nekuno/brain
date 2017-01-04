@@ -47,7 +47,10 @@ class LinkProcessor
         return $links;
     }
 
-    public function getLastLinks()
+    /**
+     * @return Link[]
+     */
+    public function processLastLinks()
     {
         $links = array();
         foreach ($this->batch as $name => $batch) {

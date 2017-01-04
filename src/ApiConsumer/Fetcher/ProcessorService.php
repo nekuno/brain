@@ -83,8 +83,7 @@ class ProcessorService implements LoggerAwareInterface
                 $links[$key] = $link;
             }
         }
-
-        $links = array_merge($links, $this->linkProcessor->getLastLinks());
+        $links = array_merge($links, $this->processLastLinks($userId));
 
         $this->dispatcher->dispatch(\AppEvents::PROCESS_FINISH, new ProcessLinksEvent($userId, $source, $preprocessedLinks));
 
@@ -140,6 +139,22 @@ class ProcessorService implements LoggerAwareInterface
         return $links;
     }
 
+    private function processLastLinks($userId)
+    {
+        $processedLinks = $this->linkProcessor->processLastLinks();
+
+        foreach ($processedLinks as $processedLink)
+        {
+            $preprocessedLink = new PreprocessedLink($processedLink->getUrl());
+            $preprocessedLink->setFirstLink($processedLink);
+
+            $links = $this->save($preprocessedLink);
+            $this->like($userId, $links, $preprocessedLink);
+        }
+
+        return $processedLinks;
+    }
+
     /**
      * @param PreprocessedLink[] $preprocessedLinks
      * @return array
@@ -156,9 +171,24 @@ class ProcessorService implements LoggerAwareInterface
             }
         }
 
-        $links = array_merge($links, $this->linkProcessor->getLastLinks());
+        $links = array_merge($links, $this->reprocessLastLinks());
 
         return $links;
+    }
+
+    private function reprocessLastLinks()
+    {
+        $processedLinks = $this->linkProcessor->processLastLinks();
+
+        foreach ($processedLinks as $processedLink)
+        {
+            $preprocessedLink = new PreprocessedLink($processedLink->getUrl());
+            $preprocessedLink->setFirstLink($processedLink);
+
+            $this->save($preprocessedLink);
+        }
+
+        return $processedLinks;
     }
 
     private function fullReprocessSingle(PreprocessedLink $preprocessedLink)
