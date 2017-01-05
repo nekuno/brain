@@ -4,6 +4,7 @@ namespace ApiConsumer\LinkProcessor\Processor\TwitterProcessor;
 
 use ApiConsumer\Exception\CannotProcessException;
 use ApiConsumer\Exception\UrlChangedException;
+use ApiConsumer\LinkProcessor\LinkAnalyzer;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
 use ApiConsumer\LinkProcessor\Processor\AbstractProcessor;
 use ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser;
@@ -30,7 +31,7 @@ class TwitterTweetProcessor extends AbstractProcessor
         $link = $this->extractLinkFromResponse($apiResponse);
 
         if (isset($link['url'])){
-            $url = $this->parser->cleanURL($link['url']);
+            $url = LinkAnalyzer::cleanUrl($link['url']);
 
             if ($url != $preprocessedLink->getUrl()){
                 throw new UrlChangedException($preprocessedLink->getUrl(), $link['url']);
