@@ -6,9 +6,11 @@ use ApiConsumer\Fetcher\ProcessorService;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
 use Console\ApplicationAwareCommand;
 use Model\User\TokensModel;
+use Psr\Log\LogLevel;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class LinksProcessNewCommand extends ApplicationAwareCommand
@@ -53,7 +55,7 @@ class LinksProcessNewCommand extends ApplicationAwareCommand
 
             try {
                 $preprocessedLink = new PreprocessedLink($url);
-                $preprocessedLink->setSource($resource);
+                $preprocessedLink->setSource($resource ?: 'nekuno');
 
                 if ($userId && $resource) {
                     $token = $this->getToken($userId, $resource);
@@ -65,6 +67,7 @@ class LinksProcessNewCommand extends ApplicationAwareCommand
 
                 /* @var ProcessorService $processor */
                 $processor = $this->app['api_consumer.processor'];
+                $processor->setLogger(new ConsoleLogger($output, array(LogLevel::NOTICE => OutputInterface::VERBOSITY_NORMAL)));
                 $processedLinks = $processor->process(array($preprocessedLink), $userToProcess);
 
                 foreach ($processedLinks as $processedLink) {
@@ -83,6 +86,11 @@ class LinksProcessNewCommand extends ApplicationAwareCommand
     {
         $token = array();
 
+        if (!($userId && $resource))
+        {
+            return $token;
+        }
+
         /* @var TokensModel $tokensModel */
         $tokensModel = $this->app['users.tokens.model'];
         $tokens = $tokensModel->getByUserOrResource($userId, $resource);
@@ -97,7 +105,6 @@ class LinksProcessNewCommand extends ApplicationAwareCommand
     {
         if (OutputInterface::VERBOSITY_NORMAL < $output->getVerbosity()) {
             $output->writeln('----------Link outputted------------');
-            $output->writeln('Type: ' . get_class($link));
             foreach ($link as $key => $value) {
                 $value = is_array($value) ? json_encode($value) : $value;
                 $output->writeln(sprintf('%s => %s', $key, $value));

@@ -12,7 +12,7 @@ class LinkProcessor
 {
     private $processorFactory;
     private $imageAnalyzer;
-    private $batch;
+    private $batch = array();
 
     public function __construct(ProcessorFactory $processorFactory, ImageAnalyzer $imageAnalyzer)
     {

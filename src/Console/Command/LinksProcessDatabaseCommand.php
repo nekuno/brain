@@ -2,10 +2,7 @@
 
 namespace Console\Command;
 
-use ApiConsumer\LinkProcessor\LinkAnalyzer;
-use ApiConsumer\LinkProcessor\LinkProcessor;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
-use ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser;
 use Console\ApplicationAwareCommand;
 use Model\Link;
 use Psr\Log\LogLevel;
