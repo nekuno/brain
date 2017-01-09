@@ -6,6 +6,7 @@ use ApiConsumer\Factory\ProcessorFactory;
 use ApiConsumer\Images\ImageAnalyzer;
 use ApiConsumer\LinkProcessor\Processor\BatchProcessorInterface;
 use ApiConsumer\LinkProcessor\Processor\ProcessorInterface;
+use ApiConsumer\LinkProcessor\UrlParser\FacebookUrlParser;
 use Model\Link;
 
 class LinkProcessor
@@ -26,7 +27,19 @@ class LinkProcessor
 
         $this->executeProcessing($preprocessedLink, $scrapper);
 
+        $this->checkSecureSites($preprocessedLink);
+
         return $preprocessedLink->getLinks();
+    }
+
+    private function checkSecureSites(PreprocessedLink $preprocessedLink)
+    {
+        $fb_security_titles = array('Vérification de sécurité', 'Security Check', 'Security Check Required', 'Control de seguridad');
+        foreach ($preprocessedLink->getLinks() as $link) {
+            if ($preprocessedLink->getType() == FacebookUrlParser::FACEBOOK_PAGE && in_array($link->getTitle(), $fb_security_titles)) {
+                $link->setProcessed(false);
+            }
+        }
     }
 
     public function process(PreprocessedLink $preprocessedLink)

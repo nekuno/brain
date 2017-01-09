@@ -2,6 +2,7 @@
 
 namespace ApiConsumer\LinkProcessor\Processor\FacebookProcessor;
 
+use ApiConsumer\Exception\CannotProcessException;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
 use ApiConsumer\LinkProcessor\UrlParser\FacebookUrlParser;
 use Model\User\TokensModel;
@@ -12,7 +13,7 @@ class FacebookProfileProcessor extends AbstractFacebookProcessor
     {
         //TODO: When Facebook App Token is implemented, include option to request public if source != facebook
         if (!($preprocessedLink->getSource() == TokensModel::FACEBOOK && $preprocessedLink->getResourceItemId())) {
-            return array();
+            throw new CannotProcessException($preprocessedLink->getUrl(), 'Cannot process as a facebook page because for lacking token or id');
         }
 
         $id = $preprocessedLink->getResourceItemId();
