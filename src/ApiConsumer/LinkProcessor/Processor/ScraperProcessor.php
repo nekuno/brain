@@ -3,6 +3,7 @@
 namespace ApiConsumer\LinkProcessor\Processor;
 
 use ApiConsumer\Exception\CannotProcessException;
+use ApiConsumer\Factory\GoutteClientFactory;
 use ApiConsumer\Images\ImageResponse;
 use ApiConsumer\LinkProcessor\MetadataParser\BasicMetadataParser;
 use ApiConsumer\LinkProcessor\MetadataParser\FacebookMetadataParser;
@@ -17,6 +18,11 @@ use Symfony\Component\DomCrawler\Crawler;
 class ScraperProcessor implements ProcessorInterface
 {
     /**
+     * @var GoutteClientFactory
+     */
+    protected $clientFactory;
+
+    /**
      * @var Client
      */
     protected $client;
@@ -30,17 +36,19 @@ class ScraperProcessor implements ProcessorInterface
      * @var BasicMetadataParser
      */
     private $basicMetadataParser;
+
     /**
-     * @param Client $client
+     * @param GoutteClientFactory $goutteClientFactory
      * @param \ApiConsumer\LinkProcessor\MetadataParser\BasicMetadataParser $basicMetadataParser
      * @param \ApiConsumer\LinkProcessor\MetadataParser\FacebookMetadataParser $facebookMetadataParser
      */
     public function __construct(
-        Client $client,
+        GoutteClientFactory $goutteClientFactory,
         BasicMetadataParser $basicMetadataParser,
         FacebookMetadataParser $facebookMetadataParser
     ) {
-        $this->client = $client;
+        $this->clientFactory = $goutteClientFactory;
+        $this->client = $this->clientFactory->build();
         $this->basicMetadataParser = $basicMetadataParser;
         $this->facebookMetadataParser = $facebookMetadataParser;
     }
@@ -53,8 +61,10 @@ class ScraperProcessor implements ProcessorInterface
             $this->client->getClient()->setDefaultOption('timeout', 30.0);
             $crawler = $this->client->request('GET', $url);
         } catch (\LogicException $e) {
+            $this->client = $this->clientFactory->build();
             throw new CannotProcessException($url);
         } catch (RequestException $e) {
+            $this->client = $this->clientFactory->build();
             throw new CannotProcessException($url);
         }
 

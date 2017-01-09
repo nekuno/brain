@@ -3,11 +3,16 @@
 namespace ApiConsumer\LinkProcessor;
 
 use ApiConsumer\Exception\CouldNotResolveException;
+use ApiConsumer\Factory\GoutteClientFactory;
 use Goutte\Client;
 use Symfony\Component\DomCrawler\Crawler;
 
 class LinkResolver
 {
+    /**
+     * @var GoutteClientFactory
+     */
+    protected $clientFactory;
 
     /**
      * @var Client
@@ -15,12 +20,12 @@ class LinkResolver
     protected $client;
 
     /**
-     * @param Client $client
+     * @param GoutteClientFactory $goutteClientFactory
      */
-    public function __construct(Client $client)
+    public function __construct(GoutteClientFactory $goutteClientFactory)
     {
-
-        $this->client = $client;
+        $this->clientFactory = $goutteClientFactory;
+        $this->client = $this->clientFactory->build();
     }
 
     public function resolve(PreprocessedLink $preprocessedLink)
@@ -49,6 +54,7 @@ class LinkResolver
             }
 
         } catch (\Exception $e) {
+            $this->client = $this->clientFactory->build();
             throw new CouldNotResolveException($preprocessedLink->getUrl());
         }
 

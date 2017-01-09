@@ -13,7 +13,7 @@ class ClientController
 {
     public function versionAction(Application $app)
     {
-        $client = $app['api_consumer.link_processor.goutte'];
+        $client = $app['api_consumer.link_processor.goutte_factory']->build();
         $client->setHeader('accept-language', 'es');
         $crawler = $client->request('GET', 'https://play.google.com/store/apps/details?id=com.nekuno');
 
