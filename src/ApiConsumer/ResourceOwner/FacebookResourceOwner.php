@@ -48,14 +48,14 @@ class FacebookResourceOwner extends FacebookResourceOwnerBase
 		$resolver->setDefined('redirect_uri');
 	}
 
-	/**
-	 * We use Facebook system for getting new long-lived tokens
-	 * and assume machine-id as a non-obligatory refreshToken
-	 * @param array $token
-	 * @param array $extraParameters
-	 * @return array
-	 * @throws RequestException
-	 */
+    /**
+     * We use Facebook system for getting new long-lived tokens
+     * and assume machine-id as a non-obligatory refreshToken
+     * @param array $token
+     * @param array $extraParameters
+     * @return array
+     * @throws \Exception
+     */
 	public function refreshAccessToken($token, array $extraParameters = array())
 	{
 
@@ -104,7 +104,12 @@ class FacebookResourceOwner extends FacebookResourceOwnerBase
 		return $token;
 	}
 
-	public function extend($token)
+    protected function canRefresh($token)
+    {
+        return true;
+    }
+
+    public function extend($token)
 	{
 		$getCodeURL = 'https://graph.facebook.com/oauth/access_token';
 		$query = array(
