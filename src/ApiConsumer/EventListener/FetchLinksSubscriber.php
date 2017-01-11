@@ -10,10 +10,7 @@ use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-/**
- * Class LinkProcessSubscriber
- * @package ApiConsumer\EventListener
- */
+
 class FetchLinksSubscriber implements EventSubscriberInterface
 {
 

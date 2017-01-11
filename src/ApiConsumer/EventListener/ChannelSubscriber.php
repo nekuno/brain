@@ -8,10 +8,7 @@ use Service\UserAggregator;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-/**
- * Class ChannelSubscriber
- * @package ApiConsumer\EventListener
- */
+
 class ChannelSubscriber implements EventSubscriberInterface
 {
 

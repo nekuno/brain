@@ -1,7 +1,4 @@
 <?php
-/**
- * @author Roberto M. Pallarola <yawmoght@gmail.com>
- */
 
 namespace Controller\User;
 

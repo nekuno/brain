@@ -2,9 +2,7 @@
 
 namespace Model\User;
 
-/**
- * @author Juan Luis Martínez <juanlu@comakai.com>
- */
+
 class UserStatusModel
 {
     const USER_STATUS_DISABLED = 'disabled';

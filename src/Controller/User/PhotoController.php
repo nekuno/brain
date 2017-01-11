@@ -8,10 +8,7 @@ use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
-/**
- * Class PhotoController
- * @package Controller
- */
+
 class PhotoController
 {
 

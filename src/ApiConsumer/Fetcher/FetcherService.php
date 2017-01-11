@@ -129,8 +129,6 @@ class FetcherService implements LoggerAwareInterface
 
             $this->dispatcher->dispatch(\AppEvents::FETCH_FINISH, new FetchEvent($userId, $resourceOwner));
 
-            //$links = $this->processLinks($links, $userId);
-
         } catch (\Exception $e) {
             throw new \Exception(sprintf('Fetcher: Error fetching from resource "%s" for user "%d". Message: %s on file %s in line %d', $resourceOwner, $userId, $e->getMessage(), $e->getFile(), $e->getLine()), 1);
         }

@@ -7,11 +7,7 @@ use PhpAmqpLib\Connection\AMQPStreamConnection;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
 
-/**
- * Class AMQPServiceProvider
- *
- * @package Provider
- */
+
 class AMQPServiceProvider implements ServiceProviderInterface
 {
 

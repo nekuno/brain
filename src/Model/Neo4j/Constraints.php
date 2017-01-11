@@ -2,11 +2,7 @@
 
 namespace Model\Neo4j;
 
-/**
- * Class Constraints
- *
- * @package Model\Neo4j
- */
+
 class Constraints
 {
 
@@ -24,6 +20,7 @@ class Constraints
         $this->gm = $gm;
     }
 
+    //TODO: Update to add indexes
     /**
      * Load the constraints
      *

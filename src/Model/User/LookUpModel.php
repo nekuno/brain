@@ -1,7 +1,5 @@
 <?php
-/**
- * @author Manolo Salsas <manolez@gmail.com>
- */
+
 namespace Model\User;
 
 use Doctrine\ORM\EntityManager;
@@ -15,11 +13,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\Request;
 
-/**
- * Class LookUpModel
- *
- * @package Model
- */
+
 class LookUpModel
 {
     /**

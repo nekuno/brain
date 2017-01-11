@@ -3,15 +3,11 @@
 namespace Console\Command;
 
 use Console\ApplicationAwareCommand;
-use Everyman\Neo4j\Query\ResultSet;
-use Model\Entity\EmailNotification;
 use Model\LinkModel;
 use Model\User;
 use Model\User\Affinity\AffinityModel;
 use Manager\UserManager;
 use Service\AffinityRecalculations;
-use Service\EmailNotifications;
-use Silex\Application;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;

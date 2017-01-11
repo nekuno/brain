@@ -10,11 +10,7 @@ use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
-/**
- * Class RateModel
- *
- * @package Model\User
- */
+
 class RateModel
 {
 

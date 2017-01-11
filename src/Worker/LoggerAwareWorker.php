@@ -9,9 +9,7 @@ use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
-/**
- * @author Juan Luis Martínez <juanlu@comakai.com>
- */
+
 abstract class LoggerAwareWorker implements LoggerAwareInterface
 {
     /**

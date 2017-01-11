@@ -1,7 +1,5 @@
 <?php
-/**
- * @author Manolo Salsas <manolez@gmail.com>
- */
+
 namespace Worker;
 
 use Model\Neo4j\Neo4jException;
@@ -10,10 +8,7 @@ use PhpAmqpLib\Message\AMQPMessage;
 use Service\SocialNetwork;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
-/**
- * Class SocialNetworkDataProcessorWorker
- * @package Worker
- */
+
 class SocialNetworkDataProcessorWorker extends LoggerAwareWorker implements RabbitMQConsumerInterface
 {
 

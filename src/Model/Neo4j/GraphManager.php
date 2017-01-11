@@ -8,9 +8,7 @@ use Everyman\Neo4j\Node;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 
-/**
- * @author Juan Luis Martínez <juanlu@comakai.com>
- */
+
 class GraphManager implements LoggerAwareInterface
 {
     /**

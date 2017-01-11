@@ -21,10 +21,7 @@ use ApiConsumer\ResourceOwner\FacebookResourceOwner;
 use Model\User\GhostUser\GhostUserManager;
 use Model\User\SocialNetwork\SocialProfileManager;
 
-/**
- * Class UserController
- * @package Controller
- */
+
 class UserController
 {
     /**

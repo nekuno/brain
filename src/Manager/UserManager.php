@@ -24,11 +24,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Security\Core\Encoder\PasswordEncoderInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
-/**
- * Class UserManager
- *
- * @package Model
- */
+
 class UserManager implements PaginatedInterface
 {
 
