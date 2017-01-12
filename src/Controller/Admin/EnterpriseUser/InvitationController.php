@@ -1,7 +1,5 @@
 <?php
-/**
- * @author Manolo Salsas <manolez@gmail.com>
- */
+
 namespace Controller\Admin\EnterpriseUser;
 
 use Silex\Application;

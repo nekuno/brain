@@ -2,9 +2,7 @@
 
 namespace Model\Neo4j;
 
-/**
- * @author Juan Luis Martínez <juanlu@comakai.com>
- */
+
 class OptionsResult
 {
 

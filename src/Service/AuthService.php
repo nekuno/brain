@@ -11,9 +11,7 @@ use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\Security\Core\Encoder\PasswordEncoderInterface;
 use HWI\Bundle\OAuthBundle\DependencyInjection\Configuration;
 
-/**
- * @author Juan Luis Martínez <juanlu@comakai.com>
- */
+
 class AuthService
 {
 

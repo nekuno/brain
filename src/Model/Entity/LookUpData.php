@@ -1,7 +1,5 @@
 <?php
-/**
- * @author Manolo Salsas <manolez@gmail.com>
- */
+
 namespace Model\Entity;
 
 use Doctrine\ORM\Mapping\Column;

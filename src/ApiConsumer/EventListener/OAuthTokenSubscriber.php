@@ -10,10 +10,7 @@ use Psr\Log\LoggerInterface;
 use Swift_Mailer;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-/**
- * Class OAuthTokenSubscriber
- * @package ApiConsumer\Listener
- */
+
 class OAuthTokenSubscriber implements EventSubscriberInterface
 {
 
@@ -68,37 +65,6 @@ class OAuthTokenSubscriber implements EventSubscriberInterface
      */
     public function onTokenExpired(OAuthTokenEvent $event)
     {
-
-        $user = $event->getToken();
-
-        $this->sendMail($user);
-
-        try {
-            $channel = $this->amqp->channel();
-        } catch (AMQPRuntimeException $e) {
-            $this->amqp->reconnect();
-            $channel = $this->amqp->channel();
-        }
-
-        $exchangeName = 'social.direct';
-        $exchangeType = 'direct';
-        $queueName = 'social.notification';
-        $routing_key = 'social.notification.token_expire';
-
-        $channel->exchange_declare($exchangeName, $exchangeType, false, true, false);
-        $channel->queue_declare($queueName, false, true, false, false);
-        $channel->queue_bind($queueName, $exchangeName, $routing_key);
-
-        $messageData = array(
-            'user' => $user['id'],
-            'resourceOwner' => $user['resourceOwner'],
-            'message' => 'Token for ' . $user['resourceOwner'] . ' is expired.'
-        );
-
-        $message = new AMQPMessage(json_encode($messageData), array('delivery_mode' => 2));
-        $channel->basic_publish($message, $exchangeName, $routing_key);
-
-        $channel->close();
     }
 
     /**

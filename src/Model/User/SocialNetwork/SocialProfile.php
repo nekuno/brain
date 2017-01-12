@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: yawmoght
- * Date: 2/11/15
- * Time: 10:40
- */
 
 namespace Model\User\SocialNetwork;
 

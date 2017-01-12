@@ -8,11 +8,7 @@ use Manager\UserManager;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 
-/**
- * Class FetchController
- *
- * @package Controller
- */
+
 class FetchController
 {
 

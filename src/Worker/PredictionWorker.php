@@ -12,10 +12,7 @@ use PhpAmqpLib\Message\AMQPMessage;
 use Service\AffinityRecalculations;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
-/**
- * Class AffinityCalculatorWorker
- * @package Worker
- */
+
 class PredictionWorker extends LoggerAwareWorker implements RabbitMQConsumerInterface
 {
 

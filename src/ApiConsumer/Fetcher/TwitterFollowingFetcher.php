@@ -57,7 +57,6 @@ class TwitterFollowingFetcher extends BasicPaginationFetcher
             $links = array_merge($links, $this->resourceOwner->buildProfilesFromLookup($lookupResponse));
         }
 
-
         $preprocessedLinks = array();
         if ($links == false || empty($links)) {
             foreach ($rawFeed as $id) {

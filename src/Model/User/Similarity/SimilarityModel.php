@@ -13,9 +13,7 @@ use Model\User\QuestionPaginatedModel;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
-/**
- * @author Juan Luis Martínez <juanlu@comakai.com>
- */
+
 class SimilarityModel
 {
     const numberOfSecondsToCache = 30;
@@ -606,26 +604,7 @@ class SimilarityModel
 
         $denominator = $questionsFactor + $contentsFactor + $skillsFactor;
 
-        //TODO: Check why this is necessary NOW
-        ////// PATCH TO FIX SIMILARITIES OF INVESTOR GROUPS //////////////////
-        //0-------------------limitSimilarity-------1
-        // TO
-        //0---------newLimitSimilarity--------------1
-        //Contracts/expands intervals to fix similarities
-        $limitSimilarity = 0.85;
-        $newLimitSimilarity = 0.4;
-        $investorGroupIds = array(9507567);
-
-        foreach ($investorGroupIds as $investorGroupId) {
-            if ($this->groupModel->isUserFromGroup($investorGroupId, $idA) && $this->groupModel->isUserFromGroup($investorGroupId, $idB)) {
-                if ($similarity['interests'] > $limitSimilarity) {
-                    $similarity['interests'] = (($similarity['interests'] - $limitSimilarity) / (1 - $limitSimilarity)) * (1 - $newLimitSimilarity) + $newLimitSimilarity;
-                } else {
-                    $similarity['interests'] = (($similarity['interests']) / $limitSimilarity) * $newLimitSimilarity;
-                }
-            }
-        }
-        /////////////////////////////////////////////////////////////////////
+        $this->specialCases($similarity, $idA, $idB);
 
         $similarity['similarity'] = $denominator == 0 ? 0 :
             (($similarity['interests'] * $contentsFactor + $similarity['questions'] * $questionsFactor + $similarity['skills'] * $skillsFactor)
@@ -635,6 +614,23 @@ class SimilarityModel
         $this->setSimilarity($idA, $idB, $similarity['similarity']);
 
         return $similarity;
+    }
+
+    private function specialCases(&$similarity, $idA, $idB)
+    {
+        $limitSimilarity = 0.85;
+        $newLimitSimilarity = 0.4;
+        $groupIds = array(9507567);
+
+        foreach ($groupIds as $groupId) {
+            if ($this->groupModel->isUserFromGroup($groupId, $idA) && $this->groupModel->isUserFromGroup($groupId, $idB)) {
+                if ($similarity['interests'] > $limitSimilarity) {
+                    $similarity['interests'] = (($similarity['interests'] - $limitSimilarity) / (1 - $limitSimilarity)) * (1 - $newLimitSimilarity) + $newLimitSimilarity;
+                } else {
+                    $similarity['interests'] = (($similarity['interests']) / $limitSimilarity) * $newLimitSimilarity;
+                }
+            }
+        }
     }
 
     private function setSimilarity($idA, $idB, $similarity)

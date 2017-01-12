@@ -1,7 +1,5 @@
 <?php
-/**
- * @author Roberto Martinez <@yawmoght>
- */
+
 namespace Console\Command;
 
 use ApiConsumer\ResourceOwner\FacebookResourceOwner;

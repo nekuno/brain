@@ -8,11 +8,7 @@ use Model\Neo4j\GraphManager;
 use Model\User\Recommendation\ContentRecommendation;
 use Symfony\Component\Translation\Translator;
 
-/**
- * Class LinkModel
- *
- * @package Model
- */
+
 class LinkModel
 {
 

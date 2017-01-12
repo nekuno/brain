@@ -8,9 +8,7 @@ use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 use Everyman\Neo4j\Exception;
 
-/**
- * @author Juan Luis Martínez <juanlu@comakai.com>
- */
+
 class Query extends \Everyman\Neo4j\Cypher\Query implements LoggerAwareInterface
 {
 

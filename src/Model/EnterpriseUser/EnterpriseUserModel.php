@@ -1,7 +1,5 @@
 <?php
-/**
- * @author Manolo Salsas <manolez@gmail.com>
- */
+
 namespace Model\EnterpriseUser;
 
 use Everyman\Neo4j\Query\Row;
@@ -9,11 +7,7 @@ use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-/**
- * Class EnterpriseUserModel
- *
- * @package Model
- */
+
 class EnterpriseUserModel
 {
 

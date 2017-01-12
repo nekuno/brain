@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: yawmoght
- * Date: 30/10/15
- * Time: 12:36
- */
 
 namespace Model\User\GhostUser;
 

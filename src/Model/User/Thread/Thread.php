@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: yawmoght
- * Date: 4/12/15
- * Time: 11:07
- */
 
 namespace Model\User\Thread;
 

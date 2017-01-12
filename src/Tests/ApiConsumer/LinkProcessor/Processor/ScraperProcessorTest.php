@@ -4,10 +4,7 @@ namespace Tests\ApiConsumer\LinkProcessor\Processor;
 
 use ApiConsumer\LinkProcessor\Processor\ScraperProcessor;
 
-/**
- * Class ScraperProcessorTest
- * @package Tests\ApiConsumer\LinkProcessor\Processor
- */
+
 class ScraperProcessorTest extends \PHPUnit_Framework_TestCase
 {
 

@@ -1,7 +1,4 @@
 <?php
-/**
- * Created by: yawmoght
- */
 
 namespace Service;
 

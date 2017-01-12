@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: yawmoght
- * Date: 29/10/15
- * Time: 10:20
- */
 
 namespace ApiConsumer\Fetcher;
 
