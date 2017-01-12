@@ -4,7 +4,6 @@ namespace Tests\ApiConsumer\LinkProcessor\Processor\TwitterProcessor;
 
 use ApiConsumer\LinkProcessor\PreprocessedLink;
 use ApiConsumer\LinkProcessor\Processor\FacebookProcessor\FacebookProfileProcessor;
-use ApiConsumer\LinkProcessor\SynonymousParameters;
 use ApiConsumer\LinkProcessor\UrlParser\FacebookUrlParser;
 use ApiConsumer\ResourceOwner\FacebookResourceOwner;
 use Model\User\TokensModel;
@@ -52,11 +51,10 @@ class FacebookProfileProcessorTest extends \PHPUnit_Framework_TestCase
             ->will($this->returnValue($profiles));
 
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
         $link->setResourceItemId($id);
         $link->setType(FacebookUrlParser::FACEBOOK_PAGE);
         $link->setSource(TokensModel::FACEBOOK);
-        $response = $this->processor->requestItem($link);
+        $response = $this->processor->getResponse($link);
 
         $this->assertEquals($response, $profiles, 'Asserting correct response for ' . $url);
     }
@@ -67,10 +65,9 @@ class FacebookProfileProcessorTest extends \PHPUnit_Framework_TestCase
     public function testHydrateLink($url, $response, $expectedArray)
     {
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
         $this->processor->hydrateLink($link, $response);
 
-        $this->assertEquals($expectedArray, $link->getLink()->toArray(), 'Asserting correct hydrated link for ' . $url);
+        $this->assertEquals($expectedArray, $link->getFirstLink()->toArray(), 'Asserting correct hydrated link for ' . $url);
     }
 
     /**
@@ -79,12 +76,11 @@ class FacebookProfileProcessorTest extends \PHPUnit_Framework_TestCase
     public function testAddTags($url, $response, $expectedTags)
     {
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
         $this->processor->addTags($link, $response);
 
         $tags = $expectedTags;
         sort($tags);
-        $resultTags = $link->getLink()->getTags();
+        $resultTags = $link->getFirstLink()->getTags();
         sort($resultTags);
         $this->assertEquals($tags, $resultTags);
     }
@@ -117,7 +113,7 @@ class FacebookProfileProcessorTest extends \PHPUnit_Framework_TestCase
                 array(
                     'title' => 'VIPS',
                     'description' => $this->getDescription(),
-                    'thumbnail' => "https://scontent.xx.fbcdn.net/v/t1.0-1/p200x200/14462778_1189395474449864_8356688914233163542_n.png?oh=7896407a8bda6664154139d74b76892c&oe=5862D54B",
+                    'thumbnail' => null,
                     'url' => null,
                     'id' => null,
                     'tags' => array(),
@@ -125,6 +121,7 @@ class FacebookProfileProcessorTest extends \PHPUnit_Framework_TestCase
                     'processed' => true,
                     'language' => null,
                     'synonymous' => array(),
+                    'imageProcessed' => null,
                 )
             )
         );
@@ -154,7 +151,7 @@ class FacebookProfileProcessorTest extends \PHPUnit_Framework_TestCase
             "picture" => array(
                 "data" => array(
                     "is_silhouette" => false,
-                    "url" => "https://scontent.xx.fbcdn.net/v/t1.0-1/p200x200/14462778_1189395474449864_8356688914233163542_n.png?oh=7896407a8bda6664154139d74b76892c&oe=5862D54B",
+                    "url" => $this->getThumbnailUrl(),
                 )
             ),
             "id" => "166849216704500"
@@ -185,6 +182,11 @@ class FacebookProfileProcessorTest extends \PHPUnit_Framework_TestCase
     public function getProfileTags()
     {
         return array();
+    }
+
+    public function getThumbnailUrl()
+    {
+        return "https://scontent.xx.fbcdn.net/v/t1.0-1/p200x200/14462778_1189395474449864_8356688914233163542_n.png?oh=7896407a8bda6664154139d74b76892c&oe=5862D54B";
     }
 
 }

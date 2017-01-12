@@ -4,7 +4,6 @@ namespace Tests\ApiConsumer\LinkProcessor\Processor\TwitterProcessor;
 
 use ApiConsumer\LinkProcessor\PreprocessedLink;
 use ApiConsumer\LinkProcessor\Processor\TwitterProcessor\TwitterPicProcessor;
-use ApiConsumer\LinkProcessor\SynonymousParameters;
 use ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser;
 use ApiConsumer\ResourceOwner\TwitterResourceOwner;
 
@@ -42,11 +41,9 @@ class TwitterPicProcessorTest extends \PHPUnit_Framework_TestCase
      */
     public function testRequestItem($url)
     {
+        $this->setExpectedException('ApiConsumer\Exception\CannotProcessException', 'Twitter pic needs to be scraped');
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
-        $response = $this->processor->requestItem($link);
-
-        $this->assertEquals(array(), $response, 'Asserting response for ' . $url);
+        $this->processor->getResponse($link);
     }
 
     /**
@@ -55,10 +52,9 @@ class TwitterPicProcessorTest extends \PHPUnit_Framework_TestCase
     public function testHydrateLink($url, $expectedArray)
     {
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
         $this->processor->hydrateLink($link, array());
 
-        $this->assertEquals($expectedArray, $link->getLink()->toArray(), 'Asserting correct hydrated link for ' . $url);
+        $this->assertEquals($expectedArray, $link->getFirstLink()->toArray(), 'Asserting correct hydrated link for ' . $url);
     }
 
     /**
@@ -67,12 +63,11 @@ class TwitterPicProcessorTest extends \PHPUnit_Framework_TestCase
     public function testAddTags($url, $response, $expectedTags)
     {
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
         $this->processor->addTags($link, $response);
 
         $tags = $expectedTags;
         sort($tags);
-        $resultTags = $link->getLink()->getTags();
+        $resultTags = $link->getFirstLink()->getTags();
         sort($resultTags);
         $this->assertEquals($tags, $resultTags);
     }
@@ -118,6 +113,7 @@ class TwitterPicProcessorTest extends \PHPUnit_Framework_TestCase
                     'processed' => true,
                     'language' => null,
                     'synonymous' => array(),
+                    'imageProcessed' => null,
                 )
             )
         );

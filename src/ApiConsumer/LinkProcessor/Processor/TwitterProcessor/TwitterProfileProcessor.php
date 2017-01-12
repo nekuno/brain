@@ -4,58 +4,157 @@ namespace ApiConsumer\LinkProcessor\Processor\TwitterProcessor;
 
 use ApiConsumer\Exception\CannotProcessException;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
+use ApiConsumer\LinkProcessor\Processor\AbstractProcessor;
+use ApiConsumer\LinkProcessor\Processor\BatchProcessorInterface;
+use ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser;
+use ApiConsumer\ResourceOwner\TwitterResourceOwner;
 use Model\Creator;
+use Model\Link;
 use Model\User\TokensModel;
 
-class TwitterProfileProcessor extends AbstractTwitterProfileProcessor
+class TwitterProfileProcessor extends AbstractProcessor implements BatchProcessorInterface
 {
+    /**
+     * @var TwitterResourceOwner
+     */
+    protected $resourceOwner;
 
-    public function requestItem(PreprocessedLink $preprocessedLink)
+    /**
+     * @var TwitterUrlParser
+     */
+    protected $parser;
+
+    protected function requestItem(PreprocessedLink $preprocessedLink)
     {
-        $userName = $this->getItemId($preprocessedLink->getCanonical());
-        $users = $this->resourceOwner->lookupUsersBy('screen_name', $userName);
+        $userId = $this->getUserId($preprocessedLink);
+        $token = $preprocessedLink->getSource() == TokensModel::TWITTER ? $preprocessedLink->getToken() : array();
+        $key = array_keys($userId)[0];
+
+        $response = $this->resourceOwner->lookupUsersBy($key, array($userId[$key]), $token);
 
         //Response validation
-        if (empty($users)) {
-            throw new CannotProcessException($preprocessedLink->getCanonical());
+        if (empty($response)) {
+            throw new CannotProcessException($preprocessedLink->getUrl());
         }
 
-        return $users[0];
+        return reset($response);
+    }
+
+    public function hydrateLink(PreprocessedLink $preprocessedLink, array $data)
+    {
+        $profileArray = $this->resourceOwner->buildProfileFromLookup($data);
+        $preprocessedLink->setFirstLink(Creator::buildFromArray($profileArray));
+
+        $id = isset($data['id_str']) ? (int)$data['id_str'] : $data['id'];
+        $preprocessedLink->setResourceItemId($id);
+    }
+
+    public function getImages(PreprocessedLink $preprocessedLink, array $data)
+    {
+        return isset($data['profile_image_url']) ? array(str_replace('_normal', '', $data['profile_image_url'])) : array();
+    }
+
+    protected function getUserId(PreprocessedLink $preprocessedLink)
+    {
+        return $this->getItemId($preprocessedLink->getUrl());
+    }
+
+    protected function getItemIdFromParser($url)
+    {
+        return $this->parser->getProfileId($url);
+    }
+
+    public function needToRequest(array $batch)
+    {
+        return count($batch) >= TwitterResourceOwner::PROFILES_PER_LOOKUP;
     }
 
     /**
-     * @param $preprocessedLinks PreprocessedLink[]
-     * @return array|bool
-     * //TODO: Generalize "batch processing" logic?
+     * @param array $batch
+     * @return Link[]
      */
-    public function processMultipleProfiles($preprocessedLinks)
+    public function requestBatchLinks(array $batch)
     {
+        $userIds = $this->getUserIdsFromBatch($batch);
 
-        $userNames = array();
-        foreach ($preprocessedLinks as $key => $preprocessedLink) {
+        $token = $this->getTokenFromBatch($batch);
 
-            $link = $preprocessedLink->getLink();
+        $responses = $this->requestLookup($userIds, $token);
+
+        $links = $this->buildLinks($responses);
+
+        return $links;
+    }
+
+    /**
+     * @param PreprocessedLink[] $batch
+     * @return array
+     */
+    protected function getUserIdsFromBatch(array $batch)
+    {
+        $userIds = array('user_id' => array(), 'screen_name' => array());
+        foreach ($batch as $key => $preprocessedLink) {
+
+            $link = $preprocessedLink->getFirstLink();
 
             if ($preprocessedLink->getSource() == TokensModel::TWITTER
                 && $link->isComplete() && !($link->getProcessed() !== false)
             ) {
-                unset($preprocessedLinks[$key]);
+                unset($batch[$key]);
             }
 
-            $userName = $this->parser->getProfileId($preprocessedLink->getCanonical());
-            $userNames[] = $userName['screen_name'];
+            $userId = $this->parser->getProfileId($preprocessedLink->getUrl());
+            $key = array_keys($userId)[0];
+            $userIds[$key][] = $userId[$key];
         }
 
-        $users = $this->resourceOwner->lookupUsersBy('screen_name', $userNames);
-        if (empty($users)) {
-            return false;
+        return $userIds;
+    }
+
+    /**
+     * @param $batch PreprocessedLink[]
+     * @return array
+     */
+    protected function getTokenFromBatch(array $batch)
+    {
+        foreach ($batch as $preprocessedLink) {
+            if (!empty($token = $preprocessedLink->getToken())) {
+                return $token;
+            }
+        }
+
+        return array();
+    }
+
+    protected function requestLookup(array $userIds, $token)
+    {
+        $lookupResponses = array();
+        foreach ($userIds as $key => $ids) {
+            $lookupResponses = array_merge($lookupResponses, $this->resourceOwner->lookupUsersBy($key, $ids, $token));
+        }
+
+        return $lookupResponses;
+    }
+
+    protected function buildLinks(array $responses)
+    {
+        if (empty($responses)) {
+            return array();
+        }
+
+        $linkArrays = array();
+        foreach ($responses as $response)
+        {
+            $linkArrays = array_merge($linkArrays, $this->resourceOwner->buildProfilesFromLookup($response));
         }
 
         $links = array();
-        foreach ($users as $user) {
-            $links[] = Creator::buildFromArray($this->resourceOwner->buildProfileFromLookup($user));
+        foreach ($linkArrays as $linkArray)
+        {
+            $links[] = Creator::buildFromArray($linkArray);
         }
 
         return $links;
     }
+
 }

@@ -51,8 +51,7 @@ class SpotifyTrackProcessorTest extends \PHPUnit_Framework_TestCase
             ->will($this->throwException(new UrlNotValidException($url)));
 
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
-        $this->processor->requestItem($link);
+        $this->processor->getResponse($link);
     }
 
     /**
@@ -71,8 +70,7 @@ class SpotifyTrackProcessorTest extends \PHPUnit_Framework_TestCase
             ->will($this->returnValue($response));
 
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
-        $this->processor->requestItem($link);
+        $this->processor->getResponse($link);
     }
 
     /**
@@ -93,8 +91,7 @@ class SpotifyTrackProcessorTest extends \PHPUnit_Framework_TestCase
             ->will($this->returnValue($album));
 
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
-        $response = $this->processor->requestItem($link);
+        $response = $this->processor->getResponse($link);
 
         $this->assertEquals(array('track' => $track, 'album' => $album), $response, 'Asserting correct track response for ' . $url);
     }
@@ -105,10 +102,9 @@ class SpotifyTrackProcessorTest extends \PHPUnit_Framework_TestCase
     public function testHydrateLink($url, $response, $expectedArray)
     {
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
         $this->processor->hydrateLink($link, $response);
 
-        $this->assertEquals($expectedArray, $link->getLink()->toArray(), 'Asserting correct hydrated link for ' . $url);
+        $this->assertEquals($expectedArray, $link->getFirstLink()->toArray(), 'Asserting correct hydrated link for ' . $url);
     }
 
     /**
@@ -117,12 +113,11 @@ class SpotifyTrackProcessorTest extends \PHPUnit_Framework_TestCase
     public function testAddTags($url, $response, $expectedTags)
     {
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
         $this->processor->addTags($link, $response);
 
         $tags = $expectedTags;
         sort($tags);
-        $resultTags = $link->getLink()->getTags();
+        $resultTags = $link->getFirstLink()->getTags();
         sort($resultTags);
         $this->assertEquals($tags, $resultTags);
     }
@@ -133,7 +128,6 @@ class SpotifyTrackProcessorTest extends \PHPUnit_Framework_TestCase
     public function testSynonymousParameters($url, $response, $expectedParameters)
     {
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
         $this->processor->getSynonymousParameters($link, $response);
 
         $this->assertEquals($expectedParameters, $link->getSynonymousParameters(), 'Asserting track synonymous parameters');
@@ -197,6 +191,8 @@ class SpotifyTrackProcessorTest extends \PHPUnit_Framework_TestCase
                     'processed' => true,
                     'language' => null,
                     'synonymous' => array(),
+                    'imageProcessed' => null,
+                    'additionalLabels' => array('Audio'),
                     'embed_type' => 'spotify',
                     'embed_id' => 'spotify:track:4vLYewWIvqHfKtJDk8c8tq',
                 )

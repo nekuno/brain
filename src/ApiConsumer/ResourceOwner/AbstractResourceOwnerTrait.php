@@ -165,9 +165,8 @@ trait AbstractResourceOwnerTrait
      */
     public function authorizedHttpRequest($url, array $query = array(), array $token = array())
     {
-        if (isset($token['expireTime']) && ($token['expireTime'] <= time() && $token['expireTime'] != 0)) {
-
-            if (!$token['refreshToken']) {
+        if ($this->needsRefreshing($token)) {
+            if (!$this->canRefresh($token)) {
                 $this->dispatchTokenExpired($token);
                 $e = new TokenException(sprintf('Refresh token not present for user "%s"', $token['username']));
                 $e->setToken($token);
@@ -191,6 +190,16 @@ trait AbstractResourceOwnerTrait
         $response = $this->sendAuthorizedRequest($this->options['base_url'] . $url, $query, $token);
 
         return $this->getResponseContent($response);
+    }
+
+    protected function needsRefreshing($token)
+    {
+        return isset($token['expireTime']) && ($token['expireTime'] <= time() && $token['expireTime'] != 0);
+    }
+
+    protected function canRefresh($token)
+    {
+        return isset($token['refreshToken']);
     }
 
     private function dispatchTokenExpired($token)

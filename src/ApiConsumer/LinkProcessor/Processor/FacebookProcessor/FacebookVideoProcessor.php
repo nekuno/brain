@@ -9,9 +9,9 @@ use Model\Video;
 
 class FacebookVideoProcessor extends AbstractFacebookProcessor
 {
-    public function requestItem(PreprocessedLink $preprocessedLink)
+    protected function requestItem(PreprocessedLink $preprocessedLink)
     {
-        $id = $this->getItemId($preprocessedLink->getCanonical());
+        $id = $this->getItemId($preprocessedLink->getUrl());
         $preprocessedLink->setResourceItemId($id);
 
         if ($preprocessedLink->getSource() == TokensModel::FACEBOOK) {
@@ -31,7 +31,7 @@ class FacebookVideoProcessor extends AbstractFacebookProcessor
         $video->setEmbedType(TokensModel::FACEBOOK);
         $video->setEmbedId($preprocessedLink->getResourceItemId());
 
-        $preprocessedLink->setLink($video);
+        $preprocessedLink->setFirstLink($video);
     }
 
     public function getImages(PreprocessedLink $preprocessedLink, array $data)

@@ -7,9 +7,9 @@ use Model\Audio;
 
 class SpotifyAlbumProcessor extends AbstractSpotifyProcessor
 {
-    public function requestItem(PreprocessedLink $preprocessedLink)
+    protected function requestItem(PreprocessedLink $preprocessedLink)
     {
-        $id = $this->getItemId($preprocessedLink->getCanonical());
+        $id = $this->getItemId($preprocessedLink->getUrl());
 
         $album = $this->resourceOwner->requestAlbum($id);
 
@@ -18,7 +18,7 @@ class SpotifyAlbumProcessor extends AbstractSpotifyProcessor
 
     public function hydrateLink(PreprocessedLink $preprocessedLink, array $data)
     {
-        $link = $preprocessedLink->getLink();
+        $link = $preprocessedLink->getFirstLink();
 
         $artistList = $this->buildArtistList($data);
 
@@ -29,14 +29,14 @@ class SpotifyAlbumProcessor extends AbstractSpotifyProcessor
         $link->setEmbedId($data['uri']);
         $link->setEmbedType('spotify');
 
-        $preprocessedLink->setLink($link);
+        $preprocessedLink->setFirstLink($link);
     }
 
     public function addTags(PreprocessedLink $preprocessedLink, array $data)
     {
         parent::addTags($preprocessedLink, $data);
 
-        $link = $preprocessedLink->getLink();
+        $link = $preprocessedLink->getFirstLink();
 
         if (isset($data['name']) && isset($data['genres']) && isset($data['artists'])) {
             foreach ($data['genres'] as $genre) {

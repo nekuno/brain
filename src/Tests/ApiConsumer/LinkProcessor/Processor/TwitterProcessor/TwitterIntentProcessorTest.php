@@ -5,9 +5,9 @@ namespace Tests\ApiConsumer\LinkProcessor\Processor\TwitterProcessor;
 use ApiConsumer\Exception\UrlNotValidException;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
 use ApiConsumer\LinkProcessor\Processor\TwitterProcessor\TwitterIntentProcessor;
-use ApiConsumer\LinkProcessor\SynonymousParameters;
 use ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser;
 use ApiConsumer\ResourceOwner\TwitterResourceOwner;
+use Model\User\TokensModel;
 
 class TwitterIntentProcessorTest extends \PHPUnit_Framework_TestCase
 {
@@ -43,21 +43,20 @@ class TwitterIntentProcessorTest extends \PHPUnit_Framework_TestCase
      */
     public function testBadUrlRequestItem($url)
     {
-        $this->setExpectedException('ApiConsumer\Exception\CannotProcessException', 'Could not process url ' . $url);
+        $this->setExpectedException('ApiConsumer\Exception\CannotProcessException', 'Getting userId from a twitter intent url');
 
         $this->parser->expects($this->once())
             ->method('getProfileId')
             ->will($this->throwException(new UrlNotValidException($url)));
 
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
-        $this->processor->requestItem($link);
+        $this->processor->getResponse($link);
     }
 
     /**
      * @dataProvider getProfileForRequestItem
      */
-    public function testRequestItem($url, $id, $profiles)
+    public function testRequestItem($url, $id, $profiles, $link)
     {
         $this->parser->expects($this->once())
             ->method('getProfileId')
@@ -67,43 +66,14 @@ class TwitterIntentProcessorTest extends \PHPUnit_Framework_TestCase
             ->method('lookupUsersBy')
             ->will($this->returnValue($profiles));
 
-        $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
-        $response = $this->processor->requestItem($link);
-
-        $this->assertEquals($response, $profiles[0], 'Asserting correct response for ' . $url);
-    }
-
-    /**
-     * @dataProvider getResponseHydration
-     */
-    public function testHydrateLink($url, $response, $expectedArray)
-    {
         $this->resourceOwner->expects($this->once())
             ->method('buildProfileFromLookup')
-            ->will($this->returnValue($response));
+            ->will($this->returnValue($link));
+
+        $this->setExpectedException('ApiConsumer\Exception\UrlChangedException', 'Url changed from https://twitter.com/intent/user?screen_name=yawmoght to https://twitter.com/yawmoght');
 
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
-        $this->processor->hydrateLink($link, $response);
-
-        $this->assertEquals($expectedArray, $link->getLink()->toArray(), 'Asserting correct hydrated link for ' . $url);
-    }
-
-    /**
-     * @dataProvider getResponseTags
-     */
-    public function testAddTags($url, $response, $expectedTags)
-    {
-        $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
-        $this->processor->addTags($link, $response);
-
-        $tags = $expectedTags;
-        sort($tags);
-        $resultTags = $link->getLink()->getTags();
-        sort($resultTags);
-        $this->assertEquals($tags, $resultTags);
+        $this->processor->getResponse($link);
     }
 
     public function getBadUrls()
@@ -120,6 +90,7 @@ class TwitterIntentProcessorTest extends \PHPUnit_Framework_TestCase
                 $this->getProfileUrl(),
                 $this->getProfileId(),
                 $this->getProfileResponse(),
+                $this->getProfileLink(),
             )
         );
     }
@@ -141,6 +112,7 @@ class TwitterIntentProcessorTest extends \PHPUnit_Framework_TestCase
                     'processed' => true,
                     'language' => null,
                     'synonymous' => array(),
+                    'imageProcessed' => null,
                 )
             )
         );
@@ -255,6 +227,20 @@ class TwitterIntentProcessorTest extends \PHPUnit_Framework_TestCase
         );
     }
 
+    public function getProfileLink()
+    {
+        return array(
+            'description' => 'Tool developer & data junkie',
+            'url' => 'https://twitter.com/yawmoght',
+            'thumbnail' => "http://pbs.twimg.com/profile_images/639462703858380800/ZxusSbUW.png",
+            'additionalLabels' => array('Creator'),
+            'resource' => TokensModel::TWITTER,
+            'timestamp' => 1000 * time(),
+            'processed' => 1,
+            'title' => 'yawmoght',
+        );
+    }
+
     public function getNewUrl()
     {
         return 'http://www.nature.com/news/democratic-databases-science-on-github-1.20719';
@@ -262,7 +248,7 @@ class TwitterIntentProcessorTest extends \PHPUnit_Framework_TestCase
 
     public function getProfileUrl()
     {
-        return 'https://twitter.com/yawmoght';
+        return 'https://twitter.com/intent/user?screen_name=yawmoght';
     }
 
     public function getProfileId()

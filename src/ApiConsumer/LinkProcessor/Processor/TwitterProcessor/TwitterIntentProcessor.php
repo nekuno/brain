@@ -3,69 +3,64 @@
 namespace ApiConsumer\LinkProcessor\Processor\TwitterProcessor;
 
 use ApiConsumer\Exception\CannotProcessException;
+use ApiConsumer\Exception\UrlChangedException;
+use ApiConsumer\Exception\UrlNotValidException;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
-use Model\User\TokensModel;
+use ApiConsumer\LinkProcessor\Processor\AbstractProcessor;
+use ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser;
+use ApiConsumer\ResourceOwner\TwitterResourceOwner;
 
-class TwitterIntentProcessor extends AbstractTwitterProfileProcessor
+class TwitterIntentProcessor extends AbstractProcessor
 {
-    public function requestItem(PreprocessedLink $preprocessedLink)
+    /** @var  TwitterUrlParser */
+    protected $parser;
+
+    /** @var  TwitterResourceOwner */
+    protected $resourceOwner;
+
+    protected function requestItem(PreprocessedLink $preprocessedLink)
     {
-        $userId = $preprocessedLink->getResourceItemId() ?
-            array('user_id' => $preprocessedLink->getResourceItemId())
-            :
-            $this->getItemId($preprocessedLink->getCanonical());
-
-        $key = array_keys($userId)[0];
-
-        $token = $preprocessedLink->getSource() == TokensModel::TWITTER ? $preprocessedLink->getToken() : array();
-        $users = $this->resourceOwner->lookupUsersBy($key, array($userId[$key]), $token);
-
-        //Response validation
-        if (empty($users)) {
-            throw new CannotProcessException($preprocessedLink->getCanonical());
+        try {
+            $userId = $this->getUserId($preprocessedLink);
+            $profileUrl = $this->buildProfileUrl($userId);
+        } catch (UrlNotValidException $e) {
+            throw new CannotProcessException($e->getUrl(), 'Getting userId from a twitter intent url');
         }
 
-        return $users[0];
+        throw new UrlChangedException($preprocessedLink->getUrl(), $profileUrl);
     }
 
-    /**
-     * @param $preprocessedLinks PreprocessedLink[]
-     * @return array|bool
-     */
-    public function processMultipleIntents($preprocessedLinks)
+    protected function getUserId(PreprocessedLink $preprocessedLink)
     {
+        return !empty($this->getUserIdFromResourceId($preprocessedLink)) ? $this->getUserIdFromResourceId($preprocessedLink) : $this->parser->getProfileId($preprocessedLink->getUrl());
+    }
 
-        $userIds = array('user_id' => array(), 'screen_name' => array());
-        foreach ($preprocessedLinks as $key => $preprocessedLink) {
+    public function hydrateLink(PreprocessedLink $preprocessedLink, array $data)
+    {
+    }
 
-            $link = $preprocessedLink->getLink();
-
-            if ($link->isComplete() && $link->getProcessed() !== false) {
-                unset($preprocessedLinks[$key]);
-            }
-
-            $userId = $preprocessedLink->getResourceItemId() ?
-                array('user_id' => $preprocessedLink->getResourceItemId()) :
-                $this->parser->getProfileId($preprocessedLink->getCanonical());
-
-            $key = array_keys($userId)[0];
-            $userIds[$key][] = $userId;
+    private function getUserIdFromResourceId(PreprocessedLink $preprocessedLink)
+    {
+        if ($resourceId = $preprocessedLink->getResourceItemId()) {
+            return array('id' => $resourceId);
         }
 
-        $users = array();
-        foreach ($userIds as $key => $ids) {
-            $users = array_merge($users, $this->resourceOwner->lookupUsersBy($key, $ids));
+        return array();
+    }
+
+    public function buildProfileUrl(array $userId)
+    {
+        if (isset($userId['screen_name'])) {
+            return $this->parser->buildUserUrl($userId['screen_name']);
         }
 
-        if (empty($users)) {
-            return false;
+        if (isset($userId['user_id'])) {
+            $response = $this->resourceOwner->lookupUsersBy('user_id', array($userId['user_id']));
+            $link = $this->resourceOwner->buildProfileFromLookup($response);
+
+            return $link['url'];
         }
 
-        $links = array();
-        foreach ($users as $user) {
-            $links[] = $this->resourceOwner->buildProfileFromLookup($user);
-        }
-
-        return $links;
+        return null;
     }
 }

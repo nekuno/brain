@@ -7,19 +7,18 @@ use Model\Video;
 
 class YoutubeVideoProcessor extends AbstractYoutubeProcessor
 {
-
     public function hydrateLink(PreprocessedLink $preprocessedLink, array $data)
     {
         parent::hydrateLink($preprocessedLink, $data);
 
-        $link = $preprocessedLink->getLink();
+        $link = $preprocessedLink->getFirstLink();
         $itemId = $preprocessedLink->getResourceItemId();
 
         $link = Video::buildFromLink($link);
         $link->setEmbedId($itemId);
         $link->setEmbedType('youtube');
 
-        $preprocessedLink->setLink($link);
+        $preprocessedLink->setFirstLink($link);
     }
 
     public function getImages(PreprocessedLink $preprocessedLink, array $data)
@@ -41,7 +40,7 @@ class YoutubeVideoProcessor extends AbstractYoutubeProcessor
 
     public function addTags(PreprocessedLink $preprocessedLink, array $item)
     {
-        $link = $preprocessedLink->getLink();
+        $link = $preprocessedLink->getFirstLink();
 
         if (isset($item['topicDetails']['topicIds'])) {
             foreach ($item['topicDetails']['topicIds'] as $tagName) {

@@ -14,11 +14,11 @@ class YoutubePlaylistProcessor extends AbstractYoutubeProcessor
     {
         parent::hydrateLink($preprocessedLink, $data);
 
-        $link = Video::buildFromLink($preprocessedLink->getLink());
+        $link = Video::buildFromLink($preprocessedLink->getFirstLink());
         $link->setEmbedId($preprocessedLink->getResourceItemId());
         $link->setEmbedType('youtube');
 
-        $preprocessedLink->setLink($link);
+        $preprocessedLink->setFirstLink($link);
     }
 
     function getItemIdFromParser($url)

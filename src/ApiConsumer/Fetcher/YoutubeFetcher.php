@@ -245,7 +245,7 @@ class YoutubeFetcher extends BasicPaginationFetcher
         $videos = $this->parseLinks($response);
 
         foreach ($videos as $key => $video){
-            if (!LinkAnalyzer::isTextSimilar($video->getLink()->getTitle(), $comparison)){
+            if (!LinkAnalyzer::isTextSimilar($video->getFirstLink()->getTitle(), $comparison)){
                 unset($videos[$key]);
             }
         }
@@ -283,7 +283,7 @@ class YoutubeFetcher extends BasicPaginationFetcher
             $link['description'] = array_key_exists('description', $item['snippet']) ? $item['snippet']['description'] : '';
             $link['timestamp'] = $timestamp;
 
-            $preprocessedLink->setLink(Link::buildFromArray($link));
+            $preprocessedLink->setFirstLink(Link::buildFromArray($link));
             $preprocessedLink->setResourceItemId(array_key_exists('id', $item) ? $item['id'] : null);
             $preprocessedLink->setSource($this->resourceOwner->getName());
 

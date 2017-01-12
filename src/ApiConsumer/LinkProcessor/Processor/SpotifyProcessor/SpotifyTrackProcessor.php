@@ -10,15 +10,15 @@ use Model\Audio;
 
 class SpotifyTrackProcessor extends AbstractSpotifyProcessor
 {
-    public function requestItem(PreprocessedLink $preprocessedLink)
+    protected function requestItem(PreprocessedLink $preprocessedLink)
     {
-        $id = $this->getItemId($preprocessedLink->getCanonical());
+        $id = $this->getItemId($preprocessedLink->getUrl());
         $preprocessedLink->setResourceItemId($id);
 
         $track = $this->resourceOwner->requestTrack($id);
 
         if (!(isset($track['album']) && isset($track['name']) && isset($track['artists']))) {
-            throw new CannotProcessException($preprocessedLink->getCanonical());
+            throw new CannotProcessException($preprocessedLink->getUrl());
         }
 
         $album = $this->resourceOwner->requestAlbum($track['album']['id']);
@@ -28,7 +28,7 @@ class SpotifyTrackProcessor extends AbstractSpotifyProcessor
 
     public function hydrateLink(PreprocessedLink $preprocessedLink, array $data)
     {
-        $link = $preprocessedLink->getLink();
+        $link = $preprocessedLink->getFirstLink();
 
         $track = $data['track'];
 
@@ -41,7 +41,7 @@ class SpotifyTrackProcessor extends AbstractSpotifyProcessor
         $link->setEmbedType('spotify');
         $link->setEmbedId($track['uri']);
 
-        $preprocessedLink->setLink($link);
+        $preprocessedLink->setFirstLink($link);
     }
 
     public function getImages(PreprocessedLink $preprocessedLink, array $data)
@@ -59,7 +59,7 @@ class SpotifyTrackProcessor extends AbstractSpotifyProcessor
 
     public function addTags(PreprocessedLink $preprocessedLink, array $data)
     {
-        $link = $preprocessedLink->getLink();
+        $link = $preprocessedLink->getFirstLink();
 
         $album = $data['album'];
         if (isset($album['genres'])) {
@@ -88,7 +88,7 @@ class SpotifyTrackProcessor extends AbstractSpotifyProcessor
         $synonymousParameters = new SynonymousParameters();
         $synonymousParameters->setQuantity(3);
         $synonymousParameters->setQuery($queryString);
-        $synonymousParameters->setComparison($preprocessedLink->getLink()->getTitle());
+        $synonymousParameters->setComparison($preprocessedLink->getFirstLink()->getTitle());
         $synonymousParameters->setType(YoutubeUrlParser::VIDEO_URL);
 
         $preprocessedLink->setSynonymousParameters($synonymousParameters);

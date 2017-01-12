@@ -14,7 +14,7 @@ class UrlChangedException extends \Exception
     {
         $this->oldUrl = $oldUrl;
         $this->newUrl = $newUrl;
-        $message = !empty($message) ? $message : sprintf('Url changed from %s to  %s', $oldUrl, $newUrl);
+        $message = !empty($message) ? $message : sprintf('Url changed from %s to %s', $oldUrl, $newUrl);
         parent::__construct($message, $code, $previous);
     }
 

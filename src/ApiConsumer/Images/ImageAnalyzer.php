@@ -152,11 +152,7 @@ class ImageAnalyzer
 
         $length = $this->getLength($head, $imageUrl);
 
-        $response = new ImageResponse();
-        $response->setUrl($imageUrl);
-        $response->setStatusCode($head->getStatusCode());
-        $response->setType($head->getHeader('Content-Type'));
-        $response->setLength($length);
+        $response = new ImageResponse($imageUrl, $head->getStatusCode(), $head->getHeader('Content-Type'), $length);
 
         return $response;
     }

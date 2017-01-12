@@ -2,15 +2,15 @@
 
 namespace Console\Command;
 
-use ApiConsumer\LinkProcessor\LinkProcessor;
+use ApiConsumer\Fetcher\ProcessorService;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
 use Console\ApplicationAwareCommand;
-use Model\LinkModel;
-use Model\User\RateModel;
 use Model\User\TokensModel;
+use Psr\Log\LogLevel;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class LinksProcessNewCommand extends ApplicationAwareCommand
@@ -29,12 +29,6 @@ class LinksProcessNewCommand extends ApplicationAwareCommand
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-
-        /* @var $linksModel LinkModel */
-        $linksModel = $this->app['links.model'];
-        /* @var $rateModel RateModel */
-        $rateModel = $this->app['users.rate.model'];
-
         $url = $input->getArgument('url');
         $csv = $input->getOption('csv');
         $userId = $input->getOption('userId');
@@ -60,38 +54,24 @@ class LinksProcessNewCommand extends ApplicationAwareCommand
         foreach ($urls as $url) {
 
             try {
-
                 $preprocessedLink = new PreprocessedLink($url);
-                $preprocessedLink->setCanonical($url);
-                $preprocessedLink->setSource($resource);
+                $preprocessedLink->setSource($resource ?: 'nekuno');
 
                 if ($userId && $resource) {
-                    /* @var TokensModel $tokensModel */
-                    $tokensModel = $this->app['users.tokens.model'];
-                    $tokens = $tokensModel->getByUserOrResource($userId, $resource);
-                    if (count($tokens) !== 0) {
-                        $preprocessedLink->setToken($tokens[0]);
-                    }
-                }
-                /* @var LinkProcessor $processor */
-                $processor = $this->app['api_consumer.link_processor'];
-                $processedLink = $processor->process($preprocessedLink);
-
-                if (OutputInterface::VERBOSITY_NORMAL < $output->getVerbosity()) {
-                    $output->writeln('----------Link outputted------------');
-                    $output->writeln('Type: ' . get_class($processedLink));
-                    foreach ($processedLink->toArray() as $key => $value) {
-                        $value = is_array($value) ? json_encode($value) : $value;
-                        $output->writeln(sprintf('%s => %s', $key, $value));
-                    }
-                    $output->writeln('-----------------------------------');
+                    $token = $this->getToken($userId, $resource);
+                    $preprocessedLink->setToken($token);
                 }
 
-                $processed = array_key_exists('processed', $processedLink) ? $processedLink['processed'] : 1;
-                if ($processed) {
-                    $output->writeln(sprintf('Success: Link %s processed', $preprocessedLink->getFetched()));
-                } else {
-                    $output->writeln(sprintf('Failed request: Link %s not processed', $preprocessedLink->getFetched()));
+                $testUserId = 42;
+                $userToProcess = $userId ?: $testUserId;
+
+                /* @var ProcessorService $processor */
+                $processor = $this->app['api_consumer.processor'];
+                $processor->setLogger(new ConsoleLogger($output, array(LogLevel::NOTICE => OutputInterface::VERBOSITY_NORMAL)));
+                $processedLinks = $processor->process(array($preprocessedLink), $userToProcess);
+
+                foreach ($processedLinks as $processedLink) {
+                    $this->outputLink($processedLink, $output);
                 }
 
             } catch (\Exception $e) {
@@ -99,27 +79,37 @@ class LinksProcessNewCommand extends ApplicationAwareCommand
                 $output->writeln(sprintf('Error: Link %s not processed', $url));
                 continue;
             }
+        }
+    }
 
-            if (!$userId) {
-                $output->writeln(sprintf('Link with url %s was not saved in the database', $processedLink->getUrl()));
-            } else {
-                try {
-                    $addedLink = $linksModel->addOrUpdateLink($processedLink);
-                    $processedLink->setId($addedLink['id']);
-                    $rateModel->userRateLink($userId, $processedLink->getId());
-                    foreach ($processedLink->getTags() as $tag) {
-                        $linksModel->createTag($tag);
-                        $linksModel->addTag($processedLink, $tag);
-                    }
+    private function getToken($userId, $resource)
+    {
+        $token = array();
 
-                    $output->writeln(sprintf('Success: Link %s saved', $processedLink->getUrl()));
+        if (!($userId && $resource))
+        {
+            return $token;
+        }
 
-                } catch (\Exception $e) {
-                    $output->writeln(sprintf('Error: Link %s not saved', $processedLink->getUrl()));
-                    $output->writeln($e->getMessage());
-                }
+        /* @var TokensModel $tokensModel */
+        $tokensModel = $this->app['users.tokens.model'];
+        $tokens = $tokensModel->getByUserOrResource($userId, $resource);
+        if (count($tokens) !== 0) {
+            $token = $tokens[0];
+        }
+
+        return $token;
+    }
+
+    private function outputLink($link, OutputInterface $output)
+    {
+        if (OutputInterface::VERBOSITY_NORMAL < $output->getVerbosity()) {
+            $output->writeln('----------Link outputted------------');
+            foreach ($link as $key => $value) {
+                $value = is_array($value) ? json_encode($value) : $value;
+                $output->writeln(sprintf('%s => %s', $key, $value));
             }
-
+            $output->writeln('-----------------------------------');
         }
     }
 }

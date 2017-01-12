@@ -5,7 +5,6 @@ namespace Tests\ApiConsumer\LinkProcessor\Processor\SpotifyProcessor;
 use ApiConsumer\Exception\UrlNotValidException;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
 use ApiConsumer\LinkProcessor\Processor\SpotifyProcessor\SpotifyArtistProcessor;
-use ApiConsumer\LinkProcessor\SynonymousParameters;
 use ApiConsumer\ResourceOwner\SpotifyResourceOwner;
 use ApiConsumer\LinkProcessor\UrlParser\SpotifyUrlParser;
 
@@ -50,8 +49,7 @@ class SpotifyArtistProcessorTest extends \PHPUnit_Framework_TestCase
             ->will($this->throwException(new UrlNotValidException($url)));
 
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
-        $this->processor->requestItem($link);
+        $this->processor->getResponse($link);
     }
 
     /**
@@ -68,8 +66,7 @@ class SpotifyArtistProcessorTest extends \PHPUnit_Framework_TestCase
             ->will($this->returnValue($artist));
 
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
-        $response = $this->processor->requestItem($link);
+        $response = $this->processor->getResponse($link);
 
         $this->assertEquals($artist, $response, 'Asserting correct artist response for ' . $url);
     }
@@ -80,10 +77,9 @@ class SpotifyArtistProcessorTest extends \PHPUnit_Framework_TestCase
     public function testHydrateLink($url, $response, $expectedArray)
     {
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
         $this->processor->hydrateLink($link, $response);
 
-        $this->assertEquals($expectedArray, $link->getLink()->toArray(), 'Asserting correct hydrated link for ' . $url);
+        $this->assertEquals($expectedArray, $link->getFirstLink()->toArray(), 'Asserting correct hydrated link for ' . $url);
     }
 
     /**
@@ -92,12 +88,11 @@ class SpotifyArtistProcessorTest extends \PHPUnit_Framework_TestCase
     public function testAddTags($url, $response, $expectedTags)
     {
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
         $this->processor->addTags($link, $response);
 
         $tags = $expectedTags;
         sort($tags);
-        $resultTags = $link->getLink()->getTags();
+        $resultTags = $link->getFirstLink()->getTags();
         sort($resultTags);
         $this->assertEquals($tags, $resultTags);
     }
@@ -137,6 +132,7 @@ class SpotifyArtistProcessorTest extends \PHPUnit_Framework_TestCase
                     'processed' => true,
                     'language' => null,
                     'synonymous' => array(),
+                    'imageProcessed' => null,
                 )
             )
         );

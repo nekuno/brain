@@ -3,7 +3,8 @@
 namespace ApiConsumer\LinkProcessor\Processor;
 
 use ApiConsumer\Exception\CannotProcessException;
-use ApiConsumer\Images\ImageAnalyzer;
+use ApiConsumer\Factory\GoutteClientFactory;
+use ApiConsumer\Images\ImageResponse;
 use ApiConsumer\LinkProcessor\MetadataParser\BasicMetadataParser;
 use ApiConsumer\LinkProcessor\MetadataParser\FacebookMetadataParser;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
@@ -16,6 +17,11 @@ use Symfony\Component\DomCrawler\Crawler;
 
 class ScraperProcessor implements ProcessorInterface
 {
+    /**
+     * @var GoutteClientFactory
+     */
+    protected $clientFactory;
+
     /**
      * @var Client
      */
@@ -30,43 +36,42 @@ class ScraperProcessor implements ProcessorInterface
      * @var BasicMetadataParser
      */
     private $basicMetadataParser;
+
     /**
-     * @param Client $client
+     * @param GoutteClientFactory $goutteClientFactory
      * @param \ApiConsumer\LinkProcessor\MetadataParser\BasicMetadataParser $basicMetadataParser
      * @param \ApiConsumer\LinkProcessor\MetadataParser\FacebookMetadataParser $facebookMetadataParser
      */
     public function __construct(
-        Client $client,
+        GoutteClientFactory $goutteClientFactory,
         BasicMetadataParser $basicMetadataParser,
         FacebookMetadataParser $facebookMetadataParser
     ) {
-        $this->client = $client;
+        $this->clientFactory = $goutteClientFactory;
+        $this->client = $this->clientFactory->build();
         $this->basicMetadataParser = $basicMetadataParser;
         $this->facebookMetadataParser = $facebookMetadataParser;
     }
 
-    public function requestItem(PreprocessedLink $preprocessedLink)
+    public function getResponse(PreprocessedLink $preprocessedLink)
     {
-        $link = $preprocessedLink->getLink();
-
-        $url = $preprocessedLink->getCanonical();
-        $link->setUrl($url);
+        $url = $preprocessedLink->getUrl();
 
         try {
             $this->client->getClient()->setDefaultOption('timeout', 30.0);
             $crawler = $this->client->request('GET', $url);
         } catch (\LogicException $e) {
-            //log
+            $this->client = $this->clientFactory->build();
             throw new CannotProcessException($url);
         } catch (RequestException $e) {
+            $this->client = $this->clientFactory->build();
             throw new CannotProcessException($url);
         }
 
-        $responseHeaders = $this->client->getResponse()->getHeaders();
-        //TODO: unify with LinkResolver->isCorrectImageResponse (QS-800)
-        if ($responseHeaders && isset($responseHeaders['Content-Type'][0]) && false !== strpos($responseHeaders['Content-Type'][0], "image/")) {
-            $image = Image::buildFromArray($link->toArray());
-            $preprocessedLink->setLink($image);
+        $imageResponse = new ImageResponse($url, 200, $this->client->getResponse()->getHeader('Content-Type'));
+        if ($imageResponse->isImage()) {
+            $image = Image::buildFromArray($preprocessedLink->getFirstLink()->toArray());
+            $preprocessedLink->setFirstLink($image);
         }
 
         return array('html' => $crawler->html());
@@ -74,7 +79,7 @@ class ScraperProcessor implements ProcessorInterface
 
     public function hydrateLink(PreprocessedLink $preprocessedLink, array $data)
     {
-        $link = $preprocessedLink->getLink();
+        $link = $preprocessedLink->getFirstLink();
 
         $crawler = new Crawler();
         $crawler->addHtmlContent($data['html']);
@@ -109,7 +114,7 @@ class ScraperProcessor implements ProcessorInterface
 
     public function addTags(PreprocessedLink $preprocessedLink, array $data)
     {
-        $link = $preprocessedLink->getLink();
+        $link = $preprocessedLink->getFirstLink();
         $crawler = new Crawler();
         $crawler->addHtmlContent($data['html']);
 

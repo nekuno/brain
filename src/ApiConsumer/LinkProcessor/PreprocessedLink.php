@@ -1,7 +1,4 @@
 <?php
-/**
- * @author yawmoght <yawmoght@gmail.com>
- */
 
 namespace ApiConsumer\LinkProcessor;
 
@@ -10,9 +7,7 @@ use Model\Link;
 
 class PreprocessedLink
 {
-    protected $fetched;
-
-    protected $canonical;
+    protected $url;
 
     /**
      * @var $exceptions \Exception[]
@@ -25,9 +20,9 @@ class PreprocessedLink
     protected $resourceItemId;
 
     /**
-     * @var Link
+     * @var Link[]
      */
-    protected $link;
+    protected $links;
 
     /**
      * @var array Token which was used for fetching
@@ -45,45 +40,30 @@ class PreprocessedLink
 
     /**
      * PreprocessedLink constructor.
-     * @param $fetched
+     * @param $url
      */
-    public function __construct($fetched)
+    public function __construct($url)
     {
-        $this->fetched = $fetched;
-        $this->link = new Link();
+        $this->url = $url;
+
+        $this->links = array(new Link());
         $this->synonymousParameters = new SynonymousParameters();
     }
 
     /**
      * @return mixed
      */
-    public function getFetched()
+    public function getUrl()
     {
-        return $this->fetched;
+        return $this->url;
     }
 
     /**
-     * @param mixed $fetched
+     * @param mixed $url
      */
-    public function setFetched($fetched)
+    public function setUrl($url)
     {
-        $this->fetched = $fetched;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getCanonical()
-    {
-        return $this->canonical;
-    }
-
-    /**
-     * @param mixed $canonical
-     */
-    public function setCanonical($canonical)
-    {
-        $this->canonical = $canonical;
+        $this->url = $url;
     }
 
     /**
@@ -129,40 +109,33 @@ class PreprocessedLink
     /**
      * @return Link
      */
-    public function getLink()
+    public function getFirstLink()
     {
-        return $this->link;
+        return reset($this->links);
     }
 
     /**
      * @param Link $link
      */
-    public function setLink($link)
+    public function setFirstLink($link)
     {
-        $this->link = $link;
-    }
-
-    public function addToLink($array)
-    {
-        foreach ($array as $key=>$value)
-        {
-            $this->link[$key] = $value;
-        }
-
-        return $this->getLink();
+        $this->links[0] = $link;
     }
 
     /**
-     * TODO: Refactor to Link object whenever available
-     * @param $label
+     * @return Link[]
      */
-    public function addAdditionalLabel($label)
+    public function getLinks()
     {
-        if (!isset($this->link['additionalLabels'])){
-            $this->link['additionalLabels'] = array();
-        }
+        return $this->links;
+    }
 
-        $this->link['additionalLabels'][] = $label;
+    /**
+     * @param Link[] $links
+     */
+    public function setLinks($links)
+    {
+        $this->links = $links;
     }
 
     /**
