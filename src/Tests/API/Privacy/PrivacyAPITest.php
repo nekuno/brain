@@ -1,7 +1,5 @@
 <?php
-/**
- * @author Manolo Salsas <manolez@gmail.com>
- */
+
 namespace Tests\API\Privacy;
 
 use Tests\API\APITest;

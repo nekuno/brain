@@ -11,10 +11,7 @@ use Service\TokenGenerator;
 use Service\Validator;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-/**
- * Class InvitationModel
- * @package Model\User
- */
+
 class InvitationModel
 {
 

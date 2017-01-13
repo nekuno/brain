@@ -1,14 +1,8 @@
 <?php
-/**
- * @author yawmoght <yawmoght@gmail.com>
- */
 
 namespace ApiConsumer\Fetcher\GetOldTweets;
 
 
-/**
- * {@inheritDoc}
- */
 class TweetManager extends \Manager\TweetManager
 {
 

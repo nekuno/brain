@@ -2,17 +2,18 @@
 
 namespace ApiConsumer\LinkProcessor\Processor\FacebookProcessor;
 
+use ApiConsumer\Exception\CannotProcessException;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
 use ApiConsumer\LinkProcessor\UrlParser\FacebookUrlParser;
 use Model\User\TokensModel;
 
 class FacebookProfileProcessor extends AbstractFacebookProcessor
 {
-    public function requestItem(PreprocessedLink $preprocessedLink)
+    protected function requestItem(PreprocessedLink $preprocessedLink)
     {
         //TODO: When Facebook App Token is implemented, include option to request public if source != facebook
         if (!($preprocessedLink->getSource() == TokensModel::FACEBOOK && $preprocessedLink->getResourceItemId())) {
-            return array();
+            throw new CannotProcessException($preprocessedLink->getUrl(), 'Cannot process as a facebook page because for lacking token or id');
         }
 
         $id = $preprocessedLink->getResourceItemId();
@@ -27,12 +28,11 @@ class FacebookProfileProcessor extends AbstractFacebookProcessor
         }
 
         return $this->resourceOwner->requestProfile($id, $token);
-
     }
 
     public function hydrateLink(PreprocessedLink $preprocessedLink, array $data)
     {
-        $link = $preprocessedLink->getLink();
+        $link = $preprocessedLink->getFirstLink();
         $link->setDescription(isset($data['description']) ? $data['description'] : $this->buildDescriptionFromTitle($data));
         $link->setTitle(isset($data['name']) ? $data['name'] : $this->buildTitleFromDescription($data));
     }

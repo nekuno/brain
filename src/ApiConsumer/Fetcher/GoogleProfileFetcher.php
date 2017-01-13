@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: yawmoght
- * Date: 29/10/15
- * Time: 10:20
- */
 
 namespace ApiConsumer\Fetcher;
 
@@ -24,7 +18,7 @@ class GoogleProfileFetcher extends AbstractFetcher{
 
         $preprocessedLink = new PreprocessedLink($response['url']);
         $link = array('resource' => $this->resourceOwner->getName());
-        $preprocessedLink->setLink($link);
+        $preprocessedLink->setFirstLink($link);
         return array($preprocessedLink);
     }
 

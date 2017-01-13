@@ -6,16 +6,9 @@ use ApiConsumer\Event\OAuthTokenEvent;
 use ApiConsumer\LinkProcessor\UrlParser\FacebookUrlParser;
 use Event\ExceptionEvent;
 use GuzzleHttp\Exception\RequestException;
-use Model\User\TokensModel;
 use HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\FacebookResourceOwner as FacebookResourceOwnerBase;
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
 
-/**
- * Class FacebookResourceOwner
- *
- * @package ApiConsumer\ResourceOwner
- * @method FacebookUrlParser getParser
- */
 class FacebookResourceOwner extends FacebookResourceOwnerBase
 {
 	use AbstractResourceOwnerTrait {
@@ -23,7 +16,8 @@ class FacebookResourceOwner extends FacebookResourceOwnerBase
 		AbstractResourceOwnerTrait::__construct as private traitConstructor;
 	}
 
-	protected $name = TokensModel::FACEBOOK;
+    /** @var FacebookUrlParser */
+    protected $urlParser;
 
 	public function __construct($httpClient, $httpUtils, $options, $name, $storage, $dispatcher)
 	{
@@ -48,14 +42,14 @@ class FacebookResourceOwner extends FacebookResourceOwnerBase
 		$resolver->setDefined('redirect_uri');
 	}
 
-	/**
-	 * We use Facebook system for getting new long-lived tokens
-	 * and assume machine-id as a non-obligatory refreshToken
-	 * @param array $token
-	 * @param array $extraParameters
-	 * @return array
-	 * @throws RequestException
-	 */
+    /**
+     * We use Facebook system for getting new long-lived tokens
+     * and assume machine-id as a non-obligatory refreshToken
+     * @param array $token
+     * @param array $extraParameters
+     * @return array
+     * @throws \Exception
+     */
 	public function refreshAccessToken($token, array $extraParameters = array())
 	{
 
@@ -104,7 +98,12 @@ class FacebookResourceOwner extends FacebookResourceOwnerBase
 		return $token;
 	}
 
-	public function extend($token)
+    protected function canRefresh($token)
+    {
+        return true;
+    }
+
+    public function extend($token)
 	{
 		$getCodeURL = 'https://graph.facebook.com/oauth/access_token';
 		$query = array(
@@ -136,7 +135,7 @@ class FacebookResourceOwner extends FacebookResourceOwnerBase
 	public function requestPicture($id, $token, $size = 'large')
 	{
 	    //TODO: Try to move out of here
-		if ($this->getParser()->isStatusId($id)){
+		if ($this->urlParser->isStatusId($id)){
 			return null;
 		}
 

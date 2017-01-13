@@ -10,10 +10,7 @@ use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-/**
- * Class LinkProcessSubscriber
- * @package ApiConsumer\EventListener
- */
+
 class FetchLinksSubscriber implements EventSubscriberInterface
 {
 
@@ -75,8 +72,8 @@ class FetchLinksSubscriber implements EventSubscriberInterface
         }
         if (OutputInterface::VERBOSITY_VERBOSE < $this->output->getVerbosity()) {
             $link = $event->getLink();
-            $url = $link->getFetched();
-            $timestamp = $link->getLink()->getCreated() ?: time()*1000 ;
+            $url = $link->getUrl();
+            $timestamp = $link->getFirstLink()->getCreated() ?: time()*1000 ;
             $this->output->writeln(sprintf(' url: "%s" at timestamp: %s', $url, $timestamp));
         }
     }

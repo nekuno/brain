@@ -5,7 +5,6 @@ namespace ApiConsumer\Fetcher;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
 use ApiConsumer\ResourceOwner\TwitterResourceOwner;
 use Model\Creator;
-use Model\Link;
 
 class TwitterFollowingFetcher extends BasicPaginationFetcher
 {
@@ -68,7 +67,7 @@ class TwitterFollowingFetcher extends BasicPaginationFetcher
                     'timestamp' => 1000 * time(),
                 );
                 $preprocessedLink = new PreprocessedLink($link['url']);
-                $preprocessedLink->setLink(Creator::buildFromArray($link));
+                $preprocessedLink->setFirstLink(Creator::buildFromArray($link));
                 $preprocessedLink->setSource($this->resourceOwner->getName());
                 $preprocessedLink->setResourceItemId($id);
                 $preprocessedLinks[] = $preprocessedLink;
@@ -85,7 +84,7 @@ class TwitterFollowingFetcher extends BasicPaginationFetcher
 //                    )
 //                );
                 $preprocessedLink = new PreprocessedLink($link['url']);
-                $preprocessedLink->setLink(Creator::buildFromArray($link));
+                $preprocessedLink->setFirstLink(Creator::buildFromArray($link));
                 $preprocessedLinks[] = $preprocessedLink;
             }
         }

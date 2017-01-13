@@ -15,9 +15,6 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-/**
- * @author Juan Luis Martínez <juanlu@comakai.com>
- */
 class Neo4jLoadQuestionsCommand extends ApplicationAwareCommand
 {
 

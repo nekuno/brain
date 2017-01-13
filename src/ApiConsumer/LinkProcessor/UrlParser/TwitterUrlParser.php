@@ -203,4 +203,9 @@ class TwitterUrlParser extends UrlParser
         }
     }
 
+    public function buildUserUrl($screenName)
+    {
+        return 'https://twitter.com/' . $screenName;
+    }
+
 }

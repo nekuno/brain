@@ -1,7 +1,8 @@
 {
     "name": "nekuno/brain",
+    "version": "0.50.0",
     "description": "Nekuno brain",
-    "license": "MIT",
+    "license": "AGPL-3.0",
     "type": "project",
     "require": {
         "php": ">=5.3.3",

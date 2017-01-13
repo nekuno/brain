@@ -21,7 +21,7 @@ class LinkAnalyzerTest extends \PHPUnit_Framework_TestCase
     public function testProcessorName($url, $expectedProcessorName)
     {
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
+        $link->setUrl($url);
 
         $processorName = LinkAnalyzer::getProcessorName($link);
         $this->assertEquals($expectedProcessorName, $processorName, 'Asserting that processor type for ' . $url . ' is ' . $processorName);
@@ -34,7 +34,7 @@ class LinkAnalyzerTest extends \PHPUnit_Framework_TestCase
     {
         $this->setExpectedException(UrlNotValidException::class, 'Url ' . $url . ' not valid');
         $link = new PreprocessedLink($url);
-        $link->setCanonical($url);
+        $link->setUrl($url);
 
         LinkAnalyzer::getProcessorName($link);
     }

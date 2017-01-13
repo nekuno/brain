@@ -1,16 +1,10 @@
 <?php
-/**
- * @author Manolo Salsas <manolez@gmail.com>
- */
+
 namespace Model\User\SocialNetwork;
 
 use Psr\Log\LoggerInterface;
 
-/**
- * Class LinkedinSocialNetworkModel
- *
- * @package Model
- */
+
 class LinkedinSocialNetworkModel extends SocialNetworkModel
 {
     public function set($id, $profileUrl, LoggerInterface $logger = null)

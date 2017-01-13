@@ -3,11 +3,8 @@
 namespace ApiConsumer\Factory;
 
 use ApiConsumer\Fetcher\FetcherInterface;
-use ApiConsumer\Factory\ResourceOwnerFactory;
 
-/**
- * @author Juan Luis Martínez <juanlu@comakai.com>
- */
+
 class FetcherFactory
 {
     /**

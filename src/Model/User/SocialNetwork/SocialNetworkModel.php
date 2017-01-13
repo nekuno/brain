@@ -1,18 +1,12 @@
 <?php
-/**
- * @author Manolo Salsas <manolez@gmail.com>
- */
+
 namespace Model\User\SocialNetwork;
 
 use Model\Neo4j\GraphManager;
 use Model\Parser\BaseParser;
 use Psr\Log\LoggerInterface;
 
-/**
- * Class SocialNetworkModel
- *
- * @package Model
- */
+
 abstract class SocialNetworkModel
 {
     /**

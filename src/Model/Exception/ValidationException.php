@@ -4,9 +4,7 @@ namespace Model\Exception;
 
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
-/**
- * @author Juan Luis Martínez <juanlu@comakai.com>
- */
+
 class ValidationException extends HttpException
 {
     protected $errors = array();

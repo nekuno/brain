@@ -8,9 +8,7 @@ use HWI\Bundle\OAuthBundle\OAuth\ResourceOwnerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Security\Http\HttpUtils;
 
-/**
- * @author Juan Luis Martínez <juanlu@comakai.com>
- */
+
 class ResourceOwnerFactory
 {
     /**

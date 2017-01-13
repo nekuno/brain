@@ -1,7 +1,4 @@
 <?php
-/**
- * @author Roberto Martinez yawmoght@gmail.com>
- */
 
 namespace Console\Command;
 

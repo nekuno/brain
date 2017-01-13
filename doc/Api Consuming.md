@@ -1,3 +1,9 @@
+EN PROCESO DE CAMBIO:
+
+ProcessorService: https://drive.google.com/open?id=0B09NUPYLIvftNlRzRVI2V1EtT2s
+
+(anticuado en parte) <<
+
 El proceso para obtener información de redes sociales consta de dos partes: fetching (conseguir) y processing (procesar).
 
 En la mayoría de casos se accederá via FetcherService, donde están los dos principales puntos de entrada (fetch y processLinks)
@@ -78,3 +84,5 @@ Procesadores:
         -process(PreprocessedLink)
             Método principal que devuelve un array link para ser procesado.
             En caso de que sea necesario cambiar de URL para reprocesar, cambia el canonical del argumento.
+            
+>>

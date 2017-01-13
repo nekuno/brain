@@ -26,11 +26,7 @@ use Worker\MatchingCalculatorWorker;
 use Worker\PredictionWorker;
 use Worker\SocialNetworkDataProcessorWorker;
 
-/**
- * Class RabbitMQConsumeCommand
- *
- * @package Console\Command
- */
+
 class RabbitMQConsumeCommand extends ApplicationAwareCommand
 {
 

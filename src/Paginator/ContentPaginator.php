@@ -1,8 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: yawmoght
- */
 
 namespace Paginator;
 

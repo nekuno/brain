@@ -1,10 +1,5 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: yawmoght
- * Date: 19/01/2016
- * Time: 10:34
- */
+
 
 namespace ApiConsumer\Event;
 

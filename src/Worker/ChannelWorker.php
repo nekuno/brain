@@ -14,10 +14,7 @@ use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Message\AMQPMessage;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
-/**
- * Class LinkProcessorWorker
- * @package Worker
- */
+
 class ChannelWorker extends LoggerAwareWorker implements RabbitMQConsumerInterface
 {
 

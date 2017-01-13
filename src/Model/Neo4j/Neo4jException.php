@@ -4,9 +4,7 @@ namespace Model\Neo4j;
 
 use Everyman\Neo4j\Exception;
 
-/**
- * @author Juan Luis Martínez <juanlu@comakai.com>
- */
+
 class Neo4jException extends Exception
 {
     protected $query;

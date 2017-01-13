@@ -2,7 +2,9 @@
 
 namespace ApiConsumer\LinkProcessor\Processor\TwitterProcessor;
 
+use ApiConsumer\Exception\CannotProcessException;
 use ApiConsumer\Exception\UrlChangedException;
+use ApiConsumer\LinkProcessor\LinkAnalyzer;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
 use ApiConsumer\LinkProcessor\Processor\AbstractProcessor;
 use ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser;
@@ -22,44 +24,23 @@ class TwitterTweetProcessor extends AbstractProcessor
 
     public function requestItem(PreprocessedLink $preprocessedLink)
     {
-        $statusId = $this->getItemId($preprocessedLink->getCanonical());
-
-        $url = $this->processTweetStatus($statusId);
-
-        $url = $this->parser->cleanURL($url);
-
-        if (!in_array($url, array($preprocessedLink->getCanonical(), $preprocessedLink->getFetched()))) {
-            throw new UrlChangedException($preprocessedLink->getCanonical(), $url);
-        } else {
-            return array();
-        }
-    }
-
-    /**
-     * Follow embedded tweets (like from retweets) until last url
-     * @param $statusId
-     * @param $counter int Avoid infinite loops and some "joke" tweet chains
-     * @return string|bool
-     */
-    private function processTweetStatus($statusId, $counter = 0)
-    {
-        if ($counter >= 10) {
-            return false;
-        }
+        $statusId = $this->getItemId($preprocessedLink->getUrl());
 
         $apiResponse = $this->resourceOwner->requestStatus($statusId);
 
         $link = $this->extractLinkFromResponse($apiResponse);
 
-        if (isset($link['id'])) {
-            return $this->processTweetStatus($link['id'], ++$counter);
-        }
+        if (isset($link['url'])){
+            $url = LinkAnalyzer::cleanUrl($link['url']);
 
-        if (isset($link['url'])) {
-            return $link['url'];
+            if ($url != $preprocessedLink->getUrl()){
+                throw new UrlChangedException($preprocessedLink->getUrl(), $link['url']);
+            } else {
+                return array();
+            }
+        } else {
+            throw new CannotProcessException($preprocessedLink->getUrl(), 'We do not want tweets without url content');
         }
-
-        return false;
     }
 
     private function extractLinkFromResponse($apiResponse)
@@ -106,8 +87,18 @@ class TwitterTweetProcessor extends AbstractProcessor
         return false;
     }
 
-    function hydrateLink(PreprocessedLink $preprocessedLink, array $data)
+    public function hydrateLink(PreprocessedLink $preprocessedLink, array $data)
     {
+    }
+
+    public function getImages(PreprocessedLink $preprocessedLink, array $data)
+    {
+        $profileAvatar = null;
+        if (isset($data['user'])){
+            $profileAvatar = isset($data['user']['profile_image_url_https']) ? $data['user']['profile_image_url_https'] : ( isset($data['user']['profile_image_url']) ? $data['user']['profile_image_url'] : null);
+        }
+
+        return array($profileAvatar);
     }
 
     protected function getItemIdFromParser($url)

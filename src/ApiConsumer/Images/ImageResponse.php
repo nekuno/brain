@@ -16,6 +16,21 @@ class ImageResponse
     const MAX_RECOMMENDED_SIZE = 200000;
 
     /**
+     * ImageResponse constructor.
+     * @param $statusCode
+     * @param $url
+     * @param $type
+     * @param $length
+     */
+    public function __construct($url, $statusCode = null, $type = null, $length = null)
+    {
+        $this->statusCode = $statusCode;
+        $this->url = $url;
+        $this->type = $type;
+        $this->length = $length;
+    }
+
+    /**
      * @return mixed
      */
     public function getStatusCode()
@@ -81,25 +96,34 @@ class ImageResponse
 
     public function isRecommended()
     {
-        $code = $this->getStatusCode();
-        $type = $this->getType();
-        $length = $this->getLength();
-
-        return 200 <= $code && $code < 300
-            && strpos($type, 'image') !== false
-            && self::MIN_RECOMMENDED_SIZE < $length && self::MAX_RECOMMENDED_SIZE > $length;
-
+        return $this->isImage() && $this->hasRecommendedLength();
     }
 
     public function isValid()
     {
+        return $this->isImage() && $this->hasValidLength();
+    }
+
+    public function isImage()
+    {
         $code = $this->getStatusCode();
         $type = $this->getType();
+
+        return (200 <= $code && $code < 300) && strpos($type, 'image') !== false;
+    }
+
+    private function hasValidLength()
+    {
         $length = $this->getLength();
 
-        return 200 <= $code && $code < 300
-            && strpos($type, 'image') !== false
-            && self::MIN_SIZE < $length && self::MAX_SIZE > $length;
+        return self::MIN_SIZE < $length && self::MAX_SIZE > $length;
+    }
+
+    private function hasRecommendedLength()
+    {
+        $length = $this->getLength();
+
+        return self::MIN_RECOMMENDED_SIZE < $length && self::MAX_RECOMMENDED_SIZE > $length;
     }
 
 }

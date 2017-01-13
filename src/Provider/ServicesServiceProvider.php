@@ -8,6 +8,7 @@ use Service\AuthService;
 use Service\ChatMessageNotifications;
 use Service\Consistency\ConsistencyCheckerService;
 use Service\EmailNotifications;
+use Service\EventDispatcher;
 use Service\ImageTransformations;
 use Service\MigrateSocialInvitations;
 use Service\NotificationManager;
@@ -133,6 +134,12 @@ class ServicesServiceProvider implements ServiceProviderInterface
         $app['consistency.service'] = $app->share(
             function (Application $app) {
                 return new ConsistencyCheckerService($app['neo4j.graph_manager'], $app['dispatcher'], $app['consistency']);
+            }
+        );
+
+        $app['dispatcher.service'] = $app->share(
+            function (Application $app) {
+                return new EventDispatcher($app['dispatcher']);
             }
         );
 

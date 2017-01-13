@@ -1,6 +1,5 @@
 <?php
 
-
 namespace ApiConsumer\LinkProcessor\MetadataParser;
 
 use Symfony\Component\DomCrawler\Crawler;
@@ -101,15 +100,18 @@ class BasicMetadataParser implements MetadataParserInterface
      * @param Crawler $crawler
      * @return array
      */
-    private function getImages(Crawler $crawler)
+    public function getImages(Crawler $crawler)
     {
-        try{
-            $images = $crawler->filter('image')->each(function($node){
-                /* @var $node Crawler */
-                return $node->attr('src');
-            });
+        try {
+            $images = $crawler->filter('image')->each(
+                function ($node) {
+                    /* @var $node Crawler */
+                    return $node->attr('src');
+                }
+            );
+
             return $images;
-        } catch (\InvalidArgumentException $e){
+        } catch (\InvalidArgumentException $e) {
             return array();
         }
     }

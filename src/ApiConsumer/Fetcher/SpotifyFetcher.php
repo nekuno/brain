@@ -63,7 +63,7 @@ class SpotifyFetcher extends BasicPaginationFetcher
 
             $links = array();
             foreach ($parsed as $parsedLink){
-                $links[$parsedLink->getFetched()] = $parsedLink;
+                $links[$parsedLink->getUrl()] = $parsedLink;
             }
 
         } catch (\Exception $e) {
@@ -102,7 +102,7 @@ class SpotifyFetcher extends BasicPaginationFetcher
                 $link['description'] = $item['track']['album']['name'] . ' : ' . implode(', ', $artistList);
                 $link['timestamp'] = $timestamp;
 
-                $preprocessedLink->setLink(Link::buildFromArray($link));
+                $preprocessedLink->setFirstLink(Link::buildFromArray($link));
                 $preprocessedLink->setResourceItemId($item['track']['id']);
                 $preprocessedLink->setSource($this->resourceOwner->getName());
 

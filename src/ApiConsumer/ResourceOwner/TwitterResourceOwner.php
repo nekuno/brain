@@ -10,11 +10,6 @@ use Service\LookUp\LookUp;
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
 use HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\TwitterResourceOwner as TwitterResourceOwnerBase;
 
-/**
- * Class TwitterResourceOwner
- *
- * @package ApiConsumer\ResourceOwner
- */
 class TwitterResourceOwner extends TwitterResourceOwnerBase
 {
 	use AbstractResourceOwnerTrait {
@@ -22,12 +17,10 @@ class TwitterResourceOwner extends TwitterResourceOwnerBase
 		AbstractResourceOwnerTrait::__construct as private traitConstructor;
 	}
 
-	protected $name = TokensModel::TWITTER;
+	/** @var  TwitterUrlParser */
+	protected $urlParser;
 
-    /** @var  TwitterUrlParser */
-    protected $urlParser;
-
-    const PROFILES_PER_LOOKUP = 100;
+	const PROFILES_PER_LOOKUP = 100;
 
 	public function __construct($httpClient, $httpUtils, $options, $name, $storage, $dispatcher)
 	{
@@ -87,35 +80,36 @@ class TwitterResourceOwner extends TwitterResourceOwnerBase
 		return $data;
 	}
 
-    public function lookupUsersBy($parameter, array $userIds, array $token = array())
-    {
-        if ($parameter !== 'user_id' && $parameter !== 'screen_name') {
-            return false;
-        }
+	public function lookupUsersBy($parameter, array $userIds, array $token = array())
+	{
+		if ($parameter !== 'user_id' && $parameter !== 'screen_name') {
+			return false;
+		}
 
-        $chunks = array_chunk($userIds, self::PROFILES_PER_LOOKUP);
-        $baseUrl = $this->getOption('base_url');
-        $url = $baseUrl . 'users/lookup.json';
+		$chunks = array_chunk($userIds, self::PROFILES_PER_LOOKUP);
+		$baseUrl = $this->getOption('base_url');
+		$url = $baseUrl . 'users/lookup.json';
 
-        $responses = array();
-        foreach ($chunks as $chunk) {
-            $query = array($parameter => implode(',', $chunk));
+		$responses = array();
+		//TODO: Array to string conversion here
+		foreach ($chunks as $chunk) {
+			$query = array($parameter => implode(',', $chunk));
             /** @var Response $response */
-            $response = $this->sendAuthorizedRequest($url, $query, $token);
+			$response = $this->sendAuthorizedRequest($url, $query, $token);
             //TODO: Generalize "if too many requests, wait this->time_window and retry"
-            if ($response->getStatusCode() === 429) {
-                sleep(60 * 15);
+            if ($response->getStatusCode() === 429){
+                sleep(60*15);
                 $response = $this->sendAuthorizedRequest($url, $query, $token);
             }
-            $responses[] = $this->getResponseContent($response);
-        }
+			$responses[] = $response;
+		}
 
-        return $responses;
-    }
+		return $responses;
+	}
 
-	public function buildProfilesFromLookup($response)
+	public function buildProfilesFromLookup(Response $response)
     {
-        $content = $response;
+        $content = $this->getResponseContent($response);
 
         foreach ($content as &$user){
             $user = $this->buildProfileFromLookup($user);
@@ -132,7 +126,7 @@ class TwitterResourceOwner extends TwitterResourceOwnerBase
 
 		$profile = array(
 			'description' => isset($user['description']) ? $user['description'] : $user['name'],
-			'url' => isset($user['screen_name']) ? 'https://twitter.com/' . $user['screen_name'] : null,
+			'url' => isset($user['screen_name']) ? $this->urlParser->buildUserUrl($user['screen_name']) : null,
 			'thumbnail' => isset($user['profile_image_url']) ? str_replace('_normal', '', $user['profile_image_url']) : null,
 			'additionalLabels' => array('Creator'),
 			'resource' => TokensModel::TWITTER,
