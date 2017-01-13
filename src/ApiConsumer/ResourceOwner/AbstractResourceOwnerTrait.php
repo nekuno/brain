@@ -30,9 +30,9 @@ trait AbstractResourceOwnerTrait
      */
     protected $dispatcher;
 
-    /**
-     * @var UrlParser
-     */
+    protected $name;
+
+    /** @var UrlParser */
     protected $urlParser;
 
     protected $expire_time_margin = 0;
@@ -105,11 +105,6 @@ trait AbstractResourceOwnerTrait
     public function getName()
     {
         return $this->name;
-    }
-
-    public function getParser()
-    {
-        return $this->urlParser;
     }
 
     public function getClient()

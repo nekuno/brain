@@ -3,18 +3,11 @@
 namespace ApiConsumer\ResourceOwner;
 
 use ApiConsumer\LinkProcessor\UrlParser\SpotifyUrlParser;
-use Model\User\TokensModel;
 use HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\SpotifyResourceOwner as SpotifyResourceOwnerBase;
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
 use Buzz\Message\RequestInterface as HttpRequestInterface;
 
 
-/**
- * Class FacebookResourceOwner
- *
- * @package ApiConsumer\ResourceOwner
- * @method SpotifyUrlParser getParser
- */
 class SpotifyResourceOwner extends SpotifyResourceOwnerBase
 {
 	use AbstractResourceOwnerTrait {
@@ -23,7 +16,8 @@ class SpotifyResourceOwner extends SpotifyResourceOwnerBase
 		AbstractResourceOwnerTrait::__construct as private traitConstructor;
 	}
 
-	protected $name = TokensModel::SPOTIFY;
+    /** @var SpotifyUrlParser */
+    protected $urlParser;
 
 	public function __construct($httpClient, $httpUtils, $options, $name, $storage, $dispatcher)
 	{

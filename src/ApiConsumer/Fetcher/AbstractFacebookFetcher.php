@@ -82,7 +82,7 @@ abstract class AbstractFacebookFetcher extends BasicPaginationFetcher
 
                 $website = str_replace('\n', ' ', $website);
                 $website = str_replace(', ', ' ', $website);
-                $websiteUrlsArray = $this->resourceOwner->getParser()->extractURLsFromText($website);
+                $websiteUrlsArray = (new FacebookUrlParser())->extractURLsFromText($website);
 
                 $counter = 1;
                 foreach ($websiteUrlsArray as $websiteUrl) {

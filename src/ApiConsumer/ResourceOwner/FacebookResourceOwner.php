@@ -6,16 +6,9 @@ use ApiConsumer\Event\OAuthTokenEvent;
 use ApiConsumer\LinkProcessor\UrlParser\FacebookUrlParser;
 use Event\ExceptionEvent;
 use GuzzleHttp\Exception\RequestException;
-use Model\User\TokensModel;
 use HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\FacebookResourceOwner as FacebookResourceOwnerBase;
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
 
-/**
- * Class FacebookResourceOwner
- *
- * @package ApiConsumer\ResourceOwner
- * @method FacebookUrlParser getParser
- */
 class FacebookResourceOwner extends FacebookResourceOwnerBase
 {
 	use AbstractResourceOwnerTrait {
@@ -23,7 +16,8 @@ class FacebookResourceOwner extends FacebookResourceOwnerBase
 		AbstractResourceOwnerTrait::__construct as private traitConstructor;
 	}
 
-	protected $name = TokensModel::FACEBOOK;
+    /** @var FacebookUrlParser */
+    protected $urlParser;
 
 	public function __construct($httpClient, $httpUtils, $options, $name, $storage, $dispatcher)
 	{
@@ -141,7 +135,7 @@ class FacebookResourceOwner extends FacebookResourceOwnerBase
 	public function requestPicture($id, $token, $size = 'large')
 	{
 	    //TODO: Try to move out of here
-		if ($this->getParser()->isStatusId($id)){
+		if ($this->urlParser->isStatusId($id)){
 			return null;
 		}
 

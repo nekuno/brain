@@ -10,19 +10,12 @@ use Service\LookUp\LookUp;
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
 use HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\TwitterResourceOwner as TwitterResourceOwnerBase;
 
-/**
- * Class TwitterResourceOwner
- *
- * @package ApiConsumer\ResourceOwner
- */
 class TwitterResourceOwner extends TwitterResourceOwnerBase
 {
 	use AbstractResourceOwnerTrait {
 		AbstractResourceOwnerTrait::configureOptions as traitConfigureOptions;
 		AbstractResourceOwnerTrait::__construct as private traitConstructor;
 	}
-
-	protected $name = TokensModel::TWITTER;
 
 	/** @var  TwitterUrlParser */
 	protected $urlParser;
