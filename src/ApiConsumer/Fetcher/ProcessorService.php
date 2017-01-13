@@ -115,8 +115,7 @@ class ProcessorService implements LoggerAwareInterface
             $this->processLink($preprocessedLink);
         } catch (UrlChangedException $e) {
 
-            if ($processedTimes <= 10)
-            {
+            if ($processedTimes <= 10) {
                 $preprocessedLink->setUrl($e->getNewUrl());
 
                 return $this->fullProcessSingle($preprocessedLink, $userId, ++$processedTimes);
@@ -143,8 +142,7 @@ class ProcessorService implements LoggerAwareInterface
     {
         $processedLinks = $this->linkProcessor->processLastLinks();
 
-        foreach ($processedLinks as $processedLink)
-        {
+        foreach ($processedLinks as $processedLink) {
             $preprocessedLink = new PreprocessedLink($processedLink->getUrl());
             $preprocessedLink->setFirstLink($processedLink);
             $preprocessedLink->setSource($source);
@@ -183,8 +181,7 @@ class ProcessorService implements LoggerAwareInterface
     {
         $processedLinks = $this->linkProcessor->processLastLinks();
 
-        foreach ($processedLinks as $processedLink)
-        {
+        foreach ($processedLinks as $processedLink) {
             $preprocessedLink = new PreprocessedLink($processedLink->getUrl());
             $preprocessedLink->setFirstLink($processedLink);
             $preprocessedLink->setSource($source);
@@ -273,7 +270,7 @@ class ProcessorService implements LoggerAwareInterface
 
     private function processLink(PreprocessedLink $preprocessedLink)
     {
-        if (!$this->cleanUrl($preprocessedLink)) {
+        if (!$this->manageUrl($preprocessedLink)) {
             return;
         }
 
@@ -289,19 +286,22 @@ class ProcessorService implements LoggerAwareInterface
         $preprocessedLink->setLinks($links);
     }
 
-    private function cleanUrl(PreprocessedLink $preprocessedLink)
+    private function manageUrl(PreprocessedLink $preprocessedLink)
     {
         try {
             $cleanURL = LinkAnalyzer::cleanUrl($preprocessedLink->getUrl());
             $preprocessedLink->setUrl($cleanURL);
+
+            $type = LinkAnalyzer::getProcessorName($preprocessedLink);
+            $preprocessedLink->setType($type);
         } catch (UrlNotValidException $e) {
             $url = $preprocessedLink->getUrl();
-            $this->manageUrlUnprocessed($e, sprintf('cleaning while processing %s', $url), $url);
+            $this->manageUrlUnprocessed($e, sprintf('managing url while processing %s', $url), $url);
             $this->getUnprocessedLinks($preprocessedLink);
 
             return false;
         } catch (\Exception $e) {
-            $this->manageError($e, sprintf('cleaning while processing %s', $preprocessedLink->getUrl()));
+            $this->manageError($e, sprintf('managing url while processing %s', $preprocessedLink->getUrl()));
             $this->getUnprocessedLinks($preprocessedLink);
 
             return false;
@@ -372,7 +372,7 @@ class ProcessorService implements LoggerAwareInterface
         $this->readyToSave($preprocessedLink);
         foreach ($preprocessedLink->getLinks() as $link) {
 
-            if (!$link->getUrl()){
+            if (!$link->getUrl()) {
                 continue;
             }
 
@@ -430,7 +430,7 @@ class ProcessorService implements LoggerAwareInterface
     private function like($userId, array $links, PreprocessedLink $preprocessedLink)
     {
         $likes = array();
-        $source = $preprocessedLink->getSource()?: 'nekuno';
+        $source = $preprocessedLink->getSource() ?: 'nekuno';
         foreach ($links as $link) {
             $linkId = $link['id'];
             try {
