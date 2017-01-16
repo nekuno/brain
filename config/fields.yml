@@ -607,6 +607,11 @@ filters:
                 en: 'Keywords'
                 es: 'Palabras clave'
     user:
+        order:
+            type: order
+            label:
+                en: 'Order'
+                es: 'Orden'
         groups:
             type: multiple_choices
             label:

@@ -408,6 +408,16 @@ class FilterUsersManager
                     }
                     $qb->with('filter');
                     break;
+                case 'order':
+                    $qb->remove("filter.order");
+
+                    if (isset($profileFilters[$fieldName])) {
+                        $value = $profileFilters[$fieldName];
+                        if (isset($value['order']) && null !== $value['order']){
+                            $qb->set('filter.order = "' . $value['order'] . '"');
+                        }
+                    }
+                    $qb->with('filter');
             }
         }
 
@@ -449,6 +459,7 @@ class FilterUsersManager
             switch ($fieldValue['type']) {
                 //single_integer used in Social
                 case 'single_integer':
+                case 'order':
                 case 'integer':
                     $qb->remove("filter.$fieldName");
 
@@ -671,7 +682,8 @@ class FilterUsersManager
             ->returns(
                 'filter.compatibility as compatibility,
                         filter.similarity as similarity, 
-                        collect(id(group)) as groups'
+                        collect(id(group)) as groups,
+                        filter.order as order'
             );
         $qb->setParameter('id', (integer)$id);
         $result = $qb->getQuery()->getResultSet();
@@ -700,6 +712,10 @@ class FilterUsersManager
 
         if ($row->offsetGet('compatibility')) {
             $userFilters['compatibility'] = $row->offsetGet('compatibility');
+        }
+
+        if ($row->offsetGet('order')) {
+            $userFilters['order'] = $row->offsetGet('order');
         }
 
         return $userFilters;
