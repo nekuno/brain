@@ -9,7 +9,6 @@ use ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser;
 use ApiConsumer\LinkProcessor\UrlParser\UrlParser;
 use ApiConsumer\LinkProcessor\UrlParser\UrlParserInterface;
 use ApiConsumer\LinkProcessor\UrlParser\YoutubeUrlParser;
-use Model\Link;
 
 class LinkAnalyzer
 {
@@ -84,17 +83,6 @@ class LinkAnalyzer
         similar_text($text1, $text2, $percent);
 
         return $percent > $similarTextPercentage;
-    }
-
-    public static function limitTextLengths(Link $link)
-    {
-        $description = $link->getDescription();
-        $description = strlen($description) >= 25 ? mb_substr($description, 0, 22) . '...' : $description;
-        $link->setDescription($description);
-
-        $title = $link->getTitle();
-        $title = strlen($title) >= 25 ? mb_substr($title, 0, 22) . '...' : $title;
-        $link->setTitle($title);
     }
     
     //TODO: Improve detection on host, not whole url

@@ -35,8 +35,9 @@ class LinkProcessor
     private function checkSecureSites(PreprocessedLink $preprocessedLink)
     {
         $fb_security_titles = array('Vérification de sécurité', 'Security Check', 'Security Check Required', 'Control de seguridad');
+        $fb_types = array(FacebookUrlParser::FACEBOOK_PAGE, FacebookUrlParser::FACEBOOK_PROFILE);
         foreach ($preprocessedLink->getLinks() as $link) {
-            if ($preprocessedLink->getType() == FacebookUrlParser::FACEBOOK_PAGE && in_array($link->getTitle(), $fb_security_titles)) {
+            if (in_array($preprocessedLink->getType(), $fb_types) && in_array($link->getTitle(), $fb_security_titles)) {
                 $link->setProcessed(false);
             }
         }

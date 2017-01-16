@@ -91,13 +91,43 @@ class ScraperProcessor implements ProcessorInterface
         $this->overrideFieldsData($link, $fbMetadata);
     }
 
-    function getImages(PreprocessedLink $preprocessedLink, array $data)
+    public function getImages(PreprocessedLink $preprocessedLink, array $data)
     {
         $crawler = new Crawler();
         $crawler->addHtmlContent($data['html']);
 
-        $basicMetadata = $this->basicMetadataParser->extractMetadata($crawler);
-        return $basicMetadata['images'];
+        $images = $this->basicMetadataParser->getImages($crawler);
+
+        $url = $preprocessedLink->getUrl();
+        $this->fixRelativeUrls($images, $url);
+
+        return $images;
+    }
+
+    private function fixRelativeUrls(array &$images, $url)
+    {
+        if ($this->isRelativeUrl($url)) {
+            return;
+        }
+
+        $slashPosition = strpos($url, '/');
+
+        $prefix = $slashPosition ? substr($url, 0, $slashPosition) : $url;
+
+        foreach ($images as &$imageUrl) {
+            if ($this->isRelativeUrl($imageUrl)) {
+                $imageUrl = $prefix . $imageUrl;
+            }
+        }
+    }
+
+    private function isRelativeUrl($url)
+    {
+        $startsWithSlash = strpos($url, '/') === 0;
+
+        $startsWithDoubleSlash = substr($url, 0, 2) === '//';
+
+        return $startsWithSlash && !$startsWithDoubleSlash;
     }
 
     private function overrideFieldsData(Link $link, array $scrapedData)

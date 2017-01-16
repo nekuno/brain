@@ -2,15 +2,11 @@
 
 namespace ApiConsumer\ResourceOwner;
 
-use Model\User\TokensModel;
+use ApiConsumer\LinkProcessor\UrlParser\YoutubeUrlParser;
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
 use HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\GoogleResourceOwner as GoogleResourceOwnerBase;
 
-/**
- * Class GoogleResourceOwner
- *
- * @package ApiConsumer\ResourceOwner
- */
+
 class GoogleResourceOwner extends GoogleResourceOwnerBase
 {
     use AbstractResourceOwnerTrait {
@@ -18,7 +14,8 @@ class GoogleResourceOwner extends GoogleResourceOwnerBase
         AbstractResourceOwnerTrait::__construct as private traitConstructor;
     }
 
-    protected $name = TokensModel::GOOGLE;
+    /** @var YoutubeUrlParser */
+    protected $urlParser;
 
     public function __construct($httpClient, $httpUtils, $options, $name, $storage, $dispatcher)
     {
