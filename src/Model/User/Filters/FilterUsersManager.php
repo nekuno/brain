@@ -457,9 +457,17 @@ class FilterUsersManager
 
         foreach ($metadata as $fieldName => $fieldValue) {
             switch ($fieldValue['type']) {
+                case 'order':
+                    $qb->remove("filter.$fieldName");
+
+                    if (isset($userFilters[$fieldName])) {
+                        $value = $userFilters[$fieldName];
+                        $qb->set('filter.' . $fieldName . ' = "' . $value . '"');
+                    }
+                    $qb->with('filter');
+                    break;
                 //single_integer used in Social
                 case 'single_integer':
-                case 'order':
                 case 'integer':
                     $qb->remove("filter.$fieldName");
 
