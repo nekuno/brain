@@ -78,7 +78,7 @@ class PhotoController
             throw new \RuntimeException(sprintf('Source image "%s" does not exists', $photo->getFullPath()));
         }
 
-        $dest = $app['social_web_dir'] . $new;
+        $dest = $app['images_web_dir'] . $new;
         $file = file_get_contents($photo->getFullPath());
         $size = getimagesizefromstring($file);
         $width = $size[0];
