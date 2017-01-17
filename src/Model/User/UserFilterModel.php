@@ -2,10 +2,6 @@
 
 namespace Model\User;
 
-
-use Model\Neo4j\GraphManager;
-use Model\User;
-
 class UserFilterModel extends FilterModel
 {
     /**
@@ -54,19 +50,10 @@ class UserFilterModel extends FilterModel
     {
         $publicField = parent::modifyPublicFieldByType($publicField, $name, $values, $locale);
         switch($values['type']) {
-            case 'multiple_choices':
-                $publicField['choices'] = array();
-                if (isset($choiceOptions[$name])) {
-                    $publicField['choices'] = $choiceOptions[$name];
-                }
-                $publicField['max_choices'] = isset($values['max_choices']) ? $values['max_choices'] : 999;
-                break;
             default:
                 break;
         }
 
         return $publicField;
     }
-
-
 }

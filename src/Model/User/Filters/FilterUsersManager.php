@@ -408,6 +408,16 @@ class FilterUsersManager
                     }
                     $qb->with('filter');
                     break;
+                case 'order':
+                    $qb->remove("filter.order");
+
+                    if (isset($profileFilters[$fieldName])) {
+                        $value = $profileFilters[$fieldName];
+                        if (isset($value['order']) && null !== $value['order']){
+                            $qb->set('filter.order = "' . $value['order'] . '"');
+                        }
+                    }
+                    $qb->with('filter');
             }
         }
 
@@ -447,6 +457,15 @@ class FilterUsersManager
 
         foreach ($metadata as $fieldName => $fieldValue) {
             switch ($fieldValue['type']) {
+                case 'order':
+                    $qb->remove("filter.$fieldName");
+
+                    if (isset($userFilters[$fieldName])) {
+                        $value = $userFilters[$fieldName];
+                        $qb->set('filter.' . $fieldName . ' = "' . $value . '"');
+                    }
+                    $qb->with('filter');
+                    break;
                 //single_integer used in Social
                 case 'single_integer':
                 case 'integer':
@@ -671,7 +690,8 @@ class FilterUsersManager
             ->returns(
                 'filter.compatibility as compatibility,
                         filter.similarity as similarity, 
-                        collect(id(group)) as groups'
+                        collect(id(group)) as groups,
+                        filter.order as order'
             );
         $qb->setParameter('id', (integer)$id);
         $result = $qb->getQuery()->getResultSet();
@@ -700,6 +720,10 @@ class FilterUsersManager
 
         if ($row->offsetGet('compatibility')) {
             $userFilters['compatibility'] = $row->offsetGet('compatibility');
+        }
+
+        if ($row->offsetGet('order')) {
+            $userFilters['order'] = $row->offsetGet('order');
         }
 
         return $userFilters;
