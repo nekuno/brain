@@ -467,7 +467,7 @@ class LinkModel
             ->setParameter('url', $url);
 
         $qb->set("l.$key = { value }")
-            ->setParameter('value ', $value);
+            ->setParameter('value', $value);
 
         $qb->returns('l');
 
