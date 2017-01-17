@@ -112,7 +112,81 @@ trait AbstractResourceOwnerTrait
         return $this->httpClient;
     }
 
-    public function sendAuthorizedRequest($url, array $query = array(), array $token = array())
+    /**
+     * Performs request as an user if token is provided, as Nekuno otherwise
+     * @param $url
+     * @param array $query
+     * @param array $token
+     * @return array
+     */
+    public function request($url, array $query = array(), array $token = array())
+    {
+        if (!empty($token)) {
+            return $this->authorizedHttpRequest($url, $query, $token);
+        } else {
+            return $this->authorizedAPIRequest($url, $query);
+        }
+    }
+
+    /**
+     * Performs an authorized HTTP request as User
+     *
+     * @param string $url The url to fetch
+     * @param array $query The query of the request
+     * @param array $token The token values as an array
+     *
+     * @throws \Exception
+     * @throws \GuzzleHttp\Exception\RequestException
+     * @throws \Exception
+     * @return array
+     */
+    public function authorizedHttpRequest($url, array $query = array(), array $token = array())
+    {
+        if ($this->needsRefreshing($token)) {
+            if (!$this->canRefresh($token)) {
+                $this->manageTokenExpired($token, sprintf('Refresh token not present for user "%s"', $token['username']));
+            }
+
+            try {
+                $data = $this->refreshAccessToken($token);
+            } catch (\Exception $e) {
+                $data = array();
+                $this->manageTokenExpired($token, $e->getMessage());
+            }
+
+            $token = $this->addOauthData($data, $token);
+            $event = new OAuthTokenEvent($token);
+            $this->dispatcher->dispatch(\AppEvents::TOKEN_REFRESHED, $event);
+        }
+
+        $response = $this->sendAuthorizedRequest($this->options['base_url'] . $url, $query, $token);
+
+        return $this->getResponseContent($response);
+    }
+
+    protected function manageTokenExpired($token, $message)
+    {
+        $this->dispatchTokenExpired($token);
+        $e = new TokenException($message);
+        $e->setToken($token);
+        throw $e;
+    }
+
+    private function dispatchTokenExpired($token)
+    {
+        if (isset($token['network']) && $token['network'] == $this->getName()) {
+            $event = new OAuthTokenEvent($token);
+            $this->dispatcher->dispatch(\AppEvents::TOKEN_EXPIRED, $event);
+        }
+    }
+
+    /**
+     * @param $url
+     * @param array $query
+     * @param array $token
+     * @return \HttpResponse
+     */
+    protected function sendAuthorizedRequest($url, array $query = array(), array $token = array())
     {
         if (Configuration::getResourceOwnerType($this->name) == 'oauth2') {
             // oauth2
@@ -146,47 +220,6 @@ trait AbstractResourceOwnerTrait
         }
     }
 
-    /**
-     * Performs an authorized HTTP request
-     *
-     * @param string $url The url to fetch
-     * @param array $query The query of the request
-     * @param array $token The token values as an array
-     *
-     * @throws \Exception
-     * @throws \GuzzleHttp\Exception\RequestException
-     * @throws \Exception
-     * @return array
-     */
-    public function authorizedHttpRequest($url, array $query = array(), array $token = array())
-    {
-        if ($this->needsRefreshing($token)) {
-            if (!$this->canRefresh($token)) {
-                $this->dispatchTokenExpired($token);
-                $e = new TokenException(sprintf('Refresh token not present for user "%s"', $token['username']));
-                $e->setToken($token);
-                throw $e;
-            }
-
-            try {
-                $data = $this->refreshAccessToken($token);
-            } catch (\Exception $e) {
-                $this->dispatchTokenExpired($token);
-                $e = new TokenException($e->getMessage(), $e->getCode(), $e->getPrevious());
-                $e->setToken($token);
-                throw $e;
-            }
-
-            $token = $this->addOauthData($data, $token);
-            $event = new OAuthTokenEvent($token);
-            $this->dispatcher->dispatch(\AppEvents::TOKEN_REFRESHED, $event);
-        }
-
-        $response = $this->sendAuthorizedRequest($this->options['base_url'] . $url, $query, $token);
-
-        return $this->getResponseContent($response);
-    }
-
     protected function needsRefreshing($token)
     {
         return isset($token['expireTime']) && ($token['expireTime'] <= time() && $token['expireTime'] != 0);
@@ -195,15 +228,6 @@ trait AbstractResourceOwnerTrait
     protected function canRefresh($token)
     {
         return isset($token['refreshToken']);
-    }
-
-    private function dispatchTokenExpired($token)
-    {
-        if (isset($token['network']) && $token['network'] == $this->getName()) {
-            $event = new OAuthTokenEvent($token);
-            $this->dispatcher->dispatch(\AppEvents::TOKEN_EXPIRED, $event);
-        }
-
     }
 
     protected function addOauthData($data, $token)
@@ -215,6 +239,7 @@ trait AbstractResourceOwnerTrait
         return $token;
     }
 
+    /** Request as Nekuno */
     public function authorizedAPIRequest($url, array $query = array(), array $token = array())
     {
         $response = $this->httpRequest($this->normalizeUrl($this->options['base_url'] . $url, $query));
