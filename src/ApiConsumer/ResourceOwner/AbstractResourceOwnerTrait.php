@@ -30,11 +30,6 @@ trait AbstractResourceOwnerTrait
      */
     protected $dispatcher;
 
-    protected $name;
-
-    /** @var UrlParser */
-    protected $urlParser;
-
     protected $expire_time_margin = 0;
 
     /**
