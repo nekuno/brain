@@ -6,7 +6,7 @@ life_time: 5184000 # 60 days
 locale.options:
     default: %locale.default%
 
-images_web_dir: %images_web_dir%
+images_relative_dir: %images_relative_dir%
 
 instant.host: %instant.host%
 guzzle.verify: %guzzle.verify%
