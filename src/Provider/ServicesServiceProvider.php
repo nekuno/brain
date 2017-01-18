@@ -10,7 +10,6 @@ use Service\Consistency\ConsistencyCheckerService;
 use Service\EmailNotifications;
 use Service\EventDispatcher;
 use Service\ImageTransformations;
-use Service\MigrateSocialInvitations;
 use Service\NotificationManager;
 use Service\Recommendator;
 use Service\SocialNetwork;
@@ -39,7 +38,7 @@ class ServicesServiceProvider implements ServiceProviderInterface
 
         $app['chatMessageNotifications.service'] = $app->share(
             function (Application $app) {
-                return new ChatMessageNotifications($app['emailNotification.service'], $app['orm.ems']['mysql_brain'], $app['dbs']['mysql_social'], $app['translator'], $app['users.manager'], $app['users.profile.model']);
+                return new ChatMessageNotifications($app['emailNotification.service'], $app['orm.ems']['mysql_brain'], $app['dbs']['mysql_brain'], $app['translator'], $app['users.manager'], $app['users.profile.model']);
             }
         );
 
@@ -52,12 +51,6 @@ class ServicesServiceProvider implements ServiceProviderInterface
         $app['socialNetwork.service'] = $app->share(
             function (Application $app) {
                 return new SocialNetwork($app['users.socialNetwork.linkedin.model'], $app['users.lookup.model'], $app['api_consumer.fetcher_factory']);
-            }
-        );
-
-        $app['migrateSocialInvitations.service'] = $app->share(
-            function (Application $app) {
-                return new MigrateSocialInvitations($app['neo4j.graph_manager'], $app['dbs']['mysql_social']);
             }
         );
 
