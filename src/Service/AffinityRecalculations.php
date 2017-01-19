@@ -11,7 +11,6 @@ use Model\User;
 use Model\User\Affinity\AffinityModel;
 use Manager\UserManager;
 use Silex\Translator;
-use Symfony\Component\EventDispatcher\EventDispatcher;
 
 class AffinityRecalculations
 {

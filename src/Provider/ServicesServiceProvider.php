@@ -44,7 +44,7 @@ class ServicesServiceProvider implements ServiceProviderInterface
 
         $app['affinityRecalculations.service'] = $app->share(
             function (Application $app) {
-                return new AffinityRecalculations($app['dispatcher'], $app['emailNotification.service'], $app['translator'], $app['neo4j.graph_manager'], $app['links.model'], $app['users.manager'], $app['users.affinity.model']);
+                return new AffinityRecalculations($app['dispatcher.service'], $app['emailNotification.service'], $app['translator'], $app['neo4j.graph_manager'], $app['links.model'], $app['users.manager'], $app['users.affinity.model']);
             }
         );
 
