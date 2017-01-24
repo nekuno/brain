@@ -22,7 +22,7 @@ class GoogleResourceOwner extends GoogleResourceOwnerBase
         $this->traitConstructor($httpClient, $httpUtils, $options, $name, $storage, $dispatcher);
     }
 
-    public function sendAuthorizedRequest($url, array $query = array(), array $token = array())
+    protected function sendAuthorizedRequest($url, array $query = array(), array $token = array())
     {
         $query += $this->getOauthToken($token);
 

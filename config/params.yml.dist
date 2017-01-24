@@ -12,6 +12,9 @@ params:
     ## Locale
     locale.default: en
 
+    ## Images directory
+    images_relative_dir: '/../../landing/web/'
+
     ## Instant
     instant.host: https://local.nekuno.com:8008/
     guzzle.verify: null

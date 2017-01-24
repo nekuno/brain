@@ -28,7 +28,6 @@ $app = new Application();
 
 $app['env'] = getenv('APP_ENV') ?: 'prod';
 $app->register(new ConfigServiceProvider(__DIR__ . "/../config/params.yml"));
-$app['social_web_dir'] = __DIR__ . '/../../landing/web/';
 $replacements = array_merge($app['params'], array('app_root_dir' => __DIR__));
 $app->register(new ConfigServiceProvider(__DIR__ . "/../config/config.yml", $replacements));
 $app->register(new ConfigServiceProvider(__DIR__ . "/../config/config_{$app['env']}.yml", $replacements));
@@ -36,6 +35,7 @@ $app->register(new ConfigServiceProvider(__DIR__ . "/../config/fields.yml", arra
 $app->register(new ConfigServiceProvider(__DIR__ . "/../config/socialFields.yml", array(), null, 'socialFields'));
 $app->register(new ConfigServiceProvider(__DIR__ . "/../config/consistency.yml", array(), null, 'consistency'));
 $app->register(new MonologServiceProvider(), array('monolog.name' => 'brain', 'monolog.level' => $app['debug'] ? \Monolog\Logger::DEBUG : \Monolog\Logger::ERROR, 'monolog.logfile' => __DIR__ . "/../var/logs/silex_{$app['env']}.log"));
+$app['images_web_dir'] = __DIR__ . $app['images_relative_dir'];
 $app->register(new DoctrineServiceProvider());
 $app->register(new DoctrineOrmServiceProvider());
 $app->register(new Neo4jPHPServiceProvider());

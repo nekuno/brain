@@ -39,11 +39,6 @@ class LinkProcessorWorker extends LoggerAwareWorker implements RabbitMQConsumerI
     /**
      * @var Connection
      */
-    protected $connectionSocial;
-
-    /**
-     * @var Connection
-     */
     protected $connectionBrain;
 
     /**
@@ -63,7 +58,6 @@ class LinkProcessorWorker extends LoggerAwareWorker implements RabbitMQConsumerI
                                 ResourceOwnerFactory $resourceOwnerFactory,
                                 TokensModel $tm,
                                 SocialProfileManager $socialProfileManager,
-                                Connection $connectionSocial,
                                 Connection $connectionBrain)
     {
         $this->channel = $channel;
@@ -73,7 +67,6 @@ class LinkProcessorWorker extends LoggerAwareWorker implements RabbitMQConsumerI
         $this->resourceOwnerFactory = $resourceOwnerFactory;
         $this->tm = $tm;
         $this->socialProfileManager = $socialProfileManager;
-        $this->connectionSocial = $connectionSocial;
         $this->connectionBrain = $connectionBrain;
     }
 
@@ -107,11 +100,6 @@ class LinkProcessorWorker extends LoggerAwareWorker implements RabbitMQConsumerI
     {
 
         // Verify mysql connections are alive
-        if ($this->connectionSocial->ping() === false) {
-            $this->connectionSocial->close();
-            $this->connectionSocial->connect();
-        }
-
         if ($this->connectionBrain->ping() === false) {
             $this->connectionBrain->close();
             $this->connectionBrain->connect();

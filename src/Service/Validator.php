@@ -397,6 +397,11 @@ class Validator
                             $fieldErrors[] = 'Value must be a string';
                         }
                         break;
+                    case 'order':
+                        if (!in_array($dataValue, array('similarity', 'matching'))) {
+                            $fieldErrors[] = sprintf('Option with value "%s" is not valid, possible values are "%s"', $dataValue, implode("', '", array('similarity', 'matching')));
+                        }
+                        break;
                 }
             } else {
                 if (isset($fieldData['required']) && $fieldData['required'] === true) {

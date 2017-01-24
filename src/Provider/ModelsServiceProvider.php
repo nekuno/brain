@@ -391,7 +391,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.relations.model'] = $app->share(
             function ($app) {
 
-                return new RelationsModel($app['neo4j.graph_manager'], $app['dbs']['mysql_social'], $app['users.manager']);
+                return new RelationsModel($app['neo4j.graph_manager'], $app['dbs']['mysql_brain'], $app['users.manager']);
             }
         );
 
@@ -412,7 +412,7 @@ class ModelsServiceProvider implements ServiceProviderInterface
         $app['users.photo.manager'] = $app->share(
             function ($app) {
 
-                return new PhotoManager($app['neo4j.graph_manager'], $app['social_web_dir'], $app['params']['social.host']);
+                return new PhotoManager($app['neo4j.graph_manager'], $app['images_web_dir'], $app['params']['social.host']);
             }
         );
     }

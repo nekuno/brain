@@ -29,18 +29,18 @@ class RelationsModel
     /**
      * @var Connection
      */
-    protected $connectionSocial;
+    protected $connectionBrain;
 
     /**
      * @var UserManager
      */
     protected $userManager;
 
-    public function __construct(GraphManager $gm, Connection $connectionSocial, UserManager $userManager)
+    public function __construct(GraphManager $gm, Connection $connectionBrain, UserManager $userManager)
     {
 
         $this->gm = $gm;
-        $this->connectionSocial = $connectionSocial;
+        $this->connectionBrain = $connectionBrain;
         $this->userManager = $userManager;
     }
 
@@ -292,7 +292,7 @@ class RelationsModel
     protected function getMessaged($id)
     {
 
-        $messaged = $this->connectionSocial->executeQuery(
+        $messaged = $this->connectionBrain->executeQuery(
             '
             SELECT * FROM (
               SELECT user_to AS user FROM chat_message

@@ -51,17 +51,13 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
     /**
      * @var Connection
      */
-    protected $connectionSocial;
-    /**
-     * @var Connection
-     */
     protected $connectionBrain;
     /**
      * @var EventDispatcher
      */
     protected $dispatcher;
 
-    public function __construct(AMQPChannel $channel, UserManager $userManager, MatchingModel $matchingModel, SimilarityModel $similarityModel, QuestionModel $questionModel, AffinityRecalculations $affinityRecalculations, Connection $connectionSocial, Connection $connectionBrain, EventDispatcher $dispatcher)
+    public function __construct(AMQPChannel $channel, UserManager $userManager, MatchingModel $matchingModel, SimilarityModel $similarityModel, QuestionModel $questionModel, AffinityRecalculations $affinityRecalculations, Connection $connectionBrain, EventDispatcher $dispatcher)
     {
 
         $this->channel = $channel;
@@ -70,7 +66,6 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
         $this->similarityModel = $similarityModel;
         $this->questionModel = $questionModel;
         $this->affinityRecalculations = $affinityRecalculations;
-        $this->connectionSocial = $connectionSocial;
         $this->connectionBrain = $connectionBrain;
         $this->dispatcher = $dispatcher;
     }
@@ -104,11 +99,6 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
     {
 
         // Verify mysql connections are alive
-        if ($this->connectionSocial->ping() === false) {
-            $this->connectionSocial->close();
-            $this->connectionSocial->connect();
-        }
-
         if ($this->connectionBrain->ping() === false) {
             $this->connectionBrain->close();
             $this->connectionBrain->connect();

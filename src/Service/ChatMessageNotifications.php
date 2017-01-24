@@ -32,7 +32,7 @@ class ChatMessageNotifications
     /**
      * @var Connection
      */
-    protected $connectionSocial;
+    protected $connectionBrain;
 
     /**
      * @var Translator
@@ -49,11 +49,11 @@ class ChatMessageNotifications
      */
     protected $profileModel;
 
-    function __construct(EmailNotifications $emailNotifications, EntityManager $entityManagerBrain, Connection $connectionSocial, Translator $translator, UserManager $userManager, ProfileModel $profileModel)
+    function __construct(EmailNotifications $emailNotifications, EntityManager $entityManagerBrain, Connection $connectionBrain, Translator $translator, UserManager $userManager, ProfileModel $profileModel)
     {
         $this->emailNotifications = $emailNotifications;
         $this->entityManagerBrain = $entityManagerBrain;
-        $this->connectionSocial = $connectionSocial;
+        $this->connectionBrain = $connectionBrain;
         $this->translator = $translator;
         $this->userManager = $userManager;
         $this->profileModel = $profileModel;
@@ -120,7 +120,7 @@ class ChatMessageNotifications
 
     public function createDefaultMessage($to, $locale)
     {
-        $qb = $this->connectionSocial->createQueryBuilder()
+        $qb = $this->connectionBrain->createQueryBuilder()
             ->insert('chat_message')->values(array(
                 'user_to' => $to,
                 'user_from' => 16,
@@ -171,7 +171,7 @@ class ChatMessageNotifications
     }
 
     /**
-     * Get users with unread chat messages (until 24h ago) (SOCIAL DB)
+     * Get users with unread chat messages (until 24h ago) (MYSQL BRAIN DB)
      *
      * @param int $limit
      * @return array
@@ -180,7 +180,7 @@ class ChatMessageNotifications
     {
         $yesterday = new \DateTime('-1 day');
         $yesterday = $yesterday->format("Y-m-d H:m:i");
-        $qb = $this->connectionSocial->createQueryBuilder('chat_message')
+        $qb = $this->connectionBrain->createQueryBuilder('chat_message')
             ->select('DISTINCT chat_message.user_to')
             ->from('chat_message')
             ->where('chat_message.readed = 0')
@@ -193,7 +193,7 @@ class ChatMessageNotifications
     }
 
     /**
-     * Get unread chat messages by user (until 24h ago) (SOCIAL DB)
+     * Get unread chat messages by user (until 24h ago) (MYSQL BRAIN DB)
      *
      * @param int $userId
      * @return array
@@ -202,7 +202,7 @@ class ChatMessageNotifications
     {
         $yesterday = new \DateTime('-1 day');
         $yesterday = $yesterday->format("Y-m-d H:m:i");
-        $qb = $this->connectionSocial->createQueryBuilder('chat_message')
+        $qb = $this->connectionBrain->createQueryBuilder('chat_message')
             ->select('*')
             ->from('chat_message')
             ->where('chat_message.readed = 0')
