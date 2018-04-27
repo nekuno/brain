@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Security;
+namespace Security;
 
 use HWI\Bundle\OAuthBundle\OAuth\Response\UserResponseInterface;
 use HWI\Bundle\OAuthBundle\Security\Core\User\OAuthAwareUserProviderInterface;
