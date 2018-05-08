@@ -2,6 +2,12 @@
 
 namespace App;
 
+use DependencyInjection\FieldsExtension;
+use DependencyInjection\HWIOAuthExtension;
+use DependencyInjection\MetadataExtension;
+use DependencyInjection\ConfigurationExtension;
+use DependencyInjection\Neo4jExtension;
+use DependencyInjection\ValidationExtension;
 use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
 use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\Config\Resource\FileResource;
@@ -37,6 +43,16 @@ class Kernel extends BaseKernel
 
     protected function configureContainer(ContainerBuilder $container, LoaderInterface $loader)
     {
+        $parserConfExtension = new ConfigurationExtension();
+        $neo4jExtension = new Neo4jExtension();
+        $hwiExtension = new HWIOAuthExtension();
+        $container->registerExtension($parserConfExtension);
+        $container->registerExtension($hwiExtension);
+        $container->registerExtension($neo4jExtension);
+        $container->loadFromExtension($parserConfExtension->getAlias());
+        $container->loadFromExtension($neo4jExtension->getAlias());
+        $container->loadFromExtension($hwiExtension->getAlias());
+
         $container->addResource(new FileResource($this->getProjectDir().'/config/bundles.php'));
         // Feel free to remove the "container.autowiring.strict_mode" parameter
         // if you are using symfony/dependency-injection 4.0+ as it's the default behavior

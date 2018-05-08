@@ -1,0 +1,11 @@
+parameters:
+    env(db_neo4j_host): ''
+    env(db_neo4j_port): ''
+    env(db_neo4j_user): ''
+    env(db_neo4j_pass): ''
+
+neo4j:
+    host: "%env(db_neo4j_host)%"
+    port: "%env(db_neo4j_port)%"
+    user: "%env(db_neo4j_user)%"
+    pass: "%env(db_neo4j_pass)%"

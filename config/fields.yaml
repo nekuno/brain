@@ -1,0 +1,884 @@
+privacy:
+    profile:
+        type: choice
+        label:
+            en: 'Who can access my profile'
+            es: 'Quién puede acceder a mi perfil'
+    description:
+        type: choice
+        label:
+            en: 'Quién puede acceder a mi perfil'
+            es: 'Quién puede acceder a la descripción de mi perfil'
+    questions:
+        type: choice
+        label:
+            en: 'Who can access my content/questions'
+            es: 'Quién puede acceder a mis preguntas/contenidos'
+    gallery:
+        type: choice
+        label:
+            en: 'Who can access my gallery'
+            es: 'Quién puede acceder a mi galería'
+    messages:
+        type: choice
+        label:
+            en: 'Who can send me messages'
+            es: 'Quién puede enviarme mensajes'
+categories:
+    profile:
+        - label:
+            en: Basic
+            es: Básicos
+          fields: [objective, birthday, gender, descriptiveGender, location, orientation]
+        - label:
+            en: Availability
+            es: Disponibilidad
+          fields: [civilStatus, relationshipInterest]
+        - label:
+            en: Look
+            es: Apariencia
+          fields: [complexion, ethnicGroup, eyeColor, hairColor, height]
+        - label:
+            en: Background
+            es: Cultura
+          fields: [interfaceLanguage, language, education, religion, ideology]
+        - label:
+            en: Drugs
+            es: Drogas
+          fields: [alcohol, smoke, drugs]
+        - label:
+            en: Others
+            es: Otros
+          fields: [income, diet, pets, allergy, sons, zodiacSign, handicap]
+        - label:
+            en: Work, ideas and projects
+            es: Trabajo, ideas y proyectos
+          fields: [profession, industry, proposal]
+        - label:
+            en: Hobbies
+            es: Aficiones
+          fields: [sports, games, creative]
+        - label:
+            en: Leisure
+            es: Ocio
+          fields: [leisureMoney, leisureTime, tickets, activity, travelling, leisurePlan]
+        - label:
+            en: Description
+            es: Descripción
+          fields: [description, descriptionImportant, descriptionTime, descriptionSkills, descriptionNotice, descriptionFan, descriptionLive, descriptionThinking, descriptionFriday, descriptionMessage]
+
+    filters:
+        - label:
+            en: Basic
+            es: Básicos
+          fields: [objective, birthday, gender, descriptiveGender, location, orientation, groups, compatibility, similarity]
+        - label:
+            en: Availability
+            es: Disponibilidad
+          fields: [civilStatus, relationshipInterest]
+        - label:
+            en: Look
+            es: Apariencia
+          fields: [complexion, ethnicGroup, eyeColor, hairColor, height]
+        - label:
+            en: Background
+            es: Cultura
+          fields: [interfaceLanguage, language, education, religion, ideology]
+        - label:
+            en: Drugs
+            es: Drogas
+          fields: [alcohol, smoke, drugs]
+        - label:
+            en: Others
+            es: Otros
+          fields: [income, diet, pets, allergy, sons, zodiacSign, handicap]
+        - label:
+            en: Work, ideas and projects
+            es: Trabajo, ideas y proyectos
+          fields: [profession, industry]
+        - label:
+            en: Hobbies
+            es: Aficiones
+          fields: [sports, games, creative]
+        - label:
+            en: Leisure
+            es: Ocio
+          fields: [leisureMoney, leisureTime, tickets, activity, travelling]
+profile:
+    mode:
+        type: choice
+        label: &modeLabel
+            en: 'Mode'
+            es: 'Modo'
+        notErasable: true
+        hidden: true
+    description:
+        type: textarea
+        min: 0
+        max: 20000
+        label: &descriptionLabel
+            en: 'About me'
+            es: 'Sobre mí'
+        labelEdit: *descriptionLabel
+    descriptionImportant:
+        type: textarea
+        min: 0
+        max: 20000
+        label: &descriptionImportantLabel
+            en: 'The most important thing I would like people to know about me'
+            es: 'Lo más importante que me gustaría que la gente supiera de mi'
+        labelEdit: *descriptionImportantLabel
+    descriptionTime:
+        type: textarea
+        min: 0
+        max: 20000
+        label: &descriptionTimeLabel
+            en: 'What do I usually do with my time'
+            es: 'Qué suelo hacer con mi tiempo'
+        labelEdit: *descriptionTimeLabel
+    descriptionSkills:
+        type: textarea
+        min: 0
+        max: 20000
+        label: &descriptionSkillsLabel
+            en: 'I''m really good at'
+            es: 'Soy realmente bueno en'
+        labelEdit: *descriptionSkillsLabel
+    descriptionNotice:
+        type: textarea
+        min: 0
+        max: 20000
+        label: &descriptionNoticeLabel
+            en: 'The first things people usually notice about me'
+            es: 'Las primeras cosas que la gente suele notar de mi'
+        labelEdit: *descriptionNoticeLabel
+    descriptionFan:
+        type: textarea
+        min: 0
+        max: 20000
+        label: &descriptionFanLabel
+            en: 'I''m very fan of'
+            es: 'Soy muy fan de'
+        labelEdit: *descriptionFanLabel
+    descriptionLive:
+        type: textarea
+        min: 0
+        max: 20000
+        label: &descriptionLiveLabel
+            en: 'The 6 things I need to live'
+            es: 'Las 6 cosas que necesito para vivir'
+        labelEdit: *descriptionLiveLabel
+    descriptionThinking:
+        type: textarea
+        min: 0
+        max: 20000
+        label: &descriptionThinkingLabel
+            en: 'I spend a lot of time thinking about'
+            es: 'Suelo pasar mucho tiempo pensando sobre'
+        labelEdit: *descriptionThinkingLabel
+    descriptionFriday:
+        type: textarea
+        min: 0
+        max: 20000
+        label: &descriptionFridayLabel
+            en: 'On my typical Friday I usually do'
+            es: 'En mi típico viernes suelo'
+        labelEdit: *descriptionFridayLabel
+    descriptionMessage:
+        type: textarea
+        min: 0
+        max: 20000
+        label: &descriptionMessageLabel
+            en: 'You should send me a message if'
+            es: 'Deberías enviarme un mensaje si'
+        labelEdit: *descriptionMessageLabel
+    birthday:
+        type: birthday
+        label: &birthdayLabel
+            en: 'Age'
+            es: 'Edad'
+        labelEdit:
+            en: 'Birthday'
+            es: 'Cumpleaños'
+        notErasable: true
+    zodiacSign:
+        type: choice
+        editable: false
+        label: &zodiacSignLabel
+            en: 'Zodiac sign'
+            es: 'Signo del zodíaco'
+        labelEdit: &zodiacSignLabelEdit
+            en: 'Zodiac'
+            es: 'Zodiaco'
+    height:
+        type: integer
+        min: 50
+        max: 300
+        label: &heightLabel
+            en: 'Height (cm)'
+            es: 'Altura (cm)'
+        labelEdit: *heightLabel
+    industry:
+        type: multiple_choices
+        label: &industryLabel
+            en: 'Industry'
+            es: 'Sector'
+        labelEdit: *industryLabel
+        max: 3
+    allergy:
+        type: tags
+        label:
+            en: 'Allergy'
+            es: 'Alergia'
+        labelEdit: &allergyLabel
+            en: 'Have you any allergy?'
+            es: '¿Tienes alguna alergia?'
+    sons:
+        type: double_choice
+        label: &sonsLabel
+            en: 'Sons'
+            es: 'Hijos'
+        labelEdit: *sonsLabel
+        doubleChoices: &sonsDoubleChoices
+            yes:
+                might_want:
+                    en: "and might want more"
+                    es: "y quizás quiera más"
+                want:
+                    en: "and want more"
+                    es: "y quiero más"
+                not_want:
+                    en: "but doesn’t want more"
+                    es: "y no quiero más"
+            no:
+                might_want:
+                    en: "but might want them"
+                    es: "pero quizás quiera"
+                want:
+                    en: "but want them"
+                    es: "pero quiero"
+                not_want:
+                    en: "and doesn’t want any"
+                    es: "y no quiero ninguno"
+
+    language:
+        type: tags_and_choice
+        label: &languageLabel
+            en: 'Languages'
+            es: 'Idiomas'
+        labelEdit: *languageLabel
+        choiceLabel: &languageChoiceLabel
+            en: 'Level'
+            es: 'Nivel'
+        choices: &languageChoices
+            elementary:
+                en: 'Elementary proficiency'
+                es: 'Competencia básica'
+            limited_working:
+                en: 'Limited working proficiency'
+                es: 'Competencia básica limitada'
+            professional_working:
+                en: 'Professional working proficiency'
+                es: 'Competencia básica profesional'
+            full_professional:
+                en: 'Full professional proficiency'
+                es: 'Competencia profesional completa'
+            native:
+                en: 'Native or bilingual proficiency'
+                es: 'Competencia bilingüe o nativa'
+
+    gender:
+        type: choice
+        label: &genderLabel
+            en: 'Want to be found in searches by gender'
+            es: 'Quiero salir en búsquedas por género'
+        labelEdit:
+            en: 'Want to be found in searches by gender'
+            es: 'Quiero salir en búsquedas por género'
+        notErasable: true
+        hidden: true
+    descriptiveGender:
+        type: multiple_choices
+        label: &descriptiveGenderLabel
+            en: 'Gender'
+            es: 'Género'
+        labelEdit: *descriptiveGenderLabel
+        max: 5
+    objective:
+        type: multiple_choices
+        label: &objectiveLabel
+            en: 'Objectives'
+            es: 'Objetivos'
+        labelEdit: *objectiveLabel
+        min: 1
+        notErasable: true
+    hairColor:
+        type: choice
+        label: &hairColorLabel
+            en: 'Hair color'
+            es: 'Color de pelo'
+        labelEdit: *hairColorLabel
+    ethnicGroup:
+        type: multiple_choices
+        label: &ethnicGroupLabel
+            en: 'Ethnicity'
+            es: 'Étnia'
+        labelEdit: *ethnicGroupLabel
+    complexion:
+        type: choice
+        label: &complexionLabel
+            en: 'Body type'
+            es: 'Tipo de cuerpo'
+        labelEdit: *complexionLabel
+    eyeColor:
+        type: choice
+        label: &eyeColorLabel
+            en: 'Eyes color'
+            es: 'Color ojos'
+        labelEdit: *eyeColorLabel
+    civilStatus:
+        type: choice
+        label: &civilStatusLabel
+            en: 'Civil status'
+            es: 'Estado civil'
+        labelEdit: *civilStatusLabel
+    income:
+        type: choice
+        label: &incomeLabel
+            en: 'Income'
+            es: 'Ingresos'
+        labelEdit: *incomeLabel
+    pets:
+        type: choice
+        label: &petsLabel
+            en: 'Pets'
+            es: 'Mascotas'
+        labelEdit:
+            en: 'Do you have pets?'
+            es: '¿Tienes mascotas?'
+    smoke:
+        type: choice
+        label: &smokeLabel
+             en: 'Smoker'
+             es: 'Fumador/a'
+        labelEdit:
+            en: 'Do you smoke?'
+            es: '¿Fumas?'
+    alcohol:
+        type: choice
+        label: &alcoholLabel
+            en: 'Alcohol'
+            es: 'Alcohol'
+        labelEdit:
+            en: 'Do you drink alcohol?'
+            es: '¿Bebes Alcohol?'
+    drugs:
+        type: multiple_choices
+        label: &drugsLabel
+            en: 'Other'
+            es: 'Otras'
+        labelEdit: *drugsLabel
+    diet:
+        type: choice
+        label: &dietLabel
+            en: 'Diet'
+            es: 'Dieta'
+        labelEdit:
+            en: 'Are you on a special diet?'
+            es: '¿Sigues alguna dieta especial?'
+    orientation:
+        type: multiple_choices
+        label: &orientationLabel
+            en: 'Orientation'
+            es: 'Orientación'
+        labelEdit: *orientationLabel
+        notErasable: true
+    orientationRequired:
+        type: boolean
+        label:
+            en: 'Orientation required'
+            es: 'Orientación obligatoria'
+    relationshipInterest:
+        type: choice
+        label: &relationshipInterestLabel
+            en: 'Looking for'
+            es: 'Tipo de relación que busca'
+        labelEdit:
+            en: 'What are your interests on relations?'
+            es: '¿Qué te interesa de las relaciones?'
+    interfaceLanguage:
+        type: choice
+        label: &interfaceLanguageLabel
+            en: 'Interface language'
+            es: 'Idioma de interfaz'
+        labelEdit:
+            en: 'What interface language do you prefer?'
+            es: '¿Qué lenguaje de interfaz prefieres?'
+        notErasable: true
+    religion:
+        type: double_choice
+        label: &religionLabel
+            en: 'Religion'
+            es: 'Religión'
+        labelEdit: *religionLabel
+        doubleChoices: &religionDoubleChoices
+            agnosticism: &religionDetails
+                important:
+                    en: "and it's important"
+                    es: "y es importante"
+                not_important:
+                    en: "and it's not important"
+                    es: "y no es importante"
+                laughing_about_it:
+                    en: "and laughing about it"
+                    es: "y me río de ello"
+            atheism: *religionDetails
+            christianity: *religionDetails
+            judaism: *religionDetails
+            catholicism: *religionDetails
+            islam: *religionDetails
+            hinduism: *religionDetails
+            buddhism: *religionDetails
+            sikh: *religionDetails
+            kopimism: *religionDetails
+            other: *religionDetails
+    handicap:
+        type: tags
+        label: &handicapLabel
+            en: 'Have you any handicap?'
+            es: '¿Tienes alguna discapacidad?'
+        labelEdit: *handicapLabel
+    ideology:
+        type: tags
+        label: &ideologyLabel
+            en: 'Ideology'
+            es: 'Ideología'
+        labelEdit: *ideologyLabel
+    profession:
+        type: tags
+        label: &professionLabel
+            en: 'Skills'
+            es: 'Habilidades profesionales'
+        labelEdit: *professionLabel
+        max: 10
+    education:
+        type: tags
+        label: &educationLabel
+            en: 'Education'
+            es: 'Educación'
+        labelEdit: *educationLabel
+    location:
+        type: location
+        label: &locationLabel
+            en: 'Location'
+            es: 'Ubicación'
+        labelEdit: *locationLabel
+        notErasable: true
+    sports:
+        type: tags
+        label: &sportsLabel
+            en: 'Sports and physical'
+            es: 'Deportes y físico'
+        labelEdit: *sportsLabel
+    games:
+        type: tags
+        label: &gamesLabel
+            en: 'Videogames and board games'
+            es: 'Videojuegos y juegos de mesa'
+        labelEdit: *gamesLabel
+        schema: VideoGame
+    creative:
+        type: tags
+        label: &creativeLabel
+            en: 'Creative'
+            es: 'Creativo'
+        labelEdit: *creativeLabel
+    leisureMoney:
+        type: multiple_choices
+        label: &leisureMoneyLabel
+            en: 'Money for leisure'
+            es: 'Dinero para ocio'
+        labelEdit: *leisureMoneyLabel
+        min: 0
+        max: 4
+        isRange: true
+    leisureTime:
+        type: multiple_choices
+        label: &leisureTimeLabel
+            en: 'Leisure time'
+            es: 'Tiempo de ocio'
+        labelEdit: *leisureTimeLabel
+        min: 0
+        max: 5
+        isRange: true
+    tickets:
+        type: multiple_choices
+        label: &ticketsLabel
+            en: 'Tickets'
+            es: 'Entradas'
+        labelEdit: *ticketsLabel
+    activity:
+        type: multiple_choices
+        label: &activityLabel
+            en: 'Activities'
+            es: 'Actividades'
+        labelEdit: *activityLabel
+    travelling:
+        type: multiple_locations
+        max: 10
+        label: &travellingLabel
+            en: 'Travelling'
+            es: 'Viajes'
+        labelEdit: *travellingLabel
+    leisurePlan:
+        type: multiple_fields
+        label: &leisurePlanLabel
+            en: 'Planes'
+            es: 'Planes'
+        labelEdit: *leisurePlanLabel
+        max: 3
+        metadata:
+            name:
+                type: textarea
+                required: true
+                max: 100
+                label: &leisurePlanNameLabel
+                    en: 'Plan description'
+                    es: 'Descripción del plan'
+                labelEdit: *leisurePlanNameLabel
+    proposal:
+        type: multiple_fields
+        label: &proposalLabel
+            en: 'Proposals'
+            es: 'Propuestas'
+        labelEdit: *proposalLabel
+        max: 3
+        metadata:
+            name:
+                type: textarea
+                required: true
+                max: 100
+                label: &proposalNameLabel
+                    en: 'Proposal description'
+                    es: 'Descripción de la propuesta'
+                labelEdit: *proposalNameLabel
+            industry:
+                type: multiple_choices
+                max: 3
+                label: *industryLabel
+                labelEdit: *industryLabel
+            profession:
+                type: tags
+                max: 10
+                label: *professionLabel
+                labelEdit: *professionLabel
+
+
+content:
+    type:
+        type: choice
+        label:
+            en: 'Type of content'
+            es: 'Tipo de contenido'
+    tags:
+        type: tags
+        label:
+            en: 'Keywords'
+            es: 'Palabras clave'
+threads:
+    name:
+        type: textarea
+        min: 1
+        max: 100
+        required: true
+    category:
+        type: choice
+        required: true
+    default:
+        type: boolean
+groups:
+    name:
+        type: textarea
+        required: true
+    html:
+        type: textarea
+        required: false
+#    date:
+#        type: date
+#        required: false
+#    location:
+#        type: location
+#        required: false
+
+invitations:
+    invitationId:
+        required: false
+        type: integer
+    token:
+        required: false
+        type: string
+    available:
+        required: true
+        type: integer
+        min: 1
+    consumed:
+        required: false
+        type: boolean
+    email:
+        required: false
+        type: email
+    expiresAt:
+        required: false
+        type: integer
+    createdAt:
+        required: false
+        type: integer
+    userId:
+        required: false
+        type: integer
+    groupId:
+        required: false
+        type: integer
+    htmlText:
+        required: false
+        type: string
+    slogan:
+        required: false
+        type: string
+    image_url:
+        required: false
+        type: url
+    image_path:
+        required: false
+        type: image_path
+    orientationRequired:
+        required: false
+        type: boolean
+
+tokens:
+    resourceOwner:
+        required: true
+        type: choice
+    oauthToken:
+        required: true
+        type: string
+    oauthTokenSecret:
+        required: false
+        type: string
+    refreshToken:
+        required: false
+        type: string
+    resourceId:
+        required: false
+        type: string
+    createdTime:
+        required: false
+        type: integer
+    updatedTime:
+        editable: false
+        type: integer
+    expireTime:
+        required: false
+        type: integer
+
+content_filter:
+    type:
+        type: multiple_choices
+        max: 5
+        label:
+            en: 'Type of content (Music, images, etc…)'
+            es: 'Tipo de contenido (Música, imágenes, etc…)'
+    tags:
+        type: tags
+        label:
+            en: 'Keywords'
+            es: 'Palabras clave'
+
+user_filter:
+    order:
+        type: order
+        label:
+            en: 'Order'
+            es: 'Orden'
+    groups:
+        type: multiple_choices
+        label:
+            en: 'Badges'
+            es: 'Insignias'
+    compatibility:
+        type: integer
+        min: 50
+        max: 100
+        label:
+            en: 'Minimum compatibility (%)'
+            es: 'Compatibilidad mínima (%)'
+    similarity:
+        type: integer
+        min: 50
+        max: 100
+        label:
+            en: 'Minimum similarity (%)'
+            es: 'Similaridad mínima (%)'
+    birthday:
+        type: birthday_range
+        label: *birthdayLabel
+        min: 14
+        max: 99
+    zodiacSign:
+        type: multiple_choices
+        label: *zodiacSignLabelEdit
+    height:
+        type: integer_range
+        min: 50
+        max: 300
+        label: *heightLabel
+    sons:
+        type: choice_and_multiple_choices
+        label: *sonsLabel
+        doubleChoices: *sonsDoubleChoices
+    language:
+        type: tags_and_multiple_choices
+        label: *languageLabel
+        choiceLabel: *languageChoiceLabel
+        choices: *languageChoices
+#        gender:
+#            type: multiple_choices
+#            label: *genderLabel
+    descriptiveGender:
+        type: multiple_choices
+        label: *descriptiveGenderLabel
+    objective:
+        type: multiple_choices
+        label: *objectiveLabel
+    hairColor:
+        type: multiple_choices
+        label: *hairColorLabel
+    ethnicGroup:
+        type: multiple_choices
+        label: *ethnicGroupLabel
+    complexion:
+        type: multiple_choices
+        label: *complexionLabel
+    eyeColor:
+        type: multiple_choices
+        label: *eyeColorLabel
+    civilStatus:
+        type: multiple_choices
+        label: *civilStatusLabel
+    income:
+        type: multiple_choices
+        label: *incomeLabel
+    pets:
+        type: multiple_choices
+        label: *petsLabel
+    smoke:
+        type: multiple_choices
+        label: *smokeLabel
+    alcohol:
+        type: multiple_choices
+        label: *alcoholLabel
+    drugs:
+        type: multiple_choices
+        label: *drugsLabel
+    diet:
+        type: multiple_choices
+        label: *dietLabel
+    industry:
+        type: multiple_choices
+        label: *industryLabel
+        max: 10
+    orientation:
+        type: multiple_choices
+        label: *orientationLabel
+    relationshipInterest:
+        type: multiple_choices
+        label: *relationshipInterestLabel
+    interfaceLanguage:
+        type: multiple_choices
+        label: *interfaceLanguageLabel
+    religion:
+        type: double_multiple_choices
+        label: *religionLabel
+        doubleChoices: *religionDoubleChoices
+    allergy:
+        type: tags
+        label: *allergyLabel
+    handicap:
+        type: tags
+        label: *handicapLabel
+    ideology:
+        type: tags
+        label: *ideologyLabel
+    profession:
+        type: tags
+        label: *professionLabel
+    education:
+        type: tags
+        label: *educationLabel
+    location:
+        type: location_distance
+        label: *locationLabel
+
+questions:
+    locale:
+        required: true
+        type: choice
+    text:
+        required: true
+        type: string
+    answers:
+        required: true
+        type: array
+        min: 2
+        max: 6
+
+questions_admin:
+    answerTexts:
+        required: true
+        type: array
+        min: 2
+        max: 6
+    questionTexts:
+        required: true
+        type: array
+        min: 2
+        max : 2
+
+answers:
+    questionId:
+        required: true
+        type: integer
+    answerId:
+        required: true
+        type: integer
+    acceptedAnswers:
+        required: true
+        type: array
+    rating:
+        required: true
+        type: integer
+        min: 0
+        max: 3
+    explanation:
+        required: true
+        type: string
+    isPrivate:
+        required: true
+        type: boolean
+    userId:
+        required: false
+        type: integer
+
+device:
+    registrationId:
+        required: true
+        type: string
+    userId:
+        required: true
+        type: integer
+    token:
+        required: false
+        type: string
+    platform:
+        required: true
+        type: string

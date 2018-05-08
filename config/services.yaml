@@ -2,8 +2,17 @@
 # https://symfony.com/doc/current/best_practices/configuration.html#application-related-configuration
 parameters:
     locale: 'en'
+    env(images_web_dir): ''
+    env(social_host): ''
+    env(admin_domain_plus_port): ''
+    env(fields): ''
+    env(profile_fields): ''
+    env(metadata_config): ''
+    env(db_neo4j_host): ''
+    env(db_neo4j_port): ''
 
 services:
+
     # default configuration for services in *this* file
     _defaults:
         autowire: true      # Automatically injects dependencies in your services.
@@ -18,16 +27,89 @@ services:
 #        resource: '../src/*'
 #        exclude: '../src/{Entity,Migrations,Tests,Kernel.php}'
     Model\:
-        resource: '../src/Model/*'
-
+        resource: '../src/Model/*/*{Manager.php,Utilities.php}'
+        exclude: '../src/Model/Metadata/MetadataManager.php'
+    Service\:
+        resource: '../src/Service/*'
+        #exclude: '../src/Service/Validator'
     # controllers are imported separately to make sure services can be injected
     # as action arguments even if you don't extend any base controller class
-    App\Controller\:
-        resource: '../src/Controller'
+    Controller\:
+        resource: '../src/Controller/*/*'
         tags: ['controller.service_arguments']
+
+    Symfony\Component\Security\Core\Encoder\:
+        resource: '../vendor/symfony/security/Core/Encoder/*'
+
+    Everyman\Neo4j\:
+        resource: '../vendor/everyman/neo4jphp/lib/Everyman/Neo4j/*'
+
+    Cocur\Slugify\:
+        resource: '../vendor/cocur/slugify/src/*'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
 
+    HWI\Bundle\OAuthBundle\Security\Core\Authentication\Provider\OAuthProvider:
+        autowire: true
+        arguments:
+            $userProvider: "@security.users_provider"
+            $resourceOwnerMap: "@oauth.resource_owner_map"
+
+    Controller\ArgumentValueResolver:
+        tags:
+            - { name: controller.argument_value_resolver, priority: 50 }
+
+    Model\User\UserManager:
+        arguments:
+            $imagesBaseDir: "%kernel.project_dir%%env(images_web_dir)%"
+
+    Model\Photo\PhotoManager:
+        arguments:
+            $base: "%kernel.project_dir%%env(images_web_dir)%"
+            $host: "%env(social_host)%"
+
+    Model\Photo\GalleryManager:
+        arguments:
+            $base: "%kernel.project_dir%%env(images_web_dir)%"
+
+    Model\Group\GroupManager:
+        arguments:
+            $invitationImagesRoot: "%env(admin_domain_plus_port)%"
+
+    Model\Metadata\MetadataManagerFactory:
+        arguments:
+            $config: "%metadata_config%"
+            $metadata: "%profile_fields%"
+            $defaultLocale: "en"
+
+    Model\Metadata\ProfileMetadataManager:
+        arguments:
+            $metadata: "%profile_fields%"
+            $defaultLocale: "en"
+
+    Service\Validator\ValidatorFactory:
+        arguments:
+            $config: "%validator_config%"
+
+    Model\Neo4j\GraphManager:
+        arguments:
+            $username: "%env(db_neo4j_user)%"
+            $password: "%env(db_neo4j_pass)%"
+
+    manager.user_manager:
+        class: Model\User\UserManager
+        arguments:
+            $imagesBaseDir: "%kernel.project_dir%%env(images_web_dir)%"
+
     security.users_provider:
         class: Security\UserProvider
+        arguments: ["@manager.user_manager"]
+
+    dispatcher.service:
+        class: Service\EventDispatcher
+        arguments: ["@event_dispatcher"]
+
+    hwi_oauth.user.provider.entity:
+        class: HWI\Bundle\OAuthBundle\Security\Core\User\OAuthUserProvider
+

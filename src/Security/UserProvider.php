@@ -73,7 +73,7 @@ class UserProvider implements UserProviderInterface, OAuthAwareUserProviderInter
             throw new UnsupportedUserException(sprintf('Expected an instance of %s, but got "%s".', '\\Manager\\User', get_class($user)));
         }
 
-        if (null === $reloadedUser = $this->userManager->findUserBy(array('id' => $user->getId()))) {
+        if (null === $reloadedUser = $this->userManager->findUserBy(array('qnoow_id' => $user->getId()))) {
             throw new UsernameNotFoundException(sprintf('User with ID "%d" could not be reloaded.', $user->getId()));
         }
 
@@ -85,7 +85,7 @@ class UserProvider implements UserProviderInterface, OAuthAwareUserProviderInter
      */
     public function supportsClass($class)
     {
-        $userClass = '\\Manager\\User';
+        $userClass = 'Model\\User\\User';
 
         return $userClass === $class || is_subclass_of($class, $userClass);
     }

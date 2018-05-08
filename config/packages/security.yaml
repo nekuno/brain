@@ -1,29 +1,49 @@
+parameters:
+    env(dev_custom_ip_1): '127.0.0.1'
+    env(dev_custom_ip_2): '127.0.0.1'
+    env(dev_custom_ip_3): '127.0.0.1'
+    env(dev_custom_ip_4): '127.0.0.1'
+    valid_ips: ['127.0.0.1', "%env(dev_custom_ip_1)%", "%env(dev_custom_ip_2)%", "%env(dev_custom_ip_3)%", "%env(dev_custom_ip_4)%"]
+
 security:
     # https://symfony.com/doc/current/security.html#where-do-users-come-from-user-providers
     providers:
         in_memory: { memory: ~ }
+        users:
+            id: security.users_provider
+
     firewalls:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
-        main:
+        login:
             anonymous: true
-            oauth:
-                resource_owners: []
-                login_path: 'thisPathCannotBeNull'
-                oauth_user_provider:
-                    service: security.users_provider
-
-            # activate different ways to authenticate
-
-            # http_basic: true
-            # https://symfony.com/doc/current/security.html#a-configuring-how-your-users-will-authenticate
-
-            # form_login: true
-            # https://symfony.com/doc/current/security/form_login_setup.html
+            pattern: ^/login$
+        public_get:
+            anonymous: true
+            pattern: (^/profile/metadata$)|(^/profile/categories)|(^/profile/tags)|(^/users/available/)|(^/client/)|(^/lookup)|(^/public/)
+            methods: [GET]
+        public_post:
+            anonymous: true
+            pattern: (^/users$)|(^/register)|(^/invitations/token/validate/)|(^/lookUp/webHook$)|(^/users/validate$)$
+            methods: [POST]
+        instant:
+            anonymous: true
+            pattern: ^/instant/
+        admin:
+            anonymous: true
+            pattern: ^/admin/
+        secured:
+            json_login:
+                check_path: /login
+            provider: users
+            pattern: ^.*$
+            guard:
+                authenticators:
+                    - lexik_jwt_authentication.jwt_token_authenticator
 
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
     access_control:
-        # - { path: ^/admin, roles: ROLE_ADMIN }
-        # - { path: ^/profile, roles: ROLE_USER }
+        - { path: ^/instant/, ips: "%valid_ips%" }
+        - { path: ^/admin/, ips: "%valid_ips%" }

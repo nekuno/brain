@@ -1,0 +1,14 @@
+validator.config:
+    answers: Service\Validator\AnswerValidator
+    content_filter: Service\Validator\FilterContentValidator
+    user_filter: Service\Validator\FilterUsersValidator
+    threads: Service\Validator\ThreadValidator
+    device: Service\Validator\DeviceValidator
+    groups: Service\Validator\GroupValidator
+    invitations: Service\Validator\InvitationValidator
+    profile: Service\Validator\ProfileValidator
+    questions: Service\Validator\QuestionValidator
+    questions_admin: Service\Validator\QuestionAdminValidator
+    tokens: Service\Validator\TokenValidator
+    tokenStatus: Service\Validator\TokenStatusValidator
+    default: Service\Validator\Validator

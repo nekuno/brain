@@ -1,7 +1,13 @@
+parameters:
+    env(facebook_consumer_key): ''
+    env(facebook_consumer_secret): ''
+
 hwi_oauth:
-    # list of names of the firewalls in which this bundle is active, this setting MUST be set
-    firewall_names: [main]
-    resource_owners: []
+    resource_owners:
+        facebook:
+            type:                facebook
+            client_id:           "%env(facebook_consumer_key)%"
+            client_secret:       "%env(facebook_consumer_secret)%"
 
     # an optional setting to configure a query string parameter which can be used to redirect
     # the user after authentication, e.g. /connect/facebook?_destination=/my/destination will
