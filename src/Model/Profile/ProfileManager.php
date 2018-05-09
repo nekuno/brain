@@ -214,7 +214,7 @@ class ProfileManager
             $profile->set($field, $profileOption);
         }
 
-        $profileTags = $this->profileTagManager->buildTags($row, $interfaceLocale);
+        $profileTags = $this->profileTagManager->buildTags($row);
         foreach ($profileTags as $field => $profileTag)
         {
             $profile->set($field, $profileTag);
@@ -298,9 +298,7 @@ class ProfileManager
             $multiple = $multipleNode->getProperties();
 
             $multiple += $this->profileOptionManager->buildOptions($row->offsetGet('options'));
-
-            $interfaceLocale = $this->getInterfaceLocaleByProfileId($profileId);
-            $multiple += $this->profileTagManager->buildTags($row, $interfaceLocale);
+            $multiple += $this->profileTagManager->buildTags($row);
             //if Location or Travelling is needed, remove :Profile requirement from methods or move this to own manager
             $label = $row->offsetGet('label');
             $field = $this->metadataUtilities->labelToType($label);

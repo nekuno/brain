@@ -2,16 +2,17 @@
 
 namespace Model\Filters;
 
-use Everyman\Neo4j\Label;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Everyman\Neo4j\Relationship;
+use Model\LanguageText\LanguageTextManager;
 use Model\Location\LocationManager;
 use Model\Metadata\MetadataUtilities;
 use Model\Neo4j\GraphManager;
 use Model\Metadata\UserFilterMetadataManager;
 use Model\Neo4j\QueryBuilder;
 use Model\Profile\ProfileOptionManager;
+use Model\Profile\ProfileTagManager;
 use Service\Validator\FilterUsersValidator;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -29,6 +30,10 @@ class FilterUsersManager
 
     protected $profileOptionManager;
 
+    protected $profileTagManager;
+
+    protected $languageTextManager;
+
     protected $metadataUtilities;
 
     protected $locationManager;
@@ -38,11 +43,13 @@ class FilterUsersManager
      */
     protected $validator;
 
-    public function __construct(GraphManager $graphManager, UserFilterMetadataManager $userFilterMetadataManager, ProfileOptionManager $profileOptionManager, LocationManager $locationManager, MetadataUtilities $metadataUtilities, FilterUsersValidator $validator)
+    public function __construct(GraphManager $graphManager, UserFilterMetadataManager $userFilterMetadataManager, ProfileOptionManager $profileOptionManager, ProfileTagManager $profileTagManager, LanguageTextManager $languageTextManager, LocationManager $locationManager, MetadataUtilities $metadataUtilities, FilterUsersValidator $validator)
     {
         $this->graphManager = $graphManager;
         $this->userFilterMetadataManager = $userFilterMetadataManager;
         $this->profileOptionManager = $profileOptionManager;
+        $this->profileTagManager = $profileTagManager;
+        $this->languageTextManager = $languageTextManager;
         $this->metadataUtilities = $metadataUtilities;
         $this->locationManager = $locationManager;
         $this->validator = $validator;
@@ -125,6 +132,7 @@ class FilterUsersManager
     protected function updateFiltersUsers(FilterUsers $filters)
     {
         $filterId = $filters->getId();
+        $interfaceLocale = 'es'; //TODO: Change this
 
 //        $this->validateOnUpdate(array('profileFilters' => $profileFilters));
 
@@ -283,7 +291,7 @@ class FilterUsersManager
                         ->delete("old_tag_rel");
                     if ($value) {
                         foreach ($value as $tag) {
-                            $qb->merge("(tag$fieldName$tag:$tagLabelName:ProfileTag)<-[:TEXT_OF]-(:TextLanguage{text:'$tag'})");
+                            $qb->merge("(tag$fieldName$tag:$tagLabelName:ProfileTag)<-[:TEXT_OF]-(:TextLanguage{canonical:'$tag', locale:'$interfaceLocale'})");
                             $qb->merge("(filter)-[:FILTERS_BY]->(tag$fieldName$tag)");
                         }
                     }
@@ -299,7 +307,7 @@ class FilterUsersManager
                             $tag = $singleValue['tag'];
                             $choice = isset($singleValue['choice']) ? $singleValue['choice'] : '';
 
-                            $qb->merge("(tag$fieldName$tag:$tagLabelName:ProfileTag)<-[:TEXT_OF]-(:TextLanguage{text:'$tag'})");
+                            $qb->merge("(tag$fieldName$tag:$tagLabelName:ProfileTag)<-[:TEXT_OF]-(:TextLanguage{canonical:'$tag', locale:'$interfaceLocale'})");
                             $qb->merge("(filter)-[tag_rel$fieldName$tag:FILTERS_BY]->(tag$fieldName$tag)")
                                 ->set("tag_rel$fieldName$tag.detail = {detail$fieldName$tag}");
                             $qb->setParameter("detail$fieldName$tag", $choice);
@@ -314,9 +322,9 @@ class FilterUsersManager
 
                     if ($value) {
                         foreach ($value as $singleValue) {
-                            $tag = $singleValue['tag'];
+                            $tag = $singleValue['tag']['name'];
                             $choices = isset($singleValue['choices']) ? $singleValue['choices'] : '';
-                            $qb->merge("(tag$fieldName$tag:$tagLabelName:ProfileTag)<-[:TEXT_OF]-(:TextLanguage{text:'$tag'})");
+                            $qb->merge("(tag$fieldName$tag:$tagLabelName:ProfileTag)<-[:TEXT_OF]-(:TextLanguage{canonical:'$tag', locale:'$interfaceLocale'})");
                             $qb->merge("(filter)-[tag_rel$fieldName$tag:FILTERS_BY]->(tag$fieldName$tag)")
                                 ->set("tag_rel$fieldName$tag.detail = {detail$fieldName$tag}");
                             $qb->setParameter("detail$fieldName$tag", $choices);
@@ -433,10 +441,10 @@ class FilterUsersManager
         $qb = $this->graphManager->createQueryBuilder();
         $qb->match('(filter:FilterUsers)')
             ->where('id(filter) = {id}')
-            ->optionalMatch('(filter)-[:FILTERS_BY]->(po:ProfileOption)')
-            ->with('filter', 'collect(distinct po) as options')
-            ->optionalMatch('(filter)-[:FILTERS_BY]->(pt:ProfileTag)')
-            ->with('filter', 'options', 'collect(distinct pt) as tags')
+            ->optionalMatch('(filter)-[optionOf:FILTERS_BY]->(option:ProfileOption)')
+            ->with('filter', 'collect(distinct {option: option, detail: (CASE WHEN EXISTS(optionOf.detail) THEN optionOf.detail ELSE null END)}) AS options')
+            ->optionalMatch('(filter)-[tagged:FILTERS_BY]->(tag:ProfileTag)-[:TEXT_OF]-(text:TextLanguage)')
+            ->with('filter', 'options', 'collect(distinct {tag: tag, tagged: tagged, text: text}) AS tags')
             ->optionalMatch('(filter)-[loc_rel:FILTERS_BY]->(loc:Location)')
             ->with('filter', 'options', 'tags', 'loc', 'loc_rel')
             ->optionalMatch('(filter)-[:FILTERS_BY]->(group:Group)')
@@ -453,10 +461,9 @@ class FilterUsersManager
         /** @var Node $filterNode */
         $filterNode = $row->offsetGet('filter');
         $options = $row->offsetGet('options');
-        $tags = $row->offsetGet('tags');
 
-        $filters = $this->buildProfileOptions($options, $filterNode);
-        $filters += $this->buildTags($tags, $filterNode);
+        $filters = $this->profileOptionManager->buildOptions($options);
+        $filters += $this->profileTagManager->buildTags($row);
 
         if ($filterNode->getProperty('age_min') || $filterNode->getProperty('age_max')) {
             $filters += array(
@@ -522,117 +529,4 @@ class FilterUsersManager
 
         return array('userFilters' => $filters);
     }
-
-    /**
-     * TODO: Check if merge with ProfileOptionManager->buildOptions or add ->buildFilterOptions(options, node)
-     * @param \ArrayAccess $options
-     * @param Node $filterNode
-     * @return array
-     */
-    private function buildProfileOptions(\ArrayAccess $options, Node $filterNode)
-    {
-        $filterMetadata = $this->userFilterMetadataManager->getMetadata();
-        $optionsResult = array();
-        /* @var Node $option */
-        foreach ($options as $option) {
-            $labels = $option->getLabels();
-            $relationship = $this->getFilterRelationshipFromNode($option, $filterNode->getId());
-            /* @var Label $label */
-            foreach ($labels as $label) {
-                if ($label->getName() && $label->getName() != 'ProfileOption') {
-                    $typeName = $this->metadataUtilities->labelToType($label->getName());
-                    $metadataValues = isset($filterMetadata[$typeName]) ? $filterMetadata[$typeName] : array();
-
-                    switch ($metadataValues['type']) {
-                        case 'double_multiple_choices':
-                            $optionsResult[$typeName] = isset($optionsResult[$typeName]) && is_array($optionsResult[$typeName]) ?
-                                $optionsResult[$typeName] : array('choices' => array(), 'details' => array());
-                            $optionsResult[$typeName]['choices'][] = $option->getProperty('id');
-                            $optionsResult[$typeName]['details'] = $relationship->getProperty('details');
-                            break;
-                        case 'choice_and_multiple_choices':
-                            $optionsResult[$typeName] = array('choice' => $option->getProperty('id'), 'details' => $relationship->getProperty('details'));
-                            break;
-                        case 'double_choice':
-                            $detail = $relationship->getProperty('detail');
-                            $choiceArray = array('choice' => $option->getProperty('id'), 'detail' => $detail);
-                            $optionsResult[$typeName] = $choiceArray;
-                            break;
-                        default:
-                            $optionsResult[$typeName] = empty($optionsResult[$typeName]) ? array($option->getProperty('id')) :
-                                array_merge($optionsResult[$typeName], array($option->getProperty('id')));
-                            break;
-                    }
-                }
-            }
-        }
-
-        return $optionsResult;
-    }
-
-    /**
-     * Quite similar to ProfileModel->buildTagOptions
-     * @param \ArrayAccess $tags
-     * @param Node $filterNode
-     * @return array
-     */
-    protected function buildTags(\ArrayAccess $tags, Node $filterNode)
-    {
-        $tagsResult = array();
-        /* @var Node $tag */
-        foreach ($tags as $tag) {
-            $labels = $tag->getLabels();
-            $relationship = $this->getFilterRelationshipFromNode($tag, $filterNode->getId());
-            /* @var Label $label */
-            foreach ($labels as $label) {
-                if ($label->getName() && $label->getName() != 'ProfileTag') {
-                    $typeName = $this->metadataUtilities->labelToType($label->getName());
-                    $tagResult = $tag->getProperty('name');
-                    $detail = $relationship->getProperty('detail');
-                    if (!is_null($detail)) {
-                        $tagResult = array();
-                        $tagResult['tag'] = $tag->getProperty('name');
-                        if (is_array($detail)) {
-                            $tagResult['choices'] = $detail;
-                        } else {
-                            $tagResult['choice'] = $detail;
-                        }
-                    }
-                    if ($typeName === 'language') {
-                        if (is_null($detail)) {
-                            $tagResult = array();
-                            $tagResult['tag'] = $tag->getProperty('name');
-                            $tagResult['choice'] = '';
-                        }
-                    }
-                    $tagsResult[$typeName][] = $tagResult;
-                }
-            }
-        }
-
-        return $tagsResult;
-    }
-
-    //TODO: Refactor to GraphManager? Used in ProfileModel too
-    //TODO: Can get slow (increments with filter amount), change to cypher specifying id from beginning
-    /**
-     * @param Node $node
-     * @param $sourceId
-     * @return Relationship|null
-     */
-    private function getFilterRelationshipFromNode(Node $node, $sourceId)
-    {
-        /* @var $relationships Relationship[] */
-        $relationships = $node->getRelationships('FILTERS_BY', Relationship::DirectionIn);
-        foreach ($relationships as $relationship) {
-            if ($relationship->getEndNode()->getId() === $node->getId() &&
-                $relationship->getStartNode()->getId() === $sourceId
-            ) {
-                return $relationship;
-            }
-        }
-
-        return null;
-    }
-
 }

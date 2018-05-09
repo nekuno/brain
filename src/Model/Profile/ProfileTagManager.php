@@ -346,14 +346,14 @@ class ProfileTagManager
         $query->getResultSet();
     }
 
-    public function buildTags(Row $row, $locale)
+    public function buildTags(Row $row)
     {
         $tags = $row->offsetGet('tags');
         $tagsResult = array();
         /** @var Row $tagData */
         foreach ($tags as $tagData) {
             $text = $tagData->offsetGet('text');
-            if ($text === null || $text->getProperty('locale') !== $locale){
+            if ($text === null){
                 continue;
             }
             $tag = $tagData->offsetGet('tag');
@@ -363,12 +363,17 @@ class ProfileTagManager
             /* @var Label $label */
             foreach ($labels as $label) {
                 if ($label->getName() && $label->getName() != 'ProfileTag') {
+                    $text = $tagData->offsetGet('text');
                     $typeName = $this->metadataUtilities->labelToType($label->getName());
                     $detail = $tagged->getProperty('detail');
                     if (!is_null($detail)) {
                         $tagResult = array();
                         $tagResult['tag'] = array('name' => $text->getProperty('canonical'));
-                        $tagResult['choice'] = $detail;
+                        if (is_array($detail)){
+                            $tagResult['choices'] = $detail;
+                        } else {
+                            $tagResult['choice'] = $detail;
+                        }
                     } else {
                         $tagResult = array('name' => $text->getProperty('canonical'));
                     }
