@@ -1,6 +1,0 @@
-#index:
-#    path: /
-#    controller: App\Controller\DefaultController::index
-#users:
-#    type:     rest
-#    resource: Controller\User\UserController

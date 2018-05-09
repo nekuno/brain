@@ -22,3 +22,5 @@ In case first openssl command forces you to input password use following to get 
 `mv config/jwt/private.pem config/jwt/private.pem-back`
 
 `mv config/jwt/private2.pem config/jwt/private.pem`
+
+API documentation at `/api/doc`

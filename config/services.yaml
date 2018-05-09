@@ -10,6 +10,10 @@ parameters:
     env(metadata_config): ''
     env(db_neo4j_host): ''
     env(db_neo4j_port): ''
+    env(support_email_1): ''
+    env(support_email_2): ''
+    env(support_email_3): ''
+    env(APP_ENV): ''
 
 services:
 
@@ -31,7 +35,6 @@ services:
         exclude: '../src/Model/Metadata/MetadataManager.php'
     Service\:
         resource: '../src/Service/*'
-        #exclude: '../src/Service/Validator'
     # controllers are imported separately to make sure services can be injected
     # as action arguments even if you don't extend any base controller class
     Controller\:
@@ -60,6 +63,14 @@ services:
         tags:
             - { name: controller.argument_value_resolver, priority: 50 }
 
+    Controller\User\UserController:
+        arguments:
+            $supportEmails:
+                - "%env(support_email_1)%"
+                - "%env(support_email_2)%"
+                - "%env(support_email_3)%"
+            $env: "%env(APP_ENV)%"
+
     Model\User\UserManager:
         arguments:
             $imagesBaseDir: "%kernel.project_dir%%env(images_web_dir)%"
@@ -73,6 +84,10 @@ services:
         arguments:
             $base: "%kernel.project_dir%%env(images_web_dir)%"
 
+    Model\Invitation\InvitationManager:
+        arguments:
+            $adminDomain: "%env(admin_domain_plus_port)%"
+
     Model\Group\GroupManager:
         arguments:
             $invitationImagesRoot: "%env(admin_domain_plus_port)%"
@@ -80,18 +95,28 @@ services:
     Model\Metadata\MetadataManagerFactory:
         arguments:
             $config: "%metadata_config%"
-            $metadata: "%profile_fields%"
+            $metadata: "%fields%"
             $defaultLocale: "en"
 
     Model\Metadata\ProfileMetadataManager:
-        arguments:
-            $metadata: "%profile_fields%"
-            $defaultLocale: "en"
+        factory: 'Model\Metadata\MetadataManagerFactory:build'
+        arguments: ['profile']
+    Model\Metadata\UserFilterMetadataManager:
+        factory: 'Model\Metadata\MetadataManagerFactory:build'
+        arguments: ['user_filter']
 
     Service\Validator\ValidatorFactory:
         arguments:
             $config: "%validator_config%"
-
+    Service\Validator\InvitationValidator:
+        factory: 'Service\Validator\ValidatorFactory:build'
+        arguments: ['invitations']
+    Service\Validator\ProfileValidator:
+        factory: 'Service\Validator\ValidatorFactory:build'
+        arguments: ['profile']
+    Service\Validator\FilterUsersValidator:
+        arguments:
+            $metadata: "%fields%"
     Model\Neo4j\GraphManager:
         arguments:
             $username: "%env(db_neo4j_user)%"

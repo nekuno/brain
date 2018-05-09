@@ -9,14 +9,21 @@ use Service\AuthService;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
-
+use Swagger\Annotations as SWG;
 
 class AuthController extends FOSRestController
 {
     /**
+     * Preflight action. Set required headers.
+     *
      * @Options("/{url}")
      * @param Request $request
      * @return Response
+     * @SWG\Response(
+     *     response=200,
+     *     description="Returns response with required headers",
+     * )
+     * @SWG\Tag(name="auth")
      */
     public function preflightAction($url, Request $request)
     {
@@ -28,10 +35,30 @@ class AuthController extends FOSRestController
     }
 
     /**
+     * Login user
+     *
      * @Post("/login")
      * @param Request $request
      * @param AuthService $authService
      * @return mixed
+     * @SWG\Parameter(
+     *      name="data",
+     *      in="body",
+     *      required=true,
+     *      type="json",
+     *      schema=@SWG\Schema(
+     *          @SWG\Property(property="resourceOwner", type="string"),
+     *          @SWG\Property(property="oauthToken", type="string"),
+     *          @SWG\Property(property="refreshToken", type="string"),
+     *          @SWG\Property(property="locale", type="string"),
+     *          example={ "resourceOwner" = "", "oauthToken" = "", "refreshToken" = "", "locale" = "en" },
+     *      )
+     * )
+     * @SWG\Response(
+     *     response=200,
+     *     description="Returns array with jwt, profile and questionsTotal",
+     * )
+     * @SWG\Tag(name="auth")
      */
     public function loginAction(Request $request, AuthService $authService)
     {

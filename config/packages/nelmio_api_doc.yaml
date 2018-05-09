@@ -1,0 +1,19 @@
+nelmio_api_doc:
+    documentation:
+        info:
+            title: Nekuno App
+            description: Nekuno App  API docs
+            version: 0.0.0
+        securityDefinitions:
+            Bearer:
+                type: apiKey
+                description: 'Value: Bearer {jwt}'
+                name: Authorization
+                in: header
+        security:
+            - Bearer: []
+    areas: # to filter documented areas
+       path_patterns: # an array of regexps
+            - ^/(?!(api/doc)|(_.*)$)
+    models: { use_jms: false }
+
