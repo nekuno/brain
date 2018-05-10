@@ -42,9 +42,8 @@ class AuthController extends FOSRestController
      * @param AuthService $authService
      * @return mixed
      * @SWG\Parameter(
-     *      name="data",
+     *      name="body",
      *      in="body",
-     *      required=true,
      *      type="json",
      *      schema=@SWG\Schema(
      *          @SWG\Property(property="resourceOwner", type="string"),

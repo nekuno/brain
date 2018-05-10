@@ -3,6 +3,7 @@
 namespace Controller\User;
 
 use FOS\RestBundle\Controller\Annotations\Get;
+use FOS\RestBundle\Controller\Annotations\Post;
 use FOS\RestBundle\Controller\Annotations\RouteResource;
 use FOS\RestBundle\Controller\FOSRestController;
 use FOS\RestBundle\Routing\ClassResourceInterface;
@@ -90,7 +91,7 @@ class UserController extends FOSRestController implements ClassResourceInterface
     /**
      * Register new user.
      *
-     * @Get("/register")
+     * @Post("/register")
      * @param Request $request
      * @param RegisterService $registerService
      * @param \Twig_Environment $twig
@@ -101,9 +102,8 @@ class UserController extends FOSRestController implements ClassResourceInterface
      *     description="Registers user",
      * )
      * @SWG\Parameter(
-     *      name="data",
+     *      name="body",
      *      in="body",
-     *      required=true,
      *      type="json",
      *      schema=@SWG\Schema(
      *          @SWG\Property(property="user", type="object"),
