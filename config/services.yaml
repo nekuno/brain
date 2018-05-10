@@ -117,6 +117,12 @@ services:
     Service\Validator\FilterUsersValidator:
         arguments:
             $metadata: "%fields%"
+    Service\Validator\AnswerValidator:
+        factory: 'Service\Validator\ValidatorFactory:build'
+        arguments: ['answers']
+    Service\Validator\QuestionValidator:
+        factory: 'Service\Validator\ValidatorFactory:build'
+        arguments: ['questions']
     Model\Neo4j\GraphManager:
         arguments:
             $username: "%env(db_neo4j_user)%"

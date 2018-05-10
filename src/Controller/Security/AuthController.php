@@ -5,6 +5,8 @@ namespace Controller\Security;
 use FOS\RestBundle\Controller\Annotations\Options;
 use FOS\RestBundle\Controller\Annotations\Post;
 use FOS\RestBundle\Controller\FOSRestController;
+use Model\Profile\ProfileManager;
+use Model\Question\UserAnswerPaginatedManager;
 use Service\AuthService;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -40,6 +42,8 @@ class AuthController extends FOSRestController
      * @Post("/login")
      * @param Request $request
      * @param AuthService $authService
+     * @param ProfileManager $profileManager
+     * @param UserAnswerPaginatedManager $userAnswerPaginatedManager
      * @return mixed
      * @SWG\Parameter(
      *      name="body",
@@ -50,9 +54,15 @@ class AuthController extends FOSRestController
      *          @SWG\Property(property="resourceOwner", type="string"),
      *          @SWG\Property(property="oauthToken", type="string"),
      *          @SWG\Property(property="refreshToken", type="string"),
-     *          @SWG\Property(property="locale", type="string"),
-     *          example={ "resourceOwner" = "", "oauthToken" = "", "refreshToken" = "", "locale" = "en" },
+     *          example={ "resourceOwner" = "", "oauthToken" = "", "refreshToken" = "" },
      *      )
+     * )
+     * @SWG\Parameter(
+     *      name="locale",
+     *      in="query",
+     *      type="string",
+     *      default="es",
+     *      required=true
      * )
      * @SWG\Response(
      *     response=200,
@@ -60,12 +70,12 @@ class AuthController extends FOSRestController
      * )
      * @SWG\Tag(name="auth")
      */
-    public function loginAction(Request $request, AuthService $authService)
+    public function loginAction(Request $request, AuthService $authService, ProfileManager $profileManager, UserAnswerPaginatedManager $userAnswerPaginatedManager)
     {
         $resourceOwner = $request->request->get('resourceOwner');
         $oauthToken = $request->request->get('oauthToken');
         $refreshToken = $request->request->get('refreshToken');
-        $locale = $request->query->get('locale');
+        $locale = $request->query->get('locale', 'es');
 
         if ($resourceOwner && $oauthToken) {
             $jwt = $authService->loginByResourceOwner($resourceOwner, $oauthToken, $refreshToken);
@@ -75,14 +85,10 @@ class AuthController extends FOSRestController
         }
 
         $user = $authService->getUser($jwt);
+        $profile = $profileManager->getById($user->getId());
+        $questionsFilters = array('id' => $user->getId(), 'locale' => $locale);
+        $countQuestions = $userAnswerPaginatedManager->countTotal($questionsFilters);
 
-        //$profile = $app['users.profile.model']->getById($user->getId());
-
-        //$questionsFilters = array('id' => $user->getId(), 'locale' => $locale);
-        //$countQuestions = $app['users.questions.model']->countTotal($questionsFilters);
-
-        //return $app->json(array('jwt' => $jwt, 'profile' => $profile, 'questionsTotal' => $countQuestions));
-
-        return $this->view(['jwt' => $jwt]);
+        return $this->view(['jwt' => $jwt, 'profile' => $profile, 'questionsTotal' => $countQuestions]);
     }
 }
