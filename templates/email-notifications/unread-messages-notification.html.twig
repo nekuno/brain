@@ -1,0 +1,32 @@
+{% extends 'email-notifications/base.html.twig' %}
+
+{% block header %}
+    {{ username }},
+    {{ 'notifications.messages.unread.body.title'|transchoice(unReadMessagesCount, {'%count%': unReadMessagesCount}) }}
+{% endblock %}
+
+{% block body %}
+    <p>
+        {% include 'email-notifications/partials/header-notification.html.twig' %}
+        {{ 'notifications.messages.unread.body.unread'|transchoice(unReadMessagesCount, {'%count%': unReadMessagesCount}) }}
+    </p>
+    <p>{{ 'notifications.messages.unread.body.latest'|transchoice(messages|length, {'%count%': messages|length}) }}</p>
+
+    {% for message in messages %}
+
+        <p>{{ 'notifications.messages.unread.body.message'|trans({'%user%': message.username_from, '%datetime%': message.createdAt}) }}</p>
+
+        <p><strong>{{ message.text }}</strong></p>
+
+    {% endfor %}
+{% endblock %}
+{% block button %}
+    <a href="http://m.nekuno.com/#/conversations">{{ 'notifications.messages.unread.body.linkAnchor'|trans }}</a>
+{% endblock %}
+{% block footer_images %}
+    {% for message in messages|slice(0,2) %}
+        <div style="overflow: hidden;display: inline-block;line-height: 0px;font-size: 0px;border: 4px solid white;margin: 0 5%;border-radius: 50%;width: 100px;height: 100px;text-align: center;">
+            <img style="width: 100px; height: 100px;" src="{{ message.picture_from }}" alt="img" />
+        </div>
+    {% endfor %}
+{% endblock %}

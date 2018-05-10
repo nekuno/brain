@@ -360,7 +360,7 @@ class Validator implements ValidatorInterface
                 }
             } else {
                 if (isset($fieldData['required']) && $fieldData['required'] === true) {
-                    $errorList->addError($fieldName, 'It\'s required.');
+                    $errorList->addError($fieldName, sprintf('"%s" is required.', $fieldName));
                 }
             }
         }

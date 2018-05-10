@@ -46,6 +46,7 @@ class AuthController extends FOSRestController
      *      in="body",
      *      type="json",
      *      schema=@SWG\Schema(
+     *          required={"resourceOwner", "oauthToken"},
      *          @SWG\Property(property="resourceOwner", type="string"),
      *          @SWG\Property(property="oauthToken", type="string"),
      *          @SWG\Property(property="refreshToken", type="string"),

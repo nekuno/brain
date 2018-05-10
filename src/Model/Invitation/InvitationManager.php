@@ -4,6 +4,7 @@ namespace Model\Invitation;
 
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
+use Model\Exception\ErrorList;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
 use Model\Group\Group;
@@ -664,7 +665,9 @@ class InvitationManager
             return $this->build($row);
         }
 
-        throw new ValidationException(null, sprintf('There is no invitation available with token %s', $token));
+        $errorList = new ErrorList();
+        $errorList->addError('token', sprintf('There is no invitation available with token "%s"', $token));
+        throw new ValidationException($errorList);
     }
 
     public function validateUpdate(array $data)

@@ -106,14 +106,14 @@ class UserController extends FOSRestController implements ClassResourceInterface
      *      in="body",
      *      type="json",
      *      schema=@SWG\Schema(
+     *          required={"user", "profile", "token", "oauth", "trackingData"},
      *          @SWG\Property(property="user", type="object"),
      *          @SWG\Property(property="profile", type="object"),
-     *          @SWG\Property(property="token", type="object"),
+     *          @SWG\Property(property="token", type="string"),
      *          @SWG\Property(property="oauth", type="object"),
      *          @SWG\Property(property="trackingData", type="object"),
      *      )
      * )
-     * @Security(name="Bearer")
      * @SWG\Tag(name="users")
      */
     public function newAction(Request $request, RegisterService $registerService, \Twig_Environment $twig, \Swift_Mailer $mailer)
@@ -121,6 +121,9 @@ class UserController extends FOSRestController implements ClassResourceInterface
         try {
             $data = $request->request->all();
             if (!isset($data['user']) || !isset($data['profile']) || !isset($data['token']) || !isset($data['oauth']) || !isset($data['trackingData'])) {
+                $this->throwRegistrationException('Bad format');
+            }
+            if (!is_array($data['user']) || !is_array($data['profile']) || !is_string($data['token']) || !is_array($data['oauth']) || !is_array($data['trackingData'])) {
                 $this->throwRegistrationException('Bad format');
             }
             $user = $registerService->register($data['user'], $data['profile'], $data['token'], $data['oauth'], $data['trackingData']);
