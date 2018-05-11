@@ -286,4 +286,22 @@ class GraphManager implements LoggerAwareInterface
         return $value;
     }
 
+    public function countLabel($label)
+    {
+        if ($label == null)
+        {
+            return null;
+        }
+
+        $qb = $this->createQueryBuilder();
+        $qb->match("(n:$label)")
+            ->returns('count(n) AS amount');
+
+        $result = $qb->getQuery()->getResultSet();
+
+        $amount = $result->current()->offsetGet('amount');
+
+        return $amount;
+    }
+
 }
