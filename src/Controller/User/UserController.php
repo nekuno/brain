@@ -4,17 +4,23 @@ namespace Controller\User;
 
 use FOS\RestBundle\Controller\Annotations\Get;
 use FOS\RestBundle\Controller\Annotations\Post;
+use FOS\RestBundle\Controller\Annotations\Put;
 use FOS\RestBundle\Controller\Annotations\RouteResource;
 use FOS\RestBundle\Controller\FOSRestController;
 use FOS\RestBundle\Routing\ClassResourceInterface;
+use Model\Device\Device;
+use Model\Device\DeviceManager;
 use Model\Exception\ErrorList;
 use Model\Exception\ValidationException;
 use Model\User\User;
 use Model\User\UserManager;
+use Nelmio\ApiDocBundle\Annotation\Model;
 use Nelmio\ApiDocBundle\Annotation\Security;
+use Service\AuthService;
 use Service\RegisterService;
 use Swagger\Annotations as SWG;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * @RouteResource("User")
@@ -41,6 +47,9 @@ class UserController extends FOSRestController implements ClassResourceInterface
      * @SWG\Response(
      *     response=200,
      *     description="Returns own user",
+     *     schema=@SWG\Schema(
+     *         @SWG\Property(property="user", type="object", ref=@Model(type=\Model\User\User::class, groups={"User"}))
+     *     )
      * )
      * @SWG\Response(
      *     response=404,
@@ -66,6 +75,9 @@ class UserController extends FOSRestController implements ClassResourceInterface
      * @SWG\Response(
      *     response=200,
      *     description="Returns other user by slug",
+     *     schema=@SWG\Schema(
+     *         @SWG\Property(property="user", type="object", ref=@Model(type=\Model\User\User::class, groups={"User"}))
+     *     )
      * )
      * @SWG\Response(
      *     response=404,
@@ -87,6 +99,38 @@ class UserController extends FOSRestController implements ClassResourceInterface
     }
 
     /**
+     * Get other public user.
+     *
+     * @Get("/public/users/{slug}")
+     * @param string $slug
+     * @param UserManager $userManager
+     * @return \FOS\RestBundle\View\View
+     * @SWG\Response(
+     *     response=200,
+     *     description="Returns other user by slug",
+     *     schema=@SWG\Schema(
+     *         @SWG\Property(property="user", type="object", ref=@Model(type=\Model\User\User::class, groups={"User"}))
+     *     )
+     * )
+     * @SWG\Response(
+     *     response=404,
+     *     description="Throws not found exception",
+     * )
+     * @SWG\Tag(name="users")
+     */
+    public function getOtherPublicAction($slug, UserManager $userManager)
+    {
+        $userArray = $userManager->getPublicBySlug($slug)->jsonSerialize();
+        $userArray = $userManager->deleteOtherUserFields($userArray);
+
+        if (empty($userArray)) {
+            return $this->view($userArray, 404);
+        }
+
+        return $this->view($userArray, 200);
+    }
+
+    /**
      * Register new user.
      *
      * @Post("/register")
@@ -95,26 +139,26 @@ class UserController extends FOSRestController implements ClassResourceInterface
      * @param \Twig_Environment $twig
      * @param \Swift_Mailer $mailer
      * @return \FOS\RestBundle\View\View
-     * @SWG\Response(
-     *     response=201,
-     *     description="Registers user",
-     * )
      * @SWG\Parameter(
      *      name="body",
      *      in="body",
      *      type="json",
      *      schema=@SWG\Schema(
      *          required={"user", "profile", "token", "oauth", "trackingData"},
-     *          @SWG\Property(property="user", type="object"),
-     *          @SWG\Property(property="profile", type="object"),
+     *          @SWG\Property(property="user", type="object", ref=@Model(type=\Model\User\User::class, groups={"User"})),
+     *          @SWG\Property(property="profile", type="object", ref=@Model(type=\Model\Profile\Profile::class, groups={"Profile"})),
      *          @SWG\Property(property="token", type="string"),
-     *          @SWG\Property(property="oauth", type="object"),
+     *          @SWG\Property(property="oauth", type="object", ref=@Model(type=\Model\Token\Token::class, groups={"Token"})),
      *          @SWG\Property(property="trackingData", type="object"),
      *      )
      * )
+     * @SWG\Response(
+     *     response=201,
+     *     description="Registers user",
+     * )
      * @SWG\Tag(name="users")
      */
-    public function newAction(Request $request, RegisterService $registerService, \Twig_Environment $twig, \Swift_Mailer $mailer)
+    public function postAction(Request $request, RegisterService $registerService, \Twig_Environment $twig, \Swift_Mailer $mailer)
     {
         try {
             $data = $request->request->all();
@@ -147,6 +191,108 @@ class UserController extends FOSRestController implements ClassResourceInterface
         }
 
         return $this->view($user, 201);
+    }
+
+    /**
+     * Edit a user.
+     *
+     * @Put("/users")
+     * @param Request $request
+     * @param User $user
+     * @param UserManager $userManager
+     * @param AuthService $authService
+     * @return \FOS\RestBundle\View\View
+     * @SWG\Parameter(
+     *      name="body",
+     *      in="body",
+     *      type="json",
+     *      schema=@SWG\Schema(
+     *          ref=@Model(type=\Model\User\User::class, groups={"User"})
+     *      )
+     * )
+     * @SWG\Response(
+     *     response=201,
+     *     description="Returns edited user and jwt.",
+     * )
+     * @Security(name="Bearer")
+     * @SWG\Tag(name="users")
+     */
+    public function putAction(Request $request, User $user, UserManager $userManager, AuthService $authService)
+    {
+        $data = $request->request->all();
+        $data['userId'] = $user->getId();
+        $userManager->update($data);
+        $jwt = $authService->getToken($data['userId']);
+
+        return $this->view(array(
+            'user' => $user,
+            'jwt' => $jwt,
+        ), 200);
+    }
+
+    /**
+     * Get username available
+     *
+     * @Get("/users/available/{username}")
+     * @param string $username
+     * @param UserManager $userManager
+     * @return \FOS\RestBundle\View\View
+     * @SWG\Response(
+     *     response=200,
+     *     description="Username is available.",
+     * )
+     * @SWG\Response(
+     *     response=422,
+     *     description="Username is NOT available.",
+     * )
+     * @SWG\Tag(name="users")
+     */
+    public function availableAction($username, UserManager $userManager)
+    {
+        $user = $this->getUser();
+        if ($user && $user instanceof User && mb_strtolower($username) === $user->getUsernameCanonical()) {
+            return $this->view([]);
+        }
+        $userManager->validateUsername(0, $username);
+
+        return $this->view([]);
+    }
+
+    /**
+     * Enable/disable user
+     *
+     * @Get("/users/enable")
+     * @param Request $request
+     * @param User $user
+     * @param UserManager $userManager
+     * @param DeviceManager $deviceManager
+     * @throws NotFoundHttpException
+     * @return \FOS\RestBundle\View\View
+     * @SWG\Response(
+     *     response=200,
+     *     description="User enabled/disabled.",
+     * )
+     * @SWG\Response(
+     *     response=404,
+     *     description="User not found.",
+     * )
+     * @Security(name="Bearer")
+     * @SWG\Tag(name="users")
+     */
+    public function setEnableAction(Request $request, User $user, UserManager $userManager, DeviceManager $deviceManager)
+    {
+        $enabled = $request->request->get('enabled');
+        $userManager->setEnabled($user->getId(), $enabled);
+
+        if (!$enabled) {
+            $allDevices = $deviceManager->getAll($user->getId());
+            /** @var Device $device */
+            foreach ($allDevices as $device) {
+                $deviceManager->delete($device->toArray());
+            }
+        }
+
+        return $this->view([]);
     }
 
     /**

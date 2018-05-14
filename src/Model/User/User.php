@@ -15,6 +15,10 @@ class User implements UserInterface, \JsonSerializable
     const USER_STATUS_COMPLETE = 'complete';
     const USER_GUEST_NAME = 'guest';
 
+    /**
+     * @var integer
+     *
+     */
     protected $id;
 
     /**
@@ -106,7 +110,7 @@ class User implements UserInterface, \JsonSerializable
     protected $expiresAt;
 
     /**
-     * @var array
+     * @var string[]
      */
     protected $roles;
 
@@ -146,7 +150,7 @@ class User implements UserInterface, \JsonSerializable
     protected $photo;
 
     /**
-     * @var array
+     * @var string[]
      */
     protected $tutorials;
 
@@ -535,6 +539,10 @@ class User implements UserInterface, \JsonSerializable
         return $this->passwordRequestedAt;
     }
 
+    /**
+     * @param $ttl
+     * @return bool
+     */
     public function isPasswordRequestNonExpired($ttl)
     {
         return $this->getPasswordRequestedAt() instanceof \DateTime &&

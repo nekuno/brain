@@ -5,11 +5,17 @@ namespace Model\Photo;
 class ProfilePhoto extends Photo
 {
 
+    /**
+     * @return string
+     */
     public function getDefaultPath()
     {
         return 'bundles/qnoowlanding/images/user-no-img.jpg';
     }
 
+    /**
+     * @return array[]
+     */
     protected function getSizes()
     {
         $path = 'media/cache/';

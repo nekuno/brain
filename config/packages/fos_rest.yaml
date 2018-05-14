@@ -10,6 +10,10 @@ fos_rest:
     format_listener:
         rules:
             - { path: '^/', priorities: ['json'], fallback_format: json, prefer_extension: false }
+#    body_converter:
+#        enabled: true
+#        validate: true
+#        validation_errors_argument: validationErrors
 
 #    exception:
 #        codes:

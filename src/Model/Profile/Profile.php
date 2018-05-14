@@ -4,8 +4,14 @@ namespace Model\Profile;
 
 class Profile implements \JsonSerializable
 {
+    /**
+     * @var integer
+     */
     protected $id;
 
+    /**
+     * @var string[]
+     */
     protected $values = array();
 
     /**
@@ -37,6 +43,9 @@ class Profile implements \JsonSerializable
         $this->values[$field] = $value;
     }
 
+    /**
+     * @return int
+     */
     public function getId()
     {
         return $this->id;

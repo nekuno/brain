@@ -13,6 +13,7 @@ parameters:
     env(support_email_1): ''
     env(support_email_2): ''
     env(support_email_3): ''
+    env(push_private_key): ''
     env(APP_ENV): ''
 
 services:
@@ -92,6 +93,10 @@ services:
         arguments:
             $invitationImagesRoot: "%env(admin_domain_plus_port)%"
 
+    Model\Device\DeviceManager:
+        arguments:
+            $applicationServerKey: "%env(push_private_key)%"
+
     Model\Metadata\MetadataManagerFactory:
         arguments:
             $config: "%metadata_config%"
@@ -123,6 +128,10 @@ services:
     Service\Validator\QuestionValidator:
         factory: 'Service\Validator\ValidatorFactory:build'
         arguments: ['questions']
+    Service\Validator\DeviceValidator:
+        factory: 'Service\Validator\ValidatorFactory:build'
+        arguments: ['device']
+
     Model\Neo4j\GraphManager:
         arguments:
             $username: "%env(db_neo4j_user)%"

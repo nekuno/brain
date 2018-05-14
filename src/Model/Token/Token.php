@@ -4,22 +4,49 @@ namespace Model\Token;
 
 class Token implements \JsonSerializable
 {
+    /**
+     * @var integer
+     */
     protected $userId;
 
+    /**
+     * @var string
+     */
     protected $resourceOwner;
 
+    /**
+     * @var string
+     */
     protected $resourceId;
 
+    /**
+     * @var string
+     */
     protected $oauthToken;
 
+    /**
+     * @var string
+     */
     protected $oauthTokenSecret;
 
+    /**
+     * @var int
+     */
     protected $createdTime;
 
+    /**
+     * @var int
+     */
     protected $updatedTime;
 
+    /**
+     * @var int
+     */
     protected $expireTime = 0;
 
+    /**
+     * @var string
+     */
     protected $refreshToken;
 
     public function __construct($data = array())

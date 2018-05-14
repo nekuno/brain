@@ -147,16 +147,25 @@ abstract class Photo implements \JsonSerializable
         $this->isProfilePhoto = $isProfilePhoto;
     }
 
+    /**
+     * @return string
+     */
     public function getFullPath()
     {
         return $this->base . $this->getPath();
     }
 
+    /**
+     * @return string
+     */
     public function getUrl()
     {
         return is_file($this->getFullPath()) ? $this->host . $this->getPath() : $this->host . $this->getDefaultPath();
     }
 
+    /**
+     * @return string
+     */
     public function getExtension()
     {
         $fileName = basename($this->path);
