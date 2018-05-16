@@ -8,16 +8,29 @@ use FOS\RestBundle\Controller\Annotations\Put;
 use FOS\RestBundle\Controller\Annotations\RouteResource;
 use FOS\RestBundle\Controller\FOSRestController;
 use FOS\RestBundle\Routing\ClassResourceInterface;
+use Model\Affinity\AffinityManager;
+use Model\Content\ContentComparePaginatedManager;
+use Model\Content\ContentPaginatedManager;
+use Model\Content\ContentReportManager;
+use Model\Content\ContentTagManager;
 use Model\Device\Device;
 use Model\Device\DeviceManager;
 use Model\Exception\ErrorList;
 use Model\Exception\ValidationException;
+use Model\Matching\MatchingManager;
+use Model\Rate\RateManager;
+use Model\Recommendation\ContentRecommendationTagManager;
+use Model\Similarity\SimilarityManager;
 use Model\User\User;
 use Model\User\UserManager;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use Nelmio\ApiDocBundle\Annotation\Security;
+use Paginator\Paginator;
 use Service\AuthService;
+use Service\MetadataService;
+use Service\RecommendatorService;
 use Service\RegisterService;
+use Service\UserStatsService;
 use Swagger\Annotations as SWG;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -293,6 +306,604 @@ class UserController extends FOSRestController implements ClassResourceInterface
         }
 
         return $this->view([]);
+    }
+
+
+    /**
+     * Get matching with other user
+     *
+     * @Get("/matching/{userId}", requirements={"userId"="\d+"})
+     * @param integer $userId
+     * @param MatchingManager $matchingManager
+     * @param User $user
+     * @return \FOS\RestBundle\View\View
+     * @SWG\Response(
+     *     response=200,
+     *     description="Returns matching with other user.",
+     * )
+     * @SWG\Response(
+     *     response=400,
+     *     description="User does NOT exist.",
+     * )
+     * @SWG\Response(
+     *     response=500,
+     *     description="Unknown exception.",
+     * )
+     * @Security(name="Bearer")
+     * @SWG\Tag(name="users")
+     */
+    public function getMatchingAction($userId, MatchingManager $matchingManager, User $user)
+    {
+        if (null === $userId) {
+            return $this->view([], 400);
+        }
+
+        try {
+            $matching = $matchingManager->getMatchingBetweenTwoUsersBasedOnAnswers($user->getId(), $userId);
+        } catch (\Exception $e) {
+            return $this->view([], 500);
+        }
+
+        return $this->view($matching, 200);
+    }
+
+    /**
+     * Get similarity with other user
+     *
+     * @Get("/similarity/{userId}", requirements={"userId"="\d+"})
+     * @param integer $userId
+     * @param SimilarityManager $similarityManager
+     * @param User $user
+     * @return \FOS\RestBundle\View\View
+     * @SWG\Response(
+     *     response=200,
+     *     description="Returns similarity with other user.",
+     * )
+     * @SWG\Response(
+     *     response=400,
+     *     description="User does NOT exist.",
+     * )
+     * @SWG\Response(
+     *     response=500,
+     *     description="Unknown exception.",
+     * )
+     * @Security(name="Bearer")
+     * @SWG\Tag(name="users")
+     */
+    public function getSimilarityAction($userId, User $user, SimilarityManager $similarityManager)
+    {
+        if (null === $userId) {
+            return $this->view([], 400);
+        }
+
+        try {
+            $similarity = $similarityManager->getCurrentSimilarity($user->getId(), $userId);
+            $result = array('similarity' => $similarity->getSimilarity());
+
+        } catch (\Exception $e) {
+            return $this->view([], 500);
+        }
+
+        return $this->view($result, 200);
+    }
+
+    /**
+     * Get paginated user content
+     *
+     * @Get("/content")
+     * @param Request $request
+     * @param User $user
+     * @param Paginator $paginator
+     * @param ContentPaginatedManager $contentPaginatedManager
+     * @return \FOS\RestBundle\View\View
+     * @SWG\Response(
+     *     response=200,
+     *     description="Returns paginated contents.",
+     * )
+     * @SWG\Response(
+     *     response=500,
+     *     description="Unknown exception.",
+     * )
+     * @Security(name="Bearer")
+     * @SWG\Tag(name="users")
+     */
+    public function getUserContentAction(Request $request, User $user, Paginator $paginator, ContentPaginatedManager $contentPaginatedManager)
+    {
+        $commonWithId = $request->get('commonWithId', null);
+        $tag = $request->get('tag', array());
+        $type = $request->get('type', array());
+
+        $filters = array('id' => $user->getId());
+
+        if ($commonWithId) {
+            $filters['commonWithId'] = (int)$commonWithId;
+        }
+
+        foreach ($tag as $singleTag) {
+            if (!empty($singleTag)) {
+                $filters['tag'][] = urldecode($singleTag);
+            }
+        }
+
+        foreach ($type as $singleType) {
+            if (!empty($singleType)) {
+                $filters['type'][] = urldecode($singleType);
+            }
+        }
+
+        try {
+            $result = $paginator->paginate($filters, $contentPaginatedManager, $request);
+            $result['totals'] = $contentPaginatedManager->countAll($user->getId());
+        } catch (\Exception $e) {
+
+            return $this->view([], 500);
+        }
+
+        return $this->view($result, 200);
+    }
+
+    /**
+     * Get paginated compared user content
+     *
+     * @Get("/content/compare/{userId}", requirements={"userId"="\d+"})
+     * @param integer $userId
+     * @param Request $request
+     * @param User $user
+     * @param Paginator $paginator
+     * @param ContentComparePaginatedManager $contentComparePaginatedManager
+     * @return \FOS\RestBundle\View\View
+     * @SWG\Response(
+     *     response=200,
+     *     description="Returns paginated compared contents.",
+     * )
+     * @SWG\Response(
+     *     response=400,
+     *     description="User does NOT exist.",
+     * )
+     * @SWG\Response(
+     *     response=500,
+     *     description="Unknown exception.",
+     * )
+     * @Security(name="Bearer")
+     * @SWG\Tag(name="users")
+     */
+    public function getUserContentCompareAction($userId, Request $request, User $user, Paginator $paginator, ContentComparePaginatedManager $contentComparePaginatedManager)
+    {
+        $tag = $request->get('tag', array());
+        $type = $request->get('type', array());
+        $showOnlyCommon = $request->get('showOnlyCommon', 0);
+
+        if (null === $userId) {
+            return $this->view([], 400);
+        }
+
+        $filters = array('id' => (int)$userId, 'id2' => $user->getId(), 'showOnlyCommon' => (int)$showOnlyCommon);
+
+        foreach ($tag as $singleTag) {
+            if (!empty($singleTag)) {
+                $filters['tag'][] = urldecode($singleTag);
+            }
+        }
+
+        foreach ($type as $singleType) {
+            if (!empty($singleType)) {
+                $filters['type'][] = urldecode($singleType);
+            }
+        }
+
+        try {
+            $result = $paginator->paginate($filters, $contentComparePaginatedManager, $request);
+            $result['totals'] = $contentComparePaginatedManager->countAll($userId, $user->getId(), $showOnlyCommon);
+        } catch (\Exception $e) {
+
+            return $this->view([], 500);
+        }
+
+        return $this->view($result, 200);
+    }
+
+    /**
+     * Get content tags
+     *
+     * @Get("/content/tags")
+     * @param Request $request
+     * @param User $user
+     * @param ContentTagManager $contentTagManager
+     * @return \FOS\RestBundle\View\View
+     * @SWG\Parameter(
+     *      name="search",
+     *      in="query",
+     *      type="string",
+     * )
+     * @SWG\Parameter(
+     *      name="limit",
+     *      in="query",
+     *      type="integer",
+     *      default=20
+     * )
+     * @SWG\Response(
+     *     response=200,
+     *     description="Returns content tags.",
+     * )
+     * @SWG\Response(
+     *     response=500,
+     *     description="Unknown exception.",
+     * )
+     * @Security(name="Bearer")
+     * @SWG\Tag(name="users")
+     */
+    public function getUserContentTagsAction(Request $request, User $user, ContentTagManager $contentTagManager)
+    {
+        $search = $request->get('search', '');
+        $limit = $request->get('limit', 0);
+
+        if ($search) {
+            $search = urldecode($search);
+        }
+
+        try {
+            $result = $contentTagManager->getContentTags($user->getId(), $search, (int)$limit);
+        } catch (\Exception $e) {
+
+            return $this->view([], 500);
+        }
+
+        return $this->view($result, 200);
+    }
+
+    /**
+     * Rate content
+     *
+     * @Post("/content/rate")
+     * @param Request $request
+     * @param User $user
+     * @param RateManager $rateManager
+     * @return \FOS\RestBundle\View\View
+     * @SWG\Parameter(
+     *      name="body",
+     *      in="body",
+     *      type="json",
+     *      schema=@SWG\Schema(
+     *          required={"rate", "linkId"},
+     *          @SWG\Property(property="rate", type="string", required={"LIKES|DISLIKES|UNRATES|IGNORES"}),
+     *          @SWG\Property(property="linkId", type="integer"),
+     *          @SWG\Property(property="originContext", type="string"),
+     *          @SWG\Property(property="originName", type="string"),
+     *          example={ "rate" = "LIKES", "linkId" = 1000, "originContext" = "", "originName" = "" },
+     *      )
+     * )
+     * @SWG\Response(
+     *     response=201,
+     *     description="Returns rate response.",
+     * )
+     * @SWG\Response(
+     *     response=400,
+     *     description="Link NOT found.",
+     * )
+     * @SWG\Response(
+     *     response=500,
+     *     description="Unknown exception.",
+     * )
+     * @Security(name="Bearer")
+     * @SWG\Tag(name="users")
+     */
+    public function rateContentAction(Request $request, User $user, RateManager $rateManager)
+    {
+        $rate = $request->request->get('rate');
+        $data = $request->request->all();
+        if (isset($data['linkId']) && !isset($data['id'])) {
+            $data['id'] = $data['linkId'];
+        }
+
+        if (null == $data['linkId'] || null == $rate) {
+            return $this->view(array('text' => 'Link Not Found', 'id' => $user->getId(), 'linkId' => $data['linkId']), 400);
+        }
+
+        $originContext = isset($data['originContext']) ? $data['originContext'] : null;
+        $originName = isset($data['originName']) ? $data['originName'] : null;
+        try {
+            $result = $rateManager->userRateLink($user->getId(), $data['id'], 'nekuno', null, $rate, true, $originContext, $originName);
+        } catch (\Exception $e) {
+
+            return $this->view([], 500);
+        }
+
+        return $this->view($result, 201);
+    }
+
+    /**
+     * Report content
+     *
+     * @Post("/content/report")
+     * @param Request $request
+     * @param User $user
+     * @param ContentReportManager $contentReportManager
+     * @return \FOS\RestBundle\View\View
+     * @SWG\Parameter(
+     *      name="body",
+     *      in="body",
+     *      type="json",
+     *      schema=@SWG\Schema(
+     *          required={"contentId", "reason"},
+     *          @SWG\Property(property="contentId", type="integer"),
+     *          @SWG\Property(property="reason", type="string"),
+     *          @SWG\Property(property="reasonText", type="string"),
+     *          example={ "contentId" = 1000, "reason" = "not interesting", "reasonText" = "" },
+     *      )
+     * )
+     * @SWG\Response(
+     *     response=201,
+     *     description="Returns report response.",
+     * )
+     * @SWG\Response(
+     *     response=500,
+     *     description="Unknown exception.",
+     * )
+     * @Security(name="Bearer")
+     * @SWG\Tag(name="users")
+     */
+    public function reportContentAction(Request $request, User $user, ContentReportManager $contentReportManager)
+    {
+        $reason = $request->request->get('reason');
+        $reasonText = $request->request->get('reasonText');
+        $contentId = $request->request->get('contentId');
+
+        try {
+            $result = $contentReportManager->report($user->getId(), $contentId, $reason, $reasonText);
+        } catch (\Exception $e) {
+
+            return $this->view([], 500);
+        }
+
+        return $this->view($result, 201);
+    }
+
+    /**
+     * Get all filters
+     *
+     * @Get("/filters")
+     * @param Request $request
+     * @param User $user
+     * @param MetadataService $metadataService
+     * @return \FOS\RestBundle\View\View
+     * @SWG\Parameter(
+     *      name="locale",
+     *      in="query",
+     *      type="string",
+     *      default="es",
+     *      required=true
+     * )
+     * @SWG\Response(
+     *     response=200,
+     *     description="Returns all filters.",
+     * )
+     * @Security(name="Bearer")
+     * @SWG\Tag(name="users")
+     */
+    public function getAllFiltersAction(Request $request, User $user, MetadataService $metadataService)
+    {
+        $locale = $request->query->get('locale', 'es');
+        $filters = array();
+
+        $filters['userFilters'] = $metadataService->getUserFilterMetadata($locale, $user->getId());
+
+        $filters['contentFilters'] = $metadataService->getContentFilterMetadata($locale);
+
+        return $this->view($filters, 200);
+    }
+
+    /**
+     * Get user paginated recommendations
+     *
+     * @Get("/recommendations/users")
+     * @param Request $request
+     * @param User $user
+     * @param RecommendatorService $recommendatorService
+     * @return \FOS\RestBundle\View\View
+     * @SWG\Response(
+     *     response=200,
+     *     description="Returns user paginated recommendations.",
+     * )
+     * @SWG\Response(
+     *     response=500,
+     *     description="Unknown exception.",
+     * )
+     * @Security(name="Bearer")
+     * @SWG\Tag(name="users")
+     */
+    public function getUserRecommendationAction(Request $request, User $user, RecommendatorService $recommendatorService)
+    {
+        try {
+            $result = $recommendatorService->getUserRecommendationFromRequest($request, $user->getId());
+        } catch (\Exception $e) {
+
+            return $this->view([], 500);
+        }
+
+        return $this->view($result, 200);
+    }
+
+    /**
+     * Get content paginated recommendations
+     *
+     * @Get("/recommendations/content")
+     * @param Request $request
+     * @param User $user
+     * @param RecommendatorService $recommendatorService
+     * @return \FOS\RestBundle\View\View
+     * @SWG\Response(
+     *     response=200,
+     *     description="Returns content paginated recommendations.",
+     * )
+     * @SWG\Response(
+     *     response=500,
+     *     description="Unknown exception.",
+     * )
+     * @Security(name="Bearer")
+     * @SWG\Tag(name="users")
+     */
+    public function getContentRecommendationAction(Request $request, User $user, RecommendatorService $recommendatorService)
+    {
+        try {
+            $result = $recommendatorService->getContentRecommendationFromRequest($request, $user->getId());
+        } catch (\Exception $e) {
+
+            return $this->view([], 500);
+        }
+
+        return $this->view($result, 200);
+    }
+
+    /**
+     * Get content recommendations tags
+     *
+     * @Get("/recommendations/content/tags")
+     * @param Request $request
+     * @param ContentRecommendationTagManager $contentRecommendationTagModel
+     * @return \FOS\RestBundle\View\View
+     * @SWG\Parameter(
+     *      name="search",
+     *      in="query",
+     *      type="string",
+     * )
+     * @SWG\Parameter(
+     *      name="limit",
+     *      in="query",
+     *      type="integer",
+     *      default=20
+     * )
+     * @SWG\Response(
+     *     response=200,
+     *     description="Returns content recommendations tags.",
+     * )
+     * @SWG\Response(
+     *     response=500,
+     *     description="Unknown exception.",
+     * )
+     * @Security(name="Bearer")
+     * @SWG\Tag(name="users")
+     */
+    public function getContentAllTagsAction(Request $request, ContentRecommendationTagManager $contentRecommendationTagModel)
+    {
+        $search = $request->get('search', '');
+        $limit = $request->get('limit', 0);
+
+        if ($search) {
+            $search = urldecode($search);
+        }
+
+        try {
+            $result = $contentRecommendationTagModel->getAllTags($search, $limit);
+        } catch (\Exception $e) {
+
+            return $this->view([], 500);
+        }
+
+        return $this->view($result, 200);
+    }
+
+    /**
+     * Get user status
+     *
+     * @Get("/status")
+     * @param User $user
+     * @param UserManager $userManager
+     * @return \FOS\RestBundle\View\View
+     * @SWG\Response(
+     *     response=200,
+     *     description="Returns user status.",
+     * )
+     * @Security(name="Bearer")
+     * @SWG\Tag(name="users")
+     */
+    public function statusAction(User $user, UserManager $userManager)
+    {
+        $status = $userManager->getStatus($user->getId());
+
+        return $this->view(array('status' => $status), 200);
+    }
+
+    /**
+     * Get user stats
+     *
+     * @Get("/stats")
+     * @param User $user
+     * @param UserStatsService $userStatsService
+     * @return \FOS\RestBundle\View\View
+     * @SWG\Response(
+     *     response=200,
+     *     description="Returns user stats.",
+     * )
+     * @Security(name="Bearer")
+     * @SWG\Tag(name="users")
+     */
+    public function statsAction(User $user, UserStatsService $userStatsService)
+    {
+        $stats = $userStatsService->getStats($user->getId());
+
+        return $this->view($stats->toArray(), 200);
+    }
+
+    /**
+     * Get user compared stats
+     *
+     * @Get("/stats/compare/{userId}")
+     * @param integer $userId
+     * @param User $user
+     * @param UserStatsService $userStatsService
+     * @return \FOS\RestBundle\View\View
+     * @SWG\Response(
+     *     response=200,
+     *     description="Returns user compared stats.",
+     * )
+     * @Security(name="Bearer")
+     * @SWG\Tag(name="users")
+     */
+    public function statsCompareAction($userId, User $user, UserStatsService $userStatsService)
+    {
+        $stats = $userStatsService->getComparedStats($user->getId(), $userId);
+
+        return $this->view($stats->toArray(), 200);
+    }
+
+
+    /**
+     * Get link affinity
+     *
+     * @Get("/affinity/{linkId}")
+     * @param integer $linkId
+     * @param User $user
+     * @param AffinityManager $affinityManager
+     * @return \FOS\RestBundle\View\View
+     * @SWG\Response(
+     *     response=200,
+     *     description="Returns link affinity.",
+     * )
+     * @SWG\Response(
+     *     response=400,
+     *     description="Link id is null.",
+     * )
+     * @SWG\Response(
+     *     response=500,
+     *     description="Unknown exception.",
+     * )
+     * @Security(name="Bearer")
+     * @SWG\Tag(name="users")
+     */
+    public function getAffinityAction($linkId, User $user, AffinityManager $affinityManager)
+    {
+        if (null === $linkId) {
+            return $this->view([], 400);
+        }
+
+        try {
+            $affinity = $affinityManager->getAffinity($user->getId(), $linkId);
+        } catch (\Exception $e) {
+
+            return $this->view([], 500);
+        }
+
+        return $this->view($affinity, !empty($affinity) ? 201 : 200);
     }
 
     /**

@@ -32,10 +32,12 @@ services:
 #        resource: '../src/*'
 #        exclude: '../src/{Entity,Migrations,Tests,Kernel.php}'
     Model\:
-        resource: '../src/Model/*/*{Manager.php,Utilities.php}'
+        resource: '../src/Model/*/*{Manager.php,Utilities.php,Calculator.php}'
         exclude: '../src/Model/Metadata/MetadataManager.php'
     Service\:
         resource: '../src/Service/*'
+    Paginator\:
+        resource: '../src/Paginator/*'
     # controllers are imported separately to make sure services can be injected
     # as action arguments even if you don't extend any base controller class
     Controller\:
@@ -71,6 +73,12 @@ services:
                 - "%env(support_email_2)%"
                 - "%env(support_email_3)%"
             $env: "%env(APP_ENV)%"
+
+    GuzzleHttp\Client:
+        autowire: true
+
+    ApiConsumer\Images\ImageAnalyzer:
+        autowire: true
 
     Model\User\UserManager:
         arguments:
@@ -122,6 +130,9 @@ services:
     Service\Validator\FilterUsersValidator:
         arguments:
             $metadata: "%fields%"
+    Service\Validator\FilterContentValidator:
+        factory: 'Service\Validator\ValidatorFactory:build'
+        arguments: ['content_filter']
     Service\Validator\AnswerValidator:
         factory: 'Service\Validator\ValidatorFactory:build'
         arguments: ['answers']
@@ -131,6 +142,10 @@ services:
     Service\Validator\DeviceValidator:
         factory: 'Service\Validator\ValidatorFactory:build'
         arguments: ['device']
+    Service\Validator\ThreadValidator:
+        factory: 'Service\Validator\ValidatorFactory:build'
+        arguments: ['threads']
+
 
     Model\Neo4j\GraphManager:
         arguments:
