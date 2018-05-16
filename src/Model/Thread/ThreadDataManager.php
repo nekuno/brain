@@ -7,7 +7,7 @@ use Model\Location\Location;
 use Model\Profile\Profile;
 use Model\Profile\ProfileManager;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\Translation\Translator;
+use Symfony\Component\Translation\TranslatorInterface;
 
 class ThreadDataManager
 {
@@ -19,7 +19,7 @@ class ThreadDataManager
      * @param $profileModel
      * @param $translator
      */
-    public function __construct(ProfileManager $profileModel, Translator $translator)
+    public function __construct(ProfileManager $profileModel, TranslatorInterface $translator)
     {
         $this->profileModel = $profileModel;
         $this->translator = $translator;
