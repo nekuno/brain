@@ -8,11 +8,18 @@ class ErrorList implements \JsonSerializable
 
     public function addError($field, $error)
     {
-        if (empty($error)){
+        if (empty($error)) {
             return;
         }
 
         $this->errors[$field][] = $error;
+    }
+
+    public function addErrors($field, array $errors)
+    {
+        foreach ($errors as $error) {
+            $this->addError($field, $error);
+        }
     }
 
     public function setErrors($field, array $errors)
@@ -43,17 +50,14 @@ class ErrorList implements \JsonSerializable
 
     protected function filterEmptyErrors()
     {
-        foreach ($this->errors as $field => &$fieldErrors)
-        {
-            foreach ($fieldErrors as $index => $fieldError)
-            {
-                if (empty($fieldError)){
+        foreach ($this->errors as $field => &$fieldErrors) {
+            foreach ($fieldErrors as $index => $fieldError) {
+                if (empty($fieldError)) {
                     unset($fieldErrors[$index]);
                 }
             }
 
-            if (empty($fieldErrors))
-            {
+            if (empty($fieldErrors)) {
                 unset($this->errors[$field]);
             }
         }
