@@ -4,7 +4,7 @@ namespace Model\Question\Admin;
 
 use Everyman\Neo4j\Query\Row;
 use Model\Neo4j\GraphManager;
-use Service\Validator\ValidatorInterface;
+use Service\Validator\QuestionAdminValidator;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class QuestionAdminManager
@@ -19,9 +19,9 @@ class QuestionAdminManager
      * QuestionAdminManager constructor.
      * @param GraphManager $graphManager
      * @param QuestionAdminBuilder $questionAdminBuilder
-     * @param ValidatorInterface $validator
+     * @param QuestionAdminValidator $validator
      */
-    public function __construct(GraphManager $graphManager, QuestionAdminBuilder $questionAdminBuilder, ValidatorInterface $validator)
+    public function __construct(GraphManager $graphManager, QuestionAdminBuilder $questionAdminBuilder, QuestionAdminValidator $validator)
     {
         $this->graphManager = $graphManager;
         $this->questionAdminBuilder = $questionAdminBuilder;

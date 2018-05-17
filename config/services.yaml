@@ -1,7 +1,7 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices/configuration.html#application-related-configuration
 parameters:
-    locale: 'en'
+    env(locale_default): 'en'
     env(images_web_dir): ''
     env(social_host): ''
     env(admin_domain_plus_port): ''
@@ -32,8 +32,12 @@ services:
 #        resource: '../src/*'
 #        exclude: '../src/{Entity,Migrations,Tests,Kernel.php}'
     Model\:
-        resource: '../src/Model/*/*{Manager.php,Utilities.php,Calculator.php}'
+        resource: '../src/Model/*/*{Manager.php,Utilities.php,Calculator.php,Selector.php}'
         exclude: '../src/Model/Metadata/MetadataManager.php'
+    Model\Question\Admin\:
+        resource: '../src/Model/Question/Admin/*{Manager.php,Builder.php}'
+    Model\Question\QuestionCategory\:
+        resource: '../src/Model/Question/QuestionCategory/*Manager.php'
     Service\:
         resource: '../src/Service/*'
     Paginator\:
@@ -73,6 +77,10 @@ services:
                 - "%env(support_email_2)%"
                 - "%env(support_email_3)%"
             $env: "%env(APP_ENV)%"
+
+    Controller\User\QuestionController:
+        arguments:
+            $defaultLocale: "%env(locale_default)%"
 
     GuzzleHttp\Client:
         autowire: true
@@ -139,6 +147,9 @@ services:
     Service\Validator\QuestionValidator:
         factory: 'Service\Validator\ValidatorFactory:build'
         arguments: ['questions']
+    Service\Validator\QuestionAdminValidator:
+        factory: 'Service\Validator\ValidatorFactory:build'
+        arguments: ['questions_admin']
     Service\Validator\DeviceValidator:
         factory: 'Service\Validator\ValidatorFactory:build'
         arguments: ['device']
