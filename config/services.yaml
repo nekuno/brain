@@ -88,6 +88,10 @@ services:
         arguments:
             $defaultLocale: "%env(locale_default)%"
 
+    Controller\User\InvitationController:
+        arguments:
+            $socialHost: "%env(social_host)%"
+
     GuzzleHttp\Client:
         autowire: true
 

@@ -1,0 +1,68 @@
+notifications:
+  an_internet_for_you: 'AN INTERNET FOR YOU'
+  unsubscribe: 'Cancelar suscripción'
+  about_us: 'Sobre nosotros'
+  all_rights_reserved: 'Todos los derechos reservados'
+  header: 'Hola %name%'
+  messages:
+    unread:
+      subject: 'Tienes mensajes sin leer'
+      body:
+        title: ' tienes %count% mensaje.|tienes %count% mensajes.'
+        unread: ' tienes %count% mensaje sin leer.|Tienes %count% mensajes sin leer.'
+        latest: 'Último mensaje sin leer:|Últimos %count% mensajes sin leer:'
+        message: 'Mensaje sin leer del usuario %user% en %datetime%:'
+        linkAnchor: 'Leer más'
+    exceptional_links:
+      subject: 'Hemos encontrado contenido que querrás ver'
+      body:
+        introduction_1: 'En Nekuno trabajamos sin descanso para encontrar contenido recomendado especialmente para ti'
+        introduction_2: 'Hemos encontrado este que te encantará:|Hemos encontrado %count% que te encantarán:'
+        enter: '{1} Vuelve a entrar para verlo:|{2,3} Vuelve a entrar para verlos|[4,Inf[ Vuelve a entrar para verlos todos'
+    invitation:
+        subject: "Invitación recibida de %name%"
+        email_txt: "%name% te ha enviado una invitación para unirte a Nekuno.\nHaz click en este enlace %url% para registrarte y comenzar a distrutar.\nEsta invitación caduca el día %expiresAt%.\n"
+        email_html: "<p>%name% te ha enviado una invitación para unirte a Nekuno.</p>\n<p>Haz click en este enlace <a href=\"%url%\">%url%</a> para registrarte y distrutar.</p>\n<p>Esta invitación caduca el día %expiresAt%.</p>\n"
+    influencer_found:
+      subject: '¡Que suerte! Acabamos de descubrir a alguien para tí.'
+      body:
+        message: "¡Que suerte! Acabamos de descubrir que superas el porcentaje mínimo exigido por <a href=\"%urlOther%\">%usernameOther%</a> para que puedas enviarle un mensaje. Se original y enviale algo que sólo tú podrías decir, ¡Por que es a ti a quien busca!"
+    follower_found:
+      subject: '¡Acabamos de descubrir a alguien para tí!'
+      body:
+        message: "¡Acabamos de descubrir que <a href=\"%urlOther%\">%usernameOther%</a> es un follower con un %value%% de %filter% contigo!"
+  footer: 'Saludos del equipo de Nekuno'
+push_notifications:
+    message:
+        title: 'Nuevo mensaje de %username%'
+    process_finish:
+        title: 'Proceso finalizado'
+        body: 'Hemos acabado de procesar tu red de %resource%.'
+    both_user_liked:
+        title: '"Like" mutuo'
+        body: '%username% y tú os habéis hecho "like" mutuamente.'
+followers:
+  invitation_slogan: '¡Descubre si eres %compatible_or_similar% con %username%!'
+  group_name: 'Seguidores de %username%'
+messages:
+  register: 'Sólamente cuando eres más tú que nunca; todas las personas a las que les encanta como eres, pueden notar tu existencia. Por esa razón, disfruta de ser tu mismo en Nekuno, porque este es el lugar donde todas esas personas pueden encontrarte. Cuenta conmigo para lo que necesites. Nyx ♥'
+types:
+  audio: 'Música'
+  video: 'Vídeos'
+  image: 'Imagenes & Gifs'
+  creator: 'Canales de Twitter'
+  creatorFacebook: 'Canales de Facebook'
+  creatorTwitter: 'Canales de Twitter'
+  link: 'Webs & enlaces'
+threads:
+  default:
+    twitter_channels: 'Canales de Twitter Increíbles'
+    best_of_location: 'Lo mejor de %location%'
+    youtube_videos: 'Vídeos de YouTube'
+    spotify_music: 'Spotify a medida'
+    images: 'GIF adictivos'
+    desired_from_location: '%desired% de %location%'
+    people_from_group: 'Gente de %group%'
+    male: 'Chicos'
+    female: 'Chicas'
+    people: 'Gente'
