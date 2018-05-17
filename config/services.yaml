@@ -38,6 +38,8 @@ services:
         resource: '../src/Model/Question/Admin/*{Manager.php,Builder.php}'
     Model\Question\QuestionCategory\:
         resource: '../src/Model/Question/QuestionCategory/*Manager.php'
+    Model\Token\TokenStatus\:
+        resource: '../src/Model/Token/TokenStatus/*Manager.php'
     Service\:
         resource: '../src/Service/*'
     Paginator\:
@@ -160,6 +162,12 @@ services:
     Service\Validator\ThreadValidator:
         factory: 'Service\Validator\ValidatorFactory:build'
         arguments: ['threads']
+    Service\Validator\TokenValidator:
+        factory: 'Service\Validator\ValidatorFactory:build'
+        arguments: ['tokens']
+    Service\Validator\TokenStatusValidator:
+        factory: 'Service\Validator\ValidatorFactory:build'
+        arguments: ['tokenStatus']
 
 
     Model\Neo4j\GraphManager:

@@ -11,7 +11,6 @@ use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
 use Service\Validator\TokenValidator;
 use Service\EventDispatcher;
-use Service\Validator\ValidatorFactory;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -40,11 +39,11 @@ class TokensManager
      */
     protected $validator;
 
-    public function __construct(EventDispatcher $dispatcher, GraphManager $graphManager, ValidatorFactory $validatorFactory)
+    public function __construct(EventDispatcher $dispatcher, GraphManager $graphManager, TokenValidator $validator)
     {
         $this->dispatcher = $dispatcher;
         $this->gm = $graphManager;
-        $this->validator = $validatorFactory->build('tokens');
+        $this->validator = $validator;
     }
 
     public static function getResourceOwners()
