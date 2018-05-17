@@ -12,7 +12,6 @@ use Model\Question\QuestionManager;
 use Model\User\User;
 use Nelmio\ApiDocBundle\Annotation\Security;
 use Service\QuestionService;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Swagger\Annotations as SWG;
 
@@ -24,11 +23,7 @@ class QuestionController extends FOSRestController implements ClassResourceInter
     {
         $this->defaultLocale = $defaultLocale;
     }
-    /**
-     * @param Request $request
-     * @param Application $app
-     * @return JsonResponse
-     */
+
 //    public function getQuestionsAction(Request $request, Application $app)
 //    {
 //        $locale = $this->getLocale($request, $app['locale.options']['default']);
@@ -145,6 +140,16 @@ class QuestionController extends FOSRestController implements ClassResourceInter
      * @param Request $request
      * @param QuestionManager $questionManager
      * @return \FOS\RestBundle\View\View
+     * @SWG\Parameter(
+     *      name="body",
+     *      in="body",
+     *      type="json",
+     *      schema=@SWG\Schema(
+     *          @SWG\Property(property="text", type="string"),
+     *          @SWG\Property(property="answers", type="array[]"),
+     *          example={ "text" = "Question text", "answers" = {{"text" = "Answer 1"}, {"text" = "Answer 2"}} },
+     *      )
+     * )
      * @SWG\Parameter(
      *      name="locale",
      *      in="query",

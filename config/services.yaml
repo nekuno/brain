@@ -82,6 +82,10 @@ services:
         arguments:
             $defaultLocale: "%env(locale_default)%"
 
+    Controller\User\AnswerController:
+        arguments:
+            $defaultLocale: "%env(locale_default)%"
+
     GuzzleHttp\Client:
         autowire: true
 
