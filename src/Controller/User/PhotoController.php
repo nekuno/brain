@@ -19,11 +19,6 @@ use Swagger\Annotations as SWG;
 class PhotoController extends FOSRestController implements ClassResourceInterface
 {
     /**
-     * @var PhotoManager
-     */
-    protected $manager;
-
-    /**
      * Get photos
      *
      * @Get("/photos")
@@ -91,7 +86,7 @@ class PhotoController extends FOSRestController implements ClassResourceInterfac
      */
     public function postAction(User $user, Request $request, PhotoManager $photoManager)
     {
-        $file = $this->getPostFile($request);
+        $file = $this->getPostFile($request, $photoManager);
         $photo = $photoManager->create($user, $file);
 
         return $this->view($photo, 201);
@@ -178,12 +173,12 @@ class PhotoController extends FOSRestController implements ClassResourceInterfac
         return $this->view($photo, 200);
     }
 
-    protected function getPostFile(Request $request)
+    protected function getPostFile(Request $request, PhotoManager $photoManager)
     {
         if ($request->request->has('base64')) {
             $file = base64_decode($request->request->get('base64'));
             if (!$file) {
-                $this->manager->throwPhotoException('Invalid "base64" provided');
+                $photoManager->throwPhotoException('Invalid "base64" provided');
             }
 
             return $file;
@@ -192,18 +187,18 @@ class PhotoController extends FOSRestController implements ClassResourceInterfac
         if ($request->request->has('url')) {
             $url = $request->request->get('url');
             if (filter_var($url, FILTER_VALIDATE_URL) === false) {
-                $this->manager->throwPhotoException('Invalid "url" provided');
+                $photoManager->throwPhotoException('Invalid "url" provided');
             }
 
             $file = @file_get_contents($url);
             if (!$file) {
-                $this->manager->throwPhotoException('Unable to get photo from "url"');
+                $photoManager->throwPhotoException('Unable to get photo from "url"');
             }
 
             return $file;
         }
 
-        $this->manager->throwPhotoException('Invalid photo provided, param "base64" or "url" must be provided');
+        $photoManager->throwPhotoException('Invalid photo provided, param "base64" or "url" must be provided');
         return null;
     }
 }
