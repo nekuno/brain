@@ -7,8 +7,6 @@ use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Photo\PhotoManager;
 use Model\Neo4j\GraphManager;
-use Service\Validator\GroupValidator;
-use Service\Validator\ValidatorInterface;
 use Service\EventDispatcher;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -396,7 +394,9 @@ class GroupManager
             ->match('(u:User { qnoow_id: { userId } })')
             ->setParameter('userId', (integer)$userId)
             ->match('(u)-[r:BELONGS_TO]->(g)')
-            ->delete('r');
+            ->delete('r')
+            ->with('u')
+            ->returns('u');
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();

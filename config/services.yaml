@@ -142,6 +142,9 @@ services:
     Service\Validator\InvitationValidator:
         factory: 'Service\Validator\ValidatorFactory:build'
         arguments: ['invitations']
+    Service\Validator\GroupValidator:
+        factory: 'Service\Validator\ValidatorFactory:build'
+        arguments: ['groups']
     Service\Validator\ProfileValidator:
         factory: 'Service\Validator\ValidatorFactory:build'
         arguments: ['profile']

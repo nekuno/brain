@@ -156,7 +156,7 @@ class InvitationController extends FOSRestController implements ClassResourceInt
      *      )
      * )
      * @SWG\Response(
-     *     response=200,
+     *     response=201,
      *     description="Returns created invitation.",
      * )
      * @Security(name="Bearer")

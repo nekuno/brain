@@ -5,7 +5,7 @@ namespace Service;
 use Model\Filters\FilterUsersManager;
 use Model\Group\Group;
 use Model\Group\GroupManager;
-use Service\Validator\ValidatorFactory;
+use Service\Validator\GroupValidator;
 
 class GroupService
 {
@@ -20,13 +20,13 @@ class GroupService
      * GroupService constructor.
      * @param GroupManager $groupModel
      * @param FilterUsersManager $filterUsersManager
-     * @param ValidatorFactory $validatorFactory
+     * @param GroupValidator $validator
      */
-    public function __construct(GroupManager $groupModel, FilterUsersManager $filterUsersManager, ValidatorFactory $validatorFactory)
+    public function __construct(GroupManager $groupModel, FilterUsersManager $filterUsersManager, GroupValidator $validator)
     {
         $this->groupModel = $groupModel;
         $this->filterUsersManager = $filterUsersManager;
-        $this->groupValidator = $validatorFactory->build('groups');
+        $this->groupValidator = $validator;
     }
 
     public function createGroup($groupData)
