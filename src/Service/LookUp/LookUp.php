@@ -26,7 +26,7 @@ abstract class LookUp implements LookUpInterface
 
     function __construct($apiUrl, $apiKey, UrlGeneratorInterface $urlGenerator)
     {
-        $this->client = new Client(array('base_url' => $apiUrl));
+        $this->client = new Client(array('base_uri' => $apiUrl));
         $this->apiKey = $apiKey;
         $this->urlGenerator = $urlGenerator;
     }

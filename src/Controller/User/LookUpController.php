@@ -50,7 +50,6 @@ class LookUpController extends FOSRestController implements ClassResourceInterfa
      *     response=200,
      *     description="Returns look up data.",
      * )
-     * @Security(name="Bearer")
      * @SWG\Tag(name="lookup")
      */
     public function getAction(Request $request, LookUpManager $lookUpManager)
@@ -91,7 +90,6 @@ class LookUpController extends FOSRestController implements ClassResourceInterfa
      *     response=201,
      *     description="Returns created look up data.",
      * )
-     * @Security(name="Bearer")
      * @SWG\Tag(name="lookup")
      */
     public function setAction($userId, Request $request, LookUpManager $lookUpManager)
@@ -120,7 +118,6 @@ class LookUpController extends FOSRestController implements ClassResourceInterfa
      *     response=201,
      *     description="Returns empty array.",
      * )
-     * @Security(name="Bearer")
      * @SWG\Tag(name="lookup")
      */
     public function setFromWebHookAction(Request $request, LookUpManager $lookUpManager, LoggerInterface $logger)
