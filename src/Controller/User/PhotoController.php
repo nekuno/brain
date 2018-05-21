@@ -42,7 +42,7 @@ class PhotoController extends FOSRestController implements ClassResourceInterfac
     /**
      * Get other user photos
      *
-     * @Get("/photos/{userId}")
+     * @Get("/photos/{userId}", requirements={"userId"="\d+"})
      * @param integer $userId
      * @param PhotoManager $photoManager
      * @return \FOS\RestBundle\View\View
@@ -95,7 +95,7 @@ class PhotoController extends FOSRestController implements ClassResourceInterfac
     /**
      * Set photo as profile photo
      *
-     * @Post("/photos/{photoId}/profile")
+     * @Post("/photos/{photoId}/profile", requirements={"photoId"="\d+"})
      * @param integer $photoId
      * @param User $user
      * @param Request $request
@@ -148,7 +148,7 @@ class PhotoController extends FOSRestController implements ClassResourceInterfac
     /**
      * Delete photo
      *
-     * @Delete("/photos/{photoId}")
+     * @Delete("/photos/{photoId}", requirements={"photoId"="\d+"})
      * @param integer $photoId
      * @param User $user
      * @param PhotoManager $photoManager
