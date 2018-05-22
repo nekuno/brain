@@ -12,6 +12,7 @@ parameters:
     env(support_email_1): ''
     env(support_email_2): ''
     env(support_email_3): ''
+    env(push_public_key): ''
     env(push_private_key): ''
     env(fullContact_consumer_key): ''
     env(fullContact_url): ''
@@ -19,6 +20,12 @@ parameters:
     env(peopleGraph_url): ''
     env(hwi_oauth.resource_owners): ''
     env(brain_base_url): ''
+    env(firebase_url): ''
+    env(firebase_api_key): ''
+    env(rabbitmq_host): ''
+    env(rabbitmq_port): ''
+    env(rabbitmq_user): ''
+    env(rabbitmq_pass): ''
     env(APP_ENV): ''
 
 services:
@@ -96,6 +103,13 @@ services:
         arguments:
             $userProvider: "@security.users_provider"
             $resourceOwnerMap: "@oauth.resource_owner_map"
+    PhpAmqpLib\Connection\AMQPStreamConnection:
+        autowire: true
+        arguments:
+            $host: "%env(rabbitmq_host)%"
+            $port: "%env(rabbitmq_port)%"
+            $user: "%env(rabbitmq_user)%"
+            $password: "%env(rabbitmq_pass)%"
     GuzzleHttp\Client:
         autowire: true
     Buzz\Client\Curl:
@@ -219,6 +233,12 @@ services:
     # End Validators
 
     # Services
+    Service\DeviceService:
+        arguments:
+            $fireBaseUrl: "%env(firebase_url)%"
+            $fireBaseApiKey: "%env(firebase_api_key)%"
+            $serverPublicKey: "%env(push_public_key)%"
+            $serverPrivateKey: "%env(push_private_key)%"
     Service\LookUp\LookUpFullContact:
         arguments:
             $apiUrl: "%env(fullContact_url)%"
@@ -246,8 +266,13 @@ services:
     # End Services
 
     # Console commands
+    Console\Command\:
+        resource: '../src/Console/Command/*'
+        tags:
+            - { name: 'console.command' }
     Console\Command\LinksFetchAndPreProcessCommand:
         arguments:
             $resourceOwners: "%hwi_oauth.resource_owners%"
-        tags:
-            - { name: 'console.command' }
+    Console\Command\LinksFetchCommand:
+        arguments:
+            $resourceOwners: "%hwi_oauth.resource_owners%"
