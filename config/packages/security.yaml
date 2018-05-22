@@ -27,9 +27,10 @@ security:
             anonymous: true
             pattern: (^/users$)|(^/register)|(^/invitations/token/validate/)|(^/lookUp/webHook$)|(^/users/validate$)$
             methods: [POST]
-#        preflight:
-#            anonymous: true
-#            methods: [OPTIONS]
+        preflight:
+            anonymous: true
+            pattern: ^/.*$
+            methods: [OPTIONS]
         instant:
             anonymous: true
             pattern: ^/instant/

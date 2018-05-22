@@ -56,6 +56,9 @@ services:
         resource: '../src/Service/*'
     Paginator\:
         resource: '../src/Paginator/*'
+    EventListener\:
+        resource: '../src/EventListener/*'
+
     # controllers are imported separately to make sure services can be injected
     # as action arguments even if you don't extend any base controller class
     Controller\:

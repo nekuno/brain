@@ -2,6 +2,7 @@
 
 namespace Controller\Security;
 
+use FOS\RestBundle\Controller\Annotations\Get;
 use FOS\RestBundle\Controller\Annotations\Options;
 use FOS\RestBundle\Controller\Annotations\Post;
 use FOS\RestBundle\Controller\FOSRestController;
@@ -20,7 +21,7 @@ class AuthController extends FOSRestController
     /**
      * Preflight action. Set required headers.
      *
-     * @Options("/{url}")
+     * @Options("/{url}", requirements={"url"=".+"})
      * @param Request $request
      * @return Response
      * @SWG\Response(
@@ -29,7 +30,7 @@ class AuthController extends FOSRestController
      * )
      * @SWG\Tag(name="auth")
      */
-    public function preflightAction($url, Request $request)
+    public function preFlightAction(Request $request)
     {
         $response = new Response();
         $response->headers->set('Access-Control-Allow-Methods', $request->headers->get('Access-Control-Request-Method'));
@@ -97,7 +98,7 @@ class AuthController extends FOSRestController
     /**
      * Auto-login user
      *
-     * @Post("/autologin")
+     * @Get("/autologin")
      * @param Request $request
      * @param User $user
      * @param ProfileManager $profileManager
