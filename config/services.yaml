@@ -6,7 +6,6 @@ parameters:
     env(social_host): ''
     env(admin_domain_plus_port): ''
     env(fields): ''
-    env(profile_fields): ''
     env(metadata_config): ''
     env(db_neo4j_host): ''
     env(db_neo4j_port): ''
@@ -18,6 +17,8 @@ parameters:
     env(fullContact_url): ''
     env(peopleGraph_consumer_key): ''
     env(peopleGraph_url): ''
+    env(hwi_oauth.resource_owners): ''
+    env(brain_base_url): ''
     env(APP_ENV): ''
 
 services:
@@ -66,12 +67,7 @@ services:
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
 
-    HWI\Bundle\OAuthBundle\Security\Core\Authentication\Provider\OAuthProvider:
-        autowire: true
-        arguments:
-            $userProvider: "@security.users_provider"
-            $resourceOwnerMap: "@oauth.resource_owner_map"
-
+    # Controller parameters
     Controller\ArgumentValueResolver:
         tags:
             - { name: controller.argument_value_resolver, priority: 50 }
@@ -83,63 +79,104 @@ services:
                 - "%env(support_email_2)%"
                 - "%env(support_email_3)%"
             $env: "%env(APP_ENV)%"
-
     Controller\User\QuestionController:
         arguments:
             $defaultLocale: "%env(locale_default)%"
-
     Controller\User\AnswerController:
         arguments:
             $defaultLocale: "%env(locale_default)%"
-
     Controller\User\InvitationController:
         arguments:
             $socialHost: "%env(social_host)%"
+    # End Controller parameters
 
+    # Autowire needed vendor classes
+    HWI\Bundle\OAuthBundle\Security\Core\Authentication\Provider\OAuthProvider:
+        autowire: true
+        arguments:
+            $userProvider: "@security.users_provider"
+            $resourceOwnerMap: "@oauth.resource_owner_map"
     GuzzleHttp\Client:
         autowire: true
+    Buzz\Client\Curl:
+        autowire: true
+    Symfony\Component\Security\Http\HttpUtils:
+        autowire: true
+    HWI\Bundle\OAuthBundle\OAuth\RequestDataStorageInterface:
+        alias: "hwi_oauth.storage.session"
+    # End Autowire needed vendor classes
 
+    # Api consumer classes parameters and autowire
     ApiConsumer\Images\ImageAnalyzer:
         autowire: true
+    ApiConsumer\Fetcher\FetcherService:
+        autowire: true
+        arguments:
+            $options: "%api_consumer_fetchers%"
+    ApiConsumer\Fetcher\ProcessorService:
+        autowire: true
+    ApiConsumer\Factory\FetcherFactory:
+        autowire: true
+        arguments:
+            $options: "%api_consumer_fetchers%"
+    ApiConsumer\Factory\ResourceOwnerFactory:
+        autowire: true
+        arguments:
+            $options: "%api_consumer_resource_owners%"
+    ApiConsumer\LinkProcessor\LinkProcessor:
+        autowire: true
+    ApiConsumer\LinkProcessor\LinkResolver:
+        autowire: true
+    ApiConsumer\Factory\ProcessorFactory:
+        autowire: true
+        arguments:
+            $options: "%api_consumer_resource_processors%"
+            $brainBaseUrl: "%env(brain_base_url)%"
+    ApiConsumer\Factory\GoutteClientFactory:
+        autowire: true
+    # End Api consumer classes parameters and autowire
 
+    # Model explicit parameters
+    Model\Neo4j\GraphManager:
+        arguments:
+            $username: "%env(db_neo4j_user)%"
+            $password: "%env(db_neo4j_pass)%"
     Model\User\UserManager:
         arguments:
             $imagesBaseDir: "%kernel.project_dir%%env(images_web_dir)%"
-
     Model\Photo\PhotoManager:
         arguments:
             $base: "%kernel.project_dir%%env(images_web_dir)%"
             $host: "%env(social_host)%"
-
     Model\Photo\GalleryManager:
         arguments:
             $base: "%kernel.project_dir%%env(images_web_dir)%"
-
     Model\Invitation\InvitationManager:
         arguments:
             $adminDomain: "%env(admin_domain_plus_port)%"
-
     Model\Group\GroupManager:
         arguments:
             $invitationImagesRoot: "%env(admin_domain_plus_port)%"
-
     Model\Device\DeviceManager:
         arguments:
             $applicationServerKey: "%env(push_private_key)%"
-
     Model\Metadata\MetadataManagerFactory:
         arguments:
             $config: "%metadata_config%"
             $metadata: "%fields%"
             $defaultLocale: "en"
+    # End Model explicit parameters
 
+    # Model metadata explicit parameters
     Model\Metadata\ProfileMetadataManager:
         factory: 'Model\Metadata\MetadataManagerFactory:build'
         arguments: ['profile']
     Model\Metadata\UserFilterMetadataManager:
         factory: 'Model\Metadata\MetadataManagerFactory:build'
         arguments: ['user_filter']
+    # End Model metadata explicit parameters
 
+    # Validators
     Service\Validator\ValidatorFactory:
         arguments:
             $config: "%validator_config%"
@@ -179,13 +216,9 @@ services:
     Service\Validator\TokenStatusValidator:
         factory: 'Service\Validator\ValidatorFactory:build'
         arguments: ['tokenStatus']
+    # End Validators
 
-
-    Model\Neo4j\GraphManager:
-        arguments:
-            $username: "%env(db_neo4j_user)%"
-            $password: "%env(db_neo4j_pass)%"
-
+    # Services
     Service\LookUp\LookUpFullContact:
         arguments:
             $apiUrl: "%env(fullContact_url)%"
@@ -210,4 +243,11 @@ services:
 
     hwi_oauth.user.provider.entity:
         class: HWI\Bundle\OAuthBundle\Security\Core\User\OAuthUserProvider
+    # End Services
 
+    # Console commands
+    Console\Command\LinksFetchAndPreProcessCommand:
+        arguments:
+            $resourceOwners: "%hwi_oauth.resource_owners%"
+        tags:
+            - { name: 'console.command' }

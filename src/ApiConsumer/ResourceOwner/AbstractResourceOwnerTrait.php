@@ -6,13 +6,13 @@ use ApiConsumer\Event\OAuthTokenEvent;
 use ApiConsumer\LinkProcessor\UrlParser\UrlParser;
 use Http\Client\HttpClient as HttpClientInterface;
 use ApiConsumer\Exception\TokenException;
-use Buzz\Message\ResponseBuilder as Response;
+use Psr\Http\Message\ResponseInterface as Response;
 use HWI\Bundle\OAuthBundle\DependencyInjection\Configuration;
 use HWI\Bundle\OAuthBundle\OAuth\RequestDataStorageInterface;
 use HWI\Bundle\OAuthBundle\Security\OAuthUtils;
 use Model\Token\Token;
 use Model\Token\TokensManager;
-use Symfony\Component\EventDispatcher\EventDispatcher;
+use Service\EventDispatcher;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Security\Http\HttpUtils;
 

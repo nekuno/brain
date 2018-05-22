@@ -12,7 +12,6 @@ class ConfigurationExtension extends Extension
     {
         $fields = Yaml::parseFile(__DIR__.'/../../config/fields.yaml');
         $container->setParameter('fields', $fields);
-        $container->setParameter('profile_fields', $fields['profile']);
 
         $configMetadata = Yaml::parseFile(__DIR__.'/../../config/config_metadata.yaml');
         $container->setParameter('metadata_config', $configMetadata['metadata.config']);

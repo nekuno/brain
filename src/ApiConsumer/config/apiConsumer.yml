@@ -1,0 +1,168 @@
+api_consumer.config:
+    resource_owner:
+        twitter:
+            class: ApiConsumer\ResourceOwner\TwitterResourceOwner
+            parser_class: ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser
+        facebook:
+            class: ApiConsumer\ResourceOwner\FacebookResourceOwner
+            parser_class: ApiConsumer\LinkProcessor\UrlParser\FacebookUrlParser
+        google:
+            class: ApiConsumer\ResourceOwner\GoogleResourceOwner
+        google_profile:
+            class: ApiConsumer\ResourceOwner\GoogleResourceOwner
+        spotify:
+            class: ApiConsumer\ResourceOwner\SpotifyResourceOwner
+            parser_class: ApiConsumer\LinkProcessor\UrlParser\SpotifyUrlParser
+        tumblr:
+            class: ApiConsumer\ResourceOwner\TumblrResourceOwner
+            parser_class: ApiConsumer\LinkProcessor\UrlParser\TumblrUrlParser
+        linkedin:
+            class: ApiConsumer\ResourceOwner\LinkedinResourceOwner
+        steam:
+            class: ApiConsumer\ResourceOwner\SteamResourceOwner
+            parser_class: ApiConsumer\LinkProcessor\UrlParser\SteamUrlParser
+    fetcher:
+        twitter_links:
+            class: ApiConsumer\Fetcher\TwitterLinksFetcher
+            resourceOwner: twitter
+        twitter_favorites:
+            class: ApiConsumer\Fetcher\TwitterFavoritesFetcher
+            resourceOwner: twitter
+        twitter_following:
+            class: ApiConsumer\Fetcher\TwitterFollowingFetcher
+            resourceOwner: twitter
+        facebook_links:
+            class: ApiConsumer\Fetcher\FacebookLinksFetcher
+            resourceOwner: facebook
+        facebook_likes:
+            class: ApiConsumer\Fetcher\FacebookLikesFetcher
+            resourceOwner: facebook
+        google:
+            class: ApiConsumer\Fetcher\GoogleFetcher
+            resourceOwner: google
+        google_profile:
+            class: ApiConsumer\Fetcher\GoogleProfileFetcher
+            resourceOwner: google_profile
+        youtube:
+            class: ApiConsumer\Fetcher\YoutubeFetcher
+            resourceOwner: google
+        spotify:
+            class: ApiConsumer\Fetcher\SpotifyFetcher
+            resourceOwner: spotify
+        tumblr_blogs:
+            class: ApiConsumer\Fetcher\TumblrBlogsFetcher
+            resourceOwner: tumblr
+        tumblr_following:
+            class: ApiConsumer\Fetcher\TumblrFollowingFetcher
+            resourceOwner: tumblr
+        tumblr_likes:
+            class: ApiConsumer\Fetcher\TumblrLikesFetcher
+            resourceOwner: tumblr
+        tumblr_posts:
+            class: ApiConsumer\Fetcher\TumblrPostsFetcher
+            resourceOwner: tumblr
+        steam_games:
+            class: ApiConsumer\Fetcher\SteamGamesFetcher
+            resourceOwner: steam
+    processor:
+        twitter_intent:
+            class: ApiConsumer\LinkProcessor\Processor\TwitterProcessor\TwitterIntentProcessor
+            parser: ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser
+            resourceOwner: twitter
+        twitter_profile:
+            class: ApiConsumer\LinkProcessor\Processor\TwitterProcessor\TwitterProfileProcessor
+            parser: ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser
+            resourceOwner: twitter
+        twitter_pic:
+            class: ApiConsumer\LinkProcessor\Processor\TwitterProcessor\TwitterPicProcessor
+            parser: ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser
+            resourceOwner: twitter
+        twitter_tweet:
+            class: ApiConsumer\LinkProcessor\Processor\TwitterProcessor\TwitterTweetProcessor
+            parser: ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser
+            resourceOwner: twitter
+
+        facebook_profile:
+            class: ApiConsumer\LinkProcessor\Processor\FacebookProcessor\FacebookProfileProcessor
+            parser: ApiConsumer\LinkProcessor\UrlParser\FacebookUrlParser
+            resourceOwner: facebook
+        facebook_page:
+            class: ApiConsumer\LinkProcessor\Processor\FacebookProcessor\FacebookPageProcessor
+            parser: ApiConsumer\LinkProcessor\UrlParser\FacebookUrlParser
+            resourceOwner: facebook
+        facebook_status:
+            class: ApiConsumer\LinkProcessor\Processor\FacebookProcessor\FacebookStatusProcessor
+            parser: ApiConsumer\LinkProcessor\UrlParser\FacebookUrlParser
+            resourceOwner: facebook
+        facebook_video:
+            class: ApiConsumer\LinkProcessor\Processor\FacebookProcessor\FacebookVideoProcessor
+            parser: ApiConsumer\LinkProcessor\UrlParser\FacebookUrlParser
+            resourceOwner: facebook
+
+        spotify_album:
+            class: ApiConsumer\LinkProcessor\Processor\SpotifyProcessor\SpotifyAlbumProcessor
+            parser: ApiConsumer\LinkProcessor\UrlParser\SpotifyUrlParser
+            resourceOwner: spotify
+        spotify_artist:
+            class: ApiConsumer\LinkProcessor\Processor\SpotifyProcessor\SpotifyArtistProcessor
+            parser: ApiConsumer\LinkProcessor\UrlParser\SpotifyUrlParser
+            resourceOwner: spotify
+        spotify_track:
+            class: ApiConsumer\LinkProcessor\Processor\SpotifyProcessor\SpotifyTrackProcessor
+            parser: ApiConsumer\LinkProcessor\UrlParser\SpotifyUrlParser
+            resourceOwner: spotify
+
+        youtube_channel:
+            class: ApiConsumer\LinkProcessor\Processor\YoutubeProcessor\YoutubeChannelProcessor
+            parser: ApiConsumer\LinkProcessor\UrlParser\YoutubeUrlParser
+            resourceOwner: google
+        youtube_playlist:
+            class: ApiConsumer\LinkProcessor\Processor\YoutubeProcessor\YoutubePlaylistProcessor
+            parser: ApiConsumer\LinkProcessor\UrlParser\YoutubeUrlParser
+            resourceOwner: google
+        youtube_video:
+            class: ApiConsumer\LinkProcessor\Processor\YoutubeProcessor\YoutubeVideoProcessor
+            parser: ApiConsumer\LinkProcessor\UrlParser\YoutubeUrlParser
+            resourceOwner: google
+
+        tumblr_audio:
+            class: ApiConsumer\LinkProcessor\Processor\TumblrProcessor\TumblrAudioProcessor
+            parser: ApiConsumer\LinkProcessor\UrlParser\TumblrUrlParser
+            resourceOwner: tumblr
+        tumblr_blog:
+            class: ApiConsumer\LinkProcessor\Processor\TumblrProcessor\TumblrBlogProcessor
+            parser: ApiConsumer\LinkProcessor\UrlParser\TumblrUrlParser
+            resourceOwner: tumblr
+        tumblr_link:
+            class: ApiConsumer\LinkProcessor\Processor\TumblrProcessor\TumblrLinkProcessor
+            parser: ApiConsumer\LinkProcessor\UrlParser\TumblrUrlParser
+            resourceOwner: tumblr
+        tumblr_photo:
+            class: ApiConsumer\LinkProcessor\Processor\TumblrProcessor\TumblrPhotoProcessor
+            parser: ApiConsumer\LinkProcessor\UrlParser\TumblrUrlParser
+            resourceOwner: tumblr
+        tumblr_video:
+            class: ApiConsumer\LinkProcessor\Processor\TumblrProcessor\TumblrVideoProcessor
+            parser: ApiConsumer\LinkProcessor\UrlParser\TumblrUrlParser
+            resourceOwner: tumblr
+        tumblr_unknown_type_post:
+            class: ApiConsumer\LinkProcessor\Processor\TumblrProcessor\TumblrUnknownTypePostProcessor
+            parser: ApiConsumer\LinkProcessor\UrlParser\TumblrUrlParser
+            resourceOwner: tumblr
+
+        steam_game:
+            class: ApiConsumer\LinkProcessor\Processor\SteamProcessor\SteamGameProcessor
+            parser: ApiConsumer\LinkProcessor\UrlParser\SteamUrlParser
+            resourceOwner: steam
+
+        instagram:
+            class: ApiConsumer\LinkProcessor\Processor\InstagramProcessor\InstagramProcessor
+            parser: ApiConsumer\LinkProcessor\UrlParser\InstagramUrlParser
+        instagram_profile:
+            class: ApiConsumer\LinkProcessor\Processor\InstagramProcessor\InstagramProfileProcessor
+            parser: ApiConsumer\LinkProcessor\UrlParser\InstagramUrlParser
+
+        scrapper:
+            class: ApiConsumer\LinkProcessor\Processor\ScraperProcessor\ScraperProcessor
+        scrapperImage:
+            class: ApiConsumer\LinkProcessor\Processor\ScraperProcessor\ImageScraperProcessor

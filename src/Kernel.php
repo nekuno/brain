@@ -2,6 +2,7 @@
 
 namespace App;
 
+use DependencyInjection\ApiConsumerExtension;
 use DependencyInjection\FieldsExtension;
 use DependencyInjection\HWIOAuthExtension;
 use DependencyInjection\MetadataExtension;
@@ -46,12 +47,15 @@ class Kernel extends BaseKernel
         $parserConfExtension = new ConfigurationExtension();
         $neo4jExtension = new Neo4jExtension();
         $hwiExtension = new HWIOAuthExtension();
+        $apiConsumerExtension = new ApiConsumerExtension();
         $container->registerExtension($parserConfExtension);
         $container->registerExtension($hwiExtension);
         $container->registerExtension($neo4jExtension);
+        $container->registerExtension($apiConsumerExtension);
         $container->loadFromExtension($parserConfExtension->getAlias());
         $container->loadFromExtension($neo4jExtension->getAlias());
         $container->loadFromExtension($hwiExtension->getAlias());
+        $container->loadFromExtension($apiConsumerExtension->getAlias());
 
         $container->addResource(new FileResource($this->getProjectDir().'/config/bundles.php'));
         // Feel free to remove the "container.autowiring.strict_mode" parameter
