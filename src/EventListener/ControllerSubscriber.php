@@ -57,6 +57,7 @@ class ControllerSubscriber implements EventSubscriberInterface
         $data = array('error' => $e->getMessage());
 
         $headers = $e instanceof HttpExceptionInterface ? $e->getHeaders() : array();
+        $statusCode = $e instanceof HttpExceptionInterface ? $e->getStatusCode() : 500;
 
         if ($e instanceof ValidationException) {
             $data['validationErrors'] = $e->getErrors();
@@ -77,7 +78,7 @@ class ControllerSubscriber implements EventSubscriberInterface
             );
         }
 
-        $response = new JsonResponse($data, $e->getStatusCode(), $headers);
+        $response = new JsonResponse($data, $statusCode, $headers);
 
         $event->setResponse($response);
     }
