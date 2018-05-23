@@ -235,6 +235,12 @@ services:
         arguments: ['tokenStatus']
     # End Validators
 
+    # Subscribers
+    EventListener\ControllerSubscriber:
+        arguments:
+            $env: "%env(APP_ENV)%"
+    # End Subscribers
+
     # Services
     Service\DeviceService:
         arguments:
