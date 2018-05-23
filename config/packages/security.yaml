@@ -33,10 +33,10 @@ security:
             methods: [OPTIONS]
         instant:
             anonymous: true
-            pattern: ^/instant/
+            pattern: ^/instant/.*$
         admin:
             anonymous: true
-            pattern: ^/admin/
+            pattern: ^/admin/.*$
         secured:
             json_login:
                 check_path: /login
@@ -49,5 +49,7 @@ security:
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
     access_control:
-        - { path: ^/instant/, ips: "%valid_ips%" }
-        - { path: ^/admin/, ips: "%valid_ips%" }
+        - { path: ^/instant/, roles: IS_AUTHENTICATED_ANONYMOUSLY, ips: "%valid_ips%" }
+        - { path: ^/admin/, roles: IS_AUTHENTICATED_ANONYMOUSLY, ips: "%valid_ips%" }
+        - { path: ^/instant/, roles: ROLE_NO_ACCESS }
+        - { path: ^/admin/, roles: ROLE_NO_ACCESS }

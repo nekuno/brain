@@ -8,22 +8,59 @@ use Model\Filters\FilterUsers;
 
 class Group implements \JsonSerializable
 {
+    /**
+     * @var integer
+     */
     protected $id;
+    /**
+     * @var string
+     */
     protected $name;
+    /**
+     * @var string
+     */
     protected $html;
+    /**
+     * @var string[]
+     */
     protected $location;
+    /**
+     * @var integer
+     */
     protected $date;
+    /**
+     * @var integer
+     */
     protected $usersCount;
+    /**
+     * @var integer
+     */
     protected $createdBy;
+    /**
+     * @var string
+     */
     protected $imagePath;
     /**
      * @var GroupPhoto $photo
      */
     protected $photo;
+    /**
+     * @var string[]
+     */
     protected $filterUsers;
+    /**
+     * @var string[]
+     */
     protected $invitation;
+    /**
+     * @var string[]
+     */
     protected $popularContents;
 
+    /**
+     * @param Node $groupNode
+     * @return static
+     */
     public static function createFromNode(Node $groupNode)
     {
         $group = new static();
@@ -232,6 +269,9 @@ class Group implements \JsonSerializable
         $this->popularContents = $popularContents;
     }
 
+    /**
+     * @return array
+     */
     function jsonSerialize()
     {
         return array(

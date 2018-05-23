@@ -5,6 +5,9 @@ namespace Model\Photo;
 class GroupPhoto extends Photo
 {
 
+    /**
+     * @return string
+     */
     public function getDefaultPath()
     {
         return 'bundles/qnoowlanding/images/user-no-img.jpg';
