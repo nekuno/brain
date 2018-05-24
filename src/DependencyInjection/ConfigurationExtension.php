@@ -18,5 +18,8 @@ class ConfigurationExtension extends Extension
 
         $configValidator = Yaml::parseFile(__DIR__.'/../../config/config_validator.yaml');
         $container->setParameter('validator_config', $configValidator['validator.config']);
+
+        $configConsistency = Yaml::parseFile(__DIR__.'/../../config/consistency.yml');
+        $container->setParameter('consistency', $configConsistency);
     }
 }

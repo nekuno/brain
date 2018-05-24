@@ -7,15 +7,19 @@ use GuzzleHttp\Exception\RequestException;
 
 class InstantConnection
 {
+    /**
+     * @var Client
+     */
     protected $client;
 
-    /**
-     * InstantConnection constructor.
-     * @param $client
-     */
-    public function __construct(Client $client)
+    public function __construct($instantHost, $instantApiSecret)
     {
-        $this->client = $client;
+        $config = array(
+            'base_uri' => $instantHost,
+            'auth' => array('brain', $instantApiSecret)
+        );
+
+        $this->client = new Client($config);
     }
 
     public function fetchStart($data)
@@ -48,9 +52,74 @@ class InstantConnection
         return $this->post($url, $data);
     }
 
+    public function similarityStart($data)
+    {
+        $url = 'api/similarity/start';
+        return $this->post($url, $data);
+    }
+
+    public function similarityStep($data)
+    {
+        $url = 'api/similarity/step';
+        return $this->post($url, $data);
+    }
+
+    public function similarityFinish($data)
+    {
+        $url = 'api/similarity/finish';
+        return $this->post($url, $data);
+    }
+
+    public function matchingStart($data)
+    {
+        $url = 'api/matching/start';
+        return $this->post($url, $data);
+    }
+
+    public function matchingStep($data)
+    {
+        $url = 'api/matching/step';
+        return $this->post($url, $data);
+    }
+
+    public function matchingFinish($data)
+    {
+        $url = 'api/matching/finish';
+        return $this->post($url, $data);
+    }
+    public function affinityStart($data)
+    {
+        $url = 'api/affinity/start';
+        return $this->post($url, $data);
+    }
+
+    public function affinityStep($data)
+    {
+        $url = 'api/affinity/step';
+        return $this->post($url, $data);
+    }
+
+    public function affinityFinish($data)
+    {
+        $url = 'api/affinity/finish';
+        return $this->post($url, $data);
+    }
+
     public function clearUser($data)
     {
         $url = 'api/user/clear';
+        return $this->post($url, $data);
+    }
+
+    public function setStatus($data)
+    {
+        $url = 'api/user/status';
+        return $this->post($url, $data);
+    }
+
+    public function sendMessage($data)
+    {
+        $url = 'api/message';
         return $this->post($url, $data);
     }
 

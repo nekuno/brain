@@ -26,6 +26,8 @@ parameters:
     env(rabbitmq_port): ''
     env(rabbitmq_user): ''
     env(rabbitmq_pass): ''
+    env(instant_host): ''
+    env(instant_api_secret): ''
     env(APP_ENV): ''
 
 services:
@@ -239,6 +241,12 @@ services:
     EventListener\ControllerSubscriber:
         arguments:
             $env: "%env(APP_ENV)%"
+    EventListener\PrivacySubscriber:
+        arguments:
+            $socialHost: "%env(social_host)%"
+    EventListener\SimilarityMatchingSubscriber:
+        arguments:
+            $socialHost: "%env(social_host)%"
     # End Subscribers
 
     # Services
@@ -256,6 +264,13 @@ services:
         arguments:
             $apiUrl: "%env(peopleGraph_url)%"
             $apiKey: "%env(peopleGraph_consumer_key)%"
+    Service\InstantConnection:
+        arguments:
+            $instantHost: "%env(instant_host)%"
+            $instantApiSecret: "%env(instant_api_secret)%"
+    Service\Consistency\ConsistencyCheckerService:
+        arguments:
+            $consistencyRules: "%consistency%"
 
     manager.user_manager:
         class: Model\User\UserManager

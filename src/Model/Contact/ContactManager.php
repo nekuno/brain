@@ -2,7 +2,7 @@
 
 namespace Model\Contact;
 
-use Doctrine\DBAL\Connection;
+use Doctrine\ORM\EntityManagerInterface;
 use Model\Neo4j\GraphManager;
 use Model\Relations\RelationsManager;
 use Model\User\UserManager;
@@ -10,9 +10,9 @@ use Model\User\UserManager;
 class ContactManager
 {
     /**
-     * @var Connection
+     * @var EntityManagerInterface
      */
-    protected $connectionBrain;
+    protected $em;
 
     /**
      * @var UserManager
@@ -31,14 +31,14 @@ class ContactManager
 
     /**
      * @param GraphManager $graphManager
-     * @param Connection $connectionBrain
+     * @param EntityManagerInterface $em
      * @param UserManager $userManager
      * @param RelationsManager $relationsModel
      */
-    public function __construct(GraphManager $graphManager, Connection $connectionBrain, UserManager $userManager, RelationsManager $relationsModel)
+    public function __construct(GraphManager $graphManager, EntityManagerInterface $em, UserManager $userManager, RelationsManager $relationsModel)
     {
         $this->graphManager = $graphManager;
-        $this->connectionBrain = $connectionBrain;
+        $this->em = $em;
         $this->userManager = $userManager;
         $this->relationsModel = $relationsModel;
     }
@@ -113,9 +113,8 @@ class ContactManager
      */
     protected function fetchMessagedByUser($id)
     {
-        $messaged = $this->connectionBrain->executeQuery(
-            '
-            SELECT * FROM (
+        $messaged = $this->em->getConnection()->executeQuery(
+            'SELECT * FROM (
               SELECT user_to AS user FROM chat_message
               WHERE user_from = :id
               GROUP BY user_to

@@ -1,0 +1,375 @@
+user:
+    label: User
+    checkerClass: Service\Consistency\UserConsistencyChecker
+
+    relationships:
+        profile:
+            type: PROFILE_OF
+            direction: incoming
+            otherNode: Profile
+            minimum: 1
+            maximum: 1
+        similarity:
+            type: SIMILARITY
+            otherNode: User
+            properties:
+                similarity:
+                    required: true
+                    minimum: 0
+                    maximum: 1
+        matching:
+            type: MATCHES
+            otherNode: User
+            properties:
+                matching_questions:
+                    required: true
+                    minimum: 0
+                    maximum: 1
+        belongs_to:
+            type: BELONGS_TO
+            direction: outgoing
+            otherNode: Group
+        created_group:
+            type: CREATED_GROUP
+            direction: outgoing
+            otherNode: Group
+        answers:
+            type: ANSWERS
+            direction: outgoing
+            otherNode: Answer
+        rates:
+            type: RATES
+            direction: outgoing
+            otherNode: Question
+            properties:
+                rating:
+                    required: true
+                    type: integer
+                    minimum: 0
+                    maximum: 3
+        accepts:
+            type: ACCEPTS
+            direction: outgoing
+            otherNode: Answer
+        privacy:
+            type: PRIVACY_OF
+            direction: incoming
+            otherNode: Privacy
+        affinity:
+            type: AFFINITY
+            direction: outgoing
+            otherNode: Link
+            properties:
+                affinity:
+                    required: true
+                    minimum: 0
+                    maximum: 1
+                updated:
+                    required: true
+                    type: integer
+        thread:
+            type: HAS_THREAD
+            direction: outgoing
+            otherNode: Thread
+        recommends:
+            type: RECOMMENDS
+            direction: incoming
+            otherNode: ThreadUsers
+        created_invitation:
+            type: CREATED_INVITATION
+            direction: outgoing
+            otherNode: Invitation
+
+    properties:
+        qnoow_id:
+            required: true
+            type: integer
+        usernameCanonical:
+            required: true
+        username:
+            required: true
+        status:
+            required: true
+            options: [complete, incomplete]
+        createdAt:
+            required: true
+            type: datetime
+            maximum: "now"
+            minimum: "2010-01-01"
+        updatedAt:
+            required: true
+            type: datetime
+            maximum: "now"
+            minimum: "2010-01-01"
+        email:
+            required: true
+        emailCanonical:
+            required: true
+        available_invitations:
+            type: integer
+            minimum: 0
+        lastLogin:
+            type: datetime
+            maximum: "now"
+        enabled:
+            type: boolean
+        locked:
+            type: boolean
+        confirmed:
+            type: boolean
+
+profile:
+    label: Profile
+
+    relationships:
+        tagged:
+            type: TAGGED
+            direction: incoming
+            otherNode: ProfileTag
+        option:
+            type: OPTION_OF
+            direction: incoming
+            otherNode: ProfileOption
+        location:
+            type: LOCATION
+            direction: outgoing
+            otherNode: Location
+        profile_of:
+            type: PROFILE_OF
+            direction: outgoing
+            otherNode:
+                -UserEnabled
+                -UserDisabled
+            minimum: 1
+            maximum: 1
+
+    properties:
+        birthday:
+            type: datetime
+            maximum: "now"
+        orientationRequired:
+            type: boolean
+        height:
+            type: integer
+
+profileOption:
+    label: ProfileOption
+
+    relationships:
+        option:
+            type: OPTION_OF
+            direction: outgoing
+            otherNode: Profile
+
+    properties:
+        id:
+            required: true
+        name_es:
+            required: true
+        name_en:
+            required: true
+
+mode:
+    label: Mode
+
+    relationships:
+        option:
+            type: OPTION_OF
+            direction: outgoing
+            otherNode: Profile
+        included_in:
+            type: INCLUDED_IN
+            direction: incoming
+            otherNode: QuestionCategory
+
+profileTag:
+    label: ProfileTag
+
+    relationships:
+        tagged:
+            type: TAGGED
+            direction: outgoing
+            otherNode: Profile
+        text_of:
+            type: TEXT_OF
+            direction: incoming
+            otherNode: TextLanguage
+            minimum: 1
+            maximum: 2
+
+textLanguage:
+    label: TextLanguage
+
+    relationships:
+        text_of:
+            type: TEXT_OF
+            direction: outgoing
+            minimum: 1
+            maximum: 1
+
+
+thread:
+    label: Thread
+    checkerClass: Service\Consistency\ThreadConsistencyChecker
+
+    relationships:
+        filter:
+            type: HAS_FILTER
+            direction: outgoing
+            otherNode: Filter
+            maximum: 1
+        user:
+            type: HAS_THREAD
+            direction: incoming
+            otherNode: User
+            minimum: 1
+            maximum: 1
+
+    properties:
+        name:
+            required: true
+        createdAt:
+            required: true
+            type: datetime
+            maximum: "now"
+            minimum: "2010-01-01"
+        updatedAt:
+            required: true
+            type: datetime
+            maximum: "now"
+            minimum: "2010-01-01"
+        totalResults:
+            type: integer
+            minimum: 0
+
+filterContent:
+    label: FilterContent
+
+    properties:
+        type:
+            required: true
+            type: array
+
+filterUsers:
+    label: FilterUsers
+
+    properties:
+        age_min:
+            type: integer
+        age_max:
+            type: integer
+
+    relationships:
+        filters_by:
+            type: FILTERS_BY
+            direction: outgoing
+            otherNode:
+                - ProfileOption
+                - ProfileTag
+                - Location
+                - Group
+
+link:
+    label: Link
+    solverClass: Service\Consistency\LinkConsistencySolver
+
+    relationships:
+        popularity:
+            type: HAS_POPULARITY
+            direction: outgoing
+            otherNode: Popularity
+            minimum: 1
+            maximum: 1
+        affinity:
+            type: AFFINITY
+            direction: incoming
+            otherNode: User
+        likes:
+            type: LIKES
+            direction: incoming
+            otherNode: User
+            minimum: 1
+        tagged:
+            type: TAGGED
+            diretion: outgoing
+            otherNode: Tag
+
+    properties:
+        url:
+            required: true
+
+web:
+    label: Web
+    checkerClass: Service\Consistency\WebConsistencyChecker
+
+
+question:
+    label: Question
+
+    properties:
+        text_en:
+            required: true
+        text_es:
+            required: true
+        text:
+            required: true
+            default: node.text_es
+
+    relationships:
+        rates:
+            type: RATES
+            direction: incoming
+            otherNode: User
+
+        is_answer_of:
+            type: IS_ANSWER_OF
+            direction: incoming
+            otherNode: Answer
+            minimum: 2
+            maximum: 6
+
+        created_by:
+            type: CREATED_BY
+            direction: outgoing
+            otherNode: User
+            maximum: 1
+
+answer:
+    label: Answer
+
+    properties:
+        text_en:
+            required: true
+        text_es:
+            required: true
+
+    relationships:
+        is_answer_of:
+            type: IS_ANSWER_OF
+            direction: outgoing
+            otherNode: Question
+            minimum: 1
+            maximum: 1
+
+        answers:
+            type: ANSWERS
+            direction: incoming
+            otherNode: User
+
+        accepts:
+            type: ACCEPTS
+            direction: incoming
+            otherNode: User
+
+questionCategory:
+    label: QuestionCategory
+
+    relationships:
+        included_in:
+            type: INCLUDED_IN
+            direction: outgoing
+            otherNode: Mode
+        category_of:
+            type: CATEGORY_OF
+            direction: outgoing
+            otherNode: Question
