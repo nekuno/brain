@@ -29,7 +29,7 @@ class PushNotificationsController extends FOSRestController implements ClassReso
      *      schema=@SWG\Schema(
      *          @SWG\Property(property="userId", type="integer"),
      *          @SWG\Property(property="category", type="string"),
-     *          @SWG\Property(property="data", type="string[]"),
+     *          @SWG\Property(property="data", type="string"),
      *      )
      * )
      * @SWG\Response(

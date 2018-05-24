@@ -4,20 +4,38 @@ namespace Model\Question\Admin;
 
 class QuestionAdmin implements \JsonSerializable
 {
+    /**
+     * @var integer
+     */
     protected $questionId;
 
+    /**
+     * @var string[]
+     */
     protected $questionText = array('en' => '', 'es' => '');
 
+    /**
+     * @var AnswerAdmin[]
+     */
     protected $answers = array();
 
+    /**
+     * @var int
+     */
     protected $answered = 0;
 
+    /**
+     * @var int
+     */
     protected $skipped = 0;
 
+    /**
+     * @var string[]
+     */
     protected $categories = array();
 
     /**
-     * @return mixed
+     * @return integer
      */
     public function getQuestionId()
     {

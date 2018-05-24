@@ -111,8 +111,7 @@ class QuestionController extends FOSRestController implements ClassResourceInter
      *      in="body",
      *      type="json",
      *      schema=@SWG\Schema(
-     *          @SWG\Property(property="answerTexts", type="array[]"),
-     *          @SWG\Property(property="questionTexts", type="array[]"),
+     *          ref=@Model(type=\Model\Question\Admin\QuestionAdmin::class)
      *      )
      * )
      * @SWG\Response(
@@ -142,8 +141,7 @@ class QuestionController extends FOSRestController implements ClassResourceInter
      *      in="body",
      *      type="json",
      *      schema=@SWG\Schema(
-     *          @SWG\Property(property="answerTexts", type="array[]"),
-     *          @SWG\Property(property="questionTexts", type="array[]"),
+     *          ref=@Model(type=\Model\Question\Admin\QuestionAdmin::class)
      *      )
      * )
      * @SWG\Response(

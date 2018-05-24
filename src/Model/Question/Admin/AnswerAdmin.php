@@ -4,8 +4,14 @@ namespace Model\Question\Admin;
 
 class AnswerAdmin implements \JsonSerializable
 {
+    /**
+     * @var integer
+     */
     protected $answerId;
 
+    /**
+     * @var string[]
+     */
     protected $text = array('es' => '', 'en' => '');
 
     /**

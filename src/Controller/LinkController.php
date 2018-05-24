@@ -30,7 +30,7 @@ class LinkController extends FOSRestController implements ClassResourceInterface
      *      in="body",
      *      type="json",
      *      schema=@SWG\Schema(
-     *          @SWG\Property(property="urls", type="string[]")
+     *          @SWG\Property(property="urls", type="string")
      *      )
      * )
      * @SWG\Response(
