@@ -16,7 +16,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class LinksCalculatePredictionCommand extends ApplicationAwareCommand
 {
-    protected static $defaultName = 'users:calculate:matching';
+    protected static $defaultName = 'links:calculate:prediction';
 
     /**
      * @var UserManager
