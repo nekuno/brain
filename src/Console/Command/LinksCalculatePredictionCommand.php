@@ -55,6 +55,8 @@ class LinksCalculatePredictionCommand extends ApplicationAwareCommand
         $this->linkManager = $linkManager;
         $this->affinityManager = $affinityManager;
         $this->affinityRecalculations = $affinityRecalculations;
+        $this->mailerSpool = $mailerSpool;
+        $this->mailerTransport = $mailerTransport;
     }
 
     protected function configure()
