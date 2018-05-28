@@ -11,7 +11,7 @@ use Model\Exception\ErrorList;
 use Model\Exception\ValidationException;
 use Model\Metadata\MetadataManager;
 use Model\Neo4j\GraphManager;
-use Symfony\Component\EventDispatcher\EventDispatcher;
+use Service\EventDispatcher;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -26,7 +26,7 @@ class PrivacyManager
     {
         $this->gm = $graphManager;
         $this->dispatcher = $dispatcher;
-        $this->metadata = $metadata;
+        $this->metadata = $metadata['privacy'];
         $this->defaultLocale = $defaultLocale;
     }
 

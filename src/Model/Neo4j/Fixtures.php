@@ -122,7 +122,7 @@ class Fixtures
      */
     protected $rm;
 
-    public function __construct($scenario, GraphManager $graphManager, Constraints $constraints, UserManager $userManager, EnterpriseUserManager $enterpriseUserManager, GroupManager $groupManager,
+    public function __construct(GraphManager $graphManager, Constraints $constraints, UserManager $userManager, EnterpriseUserManager $enterpriseUserManager, GroupManager $groupManager,
                                 GroupService $groupService, InvitationManager $invitationManager, LinkManager $linkManager, QuestionService $questionService, QuestionCorrelationManager $questionCorrelationManager,
                                 AnswerManager $answerManager, ProfileManager $profileManager, PrivacyManager $privacyManager, RateManager $rateManager)
     {
@@ -140,7 +140,6 @@ class Fixtures
         $this->pm = $profileManager;
         $this->prim = $privacyManager;
         $this->rm = $rateManager;
-        $this->scenario = $scenario;
     }
 
     /**
@@ -152,9 +151,9 @@ class Fixtures
         $this->logger = $logger;
     }
 
-    public function load()
+    public function load($scenario = 1)
     {
-
+        $this->scenario = $scenario;
         $this->clean();
         $this->loadProfileOptions();
         $this->loadPrivacyOptions();
