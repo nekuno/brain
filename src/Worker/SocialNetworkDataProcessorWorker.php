@@ -3,6 +3,7 @@
 namespace Worker;
 
 use Model\Neo4j\Neo4jException;
+use Psr\Log\LoggerInterface;
 use Service\AMQPManager;
 use Service\EventDispatcherHelper;
 use Service\SocialNetwork;
@@ -15,9 +16,9 @@ class SocialNetworkDataProcessorWorker extends LoggerAwareWorker implements Rabb
      */
     protected $sn;
 
-    public function __construct(EventDispatcherHelper $dispatcherHelper, SocialNetwork $sn)
+    public function __construct(LoggerInterface $logger, EventDispatcherHelper $dispatcherHelper, SocialNetwork $sn)
     {
-        parent::__construct($dispatcherHelper);
+        parent::__construct($logger, $dispatcherHelper);
         $this->sn = $sn;
     }
 

@@ -32,8 +32,9 @@ abstract class LoggerAwareWorker implements LoggerAwareInterface, RabbitMQConsum
 
     protected $queueManager;
 
-    public function __construct(EventDispatcherHelper $dispatcherHelper)
+    public function __construct(LoggerInterface $logger, EventDispatcherHelper $dispatcherHelper)
     {
+        $this->logger = $logger;
         $this->dispatcherHelper = $dispatcherHelper;
         $this->queueManager = new AMQPQueueService();
     }

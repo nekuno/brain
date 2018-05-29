@@ -31,12 +31,13 @@ class ChannelWorker extends LoggerAwareWorker implements RabbitMQConsumerInterfa
     protected $em;
 
     public function __construct(
+        LoggerInterface $logger,
         EventDispatcherHelper $dispatcherHelper,
         FetcherService $fetcherService,
         ProcessorService $processorService,
         EntityManagerInterface $em
     ) {
-        parent::__construct($dispatcherHelper);
+        parent::__construct($logger, $dispatcherHelper);
         $this->fetcherService = $fetcherService;
         $this->processorService = $processorService;
         $this->em = $em;

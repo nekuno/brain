@@ -15,6 +15,7 @@ use Model\User\User;
 use Model\Matching\MatchingManager;
 use Model\Similarity\SimilarityManager;
 use Model\User\UserManager;
+use Psr\Log\LoggerInterface;
 use Service\AffinityRecalculations;
 use Service\AMQPManager;
 use Service\EventDispatcherHelper;
@@ -64,6 +65,7 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
     protected $em;
 
     public function __construct(
+        LoggerInterface $logger,
         UserManager $userManager,
         MatchingManager $matchingModel,
         SimilarityManager $similarityModel,
@@ -74,7 +76,7 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
         EntityManagerInterface $em,
         EventDispatcherHelper $dispatcherHelper
     ) {
-        parent::__construct($dispatcherHelper);
+        parent::__construct($logger, $dispatcherHelper);
         $this->userManager = $userManager;
         $this->matchingModel = $matchingModel;
         $this->similarityModel = $similarityModel;

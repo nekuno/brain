@@ -6,6 +6,7 @@ use ApiConsumer\LinkProcessor\LinkProcessor;
 use Event\CheckEvent;
 use Model\Link\Link;
 use Model\Link\LinkManager;
+use Psr\Log\LoggerInterface;
 use Service\AMQPManager;
 use Service\EventDispatcherHelper;
 
@@ -20,9 +21,9 @@ class LinksCheckWorker extends LoggerAwareWorker implements RabbitMQConsumerInte
      */
     protected $linkModel;
 
-    public function __construct(EventDispatcherHelper $dispatcherHelper, LinkManager $linkModel, LinkProcessor $linkProcessor)
+    public function __construct(LoggerInterface $logger, EventDispatcherHelper $dispatcherHelper, LinkManager $linkModel, LinkProcessor $linkProcessor)
     {
-        parent::__construct($dispatcherHelper);
+        parent::__construct($logger, $dispatcherHelper);
         $this->linkProcessor = $linkProcessor;
         $this->linkModel = $linkModel;
     }

@@ -7,6 +7,7 @@ use Model\Link\LinkManager;
 use Model\Neo4j\Neo4jException;
 use Model\Affinity\AffinityManager;
 use Model\Similarity\SimilarityManager;
+use Psr\Log\LoggerInterface;
 use Service\AffinityRecalculations;
 use Service\AMQPManager;
 use Service\EventDispatcherHelper;
@@ -38,9 +39,9 @@ class PredictionWorker extends LoggerAwareWorker implements RabbitMQConsumerInte
      */
     protected $similarityModel;
 
-    public function __construct(EventDispatcherHelper $dispatcherHelper, AffinityRecalculations $affinityRecalculations, AffinityManager $affinityModel, LinkManager $linkModel)
+    public function __construct(LoggerInterface $logger, EventDispatcherHelper $dispatcherHelper, AffinityRecalculations $affinityRecalculations, AffinityManager $affinityModel, LinkManager $linkModel)
     {
-        parent::__construct($dispatcherHelper);
+        parent::__construct($logger, $dispatcherHelper);
         $this->linkModel = $linkModel;
         $this->affinityModel = $affinityModel;
         $this->affinityRecalculations = $affinityRecalculations;

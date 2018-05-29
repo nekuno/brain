@@ -24,9 +24,9 @@ class LinkProcessorWorker extends LoggerAwareWorker implements RabbitMQConsumerI
      */
     protected $processorService;
 
-    public function __construct(EventDispatcherHelper $dispatcherHelper, FetcherService $fetcherService, ProcessorService $processorService)
+    public function __construct(LoggerInterface $logger, EventDispatcherHelper $dispatcherHelper, FetcherService $fetcherService, ProcessorService $processorService)
     {
-        parent::__construct($dispatcherHelper);
+        parent::__construct($logger, $dispatcherHelper);
         $this->fetcherService = $fetcherService;
         $this->processorService = $processorService;
     }

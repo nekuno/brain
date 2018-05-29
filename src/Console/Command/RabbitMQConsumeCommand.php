@@ -187,6 +187,7 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
     protected function buildFetching(AMQPChannel $channel)
     {
         $this->linkProcessorWorker->setChannel($channel);
+        $this->linkProcessorWorker->setLogger($this->logger);
         $this->noticeStart($this->linkProcessorWorker);
 
         return $this->linkProcessorWorker;
@@ -195,6 +196,7 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
     protected function buildRefetching(AMQPChannel $channel)
     {
         $this->databaseReprocessorWorker->setChannel($channel);
+        $this->databaseReprocessorWorker->setLogger($this->logger);
         $this->noticeStart($this->databaseReprocessorWorker);
 
         return $this->databaseReprocessorWorker;
@@ -208,6 +210,7 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
     protected function buildMatching(AMQPChannel $channel)
     {
         $this->matchingCalculatorWorker->setChannel($channel);
+        $this->matchingCalculatorWorker->setLogger($this->logger);
         $this->noticeStart($this->matchingCalculatorWorker);
 
         return $this->matchingCalculatorWorker;
@@ -222,6 +225,7 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
     protected function buildMatchingPeriodic(AMQPChannel $channel)
     {
         $this->matchingCalculatorPeriodicWorker->setChannel($channel);
+        $this->matchingCalculatorPeriodicWorker->setLogger($this->logger);
         $this->noticeStart($this->matchingCalculatorPeriodicWorker);
 
         return $this->matchingCalculatorPeriodicWorker;
@@ -234,6 +238,7 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
     protected function buildPrediction(AMQPChannel $channel)
     {
         $this->predictionWorker->setChannel($channel);
+        $this->predictionWorker->setLogger($this->logger);
         $this->noticeStart($this->predictionWorker);
 
         return $this->predictionWorker;
@@ -246,6 +251,7 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
     protected function buildSocialNetwork(AMQPChannel $channel)
     {
         $this->socialNetworkDataProcessorWorker->setChannel($channel);
+        $this->socialNetworkDataProcessorWorker->setLogger($this->logger);
         $this->noticeStart($this->socialNetworkDataProcessorWorker);
 
         return $this->socialNetworkDataProcessorWorker;
@@ -258,6 +264,7 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
     protected function buildChannel(AMQPChannel $channel)
     {
         $this->channelWorker->setChannel($channel);
+        $this->channelWorker->setLogger($this->logger);
         $this->noticeStart($this->channelWorker);
 
         return $this->channelWorker;
@@ -270,6 +277,7 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
     protected function buildLinksCheck(AMQPChannel $channel)
     {
         $this->linksCheckWorker->setChannel($channel);
+        $this->linksCheckWorker->setLogger($this->logger);
         $this->noticeStart($this->linksCheckWorker);
 
         return $this->linksCheckWorker;
@@ -282,6 +290,7 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
     protected function buildLinksReprocess(AMQPChannel $channel)
     {
         $this->linksReprocessWorker->setChannel($channel);
+        $this->linksReprocessWorker->setLogger($this->logger);
         $this->noticeStart($this->linksReprocessWorker);
 
         return $this->linksReprocessWorker;

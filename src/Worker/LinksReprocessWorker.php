@@ -7,6 +7,7 @@ use ApiConsumer\LinkProcessor\PreprocessedLink;
 use Event\ReprocessEvent;
 use Model\Link\Link;
 use Model\Link\LinkManager;
+use Psr\Log\LoggerInterface;
 use Service\AMQPManager;
 use Service\EventDispatcherHelper;
 
@@ -24,9 +25,9 @@ class LinksReprocessWorker extends LoggerAwareWorker implements RabbitMQConsumer
      */
     protected $processorService;
 
-    public function __construct(EventDispatcherHelper $dispatcherHelper, LinkManager $linkModel, ProcessorService $processorService)
+    public function __construct(LoggerInterface $logger, EventDispatcherHelper $dispatcherHelper, LinkManager $linkModel, ProcessorService $processorService)
     {
-        parent::__construct($dispatcherHelper);
+        parent::__construct($logger, $dispatcherHelper);
         $this->linkModel = $linkModel;
         $this->processorService = $processorService;
     }
