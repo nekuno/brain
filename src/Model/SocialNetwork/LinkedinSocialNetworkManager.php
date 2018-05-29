@@ -2,10 +2,17 @@
 
 namespace Model\SocialNetwork;
 
+use Model\Neo4j\GraphManager;
+use Model\Parser\LinkedinParser;
 use Psr\Log\LoggerInterface;
 
 class LinkedinSocialNetworkManager extends SocialNetworkManager
 {
+    public function __construct(GraphManager $gm, LinkedinParser $parser)
+    {
+        parent::__construct($gm, $parser);
+    }
+
     public function set($id, $profileUrl, LoggerInterface $logger = null)
     {
         $qb = $this->gm->createQueryBuilder();

@@ -46,7 +46,7 @@ services:
 #        resource: '../src/*'
 #        exclude: '../src/{Entity,Migrations,Tests,Kernel.php}'
     Model\:
-        resource: '../src/Model/*/*{Manager.php,Utilities.php,Calculator.php,Selector.php,Fixtures.php,Constraints.php}'
+        resource: '../src/Model/*/*{Manager.php,Utilities.php,Calculator.php,Selector.php,Fixtures.php,Constraints.php,Parser.php}'
         exclude: '../src/Model/Metadata/MetadataManager.php'
     Model\Question\Admin\:
         resource: '../src/Model/Question/Admin/*{Manager.php,Builder.php}'
@@ -56,6 +56,8 @@ services:
         resource: '../src/Model/Token/TokenStatus/*Manager.php'
     Service\:
         resource: '../src/Service/*'
+    Worker\:
+        resource: '../src/Worker/*'
     Paginator\:
         resource: '../src/Paginator/*'
     EventListener\:
@@ -118,6 +120,8 @@ services:
     GuzzleHttp\Client:
         autowire: true
     Buzz\Client\Curl:
+        autowire: true
+    Goutte\Client:
         autowire: true
     Symfony\Component\Security\Http\HttpUtils:
         autowire: true
