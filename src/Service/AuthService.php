@@ -12,6 +12,7 @@ use Model\Token\TokensManager;
 use ReflectionObject;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\Security\Core\Encoder\MessageDigestPasswordEncoder;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class AuthService
 {
@@ -37,7 +38,7 @@ class AuthService
     protected $oAuthProvider;
 
     /**
-     * @var EventDispatcher
+     * @var EventDispatcherInterface
      */
     protected $dispatcher;
 
@@ -46,7 +47,7 @@ class AuthService
      */
     protected $tokensModel;
 
-    public function __construct(UserManager $um, MessageDigestPasswordEncoder $encoder, JWTEncoderInterface $jwtEncoder, OAuthProvider $oAuthProvider, EventDispatcher $dispatcher, TokensManager $tokensModel)
+    public function __construct(UserManager $um, MessageDigestPasswordEncoder $encoder, JWTEncoderInterface $jwtEncoder, OAuthProvider $oAuthProvider, EventDispatcherInterface $dispatcher, TokensManager $tokensModel)
     {
         $this->um = $um;
         $this->encoder = $encoder;

@@ -5,7 +5,7 @@ namespace Model\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Entity\UserTrackingEvent;
 use Model\Neo4j\GraphManager;
-use Service\EventDispatcher;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Everyman\Neo4j\Query\Row;
 
 class UserTrackingManager
@@ -21,11 +21,11 @@ class UserTrackingManager
     protected $em;
 
     /**
-     * @var EventDispatcher
+     * @var EventDispatcherInterface
      */
     protected $dispatcher;
 
-    public function __construct(GraphManager $gm, EntityManagerInterface $em, EventDispatcher $dispatcher)
+    public function __construct(GraphManager $gm, EntityManagerInterface $em, EventDispatcherInterface $dispatcher)
     {
         $this->gm = $gm;
         $this->em = $em;

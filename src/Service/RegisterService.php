@@ -6,9 +6,8 @@ use Event\UserRegisteredEvent;
 use Model\User\UserManager;
 use Model\Profile\ProfileManager;
 use Model\Invitation\InvitationManager;
-use Model\Group\GroupManager;
 use Model\GhostUser\GhostUserManager;
-use Service\EventDispatcher as Dispatcher;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Model\Token\TokensManager;
 
 class RegisterService
@@ -45,11 +44,11 @@ class RegisterService
     protected $groupService;
 
     /**
-     * @var Dispatcher
+     * @var EventDispatcherInterface
      */
     protected $dispatcher;
 
-    public function __construct(UserManager $um, GhostUserManager $gum, TokensManager $tm, ProfileManager $pm, InvitationManager $im, GroupService $groupService, Dispatcher $dispatcher)
+    public function __construct(UserManager $um, GhostUserManager $gum, TokensManager $tm, ProfileManager $pm, InvitationManager $im, GroupService $groupService, EventDispatcherInterface $dispatcher)
     {
         $this->um = $um;
         $this->gum = $gum;

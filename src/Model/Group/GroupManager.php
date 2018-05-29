@@ -7,7 +7,7 @@ use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use Model\Photo\PhotoManager;
 use Model\Neo4j\GraphManager;
-use Service\EventDispatcher;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class GroupManager
@@ -24,7 +24,7 @@ class GroupManager
     protected $pm;
 
     /**
-     * @var EventDispatcher
+     * @var EventDispatcherInterface
      */
     protected $dispatcher;
 
@@ -35,11 +35,11 @@ class GroupManager
 
     /**
      * @param GraphManager $gm
-     * @param EventDispatcher $dispatcher
+     * @param EventDispatcherInterface $dispatcher
      * @param PhotoManager $pm
      * @param $invitationImagesRoot
      */
-    public function __construct(GraphManager $gm, EventDispatcher $dispatcher, PhotoManager $pm, $invitationImagesRoot)
+    public function __construct(GraphManager $gm, EventDispatcherInterface $dispatcher, PhotoManager $pm, $invitationImagesRoot)
     {
         $this->gm = $gm;
         $this->pm = $pm;

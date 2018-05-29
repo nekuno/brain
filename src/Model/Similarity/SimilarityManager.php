@@ -9,7 +9,7 @@ use Model\Content\ContentPaginatedManager;
 use Model\Group\GroupManager;
 use Model\Profile\ProfileManager;
 use Model\Question\UserAnswerPaginatedManager;
-use Service\EventDispatcher;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 
 class SimilarityManager
@@ -22,7 +22,7 @@ class SimilarityManager
     const MAX_SIMILARITIES = 1000;
 
     /**
-     * @var EventDispatcher
+     * @var EventDispatcherInterface
      */
     protected $dispatcher;
 
@@ -49,7 +49,7 @@ class SimilarityManager
     protected $groupModel;
 
     public function __construct(
-        EventDispatcher $dispatcher,
+        EventDispatcherInterface $dispatcher,
         GraphManager $gm,
         UserAnswerPaginatedManager $questionPaginatedModel,
         ContentPaginatedManager $contentPaginatedModel,

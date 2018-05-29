@@ -11,7 +11,7 @@ use Model\Exception\ErrorList;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
 use Model\Neo4j\QueryBuilder;
-use Service\EventDispatcher;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class RelationsManager
@@ -29,11 +29,11 @@ class RelationsManager
     protected $gm;
 
     /**
-     * @var EventDispatcher
+     * @var EventDispatcherInterface
      */
     protected $dispatcher;
 
-    public function __construct(GraphManager $gm, EventDispatcher $dispatcher)
+    public function __construct(GraphManager $gm, EventDispatcherInterface $dispatcher)
     {
 
         $this->gm = $gm;

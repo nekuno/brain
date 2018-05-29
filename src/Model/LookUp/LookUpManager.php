@@ -11,7 +11,7 @@ use Service\LookUp\LookUp;
 use Service\LookUp\LookUpFullContact;
 use Service\LookUp\LookUpPeopleGraph;
 use Symfony\Component\Console\Output\OutputInterface;
-use Service\EventDispatcher;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Request;
 
 
@@ -38,7 +38,7 @@ class LookUpManager
     protected $peopleGraph;
 
     /**
-     * @var EventDispatcher
+     * @var EventDispatcherInterface
      */
     protected $dispatcher;
 
@@ -57,7 +57,7 @@ class LookUpManager
     protected $tm;
 
 
-    public function __construct(GraphManager $gm, EntityManagerInterface $em, TokensManager $tm, LookUpFullContact $fullContact, LookUpPeopleGraph $peopleGraph, EventDispatcher $dispatcher)
+    public function __construct(GraphManager $gm, EntityManagerInterface $em, TokensManager $tm, LookUpFullContact $fullContact, LookUpPeopleGraph $peopleGraph, EventDispatcherInterface $dispatcher)
 
     {
         $this->gm = $gm;

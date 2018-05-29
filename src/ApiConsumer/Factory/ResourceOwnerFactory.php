@@ -2,11 +2,10 @@
 
 namespace ApiConsumer\Factory;
 
-use Buzz\Client\Curl;
 use Http\Client\HttpClient;
 use HWI\Bundle\OAuthBundle\OAuth\RequestDataStorageInterface;
 use HWI\Bundle\OAuthBundle\OAuth\ResourceOwnerInterface;
-use Service\EventDispatcher;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Security\Http\HttpUtils;
 
 
@@ -33,11 +32,11 @@ class ResourceOwnerFactory
 	protected $storage;
 
     /**
-     * @var EventDispatcher
+     * @var EventDispatcherInterface
      */
     protected $dispatcher;
 
-    public function __construct(array $options, HttpClient $client, HttpUtils $httpUtils, RequestDataStorageInterface $storage, EventDispatcher $dispatcher)
+    public function __construct(array $options, HttpClient $client, HttpUtils $httpUtils, RequestDataStorageInterface $storage, EventDispatcherInterface $dispatcher)
     {
         $this->options = $options;
         $this->client = $client;

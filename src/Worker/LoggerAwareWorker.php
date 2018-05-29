@@ -9,7 +9,7 @@ use PhpAmqpLib\Message\AMQPMessage;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 use Service\AMQPQueueService;
-use Service\EventDispatcher;
+use Service\EventDispatcherHelper;
 
 abstract class LoggerAwareWorker implements LoggerAwareInterface, RabbitMQConsumerInterface
 {
@@ -19,9 +19,9 @@ abstract class LoggerAwareWorker implements LoggerAwareInterface, RabbitMQConsum
     protected $logger;
 
     /**
-     * @var EventDispatcher
+     * @var EventDispatcherHelper
      */
-    protected $dispatcher;
+    protected $dispatcherHelper;
 
     /**
      * @var AMQPChannel
@@ -32,9 +32,9 @@ abstract class LoggerAwareWorker implements LoggerAwareInterface, RabbitMQConsum
 
     protected $queueManager;
 
-    public function __construct(EventDispatcher $dispatcher, AMQPChannel $channel)
+    public function __construct(EventDispatcherHelper $dispatcherHelper, AMQPChannel $channel)
     {
-        $this->dispatcher = $dispatcher;
+        $this->dispatcherHelper = $dispatcherHelper;
         $this->channel = $channel;
         $this->queueManager = new AMQPQueueService();
     }
@@ -108,11 +108,11 @@ abstract class LoggerAwareWorker implements LoggerAwareInterface, RabbitMQConsum
     //TODO: Move to dispatcher to make it available everywhere. Differentiate from dispatcher->dispatchError (sets neo4j source)
     protected function dispatchError(\Exception $e, $message)
     {
-        $this->dispatcher->dispatch(\AppEvents::EXCEPTION_ERROR, new ExceptionEvent($e, $message));
+        $this->dispatcherHelper->dispatch(\AppEvents::EXCEPTION_ERROR, new ExceptionEvent($e, $message));
     }
 
     protected function dispatchWarning(\Exception $e, $message)
     {
-        $this->dispatcher->dispatch(\AppEvents::EXCEPTION_WARNING, new ExceptionEvent($e, $message));
+        $this->dispatcherHelper->dispatch(\AppEvents::EXCEPTION_WARNING, new ExceptionEvent($e, $message));
     }
 }

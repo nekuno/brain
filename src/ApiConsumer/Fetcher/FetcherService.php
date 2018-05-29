@@ -15,7 +15,7 @@ use Model\Token\Token;
 use Model\Token\TokensManager;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
-use Service\EventDispatcher;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class FetcherService implements LoggerAwareInterface
@@ -32,7 +32,7 @@ class FetcherService implements LoggerAwareInterface
     protected $fetcherFactory;
 
     /**
-     * @var EventDispatcher
+     * @var EventDispatcherInterface
      */
     protected $dispatcher;
 
@@ -53,7 +53,7 @@ class FetcherService implements LoggerAwareInterface
 
     public function __construct(
         FetcherFactory $fetcherFactory,
-        EventDispatcher $dispatcher,
+        EventDispatcherInterface $dispatcher,
         TokensManager $tokensModel,
         SocialProfileManager $socialProfileManager,
         array $options

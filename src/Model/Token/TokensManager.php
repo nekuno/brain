@@ -10,7 +10,7 @@ use HWI\Bundle\OAuthBundle\DependencyInjection\Configuration;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
 use Service\Validator\TokenValidator;
-use Service\EventDispatcher;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -25,7 +25,7 @@ class TokensManager
     CONST STEAM = 'steam';
 
     /**
-     * @var EventDispatcher
+     * @var EventDispatcherInterface
      */
     protected $dispatcher;
 
@@ -39,7 +39,7 @@ class TokensManager
      */
     protected $validator;
 
-    public function __construct(EventDispatcher $dispatcher, GraphManager $graphManager, TokenValidator $validator)
+    public function __construct(EventDispatcherInterface $dispatcher, GraphManager $graphManager, TokenValidator $validator)
     {
         $this->dispatcher = $dispatcher;
         $this->gm = $graphManager;

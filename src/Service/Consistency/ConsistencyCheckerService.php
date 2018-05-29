@@ -6,7 +6,7 @@ use Event\ExceptionEvent;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
 use Service\Consistency\ConsistencyErrors\ConsistencyError;
-use Service\EventDispatcher;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class ConsistencyCheckerService
 {
@@ -18,10 +18,10 @@ class ConsistencyCheckerService
     /**
      * ConsistencyChecker constructor.
      * @param GraphManager $graphManager
-     * @param EventDispatcher $dispatcher
+     * @param EventDispatcherInterface $dispatcher
      * @param array $consistencyRules
      */
-    public function __construct(GraphManager $graphManager, EventDispatcher $dispatcher, array $consistencyRules)
+    public function __construct(GraphManager $graphManager, EventDispatcherInterface $dispatcher, array $consistencyRules)
     {
         $this->graphManager = $graphManager;
         $this->dispatcher = $dispatcher;

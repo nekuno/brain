@@ -7,7 +7,7 @@ use Event\MatchingExpiredEvent;
 use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Relationship;
 use Model\Neo4j\GraphManager;
-use Service\EventDispatcher;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class MatchingManager
 {
@@ -16,7 +16,7 @@ class MatchingManager
     const PREFERRED_MATCHING_ANSWERS = 'answers';
 
     /**
-     * @var EventDispatcher
+     * @var EventDispatcherInterface
      */
     protected $dispatcher;
 
@@ -26,11 +26,11 @@ class MatchingManager
     protected $graphManager;
 
     /**
-     * @param EventDispatcher $dispatcher
+     * @param EventDispatcherInterface $dispatcher
      * @param GraphManager $graphManager
      */
     public function __construct(
-        EventDispatcher $dispatcher,
+        EventDispatcherInterface $dispatcher,
         GraphManager $graphManager
     ) {
 

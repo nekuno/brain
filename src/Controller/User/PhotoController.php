@@ -11,7 +11,7 @@ use Event\UserEvent;
 use Model\Photo\PhotoManager;
 use Model\User\User;
 use Nelmio\ApiDocBundle\Annotation\Security;
-use Service\EventDispatcher;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Swagger\Annotations as SWG;
@@ -100,7 +100,7 @@ class PhotoController extends FOSRestController implements ClassResourceInterfac
      * @param User $user
      * @param Request $request
      * @param PhotoManager $photoManager
-     * @param EventDispatcher $dispatcher
+     * @param EventDispatcherInterface $dispatcher
      * @return \FOS\RestBundle\View\View
      * @SWG\Parameter(
      *      name="body",
@@ -121,7 +121,7 @@ class PhotoController extends FOSRestController implements ClassResourceInterfac
      * @Security(name="Bearer")
      * @SWG\Tag(name="photos")
      */
-    public function postProfileAction($photoId, User $user, Request $request, PhotoManager $photoManager, EventDispatcher $dispatcher)
+    public function postProfileAction($photoId, User $user, Request $request, PhotoManager $photoManager, EventDispatcherInterface $dispatcher)
     {
         $xPercent = $request->request->get('x', 0);
         $yPercent = $request->request->get('y', 0);

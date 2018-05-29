@@ -12,14 +12,14 @@ use HWI\Bundle\OAuthBundle\OAuth\RequestDataStorageInterface;
 use HWI\Bundle\OAuthBundle\Security\OAuthUtils;
 use Model\Token\Token;
 use Model\Token\TokensManager;
-use Service\EventDispatcher;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Security\Http\HttpUtils;
 
 trait AbstractResourceOwnerTrait
 {
     /**
-     * @var EventDispatcher
+     * @var EventDispatcherInterface
      */
     protected $dispatcher;
 
@@ -31,9 +31,9 @@ trait AbstractResourceOwnerTrait
      * @param array $options Options for the resource owner
      * @param string $name Name for the resource owner
      * @param RequestDataStorageInterface $storage Request token storage
-     * @param EventDispatcher $dispatcher
+     * @param EventDispatcherInterface $dispatcher
      */
-    public function __construct(HttpClientInterface $httpClient, HttpUtils $httpUtils, array $options, $name, RequestDataStorageInterface $storage, EventDispatcher $dispatcher)
+    public function __construct(HttpClientInterface $httpClient, HttpUtils $httpUtils, array $options, $name, RequestDataStorageInterface $storage, EventDispatcherInterface $dispatcher)
     {
         $this->httpClient = $httpClient;
         $this->name = $name;

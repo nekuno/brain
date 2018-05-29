@@ -12,7 +12,7 @@ use Everyman\Neo4j\Query\Row;
 use Model\Exception\ValidationException;
 use Model\Neo4j\QueryBuilder;
 use Service\Validator\ProfileValidator;
-use Service\EventDispatcher;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -35,7 +35,7 @@ class ProfileManager
         ProfileTagManager $profileTagModel,
         LocationManager $locationManager,
         MetadataUtilities $metadataUtilities,
-        EventDispatcher $dispatcher,
+        EventDispatcherInterface $dispatcher,
         ProfileValidator $validator
     ) {
         $this->gm = $gm;

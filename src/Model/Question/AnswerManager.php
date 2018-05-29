@@ -7,7 +7,7 @@ use Everyman\Neo4j\Query\Row;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
 use Service\Validator\AnswerValidator;
-use Service\EventDispatcher;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class AnswerManager
@@ -20,7 +20,7 @@ class AnswerManager
     protected $answerBuilder;
 
     /**
-     * @var EventDispatcher
+     * @var EventDispatcherInterface
      */
     protected $eventDispatcher;
 
@@ -29,7 +29,7 @@ class AnswerManager
      */
     protected $validator;
 
-    public function __construct(GraphManager $gm, AnswerValidator $validator, EventDispatcher $eventDispatcher)
+    public function __construct(GraphManager $gm, AnswerValidator $validator, EventDispatcherInterface $eventDispatcher)
     {
         $this->gm = $gm;
         $this->answerBuilder = new AnswerBuilder();

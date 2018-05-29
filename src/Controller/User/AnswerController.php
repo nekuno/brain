@@ -19,7 +19,7 @@ use Model\User\User;
 use Nelmio\ApiDocBundle\Annotation\Security;
 use Paginator\Paginator;
 use Service\AnswerService;
-use Service\EventDispatcher;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Swagger\Annotations as SWG;
@@ -216,7 +216,7 @@ class AnswerController extends FOSRestController implements ClassResourceInterfa
      * @param AnswerService $answerService
      * @param AnswerManager $answerManager
      * @param QuestionManager $questionManager
-     * @param EventDispatcher $dispatcher
+     * @param EventDispatcherInterface $dispatcher
      * @return \FOS\RestBundle\View\View
      * @SWG\Parameter(
      *      name="locale",
@@ -243,7 +243,7 @@ class AnswerController extends FOSRestController implements ClassResourceInterfa
      * @Security(name="Bearer")
      * @SWG\Tag(name="answers")
      */
-    public function deleteAnswerAction(User $user, $questionId, Request $request, AnswerService $answerService, AnswerManager $answerManager, QuestionManager $questionManager, EventDispatcher $dispatcher)
+    public function deleteAnswerAction(User $user, $questionId, Request $request, AnswerService $answerService, AnswerManager $answerManager, QuestionManager $questionManager, EventDispatcherInterface $dispatcher)
     {
         $locale = $this->getLocale($request);
 

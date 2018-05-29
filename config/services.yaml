@@ -285,9 +285,6 @@ services:
         class: Security\UserProvider
         arguments: ["@manager.user_manager"]
 
-    dispatcher.service:
-        class: Service\EventDispatcher
-
     hwi_oauth.user.provider.entity:
         class: HWI\Bundle\OAuthBundle\Security\Core\User\OAuthUserProvider
     # End Services

@@ -11,12 +11,13 @@ use Model\Neo4j\GraphManager;
 use Model\User\User;
 use Model\Affinity\AffinityManager;
 use Model\User\UserManager;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Translation\TranslatorInterface;
 
 class AffinityRecalculations
 {
 
-    /* @var EventDispatcher */
+    /* @var EventDispatcherInterface */
     protected $dispatcher;
 
     /* @var $emailNotifications EmailNotifications */
@@ -41,7 +42,7 @@ class AffinityRecalculations
 
     const MIN_AFFINITY = 0.7;
 
-    public function __construct(EventDispatcher $dispatcher, EmailNotifications $emailNotifications, TranslatorInterface $translator, GraphManager $graphManager, LinkManager $linkModel, UserManager $userManager, AffinityManager $affinityModel)
+    public function __construct(EventDispatcherInterface $dispatcher, EmailNotifications $emailNotifications, TranslatorInterface $translator, GraphManager $graphManager, LinkManager $linkModel, UserManager $userManager, AffinityManager $affinityModel)
     {
         $this->dispatcher = $dispatcher;
         $this->emailNotifications = $emailNotifications;

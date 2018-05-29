@@ -11,7 +11,7 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\OutputInterface;
-use Service\EventDispatcher;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class Neo4jFixturesCommand extends ApplicationAwareCommand
 {
@@ -28,11 +28,11 @@ class Neo4jFixturesCommand extends ApplicationAwareCommand
     protected $fixtures;
 
     /**
-     * @var EventDispatcher
+     * @var EventDispatcherInterface
      */
     protected $dispatcher;
 
-    public function __construct(LoggerInterface $logger, Fixtures $fixtures, EventDispatcher $dispatcher)
+    public function __construct(LoggerInterface $logger, Fixtures $fixtures, EventDispatcherInterface $dispatcher)
     {
         parent::__construct($logger);
         $this->fixtures = $fixtures;

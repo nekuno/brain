@@ -3,12 +3,9 @@
 namespace App;
 
 use DependencyInjection\ApiConsumerExtension;
-use DependencyInjection\FieldsExtension;
 use DependencyInjection\HWIOAuthExtension;
-use DependencyInjection\MetadataExtension;
 use DependencyInjection\ConfigurationExtension;
 use DependencyInjection\Neo4jExtension;
-use DependencyInjection\ValidationExtension;
 use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
 use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\Config\Resource\FileResource;

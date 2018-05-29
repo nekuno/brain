@@ -25,7 +25,7 @@ use Model\Rate\RateManager;
 use Model\Token\TokensManager;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
-use Service\EventDispatcher;
+use Service\EventDispatcherHelper;
 
 class ProcessorService implements LoggerAwareInterface
 {
@@ -38,7 +38,7 @@ class ProcessorService implements LoggerAwareInterface
 
     protected $linkModel;
 
-    protected $dispatcher;
+    protected $dispatcherHelper;
 
     protected $rateModel;
 
@@ -49,12 +49,12 @@ class ProcessorService implements LoggerAwareInterface
     //TODO: Use this instead of userId argument in this class
     protected $userId;
 
-    public function __construct(FetcherService $fetcherService, LinkProcessor $linkProcessor, LinkManager $linkModel, EventDispatcher $dispatcher, RateManager $rateModel, LinkResolver $resolver)
+    public function __construct(FetcherService $fetcherService, LinkProcessor $linkProcessor, LinkManager $linkModel, EventDispatcherHelper $dispatcherHelper, RateManager $rateModel, LinkResolver $resolver)
     {
         $this->fetcherService = $fetcherService;
         $this->linkProcessor = $linkProcessor;
         $this->linkModel = $linkModel;
-        $this->dispatcher = $dispatcher;
+        $this->dispatcherHelper = $dispatcherHelper;
         $this->rateModel = $rateModel;
         $this->resolver = $resolver;
     }
@@ -79,7 +79,7 @@ class ProcessorService implements LoggerAwareInterface
         foreach ($preprocessedLinks as $key => $preprocessedLink) {
 
             $source = $preprocessedLink->getSource();
-            $this->dispatcher->dispatch(\AppEvents::PROCESS_LINK, new ProcessLinkEvent($userId, $source, $preprocessedLink));
+            $this->dispatcherHelper->dispatch(\AppEvents::PROCESS_LINK, new ProcessLinkEvent($userId, $source, $preprocessedLink));
 
             try {
                 $processedLinks = $this->fullProcessSingle($preprocessedLink, $userId);
@@ -330,7 +330,7 @@ class ProcessorService implements LoggerAwareInterface
     {
         if ($this->linkModel->findLinkByUrl($newUrl)) {
             $fusedLink = $this->linkModel->fuseLinks($oldUrl, $newUrl);
-            $this->dispatcher->dispatch(\AppEvents::CONSISTENCY_LINK, new ConsistencyEvent($fusedLink->getId()));
+            $this->dispatcherHelper->dispatch(\AppEvents::CONSISTENCY_LINK, new ConsistencyEvent($fusedLink->getId()));
         } else {
             $this->linkModel->setProcessed($oldUrl, false);
             $this->linkModel->changeUrl($oldUrl, $newUrl);
@@ -458,7 +458,7 @@ class ProcessorService implements LoggerAwareInterface
             if ($link instanceof Creator && $preprocessedLink->getSource() == TokensManager::TWITTER) {
                 try {
                     $username = (new TwitterUrlParser())->getProfileId($link->getUrl());
-                    $this->dispatcher->dispatch(\AppEvents::CHANNEL_ADDED, new ChannelEvent(TokensManager::TWITTER, $link->getUrl(), $username));
+                    $this->dispatcherHelper->dispatch(\AppEvents::CHANNEL_ADDED, new ChannelEvent(TokensManager::TWITTER, $link->getUrl(), $username));
                 } catch (\Exception $e) {
                     $this->logError($e, sprintf('checking creator for url %s', $link->getUrl()));
                 }
@@ -591,7 +591,7 @@ class ProcessorService implements LoggerAwareInterface
 
     private function logError(\Exception $e, $process)
     {
-        $this->dispatcher->dispatchError($e, $process);
+        $this->dispatcherHelper->dispatchError($e, $process);
 
         if ($this->logger instanceof LoggerInterface) {
             $this->logger->error($e->getMessage());
@@ -609,7 +609,7 @@ class ProcessorService implements LoggerAwareInterface
     private function logUrlUnprocessed(\Exception $e, $process, $url)
     {
         $this->logNotice(sprintf('Error processing url %s while %s', $url, $process));
-        $this->dispatcher->dispatchUrlUnprocessed($e, $process);
+        $this->dispatcherHelper->dispatchUrlUnprocessed($e, $process);
     }
 
 }

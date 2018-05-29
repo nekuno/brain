@@ -19,7 +19,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\OutputInterface;
-use Service\EventDispatcher;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Validator\Exception\MissingOptionsException;
 
 class LinksFetchCommand extends ApplicationAwareCommand
@@ -67,11 +67,11 @@ class LinksFetchCommand extends ApplicationAwareCommand
     protected $AMQPStreamConnection;
 
     /**
-     * @var EventDispatcher
+     * @var EventDispatcherInterface
      */
     protected $dispatcher;
 
-    public function __construct(LoggerInterface $logger, FetcherService $fetcherService, ProcessorService $processorService, $resourceOwners, InstantConnection $instantConnection, DeviceService $deviceService, TokensManager $tokensManager, \Swift_Mailer $mailer, AMQPStreamConnection $AMQPStreamConnection, EventDispatcher $dispatcher)    {
+    public function __construct(LoggerInterface $logger, FetcherService $fetcherService, ProcessorService $processorService, $resourceOwners, InstantConnection $instantConnection, DeviceService $deviceService, TokensManager $tokensManager, \Swift_Mailer $mailer, AMQPStreamConnection $AMQPStreamConnection, EventDispatcherInterface $dispatcher)    {
         parent::__construct($logger);
         $this->fetcherService = $fetcherService;
         $this->processorService = $processorService;

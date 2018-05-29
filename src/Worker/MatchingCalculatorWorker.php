@@ -18,7 +18,7 @@ use Model\User\UserManager;
 use PhpAmqpLib\Channel\AMQPChannel;
 use Service\AffinityRecalculations;
 use Service\AMQPManager;
-use Service\EventDispatcher;
+use Service\EventDispatcherHelper;
 use Service\UserStatsService;
 
 class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQConsumerInterface
@@ -74,9 +74,9 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
         AffinityRecalculations $affinityRecalculations,
         PopularityManager $popularityManager,
         EntityManagerInterface $em,
-        EventDispatcher $dispatcher
+        EventDispatcherHelper $dispatcherHelper
     ) {
-        parent::__construct($dispatcher, $channel);
+        parent::__construct($dispatcherHelper, $channel);
         $this->userManager = $userManager;
         $this->matchingModel = $matchingModel;
         $this->similarityModel = $similarityModel;
@@ -110,13 +110,13 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                     $this->logger->notice(sprintf('Calculating user "%s" new status: "%s"', $userA, $status->getStatus()));
                     if ($status->getStatusChanged()) {
                         $userStatusChangedEvent = new UserStatusChangedEvent($userA, $status->getStatus());
-                        $this->dispatcher->dispatch(\AppEvents::USER_STATUS_CHANGED, $userStatusChangedEvent);
+                        $this->dispatcherHelper->dispatch(\AppEvents::USER_STATUS_CHANGED, $userStatusChangedEvent);
                     }
                     $usersWithSameContent = $this->userManager->getByCommonLinksWithUser($userA, 1000);
 
                     $processId = time();
                     $similarityProcessEvent = new SimilarityProcessEvent($userA, $processId);
-                    $this->dispatcher->dispatch(\AppEvents::SIMILARITY_PROCESS_START, $similarityProcessEvent);
+                    $this->dispatcherHelper->dispatch(\AppEvents::SIMILARITY_PROCESS_START, $similarityProcessEvent);
                     $usersCount = count($usersWithSameContent);
                     $prevPercentage = 0;
                     $this->popularityManager->updatePopularityByUser($userA);
@@ -129,12 +129,12 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                         $this->logger->info(sprintf('   Similarity by interests between users %d - %d: %s', $userA, $userB, $similarity->getInterests()));
                         if ($percentage > $prevPercentage) {
                             $similarityProcessStepEvent = new SimilarityProcessStepEvent($userA, $processId, $percentage);
-                            $this->dispatcher->dispatch(\AppEvents::SIMILARITY_PROCESS_STEP, $similarityProcessStepEvent);
+                            $this->dispatcherHelper->dispatch(\AppEvents::SIMILARITY_PROCESS_STEP, $similarityProcessStepEvent);
                             $prevPercentage = $percentage;
                         }
                         $this->userStatsService->updateShares($userA, $userB);
                     }
-                    $this->dispatcher->dispatch(\AppEvents::SIMILARITY_PROCESS_FINISH, $similarityProcessEvent);
+                    $this->dispatcherHelper->dispatch(\AppEvents::SIMILARITY_PROCESS_FINISH, $similarityProcessEvent);
 
                     $usersAnsweredQuestion = $this->userManager->getByUserQuestionAnswered($userA, 800);
                     $this->processUsersAnsweredQuestion($userA, $usersAnsweredQuestion);
@@ -146,7 +146,7 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                     if ($e instanceof Neo4jException) {
                         $this->logger->error(sprintf('Query: %s' . "\n" . 'Data: %s', $e->getQuery(), print_r($e->getData(), true)));
                     }
-                    $this->dispatchError($e, 'Matching because process finished or content rated');
+                    $this->dispatcherHelper->dispatchError($e, 'Matching because process finished or content rated');
                 }
                 break;
             case self::TRIGGER_QUESTION:
@@ -160,7 +160,7 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                     $this->logger->notice(sprintf('Calculating user "%s" new status: "%s"', $userA, $status->getStatus()));
                     if ($status->getStatusChanged()) {
                         $userStatusChangedEvent = new UserStatusChangedEvent($userA, $status->getStatus());
-                        $this->dispatcher->dispatch(\AppEvents::USER_STATUS_CHANGED, $userStatusChangedEvent);
+                        $this->dispatcherHelper->dispatch(\AppEvents::USER_STATUS_CHANGED, $userStatusChangedEvent);
                     }
 
                     if (!$this->questionModel->userHasCompletedRegisterQuestions($userA)) {
@@ -176,7 +176,7 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                     if ($e instanceof Neo4jException) {
                         $this->logger->error(sprintf('Query: %s' . "\n" . 'Data: %s', $e->getQuery(), print_r($e->getData(), true)));
                     }
-                    $this->dispatchError($e, 'Matching because question answered');
+                    $this->dispatcherHelper->dispatchError($e, 'Matching because question answered');
                 }
                 break;
             case self::TRIGGER_MATCHING_EXPIRED:
@@ -202,7 +202,7 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                     if ($e instanceof Neo4jException) {
                         $this->logger->error(sprintf('Query: %s' . "\n" . 'Data: %s', $e->getQuery(), print_r($e->getData(), true)));
                     }
-                    $this->dispatchError($e, 'Matching because matching expired');
+                    $this->dispatcherHelper->dispatchError($e, 'Matching because matching expired');
                 }
                 break;
             default;
@@ -214,7 +214,7 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
     {
         $processId = time();
         $matchingProcessEvent = new MatchingProcessEvent($userA, $processId);
-        $this->dispatcher->dispatch(\AppEvents::MATCHING_PROCESS_START, $matchingProcessEvent);
+        $this->dispatcherHelper->dispatch(\AppEvents::MATCHING_PROCESS_START, $matchingProcessEvent);
         $usersCount = count($usersAnsweredQuestion);
         $this->logger->info(sprintf('   Processing %d users', $usersCount));
         $prevPercentage = 0;
@@ -229,12 +229,12 @@ class MatchingCalculatorWorker extends LoggerAwareWorker implements RabbitMQCons
                 $this->logger->info(sprintf('   Matching by questions between users %d - %d: %s', $userA, $userB, $matching->getMatching()));
                 if ($percentage > $prevPercentage) {
                     $matchingProcessStepEvent = new MatchingProcessStepEvent($userA, $processId, $percentage);
-                    $this->dispatcher->dispatch(\AppEvents::MATCHING_PROCESS_STEP, $matchingProcessStepEvent);
+                    $this->dispatcherHelper->dispatch(\AppEvents::MATCHING_PROCESS_STEP, $matchingProcessStepEvent);
                     $prevPercentage = $percentage;
                 }
             }
         }
-        $this->dispatcher->dispatch(\AppEvents::MATCHING_PROCESS_FINISH, $matchingProcessEvent);
+        $this->dispatcherHelper->dispatch(\AppEvents::MATCHING_PROCESS_FINISH, $matchingProcessEvent);
     }
 
     private function processUserAffinities($userId)

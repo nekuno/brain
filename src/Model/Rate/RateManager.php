@@ -9,7 +9,7 @@ use Model\Exception\ErrorList;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
 use Model\Token\TokensManager;
-use Service\EventDispatcher;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 
 class RateManager
@@ -21,7 +21,7 @@ class RateManager
     const IGNORE = 'IGNORES';
 
     /**
-     * @var EventDispatcher
+     * @var EventDispatcherInterface
      */
     protected $dispatcher;
 
@@ -31,10 +31,10 @@ class RateManager
     protected $gm;
 
     /**
-     * @param EventDispatcher $dispatcher
+     * @param EventDispatcherInterface $dispatcher
      * @param GraphManager $gm
      */
-    public function __construct(EventDispatcher $dispatcher, GraphManager $gm)
+    public function __construct(EventDispatcherInterface $dispatcher, GraphManager $gm)
     {
         $this->dispatcher = $dispatcher;
         $this->gm = $gm;

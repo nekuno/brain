@@ -14,7 +14,7 @@ use Model\SocialNetwork\SocialProfileManager;
 use Model\Token\Token;
 use Model\Token\TokensManager;
 use Service\AMQPManager;
-use Service\EventDispatcher;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Model\SocialNetwork\SocialProfile;
 use ApiConsumer\ResourceOwner\FacebookResourceOwner;
@@ -58,11 +58,11 @@ class AccountConnectSubscriber implements EventSubscriberInterface
     protected $profileModel;
 
     /**
-     * @var EventDispatcher
+     * @var EventDispatcherInterface
      */
     protected $dispatcher;
 
-    public function __construct(AMQPManager $amqpManager, UserManager $um, GhostUserManager $gum, SocialProfileManager $spm, ResourceOwnerFactory $resourceOwnerFactory, TokensManager $tokensModel, ProfileManager $pm, EventDispatcher $dispatcher)
+    public function __construct(AMQPManager $amqpManager, UserManager $um, GhostUserManager $gum, SocialProfileManager $spm, ResourceOwnerFactory $resourceOwnerFactory, TokensManager $tokensModel, ProfileManager $pm, EventDispatcherInterface $dispatcher)
     {
         $this->amqpManager = $amqpManager;
         $this->um = $um;
