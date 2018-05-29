@@ -45,7 +45,7 @@ class UserTrackingEvent
     protected $userId;
 
     /**
-     * @Column(name="data", type="string", nullable=true)
+     * @Column(name="data", type="text", nullable=true)
      */
     protected $data;
 
