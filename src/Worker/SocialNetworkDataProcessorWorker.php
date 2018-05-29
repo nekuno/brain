@@ -7,7 +7,6 @@ use Service\AMQPManager;
 use Service\EventDispatcherHelper;
 use Service\SocialNetwork;
 
-
 class SocialNetworkDataProcessorWorker extends LoggerAwareWorker implements RabbitMQConsumerInterface
 {
     protected $queue = AMQPManager::SOCIAL_NETWORK;
@@ -15,7 +14,6 @@ class SocialNetworkDataProcessorWorker extends LoggerAwareWorker implements Rabb
      * @var SocialNetwork
      */
     protected $sn;
-
 
     public function __construct(EventDispatcherHelper $dispatcherHelper, SocialNetwork $sn)
     {
