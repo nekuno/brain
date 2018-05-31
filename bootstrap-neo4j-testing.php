@@ -40,3 +40,8 @@ if (IS_WINDOWS) {
 }
 
 require_once __DIR__ . '/vendor/autoload.php';
+
+passthru(sprintf('php "%s/bin/console" cache:clear --env=test --no-warmup', __DIR__));
+passthru(sprintf('php "%s/bin/console" doctrine:database:drop --force', __DIR__));
+passthru(sprintf('php "%s/bin/console" doctrine:database:create', __DIR__));
+passthru(sprintf('php "%s/bin/console" doctrine:schema:create', __DIR__));

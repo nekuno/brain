@@ -44,7 +44,7 @@
         <env name="rabbitmq_port" value="5672" />
         <env name="rabbitmq_user" value="guest" />
         <env name="rabbitmq_pass" value="guest" />
-        <env name="DATABASE_URL" value="mysql://nekuno:nekuno@127.0.0.1:3306/nekuno_brain" />
+        <env name="DATABASE_URL" value="sqlite:///%kernel.project_dir%/var/cache/nekuno_brain.db" />
         <!-- define your env variables for the test env here -->
     </php>
 

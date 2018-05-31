@@ -1,4 +1,4 @@
 doctrine:
     dbal:
         driver: 'pdo_sqlite'
-        path: '%kernel.project_dir%/var/cache/brain_data.db'
+        path: '%kernel.project_dir%/src/var/cache/brain_data.db'
