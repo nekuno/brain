@@ -7,3 +7,26 @@ services:
     # aliases are prefixed with test. For example:
     #
     # test.App\Service\MyService: '@App\Service\MyService'
+    Tests\API\MockUp\:
+        resource: '../tests/API/MockUp/*'
+    testing_fixtures:
+        class: Tests\API\TestingFixtures
+        autowire: true
+    Service\AuthService:
+        class: Tests\API\MockUp\AuthServiceMockUp
+        autowire: true
+    Model\Token\TokensManager:
+        class: Tests\API\MockUp\TokensManagerMockUp
+        autowire: true
+    auth_service_mockup:
+        autowire: true
+        public: true
+        class: Service\AuthService
+    similarity_manager:
+        autowire: true
+        public: true
+        class: Model\Similarity\SimilarityManager
+    popularity_manager:
+        autowire: true
+        public: true
+        class: Model\Popularity\PopularityManager

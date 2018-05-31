@@ -24,7 +24,7 @@ class ThreadController extends FOSRestController implements ClassResourceInterfa
      * Get recommendations by thread
      *
      * @Get("/threads/{threadId}/recommendation")
-     * @param string $threadId
+     * @param integer $threadId
      * @param Request $request
      * @param ThreadService $threadService
      * @param RecommendatorService $recommendatorService

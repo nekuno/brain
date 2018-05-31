@@ -5,7 +5,7 @@
          xsi:noNamespaceSchemaLocation="http://schema.phpunit.de/6.1/phpunit.xsd"
          backupGlobals="false"
          colors="true"
-         bootstrap="vendor/autoload.php"
+         bootstrap="bootstrap-neo4j-testing.php"
 >
     <php>
         <ini name="error_reporting" value="-1" />
@@ -14,6 +14,36 @@
         <env name="APP_DEBUG" value="1" />
         <env name="APP_SECRET" value="s$cretf0rt3st" />
         <env name="SHELL_VERBOSITY" value="-1" />
+        <env name="secret" value="secretkeynekuno2015forjwt" />
+        <!-- <env name="instant_api_secret" value="" />
+        <env name="JWT_PRIVATE_KEY_PATH" value="" />
+        <env name="JWT_PUBLIC_KEY_PATH" value="" />
+        <env name="JWT_PASSPHRASE" value="" />
+        <env name="push_public_key" value="" />
+        <env name="push_private_key" value="" />
+        <env name="firebase_url" value="" />
+        <env name="firebase_api_key" value="" />
+        <env name="dev_custom_ip_1" value="" />
+        <env name="dev_custom_ip_2" value="" />
+        <env name="dev_custom_ip_3" value="" />
+        <env name="dev_custom_ip_4" value="" />
+        <env name="support_email_1" value="" />
+        <env name="support_email_2" value="" />
+        <env name="support_email_3" value="" />
+        <env name="locale_default" value="" />
+        <env name="locale" value="" />
+        <env name="images_web_dir" value="" />
+        <env name="brain_base_url" value="" />
+        <env name="instant_host" value="" />
+        <env name="guzzle_verify" value="" />
+        <env name="db_neo4j_host" value="" />
+        <env name="db_neo4j_port" value="" />
+        <env name="db_neo4j_user" value="" />
+        <env name="db_neo4j_pass" value="" />
+        <env name="rabbitmq_host" value="" />
+        <env name="rabbitmq_port" value="" />
+        <env name="rabbitmq_user" value="" />
+        <env name="rabbitmq_pass" value="" />-->
         <!-- define your env variables for the test env here -->
     </php>
 

@@ -1,4 +1,5 @@
 parameters:
+    env(api_doc_password): ''
     env(dev_custom_ip_1): '127.0.0.1'
     env(dev_custom_ip_2): '127.0.0.1'
     env(dev_custom_ip_3): '127.0.0.1'
@@ -11,8 +12,23 @@ security:
         in_memory: { memory: ~ }
         users:
             id: security.users_provider
+        api_doc_provider:
+            memory:
+                users:
+                    nekuno:
+                        password: "%env(api_doc_password)%"
+    encoders:
+        Symfony\Component\Security\Core\User\User: bcrypt
 
     firewalls:
+        default:
+            pattern: ^/$
+            methods: [GET]
+            security: false
+        api_doc:
+            pattern: ^/api/doc$
+            http_basic:
+                provider: api_doc_provider
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
@@ -21,7 +37,7 @@ security:
             pattern: ^/login$
         public_get:
             anonymous: true
-            pattern: (^/api/doc$)|(^/profile/metadata$)|(^/profile/categories)|(^/profile/tags)|(^/users/available/)|(^/client/)|(^/lookup)|(^/public/)
+            pattern: (^/profile/metadata$)|(^/profile/categories)|(^/profile/tags)|(^/users/available/)|(^/client/)|(^/lookup)|(^/public/)
             methods: [GET]
         public_post:
             anonymous: true
