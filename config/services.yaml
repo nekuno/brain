@@ -123,6 +123,10 @@ services:
         autowire: true
     Goutte\Client:
         autowire: true
+    Everyman\Neo4j\Client:
+        arguments:
+            $transport: "%env(db_neo4j_host)%"
+            $port: "%env(db_neo4j_port)%"
     Symfony\Component\Security\Http\HttpUtils:
         autowire: true
     HWI\Bundle\OAuthBundle\OAuth\RequestDataStorageInterface:

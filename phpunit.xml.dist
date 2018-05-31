@@ -15,10 +15,10 @@
         <env name="APP_SECRET" value="s$cretf0rt3st" />
         <env name="SHELL_VERBOSITY" value="-1" />
         <env name="secret" value="secretkeynekuno2015forjwt" />
-        <!-- <env name="instant_api_secret" value="" />
-        <env name="JWT_PRIVATE_KEY_PATH" value="" />
-        <env name="JWT_PUBLIC_KEY_PATH" value="" />
-        <env name="JWT_PASSPHRASE" value="" />
+        <env name="instant_api_secret" value="" />
+        <env name="JWT_PRIVATE_KEY_PATH" value="config/jwt/private.pem" />
+        <env name="JWT_PUBLIC_KEY_PATH" value="config/jwt/public.pem" />
+        <env name="JWT_PASSPHRASE" value="nekuno" />
         <env name="push_public_key" value="" />
         <env name="push_private_key" value="" />
         <env name="firebase_url" value="" />
@@ -30,20 +30,21 @@
         <env name="support_email_1" value="" />
         <env name="support_email_2" value="" />
         <env name="support_email_3" value="" />
-        <env name="locale_default" value="" />
-        <env name="locale" value="" />
-        <env name="images_web_dir" value="" />
+        <env name="locale_default" value="en" />
+        <env name="locale" value="en" />
+        <env name="images_web_dir" value="/../landing/web/" />
         <env name="brain_base_url" value="" />
         <env name="instant_host" value="" />
         <env name="guzzle_verify" value="" />
-        <env name="db_neo4j_host" value="" />
-        <env name="db_neo4j_port" value="" />
-        <env name="db_neo4j_user" value="" />
-        <env name="db_neo4j_pass" value="" />
-        <env name="rabbitmq_host" value="" />
-        <env name="rabbitmq_port" value="" />
-        <env name="rabbitmq_user" value="" />
-        <env name="rabbitmq_pass" value="" />-->
+        <env name="db_neo4j_host" value="127.0.0.1" force="true" />
+        <env name="db_neo4j_port" value="7475" force="true" />
+        <env name="db_neo4j_user" value="nekuno" force="true" />
+        <env name="db_neo4j_pass" value="nekuno" force="true" />
+        <env name="rabbitmq_host" value="localhost" />
+        <env name="rabbitmq_port" value="5672" />
+        <env name="rabbitmq_user" value="guest" />
+        <env name="rabbitmq_pass" value="guest" />
+        <env name="DATABASE_URL" value="mysql://nekuno:nekuno@127.0.0.1:3306/nekuno_brain" />
         <!-- define your env variables for the test env here -->
     </php>
 
