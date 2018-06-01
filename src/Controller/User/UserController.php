@@ -46,7 +46,11 @@ class UserController extends FOSRestController implements ClassResourceInterface
 
     public function __construct($supportEmails, $env)
     {
-        $this->supportEmails = $supportEmails;
+        foreach ($supportEmails as $supportEmail) {
+            if ($supportEmail) {
+                $this->supportEmails[] = $supportEmail;
+            }
+        }
         $this->env = $env;
     }
 
@@ -190,11 +194,16 @@ class UserController extends FOSRestController implements ClassResourceInterface
                 ->setFrom('enredos@nekuno.com', 'Nekuno')
                 ->setTo($this->supportEmails)
                 ->setContentType('text/html')
-                ->setBody($twig->render('email-notifications/registration-error-notification.html.twig', array(
-                    'e' => $e,
-                    'errorMessage' => $errorMessage,
-                    'data' => json_encode($request->request->all()),
-                )));
+                ->setBody(
+                    $twig->render(
+                        'email-notifications/registration-error-notification.html.twig',
+                        array(
+                            'e' => $e,
+                            'errorMessage' => $errorMessage,
+                            'data' => json_encode($request->request->all()),
+                        )
+                    )
+                );
 
             $mailer->send($message);
 
@@ -234,7 +243,7 @@ class UserController extends FOSRestController implements ClassResourceInterface
     {
         $data = $request->request->all();
         $data['userId'] = $user->getId();
-        $userManager->update($data);
+        $user = $userManager->update($data);
         $jwt = $authService->getToken($data['userId']);
 
         return $this->view(array(

@@ -159,7 +159,7 @@ class UsersTest extends UsersAPITest
         $userId = $formattedCreated['qnoow_id'];
 
         $response = $this->deleteUserFromAdmin($userId);
-        $formattedResponse = $this->assertJsonResponse($response, 201, "Delete UserA");
+        $formattedResponse = $this->assertJsonResponse($response, 200, "Delete UserA");
         $this->assertUserAFormat($formattedResponse);
 
         $deleted = $this->getOwnUser();
@@ -188,7 +188,7 @@ class UsersTest extends UsersAPITest
     {
         $this->assertArrayHasKey('qnoow_id', $user, "User has not qnoow_id key");
         $this->assertArrayHasKey('username', $user, "User has not username key");
-        $this->assertEquals(3, $user['qnoow_id'], "qnoow_id is not 3");
+        $this->assertEquals(5, $user['qnoow_id'], "qnoow_id is not 3");
         $this->assertEquals('Tom', $user['username'], "username is not Tom");
     }
 
