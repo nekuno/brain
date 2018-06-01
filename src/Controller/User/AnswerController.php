@@ -109,7 +109,7 @@ class AnswerController extends FOSRestController implements ClassResourceInterfa
     {
         $locale = $this->getLocale($request);
 
-        $result = $answerService->getUserAnswer($user->getId(), (int)$questionId, $locale);
+        $result = $answerService->getUserAnswer($user->getId(), $questionId, $locale);
 
         return $this->view($result, 200);
     }
@@ -248,7 +248,7 @@ class AnswerController extends FOSRestController implements ClassResourceInterfa
         $locale = $this->getLocale($request);
 
         try {
-            $userAnswer = $answerService->getUserAnswer($user->getId(), (int)$questionId, $locale);
+            $userAnswer = $answerService->getUserAnswer($user->getId(), $questionId, $locale);
             /** @var Answer $answer */
             $answer = $userAnswer['userAnswer'];
         } catch (NotFoundHttpException $e) {
@@ -261,7 +261,7 @@ class AnswerController extends FOSRestController implements ClassResourceInterfa
             return $this->view('Answer not deleted', 500);
         }
 
-        $dispatcher->dispatch(\AppEvents::ANSWER_ADDED, new AnswerEvent($user->getId(), (int)$questionId));
+        $dispatcher->dispatch(\AppEvents::ANSWER_ADDED, new AnswerEvent($user->getId(), $questionId));
 
         try {
             $questionManager->skip($answer->getQuestionId(), $user->getId());

@@ -486,7 +486,7 @@ class UserController extends FOSRestController implements ClassResourceInterface
             return $this->view([], 400);
         }
 
-        $filters = array('id' => (int)$userId, 'id2' => $user->getId(), 'showOnlyCommon' => (int)$showOnlyCommon);
+        $filters = array('id' => $userId, 'id2' => $user->getId(), 'showOnlyCommon' => (int)$showOnlyCommon);
 
         foreach ($tag as $singleTag) {
             if (!empty($singleTag)) {

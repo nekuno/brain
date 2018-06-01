@@ -7,6 +7,7 @@ use Model\Exception\ValidationException;
 use Model\Neo4j\Neo4jException;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\FilterControllerEvent;
 use Symfony\Component\HttpKernel\Event\FilterResponseEvent;
 use Symfony\Component\HttpKernel\Event\GetResponseForControllerResultEvent;
@@ -52,6 +53,7 @@ class ControllerSubscriber implements EventSubscriberInterface
             }
             $request->request->replace(is_array($data) ? $data : array());
         }
+        $this->convertIdsToInt($request);
     }
 
     /**
@@ -135,5 +137,28 @@ class ControllerSubscriber implements EventSubscriberInterface
         }
 
         return $data;
+    }
+
+    private function convertIdsToInt(Request $request)
+    {
+        foreach (self::getIdNames() as $idName) {
+            if ($request->attributes->has($idName)) {
+                $value = (integer)$request->attributes->get($idName);
+                $request->attributes->set($idName, $value);
+            }
+        }
+    }
+
+    static private function getIdNames()
+    {
+        return array(
+            'id',
+            'from',
+            'to',
+            'userId',
+            'enterpriseUserId',
+            'questionId',
+            'groupId',
+        );
     }
 }
