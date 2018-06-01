@@ -1,3 +1,14 @@
+parameters:
+    env(swiftmailer_host): ''
+    env(swiftmailer_port): ''
+    env(swiftmailer_username): ''
+    env(swiftmailer_password): ''
+    env(swiftmailer_sender_address): ''
+
 swiftmailer:
-    url: '%env(MAILER_URL)%'
+    host: '%env(swiftmailer_host)%'
+    port: '%env(swiftmailer_port)%'
+    username: '%env(swiftmailer_username)%'
+    password: '%env(swiftmailer_password)%'
+    sender_address: '%env(swiftmailer_sender_address)%'
     spool: { type: 'memory' }
