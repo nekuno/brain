@@ -11,7 +11,6 @@ use Model\Metadata\MetadataUtilities;
 use Model\Neo4j\GraphManager;
 use Model\Metadata\UserFilterMetadataManager;
 use Model\Neo4j\QueryBuilder;
-use Model\Profile\ProfileOptionManager;
 use Model\Profile\ProfileTagManager;
 use Service\Validator\FilterUsersValidator;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
