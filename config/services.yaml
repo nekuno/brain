@@ -3,6 +3,7 @@
 parameters:
     env(locale_default): 'en'
     env(images_web_dir): ''
+    env(images_absolute_web_dir): "%kernel.project_dir%%env(images_web_dir)%"
     env(social_host): ''
     env(admin_domain_plus_port): ''
     env(fields): ''
@@ -170,14 +171,14 @@ services:
             $password: "%env(db_neo4j_pass)%"
     Model\User\UserManager:
         arguments:
-            $imagesBaseDir: "%kernel.project_dir%%env(images_web_dir)%"
+            $imagesBaseDir: "%env(resolve:images_absolute_web_dir)%"
     Model\Photo\PhotoManager:
         arguments:
-            $base: "%kernel.project_dir%%env(images_web_dir)%"
+            $base: "%env(resolve:images_absolute_web_dir)%"
             $host: "%env(social_host)%"
     Model\Photo\GalleryManager:
         arguments:
-            $base: "%kernel.project_dir%%env(images_web_dir)%"
+            $base: "%env(resolve:images_absolute_web_dir)%"
     Model\Invitation\InvitationManager:
         arguments:
             $adminDomain: "%env(admin_domain_plus_port)%"
@@ -287,7 +288,7 @@ services:
     manager.user_manager:
         class: Model\User\UserManager
         arguments:
-            $imagesBaseDir: "%kernel.project_dir%%env(images_web_dir)%"
+            $imagesBaseDir: "%env(resolve:images_absolute_web_dir)%"
 
     security.users_provider:
         class: Security\UserProvider
