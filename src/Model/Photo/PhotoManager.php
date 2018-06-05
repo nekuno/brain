@@ -223,7 +223,7 @@ class PhotoManager
         );
 
         if (!isset($validTypes[$mimeType])) {
-            $this->throwPhotoException(sprintf('Invalid mime type, possibles values are "%s".', implode('", "', array_keys($validTypes))));
+            $this->throwPhotoException(sprintf('Invalid mime type "%s", possibles values are "%s".', $mimeType, implode('", "', array_keys($validTypes))));
         }
 
         return $validTypes[$mimeType];
