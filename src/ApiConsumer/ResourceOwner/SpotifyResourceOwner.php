@@ -34,9 +34,9 @@ class SpotifyResourceOwner extends SpotifyResourceOwnerBase
         $consumerKey = $this->getOption('consumer_key');
         $consumerSecret = $this->getOption('consumer_secret');
 
-        $headers = array('Authorization: Basic ' . base64_encode($consumerKey . ':' . $consumerSecret));
+        $headers = array('Authorization' => 'Basic ' . base64_encode($consumerKey . ':' . $consumerSecret));
         $accessTokenUrl = $this->getOption('access_token_url');
-        $response = $this->httpRequest($accessTokenUrl, 'grant_type=client_credentials', $headers, 'POST');
+        $response = $this->httpRequest($accessTokenUrl, array('grant_type' => 'client_credentials'), $headers, 'POST');
         $content = $this->getResponseContent($response);
 
         if (isset($content['access_token'])) {

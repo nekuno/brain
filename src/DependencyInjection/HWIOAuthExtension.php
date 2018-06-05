@@ -142,6 +142,7 @@ class HWIOAuthExtension extends Extension
                 throw new InvalidConfigurationException(sprintf('Class "%s" must implement interface "HWI\Bundle\OAuthBundle\OAuth\ResourceOwnerInterface".', $options['class']));
             }
 
+            /** @var Definition $definition */
             $definition = new $definitionClassname('hwi_oauth.abstract_resource_owner.'.$type);
             $definition->setClass($options['class']);
             unset($options['class']);

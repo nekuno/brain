@@ -1,26 +1,82 @@
+parameters:
+    env(twitter_consumer_key): ''
+    env(twitter_consumer_secret): ''
+    env(twitter_application_token): ''
+    env(facebook_consumer_key): ''
+    env(facebook_consumer_secret): ''
+    env(facebook_redirect_uri): ''
+    env(google_consumer_key): ''
+    env(google_consumer_secret): ''
+    env(google_application_token): ''
+    env(google_service_account_email): ''
+    env(google_key_file): ''
+    env(google_key_password): ''
+    env(spotify_consumer_key): ''
+    env(spotify_consumer_secret): ''
+    env(tumblr_consumer_key): ''
+    env(tumblr_consumer_secret): ''
+    env(tumblr_application_token): ''
+    env(linkedin_consumer_key): ''
+    env(linkedin_consumer_secret): ''
+    env(steam_application_token): ''
+
 api_consumer.config:
     resource_owner:
         twitter:
-            class: ApiConsumer\ResourceOwner\TwitterResourceOwner
-            parser_class: ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser
+            class:                 ApiConsumer\ResourceOwner\TwitterResourceOwner
+            parser_class:          ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser
+            consumer_key:          "%env(twitter_consumer_key)%"
+            consumer_secret:       "%env(twitter_consumer_secret)%"
+            client_credential:
+                application_token: "%env(twitter_application_token)%"
+
         facebook:
-            class: ApiConsumer\ResourceOwner\FacebookResourceOwner
-            parser_class: ApiConsumer\LinkProcessor\UrlParser\FacebookUrlParser
-        google:
-            class: ApiConsumer\ResourceOwner\GoogleResourceOwner
-        google_profile:
-            class: ApiConsumer\ResourceOwner\GoogleResourceOwner
+            class:                 ApiConsumer\ResourceOwner\FacebookResourceOwner
+            parser_class:          ApiConsumer\LinkProcessor\UrlParser\FacebookUrlParser
+            consumer_key:          "%env(facebook_consumer_key)%"
+            consumer_secret:       "%env(facebook_consumer_secret)%"
+            redirect_uri:          "%env(facebook_redirect_uri)%"
+
+        google: &resource_owner.google
+            class:                     ApiConsumer\ResourceOwner\GoogleResourceOwner
+            consumer_key:              "%env(google_consumer_key)%"
+            consumer_secret:           "%env(google_consumer_secret)%"
+            client_credential:
+                application_token:     "%env(google_application_token)%"
+                service_account_email: "%env(google_service_account_email)%"
+                key_file:              "%env(google_key_file)%"
+                key_password:          "%env(google_key_password)%"
+                scopes:
+                    - 'https://www.googleapis.com/auth/youtube'
+
+        google_profile: *resource_owner.google
+
         spotify:
-            class: ApiConsumer\ResourceOwner\SpotifyResourceOwner
-            parser_class: ApiConsumer\LinkProcessor\UrlParser\SpotifyUrlParser
+            class:           ApiConsumer\ResourceOwner\SpotifyResourceOwner
+            parser_class:    ApiConsumer\LinkProcessor\UrlParser\SpotifyUrlParser
+            consumer_key:    "%env(spotify_consumer_key)%"
+            consumer_secret: "%env(spotify_consumer_secret)%"
+
         tumblr:
-            class: ApiConsumer\ResourceOwner\TumblrResourceOwner
-            parser_class: ApiConsumer\LinkProcessor\UrlParser\TumblrUrlParser
+            class:               ApiConsumer\ResourceOwner\TumblrResourceOwner
+            parser_class:        ApiConsumer\LinkProcessor\UrlParser\TumblrUrlParser
+            consumer_key:        "%env(tumblr_consumer_key)%"
+            consumer_secret:     "%env(tumblr_consumer_secret)%"
+            scope: "read"
+            client_credential:
+                application_token: "%env(tumblr_application_token)%"
+
         linkedin:
-            class: ApiConsumer\ResourceOwner\LinkedinResourceOwner
+            class:           ApiConsumer\ResourceOwner\LinkedinResourceOwner
+            consumer_key:    "%env(linkedin_consumer_key)%"
+            consumer_secret: "%env(linkedin_consumer_secret)%"
+
         steam:
-            class: ApiConsumer\ResourceOwner\SteamResourceOwner
-            parser_class: ApiConsumer\LinkProcessor\UrlParser\SteamUrlParser
+            class:                 ApiConsumer\ResourceOwner\SteamResourceOwner
+            parser_class:          ApiConsumer\LinkProcessor\UrlParser\SteamUrlParser
+            client_credential:
+                application_token: "%env(steam_application_token)%"
+
     fetcher:
         twitter_links:
             class: ApiConsumer\Fetcher\TwitterLinksFetcher

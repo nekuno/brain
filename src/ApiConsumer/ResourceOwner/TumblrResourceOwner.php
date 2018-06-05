@@ -33,7 +33,7 @@ class TumblrResourceOwner extends GenericOAuth1ResourceOwner
     public function getUserInformation(array $accessToken, array $extraParameters = array())
     {
         $parameters = array_merge(array(
-            'oauth_consumer_key'     => $this->options['client_id'],
+            'oauth_consumer_key'     => $this->options['consumer_key'],
             'oauth_timestamp'        => time(),
             'oauth_nonce'            => $this->generateNonce(),
             'oauth_version'          => '1.0',
@@ -46,7 +46,7 @@ class TumblrResourceOwner extends GenericOAuth1ResourceOwner
             'GET',
             $url,
             $parameters,
-            $this->options['client_secret'],
+            $this->options['consumer_secret'],
             $accessToken['oauth_token_secret'],
             $this->options['signature_method']
         );

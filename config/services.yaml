@@ -18,7 +18,7 @@ parameters:
     env(fullContact_url): ''
     env(peopleGraph_consumer_key): ''
     env(peopleGraph_url): ''
-    env(hwi_oauth.resource_owners): ''
+   # env(hwi_oauth.resource_owners): ''
     env(brain_base_url): ''
     env(firebase_url): ''
     env(firebase_api_key): ''
@@ -304,7 +304,7 @@ services:
             - { name: 'console.command' }
     Console\Command\LinksFetchAndPreProcessCommand:
         arguments:
-            $resourceOwners: "%hwi_oauth.resource_owners%"
+            $resourceOwners: "%api_consumer_resource_owners%"
     Console\Command\LinksFetchCommand:
         arguments:
-            $resourceOwners: "%hwi_oauth.resource_owners%"
+            $resourceOwners: "%api_consumer_resource_owners%"

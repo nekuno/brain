@@ -1,14 +1,22 @@
 parameters:
     env(facebook_consumer_key): ''
     env(facebook_consumer_secret): ''
+    env(facebook_redirect_uri): ''
     env(google_consumer_key): ''
     env(google_consumer_secret): ''
+    env(google_application_token): ''
+    env(google_service_account_email): ''
+    env(google_key_file): ''
+    env(google_key_password): ''
     env(twitter_consumer_key): ''
     env(twitter_consumer_secret): ''
+    env(twitter_application_token): ''
     env(spotify_consumer_key): ''
     env(spotify_consumer_secret): ''
     env(tumblr_consumer_key): ''
     env(tumblr_consumer_secret): ''
+    env(tumblr_application_token): ''
+    env(steam_application_token): ''
     env(linkedin_consumer_key): ''
     env(linkedin_consumer_secret): ''
 
@@ -18,18 +26,22 @@ hwi_oauth:
             type:                facebook
             client_id:           "%env(facebook_consumer_key)%"
             client_secret:       "%env(facebook_consumer_secret)%"
-        google:
-            type:                google
-            client_id:           "%env(google_consumer_key)%"
-            client_secret:       "%env(google_consumer_secret)%"
-        twitter:
-            type:                twitter
-            client_id:           "%env(twitter_consumer_key)%"
-            client_secret:       "%env(twitter_consumer_secret)%"
-        spotify:
-            type:                spotify
-            client_id:           "%env(spotify_consumer_key)%"
-            client_secret:       "%env(spotify_consumer_secret)%"
+#
+#        google:
+#            type:                google
+#            client_id:           "%env(google_consumer_key)%"
+#            client_secret:       "%env(google_consumer_secret)%"
+#
+#        twitter:
+#            type:                twitter
+#            client_id:           "%env(twitter_consumer_key)%"
+#            client_secret:       "%env(twitter_consumer_secret)%"
+#
+#        spotify:
+#            type:                spotify
+#            client_id:           "%env(spotify_consumer_key)%"
+#            client_secret:       "%env(spotify_consumer_secret)%"
+#
         tumblr:
             type:                oauth1
             client_id:           "%env(tumblr_consumer_key)%"
@@ -43,10 +55,11 @@ hwi_oauth:
             authorization_url:  'https://www.tumblr.com/oauth/authorize'
             infos_url:          'https://api.tumblr.com/v2/user/info'
             request_token_url:  'https://www.tumblr.com/oauth/request_token'
-        linkedin:
-            type:                linkedin
-            client_id:           "%env(linkedin_consumer_key)%"
-            client_secret:       "%env(linkedin_consumer_secret)%"
+#
+#        linkedin:
+#            type:                linkedin
+#            client_id:           "%env(linkedin_consumer_key)%"
+#            client_secret:       "%env(linkedin_consumer_secret)%"
 
     # an optional setting to configure a query string parameter which can be used to redirect
     # the user after authentication, e.g. /connect/facebook?_destination=/my/destination will

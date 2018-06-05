@@ -78,7 +78,7 @@ class LinkAnalyzer
 
     public static function mustResolve(PreprocessedLink $link)
     {
-        return !self::isSpotify($link->getUrl());
+        return !self::isSpotify($link->getUrl()) && !self::isTumblr($link->getUrl());
     }
 
     /**
