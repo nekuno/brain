@@ -284,7 +284,7 @@ class PhotoManager
                 imagegif($crop, $fullPath);
                 break;
             default:
-                $this->throwPhotoException('Invalid mimetype');
+                $this->throwPhotoException(sprintf('Invalid mimetype "%s"', $size['mime']));
                 break;
         }
 
