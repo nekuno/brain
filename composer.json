@@ -14,7 +14,7 @@
         "fabpot/goutte": "^3.2",
         "friendsofsymfony/rest-bundle": "^2.3",
         "guzzlehttp/guzzle": "^6.3",
-        "hwi/oauth-bundle": "^0.6.2",
+        "hwi/oauth-bundle": "dev-master",
         "jakeasmith/http_build_url": "^1.0",
         "jms/serializer-bundle": "^2.3",
         "kriswallsmith/buzz": "^0.17.1",

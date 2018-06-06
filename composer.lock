@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "3fe2a41730dfb8bd1a2d6b6732acfa33",
+    "content-hash": "5349591b4ddb46cf3929195412d0a2d4",
     "packages": [
         {
             "name": "clue/stream-filter",
@@ -1447,16 +1447,16 @@
         },
         {
             "name": "hwi/oauth-bundle",
-            "version": "0.6.2",
+            "version": "dev-master",
             "source": {
                 "type": "git",
                 "url": "https://github.com/hwi/HWIOAuthBundle.git",
-                "reference": "d94181ac3d90509a557e3ea2bf6a85fcc8cd67b6"
+                "reference": "1acbea12bc8c0892aea082ffdd2eddaf7b16dc58"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/hwi/HWIOAuthBundle/zipball/d94181ac3d90509a557e3ea2bf6a85fcc8cd67b6",
-                "reference": "d94181ac3d90509a557e3ea2bf6a85fcc8cd67b6",
+                "url": "https://api.github.com/repos/hwi/HWIOAuthBundle/zipball/1acbea12bc8c0892aea082ffdd2eddaf7b16dc58",
+                "reference": "1acbea12bc8c0892aea082ffdd2eddaf7b16dc58",
                 "shasum": ""
             },
             "require": {
@@ -1601,7 +1601,7 @@
                 "yandex",
                 "youtube"
             ],
-            "time": "2018-03-28T16:21:10+00:00"
+            "time": "2018-04-17T13:41:30+00:00"
         },
         {
             "name": "jakeasmith/http_build_url",
@@ -6785,6 +6785,7 @@
     "minimum-stability": "stable",
     "stability-flags": {
         "everyman/neo4jphp": 20,
+        "hwi/oauth-bundle": 20,
         "symfony/lts": 20
     },
     "prefer-stable": false,
