@@ -132,12 +132,12 @@ class SpotifyFetcher extends BasicPaginationFetcher
 
     protected function getItemsFromResponse($response)
     {
-        return $response['items'] ?: array();
+        return isset($response['items']) && $response['items'] ? $response['items'] : array();
     }
 
     protected function getPaginationIdFromResponse($response)
     {
-        if ($response['next']) {
+        if (isset($response['next']) && $response['next']) {
             $startPos = strpos($response['next'], 'offset=') + 7;
             $endPos = strpos($response['next'], '&');
             $length = $endPos - $startPos;
