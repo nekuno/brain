@@ -26,22 +26,22 @@ hwi_oauth:
             type:                facebook
             client_id:           "%env(facebook_consumer_key)%"
             client_secret:       "%env(facebook_consumer_secret)%"
-#
-#        google:
-#            type:                google
-#            client_id:           "%env(google_consumer_key)%"
-#            client_secret:       "%env(google_consumer_secret)%"
-#
-#        twitter:
-#            type:                twitter
-#            client_id:           "%env(twitter_consumer_key)%"
-#            client_secret:       "%env(twitter_consumer_secret)%"
-#
-#        spotify:
-#            type:                spotify
-#            client_id:           "%env(spotify_consumer_key)%"
-#            client_secret:       "%env(spotify_consumer_secret)%"
-#
+
+        google:
+            type:                google
+            client_id:           "%env(google_consumer_key)%"
+            client_secret:       "%env(google_consumer_secret)%"
+
+        twitter:
+            type:                twitter
+            client_id:           "%env(twitter_consumer_key)%"
+            client_secret:       "%env(twitter_consumer_secret)%"
+
+        spotify:
+            type:                spotify
+            client_id:           "%env(spotify_consumer_key)%"
+            client_secret:       "%env(spotify_consumer_secret)%"
+
         tumblr:
             type:                oauth1
             client_id:           "%env(tumblr_consumer_key)%"
@@ -55,11 +55,11 @@ hwi_oauth:
             authorization_url:  'https://www.tumblr.com/oauth/authorize'
             infos_url:          'https://api.tumblr.com/v2/user/info'
             request_token_url:  'https://www.tumblr.com/oauth/request_token'
-#
-#        linkedin:
-#            type:                linkedin
-#            client_id:           "%env(linkedin_consumer_key)%"
-#            client_secret:       "%env(linkedin_consumer_secret)%"
+
+        linkedin:
+            type:                linkedin
+            client_id:           "%env(linkedin_consumer_key)%"
+            client_secret:       "%env(linkedin_consumer_secret)%"
 
     # an optional setting to configure a query string parameter which can be used to redirect
     # the user after authentication, e.g. /connect/facebook?_destination=/my/destination will
