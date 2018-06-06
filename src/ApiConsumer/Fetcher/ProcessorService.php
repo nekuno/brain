@@ -22,6 +22,7 @@ use Model\Link\Link;
 use Model\Link\LinkManager;
 use Model\Neo4j\Neo4jException;
 use Model\Rate\RateManager;
+use Model\Token\Token;
 use Model\Token\TokensManager;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
@@ -86,9 +87,12 @@ class ProcessorService implements LoggerAwareInterface
                 $links = array_merge($links, $processedLinks);
 
             } catch (TokenException $e) {
+                $token = $e->getToken();
+                $tokenUserId = $token instanceof Token ? $token->getUserId(): null;
+                $tokenResourceOwner = $token instanceof Token ? $token->getResourceOwner(): null;
                 $this->removeToken($preprocessedLinks);
 
-                $message = sprintf('Processing with the token for user %d and resource %s', $e->getToken()->getUserId(), $e->getToken()->getResourceOwner());
+                $message = sprintf('Processing with the token for user %d and resource %s', $tokenUserId, $tokenResourceOwner);
                 $this->logError($e, $message);
 
                 $processedLinks = $this->fullProcessSingle($preprocessedLink, $userId);
@@ -257,8 +261,10 @@ class ProcessorService implements LoggerAwareInterface
 
             } catch (TokenException $e) {
                 $this->removeToken($preprocessedLinks);
-
-                $message = sprintf('Reprocessing with the token for user %d and resource %s', $e->getToken()->getUserId(), $e->getToken()->getResourceOwner());
+                $token = $e->getToken();
+                $tokenUserId = $token instanceof Token ? $token->getUserId(): null;
+                $tokenResourceOwner = $token instanceof Token ? $token->getResourceOwner(): null;
+                $message = sprintf('Reprocessing with the token for user %d and resource %s', $tokenUserId, $tokenResourceOwner);
                 $this->logError($e, $message);
 
                 $reprocessedLinks = $this->fullReprocessSingle($preprocessedLink);

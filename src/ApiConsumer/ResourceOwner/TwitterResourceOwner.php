@@ -51,7 +51,7 @@ class TwitterResourceOwner extends TwitterResourceOwnerBase
 
         $headers = array();
         if (!empty($clientToken)) {
-            $headers = array('Authorization: Bearer ' . $clientToken);
+            $headers = array('Authorization' => 'Bearer ' . $clientToken);
         }
 
         $response = $this->httpRequest($this->normalizeUrl($url, $query), null, array(), $headers);

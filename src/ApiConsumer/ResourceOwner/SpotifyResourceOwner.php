@@ -36,7 +36,7 @@ class SpotifyResourceOwner extends SpotifyResourceOwnerBase
 
         $headers = array('Authorization' => 'Basic ' . base64_encode($consumerKey . ':' . $consumerSecret));
         $accessTokenUrl = $this->getOption('access_token_url');
-        $response = $this->httpRequest($accessTokenUrl, array('grant_type' => 'client_credentials'), $headers, 'POST');
+        $response = $this->httpRequest($accessTokenUrl, 'grant_type=client_credentials', $headers, 'POST');
         $content = $this->getResponseContent($response);
 
         if (isset($content['access_token'])) {
@@ -45,7 +45,7 @@ class SpotifyResourceOwner extends SpotifyResourceOwnerBase
 
             $headers = array();
             if (!empty($clientToken)) {
-                $headers = array('Authorization: Bearer ' . $clientToken);
+                $headers = array('Authorization' => 'Bearer ' . $clientToken);
             }
 
             $response = $this->httpRequest($this->normalizeUrl($url, $query), null, $headers);
@@ -79,7 +79,7 @@ class SpotifyResourceOwner extends SpotifyResourceOwnerBase
 		$refreshToken = $token['refreshToken'];
 		$url = 'https://accounts.spotify.com/api/token';
 		$authorization = base64_encode($this->options['consumer_key'] . ":" . $this->options['consumer_secret']);
-		$headers = array('Authorization: Basic ' . $authorization);
+		$headers = array('Authorization' => 'Basic ' . $authorization);
 		$body = array(
 			'grant_type' => 'refresh_token',
 			'refresh_token' => $refreshToken,

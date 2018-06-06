@@ -49,7 +49,7 @@ class GoogleResourceOwner extends GoogleResourceOwnerBase
     public function sendYoutubeAuthorizedRequest($url, $query = array())
     {
         $token = $this->getOption('client_credential')['application_token'];
-        $headers = array('Authorization: Bearer ' . $token);
+        $headers = array('Authorization' => 'Bearer ' . $token);
 
         $response = $this->httpRequest($this->normalizeUrl($url, $query), null, $headers);
 
