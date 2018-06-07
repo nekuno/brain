@@ -29,7 +29,8 @@ class TwitterProfileProcessor extends AbstractTwitterProcessor implements BatchP
     {
         $profiles = $this->resourceOwner->buildProfilesFromLookup($data);
         $link = reset($profiles);
-        $preprocessedLink->setFirstLink($link);
+        $creator = Creator::buildFromLink($link);
+        $preprocessedLink->setFirstLink($creator);
         $id = isset($data['id_str']) ? (int)$data['id_str'] : $data['id'];
         $preprocessedLink->setResourceItemId($id);
     }
@@ -154,7 +155,7 @@ class TwitterProfileProcessor extends AbstractTwitterProcessor implements BatchP
             $creators[] = Creator::buildFromLink($link);
         }
 
-        return $links;
+        return $creators;
     }
 
 }
