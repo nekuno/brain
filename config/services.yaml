@@ -260,6 +260,10 @@ services:
     EventListener\SimilarityMatchingSubscriber:
         arguments:
             $socialHost: "%env(social_host)%"
+    ApiConsumer\EventListener\ChannelSubscriber:
+        autowire: true
+    ApiConsumer\EventListener\OAuthTokenSubscriber:
+        autowire: true
     # End Subscribers
 
     # Services

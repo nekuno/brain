@@ -3,6 +3,7 @@
 /public/bundles/
 /var/cache
 /var/log
+/var/logs/*
 /vendor/
 ###< symfony/framework-bundle ###
 .idea

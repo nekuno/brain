@@ -2,15 +2,24 @@
 
 namespace Console\Command;
 
+use ApiConsumer\EventListener\CheckLinksSubscriber;
+use ApiConsumer\EventListener\FetchLinksInstantSubscriber;
+use ApiConsumer\EventListener\FetchLinksSubscriber;
+use ApiConsumer\EventListener\ReprocessLinksSubscriber;
 use Console\ApplicationAwareCommand;
+use Model\Link\LinkManager;
 use PhpAmqpLib\Channel\AMQPChannel;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 use Service\AMQPManager;
+use Service\DeviceService;
+use Service\InstantConnection;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Worker\ChannelWorker;
 use Worker\DatabaseReprocessorWorker;
 use Worker\LinkProcessorWorker;
@@ -77,6 +86,31 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
      */
     protected $linksReprocessWorker;
 
+    /**
+     * @var LinkManager
+     */
+    protected $linkManager;
+
+    /**
+     * @var DeviceService
+     */
+    protected $deviceService;
+
+    /**
+     * @var EventDispatcherInterface
+     */
+    protected $dispatcher;
+
+    /**
+     * @var InstantConnection
+     */
+    protected $instantConnection;
+
+    /**
+     * @var OutputInterface
+     */
+    protected $output;
+
     public function __construct(
         LoggerInterface $logger,
         AMQPManager $AMQPManager,
@@ -88,7 +122,11 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
         SocialNetworkDataProcessorWorker $socialNetworkDataProcessorWorker,
         ChannelWorker $channelWorker,
         LinksCheckWorker $linksCheckWorker,
-        LinksReprocessWorker $linksReprocessWorker
+        LinksReprocessWorker $linksReprocessWorker,
+        LinkManager $linkManager,
+        DeviceService $deviceService,
+        EventDispatcherInterface $dispatcher,
+        InstantConnection $instantConnection
     )
     {
         parent::__construct($logger);
@@ -102,6 +140,10 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
         $this->channelWorker = $channelWorker;
         $this->linksCheckWorker = $linksCheckWorker;
         $this->linksReprocessWorker = $linksReprocessWorker;
+        $this->linkManager = $linkManager;
+        $this->deviceService = $deviceService;
+        $this->dispatcher = $dispatcher;
+        $this->instantConnection = $instantConnection;
     }
 
     protected function configure()
@@ -119,6 +161,7 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
             throw new \Exception(sprintf('Invalid "%s" consumer name, valid consumers "%s".', $consumer, implode('", "', AMQPManager::getValidConsumers())));
         }
 
+        $this->setOutput($output);
         $this->setLogger($output);
 
         $output->writeln(sprintf('Starting %s consumer', $consumer));
@@ -184,8 +227,19 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
         }
     }
 
+    protected function setOutput(OutputInterface $output)
+    {
+        $this->output = $output;
+    }
+
     protected function buildFetching(AMQPChannel $channel)
     {
+        $subscribers = array(
+            new FetchLinksInstantSubscriber($this->instantConnection, $this->deviceService),
+            new FetchLinksSubscriber($this->output)
+        );
+        $this->addSubscribers($subscribers);
+
         $this->linkProcessorWorker->setChannel($channel);
         $this->linkProcessorWorker->setLogger($this->logger);
         $this->noticeStart($this->linkProcessorWorker);
@@ -195,6 +249,12 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
 
     protected function buildRefetching(AMQPChannel $channel)
     {
+        $subscribers = array(
+            new FetchLinksInstantSubscriber($this->instantConnection, $this->deviceService),
+            new FetchLinksSubscriber($this->output)
+        );
+        $this->addSubscribers($subscribers);
+
         $this->databaseReprocessorWorker->setChannel($channel);
         $this->databaseReprocessorWorker->setLogger($this->logger);
         $this->noticeStart($this->databaseReprocessorWorker);
@@ -263,6 +323,11 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
      */
     protected function buildChannel(AMQPChannel $channel)
     {
+        $subscribers = array(
+            new FetchLinksSubscriber($this->output)
+        );
+        $this->addSubscribers($subscribers);
+
         $this->channelWorker->setChannel($channel);
         $this->channelWorker->setLogger($this->logger);
         $this->noticeStart($this->channelWorker);
@@ -276,6 +341,11 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
      */
     protected function buildLinksCheck(AMQPChannel $channel)
     {
+        $subscribers = array(
+            new CheckLinksSubscriber($this->output, $this->linkManager)
+        );
+        $this->addSubscribers($subscribers);
+
         $this->linksCheckWorker->setChannel($channel);
         $this->linksCheckWorker->setLogger($this->logger);
         $this->noticeStart($this->linksCheckWorker);
@@ -289,6 +359,11 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
      */
     protected function buildLinksReprocess(AMQPChannel $channel)
     {
+        $subscribers = array(
+            new ReprocessLinksSubscriber($this->output, $this->linkManager)
+        );
+        $this->addSubscribers($subscribers);
+
         $this->linksReprocessWorker->setChannel($channel);
         $this->linksReprocessWorker->setLogger($this->logger);
         $this->noticeStart($this->linksReprocessWorker);
@@ -300,5 +375,16 @@ class RabbitMQConsumeCommand extends ApplicationAwareCommand
     {
         $message = 'Processing %s queue';
         $this->logger->notice(sprintf($message, $worker->getQueue()));
+    }
+
+    /**
+     * @param EventSubscriberInterface[] $subscribers
+     */
+    protected function addSubscribers(array $subscribers)
+    {
+        foreach ($subscribers as $subscribe)
+        {
+            $this->dispatcher->addSubscriber($subscribe);
+        }
     }
 }
