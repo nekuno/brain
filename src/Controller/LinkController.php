@@ -11,6 +11,7 @@ use ApiConsumer\LinkProcessor\PreprocessedLink;
 use Model\Link\Link;
 use Model\Content\Interest;
 use Model\Link\LinkManager;
+use Nelmio\ApiDocBundle\Annotation\Security;
 use Symfony\Component\HttpFoundation\Request;
 use Swagger\Annotations as SWG;
 
@@ -37,6 +38,7 @@ class LinkController extends FOSRestController implements ClassResourceInterface
      *     response=201,
      *     description="Returns new interests.",
      * )
+     * @Security(name="Bearer")
      * @SWG\Tag(name="links")
      */
     public function checkImagesAction(Request $request, LinkManager $linkManager, ProcessorService $processorService, ImageAnalyzer $imageAnalyzer)
