@@ -19,6 +19,8 @@ class FacebookStatusProcessor extends AbstractFacebookProcessor
         if (isset($item['privacy']['value']) && $item['privacy']['value'] !== 'EVERYONE') {
             throw new UrlNotValidException($preprocessedLink->getUrl(), sprintf('Url "%s" is not a public link', $preprocessedLink->getUrl()));
         }
+
+        return $item;
     }
 
     public function getImages(PreprocessedLink $preprocessedLink, array $data)
