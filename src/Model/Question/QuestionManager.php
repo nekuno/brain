@@ -36,18 +36,24 @@ class QuestionManager
     {
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match('(user:User {qnoow_id: { userId }})-[:HAS_PROFILE]->(:Profile)<-[:OPTION_OF]-(mode:Mode)')
-            ->match('(a:Answer)-[:IS_ANSWER_OF]->(:Question)-[:REGISTERS]-(mode)')
+        $qb->match('(user:User {qnoow_id: { userId }})<-[:PROFILE_OF]-(:Profile)<-[:OPTION_OF]-(mode:Mode)')
+            ->match('(q:Question)-[:REGISTERS]-(mode)')
+            ->where('NOT (user)-[:ANSWERS]->(:Answer)-[:IS_ANSWER_OF]->(q)')
             ->setParameter('userId', (int)$userId)
-            ->where('NOT (user)-[:ANSWERS]->(a)')
-            ->returns('COUNT(a)');
+            ->returns('COUNT(q) as unanswered');
 
         $query = $qb->getQuery();
         $result = $query->getResultSet();
 
-        $thereAreNoRegisterQuestionsLeft = $result->count() == 0;
+        if ($result->count() > 0) {
+            /* @var $row Row */
+            $row = $result->current();
+            $count = $row->offsetGet('unanswered');
 
-        return $thereAreNoRegisterQuestionsLeft;
+            return $count === 0;
+        }
+
+        return true;
     }
 
     //TODO: Make answer existence optionalMatch
