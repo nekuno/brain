@@ -13,7 +13,9 @@ class Image extends Link
     public function toArray()
     {
         $array = parent::toArray();
-        $array['additionalLabels'][] = self::IMAGE_LABEL;
+        if (!in_array(self::IMAGE_LABEL, $array['additionalLabels'])) {
+            $array['additionalLabels'][] = self::IMAGE_LABEL;
+        }
 
         return $array;
     }

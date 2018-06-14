@@ -10,7 +10,9 @@ class Creator extends Link
     public function toArray()
     {
         $array = parent::toArray();
-        $array['additionalLabels'][] = self::CREATOR_LABEL;
+        if (!in_array(self::CREATOR_LABEL, $array['additionalLabels'])) {
+            $array['additionalLabels'][] = self::CREATOR_LABEL;
+        }
 
         return $array;
     }
