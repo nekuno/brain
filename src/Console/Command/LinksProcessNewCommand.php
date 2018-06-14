@@ -117,11 +117,11 @@ class LinksProcessNewCommand extends ApplicationAwareCommand
         return $token;
     }
 
-    private function outputLink(array $link, OutputInterface $output)
+    private function outputLink(PreprocessedLink $link, OutputInterface $output)
     {
         if (OutputInterface::VERBOSITY_NORMAL < $output->getVerbosity()) {
             $output->writeln('----------Link outputted------------');
-            foreach ($link as $key => $value) {
+            foreach ($link->getLinks() as $key => $value) {
                 $value = is_array($value) ? json_encode($value) : $value;
                 $output->writeln(sprintf('%s => %s', $key, $value));
             }
