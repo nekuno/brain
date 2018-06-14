@@ -10,9 +10,15 @@ nelmio_api_doc:
                 description: 'Value: Bearer {jwt}'
                 name: Authorization
                 in: header
-
-    areas: # to filter documented areas
-       path_patterns: # an array of regexps
-            - ^/(?!(api/doc)|(_.*)$)
+        area: public
+    areas:
+        default:
+            path_patterns: [ ^/(?!(api/doc)|(_.*)$) ]
+        admin:
+            path_patterns: [ ^/admin ]
+        instant:
+            path_patterns: [ ^/instant ]
+        public:
+            path_patterns: [ ^/(?!(admin|instant|(api/doc)|(_.*)$)) ]
     models: { use_jms: false }
 

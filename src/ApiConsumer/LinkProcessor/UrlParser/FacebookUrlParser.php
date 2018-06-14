@@ -82,7 +82,7 @@ class FacebookUrlParser extends UrlParser
     public function isFacebookUrl($url)
     {
         $parsedUrl = parse_url($url);
-        if (preg_match('/^https?:\/\/(www\.)?facebook\.com\//i', $parsedUrl['host'])) {
+        if (preg_match('/^(www\.)?facebook\.com/i', $parsedUrl['host'])) {
             return true;
         }
 

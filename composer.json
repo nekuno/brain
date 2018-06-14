@@ -16,6 +16,7 @@
         "guzzlehttp/guzzle": "^6.3",
         "hwi/oauth-bundle": "dev-master",
         "jakeasmith/http_build_url": "^1.0",
+        "jean85/pretty-package-versions": "^1.1",
         "jms/serializer-bundle": "^2.3",
         "kriswallsmith/buzz": "^0.17.1",
         "lexik/jwt-authentication-bundle": "^2.4",

@@ -5,7 +5,9 @@ namespace Controller;
 use FOS\RestBundle\Controller\Annotations\Get;
 use FOS\RestBundle\Controller\FOSRestController;
 use FOS\RestBundle\Routing\ClassResourceInterface;
+use Jean85\PrettyVersions;
 use Swagger\Annotations as SWG;
+use Symfony\Component\HttpFoundation\Response;
 
 class DefaultController extends FOSRestController implements ClassResourceInterface
 {
@@ -13,15 +15,19 @@ class DefaultController extends FOSRestController implements ClassResourceInterf
      * Get welcome message
      *
      * @Get("/")
-     * @return \FOS\RestBundle\View\View
+     * @return Response
      * @SWG\Response(
      *     response=200,
      *     description="Returns 200.",
      * )
      * @SWG\Tag(name="default")
      */
-    public function getStatusAction()
+    public function getWelcomeAction()
     {
-        return $this->view('Welcome to Nekuno Brain!' , 200);
+        $version = PrettyVersions::getVersion('nekuno/brain2');
+
+        $view = $this->renderView('default/welcome.html.twig' , array('version' => $version));
+
+        return new Response($view, 200, ['Content-Type' => 'text/html']);
     }
 }

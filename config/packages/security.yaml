@@ -25,8 +25,11 @@ security:
             pattern: ^/$
             methods: [GET]
             security: false
-        api_doc:
-            pattern: ^/api/doc$
+        api_doc_public:
+            pattern: ^/api/doc/public$
+            security: false
+        api_doc_private:
+            pattern: ^/api/.+$
             http_basic:
                 provider: api_doc_provider
         dev:

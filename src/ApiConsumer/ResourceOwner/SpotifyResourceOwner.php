@@ -53,7 +53,7 @@ class SpotifyResourceOwner extends SpotifyResourceOwnerBase
             return $this->getResponseContent($response);
         }
 
-       throw new TokenException('Cannot get application token');
+       return array();
     }
 
     /**

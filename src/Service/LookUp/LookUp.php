@@ -26,8 +26,9 @@ abstract class LookUp implements LookUpInterface
 
     function __construct($apiUrl, $apiKey, UrlGeneratorInterface $urlGenerator)
     {
-        $this->client = new Client(array('base_uri' => $apiUrl));
+        $this->client = new Client();
         $this->apiKey = $apiKey;
+        $this->apiUrl = $apiUrl;
         $this->urlGenerator = $urlGenerator;
     }
 
@@ -81,13 +82,14 @@ abstract class LookUp implements LookUpInterface
                     'apiKey' => $apiKey,
                 );
             }
-            $response = $client->get('', array('query' => $query));
+
+            $response = $client->request('GET', $this->apiUrl, array('query' => $query));
             if ($response->getStatusCode() == 202) {
                 // TODO: Should get data from web hook
                 //throw new Exception('Resource not available yet. Wait 2 minutes and execute the command again.', 202);
             }
             if ($response->getStatusCode() == 200) {
-                return $response->json();
+                return json_decode($response->getBody()->getContents(), true);
             }
         } catch (\Exception $e) {
             // TODO: Refuse exceptions by now

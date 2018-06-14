@@ -71,8 +71,9 @@ class TwitterFollowingFetcher extends AbstractTwitterFetcher
 //                        'username' => $screenName,
 //                    )
 //                );
-                $preprocessedLink = new PreprocessedLink($link->getUrl());
-                $preprocessedLink->setFirstLink($link);
+                $creator = Creator::buildFromLink($link);
+                $preprocessedLink = new PreprocessedLink($creator->getUrl());
+                $preprocessedLink->setFirstLink($creator);
                 $preprocessedLinks[] = $preprocessedLink;
             }
         }

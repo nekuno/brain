@@ -19,7 +19,7 @@ class TumblrBlogProcessor extends AbstractTumblrProcessor
         }
         $response = $this->resourceOwner->requestBlog($blogId, $token);
 
-        return isset($response['response']['blog']) ? $response['response']['blog'] : null;
+        return isset($response['response']['blog']) ? $response['response']['blog'] : array();
     }
 
     public function hydrateLink(PreprocessedLink $preprocessedLink, array $data)

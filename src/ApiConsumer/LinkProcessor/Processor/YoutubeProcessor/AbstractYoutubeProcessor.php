@@ -36,7 +36,7 @@ abstract class AbstractYoutubeProcessor extends AbstractAPIProcessor
         return $response;
     }
 
-    protected function isValidResponse(array $response)
+    protected function isValidResponse($response)
     {
         return isset($response['items']) && is_array($response['items']) && count($response['items']) > 0 && isset($response['items'][0]['snippet']);
     }

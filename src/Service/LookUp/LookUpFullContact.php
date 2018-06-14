@@ -3,8 +3,10 @@
 namespace Service\LookUp;
 
 use Entity\LookUpData;
+use GuzzleHttp\Client;
 use Model\Exception\ErrorList;
 use Model\Exception\ValidationException;
+use Symfony\Component\Routing\Generator\UrlGenerator;
 
 class LookUpFullContact extends LookUp
 {
@@ -116,5 +118,40 @@ class LookUpFullContact extends LookUp
         }
 
         return true;
+    }
+
+    protected function getFromClient(Client $client, $lookUpType, $value, $apiKey, $webHookId)
+    {
+        try {
+            if ($webHookId) {
+                $route = $this->urlGenerator->generate('setLookUpFromWebHook', array(), UrlGenerator::ABSOLUTE_URL);
+                $query = array(
+                    $lookUpType => $value,
+                    'webHookUrl' => urlencode($route),
+                    'webHookId' => $webHookId,
+                );
+            } else {
+                $query = array(
+                    $lookUpType => $value,
+                );
+            }
+
+            $headers = array('X-FullContact-APIKey' => $apiKey);
+
+            $response = $client->request('GET', $this->apiUrl, array('query' => $query, 'headers' => $headers));
+            if ($response->getStatusCode() == 202) {
+                // TODO: Should get data from web hook
+                //throw new Exception('Resource not available yet. Wait 2 minutes and execute the command again.', 202);
+            }
+            if ($response->getStatusCode() == 200) {
+                return json_decode($response->getBody()->getContents(), true);
+            }
+        } catch (\Exception $e) {
+            // TODO: Refuse exceptions by now
+            return array();
+            //throw new Exception($e->getMessage(), 404);
+        }
+
+        return array();
     }
 }
