@@ -19,7 +19,7 @@ class SteamGameProcessor extends AbstractSteamProcessor
         return isset($response['game']) ? $response['game'] : array();
     }
 
-    public function isValidResponse(array $response)
+    public function isValidResponse($response)
     {
         return true;
     }

@@ -20,7 +20,7 @@ class SpotifyTrackProcessor extends AbstractSpotifyProcessor
         return $track;
     }
 
-    protected function isValidResponse(array $response)
+    protected function isValidResponse($response)
     {
         $hasAlbumData = isset($response['album']);
         $hasName = isset($response['name']);

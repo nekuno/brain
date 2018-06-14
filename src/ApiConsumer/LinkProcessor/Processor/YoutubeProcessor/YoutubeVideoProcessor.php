@@ -103,7 +103,7 @@ class YoutubeVideoProcessor extends AbstractYoutubeProcessor
         return $this->resourceOwner->requestVideo($id, $token);
     }
 
-    protected function checkValidResponse(PreprocessedLink $preprocessedLink, array $response)
+    protected function checkValidResponse(PreprocessedLink $preprocessedLink, $response)
     {
         if ($this->isDisabledVideoResponse($response)){
             $exception = new CannotProcessException($preprocessedLink->getUrl(), sprintf('Response for url %s is not valid', $preprocessedLink->getUrl()));

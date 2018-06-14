@@ -52,7 +52,7 @@ abstract class AbstractFacebookProcessor extends AbstractAPIProcessor
         return isset($response['name']) ? $response['name'] : null;
     }
 
-    protected function isValidResponse(array $response)
+    protected function isValidResponse($response)
     {
         $isError = isset($response['error']);
 
