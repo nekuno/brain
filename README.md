@@ -1,9 +1,9 @@
-Nekuno Brain2
+Nekuno Brain
 ===================
 
 After cloning execute:
 
-`cd brain2`
+`cd brain`
 
 `composer install`
 
