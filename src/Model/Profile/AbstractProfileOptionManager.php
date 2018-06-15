@@ -100,15 +100,20 @@ abstract class AbstractProfileOptionManager
         /** @var Row $optionData */
         foreach ($options as $optionData) {
 
-            list($optionId, $labels, $detail) = $this->getOptionData($optionData);
+            list($optionId, $labels, $detail, $details) = $this->getOptionData($optionData);
             /** @var Label[] $labels */
             foreach ($labels as $label) {
 
                 $typeName = $this->metadataUtilities->labelToType($label->getName());
-
                 switch ($metadata[$typeName]['type']) {
                     case 'multiple_choices':
                         $result = $this->getOptionArrayResult($optionsResult, $typeName, $optionId);
+                        break;
+                    case 'choice_and_multiple_choices':
+                        $result = $this->getChoiceAndMultipleChoicesResult($optionId, $details);
+                        break;
+                    case 'double_multiple_choices':
+                        $result = $this->getDoubleMultipleChoicesResult($optionsResult, $typeName, $optionId, $details);
                         break;
                     case 'double_choice':
                     case 'tags_and_choice':
@@ -129,7 +134,7 @@ abstract class AbstractProfileOptionManager
     protected function getOptionData(Row $optionData = null)
     {
         if (!$optionData->offsetExists('option')) {
-            return array(null, array(), null);
+            return array(null, array(), null, array());
         }
         $optionNode = $optionData->offsetGet('option');
         $optionId = $optionNode->getProperty('id');
@@ -144,7 +149,13 @@ abstract class AbstractProfileOptionManager
 
         $detail = $optionData->offsetExists('detail') ? $optionData->offsetGet('detail') : '';
 
-        return array($optionId, $labels, $detail);
+        $details = array();
+        $detailsRow = $optionData->offsetExists('details') ? $optionData->offsetGet('details') : [];
+        foreach ($detailsRow as $detailsSingle) {
+            $details[] = $detailsSingle;
+        }
+
+        return array($optionId, $labels, $detail, $details);
     }
 
     protected function getOptionArrayResult($optionsResult, $typeName, $optionId)
@@ -164,6 +175,39 @@ abstract class AbstractProfileOptionManager
     protected function getOptionDetailResult($optionId, $detail)
     {
         return array('choice' => $optionId, 'detail' => $detail);
+    }
+
+    protected function getDoubleMultipleChoicesResult($optionsResult, $typeName, $optionId, $details)
+    {
+        if (isset($optionsResult[$typeName]) && is_array($optionsResult[$typeName])) {
+            $currentResult = $optionsResult[$typeName];
+        } else {
+            $currentResult = array('choices' => array(), 'details' => array());
+        }
+
+        $currentResult['choices'][] = $optionId;
+        $currentResult['details'] = $details; //are the same for each optionId
+
+        $choices = $currentResult['choices'];
+        sort($choices);
+        $currentResult['choices'] = $choices;
+
+        $details = $currentResult['details'];
+        sort($details);
+        $currentResult['details'] = $details;
+
+        return $currentResult;
+    }
+
+    protected function getChoiceAndMultipleChoicesResult($optionId, $details)
+    {
+        $currentResult = array('choice' => $optionId, 'details' => $details);
+
+        $details = $currentResult['details'];
+        sort($details);
+        $currentResult['details'] = $details;
+
+        return $currentResult;
     }
 
     public function getTopProfileTags($tagType)
