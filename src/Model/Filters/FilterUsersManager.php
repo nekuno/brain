@@ -441,7 +441,11 @@ class FilterUsersManager
         $qb->match('(filter:FilterUsers)')
             ->where('id(filter) = {id}')
             ->optionalMatch('(filter)-[optionOf:FILTERS_BY]->(option:ProfileOption)')
-            ->with('filter', 'collect(distinct {option: option, detail: (CASE WHEN EXISTS(optionOf.detail) THEN optionOf.detail ELSE null END)}) AS options')
+            ->with('filter', 'collect(distinct {
+            option: option, 
+            detail: (CASE WHEN EXISTS(optionOf.detail) THEN optionOf.detail ELSE null END),
+            details: (CASE WHEN EXISTS(optionOf.details) THEN optionOf.details ELSE null END)
+            }) AS options')
             ->optionalMatch('(filter)-[tagged:FILTERS_BY]->(tag:ProfileTag)-[:TEXT_OF]-(text:TextLanguage)')
             ->with('filter', 'options', 'collect(distinct {tag: tag, tagged: tagged, text: text}) AS tags')
             ->optionalMatch('(filter)-[loc_rel:FILTERS_BY]->(loc:Location)')
@@ -450,7 +454,6 @@ class FilterUsersManager
             ->returns('filter, options, tags, loc, loc_rel', 'collect(id(group)) AS groups');
         $qb->setParameter('id', (integer)$filterId);
         $result = $qb->getQuery()->getResultSet();
-
         if ($result->count() < 1) {
             throw new NotFoundHttpException('filter with id ' . $filterId . ' not found');
         }
