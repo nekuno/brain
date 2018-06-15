@@ -10,9 +10,4 @@ abstract class SimilarityAPITest extends APITest
     {
         return $this->getResponseByRouteWithCredentials('/similarity/'.$otherUserId);
     }
-
-    public function getMatching($otherUserId)
-    {
-        return $this->getResponseByRouteWithCredentials('/matching/'.$otherUserId);
-    }
 }

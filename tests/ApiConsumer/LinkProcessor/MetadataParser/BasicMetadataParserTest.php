@@ -235,7 +235,7 @@ class BasicMetadataParserTest extends TestCase
     }
 
     /**
-     * @dataProvider testExtractTagsData
+     * @dataProvider extractTagsData
      */
     public function testExtractTags($expected, $testData)
     {
@@ -263,7 +263,7 @@ class BasicMetadataParserTest extends TestCase
     /**
      * @return array
      */
-    public function testExtractTagsData()
+    public function extractTagsData()
     {
         return array(
             array(
