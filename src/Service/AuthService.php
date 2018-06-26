@@ -163,7 +163,7 @@ class AuthService
         $token = array(
             'iss' => 'https://nekuno.com',
             'sub' => $user->getUsernameCanonical(),
-            'user' => $user->jsonSerialize(),
+            'user' => json_encode($user->jsonSerialize(), true),
         );
 
         $jwt = $this->jwtEncoder->encode($token);
@@ -177,7 +177,7 @@ class AuthService
         $data = $this->jwtEncoder->decode($token);
 
         $user = new User();
-        $this->cast($user, $data['user']);
+        $this->cast($user, json_decode($data['user']));
 
         return $user;
     }
