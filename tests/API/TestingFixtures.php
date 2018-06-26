@@ -142,8 +142,7 @@ class TestingFixtures
         $qb = $this->gm->createQueryBuilder();
 
         $qb->match('(n)')
-            ->optionalMatch('(n)-[r]-()')
-            ->delete('n, r');
+            ->detachDelete('n');
 
         $query = $qb->getQuery();
         $query->getResultSet();
