@@ -2,14 +2,14 @@
 
 define('IS_WINDOWS', strtoupper(substr(PHP_OS, 0, 3)) === 'WIN');
 define('NEO4J_VERSION', '3.0.7');
-define('NEO4J_PATH', 'vendor' . DIRECTORY_SEPARATOR . 'neo4j' . DIRECTORY_SEPARATOR . 'neo4j-community-' . NEO4J_VERSION);
+define('NEO4J_PATH', __DIR__ . '/vendor' . DIRECTORY_SEPARATOR . 'neo4j' . DIRECTORY_SEPARATOR . 'neo4j-community-' . NEO4J_VERSION);
 define('NEO4J_BIN', NEO4J_PATH . DIRECTORY_SEPARATOR . 'bin');
 define('NEO4J_FILE', IS_WINDOWS ? 'windows.zip' : 'unix.tar.gz');
 
 if (!is_dir(NEO4J_PATH)) {
-    exec('mkdir vendor' . DIRECTORY_SEPARATOR . 'neo4j');
+    exec('mkdir ' . __DIR__ . '/vendor' . DIRECTORY_SEPARATOR . 'neo4j');
     exec('wget http://neo4j.com/artifact.php?name=neo4j-community-' . NEO4J_VERSION . '-' . NEO4J_FILE . ' -Ovendor/neo4j/' . NEO4J_FILE);
-    IS_WINDOWS ? exec('unzip vendor/neo4j/' . NEO4J_FILE . ' -d vendor/neo4j') : exec('tar xvzf vendor/neo4j/' . NEO4J_FILE . ' -C vendor/neo4j');
+    IS_WINDOWS ? exec('unzip ' . __DIR__ . '/vendor/neo4j/' . NEO4J_FILE . ' -d vendor/neo4j') : exec('tar xvzf ' . __DIR__ . '/vendor/neo4j/' . NEO4J_FILE . ' -C ' . __DIR__ . '/vendor/neo4j');
     exec('rm vendor/neo4j/' . NEO4J_FILE);
     exec("sed -i 's/dbms.connector.bolt.enabled=true/dbms.connector.bolt.enabled=false/g' " . NEO4J_PATH . '/conf/neo4j.conf');
     exec("sed -i 's/#dbms.connector.http.address=0.0.0.0:7474/dbms.connector.http.address=0.0.0.0:7475/g' " . NEO4J_PATH . '/conf/neo4j.conf');
@@ -40,8 +40,3 @@ if (IS_WINDOWS) {
 }
 
 require_once __DIR__ . '/vendor/autoload.php';
-
-passthru(sprintf('php "%s/bin/console" cache:clear --env=test --no-warmup', __DIR__));
-passthru(sprintf('php "%s/bin/console" doctrine:database:drop --force', __DIR__));
-passthru(sprintf('php "%s/bin/console" doctrine:database:create', __DIR__));
-passthru(sprintf('php "%s/bin/console" doctrine:schema:create', __DIR__));
