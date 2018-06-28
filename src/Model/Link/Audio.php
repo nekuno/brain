@@ -12,7 +12,9 @@ class Audio extends Link
     public function toArray()
     {
         $array = parent::toArray();
-        $array['additionalLabels'][] = self::AUDIO_LABEL;
+        if (!in_array(self::AUDIO_LABEL, $array['additionalLabels'])) {
+            $array['additionalLabels'][] = self::AUDIO_LABEL;
+        }
         $array['additionalFields'] = array(
             'embed_id' => $this->getEmbedId(),
             'embed_type' => $this->getEmbedType()

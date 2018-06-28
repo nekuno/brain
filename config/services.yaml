@@ -298,8 +298,8 @@ services:
         class: Security\UserProvider
         arguments: ["@manager.user_manager"]
 
-    hwi_oauth.user.provider.entity:
-        class: HWI\Bundle\OAuthBundle\Security\Core\User\OAuthUserProvider
+#    hwi_oauth.user.provider.entity:
+#        class: Security\UserProvider
     # End Services
 
     # Console commands

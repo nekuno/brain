@@ -12,7 +12,9 @@ class Video extends Link
     public function toArray()
     {
         $array = parent::toArray();
-        $array['additionalLabels'][] = self::VIDEO_LABEL;
+        if (!in_array(self::VIDEO_LABEL, $array['additionalLabels'])) {
+            $array['additionalLabels'][] = self::VIDEO_LABEL;
+        }
         $array['additionalFields'] = array(
             'embed_id' => $this->getEmbedId(),
             'embed_type' => $this->getEmbedType()

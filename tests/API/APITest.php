@@ -5,6 +5,7 @@ namespace Tests\API;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Response;
 use Tests\API\MockUp\AuthServiceMockUp;
+use Doctrine\ORM\Tools\SchemaTool;
 
 abstract class APITest extends WebTestCase
 {
@@ -22,6 +23,12 @@ abstract class APITest extends WebTestCase
         parent::setUp();
         $kernel = self::bootKernel();
         $container = $kernel->getContainer();
+
+        $em = $container->get('doctrine.orm.entity_manager');
+        $schemaTool = new SchemaTool($em);
+        $schemaTool->dropDatabase();
+        $metadata = $em->getMetadataFactory()->getAllMetadata();
+        $schemaTool->createSchema($metadata);
 
         $this->authServiceMockup = $container->get('auth_service_mockup');
         /** @var TestingFixtures $fixtures */

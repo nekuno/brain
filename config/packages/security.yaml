@@ -57,9 +57,8 @@ security:
             anonymous: true
             pattern: ^/admin/.*$
         secured:
-            json_login:
-                check_path: /login
             provider: users
+            stateless: true
             pattern: ^.*$
             guard:
                 authenticators:

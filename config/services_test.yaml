@@ -26,6 +26,10 @@ services:
         autowire: true
         public: true
         class: Model\Similarity\SimilarityManager
+    matching_manager:
+        autowire: true
+        public: true
+        class: Model\Matching\MatchingManager
     popularity_manager:
         autowire: true
         public: true

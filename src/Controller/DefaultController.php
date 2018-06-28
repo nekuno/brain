@@ -24,7 +24,7 @@ class DefaultController extends FOSRestController implements ClassResourceInterf
      */
     public function getWelcomeAction()
     {
-        $version = PrettyVersions::getVersion('nekuno/brain2');
+        $version = PrettyVersions::getVersion('nekuno/brain');
 
         $view = $this->renderView('default/welcome.html.twig' , array('version' => $version));
 
