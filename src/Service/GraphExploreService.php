@@ -48,7 +48,10 @@ class GraphExploreService
         $countNodes = count($nodes);
         foreach ($common as $index => $link){
             if ($index > 100) continue;
-            $nodes[] = $this->buildLink($link);
+            $newLink = $this->buildLink($link);
+            $newLink['group'] = 'common';
+            $nodes[] = $newLink;
+
             $totalIndex = $countNodes + $index;
             $links[] = $this->buildRelationship(0, $totalIndex);
             $links[] = $this->buildRelationship(1, $totalIndex);
@@ -57,7 +60,10 @@ class GraphExploreService
         $countNodes = count($nodes);
         foreach ($links1 as $index => $link){
             if ($index > 100) continue;
-            $nodes[] = $this->buildLink($link);
+            $newLink = $this->buildLink($link);
+            $newLink['group'] = 'user1';
+            $nodes[] = $newLink;
+
             $totalIndex = $countNodes + $index;
             $links[] = $this->buildRelationship(0, $totalIndex);
         }
@@ -65,7 +71,10 @@ class GraphExploreService
         $countNodes = count($nodes);
         foreach ($links2 as $index => $link){
             if ($index > 100) continue;
-            $nodes[] = $this->buildLink($link);
+            $newLink = $this->buildLink($link);
+            $newLink['group'] = 'user2';
+            $nodes[] = $newLink;
+
             $totalIndex = $countNodes + $index;
             $links[] = $this->buildRelationship(1, $totalIndex);
         }
@@ -99,6 +108,7 @@ class GraphExploreService
             'id' => $object->offsetGet('id'),
             'username' => $object->offsetGet('username'),
             'label' => 'User',
+            'group' => 'user',
         );
     }
 
