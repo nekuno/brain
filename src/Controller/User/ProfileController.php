@@ -201,6 +201,14 @@ class ProfileController extends FOSRestController implements ClassResourceInterf
      * @param Profile $profile
      * @return \FOS\RestBundle\View\View
      * @ParamConverter("profile", converter="request_body_converter", class="Model\Profile\Profile")
+     * @SWG\Parameter(
+     *      name="body",
+     *      in="body",
+     *      type="json",
+     *      schema=@SWG\Schema(
+     *          ref=@Model(type=\Model\Profile\Profile::class)
+     *      )
+     * )
      * @SWG\Response(
      *     response=201,
      *     description="Returns edited profile.",
