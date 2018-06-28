@@ -4,6 +4,7 @@ namespace Model\Profile;
 
 use Event\ProfileEvent;
 use Model\Location\LocationManager;
+use Model\ManagerInterface;
 use Model\Metadata\MetadataUtilities;
 use Model\Metadata\ProfileMetadataManager;
 use Model\Neo4j\GraphManager;
@@ -16,7 +17,7 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-class ProfileManager
+class ProfileManager implements ManagerInterface
 {
     const MAX_TAGS_AND_CHOICE_LENGTH = 15;
     protected $gm;
@@ -141,10 +142,11 @@ class ProfileManager
 
     /**
      * @param $id
+     * @param $data
      */
-    public function remove($id)
+    public function delete($id, array $data = [])
     {
-        $this->validateOnRemove($id);
+        $this->validateOnDelete($data, $id);
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(user:User)<-[:PROFILE_OF]-(profile:Profile)')
@@ -177,7 +179,7 @@ class ProfileManager
         $this->validator->validateOnUpdate($data);
     }
 
-    public function validateOnRemove($userId)
+    public function validateOnDelete(array $data, $userId)
     {
         $data = array('userId' => $userId);
         $this->validator->validateOnDelete($data);
