@@ -210,7 +210,7 @@ class ProfileController extends FOSRestController implements ClassResourceInterf
      *      )
      * )
      * @SWG\Response(
-     *     response=201,
+     *     response=200,
      *     description="Returns edited profile.",
      * )
      * @Security(name="Bearer")
@@ -218,6 +218,6 @@ class ProfileController extends FOSRestController implements ClassResourceInterf
      */
     public function putAction(Profile $profile)
     {
-        return $this->view($profile, 201);
+        return $this->view($profile);
     }
 }
