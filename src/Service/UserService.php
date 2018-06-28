@@ -7,7 +7,7 @@ use Model\Photo\PhotoManager;
 use Model\User\UserManager;
 use Model\Profile\ProfileManager;
 use Model\Rate\RateManager;
-use Model\Token\TokensManager;
+use Model\Token\TokenManager;
 use Model\Token\TokenStatus\TokenStatusManager;
 
 class UserService
@@ -26,7 +26,7 @@ class UserService
      * UserService constructor.
      * @param UserManager $userManager
      * @param ProfileManager $profileManager
-     * @param TokensManager $tokensModel
+     * @param TokenManager $tokensModel
      * @param TokenStatusManager $tokenStatusManager
      * @param RateManager $rateModel
      * @param LinkService $linkService
@@ -34,7 +34,7 @@ class UserService
      * @param PhotoManager $photoManager
      * @param GalleryManager $galleryManager
      */
-    public function __construct(UserManager $userManager, ProfileManager $profileManager, TokensManager $tokensModel, TokenStatusManager $tokenStatusManager, RateManager $rateModel, LinkService $linkService, InstantConnection $instantConnection, PhotoManager $photoManager, GalleryManager $galleryManager)
+    public function __construct(UserManager $userManager, ProfileManager $profileManager, TokenManager $tokensModel, TokenStatusManager $tokenStatusManager, RateManager $rateModel, LinkService $linkService, InstantConnection $instantConnection, PhotoManager $photoManager, GalleryManager $galleryManager)
     {
         $this->userManager = $userManager;
         $this->profileManager = $profileManager;
@@ -96,7 +96,7 @@ class UserService
         $this->galleryManager->deleteAllFromUser($user);
 
         $this->tokenStatusManager->removeAll($userId);
-        $this->tokensModel->removeAll($userId);
+        $this->tokensModel->delete($userId);
 
         $deletedLikesUrls = $this->rateModel->deleteAllLinksByUser($userId);
         $this->linkService->deleteNotLiked($deletedLikesUrls);

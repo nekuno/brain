@@ -9,7 +9,7 @@ use ApiConsumer\Fetcher\FetcherService;
 use ApiConsumer\Fetcher\ProcessorService;
 use Console\ApplicationAwareCommand;
 use Event\ProcessLinksEvent;
-use Model\Token\TokensManager;
+use Model\Token\TokenManager;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
@@ -52,7 +52,7 @@ class LinksFetchCommand extends ApplicationAwareCommand
     protected $deviceService;
 
     /**
-     * @var TokensManager
+     * @var TokenManager
      */
     protected $tokensManager;
 
@@ -71,7 +71,7 @@ class LinksFetchCommand extends ApplicationAwareCommand
      */
     protected $dispatcher;
 
-    public function __construct(LoggerInterface $logger, FetcherService $fetcherService, ProcessorService $processorService, $resourceOwners, InstantConnection $instantConnection, DeviceService $deviceService, TokensManager $tokensManager, \Swift_Mailer $mailer, AMQPStreamConnection $AMQPStreamConnection, EventDispatcherInterface $dispatcher)    {
+    public function __construct(LoggerInterface $logger, FetcherService $fetcherService, ProcessorService $processorService, $resourceOwners, InstantConnection $instantConnection, DeviceService $deviceService, TokenManager $tokensManager, \Swift_Mailer $mailer, AMQPStreamConnection $AMQPStreamConnection, EventDispatcherInterface $dispatcher)    {
         parent::__construct($logger);
         $this->fetcherService = $fetcherService;
         $this->processorService = $processorService;

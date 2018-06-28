@@ -8,7 +8,7 @@ use Everyman\Neo4j\Relationship;
 use Model\Exception\ErrorList;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
-use Model\Token\TokensManager;
+use Model\Token\TokenManager;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 
@@ -310,7 +310,7 @@ class RateManager
         $relationship = $row->offsetGet('r');
 
         $resources = array();
-        $resourceOwners = array_merge(array('nekuno'), TokensManager::getResourceOwners());
+        $resourceOwners = array_merge(array('nekuno'), TokenManager::getResourceOwners());
         foreach ($resourceOwners as $resourceOwner){
             if ($relationship->getProperty($resourceOwner)) {
                 $resources[$resourceOwner] = $relationship->getProperty($resourceOwner);

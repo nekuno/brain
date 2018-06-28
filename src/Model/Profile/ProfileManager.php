@@ -142,11 +142,10 @@ class ProfileManager implements ManagerInterface
 
     /**
      * @param $id
-     * @param $data
      */
-    public function delete($id, array $data = [])
+    public function delete($id)
     {
-        $this->validateOnDelete($data, $id);
+        $this->validateOnDelete($id);
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(user:User)<-[:PROFILE_OF]-(profile:Profile)')
@@ -179,7 +178,7 @@ class ProfileManager implements ManagerInterface
         $this->validator->validateOnUpdate($data);
     }
 
-    public function validateOnDelete(array $data, $userId)
+    public function validateOnDelete($userId)
     {
         $data = array('userId' => $userId);
         $this->validator->validateOnDelete($data);

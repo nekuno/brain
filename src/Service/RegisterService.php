@@ -8,7 +8,7 @@ use Model\Profile\ProfileManager;
 use Model\Invitation\InvitationManager;
 use Model\GhostUser\GhostUserManager;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Model\Token\TokensManager;
+use Model\Token\TokenManager;
 
 class RegisterService
 {
@@ -24,7 +24,7 @@ class RegisterService
     protected $gum;
 
     /**
-     * @var TokensManager
+     * @var TokenManager
      */
     protected $tm;
 
@@ -48,7 +48,7 @@ class RegisterService
      */
     protected $dispatcher;
 
-    public function __construct(UserManager $um, GhostUserManager $gum, TokensManager $tm, ProfileManager $pm, InvitationManager $im, GroupService $groupService, EventDispatcherInterface $dispatcher)
+    public function __construct(UserManager $um, GhostUserManager $gum, TokenManager $tm, ProfileManager $pm, InvitationManager $im, GroupService $groupService, EventDispatcherInterface $dispatcher)
     {
         $this->um = $um;
         $this->gum = $gum;
@@ -79,7 +79,7 @@ class RegisterService
             $this->gum->saveAsGhost($user->getId());
         }
 
-        $token = $this->tm->create($user->getId(), $oauth['resourceOwner'], $oauth);
+        $token = $this->tm->create($user->getId(), $oauth);
         $profile = $this->pm->create($user->getId(), $profileData);
         $invitation = $this->im->consume($invitationToken, $user->getId());
         if (isset($invitation['invitation']['orientationRequired']) && $invitation['invitation']['orientationRequired']) {

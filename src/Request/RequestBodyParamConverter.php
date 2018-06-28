@@ -39,6 +39,8 @@ class RequestBodyParamConverter implements ParamConverterInterface
     {
         $userId = $this->tokenStorage->getToken()->getUser()->getId();
         $data = $request->request->all();
+        $data += $request->attributes->get('_route_params');
+
         $method = $request->getMethod();
         $managerClass = $configuration->getClass() . 'Manager';
         if (!$this->container->has($managerClass)) {
@@ -52,15 +54,12 @@ class RequestBodyParamConverter implements ParamConverterInterface
                 $object = $manager->getById($userId);
                 break;
             case 'POST':
-                $manager->validateOnCreate($data, $userId);
                 $object = $manager->create($userId, $data);
                 break;
             case 'PUT':
-                $manager->validateOnUpdate($data, $userId);
                 $object = $manager->update($userId, $data);
                 break;
             case 'DELETE':
-                $manager->validateOnDelete($data, $userId);
                 $object = $manager->delete($data, $userId);
                 break;
             default:

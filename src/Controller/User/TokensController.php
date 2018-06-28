@@ -6,10 +6,9 @@ use FOS\RestBundle\Controller\Annotations\Post;
 use FOS\RestBundle\Controller\Annotations\Put;
 use FOS\RestBundle\Controller\FOSRestController;
 use FOS\RestBundle\Routing\ClassResourceInterface;
-use Model\User\User;
-use Model\Token\TokensManager;
+use Model\Token\Token;
 use Nelmio\ApiDocBundle\Annotation\Security;
-use Symfony\Component\HttpFoundation\Request;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Swagger\Annotations as SWG;
 
 class TokensController extends FOSRestController implements ClassResourceInterface
@@ -18,11 +17,9 @@ class TokensController extends FOSRestController implements ClassResourceInterfa
      * Create token
      *
      * @Post("/tokens/{resourceOwner}")
-     * @param string $resourceOwner
-     * @param User $user
-     * @param Request $request
-     * @param TokensManager $tokensManager
+     * @param Token $token
      * @return \FOS\RestBundle\View\View
+     * @ParamConverter("token", converter="request_body_converter", class="Model\Token\Token")
      * @SWG\Parameter(
      *      name="body",
      *      in="body",
@@ -45,10 +42,8 @@ class TokensController extends FOSRestController implements ClassResourceInterfa
      * @Security(name="Bearer")
      * @SWG\Tag(name="tokens")
      */
-    public function postAction($resourceOwner, User $user, Request $request, TokensManager $tokensManager)
+    public function postAction(Token $token)
     {
-        $token = $tokensManager->create($user->getId(), $resourceOwner, $request->request->all());
-
         return $this->view($token, 201);
     }
 
@@ -56,11 +51,9 @@ class TokensController extends FOSRestController implements ClassResourceInterfa
      * Edit token
      *
      * @Put("/tokens/{resourceOwner}")
-     * @param string $resourceOwner
-     * @param User $user
-     * @param Request $request
-     * @param TokensManager $tokensManager
+     * @param Token $token
      * @return \FOS\RestBundle\View\View
+     * @ParamConverter("token", converter="request_body_converter", class="Model\Token\Token")
      * @SWG\Parameter(
      *      name="body",
      *      in="body",
@@ -83,10 +76,8 @@ class TokensController extends FOSRestController implements ClassResourceInterfa
      * @Security(name="Bearer")
      * @SWG\Tag(name="tokens")
      */
-    public function putAction($resourceOwner, User $user, Request $request, TokensManager $tokensManager)
+    public function putAction(Token $token)
     {
-        $token = $tokensManager->update($user->getId(), $resourceOwner, $request->request->all());
-
-        return $this->view($token, 200);
+        return $this->view($token);
     }
 }

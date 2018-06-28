@@ -7,12 +7,12 @@ use Everyman\Neo4j\Query\ResultSet;
 use Everyman\Neo4j\Query\Row;
 use Model\Neo4j\GraphManager;
 use Model\LookUp\LookUpManager;
-use Model\Token\TokensManager;
+use Model\Token\TokenManager;
 
 class SocialProfileManager
 {
     /**
-     * @var TokensManager
+     * @var TokenManager
      */
     protected $tokensModel;
 
@@ -26,7 +26,7 @@ class SocialProfileManager
      */
     protected $lookupModel;
 
-    function __construct(GraphManager $graphManager, TokensManager $tokensModel, LookUpManager $lookupModel)
+    function __construct(GraphManager $graphManager, TokenManager $tokensModel, LookUpManager $lookupModel)
     {
         $this->tokensModel = $tokensModel;
         $this->graphManager = $graphManager;

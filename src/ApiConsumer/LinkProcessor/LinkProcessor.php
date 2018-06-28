@@ -10,7 +10,7 @@ use ApiConsumer\LinkProcessor\Processor\YoutubeProcessor\YoutubeVideoProcessor;
 use ApiConsumer\LinkProcessor\UrlParser\FacebookUrlParser;
 use Model\Link\Link;
 use Model\Token\Token;
-use Model\Token\TokensManager;
+use Model\Token\TokenManager;
 
 class LinkProcessor
 {
@@ -19,7 +19,7 @@ class LinkProcessor
     private $tokensModel;
     private $batch = array();
 
-    public function __construct(ProcessorFactory $processorFactory, ImageAnalyzer $imageAnalyzer, TokensManager $tokensModel)
+    public function __construct(ProcessorFactory $processorFactory, ImageAnalyzer $imageAnalyzer, TokenManager $tokensModel)
     {
         $this->processorFactory = $processorFactory;
         $this->imageAnalyzer = $imageAnalyzer;

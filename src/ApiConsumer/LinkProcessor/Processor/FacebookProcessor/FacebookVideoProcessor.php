@@ -5,7 +5,7 @@ namespace ApiConsumer\LinkProcessor\Processor\FacebookProcessor;
 use ApiConsumer\Images\ProcessingImage;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
 use ApiConsumer\LinkProcessor\UrlParser\FacebookUrlParser;
-use Model\Token\TokensManager;
+use Model\Token\TokenManager;
 use Model\Link\Video;
 
 class FacebookVideoProcessor extends AbstractFacebookProcessor
@@ -15,7 +15,7 @@ class FacebookVideoProcessor extends AbstractFacebookProcessor
         $id = $this->getItemId($preprocessedLink->getUrl());
         $preprocessedLink->setResourceItemId($id);
 
-        if ($preprocessedLink->getSource() == TokensManager::FACEBOOK) {
+        if ($preprocessedLink->getSource() == TokenManager::FACEBOOK) {
             $response = $this->resourceOwner->requestVideo($id, $preprocessedLink->getToken());
         } else {
             $response = array();
@@ -31,7 +31,7 @@ class FacebookVideoProcessor extends AbstractFacebookProcessor
         $video = Video::buildFromLink($link);
         $video->setDescription(isset($data['description']) ? $data['description'] : null);
         $video->setTitle($this->buildTitleFromDescription($data));
-        $video->setEmbedType(TokensManager::FACEBOOK);
+        $video->setEmbedType(TokenManager::FACEBOOK);
         $video->setEmbedId($preprocessedLink->getResourceItemId());
 
         $preprocessedLink->setFirstLink($video);

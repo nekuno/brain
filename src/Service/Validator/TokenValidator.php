@@ -3,7 +3,7 @@
 namespace Service\Validator;
 
 use Model\Exception\ErrorList;
-use Model\Token\TokensManager;
+use Model\Token\TokenManager;
 
 class TokenValidator extends Validator
 {
@@ -11,7 +11,7 @@ class TokenValidator extends Validator
     {
         $metadata = $this->metadata;
         $metadata['resourceId']['required'] = true;
-        if (isset($data['resourceOwner']) && $data['resourceOwner'] === TokensManager::STEAM) {
+        if (isset($data['resourceOwner']) && $data['resourceOwner'] === TokenManager::STEAM) {
             $metadata['oauthToken']['required'] = false;
         }
         $choices = $this->getChoices();
@@ -53,7 +53,7 @@ class TokenValidator extends Validator
     private function getChoices()
     {
         return array(
-            'resourceOwner' => TokensManager::getResourceOwners(),
+            'resourceOwner' => TokenManager::getResourceOwners(),
         );
     }
 

@@ -12,7 +12,7 @@ use ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser;
 use ApiConsumer\LinkProcessor\UrlParser\UrlParser;
 use ApiConsumer\LinkProcessor\UrlParser\UrlParserInterface;
 use ApiConsumer\LinkProcessor\UrlParser\YoutubeUrlParser;
-use Model\Token\TokensManager;
+use Model\Token\TokenManager;
 
 class LinkAnalyzer
 {
@@ -51,26 +51,26 @@ class LinkAnalyzer
     {
 
         if (self::isYouTube($url)) {
-            return TokensManager::GOOGLE;
+            return TokenManager::GOOGLE;
         }
 
         if (self::isSpotify($url)) {
-            return TokensManager::SPOTIFY;
+            return TokenManager::SPOTIFY;
         }
 
         if (self::isFacebook($url)) {
-            return TokensManager::FACEBOOK;
+            return TokenManager::FACEBOOK;
         }
 
         if (self::isTwitter($url)) {
-            return TokensManager::TWITTER;
+            return TokenManager::TWITTER;
         }
 
         if (self::isTumblr($url)) {
-            return TokensManager::TUMBLR;
+            return TokenManager::TUMBLR;
         }
         if (self::isSteam($url)) {
-            return TokensManager::STEAM;
+            return TokenManager::STEAM;
         }
 
         return null;

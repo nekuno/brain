@@ -4,7 +4,7 @@ namespace Console\Command;
 
 use Console\ApplicationAwareCommand;
 use Model\Group\GroupManager;
-use Model\Token\TokensManager;
+use Model\Token\TokenManager;
 use Psr\Log\LoggerInterface;
 use Service\AMQPManager;
 use Service\GroupService;
@@ -92,7 +92,7 @@ class UsersSocialMediaAddCommand extends ApplicationAwareCommand
             $output->writeln(sprintf('Loading user %s in %s', $username, $resource));
 
             switch($resource){
-                case TokensManager::TWITTER:
+                case TokenManager::TWITTER:
                     $username = array('screenName' => $username);
                     break;
                 default:
@@ -111,7 +111,7 @@ class UsersSocialMediaAddCommand extends ApplicationAwareCommand
 
             /* @var $socialProfile \Model\SocialNetwork\SocialProfile */
             foreach ($socialProfiles as $socialProfile) {
-                if ($socialProfile->getResource() == TokensManager::TWITTER) {
+                if ($socialProfile->getResource() == TokenManager::TWITTER) {
                     $output->writeln('Enqueuing fetching followers from that twitter account');
 
                     $data = array(

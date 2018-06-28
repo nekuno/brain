@@ -15,8 +15,8 @@ services:
     Service\AuthService:
         class: Tests\API\MockUp\AuthServiceMockUp
         autowire: true
-    Model\Token\TokensManager:
-        class: Tests\API\MockUp\TokensManagerMockUp
+    Model\Token\TokenManager:
+        class: Tests\API\MockUp\TokenManagerMockUp
         autowire: true
     auth_service_mockup:
         autowire: true

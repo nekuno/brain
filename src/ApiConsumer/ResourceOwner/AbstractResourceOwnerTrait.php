@@ -11,7 +11,7 @@ use HWI\Bundle\OAuthBundle\DependencyInjection\Configuration;
 use HWI\Bundle\OAuthBundle\OAuth\RequestDataStorageInterface;
 use HWI\Bundle\OAuthBundle\Security\OAuthUtils;
 use Model\Token\Token;
-use Model\Token\TokensManager;
+use Model\Token\TokenManager;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Security\Http\HttpUtils;
@@ -166,7 +166,7 @@ trait AbstractResourceOwnerTrait
 
     protected function sendAuthorizedRequest($url, array $query = array(), Token $token = null)
     {
-        if (Configuration::getResourceOwnerType($this->name) == 'oauth2' &&  $token->getResourceOwner() !== TokensManager::TUMBLR) {
+        if (Configuration::getResourceOwnerType($this->name) == 'oauth2' &&  $token->getResourceOwner() !== TokenManager::TUMBLR) {
             $query = $this->buildOauth2Query($query, $token);
         } else {
             $query = $this->buildOauth1Query($url, $query, $token);

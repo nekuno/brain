@@ -16,7 +16,7 @@ class AuthServiceMockUp extends AuthService
      */
     public function loginByResourceOwner($resourceOwner, $accessToken, $refreshToken = null)
     {
-        $token = $this->tokensModel->getById(APITest::OWN_USER_ID, $resourceOwner);
+        $token = $this->tokensModel->getByIdAndResourceOwner(APITest::OWN_USER_ID, $resourceOwner);
         if ($token->getUserId() !== APITest::OWN_USER_ID) {
             throw new \ErrorException('Token does not exists');
         }
@@ -25,13 +25,16 @@ class AuthServiceMockUp extends AuthService
 
         $user = $this->updateLastLogin($user);
 
-        $data = array('oauthToken' => $accessToken);
+        $data = array(
+            'oauthToken' => $accessToken,
+            'resourceOwner' => $resourceOwner
+        );
         if ($refreshToken) {
             $data['refreshToken'] = $refreshToken;
         }
 
         try {
-            $this->tokensModel->update($user->getId(), $resourceOwner, $data);
+            $this->tokensModel->update($user->getId(), $data);
         } catch (\Exception $e) {
 
         }

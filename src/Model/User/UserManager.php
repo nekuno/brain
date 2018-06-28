@@ -15,7 +15,7 @@ use Model\GhostUser\GhostUserManager;
 use Model\LookUp\LookUpManager;
 use Model\Photo\PhotoManager;
 use Model\SocialNetwork\SocialProfile;
-use Model\Token\TokensManager;
+use Model\Token\TokenManager;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -1276,7 +1276,7 @@ class UserManager
 
     protected function buildChannelLabel($resource = null)
     {
-        if (in_array($resource, TokensManager::getResourceOwners())) {
+        if (in_array($resource, TokenManager::getResourceOwners())) {
             return 'Channel' . ucfirst($resource);
         }
 

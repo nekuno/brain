@@ -24,7 +24,7 @@ use Model\Link\LinkManager;
 use Model\Neo4j\Neo4jException;
 use Model\Rate\RateManager;
 use Model\Token\Token;
-use Model\Token\TokensManager;
+use Model\Token\TokenManager;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -462,10 +462,10 @@ class ProcessorService implements LoggerAwareInterface
     private function checkCreator(PreprocessedLink $preprocessedLink)
     {
         foreach ($preprocessedLink->getLinks() as $link) {
-            if ($link instanceof Creator && $preprocessedLink->getSource() == TokensManager::TWITTER) {
+            if ($link instanceof Creator && $preprocessedLink->getSource() == TokenManager::TWITTER) {
                 try {
                     $username = (new TwitterUrlParser())->getProfileId($link->getUrl());
-                    $this->dispatcher->dispatch(\AppEvents::CHANNEL_ADDED, new ChannelEvent(TokensManager::TWITTER, $link->getUrl(), $username));
+                    $this->dispatcher->dispatch(\AppEvents::CHANNEL_ADDED, new ChannelEvent(TokenManager::TWITTER, $link->getUrl(), $username));
                 } catch (\Exception $e) {
                     $this->logError($e, sprintf('checking creator for url %s', $link->getUrl()));
                 }

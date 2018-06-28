@@ -7,7 +7,7 @@ use ApiConsumer\ResourceOwner\FacebookResourceOwner;
 use Console\BaseCommand;
 use Model\Exception\ValidationException;
 use Model\User\User;
-use Model\Token\TokensManager;
+use Model\Token\TokenManager;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -30,11 +30,11 @@ class UsersSocialMediaRefreshCommand extends BaseCommand
     protected $resourceOwnerFactory;
 
     /**
-     * @var TokensManager
+     * @var TokenManager
      */
     protected $tokensManager;
 
-    public function __construct(LoggerInterface $logger, UserManager $userManager, ResourceOwnerFactory $resourceOwnerFactory, TokensManager $tokensManager)
+    public function __construct(LoggerInterface $logger, UserManager $userManager, ResourceOwnerFactory $resourceOwnerFactory, TokenManager $tokensManager)
     {
         parent::__construct($logger);
         $this->userManager = $userManager;
@@ -71,7 +71,7 @@ class UsersSocialMediaRefreshCommand extends BaseCommand
             if ($user->getId()) {
 
                 try {
-                    $token = $this->tokensManager->getById($user->getId(), $input->getArgument('resource'));
+                    $token = $this->tokensManager->getByIdAndResourceOwner($user->getId(), $input->getArgument('resource'));
 
                     if ($resourceOwner instanceof FacebookResourceOwner){
                         $resourceOwner->forceRefreshAccessToken($token);

@@ -10,14 +10,14 @@ use ApiConsumer\ResourceOwner\TwitterResourceOwner;
 use Model\Link\Creator;
 use Model\Link\Link;
 use Model\Token\Token;
-use Model\Token\TokensManager;
+use Model\Token\TokenManager;
 
 class TwitterProfileProcessor extends AbstractTwitterProcessor implements BatchProcessorInterface
 {
     protected function requestItem(PreprocessedLink $preprocessedLink)
     {
         $userId = $this->getUserId($preprocessedLink);
-        $token = $preprocessedLink->getSource() == TokensManager::TWITTER ? $preprocessedLink->getToken() : null;
+        $token = $preprocessedLink->getSource() == TokenManager::TWITTER ? $preprocessedLink->getToken() : null;
         $key = array_keys($userId)[0];
 
         $response = $this->resourceOwner->lookupUsersBy($key, array($userId[$key]), $token);
@@ -108,7 +108,7 @@ class TwitterProfileProcessor extends AbstractTwitterProcessor implements BatchP
 
             $link = $preprocessedLink->getFirstLink();
 
-            if ($preprocessedLink->getSource() == TokensManager::TWITTER
+            if ($preprocessedLink->getSource() == TokenManager::TWITTER
                 && $link && $link->isComplete() && !($link->getProcessed() !== false)
             ) {
                 unset($batch[$key]);

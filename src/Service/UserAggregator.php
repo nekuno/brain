@@ -9,7 +9,7 @@ use Model\GhostUser\GhostUserManager;
 use Model\LookUp\LookUpManager;
 use Model\SocialNetwork\SocialProfile;
 use Model\SocialNetwork\SocialProfileManager;
-use Model\Token\TokensManager;
+use Model\Token\TokenManager;
 use Model\User\UserManager;
 
 class UserAggregator
@@ -53,11 +53,11 @@ class UserAggregator
             return null;
         }
 
-        if (!in_array($resource, TokensManager::getResourceOwners()) && !$url){
+        if (!in_array($resource, TokenManager::getResourceOwners()) && !$url){
             //$output->writeln('Resource '.$resource.' not supported.');
             return null;
         }
-	    if (in_array($resource, TokensManager::getResourceOwners())) {
+	    if (in_array($resource, TokenManager::getResourceOwners())) {
             /** @var TwitterResourceOwner $resourceOwner */
             $resourceOwner = $this->resourceOwnerFactory->build($resource);
 
@@ -116,7 +116,7 @@ class UserAggregator
     public function enqueueChannel(array $socialProfiles, $username, $force = false)
     {
         foreach ($socialProfiles as $socialProfile) {
-	        if ($socialProfile->getResource() == TokensManager::TWITTER || $socialProfile->getResource() == TokensManager::GOOGLE) {
+	        if ($socialProfile->getResource() == TokenManager::TWITTER || $socialProfile->getResource() == TokenManager::GOOGLE) {
 	            $userId = $socialProfile->getUserId();
 	            $resource = $socialProfile->getResource();
 

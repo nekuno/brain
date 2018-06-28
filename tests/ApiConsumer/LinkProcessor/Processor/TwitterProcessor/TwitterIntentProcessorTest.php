@@ -13,7 +13,7 @@ use ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser;
 use ApiConsumer\ResourceOwner\TwitterResourceOwner;
 use Model\Link\Creator;
 use Model\Link\Link;
-use Model\Token\TokensManager;
+use Model\Token\TokenManager;
 use Tests\ApiConsumer\LinkProcessor\Processor\AbstractProcessorTest;
 
 class TwitterIntentProcessorTest extends AbstractProcessorTest

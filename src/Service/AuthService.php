@@ -8,7 +8,7 @@ use HWI\Bundle\OAuthBundle\Security\Core\Authentication\Token\OAuthToken;
 use Lexik\Bundle\JWTAuthenticationBundle\Encoder\JWTEncoderInterface;
 use Model\User\UserManager;
 use Model\User\User;
-use Model\Token\TokensManager;
+use Model\Token\TokenManager;
 use ReflectionObject;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\Security\Core\Encoder\MessageDigestPasswordEncoder;
@@ -43,11 +43,11 @@ class AuthService
     protected $dispatcher;
 
     /**
-     * @var TokensManager
+     * @var TokenManager
      */
     protected $tokensModel;
 
-    public function __construct(UserManager $um, MessageDigestPasswordEncoder $encoder, JWTEncoderInterface $jwtEncoder, OAuthProvider $oAuthProvider, EventDispatcherInterface $dispatcher, TokensManager $tokensModel)
+    public function __construct(UserManager $um, MessageDigestPasswordEncoder $encoder, JWTEncoderInterface $jwtEncoder, OAuthProvider $oAuthProvider, EventDispatcherInterface $dispatcher, TokenManager $tokensModel)
     {
         $this->um = $um;
         $this->encoder = $encoder;
@@ -109,13 +109,16 @@ class AuthService
 
         $user = $this->updateLastLogin($newToken->getUser());
 
-        $data = array('oauthToken' => $accessToken);
+        $data = array(
+            'oauthToken' => $accessToken,
+            'resourceOwner' => $resourceOwner
+        );
         if ($refreshToken) {
             $data['refreshToken'] = $refreshToken;
         }
 
         try {
-            $this->tokensModel->update($user->getId(), $resourceOwner, $data);
+            $this->tokensModel->update($user->getId(), $data);
         } catch (\Exception $e) {
 
         }

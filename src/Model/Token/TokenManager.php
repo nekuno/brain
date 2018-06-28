@@ -8,13 +8,14 @@ use Everyman\Neo4j\Node;
 use Everyman\Neo4j\Query\Row;
 use HWI\Bundle\OAuthBundle\DependencyInjection\Configuration;
 use Model\Exception\ValidationException;
+use Model\ManagerInterface;
 use Model\Neo4j\GraphManager;
 use Service\Validator\TokenValidator;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-class TokensManager
+class TokenManager implements ManagerInterface
 {
     CONST FACEBOOK = 'facebook';
     CONST TWITTER = 'twitter';
@@ -63,7 +64,7 @@ class TokensManager
      * @param $id
      * @return Token[]
      */
-    public function getAll($id)
+    public function getById($id)
     {
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(user:User)<-[:TOKEN_OF]-(token:Token)')
@@ -88,7 +89,7 @@ class TokensManager
      * @return Token
      * @throws NotFoundHttpException
      */
-    public function getById($id, $resourceOwner)
+    public function getByIdAndResourceOwner($id, $resourceOwner)
     {
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(user:User)<-[:TOKEN_OF]-(token:Token)')
@@ -116,14 +117,12 @@ class TokensManager
 
     /**
      * @param int $userId
-     * @param string $resourceOwner
      * @param array $data
      * @return Token
      * @throws ValidationException|NotFoundHttpException|MethodNotAllowedHttpException
      */
-    public function create($userId, $resourceOwner, array $data)
+    public function create($userId, array $data)
     {
-        $data['resourceOwner'] = $resourceOwner;
         $this->validateOnCreate($data, $userId);
 
         $qb = $this->gm->createQueryBuilder();
@@ -143,7 +142,7 @@ class TokensManager
         $tokenNode = $row->offsetGet('token');
 
         $this->saveTokenData($tokenNode, $data);
-        $token = $this->getById($userId, $resourceOwner);
+        $token = $this->getByIdAndResourceOwner($userId, $data['resourceOwner']);
 
         $this->dispatcher->dispatch(\AppEvents::ACCOUNT_CONNECTED, new AccountConnectEvent($userId, $token));
 
@@ -152,23 +151,21 @@ class TokensManager
 
     /**
      * @param int $id
-     * @param string $resourceOwner
      * @param array $data
      * @return Token
      * @throws ValidationException|NotFoundHttpException
      */
-    public function update($id, $resourceOwner, array $data)
+    public function update($id, array $data)
     {
         /** @var Node $tokenNode */
-        list($userNode, $tokenNode) = $this->getUserAndTokenNodesById($id, $resourceOwner);
+        list($userNode, $tokenNode) = $this->getUserAndTokenNodesById($id, $data['resourceOwner']);
 
-        $data['resourceOwner'] = $resourceOwner;
         $data['resourceId'] = $tokenNode->getProperty('resourceId');
         $this->validateOnUpdate($data, $id);
 
         $this->saveTokenData($tokenNode, $data);
 
-        return $this->getById($id, $resourceOwner);
+        return $this->getByIdAndResourceOwner($id, $data['resourceOwner']);
     }
 
     /**
@@ -179,7 +176,7 @@ class TokensManager
     public function remove($userId, $resourceOwner)
     {
         $this->validateOnDelete($userId, $resourceOwner);
-        $token = $this->getById($userId, $resourceOwner);
+        $token = $this->getByIdAndResourceOwner($userId, $resourceOwner);
 
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(user:User)<-[token_of:TOKEN_OF]-(token:Token)')
@@ -195,7 +192,7 @@ class TokensManager
         return $token;
     }
 
-    public function removeAll($userId)
+    public function delete($userId)
     {
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(user:User)<-[token_of:TOKEN_OF]-(token:Token)')
@@ -287,7 +284,7 @@ class TokensManager
 
     public function getUnconnectedNetworks($userId)
     {
-        $tokens = $this->getAll($userId);
+        $tokens = $this->getById($userId);
         $resourceOwners = $this->getResourceOwners();
 
         $unconnected = array();
@@ -309,7 +306,7 @@ class TokensManager
 
     public function getConnectedNetworks($userId)
     {
-        $tokens = $this->getAll($userId);
+        $tokens = $this->getById($userId);
 
         $resourceOwners = array();
         foreach ($tokens as $token) {

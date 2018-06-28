@@ -5,7 +5,7 @@ namespace Console\Command;
 use ApiConsumer\Fetcher\ProcessorService;
 use ApiConsumer\LinkProcessor\PreprocessedLink;
 use Console\ApplicationAwareCommand;
-use Model\Token\TokensManager;
+use Model\Token\TokenManager;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 use Symfony\Component\Console\Input\InputArgument;
@@ -19,7 +19,7 @@ class LinksProcessNewCommand extends ApplicationAwareCommand
     protected static $defaultName = 'links:process:new';
 
     /**
-     * @var TokensManager
+     * @var TokenManager
      */
     protected $tokensManager;
 
@@ -28,7 +28,7 @@ class LinksProcessNewCommand extends ApplicationAwareCommand
      */
     protected $processorService;
 
-    public function __construct(LoggerInterface $logger, TokensManager $tokensManager, ProcessorService $processorService)
+    public function __construct(LoggerInterface $logger, TokenManager $tokensManager, ProcessorService $processorService)
     {
         parent::__construct($logger);
         $this->tokensManager = $tokensManager;
@@ -108,7 +108,7 @@ class LinksProcessNewCommand extends ApplicationAwareCommand
         }
 
         try{
-            $token = $this->tokensManager->getById($userId, $resource);
+            $token = $this->tokensManager->getByIdAndResourceOwner($userId, $resource);
         } catch (\Exception $e){
             $output->writeln(sprintf('Couldn´t get token for user %d and resource %s', $userId, $resource));
             $output->writeln($e->getMessage());

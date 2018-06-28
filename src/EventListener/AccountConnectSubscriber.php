@@ -12,7 +12,7 @@ use Model\GhostUser\GhostUserManager;
 use Model\Profile\ProfileManager;
 use Model\SocialNetwork\SocialProfileManager;
 use Model\Token\Token;
-use Model\Token\TokensManager;
+use Model\Token\TokenManager;
 use Service\AMQPManager;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -48,7 +48,7 @@ class AccountConnectSubscriber implements EventSubscriberInterface
     protected $resourceOwnerFactory;
 
     /**
-     * @var TokensManager
+     * @var TokenManager
      */
     protected $tokensModel;
 
@@ -62,7 +62,7 @@ class AccountConnectSubscriber implements EventSubscriberInterface
      */
     protected $dispatcher;
 
-    public function __construct(AMQPManager $amqpManager, UserManager $um, GhostUserManager $gum, SocialProfileManager $spm, ResourceOwnerFactory $resourceOwnerFactory, TokensManager $tokensModel, ProfileManager $pm, EventDispatcherInterface $dispatcher)
+    public function __construct(AMQPManager $amqpManager, UserManager $um, GhostUserManager $gum, SocialProfileManager $spm, ResourceOwnerFactory $resourceOwnerFactory, TokenManager $tokensModel, ProfileManager $pm, EventDispatcherInterface $dispatcher)
     {
         $this->amqpManager = $amqpManager;
         $this->um = $um;
@@ -89,10 +89,10 @@ class AccountConnectSubscriber implements EventSubscriberInterface
         $resourceOwner = $token->getResourceOwner();
 
         switch ($resourceOwner) {
-            case TokensManager::TWITTER:
+            case TokenManager::TWITTER:
                 $this->createTwitterSocialProfile($token, $userId);
                 break;
-            case TokensManager::LINKEDIN:
+            case TokenManager::LINKEDIN:
                 $this->completeProfileWithLinkedin($token, $userId);
                 $this->dispatcher->dispatch(\AppEvents::PROCESS_FINISH, new ProcessLinksEvent($userId, $resourceOwner, array()));
                 break;
@@ -114,10 +114,10 @@ class AccountConnectSubscriber implements EventSubscriberInterface
         $resourceOwner = $token->getResourceOwner();
 
         switch ($resourceOwner) {
-            case TokensManager::FACEBOOK:
+            case TokenManager::FACEBOOK:
                 $this->extendFacebook($token);
                 break;
-            case TokensManager::LINKEDIN:
+            case TokenManager::LINKEDIN:
                 $this->extendLinkedin($token);
                 break;
             default:
@@ -128,7 +128,7 @@ class AccountConnectSubscriber implements EventSubscriberInterface
     private function extendFacebook(Token $token, $attempts = 0)
     {
         /* @var $facebookResourceOwner FacebookResourceOwner */
-        $facebookResourceOwner = $this->resourceOwnerFactory->build(TokensManager::FACEBOOK);
+        $facebookResourceOwner = $this->resourceOwnerFactory->build(TokenManager::FACEBOOK);
 
         try {
             $facebookResourceOwner->extend($token);
@@ -142,7 +142,7 @@ class AccountConnectSubscriber implements EventSubscriberInterface
     private function extendLinkedin(Token $token, $attempts = 0)
     {
         /* @var $linkedinResourceOwner LinkedinResourceOwner */
-        $linkedinResourceOwner = $this->resourceOwnerFactory->build(TokensManager::LINKEDIN);
+        $linkedinResourceOwner = $this->resourceOwnerFactory->build(TokenManager::LINKEDIN);
 
         try {
             $linkedinResourceOwner->forceRefreshAccessToken($token);
@@ -155,7 +155,7 @@ class AccountConnectSubscriber implements EventSubscriberInterface
 
     private function createTwitterSocialProfile(Token $token, $userId)
     {
-        $resourceOwner = TokensManager::TWITTER;
+        $resourceOwner = TokenManager::TWITTER;
         /** @var TwitterResourceOwner $resourceOwnerObject */
         $resourceOwnerObject = $this->resourceOwnerFactory->build($resourceOwner);
         $profileUrl = $resourceOwnerObject->requestProfileUrl($token);
@@ -173,7 +173,7 @@ class AccountConnectSubscriber implements EventSubscriberInterface
 
     private function completeProfileWithLinkedin(Token $token, $userId)
     {
-        $resourceOwner = TokensManager::LINKEDIN;
+        $resourceOwner = TokenManager::LINKEDIN;
         /** @var LinkedinResourceOwner $resourceOwnerObject */
         $resourceOwnerObject = $this->resourceOwnerFactory->build($resourceOwner);
         $accessToken = array(

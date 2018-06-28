@@ -4,7 +4,7 @@ namespace Console\Command;
 
 use Console\ApplicationAwareCommand;
 use Model\User\User;
-use Model\Token\TokensManager;
+use Model\Token\TokenManager;
 use Model\User\UserManager;
 use Psr\Log\LoggerInterface;
 use Service\AMQPManager;
@@ -22,7 +22,7 @@ class RabbitMQEnqueueFetchingCommand extends ApplicationAwareCommand
     protected $userManager;
 
     /**
-     * @var TokensManager
+     * @var TokenManager
      */
     protected $tokensManager;
 
@@ -31,7 +31,7 @@ class RabbitMQEnqueueFetchingCommand extends ApplicationAwareCommand
      */
     protected $AMQPManager;
 
-    public function __construct(LoggerInterface $logger, UserManager $userManager, TokensManager $tokensManager, AMQPManager $AMQPManager)
+    public function __construct(LoggerInterface $logger, UserManager $userManager, TokenManager $tokensManager, AMQPManager $AMQPManager)
     {
         parent::__construct($logger);
         $this->userManager = $userManager;
@@ -84,7 +84,7 @@ class RabbitMQEnqueueFetchingCommand extends ApplicationAwareCommand
 
     private function isValidResourceOwner($resourceOwnerOption)
     {
-        $availableResourceOwners = TokensManager::getResourceOwners();
+        $availableResourceOwners = TokenManager::getResourceOwners();
 
         return $resourceOwnerOption == null || in_array($resourceOwnerOption, $availableResourceOwners);
     }

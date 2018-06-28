@@ -11,7 +11,7 @@ use Model\Link\Audio;
 use Model\Link\Image;
 use Model\Link\Link;
 use Model\Link\Video;
-use Model\Token\TokensManager;
+use Model\Token\TokenManager;
 
 class TumblrPostProcessor extends AbstractTumblrProcessor
 {
@@ -30,12 +30,12 @@ class TumblrPostProcessor extends AbstractTumblrProcessor
         $post = isset($response['response']['posts'][0]) ? $response['response']['posts'][0] : array();
 
         if (isset($post['video_type']) && $post['video_type'] === 'youtube' && isset($post['permalink_url'])) {
-            $preprocessedLink->setSource(TokensManager::GOOGLE);
+            $preprocessedLink->setSource(TokenManager::GOOGLE);
             $preprocessedLink->setType(YoutubeUrlParser::VIDEO_URL);
             throw new UrlChangedException($firstLink->getUrl(), $post['permalink_url']);
         }
         if (isset($post['audio_type']) && $post['audio_type'] === 'spotify' && isset($post['audio_source_url'])) {
-            $preprocessedLink->setSource(TokensManager::SPOTIFY);
+            $preprocessedLink->setSource(TokenManager::SPOTIFY);
             $preprocessedLink->setType(null);
             throw new UrlChangedException($firstLink->getUrl(), $post['audio_source_url']);
         }

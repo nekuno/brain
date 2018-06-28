@@ -7,7 +7,7 @@ use ApiConsumer\Fetcher\ProcessorService;
 use Doctrine\ORM\EntityManagerInterface;
 use Event\ProcessLinksEvent;
 use Model\Neo4j\Neo4jException;
-use Model\Token\TokensManager;
+use Model\Token\TokenManager;
 use Psr\Log\LoggerInterface;
 use Service\AMQPManager;
 use Service\EventDispatcherHelper;
@@ -68,7 +68,7 @@ class ChannelWorker extends LoggerAwareWorker implements RabbitMQConsumerInterfa
             $resourceOwner = $data['resourceOwner'];
 
             switch ($resourceOwner) {
-                case TokensManager::TWITTER:
+                case TokenManager::TWITTER:
 
                     $userId = $this->getUserId($data);
                     $links = $this->fetchChannelTwitter($data);
@@ -111,7 +111,7 @@ class ChannelWorker extends LoggerAwareWorker implements RabbitMQConsumerInterfa
 
     private function fetchTwitterAPI($userId)
     {
-        $resourceOwner = TokensManager::TWITTER;
+        $resourceOwner = TokenManager::TWITTER;
 
         $exclude = array('twitter_following', 'twitter_favorites');
 

@@ -6,7 +6,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Event\LookUpSocialNetworksEvent;
 use Model\Neo4j\GraphManager;
 use Entity\LookUpData;
-use Model\Token\TokensManager;
+use Model\Token\TokenManager;
 use Service\LookUp\LookUp;
 use Service\LookUp\LookUpFullContact;
 use Service\LookUp\LookUpPeopleGraph;
@@ -44,20 +44,20 @@ class LookUpManager
 
     //neo4j labels => resourceOwner names
     public static $resourceOwners = array(
-        'TwitterSocialNetwork' => TokensManager::TWITTER,
-        'GoogleplusSocialNetwork' => TokensManager::GOOGLE,
-        'YoutubeSocialNetwork' => TokensManager::GOOGLE,
-        'LinkedinSocialNetwork' => TokensManager::LINKEDIN,
+        'TwitterSocialNetwork' => TokenManager::TWITTER,
+        'GoogleplusSocialNetwork' => TokenManager::GOOGLE,
+        'YoutubeSocialNetwork' => TokenManager::GOOGLE,
+        'LinkedinSocialNetwork' => TokenManager::LINKEDIN,
     );
     const LABEL_SOCIAL_NETWORK = 'SocialNetwork';
 
     /**
-     * @var TokensManager
+     * @var TokenManager
      */
     protected $tm;
 
 
-    public function __construct(GraphManager $gm, EntityManagerInterface $em, TokensManager $tm, LookUpFullContact $fullContact, LookUpPeopleGraph $peopleGraph, EventDispatcherInterface $dispatcher)
+    public function __construct(GraphManager $gm, EntityManagerInterface $em, TokenManager $tm, LookUpFullContact $fullContact, LookUpPeopleGraph $peopleGraph, EventDispatcherInterface $dispatcher)
 
     {
         $this->gm = $gm;

@@ -11,7 +11,7 @@ use ApiConsumer\LinkProcessor\Processor\TwitterProcessor\TwitterProfileProcessor
 use ApiConsumer\LinkProcessor\UrlParser\TwitterUrlParser;
 use ApiConsumer\ResourceOwner\TwitterResourceOwner;
 use Model\Link\Creator;
-use Model\Token\TokensManager;
+use Model\Token\TokenManager;
 use Tests\ApiConsumer\LinkProcessor\Processor\AbstractProcessorTest;
 
 class TwitterProfileProcessorTest extends AbstractProcessorTest

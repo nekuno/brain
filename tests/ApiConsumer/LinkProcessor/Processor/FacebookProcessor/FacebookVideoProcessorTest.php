@@ -9,7 +9,7 @@ use ApiConsumer\LinkProcessor\Processor\FacebookProcessor\FacebookVideoProcessor
 use ApiConsumer\LinkProcessor\UrlParser\FacebookUrlParser;
 use ApiConsumer\ResourceOwner\FacebookResourceOwner;
 use Model\Link\Video;
-use Model\Token\TokensManager;
+use Model\Token\TokenManager;
 use Tests\ApiConsumer\LinkProcessor\Processor\AbstractProcessorTest;
 
 class FacebookVideoProcessorTest extends AbstractProcessorTest
@@ -55,7 +55,7 @@ class FacebookVideoProcessorTest extends AbstractProcessorTest
             ->will($this->returnValue($video));
 
         $link = new PreprocessedLink($url);
-        $link->setSource(TokensManager::FACEBOOK);
+        $link->setSource(TokenManager::FACEBOOK);
         $response = $this->processor->getResponse($link);
 
         $this->assertEquals($response, $video, 'Asserting correct response for ' . $url);

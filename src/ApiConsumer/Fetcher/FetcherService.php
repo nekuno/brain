@@ -12,7 +12,7 @@ use Event\FetchEvent;
 use GuzzleHttp\Exception\RequestException;
 use Model\SocialNetwork\SocialProfileManager;
 use Model\Token\Token;
-use Model\Token\TokensManager;
+use Model\Token\TokenManager;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -37,7 +37,7 @@ class FetcherService implements LoggerAwareInterface
     protected $dispatcher;
 
     /**
-     * @var TokensManager
+     * @var TokenManager
      */
     protected $tokensModel;
 
@@ -54,7 +54,7 @@ class FetcherService implements LoggerAwareInterface
     public function __construct(
         FetcherFactory $fetcherFactory,
         EventDispatcherInterface $dispatcher,
-        TokensManager $tokensModel,
+        TokenManager $tokensModel,
         SocialProfileManager $socialProfileManager,
         array $options
     ) {
@@ -72,7 +72,7 @@ class FetcherService implements LoggerAwareInterface
 
     public function fetchAllConnected($userId, $exclude = array())
     {
-        $tokens = $this->tokensModel->getAll($userId);
+        $tokens = $this->tokensModel->getById($userId);
 
         $links = array();
         foreach ($tokens as $token) {
@@ -115,7 +115,7 @@ class FetcherService implements LoggerAwareInterface
     private function fetchFromToken($userId, $resourceOwner, $fetchers)
     {
         $links = array();
-        $token = $this->tokensModel->getById($userId, $resourceOwner);
+        $token = $this->tokensModel->getByIdAndResourceOwner($userId, $resourceOwner);
 
         foreach ($fetchers as $fetcher) {
             $links = array_merge($links, $this->fetchSingle($fetcher, $token, $resourceOwner));
@@ -155,7 +155,7 @@ class FetcherService implements LoggerAwareInterface
             //TODO: Improve exception management between services, controllers, workers...
             $originalException = $e->getOriginalException();
             if ($originalException instanceof RequestException && $originalException->getCode() == 429) {
-                if ($resourceOwner == TokensManager::TWITTER) {
+                if ($resourceOwner == TokenManager::TWITTER) {
                     $this->logger->warning('Pausing for 15 minutes due to Too Many Requests Error');
                     sleep(15 * 60);
                 }
@@ -184,7 +184,7 @@ class FetcherService implements LoggerAwareInterface
             //TODO: Improve exception management between services, controllers, workers...
             $originalException = $e->getOriginalException();
             if ($originalException instanceof RequestException && $originalException->getCode() == 429) {
-                if ($resourceOwner == TokensManager::TWITTER) {
+                if ($resourceOwner == TokenManager::TWITTER) {
                     $this->logger->warning('Pausing for 15 minutes due to Too Many Requests Error');
                     sleep(15 * 60);
                 }
