@@ -46,9 +46,16 @@ services:
 #    App\:
 #        resource: '../src/*'
 #        exclude: '../src/{Entity,Migrations,Tests,Kernel.php}'
+
+    request_body_converter:
+        class:        Request\RequestBodyParamConverter
+        tags:
+            - { name: request.param_converter, priority: -2, converter: request_body_converter }
+
     Model\:
         resource: '../src/Model/*/*{Manager.php,Utilities.php,Calculator.php,Selector.php,Fixtures.php,Constraints.php,Parser.php}'
-        exclude: '../src/Model/Metadata/MetadataManager.php'
+        exclude: '../src/Model/Metadata/{MetadataManager.php,CategoryMetadataManager.php,ContentFilterMetadataManager.php}'
+        public: true
     Model\Question\Admin\:
         resource: '../src/Model/Question/Admin/*{Manager.php,Builder.php}'
     Model\Question\QuestionCategory\:

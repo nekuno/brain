@@ -6,11 +6,12 @@ use FOS\RestBundle\Controller\Annotations\Get;
 use FOS\RestBundle\Controller\Annotations\Put;
 use FOS\RestBundle\Controller\FOSRestController;
 use FOS\RestBundle\Routing\ClassResourceInterface;
+use Model\Profile\Profile;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Swagger\Annotations as SWG;
 use Model\User\UserManager;
 use Model\Profile\ProfileManager;
 use Model\Profile\ProfileTagManager;
-use Model\User\User;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use Nelmio\ApiDocBundle\Annotation\Security;
 use Service\MetadataService;
@@ -22,24 +23,19 @@ class ProfileController extends FOSRestController implements ClassResourceInterf
      * Get own profile
      *
      * @Get("/profile")
-     * @param User $user
-     * @param ProfileManager $profileManager
+     * @param Profile $profile
      * @return \FOS\RestBundle\View\View
+     * @ParamConverter("profile", converter="request_body_converter", class="Model\Profile\Profile")
      * @SWG\Response(
      *     response=200,
      *     description="Returns own profile",
-     *     schema=@SWG\Schema(
-     *         @SWG\Property(property="profile", type="object", ref=@Model(type=\Model\Profile\Profile::class, groups={"Profile"}))
-     *     )
      * )
      * @Security(name="Bearer")
      * @SWG\Tag(name="profiles")
      */
-    public function getAction(User $user, ProfileManager $profileManager)
+    public function getAction(Profile $profile)
     {
-        $profile = $profileManager->getById($user->getId());
-
-        return $this->view($profile->jsonSerialize());
+        return $this->view($profile);
     }
 
     /**
@@ -195,25 +191,16 @@ class ProfileController extends FOSRestController implements ClassResourceInterf
         $userId = $userManager->getBySlug($slug)->getId();
         $profile = $profileManager->getById($userId);
 
-        return $this->view($profile->jsonSerialize());
+        return $this->view($profile);
     }
 
     /**
      * Edit own profile
      *
      * @Put("/profile")
-     * @param Request $request
-     * @param User $user
-     * @param ProfileManager $profileManager
+     * @param Profile $profile
      * @return \FOS\RestBundle\View\View
-     * @SWG\Parameter(
-     *      name="body",
-     *      in="body",
-     *      type="json",
-     *      schema=@SWG\Schema(
-     *          ref=@Model(type=\Model\Profile\Profile::class, groups={"Profile"})
-     *      )
-     * )
+     * @ParamConverter("profile", converter="request_body_converter", class="Model\Profile\Profile")
      * @SWG\Response(
      *     response=201,
      *     description="Returns edited profile.",
@@ -221,10 +208,8 @@ class ProfileController extends FOSRestController implements ClassResourceInterf
      * @Security(name="Bearer")
      * @SWG\Tag(name="profiles")
      */
-    public function putAction(Request $request, User $user, ProfileManager $profileManager)
+    public function putAction(Profile $profile)
     {
-        $profile = $profileManager->update($user->getId(), $request->request->all());
-
-        return $this->view($profile->jsonSerialize());
+        return $this->view($profile, 201);
     }
 }
