@@ -2,6 +2,7 @@
 
 namespace Request;
 
+use Model\ManagerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Sensio\Bundle\FrameworkExtraBundle\Request\ParamConverter\ParamConverterInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -47,7 +48,11 @@ class RequestBodyParamConverter implements ParamConverterInterface
             throw new \Exception(sprintf('Manager %s does not exist', $managerClass));
         }
 
+        /** @var ManagerInterface $manager */
         $manager = $this->container->get($managerClass);
+        if (!$manager instanceof ManagerInterface) {
+            throw new \Exception(sprintf('Manager %s does not implement %s', $managerClass, ManagerInterface::class));
+        }
 
         switch ($method) {
             case 'GET':
@@ -60,7 +65,7 @@ class RequestBodyParamConverter implements ParamConverterInterface
                 $object = $manager->update($userId, $data);
                 break;
             case 'DELETE':
-                $object = $manager->delete($data, $userId);
+                $object = $manager->delete($userId);
                 break;
             default:
                 return false;
