@@ -187,31 +187,32 @@ class ThreadController extends FOSRestController implements ClassResourceInterfa
         return $this->view($thread, 200);
     }
 
-    /**
-     * Deletes a thread
-     *
-     * @Delete("/threads/{threadId}", requirements={"threadId"="\d+"})
-     * @param integer $threadId
-     * @param ThreadService $threadService
-     * @return \FOS\RestBundle\View\View
-     * @SWG\Response(
-     *     response=200,
-     *     description="Returns deleted thread.",
-     * )
-     * @Security(name="Bearer")
-     * @SWG\Tag(name="threads")
-     */
-    public function deleteAction($threadId, ThreadService $threadService)
-    {
-        try {
-            $relationships = $threadService->deleteById($threadId);
-        } catch (\Exception $e) {
-
-            return $this->view($e->getMessage(), 500);
-        }
-
-        return $this->view($relationships, 200);
-    }
+    // TODO: User cannot delete a thread. Otherwise, it must be checked that the user owns the thread
+//    /**
+//     * Deletes a thread
+//     *
+//     * @Delete("/threads/{threadId}", requirements={"threadId"="\d+"})
+//     * @param integer $threadId
+//     * @param ThreadService $threadService
+//     * @return \FOS\RestBundle\View\View
+//     * @SWG\Response(
+//     *     response=200,
+//     *     description="Returns deleted thread.",
+//     * )
+//     * @Security(name="Bearer")
+//     * @SWG\Tag(name="threads")
+//     */
+//    public function deleteAction($threadId, ThreadService $threadService)
+//    {
+//        try {
+//            $relationships = $threadService->deleteById($threadId);
+//        } catch (\Exception $e) {
+//
+//            return $this->view($e->getMessage(), 500);
+//        }
+//
+//        return $this->view($relationships, 200);
+//    }
 
     /**
      * @param RecommendatorService $recommendatorService
