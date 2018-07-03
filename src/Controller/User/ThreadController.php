@@ -25,6 +25,7 @@ class ThreadController extends FOSRestController implements ClassResourceInterfa
      *
      * @Get("/threads/{threadId}/recommendation")
      * @param integer $threadId
+     * @param User $user
      * @param Request $request
      * @param ThreadService $threadService
      * @param RecommendatorService $recommendatorService
@@ -62,10 +63,10 @@ class ThreadController extends FOSRestController implements ClassResourceInterfa
      * @Security(name="Bearer")
      * @SWG\Tag(name="threads")
      */
-    public function getRecommendationAction($threadId, Request $request, ThreadService $threadService, RecommendatorService $recommendatorService)
+    public function getRecommendationAction($threadId, User $user, Request $request, ThreadService $threadService, RecommendatorService $recommendatorService)
     {
-        $thread = $threadService->getByThreadId($threadId);
-        $result = $this->getRecommendations($recommendatorService, $threadService, $thread, $request);
+        $thread = $threadService->getByThreadIdAndUserId($threadId, $user->getId());
+        $result = $this->getRecommendations($user, $recommendatorService, $threadService, $thread, $request);
 
         if (!is_array($result)) {
             return $this->view($result, 500);
@@ -182,6 +183,7 @@ class ThreadController extends FOSRestController implements ClassResourceInterfa
      */
     public function putAction($threadId, User $user, Request $request, ThreadService $threadService)
     {
+        $threadService->getByThreadIdAndUserId($threadId, $user->getId());
         $thread = $threadService->updateThread($threadId, $user->getId(), $request->request->all());
 
         return $this->view($thread, 200);
@@ -215,6 +217,7 @@ class ThreadController extends FOSRestController implements ClassResourceInterfa
 //    }
 
     /**
+     * @param User $user
      * @param RecommendatorService $recommendatorService
      * @param ThreadService $threadService
      * @param $thread
@@ -222,10 +225,10 @@ class ThreadController extends FOSRestController implements ClassResourceInterfa
      * @return array|string string if got an exception in production environment
      * @throws \Exception
      */
-    protected function getRecommendations(RecommendatorService $recommendatorService, ThreadService $threadService, Thread $thread, Request $request)
+    protected function getRecommendations(User $user, RecommendatorService $recommendatorService, ThreadService $threadService, Thread $thread, Request $request)
     {
         try {
-            $result = $recommendatorService->getRecommendationFromThreadAndRequest($thread, $request);
+            $result = $recommendatorService->getUserRecommendationFromThreadAndRequest($user, $thread, $request);
 //            $this->cacheRecommendations($thread, $request, $result, $threadService);
         } catch (\Exception $e) {
 

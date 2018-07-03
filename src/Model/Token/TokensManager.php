@@ -349,7 +349,7 @@ class TokensManager
         $result = $query->getResultSet();
 
         if (count($result) < 1) {
-            return array(null, null);
+            throw new NotFoundHttpException('Token not found');
         }
 
         /* @var Row $row */
