@@ -72,16 +72,19 @@ class OAuthTokenSubscriber implements EventSubscriberInterface
     {
         $token = $event->getToken();
 
-        $this->tm->update(
-            $token->getUserId(),
-            $token->getResourceOwner(),
-            array(
-                'oauthToken' => $token->getOauthToken(),
-                'expireTime' => $token->getExpireTime(),
-                'refreshToken' => $token->getRefreshToken(),
-                'resourceId' => $token->getResourceId(),
-            )
-        );
+        try {
+            $this->tm->update(
+                $token->getUserId(),
+                $token->getResourceOwner(),
+                array(
+                    'oauthToken' => $token->getOauthToken(),
+                    'expireTime' => $token->getExpireTime(),
+                    'refreshToken' => $token->getRefreshToken(),
+                    'resourceId' => $token->getResourceId(),
+                )
+            );
+        } catch (\Exception $e) {
+        }
     }
 
     /**
