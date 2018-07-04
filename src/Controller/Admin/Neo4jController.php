@@ -57,6 +57,11 @@ class Neo4jController extends FOSRestController implements ClassResourceInterfac
                 $user2Id = $request->query->get('user2Id');
                 $data = $graphExploreService->getSimilarity($user1Id, $user2Id);
                 break;
+            case 'matching':
+                $user1Id = $request->query->get('user1Id');
+                $user2Id = $request->query->get('user2Id');
+                $data = $graphExploreService->getMatching($user1Id, $user2Id);
+                break;
             default:
                 $data = array();
                 break;
