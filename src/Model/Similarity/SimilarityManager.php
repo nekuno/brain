@@ -695,15 +695,20 @@ class SimilarityManager
         
         /** @var Row $row */
         $row = $result->current();
-        
-        $user1 = $row->offsetGet('u1');
-        $user2 = $row->offsetGet('u2');
+
+        $user1Object = $row->offsetGet('u1');
+        $user1 = $qb->getData($user1Object);
+        $user2Object = $row->offsetGet('u2');
+        $user2 = $qb->getData($user2Object);
 
         $similarity = $this->buildSimilarity($row);
 
-        $common = $row->offsetGet('common');
-        $links1 = $row->offsetGet('links1');
-        $links2 = $row->offsetGet('links2');
+        $commonCollect = $row->offsetGet('common');
+        $common = $qb->getData($commonCollect);
+        $links1Collect = $row->offsetGet('links1');
+        $links1 = $qb->getData($links1Collect);
+        $links2Collect = $row->offsetGet('links2');
+        $links2 = $qb->getData($links2Collect);
 
         return array(
             'user1' => $user1,

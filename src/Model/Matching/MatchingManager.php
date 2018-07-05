@@ -236,8 +236,7 @@ class MatchingManager
 
         $resultSet = $qb->getQuery()->getResultSet();
 
-        if ($resultSet->count() == 0)
-        {
+        if ($resultSet->count() == 0) {
             return null;
         }
 
@@ -283,38 +282,46 @@ class MatchingManager
             ->with('u1', 'u2', 'matches');
 
         $qb->optionalMatch('(u1)-[:RATES]->(questionCommon:Question)<-[:RATES]-(u2)')
-//            ->with('u1', 'u2', 'matches', '{id: id(questionCommon), text: questionCommon.text_es} AS questionCommon')
             ->with('u1', 'u2', 'matches', 'questionCommon');
 
         $qb->optionalMatch('(questionCommon)-[:IS_ANSWER_OF]-(answer:Answer)')
-            ->with('u1', 'u2', 'matches', 'questionCommon', 'answer');
-        
-        $qb->match('(u1)-[:ANSWERS]->(u1Answered:Answer)--(questionCommon)')
-            ->match('(u2)-[:ANSWERS]->(u2Answered:Answer)--(questionCommon)');
+            ->with('u1', 'u2', 'matches', 'questionCommon', 'answer')
+            ->with('u1', 'u2', 'matches', 'questionCommon', '{id: id(answer), text: answer.text_es} AS answer')
+            ->with('u1', 'u2', 'matches', 'questionCommon', 'collect(answer) AS answers');
 
-        $qb->with('u1', 'u2', 'matches', 'questionCommon',
-            '{id: id(answer), text: answer.text_es} AS answer', 
-            '{id: id(u1Answered), text: u1Answered.text_es} AS u1Answered',
-            '{id: id(u2Answered), text: u2Answered.text_es} AS u2Answered')
-            ->with('u1', 'u2', 'matches', 'questionCommon', 'collect(answer) AS answers', 'collect(u1Answered) AS u1Answered', 'collect(u2Answered) AS u2Answered')
-            ->with('u1', 'u2', 'matches', '{id: id(questionCommon), text: questionCommon.text_es} AS questionCommon', 'answers', 'u1Answered', 'u2Answered')
+        $qb->match('(u1)-[:ANSWERS]->(u1Answered:Answer)--(questionCommon)')
+            ->with('u1', 'u2', 'matches', 'questionCommon', 'answers', '{id: id(u1Answered), text: u1Answered.text_es} AS u1Answered')
+            ->with('u1', 'u2', 'matches', 'questionCommon', 'answers', 'collect(u1Answered) AS u1Answered');
+
+        $qb->match('(u2)-[:ANSWERS]->(u2Answered:Answer)--(questionCommon)')
+            ->with('u1', 'u2', 'matches', 'questionCommon', 'answers', 'u1Answered', '{id: id(u2Answered), text: u2Answered.text_es} AS u2Answered')
+            ->with('u1', 'u2', 'matches', 'questionCommon', 'answers', 'u1Answered', 'collect(u2Answered) AS u2Answered');
+
+        $qb->with('u1', 'u2', 'matches', '{id: id(questionCommon), text: questionCommon.text_es} AS questionCommon', 'answers', 'u1Answered', 'u2Answered')
             ->with('u1', 'u2', '{matching: matches.matching_questions, timestamp: matches.timestamp_questions} AS matches', 'questionCommon', 'answers', 'u1Answered', 'u2Answered');
 
         $qb->returns(
             '{id: id(u1), username: u1.username} AS u1',
             '{id: id(u2), username: u2.username} AS u2',
-            'matches', 'questionCommon', 'answers', 'u1Answered', 'u2Answered');
+            'matches',
+            'questionCommon',
+            'answers',
+            'u1Answered',
+            'u2Answered'
+        );
 
         $result = $qb->getQuery()->getResultSet();
-        if ($result->count() === 0 ){
+        if ($result->count() === 0) {
             return array();
         }
 
         /** @var Row $row */
         $row = $result->current();
 
-        $user1 = $row->offsetGet('u1');
-        $user2 = $row->offsetGet('u2');
+        $user1Object = $row->offsetGet('u1');
+        $user1 = $qb->getData($user1Object);
+        $user2Object = $row->offsetGet('u2');
+        $user2 = $qb->getData($user2Object);
 
         /** @var Row $matches */
         $matches = $row->offsetGet('matches');
@@ -323,37 +330,20 @@ class MatchingManager
         $matching->setTimestamp($matches->offsetGet('timestamp'));
 
         $questions = array();
-        foreach ($result as $row)
-        {
+        foreach ($result as $row) {
             $questionObject = $row->offsetGet('questionCommon');
-            $question = array('id' => $questionObject->offsetGet('id'), 'text' => $questionObject->offsetGet('text'));
+            $question = $qb->getData($questionObject);
 
             $answersCollect = $row->offsetGet('answers');
-            $answers = array();
-            /** @var Row $answerObject */
-            foreach ($answersCollect as $answerObject)
-            {
-                $answer = array('id' => $answerObject->offsetGet('id'), 'text' => $answerObject->offsetGet('text'));
-                $answers[] = $answer;
-            }
+            $answers = $qb->getData($answersCollect);
+            $question['answers'] = $answers;
+
             $user1AnsweredCollect = $row->offsetGet('u1Answered');
-            $user1Answered = array();
-            foreach ($user1AnsweredCollect as $user1AnsweredObject)
-            {
-                $user1Answered[] = array('id' => $user1AnsweredObject->offsetGet('id'), 'text' => $user1AnsweredObject->offsetGet('text'));
-                
-            }
+            $user1Answered = $qb->getData($user1AnsweredCollect);
+            $question['links']['user1Answered'] = $user1Answered;
 
             $user2AnsweredCollect = $row->offsetGet('u2Answered');
-            $user2Answered = array();
-            foreach ($user2AnsweredCollect as $user2AnsweredObject)
-            {
-                $user2Answered[] = array('id' => $user2AnsweredObject->offsetGet('id'), 'text' => $user2AnsweredObject->offsetGet('text'));
-
-            }
-
-            $question['answers'] = $answers;
-            $question['links']['user1Answered'] = $user1Answered;
+            $user2Answered = $qb->getData($user2AnsweredCollect);
             $question['links']['user2Answered'] = $user2Answered;
 
             $questions[] = $question;

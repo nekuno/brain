@@ -180,20 +180,20 @@ class GraphExploreService
         );
     }
 
-    protected function buildLink(Row $object)
+    protected function buildLink(array $link)
     {
         return array(
-            'id' => $object->offsetGet('id'),
-            'url' => $object->offsetGet('url'),
+            'id' => $link['id'],
+            'url' => $link['url'],
             'label' => 'Link',
         );
     }
 
-    protected function buildUser(Row $object)
+    protected function buildUser(array $user)
     {
         return array(
-            'id' => $object->offsetGet('id'),
-            'username' => $object->offsetGet('username'),
+            'id' => $user['id'],
+            'username' => $user['username'],
             'label' => 'User',
         );
     }
