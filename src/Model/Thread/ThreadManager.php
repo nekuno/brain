@@ -62,6 +62,30 @@ class ThreadManager
     }
 
     /**
+     * @param $threadId
+     * @param $userId
+     * @return Thread
+     * @throws \Exception
+     */
+    public function getByIdAndUserId($threadId, $userId)
+    {
+        $qb = $this->graphManager->createQueryBuilder();
+        $qb->match('(thread:Thread)<-[:HAS_THREAD]-(:User {qnoow_id: { userId }})')
+            ->where('id(thread) = {id}');
+        $qb->optionalMatch('(thread)-[:IS_FROM_GROUP]->(group:Group)')
+            ->returns('thread', 'id(group) AS groupId');
+        $qb->setParameter('id', (integer)$threadId);
+        $qb->setParameter('userId', (integer)$userId);
+        $result = $qb->getQuery()->getResultSet();
+
+        if ($result->count() < 1) {
+            throw new NotFoundHttpException('Thread with id ' . $threadId . ' not found for user '. $userId);
+        }
+
+        return $this->build($result->current());
+    }
+
+    /**
      * @param $userId
      * @return Thread[]
      * @throws \Exception

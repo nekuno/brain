@@ -25,6 +25,7 @@ class ThreadController extends FOSRestController implements ClassResourceInterfa
      *
      * @Get("/threads/{threadId}/recommendation")
      * @param integer $threadId
+     * @param User $user
      * @param Request $request
      * @param ThreadService $threadService
      * @param RecommendatorService $recommendatorService
@@ -62,10 +63,10 @@ class ThreadController extends FOSRestController implements ClassResourceInterfa
      * @Security(name="Bearer")
      * @SWG\Tag(name="threads")
      */
-    public function getRecommendationAction($threadId, Request $request, ThreadService $threadService, RecommendatorService $recommendatorService)
+    public function getRecommendationAction($threadId, User $user, Request $request, ThreadService $threadService, RecommendatorService $recommendatorService)
     {
-        $thread = $threadService->getByThreadId($threadId);
-        $result = $this->getRecommendations($recommendatorService, $threadService, $thread, $request);
+        $thread = $threadService->getByThreadIdAndUserId($threadId, $user->getId());
+        $result = $this->getRecommendations($user, $recommendatorService, $threadService, $thread, $request);
 
         if (!is_array($result)) {
             return $this->view($result, 500);
@@ -182,38 +183,41 @@ class ThreadController extends FOSRestController implements ClassResourceInterfa
      */
     public function putAction($threadId, User $user, Request $request, ThreadService $threadService)
     {
+        $threadService->getByThreadIdAndUserId($threadId, $user->getId());
         $thread = $threadService->updateThread($threadId, $user->getId(), $request->request->all());
 
         return $this->view($thread, 200);
     }
 
+    // TODO: User cannot delete a thread. Otherwise, it must be checked that the user owns the thread
+//    /**
+//     * Deletes a thread
+//     *
+//     * @Delete("/threads/{threadId}", requirements={"threadId"="\d+"})
+//     * @param integer $threadId
+//     * @param ThreadService $threadService
+//     * @return \FOS\RestBundle\View\View
+//     * @SWG\Response(
+//     *     response=200,
+//     *     description="Returns deleted thread.",
+//     * )
+//     * @Security(name="Bearer")
+//     * @SWG\Tag(name="threads")
+//     */
+//    public function deleteAction($threadId, ThreadService $threadService)
+//    {
+//        try {
+//            $relationships = $threadService->deleteById($threadId);
+//        } catch (\Exception $e) {
+//
+//            return $this->view($e->getMessage(), 500);
+//        }
+//
+//        return $this->view($relationships, 200);
+//    }
+
     /**
-     * Deletes a thread
-     *
-     * @Delete("/threads/{threadId}", requirements={"threadId"="\d+"})
-     * @param integer $threadId
-     * @param ThreadService $threadService
-     * @return \FOS\RestBundle\View\View
-     * @SWG\Response(
-     *     response=200,
-     *     description="Returns deleted thread.",
-     * )
-     * @Security(name="Bearer")
-     * @SWG\Tag(name="threads")
-     */
-    public function deleteAction($threadId, ThreadService $threadService)
-    {
-        try {
-            $relationships = $threadService->deleteById($threadId);
-        } catch (\Exception $e) {
-
-            return $this->view($e->getMessage(), 500);
-        }
-
-        return $this->view($relationships, 200);
-    }
-
-    /**
+     * @param User $user
      * @param RecommendatorService $recommendatorService
      * @param ThreadService $threadService
      * @param $thread
@@ -221,10 +225,10 @@ class ThreadController extends FOSRestController implements ClassResourceInterfa
      * @return array|string string if got an exception in production environment
      * @throws \Exception
      */
-    protected function getRecommendations(RecommendatorService $recommendatorService, ThreadService $threadService, Thread $thread, Request $request)
+    protected function getRecommendations(User $user, RecommendatorService $recommendatorService, ThreadService $threadService, Thread $thread, Request $request)
     {
         try {
-            $result = $recommendatorService->getRecommendationFromThreadAndRequest($thread, $request);
+            $result = $recommendatorService->getUserRecommendationFromThreadAndRequest($user, $thread, $request);
 //            $this->cacheRecommendations($thread, $request, $result, $threadService);
         } catch (\Exception $e) {
 

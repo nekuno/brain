@@ -214,7 +214,7 @@ abstract class AbstractUserRecommendationPaginatedManager implements PaginatedIn
                         $matchQuery = "(p)<-[rel$name:OPTION_OF]-(option$name:$profileLabelName)";
                         $whereQueries = array();
                         $choices = $value['choices'];
-                        $details = isset($value['details']) ? $value['details'] : null;
+                        $details = isset($value['details']) && !empty($value['details']) ? $value['details'] : null;
                         foreach ($choices as $choice) {
                             $whereQuery = " option$name.id = '$choice'";
                             if ($details) {

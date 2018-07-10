@@ -70,6 +70,8 @@ class Link implements \JsonSerializable
         }
         if (isset($array['timestamp'])) {
             $link->setCreated($array['timestamp']);
+        } else if (isset($array['created'])) {
+            $link->setCreated($array['created']);
         }
         if (isset($array['additionalLabels'])) {
             $link->setAdditionalLabels($array['additionalLabels']);

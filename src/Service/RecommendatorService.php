@@ -13,6 +13,7 @@ use Model\Shares\SharesManager;
 use Model\Thread\ContentThread;
 use Model\Thread\Thread;
 use Model\Thread\UsersThread;
+use Model\User\User;
 use Model\User\UserManager;
 use Paginator\ContentPaginator;
 use Paginator\Paginator;
@@ -117,9 +118,8 @@ class RecommendatorService
             'recommendation' => $recommendation);
     }
 
-    public function getRecommendationFromThreadAndRequest(Thread $thread, Request $request)
+    public function getUserRecommendationFromThreadAndRequest(User $user, Thread $thread, Request $request)
     {
-        $user = $this->userManager->getOneByThread($thread->getId());
         //Todo: Change to Class::class if PHP >= 5.5
         switch (get_class($thread)) {
             case 'Model\Thread\ContentThread':

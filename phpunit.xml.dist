@@ -16,8 +16,8 @@
         <env name="SHELL_VERBOSITY" value="-1" />
         <env name="secret" value="secretkeynekuno2015forjwt" />
         <env name="instant_api_secret" value="" />
-        <env name="JWT_PRIVATE_KEY_PATH" value="config/jwt/private.pem" />
-        <env name="JWT_PUBLIC_KEY_PATH" value="config/jwt/public.pem" />
+        <env name="JWT_PRIVATE_KEY_PATH" value="config/jwt/private-test.pem" />
+        <env name="JWT_PUBLIC_KEY_PATH" value="config/jwt/public-test.pem" />
         <env name="JWT_PASSPHRASE" value="nekuno" />
         <env name="push_public_key" value="" />
         <env name="push_private_key" value="" />

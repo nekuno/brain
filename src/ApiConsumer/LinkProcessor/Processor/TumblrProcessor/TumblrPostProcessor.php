@@ -27,7 +27,7 @@ class TumblrPostProcessor extends AbstractTumblrProcessor
         }
 
         $response = $this->resourceOwner->requestPost($blogId, $postId, $token);
-        $post = isset($response['response']['posts'][0]) ? $response['response']['posts'][0] : null;
+        $post = isset($response['response']['posts'][0]) ? $response['response']['posts'][0] : array();
 
         if (isset($post['video_type']) && $post['video_type'] === 'youtube' && isset($post['permalink_url'])) {
             $preprocessedLink->setSource(TokensManager::GOOGLE);

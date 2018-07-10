@@ -9,7 +9,9 @@ class Game extends Link
     public function toArray()
     {
         $array = parent::toArray();
-        $array['additionalLabels'][] = self::GAME_LABEL;
+        if (!in_array(self::GAME_LABEL, $array['additionalLabels'])) {
+            $array['additionalLabels'][] = self::GAME_LABEL;
+        }
 
         return $array;
     }

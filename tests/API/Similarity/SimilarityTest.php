@@ -35,7 +35,12 @@ class SimilarityTest extends SimilarityAPITest
     public function assertSimilarityValues()
     {
         $this->similarityManager->getSimilarity(1, 2);
-        $this->getSimilarity(2);
-        $this->popularityManager->updatePopularityByUser(1);
+        $response = $this->getSimilarity(2);
+        $formattedResponse = $this->assertJsonResponse($response, 200, "Get similarity");
+        $this->assertEquals(['similarity' => 0], $formattedResponse, "Similarity is not 0");
+
+        $bool = $this->popularityManager->updatePopularityByUser(1);
+        $this->assertEquals(true, $bool, "updatePopularityByUser result is not true");
     }
+
 }

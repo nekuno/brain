@@ -48,6 +48,15 @@ class ThreadService
         return $thread;
     }
 
+    public function getByThreadIdAndUserId($threadId, $userId)
+    {
+        $thread = $this->threadManager->getByIdAndUserId($threadId, $userId);
+        $this->setFilters($thread);
+//        $this->setCachedResults($thread);
+
+        return $thread;
+    }
+
     public function getAllByUserId($userId)
     {
         $threads = $this->threadManager->getAllByUserId($userId);

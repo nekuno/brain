@@ -36,7 +36,7 @@ abstract class AbstractAPIProcessor implements ProcessorInterface
         return $response;
     }
 
-    protected function checkValidResponse(PreprocessedLink $preprocessedLink, array $response)
+    protected function checkValidResponse(PreprocessedLink $preprocessedLink, $response)
     {
         if (!$this->isValidResponse($response)){
             throw new CannotProcessException($preprocessedLink->getUrl(), sprintf('Response for url %s is not valid', $preprocessedLink->getUrl()));
@@ -45,8 +45,8 @@ abstract class AbstractAPIProcessor implements ProcessorInterface
 
     abstract protected function requestItem(PreprocessedLink $preprocessedLink);
 
-    protected function isValidResponse(array $response){
-        return !empty($response);
+    protected function isValidResponse($response){
+        return is_array($response) && !empty($response);
     }
 
     public function addTags(PreprocessedLink $preprocessedLink, array $data)
