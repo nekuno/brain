@@ -2,7 +2,7 @@
 
 namespace Controller\Admin;
 
-use Service\GraphExploreService;
+use Service\GraphExplore\GraphExploreService;
 use FOS\RestBundle\Controller\Annotations\Get;
 use FOS\RestBundle\Controller\Annotations\Route;
 use FOS\RestBundle\Controller\FOSRestController;
