@@ -5,7 +5,6 @@ namespace Model\Question;
 use Everyman\Neo4j\Query\ResultSet;
 use Model\Neo4j\GraphManager;
 use Paginator\PaginatedInterface;
-
 use Everyman\Neo4j\Query\Row;
 use Service\AnswerService;
 
@@ -68,16 +67,21 @@ class QuestionComparePaginatedManager implements PaginatedInterface
             ->with('u', 'u2')
             ->limit(1);
 
+        $qb->match('(u)-[:ANSWERS]->(:Answer)-[:IS_ANSWER_OF]->(otherQuestion:Question)')
+            ->where('NOT (u2)-[:ANSWERS]->(:Answer)-[:IS_ANSWER_OF]->(otherQuestion)')
+            ->with('u, u2, collect(distinct otherQuestion) as otherQuestions');
+
         $qb->match('(u)-[ua:ANSWERS]->(answer:Answer)-[:IS_ANSWER_OF]->(question:Question)')
             ->where("EXISTS(answer.text_$locale)")
-            ->with('u', 'u2', 'question', 'answer', 'ua');
+            ->with('u', 'u2', 'question', 'answer', 'ua', 'otherQuestions');
 
         $qb->match('(u2)<-[:PROFILE_OF]-(:Profile)<-[:OPTION_OF]-(:Mode)<-[:INCLUDED_IN]-(:QuestionCategory)-[:CATEGORY_OF]->(question)');
 
         if ($showOnlyCommon) {
-            $qb->match('(u2)-[ua2:ANSWERS]-(answer2:Answer)-[:IS_ANSWER_OF]-(question)');
+            $qb->match('(u2)-[ua2:ANSWERS]-(answer)')
+                ->with('u, u2, ua, ua2, question, answer, answer as answer2, otherQuestions');
         } else {
-            $qb->optionalMatch('(u2)-[ua2:ANSWERS]-(answer2:Answer)-[:IS_ANSWER_OF]-(question)');
+            $qb->match('(u2)-[ua2:ANSWERS]-(answer2:Answer)-[:IS_ANSWER_OF]-(question)');
         }
 
         $qb->optionalMatch('(u)-[:ACCEPTS]-(acceptedAnswers:Answer)-[:IS_ANSWER_OF]-(question)');
@@ -105,7 +109,8 @@ class QuestionComparePaginatedManager implements PaginatedInterface
                 rates: rate2,
                 answers: collect(distinct possible_answers),
                 acceptedAnswers: collect(distinct acceptedAnswers2)
-            } as own_questions'
+            } as own_questions',
+            'otherQuestions'
         )
             ->orderBy('isCommon DESC', 'id(question)')
             ->skip('{offset}')
@@ -119,7 +124,6 @@ class QuestionComparePaginatedManager implements PaginatedInterface
                 'limit' => (integer)$limit
             )
         );
-
         $result = $qb->getQuery()->getResultSet();
 
         $own_questions_results = $this->buildQuestionResults($result, 'own_questions', $locale);
@@ -132,11 +136,26 @@ class QuestionComparePaginatedManager implements PaginatedInterface
             $other_questions_results['userId'] = $id;
         }
 
+        $otherQuestions = array();
+
+        /** @var Row $row */
+        foreach ($result as $row) {
+            /** @var Row $otherQuestionRow */
+            $otherQuestionRow = $row->offsetGet('otherQuestions');
+            foreach ($otherQuestionRow as $otherQuestionNode) {
+                $otherQuestions[] = array(
+                    'id' => $otherQuestionNode->getId(),
+                    'text' => $otherQuestionNode->getProperty("text_$locale"),
+                );
+            }
+            break;
+        }
+
         $resultArray = array();
         $noResults = empty($other_questions_results);
         if (!$noResults)
         {
-            $resultArray = array($other_questions_results, $own_questions_results);
+            $resultArray = array($other_questions_results, $own_questions_results, $otherQuestions);
         }
 
         return $resultArray;
