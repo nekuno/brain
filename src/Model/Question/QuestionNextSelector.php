@@ -103,9 +103,9 @@ class QuestionNextSelector
             ->with('user', 'otherAnswer', 'collect(answered) + collect(report) AS excluded');
 
         $qb->optionalMatch('(user)<-[:PROFILE_OF]-(:Profile)<-[:OPTION_OF]-(mode:Mode)')
-            ->with('user', 'excluded', 'collect(mode) AS userModes', 'count(mode) AS userModeAmount')
+            ->with('user', 'otherAnswer', 'excluded', 'collect(mode) AS userModes', 'count(mode) AS userModeAmount')
             ->match('(mode:Mode)')
-            ->with('user', 'excluded', 'CASE WHEN userModeAmount > 0 THEN userModes ELSE collect(mode) END AS modes')
+            ->with('user', 'otherAnswer', 'excluded', 'CASE WHEN userModeAmount > 0 THEN userModes ELSE collect(mode) END AS modes')
             ->match('(mode)<-[:INCLUDED_IN]-(:QuestionCategory)-[:CATEGORY_OF]->(candidateQuestion:Question)')
             ->where('mode IN modes');
 
