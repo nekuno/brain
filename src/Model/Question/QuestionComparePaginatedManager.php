@@ -67,21 +67,18 @@ class QuestionComparePaginatedManager implements PaginatedInterface
             ->with('u', 'u2')
             ->limit(1);
 
-        $qb->match('(u)-[:ANSWERS]->(:Answer)-[:IS_ANSWER_OF]->(otherQuestion:Question)')
-            ->where('NOT (u2)-[:ANSWERS]->(:Answer)-[:IS_ANSWER_OF]->(otherQuestion)')
-            ->with('u, u2, collect(distinct otherQuestion) as otherQuestions');
-
         $qb->match('(u)-[ua:ANSWERS]->(answer:Answer)-[:IS_ANSWER_OF]->(question:Question)')
             ->where("EXISTS(answer.text_$locale)")
-            ->with('u', 'u2', 'question', 'answer', 'ua', 'otherQuestions');
+            ->with('u', 'u2', 'question', 'answer', 'ua');
 
         $qb->match('(u2)<-[:PROFILE_OF]-(:Profile)<-[:OPTION_OF]-(:Mode)<-[:INCLUDED_IN]-(:QuestionCategory)-[:CATEGORY_OF]->(question)');
 
         if ($showOnlyCommon) {
             $qb->match('(u2)-[ua2:ANSWERS]-(answer)')
-                ->with('u, u2, ua, ua2, question, answer, answer as answer2, otherQuestions');
+                ->with('u, u2, ua, ua2, question, answer, answer as answer2');
         } else {
-            $qb->match('(u2)-[ua2:ANSWERS]-(answer2:Answer)-[:IS_ANSWER_OF]-(question)');
+            $qb->match('(u2)-[ua2:ANSWERS]-(answer2:Answer)-[:IS_ANSWER_OF]-(question)')
+                ->with('u, u2, ua, ua2, question, answer, answer2');
         }
 
         $qb->optionalMatch('(u)-[:ACCEPTS]-(acceptedAnswers:Answer)-[:IS_ANSWER_OF]-(question)');
@@ -109,8 +106,7 @@ class QuestionComparePaginatedManager implements PaginatedInterface
                 rates: rate2,
                 answers: collect(distinct possible_answers),
                 acceptedAnswers: collect(distinct acceptedAnswers2)
-            } as own_questions',
-            'otherQuestions'
+            } as own_questions'
         )
             ->orderBy('isCommon DESC', 'id(question)')
             ->skip('{offset}')
@@ -136,29 +132,62 @@ class QuestionComparePaginatedManager implements PaginatedInterface
             $other_questions_results['userId'] = $id;
         }
 
-        $otherQuestions = array();
-
-        /** @var Row $row */
-        foreach ($result as $row) {
-            /** @var Row $otherQuestionRow */
-            $otherQuestionRow = $row->offsetGet('otherQuestions');
-            foreach ($otherQuestionRow as $otherQuestionNode) {
-                $otherQuestions[] = array(
-                    'id' => $otherQuestionNode->getId(),
-                    'text' => $otherQuestionNode->getProperty("text_$locale"),
-                );
-            }
-            break;
+        $questionsCount = isset($other_questions_results['questions']) && !empty($other_questions_results['questions']) ?
+            count($other_questions_results['questions']) : 0;
+        $other_not_answered_questions_results = [];
+        if ($questionsCount < $limit) {
+            $filters['showOnlyCommon'] = true;
+            $answeredTotal = $this->countTotal($filters);
+            $limit = $limit - $questionsCount;
+            $offset = $offset - $answeredTotal > 0 ? $offset - $answeredTotal : 0;
+            $other_not_answered_questions_results = $this->getNotAnsweredQuestions($id2, $id, $offset, $limit, $locale);
         }
 
         $resultArray = array();
-        $noResults = empty($other_questions_results);
+        $noResults = empty($other_questions_results) && empty($other_not_answered_questions_results);
         if (!$noResults)
         {
-            $resultArray = array($other_questions_results, $own_questions_results, $otherQuestions);
+            $resultArray = array(
+                'otherQuestions' => $other_questions_results,
+                'ownQuestions' => $own_questions_results,
+                'otherNotAnsweredQuestions' => $other_not_answered_questions_results
+            );
         }
 
         return $resultArray;
+    }
+
+    private function getNotAnsweredQuestions($ownUserId, $otherUserId, $offset, $limit, $locale)
+    {
+        $qb = $this->graphManager->createQueryBuilder();
+
+        $qb->match('(otherUser:User), (ownUser:User)')
+            ->where('otherUser.qnoow_id = {otherUserId} AND ownUser.qnoow_id = {ownUserId}')
+            ->with('otherUser', 'ownUser')
+            ->limit(1);
+        $qb->match('(otherUser)-[:ANSWERS]->(possible_answers:Answer)-[:IS_ANSWER_OF]->(question:Question)')
+            ->where('NOT (ownUser)-[:ANSWERS]->(:Answer)-[:IS_ANSWER_OF]->(question)');
+        $qb->returns(
+            'question',
+            '{
+                question: question,
+                answers: collect(distinct possible_answers)
+            } as other_not_answered_questions'
+        )
+            ->orderBy('id(question)')
+            ->skip('{offset}')
+            ->limit('{limit}');
+        $qb->setParameters(
+            array(
+                'ownUserId' => (integer)$ownUserId,
+                'otherUserId' => (integer)$otherUserId,
+                'offset' => (integer)$offset,
+                'limit' => (integer)$limit
+            )
+        );
+        $result = $qb->getQuery()->getResultSet();
+        return $this->buildNotAnsweredQuestionResults($result, 'other_not_answered_questions', $locale);
+
     }
 
     private function buildQuestionResults(ResultSet $result, $questionsKey, $locale)
@@ -170,6 +199,30 @@ class QuestionComparePaginatedManager implements PaginatedInterface
                 $questions = $row->offsetGet($questionsKey);
                 $questionId = $questions->offsetGet('question')->getId();
                 $questions_results['questions'][$questionId] = $this->answerService->build($questions, $locale);
+
+                if ($questions->offsetExists('isCommon')) {
+                    $questions_results['questions'][$questionId]['question']['isCommon'] = $questions->offsetGet('isCommon');
+                }
+
+                foreach ($questions_results['questions'] as $questionId => &$questionData) {
+                    $registerModes = $this->questionModel->getRegisterModes($questionId);
+                    $questionData['question']['registerModes'] = $registerModes;
+                }
+            }
+        }
+
+        return $questions_results;
+    }
+
+    private function buildNotAnsweredQuestionResults(ResultSet $result, $questionsKey, $locale)
+    {
+        $questions_results = array();
+        /* @var $row Row */
+        foreach ($result as $row) {
+            if ($row->offsetGet($questionsKey)->offsetExists('question')) {
+                $questions = $row->offsetGet($questionsKey);
+                $questionId = $questions->offsetGet('question')->getId();
+                $questions_results['questions'][$questionId] = $this->questionModel->build($questions, $locale);
 
                 if ($questions->offsetExists('isCommon')) {
                     $questions_results['questions'][$questionId]['question']['isCommon'] = $questions->offsetGet('isCommon');
