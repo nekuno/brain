@@ -174,7 +174,7 @@ class UserRecommendationPaginatedManager extends AbstractUserRecommendationPagin
 
     public function buildResponseFromResult(ResultSet $result)
     {
-        return array('items' => $this->buildUserRecommendations($result));
+        return array('items' => $this->userRecommendationBuilder->buildUserRecommendations($result));
     }
 
     /**

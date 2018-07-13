@@ -7,28 +7,28 @@ use Model\Neo4j\GraphManager;
 use Model\Recommendation\ContentRecommendation;
 use Model\Recommendation\ContentRecommendationPaginatedManager;
 use Model\Recommendation\UserRecommendation;
-use Model\Recommendation\UserRecommendationPaginatedManager;
+use App\Model\Recommendation\UserRecommendationBuilder;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class ThreadCachedManager
 {
     protected $graphManager;
-    protected $userRecommendationPaginatedModel;
+    protected $userRecommendationBuilder;
     protected $contentRecommendationPaginatedModel;
     protected $linkModel;
 
     /**
      * ThreadCachedManager constructor.
      * @param GraphManager $graphManager
-     * @param UserRecommendationPaginatedManager $userRecommendationPaginatedModel
+     * @param UserRecommendationBuilder $userRecommendationBuilder
      * @param ContentRecommendationPaginatedManager $contentRecommendationPaginatedModel
      * @param LinkManager $linkModel
      */
-    public function __construct(GraphManager $graphManager, UserRecommendationPaginatedManager $userRecommendationPaginatedModel,
+    public function __construct(GraphManager $graphManager, UserRecommendationBuilder $userRecommendationBuilder,
     ContentRecommendationPaginatedManager $contentRecommendationPaginatedModel, LinkManager $linkModel)
     {
         $this->graphManager = $graphManager;
-        $this->userRecommendationPaginatedModel = $userRecommendationPaginatedModel;
+        $this->userRecommendationBuilder = $userRecommendationBuilder;
         $this->contentRecommendationPaginatedModel = $contentRecommendationPaginatedModel;
         $this->linkModel = $linkModel;
     }
@@ -152,7 +152,7 @@ class ThreadCachedManager
         $qb->setParameters($parameters);
         $result = $qb->getQuery()->getResultSet();
 
-        return $this->userRecommendationPaginatedModel->buildUserRecommendations($result);
+        return $this->userRecommendationBuilder->buildUserRecommendations($result);
     }
 
     public function getCachedContentRecommendations(Thread $thread)
