@@ -1,10 +1,5 @@
 parameters:
     env(api_doc_password): ''
-    env(dev_custom_ip_1): '127.0.0.1'
-    env(dev_custom_ip_2): '127.0.0.1'
-    env(dev_custom_ip_3): '127.0.0.1'
-    env(dev_custom_ip_4): '127.0.0.1'
-    valid_ips: ['127.0.0.1', "%env(dev_custom_ip_1)%", "%env(dev_custom_ip_2)%", "%env(dev_custom_ip_3)%", "%env(dev_custom_ip_4)%"]
 
 security:
     # https://symfony.com/doc/current/security.html#where-do-users-come-from-user-providers
@@ -17,6 +12,17 @@ security:
                 users:
                     nekuno:
                         password: "%env(api_doc_password)%"
+        admin_provider:
+            memory:
+                users:
+                    admin:
+                        password: "%env(admin_http_password)%"
+        instant_provider:
+            memory:
+                users:
+                    instant:
+                        password: "%env(instant_http_password)%"
+
     encoders:
         Symfony\Component\Security\Core\User\User: bcrypt
 
@@ -51,11 +57,13 @@ security:
             pattern: ^/.*$
             methods: [OPTIONS]
         instant:
-            anonymous: true
             pattern: ^/instant/.*$
+            http_basic:
+                provider: instant_provider
         admin:
-            anonymous: true
             pattern: ^/admin/.*$
+            http_basic:
+                provider: admin_provider
         secured:
             provider: users
             stateless: true
@@ -64,10 +72,3 @@ security:
                 authenticators:
                     - lexik_jwt_authentication.jwt_token_authenticator
 
-    # Easy way to control access for large sections of your site
-    # Note: Only the *first* access control that matches will be used
-    access_control:
-        - { path: ^/instant/, roles: IS_AUTHENTICATED_ANONYMOUSLY, ips: "%valid_ips%" }
-        - { path: ^/admin/, roles: IS_AUTHENTICATED_ANONYMOUSLY, ips: "%valid_ips%" }
-        - { path: ^/instant/, roles: ROLE_NO_ACCESS }
-        - { path: ^/admin/, roles: ROLE_NO_ACCESS }
