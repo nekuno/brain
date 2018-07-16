@@ -29,6 +29,7 @@ class ProposalRecommendatorService
 
     public function getRecommendations(User $user, Request $request)
     {
+        //TODO: Enable different labels for different types of proposals
         $candidateRecommendations = $this->getCandidateRecommendations($user, $request);
         $proposalRecommendations = $this->getProposalRecommendations($user, $request);
 

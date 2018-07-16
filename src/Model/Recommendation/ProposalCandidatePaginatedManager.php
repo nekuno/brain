@@ -29,7 +29,7 @@ class ProposalCandidatePaginatedManager implements PaginatedInterface
      */
     public function validateFilters(array $filters)
     {
-        return true;
+        return isset($filters['userId']);
     }
 
     /**
@@ -43,7 +43,10 @@ class ProposalCandidatePaginatedManager implements PaginatedInterface
     {
         $interestedCandidates = $this->getInterestedCandidates($filters, $offset, $limit);
         $uninterestedCandidates = $this->getUninterestedCandidates($filters, $offset, $limit);
-        //mix
+
+        $candidates = $this->mixCandidates($interestedCandidates, $uninterestedCandidates);
+
+        return $candidates;
     }
 
     protected function getInterestedCandidates($filters, $offset, $limit)
@@ -90,7 +93,7 @@ class ProposalCandidatePaginatedManager implements PaginatedInterface
     protected function getUnInterestedCandidates($filters, $offset, $limit)
     {
         $offset = ceil($offset / 2);
-        $limit = floor($limit / 2);
+        $limit = ceil($limit / 2);
 
         $userId = $filters['userId'];
 
@@ -153,5 +156,27 @@ class ProposalCandidatePaginatedManager implements PaginatedInterface
         $result = $qb->getQuery()->getResultSet();
 
         return $result->current()->offsetGet('amount');
+    }
+
+    protected function mixCandidates($interested, $unIntenterested)
+    {
+        $length = count($interested);
+
+        $candidates = array();
+        for ($i = 0; $i < $length; $i++)
+        {
+            $partial = [$interested[$i], $unIntenterested[$i]];
+            shuffle($partial);
+
+            $candidates = array_merge($candidates, $partial);
+        }
+
+        if (count($unIntenterested) > $length)
+        {
+            $extra = array_slice($unIntenterested, $length);
+            $candidates = array_merge($candidates, $extra);
+        }
+
+        return $candidates;
     }
 }
