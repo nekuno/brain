@@ -68,7 +68,7 @@ class QuestionComparePaginatedManager implements PaginatedInterface
             ->limit(1);
 
         $qb->match('(u)-[ua:ANSWERS]->(answer:Answer)-[:IS_ANSWER_OF]->(question:Question)')
-            ->where("EXISTS(answer.text_$locale)")
+            ->where("EXISTS(answer.text_$locale) AND EXISTS(question.text_$locale)")
             ->with('u', 'u2', 'question', 'answer', 'ua');
 
         $qb->match('(u2)<-[:PROFILE_OF]-(:Profile)<-[:OPTION_OF]-(:Mode)<-[:INCLUDED_IN]-(:QuestionCategory)-[:CATEGORY_OF]->(question)');
@@ -166,7 +166,7 @@ class QuestionComparePaginatedManager implements PaginatedInterface
             ->with('otherUser', 'ownUser')
             ->limit(1);
         $qb->match('(otherUser)-[:ANSWERS]->(possible_answers:Answer)-[:IS_ANSWER_OF]->(question:Question)')
-            ->where('NOT (ownUser)-[:ANSWERS]->(:Answer)-[:IS_ANSWER_OF]->(question)');
+            ->where("NOT (ownUser)-[:ANSWERS]->(:Answer)-[:IS_ANSWER_OF]->(question) AND EXISTS(possible_answers.text_$locale) AND EXISTS(question.text_$locale)");
         $qb->returns(
             'question',
             '{
@@ -270,7 +270,7 @@ class QuestionComparePaginatedManager implements PaginatedInterface
             ->limit(1);
 
         $qb->match('(u)-[ua:ANSWERS]->(answer:Answer)-[:IS_ANSWER_OF]->(question:Question)')
-            ->where("EXISTS(answer.text_$locale)")
+            ->where("EXISTS(answer.text_$locale) AND EXISTS(question.text_$locale)")
             ->with('u', 'u2', 'question', 'answer', 'ua');
 
         $qb->match('(u2)<-[:PROFILE_OF]-(:Profile)<-[:OPTION_OF]-(:Mode)<-[:INCLUDED_IN]-(:QuestionCategory)-[:CATEGORY_OF]->(question)');
