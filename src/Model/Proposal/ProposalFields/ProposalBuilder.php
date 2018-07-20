@@ -20,28 +20,12 @@ class ProposalBuilder
     }
 
     /**
-     * @param array $data
-     * @return Proposal[]
-     */
-    //TODO: Add locale
-    public function buildMany(array $data)
-    {
-        $proposals = array();
-        foreach ($data AS $proposalName => $proposalData)
-        {
-            $proposals[] = $this->buildOne($proposalName, $proposalData);
-        }
-
-        return $proposals;
-    }
-
-    /**
      * @param $proposalName
      * @param $proposalData
      * @return Proposal
      */
     //TODO: Add locale
-    public function buildOne($proposalName, $proposalData)
+    public function buildFromData($proposalName, $proposalData)
     {
         $metadata = $this->metadataManager->getMetadata();
         $metadatum = $metadata[$proposalName];
@@ -49,7 +33,7 @@ class ProposalBuilder
         $fields = array();
         foreach ($metadatum AS $fieldName => $fieldMetadata){
             $type = $fieldMetadata['type'];
-            $value = $proposalData[$fieldName];
+            $value = isset($proposalData[$fieldName])? $proposalData[$fieldName] : null;
             switch($type){
                 case 'string':
                     $proposalField = new ProposalFieldString();
@@ -74,12 +58,18 @@ class ProposalBuilder
                     break;
                 case 'availability':
                     $proposalField = new ProposalFieldAvailability();
+                    break;
                 default:
                     $proposalField = new ProposalFieldString();
                     break;
             }
 
             $fields[] = $proposalField;
+        }
+
+        $proposal = new Proposal($proposalName, $fields);
+        if (isset($proposalData['proposalId'])){
+            $proposal->setId($proposalData['proposalId']);
         }
 
         return new Proposal($proposalName, $fields);

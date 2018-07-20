@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Model\Date;
+namespace Model\Date;
 
 use Model\Neo4j\GraphManager;
 

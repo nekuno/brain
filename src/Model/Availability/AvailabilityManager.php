@@ -2,7 +2,6 @@
 
 namespace Model\Availability;
 
-use Everyman\Neo4j\Query\ResultSet;
 use Model\Neo4j\GraphManager;
 
 class AvailabilityManager
@@ -21,7 +20,7 @@ class AvailabilityManager
     public function create($data)
     {
         $qb = $this->graphManager->createQueryBuilder();
-        
+
         $dates = $data['dates'];
 
         $qb->create('(availability:Availability)')
@@ -31,21 +30,69 @@ class AvailabilityManager
             ->where('id(day) IN {days}')
             ->with('availability', 'day')
             ->setParameter('days', $dates);
-        
+
         $qb->merge('(availability)-[:INCLUDES]->(day)');
-        
+
+        $qb->returns('{id: id(availability)} AS availability');
+
+        $resultSet = $qb->getQuery()->getResultSet();
+        $availabilityData = $qb->getData($resultSet->current());
+
+        return $this->build($availabilityData);
+    }
+
+    public function update($availabilityId, $data)
+    {
+        $qb = $this->graphManager->createQueryBuilder();
+
+        $dates = $data['dates'];
+
+        $qb->match('(availability:Availability)')
+            ->where('id(availability) = {availabilityId}')
+            ->with('availability')
+            ->setParameter('availabilityId', $availabilityId);
+
+        $qb->optionalMatch('(availability)-[includes:INCLUDES]-(:Day)')
+            ->delete('includes')
+            ->with('availability');
+
+        $qb->match('(day:Day)')
+            ->where('id(day) IN {days}')
+            ->with('availability', 'day')
+            ->setParameter('days', $dates);
+
+        $qb->merge('(availability)-[:INCLUDES]->(day)');
+
         $qb->returns('{id: id(availability)} AS availability');
 
         $resultSet = $qb->getQuery()->getResultSet();
 
-        $availability = $this->build($resultSet);
+        $availabilityData = $qb->getData($resultSet->current());
+
+        return $this->build($availabilityData);
     }
 
-    protected function build(ResultSet $resultSet)
+    public function delete($availabilityId)
     {
-        $availabilityResult = $resultSet->current()->offsetGet('availability');
+        $qb = $this->graphManager->createQueryBuilder();
 
+        $qb->match('(availability:Availability)')
+            ->where('id(availability) = {availabilityId}')
+            ->with('availability')
+            ->setParameter('availabilityId', $availabilityId);
+
+        $qb->detachDelete('availability');
+
+        $qb->getQuery()->getResultSet();
+
+        return true;
+    }
+
+    public function build(array $availabilityData)
+    {
         $availability = new Availability();
-        $availability->setId($availabilityResult->offsetGet());
+        $availability->setId($availabilityData['id']);
+
+        return $availability;
     }
 }

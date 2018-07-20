@@ -16,6 +16,14 @@ class ProposalFieldString implements ProposalFieldInterface
     }
 
     /**
+     * @return mixed
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    /**
      * @param mixed $value
      */
     public function setValue($value): void

@@ -6,6 +6,8 @@ use Model\Proposal\ProposalFields\ProposalFieldInterface;
 
 class Proposal
 {
+    protected $id;
+
     protected $name;
 
     /** @var ProposalFieldInterface[] */
@@ -20,6 +22,22 @@ class Proposal
     {
         $this->name = $name;
         $this->fields = $fields;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getId()
+    {
+        return $this->id;
+    }
+
+    /**
+     * @param mixed $id
+     */
+    public function setId($id): void
+    {
+        $this->id = $id;
     }
 
     /**
@@ -57,6 +75,18 @@ class Proposal
     public function setFields(array $fields): void
     {
         $this->fields = $fields;
+    }
+
+    public function getField($name)
+    {
+        foreach ($this->fields as $field)
+        {
+            if ($field->getName() === $name){
+                return $field;
+            }
+        }
+
+        return null;
     }
 
 }

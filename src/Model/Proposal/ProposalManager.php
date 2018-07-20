@@ -50,7 +50,7 @@ class ProposalManager
     public function update($proposalId, array $data)
     {
         $proposalName = $data['name'];
-        $proposal = $this->proposalBuilder->buildOne($proposalName, $data);
+        $proposal = $this->proposalBuilder->buildFromData($proposalName, $data);
 
         $qb = $this->graphManager->createQueryBuilder();
 
@@ -70,7 +70,43 @@ class ProposalManager
 
         $qb->returns('proposal');
 
+        $qb->getQuery()->getResultSet();
+
         return $proposal;
+    }
+
+    public function getById($proposalId)
+    {
+        $qb = $this->graphManager->createQueryBuilder();
+
+        $qb->match('(proposal:Proposal)')
+            ->where('id(proposal) = {proposalId}')
+            ->setParameter('proposalId', $proposalId);
+
+        $qb->returns('{id: id(proposal), labels: labels(proposal)} AS proposal');
+
+        $resultSet = $qb->getQuery()->getResultSet();
+
+        $proposalData = $qb->getData($resultSet->current());
+
+        $proposalName = $this->getProposalName($proposalData);
+        $proposal = $this->proposalBuilder->buildFromData($proposalName, $proposalData);
+
+        return $proposal;
+    }
+
+    protected function getProposalName($proposalData)
+    {
+        $labels = $proposalData['labels'];
+
+        foreach ($labels as $label)
+        {
+            if ($label !== 'Proposal'){
+                return $label;
+            }
+        }
+
+        return '';
     }
 
 }

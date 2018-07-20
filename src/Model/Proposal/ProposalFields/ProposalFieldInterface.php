@@ -16,5 +16,7 @@ interface ProposalFieldInterface
 
     public function getData();
 
+    public function getName();
+
     public function setName($name);
 }
