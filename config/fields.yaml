@@ -882,3 +882,27 @@ device:
     platform:
         required: true
         type: string
+proposal:
+    work:
+        industry:
+            type: tag
+        profession:
+            type: tag
+    sport:
+        sport:
+            type: tag_and_suggestion
+    videogame:
+        videogame:
+            type: tag_and_suggestion
+    hobby:
+        hobby:
+            type: choice
+    show:
+        show:
+            type: choice
+    restaurant:
+        restaurant:
+            type: choice
+    plan:
+        plan:
+            type: choice
