@@ -283,7 +283,7 @@ class UserController extends FOSRestController implements ClassResourceInterface
     /**
      * Enable/disable user
      *
-     * @Get("/users/enable")
+     * @Post("/users/enable")
      * @param Request $request
      * @param User $user
      * @param UserManager $userManager

@@ -647,4 +647,76 @@ class SimilarityManager
 
         return $similarity;
     }
+
+    public function getDetailedSimilarity($user1Id, $user2Id)
+    {
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(u1:User{qnoow_id:{user1Id}}), (u2:User{qnoow_id:{user2Id}})')
+            ->setParameter('user1Id', (integer)$user1Id)
+            ->setParameter('user2Id', (integer)$user2Id)
+            ->with('u1', 'u2');
+
+        $qb->match('(u1)-[similarity:SIMILARITY]-(u2)')
+            ->with('u1', 'u2', 'similarity');
+
+        $qb->optionalMatch('(u1)-[:LIKES]->(linkCommon:Link)<-[:LIKES]-(u2)')
+            ->with('u1', 'u2', 'similarity', '{id: id(linkCommon), url: linkCommon.url} AS linkCommon')
+        ->with('u1', 'u2', 'similarity', 'collect(linkCommon) AS common');
+
+        $qb->optionalMatch('(u1)-[:LIKES]->(link1:Link)')
+            ->where('NOT (u2)-[:LIKES]-(link1)')
+            ->with('u1', 'u2', 'similarity', 'common', '{id: id(link1), url: link1.url} AS link1')
+            ->with('u1', 'u2', 'similarity', 'common', 'collect(link1) AS links1');
+
+        $qb->optionalMatch('(u2)-[:LIKES]->(link2:Link)')
+            ->where('NOT (u1)-[:LIKES]-(link2)')
+            ->with('u1', 'u2', 'similarity', 'common', 'links1', '{id: id(link2), url: link2.url} AS link2')
+            ->with('u1', 'u2', 'similarity', 'common', 'links1', 'collect(link2) AS links2');
+
+        $qb->returns(
+            '{id: id(u1), username: u1.username} AS u1',
+            '{id: id(u2), username: u2.username} AS u2', 
+            'common', 'links1', 'links2',
+            'similarity.questions AS questions',
+            'similarity.interests AS interests',
+            'similarity.skills AS skills',
+            'similarity.similarity AS similarity',
+            'CASE WHEN EXISTS(similarity.questionsUpdated) THEN similarity.questionsUpdated ELSE 0 END AS questionsUpdated',
+            'CASE WHEN EXISTS(similarity.interestsUpdated) THEN similarity.interestsUpdated ELSE 0 END AS interestsUpdated',
+            'CASE WHEN EXISTS(similarity.skillsUpdated) THEN similarity.skillsUpdated ELSE 0 END AS skillsUpdated',
+            'CASE WHEN EXISTS(similarity.similarityUpdated) THEN similarity.similarityUpdated ELSE 0 END AS similarityUpdated');
+
+        $result = $qb->getQuery()->getResultSet();
+
+        if ($result->count() === 0 ){
+            return array();
+        }
+        
+        /** @var Row $row */
+        $row = $result->current();
+
+        $user1Object = $row->offsetGet('u1');
+        $user1 = $qb->getData($user1Object);
+        $user2Object = $row->offsetGet('u2');
+        $user2 = $qb->getData($user2Object);
+
+        $similarity = $this->buildSimilarity($row);
+
+        $commonCollect = $row->offsetGet('common');
+        $common = $qb->getData($commonCollect);
+        $links1Collect = $row->offsetGet('links1');
+        $links1 = $qb->getData($links1Collect);
+        $links2Collect = $row->offsetGet('links2');
+        $links2 = $qb->getData($links2Collect);
+
+        return array(
+            'user1' => $user1,
+            'user2' => $user2,
+            'similarity' => $similarity,
+            'common' => $common,
+            'links1' => $links1,
+            'links2' => $links2
+        );
+    }
 }

@@ -33,6 +33,8 @@
         <env name="images_web_dir" value="/../landing/web/" />
         <env name="brain_base_url" value="" />
         <env name="instant_host" value="" />
+        <env name="instant_http_password" value="" />
+        <env name="admin_http_password" value="" />
         <env name="guzzle_verify" value="" />
         <env name="db_neo4j_host" value="127.0.0.1" force="true" />
         <env name="db_neo4j_port" value="7475" force="true" />
@@ -48,7 +50,7 @@
 
     <testsuites>
         <testsuite name="Project Test Suite">
-            <directory>tests/</directory>
+            <directory>tests/API</directory>
         </testsuite>
     </testsuites>
 
