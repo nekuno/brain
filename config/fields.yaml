@@ -882,6 +882,7 @@ device:
     platform:
         required: true
         type: string
+
 proposal:
     work:
         industry:
@@ -906,3 +907,10 @@ proposal:
     plan:
         plan:
             type: choice
+
+availability:
+    date:
+        type: date
+    id:
+        type: integer
+        required: false
