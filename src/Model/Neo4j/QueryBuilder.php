@@ -3,7 +3,7 @@
 namespace Model\Neo4j;
 
 use Doctrine\Common\Collections\ArrayCollection;
-
+use Everyman\Neo4j\Query\Row;
 
 class QueryBuilder
 {
@@ -447,6 +447,21 @@ class QueryBuilder
         $this->with($name);
 
         return $this;
+    }
+
+    public function getData(Row $row)
+    {
+        $data = array();
+        foreach ($row as $column => $item)
+        {
+            if ($item instanceof Row)
+            {
+                $item = $this->getData($item);
+            }
+            $data[$column] = $item;
+        }
+
+        return $data;
     }
 
     /**
