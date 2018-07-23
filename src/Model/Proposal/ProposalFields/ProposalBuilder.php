@@ -58,6 +58,7 @@ class ProposalBuilder
                     break;
                 case 'availability':
                     $proposalField = new ProposalFieldAvailability();
+                    $proposalField->setAvailability($value);
                     break;
                 default:
                     $proposalField = new ProposalFieldString();

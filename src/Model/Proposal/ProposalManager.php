@@ -4,6 +4,7 @@ namespace Model\Proposal;
 
 use Model\Neo4j\GraphManager;
 use Model\Proposal\ProposalFields\ProposalBuilder;
+use Model\User\User;
 
 class ProposalManager
 {
@@ -93,6 +94,41 @@ class ProposalManager
         $proposal = $this->proposalBuilder->buildFromData($proposalName, $proposalData);
 
         return $proposal;
+    }
+
+    /**
+     * @param User $user
+     * @return Proposal[]
+     * @throws \Exception
+     */
+    public function getByUser(User $user)
+    {
+        $userId = $user->getId();
+
+        $qb = $this->graphManager->createQueryBuilder();
+
+        $qb->match('(user:User{qnoow_id: {userId}})')
+            ->setParameter('userId', $userId)
+            ->with('user');
+
+        $qb->match('(user)-[:PROPOSES]->(proposal:Proposal)')
+            ->returns('{id: id(proposal), labels: labels(proposal)} AS proposal');
+
+        $resultSet = $qb->getQuery()->getResultSet();
+
+        $proposals = array();
+        foreach ($resultSet as $row)
+        {
+            $proposalData = $qb->getData($row);
+
+            $proposalName = $this->getProposalName($proposalData);
+            $proposal = $this->proposalBuilder->buildFromData($proposalName, $proposalData);
+
+            $proposals[] = $proposal;
+
+        }
+
+        return $proposals;
     }
 
     protected function getProposalName($proposalData)

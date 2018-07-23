@@ -3,6 +3,7 @@
 namespace Model\Availability;
 
 use Model\Neo4j\GraphManager;
+use Model\Proposal\Proposal;
 
 class AvailabilityManager
 {
@@ -15,6 +16,27 @@ class AvailabilityManager
     public function __construct(GraphManager $graphManager)
     {
         $this->graphManager = $graphManager;
+    }
+
+    public function getByProposal(Proposal $proposal)
+    {
+        $qb = $this->graphManager->createQueryBuilder();
+
+        $qb->match('(proposal)')
+            ->where('id(proposal) = {proposalId}')
+            ->setParameter('proposalId', $proposal->getId());
+
+        $qb->match('(proposal)-[:HAS_AVAILABILITY]->(availability:Availability)')
+            ->with('availability');
+
+        $qb->match('(availability)-[:INCLUDES]-(day:Day)')
+            ->returns('{id: id(availability)} AS availability', 'collect(id(day)) AS daysIds');
+
+        $resultSet = $qb->getQuery()->getResultSet();
+
+        $availabilityData = $qb->getData($resultSet->current());
+
+        return $this->build($availabilityData);
     }
 
     public function create($data)
@@ -92,6 +114,10 @@ class AvailabilityManager
     {
         $availability = new Availability();
         $availability->setId($availabilityData['id']);
+
+        if (isset($availabilityData['daysIds'])){
+            $availability->setDaysIds($availabilityData['daysIds']);
+        }
 
         return $availability;
     }

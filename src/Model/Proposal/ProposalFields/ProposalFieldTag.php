@@ -37,13 +37,15 @@ class ProposalFieldTag implements ProposalFieldInterface
         $variables[] = "tag$this->name";
 
         $queryVariables = array_merge($variables, "tag.value AS tag$this->name");
-        return "OPTIONAL MATCH (proposal)-[:INCLUDES]->(tag$this->name:ProposalTag)" . "WITH " . implode(', ', $queryVariables);
+        return "OPTIONAL MATCH (proposal)-[:INCLUDES]->(tag$this->name:ProposalTag)"
+            . "WITH " . implode(', ', $queryVariables);
     }
 
     //TODO: Use ProposalTag--TextLanguage
     public function getSaveQuery(array $variables)
     {
-        return "MERGE (tag$this->name:ProposalTag{value: $this->value}) MERGE (proposal)-[:INCLUDES]->(tag$this->name) " . "WITH " . implode(', ', $variables);
+        return "MERGE (tag$this->name:ProposalTag{value: $this->value}) MERGE (proposal)-[:INCLUDES]->(tag$this->name) "
+            . "WITH " . implode(', ', $variables);
     }
 
     public function getData()

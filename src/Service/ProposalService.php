@@ -32,7 +32,7 @@ class ProposalService
     {
         $proposal = $this->proposalManager->getById($proposalId);
 
-        $availability = $this->availabilityManager->getByProposalId($proposalId);
+        $availability = $this->availabilityManager->getByProposal($proposal);
         /** @var ProposalFieldAvailability $availabilityField */
         $availabilityField = $proposal->getField('availability');
         $availabilityField->setAvailability($availability);
@@ -42,12 +42,14 @@ class ProposalService
 
     public function getByUser(User $user)
     {
-        $proposals = $this->proposalManager->getByUserId($userId);
+        $proposals = $this->proposalManager->getByUser($user);
 
         foreach ($proposals as $proposal)
         {
-            //get availabilities
-            //get dates
+            $availability = $this->availabilityManager->getByProposal($proposal);
+
+            $dates = $this->dateManager->getByAvailability($availability);
+            $availability->setDates($dates);
         }
 
         return $proposals;

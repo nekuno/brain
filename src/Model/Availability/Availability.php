@@ -6,24 +6,26 @@ class Availability
 {
     protected $id;
 
-    protected $date;
+    protected $dates = array();
+
+    protected $daysIds = array();
 
     //TODO: Dynamic ranges
     //TODO: Time range
     /**
      * @return mixed
      */
-    public function getDate()
+    public function getDates()
     {
-        return $this->date;
+        return $this->dates;
     }
 
     /**
-     * @param mixed $date
+     * @param mixed $dates
      */
-    public function setDate($date): void
+    public function setDates($dates): void
     {
-        $this->date = $date;
+        $this->dates = $dates;
     }
 
     /**
@@ -40,6 +42,22 @@ class Availability
     public function setId($id): void
     {
         $this->id = $id;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getDaysIds()
+    {
+        return $this->daysIds;
+    }
+
+    /**
+     * @param mixed $daysIds
+     */
+    public function setDaysIds($daysIds): void
+    {
+        $this->daysIds = $daysIds;
     }
 
 }

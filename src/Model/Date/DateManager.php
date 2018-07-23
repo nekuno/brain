@@ -2,6 +2,7 @@
 
 namespace Model\Date;
 
+use Model\Availability\Availability;
 use Model\Neo4j\GraphManager;
 
 class DateManager
@@ -15,6 +16,37 @@ class DateManager
     public function __construct(GraphManager $graphManager)
     {
         $this->graphManager = $graphManager;
+    }
+
+    /**
+     * @param Availability $availability
+     * @return Date[]
+     * @throws \Exception
+     */
+    public function getByAvailability(Availability $availability)
+    {
+        $availabilityId = $availability->getId();
+
+        $qb = $this->graphManager->createQueryBuilder();
+
+        $qb->match('(availability)')
+            ->where('id(availability) = {availabilityId}')
+            ->with('availability')
+            ->setParameter('availabilityId', $availabilityId);
+
+        $qb->match('(availability)-[:INCLUDES]-(day:Day)-[:DAY_OF]->(month:Month)-[:MONTH_OF]-(year:Year)')
+            ->returns('year.value AS year', 'month.value AS month', 'day.value AS day', 'id(day) AS dayId');
+
+        $result = $qb->getQuery()->getResultSet();
+
+        $dates = array();
+        foreach ($result as $row) {
+            $data = $qb->getData($row);
+            $date = $this->build($data);
+            $dates[] = $date;
+        }
+
+        return $dates;
     }
 
     /**
@@ -55,12 +87,11 @@ class DateManager
         $result = $qb->getQuery()->getResultSet();
         $row = $result->current();
 
-        $date->setYear($row->offsetGet('year'));
-        $date->setMonth($row->offsetGet('month'));
-        $date->setDay($row->offsetGet('day'));
-        $date->setDayId($row->offsetGet('dayId'));
+        $data = $qb->getData($row);
 
-        if ($row->offsetGet('created')) {
+        $date = $this->build($data);
+
+        if ($data['new']) {
             $previousDateString = $this->buildPreviousDate($dateString);
             $previousDate = $this->merge($previousDateString);
             $this->createNext($previousDate, $date);
@@ -133,9 +164,8 @@ class DateManager
         $startDate = $this->merge($startDate);
         $endDate = $this->merge($endDate);
 
-        
         $qb = $this->graphManager->createQueryBuilder();
-        
+
         $qb->match('(start:Day)')
             ->where('id(start) = {startId}')
             ->with('start')
@@ -161,8 +191,7 @@ class DateManager
         $result = $qb->getQuery()->getResultSet();
 
         $dates = array();
-        foreach ($result as $row)
-        {
+        foreach ($result as $row) {
             $date = new Date();
             $date->setDay($row->offsetGet('day'));
             $date->setMonth($row->offsetGet('month'));
@@ -178,13 +207,26 @@ class DateManager
 
     protected function buildWeekdayRestriction(array $weekdays)
     {
-        if (empty($weekdays)){
+        if (empty($weekdays)) {
             return false;
         }
 
         $possibilities = implode(' OR day:', $weekdays);
 
         $restriction = "(day:$possibilities)";
+
         return $restriction;
+    }
+
+    protected function build(array $resultData)
+    {
+        $date = new Date();
+
+        $date->setYear($resultData['year']);
+        $date->setMonth($resultData['month']);
+        $date->setDay($resultData['day']);
+        $date->setDayId($resultData['dayId']);
+
+        return $date;
     }
 }
