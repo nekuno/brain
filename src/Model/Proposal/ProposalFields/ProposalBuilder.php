@@ -3,7 +3,7 @@
 namespace Model\Proposal\ProposalFields;
 
 use App\Model\Proposal\ProposalFields\ProposalFieldBoolean;
-use Model\Metadata\MetadataManagerInterface;
+use Model\Metadata\ProposalMetadataManager;
 use Model\Proposal\Proposal;
 
 class ProposalBuilder
@@ -14,7 +14,7 @@ class ProposalBuilder
      * ProposalFieldBuilder constructor.
      * @param $metadataManager
      */
-    public function __construct(MetadataManagerInterface $metadataManager)
+    public function __construct(ProposalMetadataManager $metadataManager)
     {
         $this->metadataManager = $metadataManager;
     }
@@ -33,7 +33,10 @@ class ProposalBuilder
         $fields = array();
         foreach ($metadatum AS $fieldName => $fieldMetadata){
             $type = $fieldMetadata['type'];
-            $value = isset($proposalData[$fieldName])? $proposalData[$fieldName] : null;
+            if (!isset($proposalData[$fieldName])){
+                continue;
+            }
+            $value = $proposalData[$fieldName] ;
             switch($type){
                 case 'string':
                     $proposalField = new ProposalFieldString();
@@ -58,7 +61,10 @@ class ProposalBuilder
                     break;
                 case 'availability':
                     $proposalField = new ProposalFieldAvailability();
-                    $proposalField->setAvailability($value);
+                    if ($value)
+                    {
+                        $proposalField->setAvailability($value);
+                    }
                     break;
                 default:
                     $proposalField = new ProposalFieldString();
@@ -76,4 +82,43 @@ class ProposalBuilder
         return new Proposal($proposalName, $fields);
     }
 
+    public function buildEmpty($proposalName)
+    {
+        $metadata = $this->metadataManager->getMetadata();
+        $metadatum = $metadata[$proposalName];
+
+        $fields = array();
+        foreach ($metadatum AS $fieldName => $fieldMetadata){
+            $type = $fieldMetadata['type'];
+            switch($type){
+                case 'string':
+                    $proposalField = new ProposalFieldString();
+                    $proposalField->setName($fieldName);
+                    break;
+                case 'tag':
+                case 'tag_and_suggestion':
+                    $proposalField = new ProposalFieldTag();
+                    $proposalField->setName($fieldName);
+                    break;
+                case 'choice':
+                    $proposalField = new ProposalFieldChoice();
+                    $proposalField->setName($fieldName);
+                    break;
+                case 'boolean':
+                    $proposalField = new ProposalFieldBoolean();
+                    $proposalField->setName($fieldName);
+                    break;
+                case 'availability':
+                    $proposalField = new ProposalFieldAvailability();
+                    break;
+                default:
+                    $proposalField = new ProposalFieldString();
+                    break;
+            }
+
+            $fields[] = $proposalField;
+        }
+
+        return new Proposal($proposalName, $fields);
+    }
 }

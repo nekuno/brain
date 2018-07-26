@@ -77,6 +77,11 @@ class Proposal
         $this->fields = $fields;
     }
 
+    public function addField(ProposalFieldInterface $field)
+    {
+        $this->fields[] = $field;
+    }
+
     public function getField($name)
     {
         foreach ($this->fields as $field)

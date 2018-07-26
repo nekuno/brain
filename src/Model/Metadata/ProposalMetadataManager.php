@@ -19,4 +19,17 @@ class ProposalMetadataManager extends MetadataManager
             $proposalData['availability'] = array('type' => 'availability');
         }
     }
+
+    protected function modifyPublicField($publicField, $name, $values)
+    {
+        unset($publicField['label']);
+
+        return $publicField;
+    }
+
+    protected function orderByLabel($metadata)
+    {
+        return $metadata;
+    }
+
 }

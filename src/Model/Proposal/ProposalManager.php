@@ -27,15 +27,9 @@ class ProposalManager
 
     public function create(array $data)
     {
-        $userId = $data['userId'];
-
         $qb = $this->graphManager->createQueryBuilder();
 
-        $qb->match('(user:User{qnoow_id:{userId}})')
-            ->with('user')
-            ->setParameter('userId', $userId);
-
-        $qb->create('(user)-[:PROPOSES]->(proposal:Proposal)');
+        $qb->create('(proposal:Proposal)');
 
         $qb->returns('id(proposal) AS proposalId');
 
@@ -52,6 +46,7 @@ class ProposalManager
     {
         $proposalName = $data['name'];
         $proposal = $this->proposalBuilder->buildFromData($proposalName, $data);
+        $proposal->setId($proposalId);
 
         $qb = $this->graphManager->createQueryBuilder();
 
@@ -66,7 +61,7 @@ class ProposalManager
 
         $variables = array('proposal');
         foreach ($proposal->getFields() as $field) {
-            $qb->add('', $field->addInformation($variables));
+            $qb->add('', $field->getSaveQuery($variables));
         }
 
         $qb->returns('proposal');
@@ -74,6 +69,26 @@ class ProposalManager
         $qb->getQuery()->getResultSet();
 
         return $proposal;
+    }
+
+    public function relateToUser(Proposal $proposal, User $user)
+    {
+        $qb = $this->graphManager->createQueryBuilder();
+
+        $qb->match('(proposal:Proposal)')
+            ->where('id(proposal) = {proposalId}')
+            ->with('proposal')
+            ->setParameter('proposalId', $proposal->getId());
+
+        $qb->match('(user:User{qnoow_id: {userId}})')
+            ->with('proposal', 'user')
+            ->setParameter('userId', $user->getId());
+
+        $qb->merge('(user)-[:PROPOSES]->(proposal)');
+
+        $result = $qb->getQuery()->getResultSet();
+
+        return !!($result->count());
     }
 
     public function getById($proposalId)
@@ -91,7 +106,10 @@ class ProposalManager
         $proposalData = $qb->getData($resultSet->current());
 
         $proposalName = $this->getProposalName($proposalData);
-        $proposal = $this->proposalBuilder->buildFromData($proposalName, $proposalData);
+        $proposalId = $proposalData['proposal']['id'];
+
+        $proposal = $this->getProposalData($proposalId, $proposalName);
+        $proposal->setId($proposalId);
 
         return $proposal;
     }
@@ -119,26 +137,49 @@ class ProposalManager
         $proposals = array();
         foreach ($resultSet as $row)
         {
-            $proposalData = $qb->getData($row);
+            $data = $qb->getData($row);
+            $proposalId = $data['proposal']['id'];
 
-            $proposalName = $this->getProposalName($proposalData);
-            $proposal = $this->proposalBuilder->buildFromData($proposalName, $proposalData);
-
+            $proposal = $this->getById($proposalId);
             $proposals[] = $proposal;
-
         }
 
         return $proposals;
     }
 
+    protected function getProposalData($proposalId, $proposalName)
+    {
+        $proposal = $this->proposalBuilder->buildEmpty($proposalName);
+
+        $qb = $this->graphManager->createQueryBuilder();
+
+        $qb->match('(proposal:Proposal)')
+            ->where('id(proposal) = {proposalId}')
+            ->with('proposal')
+            ->setParameter('proposalId', $proposalId);
+
+        $variables = array('proposal');
+        foreach ($proposal->getFields() as $field) {
+            $qb->add('', $field->addInformation($variables));
+        }
+
+        $variables[0] = '{id: id(proposal), labels: labels(proposal)} AS proposal';
+        $qb->returns($variables);
+
+        $resultSet = $qb->getQuery()->getResultSet();
+        $data = $qb->getData($resultSet->current());
+
+        return $this->proposalBuilder->buildFromData($proposalName, $data);
+    }
+
     protected function getProposalName($proposalData)
     {
-        $labels = $proposalData['labels'];
+        $labels = $proposalData['proposal']['labels'];
 
         foreach ($labels as $label)
         {
             if ($label !== 'Proposal'){
-                return $label;
+                return lcfirst($label);
             }
         }
 

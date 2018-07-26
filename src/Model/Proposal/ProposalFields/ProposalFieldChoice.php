@@ -34,16 +34,16 @@ class ProposalFieldChoice implements ProposalFieldInterface
     //TODO: Use ProposalOption--TextLanguage
     public function addInformation(array &$variables)
     {
-        $variables[] = "option$this->name";
+        $queryVariables = array_merge($variables, array("$this->name.value AS $this->name"));
+        $variables[] = "$this->name";
 
-        $queryVariables = array_merge($variables, "option.value AS option$this->name");
-        return "OPTIONAL MATCH (proposal)-[:INCLUDES]->(option$this->name:ProposalOption)" . "WITH " . implode(', ', $queryVariables);
+        return "OPTIONAL MATCH (proposal)-[:INCLUDES]->($this->name:ProposalOption)" . "WITH " . implode(', ', $queryVariables);
     }
 
     //TODO: Use ProposalOption--TextLanguage
     public function getSaveQuery(array $variables)
     {
-        return "MERGE (proposal)-[:INCLUDES]->(option$this->name:ProposalOption{value: $this->value}) " . "WITH " . implode(', ', $variables);
+        return "MERGE (proposal)-[:INCLUDES]->($this->name:ProposalOption{value: '$this->value'}) " . "WITH " . implode(', ', $variables);
     }
 
     public function getData()

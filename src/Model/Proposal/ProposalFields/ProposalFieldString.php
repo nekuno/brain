@@ -33,16 +33,16 @@ class ProposalFieldString implements ProposalFieldInterface
 
     public function addInformation(array &$variables)
     {
+        $queryVariables = array_merge($variables, array("proposal.$this->name AS $this->name"));
         $variables[] = "$this->name";
 
-        $queryVariables = array_merge($variables, "proposal.$this->name AS $this->name");
         return 'WITH ' . implode(', ', $queryVariables);
     }
 
     public function getSaveQuery(array $variables)
     {
-        return "SET proposal.$this->name = $this->value"
-            . 'WITH' . implode(', ', $variables);
+        return "SET proposal.$this->name = '$this->value'"
+            . ' WITH ' . implode(', ', $variables);
     }
 
     public function getData()

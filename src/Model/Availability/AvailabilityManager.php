@@ -34,6 +34,9 @@ class AvailabilityManager
 
         $resultSet = $qb->getQuery()->getResultSet();
 
+        if ($resultSet->count() == 0){
+            return null;
+        }
         $availabilityData = $qb->getData($resultSet->current());
 
         return $this->build($availabilityData);
@@ -43,24 +46,27 @@ class AvailabilityManager
     {
         $qb = $this->graphManager->createQueryBuilder();
 
-        $dates = $data['dates'];
+        $daysIds = $data['daysIds'];
 
         $qb->create('(availability:Availability)')
             ->with('availability');
 
-        $qb->match('(day:Day)')
-            ->where('id(day) IN {days}')
-            ->with('availability', 'day')
-            ->setParameter('days', $dates);
+        if (!empty($daysIds))
+        {
+            $qb->optionalMatch('(day:Day)')
+                ->where('id(day) IN {days}')
+                ->with('availability', 'day')
+                ->setParameter('days', $daysIds);
 
-        $qb->merge('(availability)-[:INCLUDES]->(day)');
+            $qb->merge('(availability)-[:INCLUDES]->(day)');
+        }
 
         $qb->returns('{id: id(availability)} AS availability');
 
         $resultSet = $qb->getQuery()->getResultSet();
-        $availabilityData = $qb->getData($resultSet->current());
+        $data = $qb->getData($resultSet->current());
 
-        return $this->build($availabilityData);
+        return $this->build($data['availability']);
     }
 
     public function update($availabilityId, $data)
@@ -110,7 +116,7 @@ class AvailabilityManager
         return true;
     }
 
-    public function build(array $availabilityData)
+    protected function build(array $availabilityData)
     {
         $availability = new Availability();
         $availability->setId($availabilityData['id']);
@@ -120,5 +126,28 @@ class AvailabilityManager
         }
 
         return $availability;
+    }
+
+    public function relateToProposal(Availability $availability, Proposal $proposal)
+    {
+        $qb = $this->graphManager->createQueryBuilder();
+
+        $availabilityId = $availability->getId();
+        $qb->match('(availability:Availability)')
+            ->where('id(availability) = {availabilityId}')
+            ->with('availability')
+            ->setParameter('availabilityId', $availabilityId);
+
+        $proposalId = $proposal->getId();
+        $qb->match('(proposal:Proposal)')
+            ->where('id(proposal) = {proposalId}')
+            ->with('proposal')
+            ->setParameter('proposalId', $proposalId);
+
+        $qb->merge('(proposal)-[:HAS_AVAILABILITY]-(availability)');
+
+        $result = $qb->getQuery()->getResultSet();
+
+        return !!($result->count());
     }
 }

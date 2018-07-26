@@ -13,12 +13,11 @@ class ProposalFieldAvailability implements ProposalFieldInterface
 
     public function addInformation(array &$variables)
     {
+        $queryVariables = array_merge($variables, array("id(availability) AS availabilityId"));
         $variables[] = 'availabilityId';
 
-        $queryVariables = array_merge($variables, "id(availability) AS availabilityId");
-
         return 'OPTIONAL MATCH (proposal)-[:HAS_AVAILABILITY]->(availability:Availability)'
-            . "WITH " . implode(', ', $queryVariables);
+            . " WITH " . implode(', ', $queryVariables);
 
     }
 
@@ -27,7 +26,7 @@ class ProposalFieldAvailability implements ProposalFieldInterface
         $availabilityId = $this->availability->getId();
 
         return "OPTIONAL MATCH (availability) WHERE id(availability) = $availabilityId "
-            . "MERGE (proposal)-[:HAS_AVAILABILITY]->(availability)";
+            . " MERGE (proposal)-[:HAS_AVAILABILITY]->(availability)";
     }
 
     public function getData()

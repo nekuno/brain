@@ -43,27 +43,39 @@ class ProposalService
     public function getByUser(User $user)
     {
         $proposals = $this->proposalManager->getByUser($user);
-
         foreach ($proposals as $proposal)
         {
             $availability = $this->availabilityManager->getByProposal($proposal);
+            if (null == $availability)
+            {
+                continue;
+            }
 
             $dates = $this->dateManager->getByAvailability($availability);
             $availability->setDates($dates);
+            $availabilityField = new ProposalFieldAvailability();
+            $availabilityField->setAvailability($availability);
+            $proposal->addField($availabilityField);
         }
 
         return $proposals;
     }
 
-    public function create($data)
+    public function create($data, User $user)
     {
+        $proposal = $this->proposalManager->create($data);
+        $this->proposalManager->relateToUser($proposal, $user);
+
         $dates = $this->createDates($data);
         $daysIds = $this->getDaysIds($dates);
+        if (isset($data['daysIds']) && !empty($daysIds)){
+            $availability = $this->availabilityManager->create($data);
+            $this->availabilityManager->relateToProposal($availability, $proposal);
 
-        $availability = $this->availabilityManager->create($daysIds);
-        $data['availability'] = $availability;
-
-        $proposal = $this->proposalManager->create($data);
+            $availabilityField = new ProposalFieldAvailability();
+            $availabilityField->setAvailability($availability);
+            $proposal->addField($availabilityField);
+        }
 
         return $proposal;
     }
@@ -94,6 +106,10 @@ class ProposalService
      */
     protected function createDates($data)
     {
+        if (!isset($data['availability']) || !isset($data['availability']['days'])){
+            return array();
+        }
+
         $days = $data['days'];
         $dates = array();
         foreach ($days as $day) {

@@ -7,7 +7,7 @@ use Model\Neo4j\GraphManager;
 use Model\Recommendation\ContentRecommendation;
 use Model\Recommendation\ContentRecommendationPaginatedManager;
 use Model\Recommendation\UserRecommendation;
-use App\Model\Recommendation\UserRecommendationBuilder;
+use Model\Recommendation\UserRecommendationBuilder;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class ThreadCachedManager

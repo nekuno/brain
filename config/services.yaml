@@ -55,6 +55,8 @@ services:
         resource: '../src/Model/Question/QuestionCategory/*Manager.php'
     Model\Token\TokenStatus\:
         resource: '../src/Model/Token/TokenStatus/*Manager.php'
+    Model\Recommendation\:
+        resource: '../src/Model/Recommendation/*Builder.php'
     Service\:
         resource: '../src/Service/*'
     Worker\:
@@ -197,6 +199,9 @@ services:
             $config: "%metadata_config%"
             $metadata: "%fields%"
             $defaultLocale: "en"
+    Model\Recommendation\UserRecommendationBuilder:
+    Model\Proposal\ProposalFields\ProposalBuilder:
+
     # End Model explicit parameters
 
     # Model metadata explicit parameters
