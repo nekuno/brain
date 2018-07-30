@@ -4,6 +4,8 @@ namespace Controller\User;
 
 use FOS\RestBundle\Controller\Annotations\Get;
 use FOS\RestBundle\Controller\Annotations\Post;
+use FOS\RestBundle\Controller\Annotations\Put;
+use FOS\RestBundle\Controller\Annotations\Delete;
 use FOS\RestBundle\Controller\FOSRestController;
 use FOS\RestBundle\Routing\ClassResourceInterface;
 use Model\User\User;
@@ -61,6 +63,93 @@ class ProposalController extends FOSRestController implements ClassResourceInter
         $proposal = $proposalService->create($data, $user);
 
         return $this->view($proposal, 201);
+    }
+
+    /**
+     * Update a proposal
+     *
+     * @Put("/proposals")
+     * @param Request $request
+     * @param ProposalService $proposalService
+     * @return \FOS\RestBundle\View\View
+     * @SWG\Parameter(
+     *      name="body",
+     *      in="body",
+     *      type="json",
+     *      schema=@SWG\Schema(
+     *          @SWG\Property(property="proposalId", type="string"),
+     *          @SWG\Property(property="name", type="string"),
+     *          @SWG\Property(property="description", type="string"),
+     *          @SWG\Property(property="industry", type="string"),
+     *          @SWG\Property(property="profession", type="string"),
+     *          @SWG\Property(property="sport", type="string"),
+     *          @SWG\Property(property="videogame", type="string"),
+     *          @SWG\Property(property="hobby", type="string"),
+     *          @SWG\Property(property="show", type="string"),
+     *          @SWG\Property(property="restaurant", type="string"),
+     *          @SWG\Property(property="plan", type="string"),
+     *          @SWG\Property(property="availability", type="array[]"),
+     *          example={ "proposalId" = "15899079", "name" = "work", "description" = "my first proposal", "industry" = "CS", "profession" = "web dev"},
+     *      )
+     * )
+     * @SWG\Parameter(
+     *      name="locale",
+     *      in="query",
+     *      type="string",
+     *      default="es"
+     * )
+     * @SWG\Response(
+     *     response=201,
+     *     description="Returns created proposal",
+     * )
+     * @Security(name="Bearer")
+     * @SWG\Tag(name="proposals")
+     */
+    public function updateProposalAction(Request $request, ProposalService $proposalService)
+    {
+        $data = $request->request->all();
+
+        $proposal = $proposalService->update($data);
+
+        return $this->view($proposal, 201);
+    }
+
+    /**
+     * Delete a proposal
+     *
+     * @Delete("/proposals")
+     * @param Request $request
+     * @param ProposalService $proposalService
+     * @return \FOS\RestBundle\View\View
+     * @SWG\Parameter(
+     *      name="body",
+     *      in="body",
+     *      type="json",
+     *      schema=@SWG\Schema(
+     *          @SWG\Property(property="proposalId", type="string"),
+     *          example={ "proposalId" = "15899079"}
+     *      )
+     * )
+     * @SWG\Parameter(
+     *      name="locale",
+     *      in="query",
+     *      type="string",
+     *      default="es"
+     * )
+     * @SWG\Response(
+     *     response=201,
+     *     description="Returns empty",
+     * )
+     * @Security(name="Bearer")
+     * @SWG\Tag(name="proposals")
+     */
+    public function deleteProposalAction(Request $request, ProposalService $proposalService)
+    {
+        $data = $request->request->all();
+
+        $proposalService->delete($data);
+
+        return $this->view(array(), 201);
     }
 
     /**

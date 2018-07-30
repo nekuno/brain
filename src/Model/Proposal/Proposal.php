@@ -2,7 +2,7 @@
 
 namespace Model\Proposal;
 
-use Model\Proposal\ProposalFields\ProposalFieldInterface;
+use Model\Proposal\ProposalFields\AbstractProposalField;
 
 class Proposal
 {
@@ -10,13 +10,13 @@ class Proposal
 
     protected $name;
 
-    /** @var ProposalFieldInterface[] */
+    /** @var AbstractProposalField[] */
     protected $fields = array();
 
     /**
      * Proposal constructor.
      * @param $name
-     * @param ProposalFieldInterface[] $fields
+     * @param AbstractProposalField[] $fields
      */
     public function __construct($name, array $fields)
     {
@@ -62,7 +62,7 @@ class Proposal
     }
 
     /**
-     * @return ProposalFieldInterface[]
+     * @return AbstractProposalField[]
      */
     public function getFields(): array
     {
@@ -70,14 +70,14 @@ class Proposal
     }
 
     /**
-     * @param ProposalFieldInterface[] $fields
+     * @param AbstractProposalField[] $fields
      */
     public function setFields(array $fields): void
     {
         $this->fields = $fields;
     }
 
-    public function addField(ProposalFieldInterface $field)
+    public function addField(AbstractProposalField $field)
     {
         $this->fields[] = $field;
     }

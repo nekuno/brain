@@ -2,35 +2,8 @@
 
 namespace Model\Proposal\ProposalFields;
 
-class ProposalFieldString implements ProposalFieldInterface
+class ProposalFieldString extends AbstractProposalField
 {
-    protected $name;
-    protected $value;
-
-    /**
-     * @param mixed $name
-     */
-    public function setName($name): void
-    {
-        $this->name = $name;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getName()
-    {
-        return $this->name;
-    }
-
-    /**
-     * @param mixed $value
-     */
-    public function setValue($value): void
-    {
-        $this->value = $value;
-    }
-
     public function addInformation(array &$variables)
     {
         $queryVariables = array_merge($variables, array("proposal.$this->name AS $this->name"));
@@ -43,10 +16,5 @@ class ProposalFieldString implements ProposalFieldInterface
     {
         return "SET proposal.$this->name = '$this->value'"
             . ' WITH ' . implode(', ', $variables);
-    }
-
-    public function getData()
-    {
-        return array($this->name => $this->value);
     }
 }

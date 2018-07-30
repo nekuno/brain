@@ -52,6 +52,7 @@ class ProposalManager
 
         $qb->match('(proposal:Proposal)')
             ->where('id(proposal) = {proposalId}')
+            ->with('proposal')
             ->setParameter('proposalId', $proposalId);
 
         $proposalLabel = $proposal->getLabel();
@@ -69,6 +70,28 @@ class ProposalManager
         $qb->getQuery()->getResultSet();
 
         return $proposal;
+    }
+
+    public function delete($proposalId)
+    {
+        $qb = $this->graphManager->createQueryBuilder();
+
+        $qb->match('(proposal:Proposal)')
+            ->where('id(proposal) = {proposalId}')
+            ->with('proposal')
+            ->setParameter('proposalId', $proposalId);
+
+        $qb->optionalMatch('(proposal)-[rel:INCLUDES]->(:ProposalOption)')
+            ->delete('rel')
+            ->with('proposal');
+
+        $qb->optionalMatch('(proposal)-[rel:INCLUDES]->(tag:ProposalTag)')
+            ->delete('rel')
+            ->with('proposal');
+
+        $qb->detachDelete('proposal');
+
+        $qb->getQuery()->getResultSet();
     }
 
     public function relateToUser(Proposal $proposal, User $user)

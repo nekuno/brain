@@ -2,35 +2,8 @@
 
 namespace Model\Proposal\ProposalFields;
 
-class ProposalFieldTag implements ProposalFieldInterface
+class ProposalFieldTag extends AbstractProposalField
 {
-    protected $name;
-    protected $value;
-
-    /**
-     * @param mixed $name
-     */
-    public function setName($name): void
-    {
-        $this->name = $name;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getName()
-    {
-        return $this->name;
-    }
-
-    /**
-     * @param mixed $value
-     */
-    public function setValue($value): void
-    {
-        $this->value = $value;
-    }
-
     //TODO: Use ProposalTag--TextLanguage
     public function addInformation(array &$variables)
     {
@@ -48,10 +21,5 @@ class ProposalFieldTag implements ProposalFieldInterface
         $tagLabel = $this->name.'Tag';
         return "MERGE ($this->name:ProposalTag:$tagLabel{value: '$this->value'}) MERGE (proposal)-[:INCLUDES]->($this->name) "
             . "WITH " . implode(', ', $variables);
-    }
-
-    public function getData()
-    {
-        return array ($this->name => $this->value);
     }
 }

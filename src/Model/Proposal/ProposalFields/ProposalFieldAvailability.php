@@ -4,7 +4,7 @@ namespace Model\Proposal\ProposalFields;
 
 use Model\Availability\Availability;
 
-class ProposalFieldAvailability implements ProposalFieldInterface
+class ProposalFieldAvailability extends AbstractProposalField
 {
     /**
      * @var Availability
@@ -27,20 +27,6 @@ class ProposalFieldAvailability implements ProposalFieldInterface
 
         return "OPTIONAL MATCH (availability) WHERE id(availability) = $availabilityId "
             . " MERGE (proposal)-[:HAS_AVAILABILITY]->(availability)";
-    }
-
-    public function getData()
-    {
-        return array('availability' => $this->availability);
-    }
-
-    public function getName()
-    {
-        return 'availability';
-    }
-
-    public function setName($name)
-    {
     }
 
     /**
