@@ -80,6 +80,13 @@ class MetadataService
         return $metadata;
     }
 
+    public function getProposalMetadata($locale = null)
+    {
+        $metadata = $this->getBasicMetadata($locale, 'proposal');
+
+        return $metadata;
+    }
+
     public function getGroupChoices($userId)
     {
         $groups = $this->groupModel->getAllByUserId($userId);

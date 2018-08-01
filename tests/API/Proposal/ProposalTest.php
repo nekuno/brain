@@ -9,8 +9,9 @@ class ProposalTest extends ProposalAPITest
         $this->assertGetOwnProposalsEmpty();
         $this->assertCreateProposals();
         $this->assertEditProposal();
-//        $this->assertDeleteProposal();
+        $this->assertDeleteProposal();
         $this->assertGetOwnProposals();
+        $this->assertGetMetadata();
     }
 
     protected function assertGetOwnProposalsEmpty()
@@ -93,6 +94,13 @@ class ProposalTest extends ProposalAPITest
         $response = $this->deleteProposal($data);
         $formattedResponse = $this->assertJsonResponse($response, 201);
         $this->assertEquals([], $formattedResponse);
+    }
+
+    protected function assertGetMetadata()
+    {
+        $response = $this->getProposalMetadata();
+        $formattedResponse = $this->assertJsonResponse($response, 200, "Get Profile metadata");
+        $this->assertMetadataFormat($formattedResponse);
     }
 
     protected function getWorkProposalData()
@@ -186,5 +194,17 @@ class ProposalTest extends ProposalAPITest
         }
     }
 
-
+    protected function assertMetadataFormat($metadata)
+    {
+        $this->assertArrayOfType('array', $metadata, 'metadata is array of proposals');
+        foreach ($metadata as $metadatum)
+        {
+            $this->assertArrayOfType('array', $metadatum, 'each proposal is array of fields');
+            foreach ($metadatum as $field)
+            {
+                $this->isType('array')->evaluate($field);
+                $this->assertArrayHasKey('type', $field);
+            }
+        }
+    }
 }

@@ -10,6 +10,7 @@ use FOS\RestBundle\Controller\FOSRestController;
 use FOS\RestBundle\Routing\ClassResourceInterface;
 use Model\User\User;
 use Nelmio\ApiDocBundle\Annotation\Security;
+use Service\MetadataService;
 use Service\ProposalService;
 use Symfony\Component\HttpFoundation\Request;
 use Swagger\Annotations as SWG;
@@ -172,5 +173,28 @@ class ProposalController extends FOSRestController implements ClassResourceInter
         $proposals = $proposalService->getByUser($user);
 
         return $this->view($proposals, 200);
+    }
+    /**
+     * Get all proposals for a user
+     *
+     * @Get("/proposals/metadata")
+     * @param Request $request
+     * @param MetadataService $metadataService
+     * @return \FOS\RestBundle\View\View
+     *
+     * @SWG\Response(
+     *     response=200,
+     *     description="Returns proposal metadata",
+     * )
+     * @Security(name="Bearer")
+     * @SWG\Tag(name="proposals")
+     */
+    public function getMetadataAction(Request $request, MetadataService $metadataService)
+    {
+        $locale = $request->query->get('locale', 'en');
+
+        $metadata = $metadataService->getProposalMetadata($locale);
+
+        return $this->view($metadata, 200);
     }
 }

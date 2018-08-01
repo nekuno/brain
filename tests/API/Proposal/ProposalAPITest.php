@@ -26,10 +26,10 @@ abstract class ProposalAPITest extends APITest
         return $this->getResponseByRouteWithCredentials('/proposals', 'DELETE', $data, $loggedInUserId);
     }
 
-//    protected function getProfileMetadata($loggedInUserId = self::OWN_USER_ID)
-//    {
-//        return $this->getResponseByRouteWithCredentials('/profile/metadata', 'GET', array(), $loggedInUserId);
-//    }
+    protected function getProposalMetadata($loggedInUserId = self::OWN_USER_ID)
+    {
+        return $this->getResponseByRouteWithCredentials('/proposals/metadata', 'GET', array(), $loggedInUserId);
+    }
 //
 //    protected function getProfileFilters($loggedInUserId = self::OWN_USER_ID)
 //    {
