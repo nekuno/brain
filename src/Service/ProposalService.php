@@ -33,9 +33,9 @@ class ProposalService
         $this->proposalTagManager = $proposalTagManager;
     }
 
-    public function getById($proposalId)
+    public function getById($proposalId, $locale)
     {
-        $proposal = $this->proposalManager->getById($proposalId);
+        $proposal = $this->proposalManager->getById($proposalId, $locale);
 
         $availability = $this->availabilityManager->getByProposal($proposal);
         /** @var ProposalFieldAvailability $availabilityField */
@@ -49,9 +49,17 @@ class ProposalService
         return $proposal;
     }
 
-    public function getByUser(User $user)
+    public function getByUser(User $user, $locale)
     {
-        $proposals = $this->proposalManager->getByUser($user);
+        $proposalIds = $this->proposalManager->getIdsByUser($user);
+
+        $proposals = array();
+        foreach ($proposalIds as $proposalId)
+        {
+            $proposal = $this->getById($proposalId, $locale);
+            $proposals[] = $proposal;
+        }
+
         foreach ($proposals as $proposal) {
             $availability = $this->availabilityManager->getByProposal($proposal);
             if (null == $availability) {
@@ -70,35 +78,26 @@ class ProposalService
 
     public function create($data, User $user)
     {
-        $proposal = $this->proposalManager->create($data);
+        $proposalId = $this->proposalManager->create();
+        $proposal = $this->proposalManager->update($proposalId, $data);
         $this->proposalManager->relateToUser($proposal, $user);
 
-        $dates = $this->createDates($data);
-        $daysIds = $this->getDaysIds($dates);
-        if (isset($data['daysIds']) && !empty($daysIds)) {
-            $availability = $this->availabilityManager->create($data);
-            $this->availabilityManager->relateToProposal($availability, $proposal);
-
-            $availabilityField = new ProposalFieldAvailability();
-            $availabilityField->setAvailability($availability);
-            $proposal->addField($availabilityField);
-        }
+        $proposal = $this->createAvailability($proposal, $data);
 
         return $proposal;
     }
 
-    public function update($data)
+    public function update($proposalId, $data)
     {
-        $proposalId = $data['proposalId'];
         $proposal = $this->proposalManager->update($proposalId, $data);
 
         if ($proposal->getField('availability')) {
             $availabilityId = $this->getAvailabilityId($proposal);
-            $availability = $this->availabilityManager->update($availabilityId, $data);
-
-            $availabilityField = $proposal->getField('availability');
-            $availabilityField->setAvailability($availability);
+            $this->availabilityManager->delete($availabilityId);
+            $proposal->removeField('availability');
         }
+
+        $proposal = $this->createAvailability($proposal, $data);
 
         return $proposal;
     }
@@ -106,8 +105,8 @@ class ProposalService
     public function delete(array $data)
     {
         $proposalId = (integer)$data['proposalId'];
-
-        $proposal = $this->getById($proposalId);
+        $locale = $data['locale'];
+        $proposal = $this->getById($proposalId, $locale);
 
         if ($proposal->getField('availability')) {
             $availabilityId = $this->getAvailabilityId($proposal);
@@ -139,11 +138,13 @@ class ProposalService
     }
 
     /**
-     * @param Date[] $dates
+     * @param array $data
      * @return array
+     * @throws \Exception
      */
-    protected function getDaysIds(array $dates)
+    protected function getDaysIds(array $data)
     {
+        $dates = $this->createDates($data);
         $ids = array();
         foreach ($dates as $date) {
             $ids[] = $date->getDayId();
@@ -159,6 +160,21 @@ class ProposalService
         $availabilityId = $availabilityField->getAvailability()->getId();
 
         return $availabilityId;
+    }
+
+    protected function createAvailability(Proposal $proposal ,array $data)
+    {
+        $daysIds = $this->getDaysIds($data);
+        if (!empty($daysIds)) {
+            $availability = $this->availabilityManager->create($data);
+            $this->availabilityManager->relateToProposal($availability, $proposal);
+
+            $availabilityField = new ProposalFieldAvailability();
+            $availabilityField->setAvailability($availability);
+            $proposal->addField($availabilityField);
+        }
+
+        return $proposal;
     }
 
     protected function deleteTags(Proposal $proposal)

@@ -60,6 +60,7 @@ class ProposalController extends FOSRestController implements ClassResourceInter
     public function createProposalAction(User $user, Request $request, ProposalService $proposalService)
     {
         $data = $request->request->all();
+        $data['locale'] = $request->query->get('locale', 'en');
 
         $proposal = $proposalService->create($data, $user);
 
@@ -69,7 +70,8 @@ class ProposalController extends FOSRestController implements ClassResourceInter
     /**
      * Update a proposal
      *
-     * @Put("/proposals")
+     * @Put("/proposals/{proposalId}", requirements={"proposalId"="\d+"})
+     * @param $proposalId
      * @param Request $request
      * @param ProposalService $proposalService
      * @return \FOS\RestBundle\View\View
@@ -106,11 +108,12 @@ class ProposalController extends FOSRestController implements ClassResourceInter
      * @Security(name="Bearer")
      * @SWG\Tag(name="proposals")
      */
-    public function updateProposalAction(Request $request, ProposalService $proposalService)
+    public function updateProposalAction($proposalId, Request $request, ProposalService $proposalService)
     {
         $data = $request->request->all();
+        $data['locale'] = $request->query->get('locale', 'en');
 
-        $proposal = $proposalService->update($data);
+        $proposal = $proposalService->update($proposalId, $data);
 
         return $this->view($proposal, 201);
     }
@@ -147,6 +150,7 @@ class ProposalController extends FOSRestController implements ClassResourceInter
     public function deleteProposalAction(Request $request, ProposalService $proposalService)
     {
         $data = $request->request->all();
+        $data['locale'] = $request->query->get('locale', 'en');
 
         $proposalService->delete($data);
 
@@ -157,10 +161,17 @@ class ProposalController extends FOSRestController implements ClassResourceInter
      * Get all proposals for a user
      *
      * @Get("/proposals")
+     * @param Request $request
      * @param User $user
      * @param ProposalService $proposalService
      * @return \FOS\RestBundle\View\View
      *
+     * @SWG\Parameter(
+     *      name="locale",
+     *      in="query",
+     *      type="string",
+     *      default="es"
+     * )
      * @SWG\Response(
      *     response=200,
      *     description="Returns all proposals",
@@ -168,9 +179,10 @@ class ProposalController extends FOSRestController implements ClassResourceInter
      * @Security(name="Bearer")
      * @SWG\Tag(name="proposals")
      */
-    public function getUserProposalsAction(User $user, ProposalService $proposalService)
+    public function getUserProposalsAction(Request $request, User $user, ProposalService $proposalService)
     {
-        $proposals = $proposalService->getByUser($user);
+        $locale = $request->query->get('locale', 'en');
+        $proposals = $proposalService->getByUser($user, $locale);
 
         return $this->view($proposals, 200);
     }

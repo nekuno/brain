@@ -67,9 +67,8 @@ class ProposalTest extends ProposalAPITest
         $workProposalId = $workProposals[0]['id'];
 
         $editData = $this->getWorkProposalData2();
-        $editData['proposalId'] = $workProposalId;
 
-        $response = $this->editProposal($editData);
+        $response = $this->editProposal($workProposalId, $editData);
         $formattedResponse = $this->assertJsonResponse($response, 201);
         $this->assertProposalFormat($formattedResponse);
     }
@@ -88,9 +87,11 @@ class ProposalTest extends ProposalAPITest
     {
         $response = $this->getOwnProposals();
         $formattedResponse = $this->assertJsonResponse($response, 200);
+
         $workProposals = array_filter($formattedResponse ,function($proposal) {return $proposal['name'] == 'work';});
-        $proposalId = $workProposals[0]['id'];
+        $proposalId = reset($workProposals)['id'];
         $data = array('proposalId' => $proposalId);
+
         $response = $this->deleteProposal($data);
         $formattedResponse = $this->assertJsonResponse($response, 201);
         $this->assertEquals([], $formattedResponse);
@@ -180,7 +181,6 @@ class ProposalTest extends ProposalAPITest
     protected function assertProposalFormat($proposal)
     {
         $this->assertArrayHasKey('id', $proposal);
-        $this->isType('int')->evaluate($proposal['id']);
         $this->assertArrayHasKey('name', $proposal);
         $this->isType('string')->evaluate($proposal['name']);
 

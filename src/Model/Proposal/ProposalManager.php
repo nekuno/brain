@@ -14,6 +14,8 @@ class ProposalManager
 
     protected $proposalBuilder;
 
+    protected $locale = 'en';
+
     /**
      * ProposalManager constructor.
      * @param GraphManager $graphManager
@@ -25,21 +27,17 @@ class ProposalManager
         $this->proposalBuilder = $proposalBuilder;
     }
 
-    public function create(array $data)
+    public function create()
     {
         $qb = $this->graphManager->createQueryBuilder();
 
-        $qb->create('(proposal:Proposal)');
-
-        $qb->returns('id(proposal) AS proposalId');
+        $qb->create('(proposal:Proposal)')
+            ->returns('id(proposal) AS proposalId');
 
         $resultSet = $qb->getQuery()->getResultSet();
-
         $proposalId = $resultSet->current()->offsetGet('proposalId');
 
-        $proposal = $this->update($proposalId, $data);
-
-        return $proposal;
+        return $proposalId;
     }
 
     public function update($proposalId, array $data)
@@ -64,6 +62,7 @@ class ProposalManager
         foreach ($proposal->getFields() as $field) {
             $qb->add('', $field->getSaveQuery($variables));
         }
+        $qb->setParameter('locale', $data['locale']);
 
         $qb->returns('proposal');
 
@@ -114,8 +113,10 @@ class ProposalManager
         return !!($result->count());
     }
 
-    public function getById($proposalId)
+    public function getById($proposalId, $locale)
     {
+        $this->locale = $locale;
+
         $qb = $this->graphManager->createQueryBuilder();
 
         $qb->match('(proposal:Proposal)')
@@ -142,7 +143,7 @@ class ProposalManager
      * @return Proposal[]
      * @throws \Exception
      */
-    public function getByUser(User $user)
+    public function getIdsByUser(User $user)
     {
         $userId = $user->getId();
 
@@ -157,17 +158,13 @@ class ProposalManager
 
         $resultSet = $qb->getQuery()->getResultSet();
 
-        $proposals = array();
-        foreach ($resultSet as $row)
-        {
+        $proposalIds = array();
+        foreach ($resultSet as $row) {
             $data = $qb->getData($row);
-            $proposalId = $data['proposal']['id'];
-
-            $proposal = $this->getById($proposalId);
-            $proposals[] = $proposal;
+            $proposalIds[] = (integer)$data['proposal']['id'];
         }
 
-        return $proposals;
+        return $proposalIds;
     }
 
     protected function getProposalData($proposalId, $proposalName)
@@ -185,6 +182,7 @@ class ProposalManager
         foreach ($proposal->getFields() as $field) {
             $qb->add('', $field->addInformation($variables));
         }
+        $qb->setParameter('locale', $this->locale);
 
         $variables[0] = '{id: id(proposal), labels: labels(proposal)} AS proposal';
         $qb->returns($variables);
@@ -199,9 +197,8 @@ class ProposalManager
     {
         $labels = $proposalData['proposal']['labels'];
 
-        foreach ($labels as $label)
-        {
-            if ($label !== 'Proposal'){
+        foreach ($labels as $label) {
+            if ($label !== 'Proposal') {
                 return lcfirst($label);
             }
         }

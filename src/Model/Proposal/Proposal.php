@@ -94,4 +94,16 @@ class Proposal
         return null;
     }
 
+    public function removeField($name)
+    {
+        foreach ($this->fields as $index => $field)
+        {
+            if ($field->getName() === $name){
+                unset($this->fields[$index]);
+            }
+        }
+
+        return null;
+    }
+
 }

@@ -7,19 +7,24 @@ class ProposalFieldTag extends AbstractProposalField
     //TODO: Use ProposalTag--TextLanguage
     public function addInformation(array &$variables)
     {
-        $tagLabel = $this->name.'Tag';
-        $queryVariables = array_merge($variables, array("$this->name.value AS $this->name"));
+        $tagLabel = $this->getTagLabel();
+        $queryVariables = array_merge($variables, array("text$this->name.canonical AS $this->name"));
         $variables[] = "$this->name";
 
-        return "OPTIONAL MATCH (proposal)-[:INCLUDES]->($this->name:ProposalTag:$tagLabel)"
+        return "OPTIONAL MATCH (proposal)-[:INCLUDES]->($this->name:ProposalTag:$tagLabel)<-[:TEXT_OF]-(text$this->name:TextLanguage{locale: {locale}})"
             . "WITH " . implode(', ', $queryVariables);
     }
 
     //TODO: Use ProposalTag--TextLanguage
     public function getSaveQuery(array $variables)
     {
-        $tagLabel = $this->name.'Tag';
-        return "MERGE ($this->name:ProposalTag:$tagLabel{value: '$this->value'}) MERGE (proposal)-[:INCLUDES]->($this->name) "
+        $tagLabel = $this->getTagLabel();
+        return "MERGE ($this->name:ProposalTag:$tagLabel)<-[:TEXT_OF]-(text$this->name:TextLanguage{locale: {locale}, canonical: '$this->value'}) MERGE (proposal)-[:INCLUDES]->($this->name) "
             . "WITH " . implode(', ', $variables);
+    }
+
+    protected function getTagLabel()
+    {
+        return $this->name.'Tag';
     }
 }
