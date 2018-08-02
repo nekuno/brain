@@ -25,7 +25,7 @@ class ProposalTest extends ProposalAPITest
     {
         $workProposalData = $this->getWorkProposalData();
         $workResponse = $this->createProposal($workProposalData);
-        $formattedResponse = $this->assertJsonResponse($workResponse, 201, 'Create work proposal');
+        $formattedResponse = $this->assertJsonResponse($workResponse, 201, $workResponse->getContent());
         $this->assertProposalFormat($formattedResponse);
 
         $sportProposalData = $this->getSportProposalData();
@@ -64,7 +64,7 @@ class ProposalTest extends ProposalAPITest
         $response = $this->getOwnProposals();
         $formattedResponse = $this->assertJsonResponse($response, 200);
         $workProposals = array_filter($formattedResponse ,function($proposal) {return $proposal['name'] == 'work';});
-        $workProposalId = $workProposals[0]['id'];
+        $workProposalId = reset($workProposals)['id'];
 
         $editData = $this->getWorkProposalData2();
 
@@ -109,8 +109,8 @@ class ProposalTest extends ProposalAPITest
         return array(
             'name' => 'work',
             'description' => 'my work proposal',
-            'industry' => 'CS',
-            'profession' => 'web dev'
+            'industry' => array('CS'),
+            'profession' => array('web dev')
         );
     }
 
@@ -119,8 +119,8 @@ class ProposalTest extends ProposalAPITest
         return array(
             'name' => 'work',
             'description' => 'my edited work proposal',
-            'industry' => 'Coffee drinking',
-            'profession' => 'web dev'
+            'industry' => array('Coffee drinking'),
+            'profession' => array('web dev')
         );
     }
 
@@ -129,7 +129,7 @@ class ProposalTest extends ProposalAPITest
         return array(
             'name' => 'sport',
             'description' => 'my sport proposal',
-            'sport' => 'football'
+            'sport' => array('football')
         );
     }
 
@@ -138,7 +138,7 @@ class ProposalTest extends ProposalAPITest
         return array(
             'name' => 'videogame',
             'description' => 'my videogame proposal',
-            'videogame' => 'GTA'
+            'videogame' => array('GTA')
         );
     }
 
@@ -147,7 +147,7 @@ class ProposalTest extends ProposalAPITest
         return array(
             'name' => 'hobby',
             'description' => 'my hobby proposal',
-            'hobby' => 'Painting'
+            'hobby' => array('Painting')
         );
     }
 
@@ -156,7 +156,7 @@ class ProposalTest extends ProposalAPITest
         return array(
             'name' => 'show',
             'description' => 'my show proposal',
-            'show' => 'Theater'
+            'show' => array('Theater')
         );
     }
 
@@ -165,7 +165,7 @@ class ProposalTest extends ProposalAPITest
         return array(
             'name' => 'restaurant',
             'description' => 'my restaurant proposal',
-            'restaurant' => 'Italian'
+            'restaurant' => array('Italian')
         );
     }
 
@@ -174,7 +174,7 @@ class ProposalTest extends ProposalAPITest
         return array(
             'name' => 'plan',
             'description' => 'my plan proposal',
-            'plan' => 'planning'
+            'plan' => array('planning')
         );
     }
 

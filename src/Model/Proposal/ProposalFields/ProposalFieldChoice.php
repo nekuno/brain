@@ -4,18 +4,31 @@ namespace Model\Proposal\ProposalFields;
 
 class ProposalFieldChoice extends AbstractProposalField
 {
-    //TODO: Use ProposalOption--TextLanguage
+    protected $value = array();
+
     public function addInformation(array &$variables)
     {
-        $queryVariables = array_merge($variables, array("$this->name.value AS $this->name"));
+        $queryVariables1 = array_merge($variables, array("$this->name.value AS $this->name"));
+        $queryVariables2 = array_merge($variables, array("collect($this->name) AS $this->name"));
         $variables[] = "$this->name";
 
-        return "OPTIONAL MATCH (proposal)-[:INCLUDES]->($this->name:ProposalOption)" . "WITH " . implode(', ', $queryVariables);
+        return " OPTIONAL MATCH (proposal)-[:INCLUDES]->($this->name:ProposalOption)"
+            . " WITH " . implode(', ', $queryVariables1)
+            . " WITH " . implode(', ', $queryVariables2);
     }
 
-    //TODO: Use ProposalOption--TextLanguage
     public function getSaveQuery(array $variables)
     {
-        return "MERGE (proposal)-[:INCLUDES]->($this->name:ProposalOption{value: '$this->value'}) " . "WITH " . implode(', ', $variables);
+        $lines = array();
+
+        foreach ($this->value AS $index => $optionValue)
+        {
+            $thisName = $this->name . $index;
+            $lines[] = " MERGE (proposal)-[:INCLUDES]->($thisName:ProposalOption{value: '$optionValue'})";
+        }
+
+        $lines[] = " WITH " . implode(', ', $variables);
+
+        return implode(' ', $lines);
     }
 }
