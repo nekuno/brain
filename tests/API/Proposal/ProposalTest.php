@@ -6,22 +6,23 @@ class ProposalTest extends ProposalAPITest
 {
     public function testProposal()
     {
-        $this->assertGetOwnProposalsEmpty();
-        $this->assertCreateProposals();
-        $this->assertEditProposal();
-        $this->assertDeleteProposal();
-        $this->assertGetOwnProposals();
+        $this->assertGetOwnEmpty();
+        $this->assertCreate();
+        $this->assertCreateWithAvailability();
+        $this->assertEdit();
+        $this->assertDelete();
+        $this->assertGetOwn();
         $this->assertGetMetadata();
     }
 
-    protected function assertGetOwnProposalsEmpty()
+    protected function assertGetOwnEmpty()
     {
         $response = $this->getOwnProposals();
         $formattedResponse = $this->assertJsonResponse($response, 200, "Get Proposals");
         $this->assertEquals([], $formattedResponse);
     }
 
-    protected function assertCreateProposals()
+    protected function assertCreate()
     {
         $workProposalData = $this->getWorkProposalData();
         $workResponse = $this->createProposal($workProposalData);
@@ -58,8 +59,16 @@ class ProposalTest extends ProposalAPITest
         $formattedResponse = $this->assertJsonResponse($planResponse, 201, 'Create plan proposal');
         $this->assertProposalFormat($formattedResponse);
     }
+    
+    protected function assertCreateWithAvailability()
+    {
+        $availabilityProposalData = $this->getAvailabilityProposalData();
+        $availabilityResponse = $this->createProposal($availabilityProposalData);
+        $formattedResponse = $this->assertJsonResponse($availabilityResponse, 201, 'Create availability proposal');
+        $this->assertProposalFormat($formattedResponse);
+    }
 
-    protected function assertEditProposal()
+    protected function assertEdit()
     {
         $response = $this->getOwnProposals();
         $formattedResponse = $this->assertJsonResponse($response, 200);
@@ -73,7 +82,7 @@ class ProposalTest extends ProposalAPITest
         $this->assertProposalFormat($formattedResponse);
     }
 
-    protected function assertGetOwnProposals()
+    protected function assertGetOwn()
     {
         $response = $this->getOwnProposals();
         $formattedResponse = $this->assertJsonResponse($response, 200);
@@ -83,7 +92,7 @@ class ProposalTest extends ProposalAPITest
         }
     }
 
-    protected function assertDeleteProposal()
+    protected function assertDelete()
     {
         $response = $this->getOwnProposals();
         $formattedResponse = $this->assertJsonResponse($response, 200);
@@ -175,6 +184,19 @@ class ProposalTest extends ProposalAPITest
             'name' => 'plan',
             'description' => 'my plan proposal',
             'plan' => array('planning')
+        );
+    }
+
+    protected function getAvailabilityProposalData()
+    {
+        return array(
+            'name' => 'plan',
+            'description' => 'my plan proposal',
+            'plan' => array('planning'),
+            'availability' => array(
+                array('day' => '2018-09-01', 'hourMin' => '3600', 'hourMax' => '7200'),
+                array('day' => '2018-09-03', 'hourMin' => '3600', 'hourMax' => '7200'),
+            )
         );
     }
 

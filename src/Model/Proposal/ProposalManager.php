@@ -51,7 +51,7 @@ class ProposalManager
         $qb->match('(proposal:Proposal)')
             ->where('id(proposal) = {proposalId}')
             ->with('proposal')
-            ->setParameter('proposalId', $proposalId);
+            ->setParameter('proposalId', (integer)$proposalId);
 
         $proposalLabel = $proposal->getLabel();
         $qb->remove('proposal:Work:Sport:Videogame:Hobby:Show:Restaurant:Plan');
@@ -65,7 +65,7 @@ class ProposalManager
         $qb->setParameter('locale', $data['locale']);
 
         $qb->returns('proposal');
-
+var_dump($qb->getQuery()->getExecutableQuery());
         $qb->getQuery()->getResultSet();
 
         return $proposal;

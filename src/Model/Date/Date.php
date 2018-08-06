@@ -5,7 +5,7 @@ namespace Model\Date;
 class Date implements \JsonSerializable
 {
     protected $maxYear = 2020;
-    protected $minYear = -2017;
+    protected $minYear = 2017;
 
     protected $day;
     protected $month;
@@ -13,15 +13,8 @@ class Date implements \JsonSerializable
 
     protected $dayId;
 
-    /**
-     * @param $string yyyy-mm-dd
-     */
-    public function __construct($string = null)
+    public function setDate($string)
     {
-        if ($string == null){
-            return;
-        }
-
         $this->year = $this->extractYear($string);
         $this->month = $this->extractMonth($string);
         $this->day = $this->extractDay($string);
@@ -35,7 +28,7 @@ class Date implements \JsonSerializable
         $monthCorrect = is_int($this->month) && $this->month > 0 && $this->month <= 12;
         $dayCorrect = is_int($this->day) && $this->day > 0 && $this->day <= 31;
 
-        if (!$yearCorrect || !$monthCorrect || !$dayCorrect){
+        if (!$yearCorrect || !$monthCorrect || !$dayCorrect) {
             throw new \Exception('Date format not valid');
         }
     }

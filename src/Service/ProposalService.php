@@ -96,7 +96,6 @@ class ProposalService
             $this->availabilityManager->delete($availabilityId);
             $proposal->removeField('availability');
         }
-
         $proposal = $this->createAvailability($proposal, $data);
 
         return $proposal;
@@ -124,14 +123,17 @@ class ProposalService
      */
     protected function createDates($data)
     {
-        if (!isset($data['availability']) || !isset($data['availability']['days'])) {
+        if (!isset($data['availability'])) {
             return array();
         }
-
-        $days = $data['days'];
+        $days = array_map( function($object){return $object['day'];}, $data['availability']);
         $dates = array();
         foreach ($days as $day) {
-            $dates[] = $this->dateManager->merge($day);
+            $date = $this->dateManager->merge($day);
+            if ($date !== null)
+            {
+                $dates[] = $date;
+            }
         }
 
         return $dates;
@@ -165,8 +167,9 @@ class ProposalService
     protected function createAvailability(Proposal $proposal ,array $data)
     {
         $daysIds = $this->getDaysIds($data);
+//        $data = $this->addAvailability($data);
         if (!empty($daysIds)) {
-            $availability = $this->availabilityManager->create($data);
+            $availability = $this->availabilityManager->create($daysIds);
             $this->availabilityManager->relateToProposal($availability, $proposal);
 
             $availabilityField = new ProposalFieldAvailability();
@@ -190,5 +193,4 @@ class ProposalService
             }
         }
     }
-
 }

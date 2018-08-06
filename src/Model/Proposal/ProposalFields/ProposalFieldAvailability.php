@@ -23,10 +23,11 @@ class ProposalFieldAvailability extends AbstractProposalField
 
     public function getSaveQuery(array $variables)
     {
-        $availabilityId = $this->availability->getId();
-
-        return "OPTIONAL MATCH (availability) WHERE id(availability) = $availabilityId "
-            . " MERGE (proposal)-[:HAS_AVAILABILITY]->(availability)";
+//        $availabilityId = $this->availability->getId();
+//
+//        return "OPTIONAL MATCH (availability) WHERE id(availability) = $availabilityId "
+//            . " MERGE (proposal)-[:HAS_AVAILABILITY]->(availability)";
+        return '';
     }
 
     /**

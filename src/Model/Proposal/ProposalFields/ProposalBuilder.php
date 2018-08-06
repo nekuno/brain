@@ -2,6 +2,7 @@
 
 namespace Model\Proposal\ProposalFields;
 
+use Model\Availability\Availability;
 use Model\Metadata\ProposalMetadataManager;
 use Model\Proposal\Proposal;
 
@@ -23,7 +24,6 @@ class ProposalBuilder
      * @param $proposalData
      * @return Proposal
      */
-    //TODO: Add locale
     public function buildFromData($proposalName, $proposalData)
     {
         $metadata = $this->metadataManager->getMetadata();
@@ -40,7 +40,7 @@ class ProposalBuilder
             $proposalField->setName($fieldName);
             $proposalField->setValue($value);
 
-            if ($proposalField instanceof ProposalFieldAvailability && $value) {
+            if ($proposalField instanceof ProposalFieldAvailability && ($value instanceof Availability)) {
                 $proposalField->setAvailability($value);
             }
 

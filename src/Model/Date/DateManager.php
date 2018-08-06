@@ -56,12 +56,11 @@ class DateManager
      */
     public function merge($dateString)
     {
-        $date = new Date($dateString);
-
-        if ($date === null) {
+        $date = $this->buildDate($dateString);
+        if ($date == null)
+        {
             return null;
         }
-
         $qb = $this->graphManager->createQueryBuilder();
 
         $qb->merge('(year:Year{value: {year}})')
@@ -80,7 +79,7 @@ class DateManager
             ->setParameter('day', $date->getDay());
 
         $weekday = $this->getWeekday($dateString);
-        $qb->set("(day:$weekday");
+        $qb->set("day:$weekday");
 
         $qb->returns('year.value AS year', 'month.value AS month', 'day.value AS day', 'id(day) AS dayId', 'created');
 
@@ -88,13 +87,15 @@ class DateManager
         $row = $result->current();
 
         $data = $qb->getData($row);
-
         $date = $this->build($data);
 
-        if ($data['new']) {
+        if ($data['created']) {
             $previousDateString = $this->buildPreviousDate($dateString);
             $previousDate = $this->merge($previousDateString);
-            $this->createNext($previousDate, $date);
+            if (null !== $previousDate)
+            {
+                $this->createNext($previousDate, $date);
+            }
         }
 
         return $date;
@@ -105,7 +106,7 @@ class DateManager
         $date = new \DateTime($dateString);
         $date->modify('-1 day');
 
-        return $date->format('yyyy-mm-dd');
+        return $date->format('Y-m-d');
     }
 
     protected function getWeekday($dateString)
@@ -118,7 +119,8 @@ class DateManager
     protected function buildDate($dateString)
     {
         try {
-            $date = new Date($dateString);
+            $date = new Date();
+            $date->setDate($dateString);
         } catch (\Exception $e) {
             return null;
         }

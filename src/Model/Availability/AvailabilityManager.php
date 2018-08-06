@@ -42,11 +42,9 @@ class AvailabilityManager
         return $this->build($availabilityData);
     }
 
-    public function create($data)
+    public function create($daysIds)
     {
         $qb = $this->graphManager->createQueryBuilder();
-
-        $daysIds = $data['daysIds'];
 
         $qb->create('(availability:Availability)')
             ->with('availability');
