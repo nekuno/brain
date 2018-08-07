@@ -2,6 +2,7 @@
 
 namespace Model\Proposal;
 
+use Model\Filters\FilterUsers;
 use Model\Proposal\ProposalFields\AbstractProposalField;
 
 class Proposal
@@ -12,6 +13,9 @@ class Proposal
 
     /** @var AbstractProposalField[] */
     protected $fields = array();
+
+    /** @var FilterUsers */
+    protected $filters;
 
     /**
      * Proposal constructor.
@@ -104,6 +108,22 @@ class Proposal
         }
 
         return null;
+    }
+
+    /**
+     * @return FilterUsers
+     */
+    public function getFilters(): FilterUsers
+    {
+        return $this->filters;
+    }
+
+    /**
+     * @param FilterUsers $filters
+     */
+    public function setFilters(FilterUsers $filters): void
+    {
+        $this->filters = $filters;
     }
 
 }

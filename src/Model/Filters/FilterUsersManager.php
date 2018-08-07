@@ -84,6 +84,18 @@ class FilterUsersManager
 
         return $filters;
     }
+    
+    public function updateFilterUsersByProposalId($id, $filtersArray)
+    {
+        $filters = $this->buildFiltersUsers($filtersArray);
+
+        $filterId = $this->getFilterUsersIdByProposalId($id);
+        $filters->setId($filterId);
+
+        $this->updateFiltersUsers($filters);
+
+        return $filters;
+    }
 
     /**
      * @param $filterId
@@ -401,6 +413,24 @@ class FilterUsersManager
             ->where('id(group) = {id}')
             ->with('group')
             ->merge('(group)-[:HAS_FILTER]->(filter:Filter:FilterUsers)')
+            ->returns('id(filter) as filterId');
+        $qb->setParameter('id', (integer)$id);
+        $result = $qb->getQuery()->getResultSet();
+
+        if ($result->count() == 0) {
+            return null;
+        }
+
+        return $result->current()->offsetGet('filterId');
+    }
+
+    protected function getFilterUsersIdByProposalId($id)
+    {
+        $qb = $this->graphManager->createQueryBuilder();
+        $qb->match('(proposal:Proposal)')
+            ->where('id(proposal) = {id}')
+            ->with('proposal')
+            ->merge('(proposal)-[:HAS_FILTER]->(filter:Filter:FilterUsers)')
             ->returns('id(filter) as filterId');
         $qb->setParameter('id', (integer)$id);
         $result = $qb->getQuery()->getResultSet();

@@ -213,6 +213,26 @@ class ProposalTest extends ProposalAPITest
                     array('day' => '2018-09-01', 'range' => array('min' => '3600', 'max' => '7200')),
                     array('day' => '2018-09-03', 'range' => array('min' => '3600', 'max' => '7200')),
                 )
+            ),
+            'filters' => array(
+                'userFilters' => array(
+                    'descriptiveGender' => array('man'),
+                    'birthday' => array(
+                        'max' => 40,
+                        'min' => 30,
+                    ),
+                    'language' => array(
+                        array(
+                            'tag' => array(
+                                'name' => 'English'
+                            ),
+                            'choices' => array(
+                                'full_professional',
+                                'professional_working'
+                            )
+                        )
+                    ),
+                )
             )
         );
     }

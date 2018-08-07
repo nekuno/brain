@@ -5,6 +5,8 @@ namespace Service;
 use Model\Date\Date;
 use Model\Date\DateManager;
 use Model\Availability\AvailabilityManager;
+use Model\Exception\ValidationException;
+use Model\Filters\FilterUsersManager;
 use Model\Proposal\Proposal;
 use Model\Proposal\ProposalFields\ProposalFieldAvailability;
 use Model\Proposal\ProposalManager;
@@ -17,6 +19,7 @@ class ProposalService
     protected $availabilityManager;
     protected $proposalManager;
     protected $proposalTagManager;
+    protected $filterUsersManager;
 
     /**
      * ProposalService constructor.
@@ -25,12 +28,13 @@ class ProposalService
      * @param ProposalManager $proposalManager
      * @param ProposalTagManager $proposalTagManager
      */
-    public function __construct(DateManager $dateManager, AvailabilityManager $availabilityManager, ProposalManager $proposalManager, ProposalTagManager $proposalTagManager)
+    public function __construct(DateManager $dateManager, AvailabilityManager $availabilityManager, ProposalManager $proposalManager, ProposalTagManager $proposalTagManager, FilterUsersManager $filterUsersManager)
     {
         $this->dateManager = $dateManager;
         $this->availabilityManager = $availabilityManager;
         $this->proposalManager = $proposalManager;
         $this->proposalTagManager = $proposalTagManager;
+        $this->filterUsersManager = $filterUsersManager;
     }
 
     public function getById($proposalId, $locale)
@@ -83,6 +87,21 @@ class ProposalService
 
         $proposal = $this->createAvailability($proposal, $data);
 
+        $filters = $this->getFiltersData($data);
+
+        if (!empty($filters)){
+            try {
+//            $this->validateFilters($data, $user->getId());
+            } catch (ValidationException $e) {
+                $data = array('proposalId' => $proposal->getId());
+                $this->delete($data);
+                throw $e;
+            }
+
+            $proposal = $this->updateFilters($proposal, $filters);
+        }
+
+
         return $proposal;
     }
 
@@ -96,6 +115,15 @@ class ProposalService
             $proposal->removeField('availability');
         }
         $proposal = $this->createAvailability($proposal, $data);
+
+        return $proposal;
+    }
+
+    protected function updateFilters(Proposal $proposal, $filters)
+    {
+        $proposalId = $proposal->getId();
+        $filters = $this->filterUsersManager->updateFilterUsersByProposalId($proposalId, $filters);
+        $proposal->setFilters($filters);
 
         return $proposal;
     }
@@ -250,5 +278,10 @@ class ProposalService
                 $this->proposalTagManager->deleteIfOrphan($tagName, $tagValue);
             }
         }
+    }
+
+    protected function getFiltersData(array $data)
+    {
+        return isset($data['filters']) ? $data['filters'] : array();
     }
 }
