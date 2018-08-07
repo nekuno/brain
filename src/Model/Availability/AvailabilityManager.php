@@ -2,6 +2,7 @@
 
 namespace Model\Availability;
 
+use Model\Date\Date;
 use Model\Neo4j\GraphManager;
 use Model\Proposal\Proposal;
 
@@ -42,21 +43,47 @@ class AvailabilityManager
         return $this->build($availabilityData);
     }
 
-    public function create($daysIds)
+    public function create()
     {
         $qb = $this->graphManager->createQueryBuilder();
 
         $qb->create('(availability:Availability)')
             ->with('availability');
 
-        if (!empty($daysIds))
-        {
-            $qb->optionalMatch('(day:Day)')
-                ->where('id(day) IN {days}')
-                ->with('availability', 'day')
-                ->setParameter('days', $daysIds);
+        $qb->returns('{id: id(availability)} AS availability');
 
-            $qb->merge('(availability)-[:INCLUDES]->(day)');
+        $resultSet = $qb->getQuery()->getResultSet();
+        $data = $qb->getData($resultSet->current());
+
+        return $this->build($data['availability']);
+    }
+
+    public function addStatic(Availability $availability, array $dates)
+    {
+        $qb = $this->graphManager->createQueryBuilder();
+
+        $qb->match('(availability:Availability)')
+            ->where('id(availability) = {availabilityId}')
+            ->with('availability')
+            ->setParameter('availabilityId', $availability->getId());
+
+        foreach ($dates as $index => $date)
+        {
+            /** @var Date $dateObject */
+            $dateObject = $date['date'];
+
+            $qb->optionalMatch('(day:Day)')
+                ->where("id(day) = {dayId$index}")
+                ->setParameter("dayId$index", $dateObject->getDayId());
+
+            $qb->merge('(availability)-[includes:INCLUDES]->(day)');
+
+            $qb->set("includes.min = {min$index}")
+                ->set("includes.max = {max$index}")
+                ->setParameter("min$index", $date['range']['min'])
+                ->setParameter("max$index", $date['range']['max']);
+
+            $qb->with('availability');
         }
 
         $qb->returns('{id: id(availability)} AS availability');
@@ -67,6 +94,33 @@ class AvailabilityManager
         return $this->build($data['availability']);
     }
 
+    public function addDynamic(Availability $availability, array $dynamic)
+    {
+        $qb = $this->graphManager->createQueryBuilder();
+
+        $qb->match('(availability:Availability)')
+            ->where('id(availability) = {availabilityId}')
+            ->with('availability')
+            ->setParameter('availabilityId', $availability->getId());
+
+        foreach ($dynamic as $each)
+        {
+            $weekday = $each['weekday'];
+            $range = $each['range'];
+            $qb->set("availability.$weekday = { $weekday }")
+                ->setParameter($weekday, $range);
+            $qb->with('availability');
+        }
+
+        $qb->returns('{id: id(availability)} AS availability');
+
+        $resultSet = $qb->getQuery()->getResultSet();
+        $data = $qb->getData($resultSet->current());
+
+        return $this->build($data['availability']);
+    }
+
+    //TODO: Not used
     public function update($availabilityId, $data)
     {
         $qb = $this->graphManager->createQueryBuilder();

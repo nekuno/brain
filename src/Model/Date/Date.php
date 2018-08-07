@@ -116,5 +116,4 @@ class Date implements \JsonSerializable
     {
         return $this->year . '-' . $this->month . '-' . $this->day;
     }
-
 }

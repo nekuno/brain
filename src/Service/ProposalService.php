@@ -54,8 +54,7 @@ class ProposalService
         $proposalIds = $this->proposalManager->getIdsByUser($user);
 
         $proposals = array();
-        foreach ($proposalIds as $proposalId)
-        {
+        foreach ($proposalIds as $proposalId) {
             $proposal = $this->getById($proposalId, $locale);
             $proposals[] = $proposal;
         }
@@ -121,22 +120,50 @@ class ProposalService
      * @return Date[]
      * @throws \Exception
      */
-    protected function createDates($data)
+    protected function createDateObjects($data)
     {
         if (!isset($data['availability'])) {
             return array();
         }
-        $days = array_map( function($object){return $object['day'];}, $data['availability']);
+
+        $days = array_map(
+            function ($object) {
+                return $object['day'];
+            },
+            $data['availability']['static']
+        );
         $dates = array();
-        foreach ($days as $day) {
+        foreach ($days as $index => $day) {
             $date = $this->dateManager->merge($day);
-            if ($date !== null)
-            {
-                $dates[] = $date;
+            if ($date !== null) {
+                $dates[$index] = $date;
             }
         }
 
         return $dates;
+    }
+
+    protected function createTimeRanges($data)
+    {
+        if (!isset($data['availability'])) {
+            return array();
+        }
+
+        $ranges = array_map(
+            function ($object) {
+                return $object['range'];
+            },
+            $data['availability']['static']
+        );
+
+        $secondsInDay = 24 * 3600;
+        foreach ($ranges as &$range) {
+            $range['min'] = isset($range['min']) ? $range['min'] : 0;
+            $range['max'] = isset($range['max']) ? $range['min'] : $secondsInDay;
+
+        }
+
+        return $ranges;
     }
 
     /**
@@ -144,15 +171,33 @@ class ProposalService
      * @return array
      * @throws \Exception
      */
-    protected function getDaysIds(array $data)
+    protected function createDates(array $data)
     {
-        $dates = $this->createDates($data);
+        $dates = $this->createDateObjects($data);
+        $ranges = $this->createTimeRanges($data);
         $ids = array();
-        foreach ($dates as $date) {
-            $ids[] = $date->getDayId();
+        foreach ($dates as $index => $date) {
+            $ids[] = array('date' => $date, 'range' => $ranges[$index]);
         }
 
         return $ids;
+    }
+
+    protected function getDynamicData(array $data)
+    {
+        if (!isset($data['availability']) || !isset($data['availability']['dynamic'])) {
+            return array();
+        }
+
+        $ranges = array();
+        foreach ($data['availability']['dynamic'] as $datum) {
+            $weekday = $datum['weekday'];
+            $range = $datum['range'];
+
+            $ranges[] = array('weekday' => $weekday, 'range' => array($range['min'], $range['max']));
+        }
+
+        return $ranges;
     }
 
     protected function getAvailabilityId(Proposal $proposal)
@@ -164,12 +209,25 @@ class ProposalService
         return $availabilityId;
     }
 
-    protected function createAvailability(Proposal $proposal ,array $data)
+    protected function createAvailability(Proposal $proposal, array $data)
     {
-        $daysIds = $this->getDaysIds($data);
-//        $data = $this->addAvailability($data);
-        if (!empty($daysIds)) {
-            $availability = $this->availabilityManager->create($daysIds);
+        $dates = $this->createDates($data);
+        $dynamic = $this->getDynamicData($data);
+
+        $availability = null;
+        if (!empty($dates) || !empty($dynamic)) {
+            $availability = $this->availabilityManager->create();
+        }
+
+        if (!empty($dates)) {
+            $this->availabilityManager->addStatic($availability, $dates);
+        }
+
+        if (!empty($dynamic)) {
+            $this->availabilityManager->addDynamic($availability, $dynamic);
+        }
+
+        if ($availability) {
             $this->availabilityManager->relateToProposal($availability, $proposal);
 
             $availabilityField = new ProposalFieldAvailability();

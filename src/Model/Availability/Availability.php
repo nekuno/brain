@@ -11,7 +11,6 @@ class Availability
     protected $daysIds = array();
 
     //TODO: Dynamic ranges
-    //TODO: Time range
     /**
      * @return mixed
      */

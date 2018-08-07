@@ -65,7 +65,6 @@ class ProposalManager
         $qb->setParameter('locale', $data['locale']);
 
         $qb->returns('proposal');
-var_dump($qb->getQuery()->getExecutableQuery());
         $qb->getQuery()->getResultSet();
 
         return $proposal;

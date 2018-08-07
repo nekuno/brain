@@ -59,7 +59,7 @@ class ProposalTest extends ProposalAPITest
         $formattedResponse = $this->assertJsonResponse($planResponse, 201, 'Create plan proposal');
         $this->assertProposalFormat($formattedResponse);
     }
-    
+
     protected function assertCreateWithAvailability()
     {
         $availabilityProposalData = $this->getAvailabilityProposalData();
@@ -72,7 +72,12 @@ class ProposalTest extends ProposalAPITest
     {
         $response = $this->getOwnProposals();
         $formattedResponse = $this->assertJsonResponse($response, 200);
-        $workProposals = array_filter($formattedResponse ,function($proposal) {return $proposal['name'] == 'work';});
+        $workProposals = array_filter(
+            $formattedResponse,
+            function ($proposal) {
+                return $proposal['name'] == 'work';
+            }
+        );
         $workProposalId = reset($workProposals)['id'];
 
         $editData = $this->getWorkProposalData2();
@@ -86,8 +91,7 @@ class ProposalTest extends ProposalAPITest
     {
         $response = $this->getOwnProposals();
         $formattedResponse = $this->assertJsonResponse($response, 200);
-        foreach ($formattedResponse as $proposal)
-        {
+        foreach ($formattedResponse as $proposal) {
             $this->assertProposalFormat($proposal);
         }
     }
@@ -97,7 +101,12 @@ class ProposalTest extends ProposalAPITest
         $response = $this->getOwnProposals();
         $formattedResponse = $this->assertJsonResponse($response, 200);
 
-        $workProposals = array_filter($formattedResponse ,function($proposal) {return $proposal['name'] == 'work';});
+        $workProposals = array_filter(
+            $formattedResponse,
+            function ($proposal) {
+                return $proposal['name'] == 'work';
+            }
+        );
         $proposalId = reset($workProposals)['id'];
         $data = array('proposalId' => $proposalId);
 
@@ -194,8 +203,16 @@ class ProposalTest extends ProposalAPITest
             'description' => 'my plan proposal',
             'plan' => array('planning'),
             'availability' => array(
-                array('day' => '2018-09-01', 'hourMin' => '3600', 'hourMax' => '7200'),
-                array('day' => '2018-09-03', 'hourMin' => '3600', 'hourMax' => '7200'),
+                'dynamic' => array(
+                    array(
+                        'weekday' => 'friday',
+                        'range' => array('min' => '3600', 'max' => '7200')
+                    )
+                ),
+                'static' => array(
+                    array('day' => '2018-09-01', 'range' => array('min' => '3600', 'max' => '7200')),
+                    array('day' => '2018-09-03', 'range' => array('min' => '3600', 'max' => '7200')),
+                )
             )
         );
     }
@@ -208,8 +225,7 @@ class ProposalTest extends ProposalAPITest
 
         $this->assertArrayHasKey('fields', $proposal);
         $this->assertArrayOfType('array', $proposal['fields'], 'fields is an array of arrays');
-        foreach ($proposal['fields'] as $field)
-        {
+        foreach ($proposal['fields'] as $field) {
             $this->assertArrayHasKey('name', $field);
             $this->assertArrayHasKey('value', $field);
             $this->assertArrayHasKey('type', $field);
@@ -219,11 +235,9 @@ class ProposalTest extends ProposalAPITest
     protected function assertMetadataFormat($metadata)
     {
         $this->assertArrayOfType('array', $metadata, 'metadata is array of proposals');
-        foreach ($metadata as $metadatum)
-        {
+        foreach ($metadata as $metadatum) {
             $this->assertArrayOfType('array', $metadatum, 'each proposal is array of fields');
-            foreach ($metadatum as $field)
-            {
+            foreach ($metadatum as $field) {
                 $this->isType('array')->evaluate($field);
                 $this->assertArrayHasKey('type', $field);
             }
