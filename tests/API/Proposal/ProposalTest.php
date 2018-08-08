@@ -62,7 +62,7 @@ class ProposalTest extends ProposalAPITest
 
     protected function assertCreateWithAvailability()
     {
-        $availabilityProposalData = $this->getAvailabilityProposalData();
+        $availabilityProposalData = $this->getFullProposalData();
         $availabilityResponse = $this->createProposal($availabilityProposalData);
         $formattedResponse = $this->assertJsonResponse($availabilityResponse, 201, 'Create availability proposal');
         $this->assertProposalFormat($formattedResponse);
@@ -196,7 +196,7 @@ class ProposalTest extends ProposalAPITest
         );
     }
 
-    protected function getAvailabilityProposalData()
+    protected function getFullProposalData()
     {
         return array(
             'name' => 'plan',
@@ -210,10 +210,11 @@ class ProposalTest extends ProposalAPITest
                     )
                 ),
                 'static' => array(
-                    array('day' => '2018-09-01', 'range' => array('min' => '3600', 'max' => '7200')),
-                    array('day' => '2018-09-03', 'range' => array('min' => '3600', 'max' => '7200')),
+                    array('day' => '2018-01-10', 'range' => array('min' => '3600', 'max' => '7200')),
+                    array('day' => '2018-01-12', 'range' => array('min' => '3600', 'max' => '7200')),
                 )
             ),
+            'participantLimit' => 5,
             'filters' => array(
                 'userFilters' => array(
                     'descriptiveGender' => array('man'),

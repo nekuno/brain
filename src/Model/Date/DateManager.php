@@ -8,14 +8,19 @@ use Model\Neo4j\GraphManager;
 class DateManager
 {
     protected $graphManager;
+    
+    protected $lastYearAvailable = 2020;
+    protected $firstYearAvailable = 2018;
 
     /**
      * DateManager constructor.
-     * @param $graphManager
+     * @param GraphManager $graphManager
+     * @param $lastYear
      */
-    public function __construct(GraphManager $graphManager)
+    public function __construct(GraphManager $graphManager, $lastYear)
     {
         $this->graphManager = $graphManager;
+        $this->lastYearAvailable = $lastYear;
     }
 
     /**
@@ -121,11 +126,28 @@ class DateManager
         try {
             $date = new Date();
             $date->setDate($dateString);
+            $this->validate($date);
+
         } catch (\Exception $e) {
             return null;
         }
 
         return $date;
+    }
+
+    protected function validate(Date $date)
+    {
+        $year = $date->getYear();
+        $month = $date->getMonth();
+        $day = $date->getDay();
+        
+        $yearCorrect = is_int($year) && $year <= $this->lastYearAvailable && $year >= $this->firstYearAvailable;
+        $monthCorrect = is_int($month) && $month > 0 && $month <= 12;
+        $dayCorrect = is_int($day) && $day > 0 && $day <= 31;
+
+        if (!$yearCorrect || !$monthCorrect || !$dayCorrect) {
+            throw new \Exception('Date format not valid');
+        }
     }
 
     protected function createNext(Date $previous, Date $target)

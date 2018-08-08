@@ -15,7 +15,7 @@ class ProposalMetadataManager extends MetadataManager
 
         foreach ($this->metadata as $name => &$proposalData) {
             $proposalData['description'] = array('type' => 'string');
-            $proposalData['participantLimit'] = array('type' => 'boolean');
+            $proposalData['participantLimit'] = array('type' => 'integer');
             $proposalData['availability'] = array('type' => 'availability');
         }
     }
