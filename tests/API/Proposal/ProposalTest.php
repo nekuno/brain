@@ -240,6 +240,7 @@ class ProposalTest extends ProposalAPITest
                             )
                         )
                     ),
+                    'order' => 'similarity DESC'
                 )
             )
         );

@@ -37,6 +37,7 @@ class ProposalCandidatePaginatedManager extends AbstractUserRecommendationPagina
         $limit = floor($limit / 2);
 
         $userId = $filtersArray['userId'];
+        $order = isset($filtersArray['userFilters']['order'])? $filtersArray['userFilters']['order'] : 'id DESC';
 
         $filters = $this->applyFilters($filtersArray);
 
@@ -47,18 +48,23 @@ class ProposalCandidatePaginatedManager extends AbstractUserRecommendationPagina
             ->setParameter('userId', $userId);
 
         $qb->match('(user)-[:PROPOSES]->(proposal:Proposal)')
-            ->with('proposal');
+            ->with('proposal', 'user');
 
         $qb->match('(proposal)<-[:INTERESTED_IN]-(anyUser:UserEnabled)-[:PROFILE_OF]-(p:Profile)')
-            ->with('proposal', 'anyUser', 'p');
+            ->with('proposal', 'anyUser', 'user', 'p');
+
+        $qb->optionalMatch('(anyUser)-[similarity:SIMILARITY]-(user)')
+            ->with('anyUser', 'proposal', 'user', 'p', 'similarity');
+        $qb->optionalMatch('(anyUser)-[matching:MATCHING]-(user)')
+            ->with('anyUser', 'proposal', 'p', 'similarity', 'matching');
 
         foreach ($filters['matches'] as $match) {
             $qb->match($match);
         }
-        $qb->with('proposal', 'anyUser', 'p');
+        $qb->with('proposal', 'anyUser', 'p', 'similarity', 'matching');
 
-        $qb->match('(profile)-[:LOCATION]-(l:Location)')
-            ->match('(profile)-[:OPTION_OF]-(gender:DescriptiveGender)');
+        $qb->match('(p)-[:LOCATION]-(l:Location)')
+            ->match('(p)-[:OPTION_OF]-(gender:DescriptiveGender)');
 
         $qb->where($filters['conditions']);
 
@@ -67,9 +73,11 @@ class ProposalCandidatePaginatedManager extends AbstractUserRecommendationPagina
             anyUser.username AS username, 
             p AS profile,
             l AS location,
-            gender,
-            proposal'
+            collect(gender) AS gender,
+            proposal',
+            'similarity'
         )
+            ->orderBy($order)
             ->skip('{offset}')
             ->limit('{limit}')
             ->setParameter('offset', $offset)
@@ -82,12 +90,15 @@ class ProposalCandidatePaginatedManager extends AbstractUserRecommendationPagina
         return $userRecommendations;
     }
 
-    protected function getUnInterestedCandidates($filters, $offset, $limit)
+    protected function getUnInterestedCandidates($filtersArray, $offset, $limit)
     {
         $offset = ceil($offset / 2);
         $limit = ceil($limit / 2);
 
-        $userId = $filters['userId'];
+        $userId = $filtersArray['userId'];
+        $order = isset($filtersArray['userFilters']['order'])? $filtersArray['userFilters']['order'] : 'id DESC';
+
+        $filters = $this->applyFilters($filtersArray);
 
         $qb = $this->gm->createQueryBuilder();
 
@@ -95,31 +106,49 @@ class ProposalCandidatePaginatedManager extends AbstractUserRecommendationPagina
             ->with('user')
             ->setParameter('userId', $userId);
 
-        $qb->match('(user)-[:PROFILE_OF]-(:Profile)-[:OPTION_OF]-(proposal:Proposal)-[:HAS_AVAILABILITY]->(availability:Availability)')
-            ->with('{id: id(proposal), text: proposal.text_es} AS proposal', 'availability');
+        $qb->match('(user)-[:PROPOSES]->(proposal:Proposal)')
+            ->with('proposal', 'user');
 
+        $qb->match('(proposal)-[:HAS_AVAILABILITY]->(availability:Availability)')
+            ->with('availability', 'proposal', 'user');
+
+        $qb->match('(availability)-[:INCLUDES]-(:Day)-[:INCLUDES]-(:Availability)-[:HAS_AVAILABILITY]-(anyUser:User)')
+            ->with('anyUser', 'proposal', 'user')
+            ->where('NOT((proposal)<-[:INTERESTED_IN]-(anyUser:UserEnabled))');
         //TODO: Include filter by hour
         //TODO: Include filter by weekday
-        $qb->match('(availability)-[:INCLUDES]->(:Day)<-[:INCLUDES]-(:Availability)<-[:HAS_AVAILABILITY]-(anyUser:UserEnabled)<-[:PROFILE_OF]-(profile:Profile)')
-            ->with('proposal', 'anyUser', 'profile');
 
-        $qb->match('(profile)-[:LOCATION]-(location:Location)')
-            ->with('proposal, anyUser', 'profile', 'location')
-            ->match('(profile)-[:OPTION_OF]-(gender:DescriptiveGender)')
-            ->with('proposal', 'anyUser', 'profile', 'location', 'gender')
-            ->returns(
-                'anyUser.qnoow_id AS id, 
+        $qb->optionalMatch('(anyUser)-[similarity:SIMILARITY]-(user)')
+            ->with('anyUser', 'proposal', 'user', 'similarity');
+        $qb->optionalMatch('(anyUser)-[matching:MATCHING]-(user)')
+            ->with('anyUser', 'proposal', 'user', 'similarity', 'matching');
+        $qb->match('(anyUser:UserEnabled)-[:PROFILE_OF]-(p:Profile)')
+            ->with('proposal', 'anyUser', 'p', 'similarity', 'matching');
+
+        foreach ($filters['matches'] as $match) {
+            $qb->match($match);
+        }
+
+        $qb->match('(p)-[:LOCATION]-(l:Location)')
+            ->with('proposal, anyUser', 'p', 'l', 'similarity', 'matching')
+            ->match('(p)-[:OPTION_OF]-(gender:DescriptiveGender)')
+            ->with('proposal', 'anyUser', 'p', 'l', 'gender', 'similarity', 'matching');
+
+        $qb->where($filters['conditions']);
+
+        $qb->returns(
+            'anyUser.qnoow_id AS id, 
             anyUser.username AS username, 
-            anyUser.slug AS slug,
             anyUser.photo AS photo,
             anyUser.createdAt AS createdAt,
-            profile.birthday AS birthday,
-            profile,
-            location,
+            p.birthday AS birthday,
+            p AS profile,
+            l AS location,
             collect(gender) AS gender,
-            proposal'
-            )
-            ->orderBy('createdAt DESC')
+            proposal, 
+            similarity'
+        )
+            ->orderBy($order)
             ->skip('{offset}')
             ->limit('{limit}')
             ->setParameter('offset', $offset)
