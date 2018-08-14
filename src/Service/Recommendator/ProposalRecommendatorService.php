@@ -2,6 +2,8 @@
 
 namespace Service\Recommendator;
 
+use Model\Filters\FilterUsersManager;
+use Model\Proposal\ProposalManager;
 use Model\Recommendation\ProposalCandidatePaginatedManager;
 use Model\Recommendation\ProposalRecommendationPaginatedManager;
 use Model\User\User;
@@ -11,6 +13,8 @@ use Symfony\Component\HttpFoundation\Request;
 class ProposalRecommendatorService
 {
     protected $paginator;
+    protected $filterUsersManager;
+    protected $proposalManager;
     protected $proposalCandidatePaginatedManager;
     protected $proposalPaginatedManager;
 
@@ -20,16 +24,17 @@ class ProposalRecommendatorService
      * @param $proposalCandidatePaginatedManager
      * @param $proposalPaginatedManager
      */
-    public function __construct(Paginator $paginator, ProposalCandidatePaginatedManager $proposalCandidatePaginatedManager, ProposalRecommendationPaginatedManager $proposalPaginatedManager)
+    public function __construct(Paginator $paginator, ProposalCandidatePaginatedManager $proposalCandidatePaginatedManager, ProposalRecommendationPaginatedManager $proposalPaginatedManager, FilterUsersManager $filterUsersManager, ProposalManager $proposalManager)
     {
         $this->paginator = $paginator;
         $this->proposalCandidatePaginatedManager = $proposalCandidatePaginatedManager;
         $this->proposalPaginatedManager = $proposalPaginatedManager;
+        $this->filterUsersManager = $filterUsersManager;
+        $this->proposalManager = $proposalManager;
     }
 
     public function getRecommendations(User $user, Request $request)
     {
-        //TODO: Enable different labels for different types of proposals
         $candidateRecommendations = $this->getCandidateRecommendations($user, $request);
         $proposalRecommendations = $this->getProposalRecommendations($user, $request);
 
@@ -40,10 +45,16 @@ class ProposalRecommendatorService
 
     protected function getCandidateRecommendations(User $user, Request $request)
     {
-        $filters = $request->query->get('filters');
-        $filters['userId'] = $user->getId();
+        $proposalIds = $this->proposalManager->getIdsByUser($user);
 
-        $candidateRecommendations = $this->paginator->paginate($filters, $this->proposalCandidatePaginatedManager, $request);
+        $candidateRecommendations = array();
+        foreach ($proposalIds as $proposalId) {
+            $filters = $this->filterUsersManager->getFilterUsersByProposalId($proposalId);
+            $filters = $filters->jsonSerialize();
+            $filters['userId'] = $user->getId();
+
+            $candidateRecommendations[] = $this->paginator->paginate($filters, $this->proposalCandidatePaginatedManager, $request);
+        }
 
         return $candidateRecommendations;
     }
@@ -61,9 +72,13 @@ class ProposalRecommendatorService
     protected function mixRecommendations($candidateRecommendations, $proposalRecommendations)
     {
         $recommendations = array();
-        for ($i = 0; $i< 5; $i++){
-            $recommendations[] = $candidateRecommendations[$i];
-            $recommendations[] = $proposalRecommendations[$i];
+        for ($i = 0; $i < 5; $i++) {
+            if (isset($candidateRecommendations[$i])){
+                $recommendations[] = $candidateRecommendations[$i];
+            }
+            if (isset($proposalRecommendations[$i])){
+                $recommendations[] = $proposalRecommendations[$i];
+            }
         }
 
         return $recommendations;

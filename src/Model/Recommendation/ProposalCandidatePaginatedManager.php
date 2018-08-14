@@ -2,26 +2,8 @@
 
 namespace Model\Recommendation;
 
-use Model\Neo4j\GraphManager;
-use Paginator\PaginatedInterface;
-
-class ProposalCandidatePaginatedManager implements PaginatedInterface
+class ProposalCandidatePaginatedManager extends AbstractUserRecommendationPaginatedManager
 {
-    protected $graphManager;
-
-    protected $userRecommendationBuilder;
-
-    /**
-     * ProposalCandidatePaginatedManager constructor.
-     * @param GraphManager $graphManager
-     * @param UserRecommendationBuilder $userRecommendationBuilder
-     */
-    public function __construct(GraphManager $graphManager, UserRecommendationBuilder $userRecommendationBuilder)
-    {
-        $this->graphManager = $graphManager;
-        $this->userRecommendationBuilder = $userRecommendationBuilder;
-    }
-
     /**
      * Hook point for validating the $filters.
      * @param array $filters
@@ -49,35 +31,45 @@ class ProposalCandidatePaginatedManager implements PaginatedInterface
         return $candidates;
     }
 
-    protected function getInterestedCandidates($filters, $offset, $limit)
+    protected function getInterestedCandidates($filtersArray, $offset, $limit)
     {
         $offset = floor($offset / 2);
         $limit = floor($limit / 2);
 
-        $userId = $filters['userId'];
+        $userId = $filtersArray['userId'];
 
-        $qb = $this->graphManager->createQueryBuilder();
+        $filters = $this->applyFilters($filtersArray);
+
+        $qb = $this->gm->createQueryBuilder();
 
         $qb->match('(user:User{qnoow_id:{userId}})')
             ->with('user')
             ->setParameter('userId', $userId);
 
-        $qb->match('(user)-[:PROFILE_OF]-(:Profile)-[:OPTION_OF]-(proposal:Proposal)')
+        $qb->match('(user)-[:PROPOSES]->(proposal:Proposal)')
             ->with('proposal');
 
-        $qb->match('(proposal)<-[:INTERESTED_IN]-(anyUser:UserEnabled)-[:PROFILE_OF]-(profile:Profile)')
-            ->with('collect(proposal) AS proposals', 'anyUser', 'profile');
+        $qb->match('(proposal)<-[:INTERESTED_IN]-(anyUser:UserEnabled)-[:PROFILE_OF]-(p:Profile)')
+            ->with('proposal', 'anyUser', 'p');
 
-        $qb->match('(profile)-[:LOCATION]-(location:Location)')
-            ->match('(profile)-[:OPTION_OF]-(gender:DescriptiveGender)')
-            ->returns(
-                'anyUser.qnoow_id AS id, 
+        foreach ($filters['matches'] as $match) {
+            $qb->match($match);
+        }
+        $qb->with('proposal', 'anyUser', 'p');
+
+        $qb->match('(profile)-[:LOCATION]-(l:Location)')
+            ->match('(profile)-[:OPTION_OF]-(gender:DescriptiveGender)');
+
+        $qb->where($filters['conditions']);
+
+        $qb->returns(
+            'anyUser.qnoow_id AS id, 
             anyUser.username AS username, 
-            profile AS profile,
-            location,
+            p AS profile,
+            l AS location,
             gender,
             proposal'
-            )
+        )
             ->skip('{offset}')
             ->limit('{limit}')
             ->setParameter('offset', $offset)
@@ -97,7 +89,7 @@ class ProposalCandidatePaginatedManager implements PaginatedInterface
 
         $userId = $filters['userId'];
 
-        $qb = $this->graphManager->createQueryBuilder();
+        $qb = $this->gm->createQueryBuilder();
 
         $qb->match('(user:User{qnoow_id:{userId}})')
             ->with('user')
@@ -109,21 +101,25 @@ class ProposalCandidatePaginatedManager implements PaginatedInterface
         //TODO: Include filter by hour
         //TODO: Include filter by weekday
         $qb->match('(availability)-[:INCLUDES]->(:Day)<-[:INCLUDES]-(:Availability)<-[:HAS_AVAILABILITY]-(anyUser:UserEnabled)<-[:PROFILE_OF]-(profile:Profile)')
-            ->with('proposal', 'anyUser');
+            ->with('proposal', 'anyUser', 'profile');
 
         $qb->match('(profile)-[:LOCATION]-(location:Location)')
+            ->with('proposal, anyUser', 'profile', 'location')
             ->match('(profile)-[:OPTION_OF]-(gender:DescriptiveGender)')
+            ->with('proposal', 'anyUser', 'profile', 'location', 'gender')
             ->returns(
                 'anyUser.qnoow_id AS id, 
             anyUser.username AS username, 
             anyUser.slug AS slug,
             anyUser.photo AS photo,
+            anyUser.createdAt AS createdAt,
             profile.birthday AS birthday,
             profile,
             location,
             collect(gender) AS gender,
             proposal'
             )
+            ->orderBy('createdAt DESC')
             ->skip('{offset}')
             ->limit('{limit}')
             ->setParameter('offset', $offset)
@@ -140,7 +136,7 @@ class ProposalCandidatePaginatedManager implements PaginatedInterface
     {
         $userId = $filters['userId'];
 
-        $qb = $this->graphManager->createQueryBuilder();
+        $qb = $this->gm->createQueryBuilder();
 
         $qb->match('(user:User{qnoow_id:{userId}})')
             ->with('user')
@@ -163,16 +159,14 @@ class ProposalCandidatePaginatedManager implements PaginatedInterface
         $length = count($interested);
 
         $candidates = array();
-        for ($i = 0; $i < $length; $i++)
-        {
+        for ($i = 0; $i < $length; $i++) {
             $partial = [$interested[$i], $unIntenterested[$i]];
             shuffle($partial);
 
             $candidates = array_merge($candidates, $partial);
         }
 
-        if (count($unIntenterested) > $length)
-        {
+        if (count($unIntenterested) > $length) {
             $extra = array_slice($unIntenterested, $length);
             $candidates = array_merge($candidates, $extra);
         }

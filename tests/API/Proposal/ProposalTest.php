@@ -12,6 +12,7 @@ class ProposalTest extends ProposalAPITest
         $this->assertEdit();
         $this->assertDelete();
         $this->assertGetOwn();
+        $this->assertGetRecommendations();
         $this->assertGetMetadata();
     }
 
@@ -87,15 +88,6 @@ class ProposalTest extends ProposalAPITest
         $this->assertProposalFormat($formattedResponse);
     }
 
-    protected function assertGetOwn()
-    {
-        $response = $this->getOwnProposals();
-        $formattedResponse = $this->assertJsonResponse($response, 200);
-        foreach ($formattedResponse as $proposal) {
-            $this->assertProposalFormat($proposal);
-        }
-    }
-
     protected function assertDelete()
     {
         $response = $this->getOwnProposals();
@@ -113,6 +105,21 @@ class ProposalTest extends ProposalAPITest
         $response = $this->deleteProposal($data);
         $formattedResponse = $this->assertJsonResponse($response, 201);
         $this->assertEquals([], $formattedResponse);
+    }
+
+    protected function assertGetOwn()
+    {
+        $response = $this->getOwnProposals();
+        $formattedResponse = $this->assertJsonResponse($response, 200);
+        foreach ($formattedResponse as $proposal) {
+            $this->assertProposalFormat($proposal);
+        }
+    }
+
+    protected function assertGetRecommendations()
+    {
+        $response = $this->getRecommendations();
+        $formattedResponse = $this->assertJsonResponse($response, 200);
     }
 
     protected function assertGetMetadata()

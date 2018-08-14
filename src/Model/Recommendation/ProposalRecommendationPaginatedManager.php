@@ -48,7 +48,7 @@ class ProposalRecommendationPaginatedManager implements PaginatedInterface
         $qb->match('(user)-[:HAS_AVAILABILITY]->(:Availability)-[:INCLUDES]->(day:Day)');
 
         $qb->match('(day)<-[:INCLUDES]-(:Availability)<-[:HAS_AVAILABILITY]-(proposal:Proposal)')
-            ->where('NOT ((user)-[:PROFILE_OF]-(profile:Profile)-[:OPTION_OF]-(proposal)')
+            ->where('NOT ((user)-[:PROPOSES]->(proposal))')
             ->with('proposal');
 
         $qb->returns('{id: id(proposal), text: proposal.text_es} AS proposal');
@@ -82,7 +82,7 @@ class ProposalRecommendationPaginatedManager implements PaginatedInterface
         $qb->match('(user)-[:HAS_AVAILABILITY]->(:Availability)-[:INCLUDES]->(day:Day)');
 
         $qb->match('(day)<-[:INCLUDES]-(:Availability)<-[:HAS_AVAILABILITY]-(proposal:Proposal)')
-            ->where('NOT ((user)-[:PROFILE_OF]-(profile:Profile)-[:OPTION_OF]-(proposal)')
+            ->where('NOT ((user)-[:PROPOSES]->(proposal))')
             ->with('proposal');
 
         $qb->returns('count(proposal) AS amount');

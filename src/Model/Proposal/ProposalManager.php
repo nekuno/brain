@@ -139,7 +139,7 @@ class ProposalManager
 
     /**
      * @param User $user
-     * @return Proposal[]
+     * @return array
      * @throws \Exception
      */
     public function getIdsByUser(User $user)

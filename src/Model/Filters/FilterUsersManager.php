@@ -61,6 +61,13 @@ class FilterUsersManager
         return $this->getFilterUsersById($filterId);
     }
 
+    public function getFilterUsersByProposalId($id)
+    {
+        $filterId = $this->getFilterUsersIdByProposalId($id);
+
+        return $this->getFilterUsersById($filterId);
+    }
+
     public function updateFilterUsersByThreadId($id, $filtersArray)
     {
         $filters = $this->buildFiltersUsers($filtersArray);

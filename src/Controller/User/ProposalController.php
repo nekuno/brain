@@ -12,6 +12,7 @@ use Model\User\User;
 use Nelmio\ApiDocBundle\Annotation\Security;
 use Service\MetadataService;
 use Service\ProposalService;
+use Service\Recommendator\ProposalRecommendatorService;
 use Symfony\Component\HttpFoundation\Request;
 use Swagger\Annotations as SWG;
 
@@ -186,6 +187,42 @@ class ProposalController extends FOSRestController implements ClassResourceInter
 
         return $this->view($proposals, 200);
     }
+
+    /**
+     * Get recommendations for all proposals
+     *
+     * @Get("/proposals/recommendations")
+     * @param Request $request
+     * @param User $user
+     * @param ProposalRecommendatorService $proposalRecommendatorService
+     * @return \FOS\RestBundle\View\View
+     *
+     * @SWG\Parameter(
+     *      name="locale",
+     *      in="query",
+     *      type="string",
+     *      default="es"
+     * )
+     * @SWG\Response(
+     *     response=200,
+     *     description="Returns all recommendations",
+     * )
+     * @Security(name="Bearer")
+     * @SWG\Tag(name="proposals")
+     */
+    public function getRecommendationsAction(User $user, Request $request, ProposalRecommendatorService $proposalRecommendatorService)
+    {
+        try {
+            $recommendations = $proposalRecommendatorService->getRecommendations($user, $request);
+        } catch (\Exception $e) {
+            var_dump($e->getMessage());
+            var_dump($e->getTraceAsString());
+            throw $e;
+        }
+
+        return $this->view($recommendations, 200);
+    }
+
     /**
      * Get all proposals for a user
      *

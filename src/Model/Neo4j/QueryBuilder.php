@@ -449,12 +449,12 @@ class QueryBuilder
         return $this;
     }
 
-    public function getData(Row $row)
+    public function getData(\ArrayAccess $row)
     {
         $data = array();
         foreach ($row as $column => $item)
         {
-            if ($item instanceof Row)
+            if ($item instanceof \ArrayAccess)
             {
                 $item = $this->getData($item);
             }

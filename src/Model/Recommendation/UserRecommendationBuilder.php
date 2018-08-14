@@ -61,6 +61,37 @@ class UserRecommendationBuilder
         return $response;
     }
 
+    /**
+     * @param array $data
+     * @return ProposalCandidateRecommendation[]
+     */
+    public function buildCandidates(array $data)
+    {
+        $response = array();
+        /** @var Row $row */
+        foreach ($data as $row) {
+
+            $age = $this->getAgeFromBirthday($row);
+
+            $photo = $this->photoManager->createProfilePhoto();
+            $photo->setPath($row['photo']);
+            $photo->setUserId($row['id']);
+
+            $candidate = new ProposalCandidateRecommendation();
+            $candidate->setId($row['id']);
+            $candidate->setUsername($row['username']);
+            $candidate->setSlug($row['slug']);
+            $candidate->setPhoto($photo);
+            $candidate->setMatching($row['matching_questions']);
+            $candidate->setSimilarity($row['similarity']);
+            $candidate->setAge($age);
+
+            $response[] = $candidate;
+        }
+
+        return $response;
+    }
+
     protected function getAgeFromBirthday(\ArrayAccess $row)
     {
         $age = null;
