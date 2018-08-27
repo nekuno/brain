@@ -112,10 +112,13 @@ class ProposalCandidatePaginatedManager extends AbstractUserRecommendationPagina
         $qb->match('(proposal)-[:HAS_AVAILABILITY]->(availability:Availability)')
             ->with('availability', 'proposal', 'user');
 
-        $qb->match('(availability)-[:INCLUDES]-(:Day)-[:INCLUDES]-(:Availability)-[:HAS_AVAILABILITY]-(anyUser:User)')
+        $qb->match('(availability)-[:INCLUDES]-(:Day)-[includes:INCLUDES]-(:Availability)-[anyHas:HAS_AVAILABILITY]-(anyUser:User)')
+            //range A "fits" range B if A.min is inside B, or if A.max is inside B
+            //->where((includes fits anyHas) OR (anyHas fits includes))
+            ->where('((includes.min > anyHas.min AND includes.min < anyHas.max) OR (includes.max < anyHas.max AND includes.max > anyHas.min)) 
+                    OR ((anyHas.min > includes.min AND anyHas.min < includes.max) OR (anyHas.max < includes.max AND anyHas.max > includes.min))')
             ->with('anyUser', 'proposal', 'user')
             ->where('NOT((proposal)<-[:INTERESTED_IN]-(anyUser:UserEnabled))');
-        //TODO: Include filter by hour
         //TODO: Include filter by weekday
 
         $qb->optionalMatch('(anyUser)-[similarity:SIMILARITY]-(user)')

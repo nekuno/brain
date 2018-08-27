@@ -47,7 +47,13 @@ class ProposalRecommendationPaginatedManager implements PaginatedInterface
 
         $qb->match('(user)-[:HAS_AVAILABILITY]->(:Availability)-[:INCLUDES]->(day:Day)');
 
-        $qb->match('(day)<-[:INCLUDES]-(:Availability)<-[:HAS_AVAILABILITY]-(proposal:Proposal)')
+        $qb->match('(day)<-[includes:INCLUDES]-(:Availability)<-[anyHas:HAS_AVAILABILITY]-(proposal:Proposal)')
+            //range A "fits" range B if A.min is inside B, or if A.max is inside B
+            //->where((includes fits anyHas) OR (anyHas fits includes))
+            ->where('((includes.min > anyHas.min AND includes.min < anyHas.max) OR (includes.max < anyHas.max AND includes.max > anyHas.min)) 
+                    OR ((anyHas.min > includes.min AND anyHas.min < includes.max) OR (anyHas.max < includes.max AND anyHas.max > includes.min))')
+
+            ->with('user', 'proposal')
             ->where('NOT ((user)-[:PROPOSES]->(proposal))')
             ->with('proposal');
 

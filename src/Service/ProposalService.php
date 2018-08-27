@@ -199,7 +199,7 @@ class ProposalService
      * @return array
      * @throws \Exception
      */
-    protected function createDates(array $data)
+    protected function getStaticData(array $data)
     {
         $dates = $this->createDateObjects($data);
         $ranges = $this->createTimeRanges($data);
@@ -239,16 +239,16 @@ class ProposalService
 
     protected function createAvailability(Proposal $proposal, array $data)
     {
-        $dates = $this->createDates($data);
+        $static = $this->getStaticData($data);
         $dynamic = $this->getDynamicData($data);
 
         $availability = null;
-        if (!empty($dates) || !empty($dynamic)) {
+        if (!empty($static) || !empty($dynamic)) {
             $availability = $this->availabilityManager->create();
         }
 
-        if (!empty($dates)) {
-            $this->availabilityManager->addStatic($availability, $dates);
+        if (!empty($static)) {
+            $this->availabilityManager->addStatic($availability, $static);
         }
 
         if (!empty($dynamic)) {
