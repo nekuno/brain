@@ -212,13 +212,7 @@ class ProposalController extends FOSRestController implements ClassResourceInter
      */
     public function getRecommendationsAction(User $user, Request $request, ProposalRecommendatorService $proposalRecommendatorService)
     {
-        try {
-            $recommendations = $proposalRecommendatorService->getRecommendations($user, $request);
-        } catch (\Exception $e) {
-            var_dump($e->getMessage());
-            var_dump($e->getTraceAsString());
-            throw $e;
-        }
+        $recommendations = $proposalRecommendatorService->getRecommendations($user, $request);
 
         return $this->view($recommendations, 200);
     }

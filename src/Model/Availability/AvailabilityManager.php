@@ -5,6 +5,7 @@ namespace Model\Availability;
 use Model\Date\Date;
 use Model\Neo4j\GraphManager;
 use Model\Proposal\Proposal;
+use Model\User\User;
 
 class AvailabilityManager
 {
@@ -17,6 +18,30 @@ class AvailabilityManager
     public function __construct(GraphManager $graphManager)
     {
         $this->graphManager = $graphManager;
+    }
+
+    public function getByUser(User $user)
+    {
+        $qb = $this->graphManager->createQueryBuilder();
+
+        $qb->match('(user:UserEnabled)')
+            ->where('user.qnoow_id = {userId}')
+            ->setParameter('userId', $user->getId());
+
+        $qb->match('(user)-[:HAS_AVAILABILITY]->(availability:Availability)')
+            ->with('availability');
+
+        $qb->match('(availability)-[:INCLUDES]-(day:Day)')
+            ->returns('{id: id(availability)} AS availability', 'collect(id(day)) AS daysIds');
+
+        $resultSet = $qb->getQuery()->getResultSet();
+
+        if ($resultSet->count() == 0) {
+            return null;
+        }
+        $availabilityData = $qb->getData($resultSet->current());
+
+        return $this->build($availabilityData);
     }
 
     public function getByProposal(Proposal $proposal)
@@ -35,7 +60,7 @@ class AvailabilityManager
 
         $resultSet = $qb->getQuery()->getResultSet();
 
-        if ($resultSet->count() == 0){
+        if ($resultSet->count() == 0) {
             return null;
         }
         $availabilityData = $qb->getData($resultSet->current());
@@ -67,8 +92,7 @@ class AvailabilityManager
             ->with('availability')
             ->setParameter('availabilityId', $availability->getId());
 
-        foreach ($dates as $index => $date)
-        {
+        foreach ($dates as $index => $date) {
             /** @var Date $dateObject */
             $dateObject = $date['date'];
 
@@ -103,8 +127,7 @@ class AvailabilityManager
             ->with('availability')
             ->setParameter('availabilityId', $availability->getId());
 
-        foreach ($dynamic as $each)
-        {
+        foreach ($dynamic as $each) {
             $weekday = $each['weekday'];
             $range = $each['range'];
             $qb->set("availability.$weekday = { $weekday }")
@@ -118,6 +141,28 @@ class AvailabilityManager
         $data = $qb->getData($resultSet->current());
 
         return $this->build($data['availability']);
+    }
+
+    public function relateToUser(Availability $availability, User $user)
+    {
+        $qb = $this->graphManager->createQueryBuilder();
+
+        $qb->match('(availability:Availability)')
+            ->where('id(availability) = {availabilityId}')
+            ->with('availability')
+            ->setParameter('availabilityId', $availability->getId());
+
+        $qb->match('(user:UserEnabled)')
+            ->where('user.qnoow_id = {userId}')
+            ->with('availability', 'user')
+            ->setParameter('userId', $user->getId());
+
+        $qb->merge('(user)-[:HAS_AVAILABILITY]->(availability)');
+
+        $resultSet = $qb->getQuery()->getResultSet();
+        $created = !!($resultSet->count());
+
+        return $created;
     }
 
     //TODO: Not used
@@ -173,7 +218,7 @@ class AvailabilityManager
         $availability = new Availability();
         $availability->setId($availabilityData['id']);
 
-        if (isset($availabilityData['daysIds'])){
+        if (isset($availabilityData['daysIds'])) {
             $availability->setDaysIds($availabilityData['daysIds']);
         }
 
