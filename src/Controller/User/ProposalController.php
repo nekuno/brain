@@ -240,4 +240,82 @@ class ProposalController extends FOSRestController implements ClassResourceInter
 
         return $this->view($metadata, 200);
     }
+
+    /**
+     * Set interested in proposal
+     *
+     * @Post("/proposals/interested")
+     * @param User $user
+     * @param Request $request
+     * @param ProposalService $proposalService
+     * @return \FOS\RestBundle\View\View
+     * @SWG\Parameter(
+     *      name="body",
+     *      in="body",
+     *      type="json",
+     *      schema=@SWG\Schema(
+     *          @SWG\Property(property="proposalId", type="string"),
+     *          @SWG\Property(property="interested", type="boolean"),
+     *          )
+     * )
+     * @SWG\Parameter(
+     *      name="locale",
+     *      in="query",
+     *      type="string",
+     *      default="es"
+     * )
+     * @SWG\Response(
+     *     response=201,
+     *     description="Returns interested",
+     * )
+     * @Security(name="Bearer")
+     * @SWG\Tag(name="proposals")
+     */
+    public function setInterestedAction (Request $request, User $user, ProposalService $proposalService)
+    {
+        $data = $request->request->all();
+
+        $interested = $proposalService->setInterestedInProposal($user, $data);
+
+        return $this->view($interested, 201);
+    }
+
+    /**
+     * Set candidate accepted
+     *
+     * @Post("/proposals/accepted")
+     * @param Request $request
+     * @param ProposalService $proposalService
+     * @return \FOS\RestBundle\View\View
+     * @SWG\Parameter(
+     *      name="body",
+     *      in="body",
+     *      type="json",
+     *      schema=@SWG\Schema(
+     *          @SWG\Property(property="proposalId", type="string"),
+     *          @SWG\Property(property="otherUserId", type="string"),
+     *          @SWG\Property(property="accepted", type="boolean"),
+     *          )
+     * )
+     * @SWG\Parameter(
+     *      name="locale",
+     *      in="query",
+     *      type="string",
+     *      default="es"
+     * )
+     * @SWG\Response(
+     *     response=201,
+     *     description="Returns accepted",
+     * )
+     * @Security(name="Bearer")
+     * @SWG\Tag(name="proposals")
+     */
+    public function setAcceptedAction (Request $request, ProposalService $proposalService)
+    {
+        $data = $request->request->all();
+
+        $interested = $proposalService->setAcceptedCandidate($data);
+
+        return $this->view($interested, 201);
+    }
 }

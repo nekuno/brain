@@ -51,7 +51,8 @@ class ProposalCandidatePaginatedManager extends AbstractUserRecommendationPagina
             ->with('proposal', 'user');
 
         $qb->match('(proposal)<-[:INTERESTED_IN]-(anyUser:UserEnabled)-[:PROFILE_OF]-(p:Profile)')
-            ->with('proposal', 'anyUser', 'user', 'p');
+            ->with('proposal', 'anyUser', 'user', 'p')
+            ->where('NOT (proposal)-[:ACCEPTED]->(anyUser)');
 
         $qb->optionalMatch('(anyUser)-[similarity:SIMILARITY]-(user)')
             ->with('anyUser', 'proposal', 'user', 'p', 'similarity');
@@ -118,7 +119,7 @@ class ProposalCandidatePaginatedManager extends AbstractUserRecommendationPagina
             ->where('((includes.min > anyHas.min AND includes.min < anyHas.max) OR (includes.max < anyHas.max AND includes.max > anyHas.min)) 
                     OR ((anyHas.min > includes.min AND anyHas.min < includes.max) OR (anyHas.max < includes.max AND anyHas.max > includes.min))')
             ->with('anyUser', 'proposal', 'user')
-            ->where('NOT((proposal)<-[:INTERESTED_IN]-(anyUser:UserEnabled))');
+            ->where('NOT((proposal)<-[:INTERESTED_IN]-(anyUser))', 'NOT (proposal)-[:ACCEPTED]->(anyUser)');
         //TODO: Include filter by weekday
 
         $qb->optionalMatch('(anyUser)-[similarity:SIMILARITY]-(user)')

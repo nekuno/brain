@@ -166,6 +166,64 @@ class ProposalManager
         return $proposalIds;
     }
 
+    public function setInterestedInProposal(User $user, $proposalId, $interested)
+    {
+        $userId = $user->getId();
+
+        $qb = $this->graphManager->createQueryBuilder();
+
+        $qb->match('(user:User{qnoow_id: {userId}})')
+            ->setParameter('userId', $userId)
+            ->with('user');
+
+        $qb->match('(proposal:Proposal)')
+            ->where('id(proposal) = {proposalId}')
+            ->setParameter('proposalId', $proposalId);
+
+        $qb->match('(user)-[r]->(proposal)')
+            ->delete('r')
+            ->with('user', 'proposal');
+
+        if ($interested)
+        {
+            $qb->create('(user)-[:INTERESTED_IN)->(proposal)');
+        }
+
+        $qb->returns('user', 'proposal');
+
+        $resultSet = $qb->getQuery()->getResultSet();
+
+        return $resultSet->count();
+    }
+
+    public function setAcceptedCandidate($otherUserId, $proposalId, $accepted)
+    {
+        $qb = $this->graphManager->createQueryBuilder();
+
+        $qb->match('(user:User{qnoow_id: {userId}})')
+            ->setParameter('userId', $otherUserId)
+            ->with('user');
+
+        $qb->match('(proposal:Proposal)')
+            ->where('id(proposal) = {proposalId}')
+            ->setParameter('proposalId', $proposalId);
+
+        $qb->match('(proposal)-[r]->(user)')
+            ->delete('r')
+            ->with('proposal', 'user');
+
+        if ($accepted)
+        {
+            $qb->create('(proposal)-[:ACCEPTED)->(user)');
+        }
+
+        $qb->returns('user', 'proposal');
+
+        $resultSet = $qb->getQuery()->getResultSet();
+
+        return $resultSet->count();
+    }
+
     protected function getProposalData($proposalId, $proposalName)
     {
         $proposal = $this->proposalBuilder->buildEmpty($proposalName);

@@ -145,6 +145,23 @@ class ProposalService
         $this->proposalManager->delete($proposalId);
     }
 
+    public function setInterestedInProposal(User $user, array $data)
+    {
+        $proposalId = $data['proposalId'];
+        $interested = $data['interested'];
+
+        return $this->proposalManager->setInterestedInProposal($user, $proposalId, $interested);
+    }
+
+    public function setAcceptedCandidate(array $data)
+    {
+        $proposalId = $data['proposalId'];
+        $otherUserId = $data['otherUserId'];
+        $accepted = $data['accepted'];
+
+        return $this->proposalManager->setAcceptedCandidate($otherUserId, $proposalId, $accepted);
+    }
+
     protected function getAvailabilityId(Proposal $proposal)
     {
         /** @var ProposalFieldAvailability $availabilityField */
