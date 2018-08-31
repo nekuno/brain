@@ -92,6 +92,15 @@ class ProposalManager
         $qb->getQuery()->getResultSet();
     }
 
+    public function deleteByUser(User $user)
+    {
+        $proposalIds = $this->getIdsByUser($user);
+        foreach ($proposalIds as $proposalId)
+        {
+            $this->delete($proposalId);
+        }
+    }
+
     public function relateToUser(Proposal $proposal, User $user)
     {
         $qb = $this->graphManager->createQueryBuilder();

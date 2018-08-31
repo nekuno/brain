@@ -105,6 +105,8 @@ class UserService
         $deletedLikesUrls = $this->rateModel->deleteAllLinksByUser($userId);
         $this->linkService->deleteNotLiked($deletedLikesUrls);
 
+        $this->proposalManager->deleteByUser($user);
+
         $this->profileManager->remove($userId);
 
         $this->userManager->delete($userId);
