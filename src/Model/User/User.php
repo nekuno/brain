@@ -3,6 +3,7 @@
 namespace Model\User;
 
 use Model\Photo\ProfilePhoto;
+use Model\Proposal\Proposal;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 class User implements UserInterface, \JsonSerializable
@@ -154,6 +155,11 @@ class User implements UserInterface, \JsonSerializable
      */
     protected $tutorials;
 
+    /**
+     * @var Proposal[]
+     */
+    protected $proposals;
+
     public function __construct()
     {
         $this->salt = base_convert(sha1(uniqid(mt_rand(), true)), 16, 36);
@@ -165,6 +171,7 @@ class User implements UserInterface, \JsonSerializable
         $this->credentialsExpired = false;
         $this->confirmed = false;
         $this->tutorials = array();
+        $this->proposals = array();
     }
 
     public function addRole($role)
@@ -736,6 +743,22 @@ class User implements UserInterface, \JsonSerializable
         $this->tutorials = $tutorials;
 
         return $this;
+    }
+
+    /**
+     * @return Proposal[]
+     */
+    public function getProposals(): array
+    {
+        return $this->proposals;
+    }
+
+    /**
+     * @param Proposal[] $proposals
+     */
+    public function setProposals(array $proposals): void
+    {
+        $this->proposals = $proposals;
     }
 
     public function __toString()

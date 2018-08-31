@@ -4,6 +4,7 @@ namespace Service;
 
 use Model\Photo\GalleryManager;
 use Model\Photo\PhotoManager;
+use Model\Proposal\ProposalManager;
 use Model\User\UserManager;
 use Model\Profile\ProfileManager;
 use Model\Rate\RateManager;
@@ -21,6 +22,7 @@ class UserService
     protected $instantConnection;
     protected $photoManager;
     protected $galleryManager;
+    protected $proposalManager;
 
     /**
      * UserService constructor.
@@ -33,8 +35,9 @@ class UserService
      * @param InstantConnection $instantConnection
      * @param PhotoManager $photoManager
      * @param GalleryManager $galleryManager
+     * @param ProposalManager $proposalManager
      */
-    public function __construct(UserManager $userManager, ProfileManager $profileManager, TokensManager $tokensModel, TokenStatusManager $tokenStatusManager, RateManager $rateModel, LinkService $linkService, InstantConnection $instantConnection, PhotoManager $photoManager, GalleryManager $galleryManager)
+    public function __construct(UserManager $userManager, ProfileManager $profileManager, TokensManager $tokensModel, TokenStatusManager $tokenStatusManager, RateManager $rateModel, LinkService $linkService, InstantConnection $instantConnection, PhotoManager $photoManager, GalleryManager $galleryManager, ProposalManager $proposalManager)
     {
         $this->userManager = $userManager;
         $this->profileManager = $profileManager;
@@ -46,6 +49,7 @@ class UserService
         //TODO: Move to PhotoService and remove USerManager->PhotoManager dependencies
         $this->photoManager = $photoManager;
         $this->galleryManager = $galleryManager;
+        $this->proposalManager = $proposalManager;
     }
 
     public function createUser(array $userData, array $profileData)
@@ -113,6 +117,20 @@ class UserService
         $user = $this->userManager->getById($userId);
 
         return $user;
+    }
+
+    public function getOtherPublic($slug)
+    {
+        $user = $this->userManager->getPublicBySlug($slug);
+
+        $locale = $this->profileManager->getInterfaceLocale($user->getId());
+        $proposals = $this->proposalManager->getByUser($user, $locale);
+        $user->setProposals($proposals);
+
+        $userArray = $user->jsonSerialize();
+        $userArray = $this->userManager->deleteOtherUserFields($userArray);
+
+        return $userArray;
     }
 
 }

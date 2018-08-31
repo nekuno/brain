@@ -30,6 +30,7 @@ use Service\AuthService;
 use Service\MetadataService;
 use Service\RecommendatorService;
 use Service\RegisterService;
+use Service\UserService;
 use Service\UserStatsService;
 use Swagger\Annotations as SWG;
 use Symfony\Component\HttpFoundation\Request;
@@ -120,7 +121,7 @@ class UserController extends FOSRestController implements ClassResourceInterface
      *
      * @Get("/public/users/{slug}")
      * @param string $slug
-     * @param UserManager $userManager
+     * @param UserService $userService
      * @return \FOS\RestBundle\View\View
      * @SWG\Response(
      *     response=200,
@@ -135,10 +136,9 @@ class UserController extends FOSRestController implements ClassResourceInterface
      * )
      * @SWG\Tag(name="users")
      */
-    public function getOtherPublicAction($slug, UserManager $userManager)
+    public function getOtherPublicAction($slug, UserService $userService)
     {
-        $userArray = $userManager->getPublicBySlug($slug)->jsonSerialize();
-        $userArray = $userManager->deleteOtherUserFields($userArray);
+        $userArray = $userService->getOtherPublic($slug);
 
         if (empty($userArray)) {
             return $this->view($userArray, 404);

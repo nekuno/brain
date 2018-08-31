@@ -166,6 +166,24 @@ class ProposalManager
         return $proposalIds;
     }
 
+    /**
+     * @param User $user
+     * @param $locale
+     * @return Proposal[]
+     * @throws \Exception
+     */
+    public function getByUser(User $user, $locale)
+    {
+        $proposalIds = $this->getIdsByUser($user);
+        $proposals = array();
+        foreach ($proposalIds as $proposalId)
+        {
+            $proposals[] = $this->getById($proposalId, $locale);
+        }
+
+        return $proposals;
+    }
+
     public function setInterestedInProposal(User $user, $proposalId, $interested)
     {
         $userId = $user->getId();
