@@ -251,6 +251,62 @@ class ProposalManager
         return $resultSet->count();
     }
 
+    public function setSkippedProposal(User $user, $proposalId, $skipped)
+    {
+        $qb = $this->graphManager->createQueryBuilder();
+
+        $qb->match('(user:User{qnoow_id: {userId}})')
+            ->setParameter('userId', $user->getId())
+            ->with('user');
+
+        $qb->match('(proposal:Proposal)')
+            ->where('id(proposal) = {proposalId}')
+            ->setParameter('proposalId', $proposalId);
+
+        $qb->match('(proposal)<-[r]-(user)')
+            ->delete('r')
+            ->with('proposal', 'user');
+
+        if ($skipped)
+        {
+            $qb->create('(proposal)<-[:SKIPPED)-(user)');
+        }
+
+        $qb->returns('user', 'proposal');
+
+        $resultSet = $qb->getQuery()->getResultSet();
+
+        return $resultSet->count();
+    }
+
+    public function setSkippedCandidate($proposalId, $candidateId, $skipped)
+    {
+        $qb = $this->graphManager->createQueryBuilder();
+
+        $qb->match('(user:User{qnoow_id: {userId}})')
+            ->setParameter('userId', $candidateId)
+            ->with('user');
+
+        $qb->match('(proposal:Proposal)')
+            ->where('id(proposal) = {proposalId}')
+            ->setParameter('proposalId', $proposalId);
+
+        $qb->match('(proposal)-[r]->(user)')
+            ->delete('r')
+            ->with('proposal', 'user');
+
+        if ($skipped)
+        {
+            $qb->create('(proposal)-[:SKIPPED)->(user)');
+        }
+
+        $qb->returns('user', 'proposal');
+
+        $resultSet = $qb->getQuery()->getResultSet();
+
+        return $resultSet->count();
+    }
+
     protected function getProposalData($proposalId, $proposalName)
     {
         $proposal = $this->proposalBuilder->buildEmpty($proposalName);

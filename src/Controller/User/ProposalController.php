@@ -245,7 +245,7 @@ class ProposalController extends FOSRestController implements ClassResourceInter
     /**
      * Set interested in proposal
      *
-     * @Post("/proposals/interested")
+     * @Post("/recommendations/proposals")
      * @param User $user
      * @param Request $request
      * @param ProposalService $proposalService
@@ -284,7 +284,7 @@ class ProposalController extends FOSRestController implements ClassResourceInter
     /**
      * Set candidate accepted
      *
-     * @Post("/proposals/accepted")
+     * @Post("/recommendations/candidates")
      * @param Request $request
      * @param ProposalService $proposalService
      * @return \FOS\RestBundle\View\View
@@ -316,6 +316,84 @@ class ProposalController extends FOSRestController implements ClassResourceInter
         $data = $request->request->all();
 
         $interested = $proposalService->setAcceptedCandidate($data);
+
+        return $this->view($interested, 201);
+    }
+
+    /**
+     * Skip proposal
+     *
+     * @Post("/recommendations/proposals/skip")
+     * @param Request $request
+     * @param User $user
+     * @param ProposalService $proposalService
+     * @return \FOS\RestBundle\View\View
+     * @SWG\Parameter(
+     *      name="body",
+     *      in="body",
+     *      type="json",
+     *      schema=@SWG\Schema(
+     *          @SWG\Property(property="proposalId", type="string"),
+     *          @SWG\Property(property="skipped", type="boolean"),
+     *          )
+     * )
+     * @SWG\Parameter(
+     *      name="locale",
+     *      in="query",
+     *      type="string",
+     *      default="es"
+     * )
+     * @SWG\Response(
+     *     response=201,
+     *     description="Returns skipped",
+     * )
+     * @Security(name="Bearer")
+     * @SWG\Tag(name="proposals")
+     */
+    public function setSkippedProposalAction (Request $request, User $user, ProposalService $proposalService)
+    {
+        $data = $request->request->all();
+
+        $interested = $proposalService->setSkippedProposal($data, $user);
+
+        return $this->view($interested, 201);
+    }
+
+    /**
+     * Skip candidate
+     *
+     * @Post("/recommendations/candidates/skip")
+     * @param Request $request
+     * @param User $user
+     * @param ProposalService $proposalService
+     * @return \FOS\RestBundle\View\View
+     * @SWG\Parameter(
+     *      name="body",
+     *      in="body",
+     *      type="json",
+     *      schema=@SWG\Schema(
+     *          @SWG\Property(property="proposalId", type="string"),
+     *          @SWG\Property(property="skipped", type="boolean"),
+     *          )
+     * )
+     * @SWG\Parameter(
+     *      name="locale",
+     *      in="query",
+     *      type="string",
+     *      default="es"
+     * )
+     * @SWG\Response(
+     *     response=201,
+     *     description="Returns skipped",
+     * )
+     * @Security(name="Bearer")
+     * @SWG\Tag(name="proposals")
+     */
+    public function setSkippedCandidateAction (Request $request, User $user, ProposalService $proposalService)
+    {
+        $data = $request->request->all();
+
+        $interested = $proposalService->setSkippedCandidate($data, $user);
 
         return $this->view($interested, 201);
     }

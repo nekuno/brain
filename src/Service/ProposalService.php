@@ -183,6 +183,22 @@ class ProposalService
         return $this->proposalManager->setAcceptedCandidate($otherUserId, $proposalId, $accepted);
     }
 
+    public function setSkippedProposal(array $data, User $user)
+    {
+        $proposalId = $data['proposalId'];
+        $skipped = $data['skipped'];
+        return $this->proposalManager->setSkippedProposal($user, $proposalId, $skipped);
+    }
+
+    public function setSkippedCandidate(array $data)
+    {
+        $proposalId = $data['proposalId'];
+        $otherUserId = $data['otherUserId'];
+        $skipped = $data['skipped'];
+
+        return $this->proposalManager->setSkippedCandidate($proposalId, $otherUserId, $skipped);
+    }
+
     protected function getAvailabilityId(Proposal $proposal)
     {
         /** @var ProposalFieldAvailability $availabilityField */
