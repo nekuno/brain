@@ -74,6 +74,7 @@ class ProposalController extends FOSRestController implements ClassResourceInter
      * @Put("/proposals/{proposalId}", requirements={"proposalId"="\d+"})
      * @param $proposalId
      * @param Request $request
+     * @param User $user
      * @param ProposalService $proposalService
      * @return \FOS\RestBundle\View\View
      * @SWG\Parameter(
@@ -109,12 +110,12 @@ class ProposalController extends FOSRestController implements ClassResourceInter
      * @Security(name="Bearer")
      * @SWG\Tag(name="proposals")
      */
-    public function updateProposalAction($proposalId, Request $request, ProposalService $proposalService)
+    public function updateProposalAction($proposalId, Request $request, User $user, ProposalService $proposalService)
     {
         $data = $request->request->all();
         $data['locale'] = $request->query->get('locale', 'en');
 
-        $proposal = $proposalService->update($proposalId, $data);
+        $proposal = $proposalService->update($proposalId, $user, $data);
 
         return $this->view($proposal, 201);
     }

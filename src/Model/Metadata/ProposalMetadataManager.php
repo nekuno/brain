@@ -17,6 +17,7 @@ class ProposalMetadataManager extends MetadataManager
             $proposalData['description'] = array('type' => 'string');
             $proposalData['participantLimit'] = array('type' => 'integer');
             $proposalData['availability'] = array('type' => 'availability');
+            $proposalData['photo'] = array('type' => 'string');
         }
     }
 

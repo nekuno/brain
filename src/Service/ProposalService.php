@@ -7,6 +7,8 @@ use Model\Date\DateManager;
 use Model\Availability\AvailabilityManager;
 use Model\Exception\ValidationException;
 use Model\Filters\FilterUsersManager;
+use Model\Photo\PhotoManager;
+use Model\Photo\ProposalPhotoManager;
 use Model\Proposal\Proposal;
 use Model\Proposal\ProposalFields\ProposalFieldAvailability;
 use Model\Proposal\ProposalManager;
@@ -20,6 +22,7 @@ class ProposalService
     protected $availabilityDataFormatter;
     protected $proposalManager;
     protected $proposalTagManager;
+    protected $proposalPhotoManager;
     protected $filterUsersManager;
 
     /**
@@ -29,13 +32,23 @@ class ProposalService
      * @param ProposalManager $proposalManager
      * @param ProposalTagManager $proposalTagManager
      */
-    public function __construct(DateManager $dateManager, AvailabilityManager $availabilityManager, AvailabilityDataFormatter $availabilityDataFormatter, ProposalManager $proposalManager, ProposalTagManager $proposalTagManager, FilterUsersManager $filterUsersManager)
-    {
+    public function __construct(
+        DateManager $dateManager,
+        AvailabilityManager $availabilityManager,
+        AvailabilityDataFormatter $availabilityDataFormatter,
+        ProposalManager $proposalManager,
+        ProposalTagManager $proposalTagManager,
+        FilterUsersManager $filterUsersManager,
+        ProposalPhotoManager $proposalPhotoManager,
+        PhotoManager $photoManager
+    ) {
         $this->dateManager = $dateManager;
         $this->availabilityManager = $availabilityManager;
         $this->availabilityDataFormatter = $availabilityDataFormatter;
         $this->proposalManager = $proposalManager;
         $this->proposalTagManager = $proposalTagManager;
+        $this->proposalPhotoManager = $proposalPhotoManager;
+        $this->photoManager = $photoManager;
         $this->filterUsersManager = $filterUsersManager;
     }
 
@@ -91,7 +104,7 @@ class ProposalService
 
         $filters = $this->getFiltersData($data);
 
-        if (!empty($filters)){
+        if (!empty($filters)) {
             try {
 //            $this->validateFilters($data, $user->getId());
             } catch (ValidationException $e) {
@@ -103,12 +116,13 @@ class ProposalService
             $proposal = $this->updateFilters($proposal, $filters);
         }
 
-
         return $proposal;
     }
 
-    public function update($proposalId, $data)
+    public function update($proposalId, User $user, $data)
     {
+        $this->saveProposalPhoto($user, $data);
+
         $proposal = $this->proposalManager->update($proposalId, $data);
 
         if ($proposal->getField('availability')) {
@@ -119,6 +133,13 @@ class ProposalService
         $proposal = $this->createAvailability($proposal, $data);
 
         return $proposal;
+    }
+
+    protected function saveProposalPhoto(User $user, array $data)
+    {
+        $photo = isset($data['photo']) ? $data['photo'] : $this->proposalPhotoManager->getRandomPhoto();
+        $extension = $this->photoManager->validate($photo);
+        $this->proposalPhotoManager->save($photo, $user, $extension);
     }
 
     protected function updateFilters(Proposal $proposal, $filters)
