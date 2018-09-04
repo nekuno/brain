@@ -54,7 +54,7 @@ class ProposalRecommendationPaginatedManager implements PaginatedInterface
                     OR ((anyHas.min > includes.min AND anyHas.min < includes.max) OR (anyHas.max < includes.max AND anyHas.max > includes.min))')
 
             ->with('user', 'proposal')
-            ->where('NOT ((user)-[:PROPOSES]->(proposal))')
+            ->where('NOT ((user)-[:PROPOSES|SKIPPED]->(proposal))')
             ->with('proposal');
 
         $qb->returns('{id: id(proposal), text: proposal.text_es} AS proposal');
