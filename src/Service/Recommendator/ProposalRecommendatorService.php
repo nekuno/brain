@@ -2,9 +2,13 @@
 
 namespace Service\Recommendator;
 
+use Model\Availability\AvailabilityManager;
 use Model\Filters\FilterUsersManager;
 use Model\Proposal\ProposalManager;
-use Model\Recommendation\ProposalCandidatePaginatedManager;
+use Model\Recommendation\CandidateInterestedPaginatedManager;
+use Model\Recommendation\CandidateUninterestedFreePaginatedManager;
+use Model\Recommendation\CandidateUninterestedPaginatedManager;
+use Model\Recommendation\ProposalRecommendationFreePaginatedManager;
 use Model\Recommendation\ProposalRecommendationPaginatedManager;
 use Model\User\User;
 use Paginator\Paginator;
@@ -14,22 +18,45 @@ class ProposalRecommendatorService
 {
     protected $paginator;
     protected $filterUsersManager;
+    protected $availabilityManager;
     protected $proposalManager;
-    protected $proposalCandidatePaginatedManager;
+    protected $candidateUninterestedPaginatedManager;
+    protected $candidateUninterestedFreePaginatedManager;
+    protected $candidateInterestedPaginatedManager;
     protected $proposalPaginatedManager;
+    protected $proposalRecommendationFreePaginatedManager;
 
     /**
      * ProposalRecommendatorService constructor.
-     * @param $paginator
-     * @param $proposalCandidatePaginatedManager
-     * @param $proposalPaginatedManager
+     * @param Paginator $paginator
+     * @param CandidateUninterestedPaginatedManager $candidateUninterestedPaginatedManager
+     * @param CandidateUninterestedFreePaginatedManager $candidateUninterestedFreePaginatedManager
+     * @param CandidateInterestedPaginatedManager $candidateInterestedPaginatedManager
+     * @param ProposalRecommendationPaginatedManager $proposalPaginatedManager
+     * @param ProposalRecommendationFreePaginatedManager $proposalRecommendationFreePaginatedManager
+     * @param FilterUsersManager $filterUsersManager
+     * @param AvailabilityManager $availabilityManager
+     * @param ProposalManager $proposalManager
      */
-    public function __construct(Paginator $paginator, ProposalCandidatePaginatedManager $proposalCandidatePaginatedManager, ProposalRecommendationPaginatedManager $proposalPaginatedManager, FilterUsersManager $filterUsersManager, ProposalManager $proposalManager)
-    {
+    public function __construct(
+        Paginator $paginator,
+        CandidateUninterestedPaginatedManager $candidateUninterestedPaginatedManager,
+        CandidateUninterestedFreePaginatedManager $candidateUninterestedFreePaginatedManager,
+        CandidateInterestedPaginatedManager $candidateInterestedPaginatedManager,
+        ProposalRecommendationPaginatedManager $proposalPaginatedManager,
+        ProposalRecommendationFreePaginatedManager $proposalRecommendationFreePaginatedManager,
+        FilterUsersManager $filterUsersManager,
+        AvailabilityManager $availabilityManager,
+        ProposalManager $proposalManager
+    ) {
         $this->paginator = $paginator;
-        $this->proposalCandidatePaginatedManager = $proposalCandidatePaginatedManager;
+        $this->candidateUninterestedPaginatedManager = $candidateUninterestedPaginatedManager;
+        $this->candidateUninterestedFreePaginatedManager = $candidateUninterestedFreePaginatedManager;
+        $this->candidateInterestedPaginatedManager = $candidateInterestedPaginatedManager;
         $this->proposalPaginatedManager = $proposalPaginatedManager;
+        $this->proposalRecommendationFreePaginatedManager = $proposalRecommendationFreePaginatedManager;
         $this->filterUsersManager = $filterUsersManager;
+        $this->availabilityManager = $availabilityManager;
         $this->proposalManager = $proposalManager;
     }
 
@@ -51,12 +78,38 @@ class ProposalRecommendatorService
         foreach ($proposalIds as $proposalId) {
             $filters = $this->filterUsersManager->getFilterUsersByProposalId($proposalId);
             $filters = $filters->jsonSerialize();
-            $filters['userId'] = $user->getId();
+            $filters['proposalId'] = $proposalId;
 
-            $candidateRecommendations[] = $this->paginator->paginate($filters, $this->proposalCandidatePaginatedManager, $request);
+            $interestedCandidates = $this->getInterestedCandidates($filters, $request);
+            $uninterestedCandidates = $this->getUninterestedCandidates($filters, $request);
+
+            $candidates = $this->mixCandidates($interestedCandidates['items'], $uninterestedCandidates['items']);
+
+            $candidateRecommendations[] = $candidates;
         }
 
         return $candidateRecommendations;
+    }
+
+    protected function getInterestedCandidates($filters, $request)
+    {
+        return $this->paginator->paginate($filters, $this->candidateInterestedPaginatedManager, $request);
+    }
+
+    protected function getUninterestedCandidates($filters, $request)
+    {
+        $defaultLocale = 'en';
+        $proposalId = $filters['proposalId'];
+        $proposal = $this->proposalManager->getById($proposalId, $defaultLocale);
+        $availability = $this->availabilityManager->getByProposal($proposal);
+
+        if (null == $availability) {
+            $model = $this->candidateUninterestedFreePaginatedManager;
+        } else {
+            $model = $this->candidateInterestedPaginatedManager;
+        }
+
+        return $this->paginator->paginate($filters, $model, $request);
     }
 
     protected function getProposalRecommendations(User $user, Request $request)
@@ -64,23 +117,43 @@ class ProposalRecommendatorService
         $filters = $request->query->get('filters');
         $filters['userId'] = $user->getId();
 
-        $candidateRecommendations = $this->paginator->paginate($filters, $this->proposalPaginatedManager, $request);
+        $proposalRecommendations = $this->paginator->paginate($filters, $this->proposalPaginatedManager, $request);
 
-        return $candidateRecommendations;
+        return $proposalRecommendations;
     }
 
     protected function mixRecommendations($candidateRecommendations, $proposalRecommendations)
     {
         $recommendations = array();
         for ($i = 0; $i < 5; $i++) {
-            if (isset($candidateRecommendations[$i])){
+            if (isset($candidateRecommendations[$i])) {
                 $recommendations[] = $candidateRecommendations[$i];
             }
-            if (isset($proposalRecommendations[$i])){
+            if (isset($proposalRecommendations[$i])) {
                 $recommendations[] = $proposalRecommendations[$i];
             }
         }
 
         return $recommendations;
+    }
+
+    protected function mixCandidates($interested, $unInterested)
+    {
+        $length = count($interested);
+
+        $candidates = array();
+        for ($i = 0; $i < $length; $i++) {
+            $partial = [$interested[$i], $unInterested[$i]];
+            shuffle($partial);
+
+            $candidates = array_merge($candidates, $partial);
+        }
+
+        if (count($unInterested) > $length) {
+            $extra = array_slice($unInterested, $length);
+            $candidates = array_merge($candidates, $extra);
+        }
+
+        return $candidates;
     }
 }
