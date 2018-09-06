@@ -11,7 +11,7 @@ use Model\Recommendation\CandidateUninterestedPaginatedManager;
 use Model\Recommendation\ProposalRecommendationFreePaginatedManager;
 use Model\Recommendation\ProposalRecommendationPaginatedManager;
 use Model\User\User;
-use Paginator\Paginator;
+use Paginator\ProposalRecommendationsPaginator;
 use Symfony\Component\HttpFoundation\Request;
 
 class ProposalRecommendatorService
@@ -28,7 +28,7 @@ class ProposalRecommendatorService
 
     /**
      * ProposalRecommendatorService constructor.
-     * @param Paginator $paginator
+     * @param ProposalRecommendationsPaginator $paginator
      * @param CandidateUninterestedPaginatedManager $candidateUninterestedPaginatedManager
      * @param CandidateUninterestedFreePaginatedManager $candidateUninterestedFreePaginatedManager
      * @param CandidateInterestedPaginatedManager $candidateInterestedPaginatedManager
@@ -39,7 +39,7 @@ class ProposalRecommendatorService
      * @param ProposalManager $proposalManager
      */
     public function __construct(
-        Paginator $paginator,
+        ProposalRecommendationsPaginator $paginator,
         CandidateUninterestedPaginatedManager $candidateUninterestedPaginatedManager,
         CandidateUninterestedFreePaginatedManager $candidateUninterestedFreePaginatedManager,
         CandidateInterestedPaginatedManager $candidateInterestedPaginatedManager,
@@ -118,6 +118,7 @@ class ProposalRecommendatorService
         $filters['userId'] = $user->getId();
 
         $proposalRecommendations = $this->paginator->paginate($filters, $this->proposalPaginatedManager, $request);
+        $proposalRecommendations = array_slice($proposalRecommendations['items'], 10);
 
         return $proposalRecommendations;
     }
@@ -125,7 +126,7 @@ class ProposalRecommendatorService
     protected function mixRecommendations($candidateRecommendations, $proposalRecommendations)
     {
         $recommendations = array();
-        for ($i = 0; $i < 5; $i++) {
+        for ($i = 0; $i < 10; $i++) {
             if (isset($candidateRecommendations[$i])) {
                 $recommendations[] = $candidateRecommendations[$i];
             }
@@ -139,7 +140,11 @@ class ProposalRecommendatorService
 
     protected function mixCandidates($interested, $unInterested)
     {
-        $length = count($interested);
+        $interestedDesired = 3;
+        $unInterestedDesired = 7;
+        $totalDesired = $interestedDesired + $unInterestedDesired;
+
+        $length = min(count($interested), $interestedDesired);
 
         $candidates = array();
         for ($i = 0; $i < $length; $i++) {
@@ -153,6 +158,8 @@ class ProposalRecommendatorService
             $extra = array_slice($unInterested, $length);
             $candidates = array_merge($candidates, $extra);
         }
+
+        $candidates = array_slice($candidates, $totalDesired);
 
         return $candidates;
     }
