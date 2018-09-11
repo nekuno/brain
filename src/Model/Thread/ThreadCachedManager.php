@@ -5,7 +5,7 @@ namespace Model\Thread;
 use Model\Link\LinkManager;
 use Model\Neo4j\GraphManager;
 use Model\Recommendation\ContentRecommendation;
-use Model\Recommendation\ContentRecommendationPaginatedManager;
+use Model\Recommendation\ContentRecommendator;
 use Model\Recommendation\UserRecommendation;
 use Model\Recommendation\UserRecommendationBuilder;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -21,11 +21,11 @@ class ThreadCachedManager
      * ThreadCachedManager constructor.
      * @param GraphManager $graphManager
      * @param UserRecommendationBuilder $userRecommendationBuilder
-     * @param ContentRecommendationPaginatedManager $contentRecommendationPaginatedModel
+     * @param ContentRecommendator $contentRecommendationPaginatedModel
      * @param LinkManager $linkModel
      */
     public function __construct(GraphManager $graphManager, UserRecommendationBuilder $userRecommendationBuilder,
-    ContentRecommendationPaginatedManager $contentRecommendationPaginatedModel, LinkManager $linkModel)
+    ContentRecommendator $contentRecommendationPaginatedModel, LinkManager $linkModel)
     {
         $this->graphManager = $graphManager;
         $this->userRecommendationBuilder = $userRecommendationBuilder;

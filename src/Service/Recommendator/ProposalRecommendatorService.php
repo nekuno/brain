@@ -5,11 +5,11 @@ namespace Service\Recommendator;
 use Model\Availability\AvailabilityManager;
 use Model\Filters\FilterUsersManager;
 use Model\Proposal\ProposalManager;
-use Model\Recommendation\CandidateInterestedPaginatedManager;
-use Model\Recommendation\CandidateUninterestedFreePaginatedManager;
-use Model\Recommendation\CandidateUninterestedPaginatedManager;
-use Model\Recommendation\ProposalRecommendationFreePaginatedManager;
-use Model\Recommendation\ProposalRecommendationPaginatedManager;
+use Model\Recommendation\CandidateInterestedRecommendator;
+use Model\Recommendation\CandidateUninterestedFreeRecommendator;
+use Model\Recommendation\CandidateUninterestedRecommendator;
+use Model\Recommendation\ProposalFreeRecommendator;
+use Model\Recommendation\ProposalRecommendator;
 use Model\User\User;
 use Paginator\ProposalRecommendationsPaginator;
 use Symfony\Component\HttpFoundation\Request;
@@ -29,22 +29,22 @@ class ProposalRecommendatorService
     /**
      * ProposalRecommendatorService constructor.
      * @param ProposalRecommendationsPaginator $paginator
-     * @param CandidateUninterestedPaginatedManager $candidateUninterestedPaginatedManager
-     * @param CandidateUninterestedFreePaginatedManager $candidateUninterestedFreePaginatedManager
-     * @param CandidateInterestedPaginatedManager $candidateInterestedPaginatedManager
-     * @param ProposalRecommendationPaginatedManager $proposalPaginatedManager
-     * @param ProposalRecommendationFreePaginatedManager $proposalRecommendationFreePaginatedManager
+     * @param CandidateUninterestedRecommendator $candidateUninterestedPaginatedManager
+     * @param CandidateUninterestedFreeRecommendator $candidateUninterestedFreePaginatedManager
+     * @param CandidateInterestedRecommendator $candidateInterestedPaginatedManager
+     * @param ProposalRecommendator $proposalPaginatedManager
+     * @param ProposalFreeRecommendator $proposalRecommendationFreePaginatedManager
      * @param FilterUsersManager $filterUsersManager
      * @param AvailabilityManager $availabilityManager
      * @param ProposalManager $proposalManager
      */
     public function __construct(
         ProposalRecommendationsPaginator $paginator,
-        CandidateUninterestedPaginatedManager $candidateUninterestedPaginatedManager,
-        CandidateUninterestedFreePaginatedManager $candidateUninterestedFreePaginatedManager,
-        CandidateInterestedPaginatedManager $candidateInterestedPaginatedManager,
-        ProposalRecommendationPaginatedManager $proposalPaginatedManager,
-        ProposalRecommendationFreePaginatedManager $proposalRecommendationFreePaginatedManager,
+        CandidateUninterestedRecommendator $candidateUninterestedPaginatedManager,
+        CandidateUninterestedFreeRecommendator $candidateUninterestedFreePaginatedManager,
+        CandidateInterestedRecommendator $candidateInterestedPaginatedManager,
+        ProposalRecommendator $proposalPaginatedManager,
+        ProposalFreeRecommendator $proposalRecommendationFreePaginatedManager,
         FilterUsersManager $filterUsersManager,
         AvailabilityManager $availabilityManager,
         ProposalManager $proposalManager
