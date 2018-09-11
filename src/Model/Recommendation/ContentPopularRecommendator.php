@@ -4,7 +4,7 @@ namespace Model\Recommendation;
 
 use Everyman\Neo4j\Query\ResultSet;
 
-class ContentPopularRecommendationPaginatedManager extends AbstractContentPaginatedManager
+class ContentPopularRecommendator extends AbstractContentRecommendator
 {
     /**
      * Slices the query according to $offset, and $limit.

@@ -8,7 +8,7 @@ use Model\Neo4j\GraphManager;
 use Model\Metadata\UserFilterMetadataManager;
 use Paginator\PaginatedInterface;
 
-abstract class AbstractUserRecommendationPaginatedManager implements PaginatedInterface
+abstract class AbstractUserRecommendator implements PaginatedInterface
 {
     /**
      * @var GraphManager

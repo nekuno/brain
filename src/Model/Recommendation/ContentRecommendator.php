@@ -11,7 +11,7 @@ use Model\Neo4j\GraphManager;
 use Service\ImageTransformations;
 use Service\Validator\FilterContentValidator;
 
-class ContentRecommendationRecommendator extends AbstractContentRecommendator
+class ContentRecommendator extends AbstractContentRecommendator
 {
 
     /**

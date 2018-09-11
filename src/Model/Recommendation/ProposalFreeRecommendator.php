@@ -5,7 +5,7 @@ namespace Model\Recommendation;
 use Model\Neo4j\GraphManager;
 use Paginator\PaginatedInterface;
 
-class ProposalRecommendationFreePaginatedManager implements PaginatedInterface
+class ProposalFreeRecommendator implements PaginatedInterface
 {
     protected $graphManager;
 

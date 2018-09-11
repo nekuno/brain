@@ -2,7 +2,7 @@
 
 namespace Model\Recommendation;
 
-class CandidateInterestedPaginatedManager extends AbstractUserRecommendationPaginatedManager
+class CandidateInterestedRecommendator extends AbstractUserRecommendator
 {
     /**
      * Hook point for validating the $filters.
