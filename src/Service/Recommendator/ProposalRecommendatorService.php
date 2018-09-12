@@ -76,9 +76,7 @@ class ProposalRecommendatorService
 
         $candidateRecommendations = array();
         foreach ($proposalIds as $proposalId) {
-            $filters = $this->filterUsersManager->getFilterUsersByProposalId($proposalId);
-            $filters = $filters->jsonSerialize();
-            $filters['proposalId'] = $proposalId;
+            $filters = $this->getFiltersByProposalId($proposalId);
 
             $interestedCandidates = $this->getInterestedCandidates($filters, $request);
             $uninterestedCandidates = $this->getUninterestedCandidates($filters, $request);
@@ -91,6 +89,19 @@ class ProposalRecommendatorService
         return $candidateRecommendations;
     }
 
+    /**
+     * @param $proposalId
+     * @return array
+     */
+    protected function getFiltersByProposalId($proposalId)
+    {
+        $filters = $this->filterUsersManager->getFilterUsersByProposalId($proposalId);
+        $filters = $filters->jsonSerialize();
+        $filters['proposalId'] = $proposalId;
+
+        return $filters;
+    }
+
     protected function getInterestedCandidates($filters, $request)
     {
         return $this->paginator->paginate($filters, $this->candidateInterestedPaginatedManager, $request);
@@ -98,10 +109,7 @@ class ProposalRecommendatorService
 
     protected function getUninterestedCandidates($filters, $request)
     {
-        $defaultLocale = 'en';
-        $proposalId = $filters['proposalId'];
-        $proposal = $this->proposalManager->getById($proposalId, $defaultLocale);
-        $availability = $this->availabilityManager->getByProposal($proposal);
+        $availability = $this->getAvailabilityByProposal($filters['proposalId']);
 
         if (null == $availability) {
             $model = $this->candidateUninterestedFreePaginatedManager;
@@ -110,6 +118,15 @@ class ProposalRecommendatorService
         }
 
         return $this->paginator->paginate($filters, $model, $request);
+    }
+
+    protected function getAvailabilityByProposal($proposalId)
+    {
+        $defaultLocale = 'en';
+        $proposal = $this->proposalManager->getById($proposalId, $defaultLocale);
+        $availability = $this->availabilityManager->getByProposal($proposal);
+
+        return $availability;
     }
 
     protected function getProposalRecommendations(User $user, Request $request)

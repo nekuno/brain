@@ -47,7 +47,7 @@ class ProposalFreeRecommendator implements PaginatedInterface
 
         $qb->match('(proposal:Proposal)')
             ->with('user', 'proposal')
-            ->where('NOT ((user)-[:PROPOSES|SKIPPED]->(proposal))')
+            ->where('NOT ((user)-[:PROPOSES|SKIPPED]->(proposal))', 'NOT (user)-[:HAS_AVAILABILITY]-(:Availability)--(:Day)--(:Availability)--(proposal)')
             ->with('proposal');
 
         $qb->returns('{id: id(proposal), text: proposal.text_es} AS proposal');
