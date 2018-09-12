@@ -4,18 +4,22 @@ namespace Model\Availability;
 
 use Model\Date\Date;
 use Model\Date\DateManager;
+use Model\Date\DayPeriodManager;
 
 class AvailabilityDataFormatter
 {
     protected $dateManager;
+    protected $dayPeriodManager;
 
     /**
      * AvailabilityDataFormatter constructor.
      * @param DateManager $dateManager
+     * @param DayPeriodManager $dayPeriodManager
      */
-    public function __construct(DateManager $dateManager)
+    public function __construct(DateManager $dateManager, DayPeriodManager $dayPeriodManager)
     {
         $this->dateManager = $dateManager;
+        $this->dayPeriodManager = $dayPeriodManager;
     }
 
     public function getFormattedData($data)
@@ -25,6 +29,7 @@ class AvailabilityDataFormatter
             'dynamic' => $this->getDynamicData($data)
         );
     }
+
     /**
      * @param array $data
      * @return array
@@ -32,14 +37,15 @@ class AvailabilityDataFormatter
      */
     protected function getStaticData(array $data)
     {
-        $dates = $this->createDateObjects($data);
-        $ranges = $this->createTimeRanges($data);
-        $ids = array();
+        $dates = $this->createDates($data);
+        $ranges = $this->createPeriodObjects($data);
+
+        $formattedData = array();
         foreach ($dates as $index => $date) {
-            $ids[] = array('date' => $date, 'range' => $ranges[$index]);
+            $formattedData[] = array('date' => $date, 'range' => $ranges[$index]);
         }
 
-        return $ids;
+        return $formattedData;
     }
 
     protected function getDynamicData(array $data)
@@ -64,30 +70,59 @@ class AvailabilityDataFormatter
      * @return Date[]
      * @throws \Exception
      */
-    protected function createDateObjects($data)
+    protected function createDates($data)
     {
         if (!isset($data['availability'])) {
             return array();
         }
 
+        $dayStrings = $this->getDayStrings($data);
+        $dates = $this->saveDates($dayStrings);
+
+        return $dates;
+    }
+
+    protected function saveDates($dayStrings)
+    {
+        $dates = array();
+        foreach ($dayStrings as $day) {
+            $date = $this->dateManager->merge($day);
+
+            if ($date == null) {
+                continue;
+            }
+
+            $this->createDayPeriods($date);
+
+            $dates[] = $date;
+        }
+
+        return $dates;
+    }
+
+    protected function createDayPeriods(Date $date)
+    {
+        $dayId = $date->getDayId();
+        $periods = $this->dayPeriodManager->createByDay($dayId);
+        foreach ($periods as $period)
+        {
+            $this->dayPeriodManager->relateToDay($period->getId(), $dayId);
+        }
+    }
+
+    protected function getDayStrings(array $data)
+    {
         $days = array_map(
             function ($object) {
                 return $object['day'];
             },
             $data['availability']['static']
         );
-        $dates = array();
-        foreach ($days as $index => $day) {
-            $date = $this->dateManager->merge($day);
-            if ($date !== null) {
-                $dates[$index] = $date;
-            }
-        }
 
-        return $dates;
+        return $days;
     }
 
-    protected function createTimeRanges($data)
+    protected function createPeriodObjects($data)
     {
         if (!isset($data['availability'])) {
             return array();
@@ -100,13 +135,8 @@ class AvailabilityDataFormatter
             $data['availability']['static']
         );
 
-        $secondsInDay = 24 * 3600;
-        foreach ($ranges as &$range) {
-            $range['min'] = isset($range['min']) ? $range['min'] : 0;
-            $range['max'] = isset($range['max']) ? $range['min'] : $secondsInDay;
+        $periods = $this->dayPeriodManager->buildFromData($ranges);
 
-        }
-
-        return $ranges;
+        return $periods;
     }
 }

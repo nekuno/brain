@@ -23,14 +23,19 @@ class ProposalService
     protected $proposalManager;
     protected $proposalTagManager;
     protected $proposalPhotoManager;
+    protected $photoManager;
     protected $filterUsersManager;
 
     /**
      * ProposalService constructor.
      * @param DateManager $dateManager
      * @param AvailabilityManager $availabilityManager
+     * @param AvailabilityDataFormatter $availabilityDataFormatter
      * @param ProposalManager $proposalManager
      * @param ProposalTagManager $proposalTagManager
+     * @param FilterUsersManager $filterUsersManager
+     * @param ProposalPhotoManager $proposalPhotoManager
+     * @param PhotoManager $photoManager
      */
     public function __construct(
         DateManager $dateManager,

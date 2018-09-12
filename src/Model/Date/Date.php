@@ -13,6 +13,8 @@ class Date implements \JsonSerializable
 
     protected $dayId;
 
+    protected $periods = [];
+
     public function setDate($string)
     {
         $this->year = $this->extractYear($string);
@@ -110,6 +112,22 @@ class Date implements \JsonSerializable
     public function setDayId($dayId): void
     {
         $this->dayId = $dayId;
+    }
+
+    /**
+     * @return array
+     */
+    public function getPeriods(): array
+    {
+        return $this->periods;
+    }
+
+    /**
+     * @param array $periods
+     */
+    public function setPeriods(array $periods): void
+    {
+        $this->periods = $periods;
     }
 
     public function jsonSerialize()

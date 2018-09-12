@@ -2,7 +2,7 @@
 
 namespace Model\Availability;
 
-use Model\Date\Date;
+use Model\Date\DayPeriod;
 use Model\Neo4j\GraphManager;
 use Model\Proposal\Proposal;
 use Model\User\User;
@@ -83,7 +83,8 @@ class AvailabilityManager
         return $this->build($data['availability']);
     }
 
-    public function addStatic(Availability $availability, array $dates)
+    //ONLY RANGE IS NEEDED
+    public function addStatic(Availability $availability, array $staticData)
     {
         $qb = $this->graphManager->createQueryBuilder();
 
@@ -92,22 +93,19 @@ class AvailabilityManager
             ->with('availability')
             ->setParameter('availabilityId', $availability->getId());
 
-        foreach ($dates as $index => $date) {
-            /** @var Date $dateObject */
-            $dateObject = $date['date'];
+        foreach ($staticData as $index => $staticDatum) {
+            /** @var DayPeriod[] $dayPeriods */
+            $dayPeriods = $staticDatum['range'];
 
-            $qb->optionalMatch('(day:Day)')
-                ->where("id(day) = {dayId$index}")
-                ->setParameter("dayId$index", $dateObject->getDayId());
+            foreach ($dayPeriods as $secondIndex => $dayPeriod)
+            {
+                $qb->optionalMatch("(period$index$secondIndex:DayPeriod)")
+                    ->where("id(dayPeriod) = {periodId$index$secondIndex}")
+                    ->setParameter("periodId$index$secondIndex", $dayPeriod->getId());
 
-            $qb->merge('(availability)-[includes:INCLUDES]->(day)');
-
-            $qb->set("includes.min = {min$index}")
-                ->set("includes.max = {max$index}")
-                ->setParameter("min$index", $date['range']['min'])
-                ->setParameter("max$index", $date['range']['max']);
-
-            $qb->with('availability');
+                $qb->merge("(availability)-[includes:INCLUDES]->(period$index$secondIndex)");
+                $qb->with('availability');
+            }
         }
 
         $qb->returns('{id: id(availability)} AS availability');
@@ -177,16 +175,16 @@ class AvailabilityManager
             ->with('availability')
             ->setParameter('availabilityId', $availabilityId);
 
-        $qb->optionalMatch('(availability)-[includes:INCLUDES]-(:Day)')
+        $qb->optionalMatch('(availability)-[includes:INCLUDES]-(:DayPeriod)')
             ->delete('includes')
             ->with('availability');
 
-        $qb->match('(day:Day)')
-            ->where('id(day) IN {days}')
-            ->with('availability', 'day')
-            ->setParameter('days', $dates);
+        $qb->match('(dayPeriod:DayPeriod)')
+            ->where('id(dayPeriod) IN {dayPeriods}')
+            ->with('availability', 'dayPeriod')
+            ->setParameter('dayPeriods', $dates);
 
-        $qb->merge('(availability)-[:INCLUDES]->(day)');
+        $qb->merge('(availability)-[:INCLUDES]->(dayPeriod)');
 
         $qb->returns('{id: id(availability)} AS availability');
 

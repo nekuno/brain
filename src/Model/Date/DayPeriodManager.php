@@ -34,7 +34,7 @@ class DayPeriodManager
 
         $data = $qb->getData($resultSet->current());
 
-        return $this->build($data);
+        return $this->buildFromResult($data);
     }
 
     public function createByDay($dayId)
@@ -58,14 +58,35 @@ class DayPeriodManager
 
         $data = $qb->getData($resultSet->current());
 
-        return $this->build($data);
+        return $this->buildFromResult($data);
+    }
+
+    public function relateToDay($periodId, $dayId)
+    {
+        $qb = $this->graphManager->createQueryBuilder();
+
+        $qb->match('(day:Day)')
+            ->where('id(day) = {dayId}')
+            ->setParameter('dayId', $dayId)
+            ->with('day');
+
+        $qb->match('(period:DayPeriod)')
+            ->where('id(period) = {periodId}')
+            ->setParameter('periodId', $periodId)
+            ->with('day', 'period');
+
+        $qb->merge('(period)-[:PERIOD_OF]->(day)');
+
+        $resultSet = $qb->getQuery()->getResultSet();
+
+        return !!$resultSet->count();
     }
 
     /**
      * @param array $data
      * @return DayPeriod[]
      */
-    protected function build(array $data)
+    protected function buildFromResult(array $data)
     {
         $periodsArray = $data['periods'];
 
@@ -75,6 +96,25 @@ class DayPeriodManager
             $period->setId($periodData['id']);
 
             $periodName = $this->extractPeriodName($periodData);
+            $period->setName($periodName);
+
+            $periods[] = $period;
+        }
+
+        return $periods;
+    }
+
+    /**
+     * @param array $data
+     * @return DayPeriod[]
+     */
+    public function buildFromData(array $data)
+    {
+        $periods = [];
+        foreach ($data as $periodData) {
+            $period = new DayPeriod();
+
+            $periodName = $periodData['name'];
             $period->setName($periodName);
 
             $periods[] = $period;
