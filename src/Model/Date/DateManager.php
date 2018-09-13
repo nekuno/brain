@@ -55,6 +55,36 @@ class DateManager
     }
 
     /**
+     * @param DayPeriod $dayPeriod
+     * @return Date
+     * @throws \Exception
+     */
+    public function getByPeriod(DayPeriod $dayPeriod)
+    {
+        $periodId = $dayPeriod->getId();
+
+        $qb = $this->graphManager->createQueryBuilder();
+
+        $qb->match('(period:DayPeriod)')
+            ->where('id(period) = {periodId}')
+            ->setParameter('periodId', $periodId)
+            ->with('period');
+
+        $qb->match('(day:Day)<-[:PERIOD_OF]-(period)')
+            ->with('day');
+
+        $qb->match('(day:Day)-[:DAY_OF]->(month:Month)-[:MONTH_OF]-(year:Year)')
+            ->returns('year.value AS year', 'month.value AS month', 'day.value AS day', 'id(day) AS dayId');
+
+        $result = $qb->getQuery()->getResultSet();
+
+        $data = $qb->getData($result->current());
+        $date = $this->build($data);
+
+        return $date;
+    }
+
+    /**
      * @param $dateString yyyy-mm-dd
      * @return Date|null
      * @throws \Exception

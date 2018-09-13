@@ -2,6 +2,7 @@
 
 namespace Model\Date;
 
+use Model\Availability\Availability;
 use Model\Neo4j\GraphManager;
 
 class DayPeriodManager
@@ -17,6 +18,11 @@ class DayPeriodManager
         $this->graphManager = $graphManager;
     }
 
+    /**
+     * @param $dayId
+     * @return DayPeriod[]
+     * @throws \Exception
+     */
     public function getByDay($dayId)
     {
         $qb = $this->graphManager->createQueryBuilder();
@@ -37,6 +43,37 @@ class DayPeriodManager
         return $this->buildFromResult($data);
     }
 
+    /**
+     * @param Availability $availability
+     * @return DayPeriod[]
+     * @throws \Exception
+     */
+    public function getByAvailability(Availability $availability)
+    {
+        $availabilityId = $availability->getId();
+
+        $qb = $this->graphManager->createQueryBuilder();
+
+        $qb->match('(availability)')
+            ->where('id(availability) = {availabilityId}')
+            ->with('availability')
+            ->setParameter('availabilityId', $availabilityId);
+
+        $qb->match('(availability)-[:INCLUDES]-(period:DayPeriod)')
+            ->with('{id: id(period), labels: labels(period)} AS period')
+            ->returns('collect(period) AS periods');
+        $result = $qb->getQuery()->getResultSet();
+
+        $data = $qb->getData($result->current());
+
+        return $this->buildFromResult($data);
+    }
+
+    /**
+     * @param $dayId
+     * @return DayPeriod[]
+     * @throws \Exception
+     */
     public function createByDay($dayId)
     {
         $qb = $this->graphManager->createQueryBuilder();
@@ -61,6 +98,12 @@ class DayPeriodManager
         return $this->buildFromResult($data);
     }
 
+    /**
+     * @param $periodId
+     * @param $dayId
+     * @return bool
+     * @throws \Exception
+     */
     public function relateToDay($periodId, $dayId)
     {
         $qb = $this->graphManager->createQueryBuilder();
@@ -129,7 +172,7 @@ class DayPeriodManager
 
         foreach ($labels as $label) {
             if ($label !== 'DayPeriod') {
-                return strtolower($label);
+                return $label;
             }
         }
 

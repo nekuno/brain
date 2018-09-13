@@ -70,7 +70,7 @@ class AvailabilityController extends FOSRestController implements ClassResourceI
      */
     public function getAction(User $user, AvailabilityService $availabilityService)
     {
-        $availability = $availabilityService->get($user);
+        $availability = $availabilityService->getByUser($user);
 
         return $this->view($availability, 200);
     }

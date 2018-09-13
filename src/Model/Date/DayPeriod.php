@@ -8,9 +8,11 @@ class DayPeriod implements \JsonSerializable
 
     protected $name;
 
+    protected $date;
+
     public function jsonSerialize()
     {
-        return $this->name;
+        return $this->name . ' of '. $this->date;
     }
 
     /**
@@ -45,4 +47,19 @@ class DayPeriod implements \JsonSerializable
         $this->name = $name;
     }
 
+    /**
+     * @return mixed
+     */
+    public function getDate()
+    {
+        return $this->date;
+    }
+
+    /**
+     * @param mixed $date
+     */
+    public function setDate($date): void
+    {
+        $this->date = $date;
+    }
 }

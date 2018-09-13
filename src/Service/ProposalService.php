@@ -2,8 +2,6 @@
 
 namespace Service;
 
-use Model\Availability\AvailabilityDataFormatter;
-use Model\Date\DateManager;
 use Model\Availability\AvailabilityManager;
 use Model\Exception\ValidationException;
 use Model\Filters\FilterUsersManager;
@@ -17,9 +15,8 @@ use Model\User\User;
 
 class ProposalService
 {
-    protected $dateManager;
     protected $availabilityManager;
-    protected $availabilityDataFormatter;
+    protected $availabilityService;
     protected $proposalManager;
     protected $proposalTagManager;
     protected $proposalPhotoManager;
@@ -28,9 +25,8 @@ class ProposalService
 
     /**
      * ProposalService constructor.
-     * @param DateManager $dateManager
      * @param AvailabilityManager $availabilityManager
-     * @param AvailabilityDataFormatter $availabilityDataFormatter
+     * @param AvailabilityService $availabilityService
      * @param ProposalManager $proposalManager
      * @param ProposalTagManager $proposalTagManager
      * @param FilterUsersManager $filterUsersManager
@@ -38,18 +34,16 @@ class ProposalService
      * @param PhotoManager $photoManager
      */
     public function __construct(
-        DateManager $dateManager,
         AvailabilityManager $availabilityManager,
-        AvailabilityDataFormatter $availabilityDataFormatter,
+        AvailabilityService $availabilityService,
         ProposalManager $proposalManager,
         ProposalTagManager $proposalTagManager,
         FilterUsersManager $filterUsersManager,
         ProposalPhotoManager $proposalPhotoManager,
         PhotoManager $photoManager
     ) {
-        $this->dateManager = $dateManager;
         $this->availabilityManager = $availabilityManager;
-        $this->availabilityDataFormatter = $availabilityDataFormatter;
+        $this->availabilityService = $availabilityService;
         $this->proposalManager = $proposalManager;
         $this->proposalTagManager = $proposalTagManager;
         $this->proposalPhotoManager = $proposalPhotoManager;
@@ -61,7 +55,7 @@ class ProposalService
     {
         $proposal = $this->proposalManager->getById($proposalId, $locale);
 
-        $availability = $this->availabilityManager->getByProposal($proposal);
+        $availability = $this->availabilityService->getByProposal($proposal);
         /** @var ProposalFieldAvailability $availabilityField */
 
         if (null !== $availability) {
@@ -84,13 +78,11 @@ class ProposalService
         }
 
         foreach ($proposals as $proposal) {
-            $availability = $this->availabilityManager->getByProposal($proposal);
+            $availability = $this->availabilityService->getByProposal($proposal);
             if (null == $availability) {
                 continue;
             }
 
-            $dates = $this->dateManager->getByAvailability($availability);
-            $availability->setDates($dates);
             $availabilityField = new ProposalFieldAvailability();
             $availabilityField->setAvailability($availability);
             $proposal->addField($availabilityField);
@@ -215,22 +207,7 @@ class ProposalService
 
     protected function createAvailability(Proposal $proposal, array $data)
     {
-        $formattedData = $this->availabilityDataFormatter->getFormattedData($data);
-        $static = $formattedData['static'];
-        $dynamic = $formattedData['dynamic'];
-
-        $availability = null;
-        if (!empty($static) || !empty($dynamic)) {
-            $availability = $this->availabilityManager->create();
-        }
-
-        if (!empty($static)) {
-            $this->availabilityManager->addStatic($availability, $static);
-        }
-
-        if (!empty($dynamic)) {
-            $this->availabilityManager->addDynamic($availability, $dynamic);
-        }
+        $availability = $this->availabilityService->saveWithData($data);
 
         if ($availability) {
             $this->availabilityManager->relateToProposal($availability, $proposal);

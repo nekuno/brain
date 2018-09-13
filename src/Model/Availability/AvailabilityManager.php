@@ -31,8 +31,8 @@ class AvailabilityManager
         $qb->match('(user)-[:HAS_AVAILABILITY]->(availability:Availability)')
             ->with('availability');
 
-        $qb->match('(availability)-[:INCLUDES]-(day:Day)')
-            ->returns('{id: id(availability)} AS availability', 'collect(id(day)) AS daysIds');
+        $qb->match('(availability)-[:INCLUDES]->(period:DayPeriod)')
+            ->returns('{id: id(availability)} AS availability', 'collect(id(period)) AS periodIds');
 
         $resultSet = $qb->getQuery()->getResultSet();
 
@@ -55,8 +55,8 @@ class AvailabilityManager
         $qb->match('(proposal)-[:HAS_AVAILABILITY]->(availability:Availability)')
             ->with('availability');
 
-        $qb->match('(availability)-[:INCLUDES]-(day:Day)')
-            ->returns('{id: id(availability)} AS availability', 'collect(id(day)) AS daysIds');
+        $qb->match('(availability)-[:INCLUDES]->(period:DayPeriod)')
+            ->returns('{id: id(availability)} AS availability', 'collect(id(period)) AS periodIds');
 
         $resultSet = $qb->getQuery()->getResultSet();
 
@@ -83,7 +83,6 @@ class AvailabilityManager
         return $this->build($data['availability']);
     }
 
-    //ONLY RANGE IS NEEDED
     public function addStatic(Availability $availability, array $staticData)
     {
         $qb = $this->graphManager->createQueryBuilder();
@@ -175,7 +174,7 @@ class AvailabilityManager
             ->with('availability')
             ->setParameter('availabilityId', $availabilityId);
 
-        $qb->optionalMatch('(availability)-[includes:INCLUDES]-(:DayPeriod)')
+        $qb->optionalMatch('(availability)-[includes:INCLUDES]->(:DayPeriod)')
             ->delete('includes')
             ->with('availability');
 
@@ -216,8 +215,8 @@ class AvailabilityManager
         $availability = new Availability();
         $availability->setId($availabilityData['id']);
 
-        if (isset($availabilityData['daysIds'])) {
-            $availability->setDaysIds($availabilityData['daysIds']);
+        if (isset($availabilityData['periodIds'])) {
+            $availability->setPeriodIds($availabilityData['periodIds']);
         }
 
         return $availability;
