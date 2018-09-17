@@ -9,6 +9,6 @@ class ProposalPhotoManager extends GalleryManager
     //TODO: Add random photos
     public function getRandomPhoto()
     {
-        return '';
+        return 'fake.png';
     }
 }

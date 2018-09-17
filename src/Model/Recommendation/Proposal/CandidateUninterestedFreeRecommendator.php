@@ -1,6 +1,8 @@
 <?php
 
-namespace Model\Recommendation;
+namespace Model\Recommendation\Proposal;
+
+use Model\Recommendation\AbstractUserRecommendator;
 
 class CandidateUninterestedFreeRecommendator extends AbstractUserRecommendator
 {
@@ -11,7 +13,7 @@ class CandidateUninterestedFreeRecommendator extends AbstractUserRecommendator
      */
     public function validateFilters(array $filters)
     {
-        return isset($filters['userId']);
+        return isset($filters['proposalId']);
     }
 
     /**
@@ -44,14 +46,14 @@ class CandidateUninterestedFreeRecommendator extends AbstractUserRecommendator
 
         $qb->match('(anyUser:UserEnabled)')
             ->with('anyUser', 'proposal', 'user')
-            ->where('NOT((proposal)<-[:INTERESTED_IN]-(anyUser))', 'NOT (proposal)-[:ACCEPTED|SKIPPED]->(anyUser)');
+            ->where('NOT (proposal)<-[:INTERESTED_IN]-(anyUser)', 'NOT (proposal)-[:ACCEPTED|SKIPPED]->(anyUser)', 'NOT (proposal)--(:Availability)--(:DayPeriod)--(:Availability)--(anyUser)');
         //TODO: Include filter by weekday
 
         $qb->optionalMatch('(anyUser)-[similarity:SIMILARITY]-(user)')
             ->with('anyUser', 'proposal', 'user', 'similarity');
         $qb->optionalMatch('(anyUser)-[matching:MATCHING]-(user)')
             ->with('anyUser', 'proposal', 'user', 'similarity', 'matching');
-        $qb->match('(anyUser:UserEnabled)-[:PROFILE_OF]-(p:Profile)')
+        $qb->match('(anyUser)-[:PROFILE_OF]-(p:Profile)')
             ->with('proposal', 'anyUser', 'p', 'similarity', 'matching');
 
         foreach ($filters['matches'] as $match) {
@@ -90,20 +92,37 @@ class CandidateUninterestedFreeRecommendator extends AbstractUserRecommendator
         return $userRecommendations;
     }
 
-    public function countTotal(array $filters)
+    public function countTotal(array $filtersArray)
     {
-        $userId = $filters['userId'];
+        $proposalId = $filtersArray['proposalId'];
+        $filters = $this->applyFilters($filtersArray);
+
 
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match('(user:User{qnoow_id:{userId}})')
-            ->with('user')
-            ->setParameter('userId', $userId);
+        $qb->match('(proposal:Proposal)')
+            ->where('id(proposal) = {proposalId}')
+            ->with('proposal')
+            ->setParameter('proposalId', $proposalId);
 
-        $qb->match('(user)-[:PROFILE_OF]-(:Profile)-[:OPTION_OF]-(proposal:Proposal)')
-            ->with('proposal');
+        $qb->match('(user)-[:PROPOSES]->(proposal:Proposal)')
+            ->with('proposal', 'user');
 
-        $qb->where('NOT ((proposal)<-[:INTERESTED_IN]-(anyUser:UserEnabled))');
+        $qb->match('(anyUser:UserEnabled)')
+            ->with('anyUser', 'proposal', 'user')
+            ->where('NOT (proposal)<-[:INTERESTED_IN]-(anyUser)', 'NOT (proposal)-[:ACCEPTED|SKIPPED]->(anyUser)', 'NOT (proposal)--(:Availability)--(:DayPeriod)--(:Availability)--(anyUser)');
+
+        $qb->match('(anyUser)-[:PROFILE_OF]-(p:Profile)');
+        $qb->match('(p)-[:LOCATION]-(l:Location)');
+        $qb->with('anyUser', 'proposal', 'user', 'p', 'l');
+
+        foreach ($filters['matches'] as $match) {
+            $qb->match($match);
+        }
+
+        $qb->with('anyUser', 'proposal', 'user');
+
+        $qb->where($filters['conditions']);
 
         $qb->returns('count(distinct anyUser) AS amount');
 
@@ -111,6 +130,4 @@ class CandidateUninterestedFreeRecommendator extends AbstractUserRecommendator
 
         return $result->current()->offsetGet('amount');
     }
-
-
 }

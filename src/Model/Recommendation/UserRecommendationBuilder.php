@@ -6,6 +6,7 @@ use Everyman\Neo4j\Query\ResultSet;
 use Everyman\Neo4j\Query\Row;
 use Model\Photo\PhotoManager;
 use Model\Profile\ProfileManager;
+use Model\Recommendation\Proposal\ProposalCandidateRecommendation;
 
 class UserRecommendationBuilder
 {

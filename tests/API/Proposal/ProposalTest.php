@@ -119,7 +119,7 @@ class ProposalTest extends ProposalAPITest
     protected function assertGetRecommendations()
     {
         $response = $this->getRecommendations();
-        $formattedResponse = $this->assertJsonResponse($response, 200);
+        $formattedResponse = $this->assertJsonResponse($response, 200, $response->getContent());
     }
 
     protected function assertGetMetadata()
@@ -217,8 +217,8 @@ class ProposalTest extends ProposalAPITest
                     )
                 ),
                 'static' => array(
-                    array('day' => '2018-01-10', 'range' => array('min' => '3600', 'max' => '7200')),
-                    array('day' => '2018-01-12', 'range' => array('min' => '3600', 'max' => '7200')),
+                    array('day' => '2018-01-10', 'range' => array('Morning')),
+                    array('day' => '2018-01-12', 'range' => array('Morning', 'Night')),
                 )
             ),
             'participantLimit' => 5,

@@ -12,7 +12,7 @@ use Model\User\User;
 use Nelmio\ApiDocBundle\Annotation\Security;
 use Service\MetadataService;
 use Service\ProposalService;
-use Service\Recommendator\ProposalRecommendatorService;
+use Service\ProposalRecommendatorService;
 use Symfony\Component\HttpFoundation\Request;
 use Swagger\Annotations as SWG;
 
@@ -213,7 +213,14 @@ class ProposalController extends FOSRestController implements ClassResourceInter
      */
     public function getRecommendationsAction(User $user, Request $request, ProposalRecommendatorService $proposalRecommendatorService)
     {
-        $recommendations = $proposalRecommendatorService->getRecommendations($user, $request);
+        try {
+            $recommendations = $proposalRecommendatorService->getRecommendations($user, $request);
+        } catch (\Exception $e) {
+            var_dump($e->getMessage());
+            var_dump($e->getTraceAsString());
+            throw $e;
+
+        }
 
         return $this->view($recommendations, 200);
     }

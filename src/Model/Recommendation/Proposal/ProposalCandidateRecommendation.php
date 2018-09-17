@@ -1,8 +1,9 @@
 <?php
 
-namespace Model\Recommendation;
+namespace Model\Recommendation\Proposal;
 
 use Model\Proposal\Proposal;
+use Model\Recommendation\AbstractUserRecommendation;
 
 class ProposalCandidateRecommendation extends AbstractUserRecommendation
 {

@@ -1,15 +1,15 @@
 <?php
 
-namespace Service\Recommendator;
+namespace Service;
 
 use Model\Availability\AvailabilityManager;
 use Model\Filters\FilterUsersManager;
 use Model\Proposal\ProposalManager;
-use Model\Recommendation\CandidateInterestedRecommendator;
-use Model\Recommendation\CandidateUninterestedFreeRecommendator;
-use Model\Recommendation\CandidateUninterestedRecommendator;
-use Model\Recommendation\ProposalFreeRecommendator;
-use Model\Recommendation\ProposalRecommendator;
+use Model\Recommendation\Proposal\CandidateInterestedRecommendator;
+use Model\Recommendation\Proposal\CandidateUninterestedFreeRecommendator;
+use Model\Recommendation\Proposal\CandidateUninterestedRecommendator;
+use Model\Recommendation\Proposal\ProposalFreeRecommendator;
+use Model\Recommendation\Proposal\ProposalRecommendator;
 use Model\User\User;
 use Paginator\ProposalRecommendationsPaginator;
 use Symfony\Component\HttpFoundation\Request;
@@ -20,41 +20,41 @@ class ProposalRecommendatorService
     protected $filterUsersManager;
     protected $availabilityManager;
     protected $proposalManager;
-    protected $candidateUninterestedPaginatedManager;
-    protected $candidateUninterestedFreePaginatedManager;
-    protected $candidateInterestedPaginatedManager;
-    protected $proposalPaginatedManager;
-    protected $proposalRecommendationFreePaginatedManager;
+    protected $candidateUninterestedRecommendator;
+    protected $candidateUninterestedFreeRecommendator;
+    protected $candidateInterestedRecommendator;
+    protected $proposalRecommendator;
+    protected $proposalFreeRecommendator;
 
     /**
      * ProposalRecommendatorService constructor.
      * @param ProposalRecommendationsPaginator $paginator
-     * @param CandidateUninterestedRecommendator $candidateUninterestedPaginatedManager
-     * @param CandidateUninterestedFreeRecommendator $candidateUninterestedFreePaginatedManager
-     * @param CandidateInterestedRecommendator $candidateInterestedPaginatedManager
-     * @param ProposalRecommendator $proposalPaginatedManager
-     * @param ProposalFreeRecommendator $proposalRecommendationFreePaginatedManager
+     * @param CandidateUninterestedRecommendator $candidateUninterestedRecommendator
+     * @param CandidateUninterestedFreeRecommendator $candidateUninterestedFreeRecommendator
+     * @param CandidateInterestedRecommendator $candidateInterestedRecommendator
+     * @param ProposalRecommendator $proposalRecommendator
+     * @param ProposalFreeRecommendator $proposalRecommendationFreeRecommendator
      * @param FilterUsersManager $filterUsersManager
      * @param AvailabilityManager $availabilityManager
      * @param ProposalManager $proposalManager
      */
     public function __construct(
         ProposalRecommendationsPaginator $paginator,
-        CandidateUninterestedRecommendator $candidateUninterestedPaginatedManager,
-        CandidateUninterestedFreeRecommendator $candidateUninterestedFreePaginatedManager,
-        CandidateInterestedRecommendator $candidateInterestedPaginatedManager,
-        ProposalRecommendator $proposalPaginatedManager,
-        ProposalFreeRecommendator $proposalRecommendationFreePaginatedManager,
+        CandidateUninterestedRecommendator $candidateUninterestedRecommendator,
+        CandidateUninterestedFreeRecommendator $candidateUninterestedFreeRecommendator,
+        CandidateInterestedRecommendator $candidateInterestedRecommendator,
+        ProposalRecommendator $proposalRecommendator,
+        ProposalFreeRecommendator $proposalRecommendationFreeRecommendator,
         FilterUsersManager $filterUsersManager,
         AvailabilityManager $availabilityManager,
         ProposalManager $proposalManager
     ) {
         $this->paginator = $paginator;
-        $this->candidateUninterestedPaginatedManager = $candidateUninterestedPaginatedManager;
-        $this->candidateUninterestedFreePaginatedManager = $candidateUninterestedFreePaginatedManager;
-        $this->candidateInterestedPaginatedManager = $candidateInterestedPaginatedManager;
-        $this->proposalPaginatedManager = $proposalPaginatedManager;
-        $this->proposalRecommendationFreePaginatedManager = $proposalRecommendationFreePaginatedManager;
+        $this->candidateUninterestedRecommendator = $candidateUninterestedRecommendator;
+        $this->candidateUninterestedFreeRecommendator = $candidateUninterestedFreeRecommendator;
+        $this->candidateInterestedRecommendator = $candidateInterestedRecommendator;
+        $this->proposalRecommendator = $proposalRecommendator;
+        $this->proposalFreeRecommendator = $proposalRecommendationFreeRecommendator;
         $this->filterUsersManager = $filterUsersManager;
         $this->availabilityManager = $availabilityManager;
         $this->proposalManager = $proposalManager;
@@ -77,6 +77,7 @@ class ProposalRecommendatorService
         $candidateRecommendations = array();
         foreach ($proposalIds as $proposalId) {
             $filters = $this->getFiltersByProposalId($proposalId);
+            $filters['userId'] = $user->getId();
 
             $interestedCandidates = $this->getInterestedCandidates($filters, $request);
             $uninterestedCandidates = $this->getUninterestedCandidates($filters, $request);
@@ -104,7 +105,7 @@ class ProposalRecommendatorService
 
     protected function getInterestedCandidates($filters, $request)
     {
-        return $this->paginator->paginate($filters, $this->candidateInterestedPaginatedManager, $request);
+        return $this->paginator->paginate($filters, $this->candidateInterestedRecommendator, $request);
     }
 
     protected function getUninterestedCandidates($filters, $request)
@@ -112,9 +113,9 @@ class ProposalRecommendatorService
         $availability = $this->getAvailabilityByProposal($filters['proposalId']);
 
         if (null == $availability) {
-            $model = $this->candidateUninterestedFreePaginatedManager;
+            $model = $this->candidateUninterestedFreeRecommendator;
         } else {
-            $model = $this->candidateInterestedPaginatedManager;
+            $model = $this->candidateInterestedRecommendator;
         }
 
         return $this->paginator->paginate($filters, $model, $request);
@@ -134,7 +135,7 @@ class ProposalRecommendatorService
         $filters = $request->query->get('filters');
         $filters['userId'] = $user->getId();
 
-        $proposalRecommendations = $this->paginator->paginate($filters, $this->proposalPaginatedManager, $request);
+        $proposalRecommendations = $this->paginator->paginate($filters, $this->proposalRecommendator, $request);
         $proposalRecommendations = array_slice($proposalRecommendations['items'], 10);
 
         return $proposalRecommendations;

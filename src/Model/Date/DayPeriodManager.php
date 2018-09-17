@@ -85,7 +85,8 @@ class DayPeriodManager
 
         $qb->merge('(day)<-[:PERIOD_OF]-(morning:DayPeriod:Morning)')
             ->merge('(day)<-[:PERIOD_OF]-(evening:DayPeriod:Evening)')
-            ->merge('(day)<-[:PERIOD_OF]-(night:DayPeriod:Night)');
+            ->merge('(day)<-[:PERIOD_OF]-(night:DayPeriod:Night)')
+            ->with('day');
 
         $qb->match('(day)<-[:PERIOD_OF]-(period:DayPeriod)')
             ->with('{id: id(period), labels: labels(period)} AS period')
@@ -154,10 +155,9 @@ class DayPeriodManager
     public function buildFromData(array $data)
     {
         $periods = [];
-        foreach ($data as $periodData) {
-            $period = new DayPeriod();
+        foreach ($data as $periodName) {
 
-            $periodName = $periodData['name'];
+            $period = new DayPeriod();
             $period->setName($periodName);
 
             $periods[] = $period;

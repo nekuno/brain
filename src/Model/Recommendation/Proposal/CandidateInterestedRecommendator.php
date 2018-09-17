@@ -1,6 +1,8 @@
 <?php
 
-namespace Model\Recommendation;
+namespace Model\Recommendation\Proposal;
+
+use Model\Recommendation\AbstractUserRecommendator;
 
 class CandidateInterestedRecommendator extends AbstractUserRecommendator
 {
@@ -11,7 +13,7 @@ class CandidateInterestedRecommendator extends AbstractUserRecommendator
      */
     public function validateFilters(array $filters)
     {
-        return isset($filters['userId']);
+        return isset($filters['proposalId']);
     }
 
     /**
@@ -26,16 +28,17 @@ class CandidateInterestedRecommendator extends AbstractUserRecommendator
         $offset = floor($offset / 2);
         $limit = floor($limit / 2);
 
-        $userId = $filtersArray['userId'];
+        $proposalId = $filtersArray['proposalId'];
         $order = isset($filtersArray['userFilters']['order'])? $filtersArray['userFilters']['order'] : 'id DESC';
 
         $filters = $this->applyFilters($filtersArray);
 
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match('(user:User{qnoow_id:{userId}})')
-            ->with('user')
-            ->setParameter('userId', $userId);
+        $qb->match('(proposal:Proposal)')
+            ->where('id(proposal) = {proposalId}')
+            ->with('proposal')
+            ->setParameter('proposalId', $proposalId);
 
         $qb->match('(user)-[:PROPOSES]->(proposal:Proposal)')
             ->with('proposal', 'user');
@@ -81,20 +84,34 @@ class CandidateInterestedRecommendator extends AbstractUserRecommendator
         return $userRecommendations;
     }
 
-    public function countTotal(array $filters)
+    public function countTotal(array $filtersArray)
     {
-        $userId = $filters['userId'];
+        $proposalId = $filtersArray['proposalId'];
+        $filters = $this->applyFilters($filtersArray);
 
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match('(user:User{qnoow_id:{userId}})')
-            ->with('user')
-            ->setParameter('userId', $userId);
+        $qb->match('(proposal:Proposal)')
+            ->where('id(proposal) = {proposalId}')
+            ->with('proposal')
+            ->setParameter('proposalId', $proposalId);
 
-        $qb->match('(user)-[:PROFILE_OF]-(:Profile)-[:OPTION_OF]-(proposal:Proposal)')
-            ->with('proposal');
+        $qb->match('(user)-[:PROPOSES]->(proposal:Proposal)')
+            ->with('proposal', 'user');
 
         $qb->match('(proposal)<-[:INTERESTED_IN]-(anyUser:UserEnabled)');
+
+        $qb->match('(anyUser)-[:PROFILE_OF]-(p:Profile)');
+        $qb->match('(p)-[:LOCATION]-(l:Location)');
+        $qb->with('anyUser', 'proposal', 'user', 'p', 'l');
+
+        foreach ($filters['matches'] as $match) {
+            $qb->match($match);
+        }
+
+        $qb->with('anyUser', 'proposal', 'user');
+
+        $qb->where($filters['conditions']);
 
         $qb->returns('count(distinct anyUser) AS amount');
 

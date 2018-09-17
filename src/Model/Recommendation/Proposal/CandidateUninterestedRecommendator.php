@@ -1,6 +1,8 @@
 <?php
 
-namespace Model\Recommendation;
+namespace Model\Recommendation\Proposal;
+
+use Model\Recommendation\AbstractUserRecommendator;
 
 class CandidateUninterestedRecommendator extends AbstractUserRecommendator
 {
@@ -11,7 +13,7 @@ class CandidateUninterestedRecommendator extends AbstractUserRecommendator
      */
     public function validateFilters(array $filters)
     {
-        return isset($filters['userId']);
+        return isset($filters['proposalId']);
     }
 
     /**
@@ -45,11 +47,7 @@ class CandidateUninterestedRecommendator extends AbstractUserRecommendator
         $qb->match('(proposal)-[:HAS_AVAILABILITY]->(availability:Availability)')
             ->with('availability', 'proposal', 'user');
 
-        $qb->match('(availability)-[:INCLUDES]-(:Day)-[includes:INCLUDES]-(:Availability)-[anyHas:HAS_AVAILABILITY]-(anyUser:User)')
-            //range A "fits" range B if A.min is inside B, or if A.max is inside B
-            //->where((includes fits anyHas) OR (anyHas fits includes))
-            ->where('((includes.min > anyHas.min AND includes.min < anyHas.max) OR (includes.max < anyHas.max AND includes.max > anyHas.min)) 
-                    OR ((anyHas.min > includes.min AND anyHas.min < includes.max) OR (anyHas.max < includes.max AND anyHas.max > includes.min))')
+        $qb->match('(availability)-[:INCLUDES]-(:DayPeriod)-[includes:INCLUDES]-(:Availability)-[anyHas:HAS_AVAILABILITY]-(anyUser:User)')
             ->with('anyUser', 'proposal', 'user')
             ->where('NOT((proposal)<-[:INTERESTED_IN]-(anyUser))', 'NOT (proposal)-[:ACCEPTED|SKIPPED]->(anyUser)');
         //TODO: Include filter by weekday
@@ -58,7 +56,7 @@ class CandidateUninterestedRecommendator extends AbstractUserRecommendator
             ->with('anyUser', 'proposal', 'user', 'similarity');
         $qb->optionalMatch('(anyUser)-[matching:MATCHING]-(user)')
             ->with('anyUser', 'proposal', 'user', 'similarity', 'matching');
-        $qb->match('(anyUser:UserEnabled)-[:PROFILE_OF]-(p:Profile)')
+        $qb->match('(anyUser)-[:PROFILE_OF]-(p:Profile)')
             ->with('proposal', 'anyUser', 'p', 'similarity', 'matching');
 
         foreach ($filters['matches'] as $match) {
@@ -97,20 +95,39 @@ class CandidateUninterestedRecommendator extends AbstractUserRecommendator
         return $userRecommendations;
     }
 
-    public function countTotal(array $filters)
+    public function countTotal(array $filtersArray)
     {
-        $userId = $filters['userId'];
+        $proposalId = $filtersArray['proposalId'];
+        $filters = $this->applyFilters($filtersArray);
 
         $qb = $this->gm->createQueryBuilder();
 
-        $qb->match('(user:User{qnoow_id:{userId}})')
-            ->with('user')
-            ->setParameter('userId', $userId);
+        $qb->match('(proposal:Proposal)')
+            ->where('id(proposal) = {proposalId}')
+            ->with('proposal')
+            ->setParameter('proposalId', $proposalId);
 
-        $qb->match('(user)-[:PROFILE_OF]-(:Profile)-[:OPTION_OF]-(proposal:Proposal)')
-            ->with('proposal');
+        $qb->match('(user)-[:PROPOSES]->(proposal:Proposal)')
+            ->with('proposal', 'user');
 
-        $qb->where('NOT ((proposal)<-[:INTERESTED_IN]-(anyUser:UserEnabled))');
+        $qb->match('(proposal)-[:HAS_AVAILABILITY]->(availability:Availability)')
+            ->with('availability', 'proposal', 'user');
+
+        $qb->match('(availability)-[:INCLUDES]-(:DayPeriod)-[includes:INCLUDES]-(:Availability)-[anyHas:HAS_AVAILABILITY]-(anyUser:User)')
+            ->with('anyUser', 'proposal', 'user')
+            ->where('NOT((proposal)<-[:INTERESTED_IN]-(anyUser))', 'NOT (proposal)-[:ACCEPTED|SKIPPED]->(anyUser)');
+
+        $qb->match('(anyUser)-[:PROFILE_OF]-(p:Profile)');
+        $qb->match('(p)-[:LOCATION]-(l:Location)');
+        $qb->with('anyUser', 'proposal', 'user', 'p', 'l');
+
+        foreach ($filters['matches'] as $match) {
+            $qb->match($match);
+        }
+
+        $qb->with('anyUser', 'proposal', 'user');
+
+        $qb->where($filters['conditions']);
 
         $qb->returns('count(distinct anyUser) AS amount');
 

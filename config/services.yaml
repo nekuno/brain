@@ -56,7 +56,9 @@ services:
     Model\Token\TokenStatus\:
         resource: '../src/Model/Token/TokenStatus/*Manager.php'
     Model\Recommendation\:
-        resource: '../src/Model/Recommendation/*Builder.php'
+        resource: '../src/Model/Recommendation/*{Builder.php,Recommendator.php}'
+    Model\Recommendation\Proposal\:
+        resource: '../src/Model/Recommendation/Proposal/*Recommendator.php'
     Service\:
         resource: '../src/Service/*'
     Worker\:
@@ -182,6 +184,9 @@ services:
             $base: "%env(resolve:images_absolute_web_dir)%"
             $host: "%env(social_host)%"
     Model\Photo\GalleryManager:
+        arguments:
+            $base: "%env(resolve:images_absolute_web_dir)%"
+    Model\Photo\ProposalPhotoManager:
         arguments:
             $base: "%env(resolve:images_absolute_web_dir)%"
     Model\Invitation\InvitationManager:

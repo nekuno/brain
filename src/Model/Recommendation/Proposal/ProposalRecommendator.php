@@ -1,11 +1,11 @@
 <?php
 
-namespace Model\Recommendation;
+namespace Model\Recommendation\Proposal;
 
 use Model\Neo4j\GraphManager;
 use Paginator\PaginatedInterface;
 
-class ProposalFreeRecommendator implements PaginatedInterface
+class ProposalRecommendator implements PaginatedInterface
 {
     protected $graphManager;
 
@@ -45,9 +45,12 @@ class ProposalFreeRecommendator implements PaginatedInterface
             ->with('user')
             ->setParameter('userId', $userId);
 
-        $qb->match('(proposal:Proposal)')
+        $qb->match('(user)-[:HAS_AVAILABILITY]->(:Availability)-[:INCLUDES]->(day:DayPeriod)');
+
+        $qb->match('(day)<-[includes:INCLUDES]-(:Availability)<-[anyHas:HAS_AVAILABILITY]-(proposal:Proposal)')
+
             ->with('user', 'proposal')
-            ->where('NOT ((user)-[:PROPOSES|SKIPPED]->(proposal))', 'NOT (user)-[:HAS_AVAILABILITY]-(:Availability)--(:Day)--(:Availability)--(proposal)')
+            ->where('NOT ((user)-[:PROPOSES|SKIPPED]->(proposal))')
             ->with('proposal');
 
         $qb->returns('{id: id(proposal), text: proposal.text_es} AS proposal');
@@ -78,7 +81,9 @@ class ProposalFreeRecommendator implements PaginatedInterface
             ->with('user')
             ->setParameter('userId', $userId);
 
-        $qb->match('(proposal:Proposal)')
+        $qb->match('(user)-[:HAS_AVAILABILITY]->(:Availability)-[:INCLUDES]->(day:Day)');
+
+        $qb->match('(day)<-[:INCLUDES]-(:Availability)<-[:HAS_AVAILABILITY]-(proposal:Proposal)')
             ->where('NOT ((user)-[:PROPOSES]->(proposal))')
             ->with('proposal');
 

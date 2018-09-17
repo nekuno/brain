@@ -230,13 +230,13 @@ class AvailabilityManager
         $qb->match('(availability:Availability)')
             ->where('id(availability) = {availabilityId}')
             ->with('availability')
-            ->setParameter('availabilityId', $availabilityId);
+            ->setParameter('availabilityId', (integer)$availabilityId);
 
         $proposalId = $proposal->getId();
         $qb->match('(proposal:Proposal)')
             ->where('id(proposal) = {proposalId}')
             ->with('proposal')
-            ->setParameter('proposalId', $proposalId);
+            ->setParameter('proposalId', (integer)$proposalId);
 
         $qb->merge('(proposal)-[:HAS_AVAILABILITY]-(availability)');
 

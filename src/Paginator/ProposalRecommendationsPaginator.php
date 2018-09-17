@@ -2,6 +2,7 @@
 
 namespace Paginator;
 
+use Model\Neo4j\Neo4jException;
 use Symfony\Component\HttpFoundation\Request;
 
 class ProposalRecommendationsPaginator extends Paginator
@@ -18,7 +19,12 @@ class ProposalRecommendationsPaginator extends Paginator
         $this->checkFilters($filters, $paginated);
 
         $slice = $paginated->slice($filters, $offset, $limit);
-        $total = $paginated->countTotal($filters);
+        try {
+            $total = $paginated->countTotal($filters);
+        } catch (Neo4jException $e) {
+            var_dump($e->getQuery());
+            throw $e;
+        }
 
         $pagination = array();
         $pagination['total'] = $total;
@@ -29,7 +35,7 @@ class ProposalRecommendationsPaginator extends Paginator
 
         $result = array();
         $result['pagination'] = $pagination;
-        $result['items'] = $slice['items'];
+        $result['items'] = $slice;
 
         return $result;
     }

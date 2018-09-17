@@ -1,11 +1,11 @@
 <?php
 
-namespace Model\Recommendation;
+namespace Model\Recommendation\Proposal;
 
 use Model\Neo4j\GraphManager;
 use Paginator\PaginatedInterface;
 
-class ProposalRecommendator implements PaginatedInterface
+class ProposalFreeRecommendator implements PaginatedInterface
 {
     protected $graphManager;
 
@@ -45,16 +45,9 @@ class ProposalRecommendator implements PaginatedInterface
             ->with('user')
             ->setParameter('userId', $userId);
 
-        $qb->match('(user)-[:HAS_AVAILABILITY]->(:Availability)-[:INCLUDES]->(day:Day)');
-
-        $qb->match('(day)<-[includes:INCLUDES]-(:Availability)<-[anyHas:HAS_AVAILABILITY]-(proposal:Proposal)')
-            //range A "fits" range B if A.min is inside B, or if A.max is inside B
-            //->where((includes fits anyHas) OR (anyHas fits includes))
-            ->where('((includes.min > anyHas.min AND includes.min < anyHas.max) OR (includes.max < anyHas.max AND includes.max > anyHas.min)) 
-                    OR ((anyHas.min > includes.min AND anyHas.min < includes.max) OR (anyHas.max < includes.max AND anyHas.max > includes.min))')
-
+        $qb->match('(proposal:Proposal)')
             ->with('user', 'proposal')
-            ->where('NOT ((user)-[:PROPOSES|SKIPPED]->(proposal))')
+            ->where('NOT ((user)-[:PROPOSES|SKIPPED]->(proposal))', 'NOT (user)-[:HAS_AVAILABILITY]-(:Availability)--(:DayPeriod)--(:Availability)--(proposal)')
             ->with('proposal');
 
         $qb->returns('{id: id(proposal), text: proposal.text_es} AS proposal');
@@ -85,9 +78,7 @@ class ProposalRecommendator implements PaginatedInterface
             ->with('user')
             ->setParameter('userId', $userId);
 
-        $qb->match('(user)-[:HAS_AVAILABILITY]->(:Availability)-[:INCLUDES]->(day:Day)');
-
-        $qb->match('(day)<-[:INCLUDES]-(:Availability)<-[:HAS_AVAILABILITY]-(proposal:Proposal)')
+        $qb->match('(proposal:Proposal)')
             ->where('NOT ((user)-[:PROPOSES]->(proposal))')
             ->with('proposal');
 

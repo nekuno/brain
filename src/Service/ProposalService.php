@@ -135,8 +135,8 @@ class ProposalService
     protected function saveProposalPhoto(User $user, array $data)
     {
         $photo = isset($data['photo']) ? $data['photo'] : $this->proposalPhotoManager->getRandomPhoto();
-        $extension = $this->photoManager->validate($photo);
-        $this->proposalPhotoManager->save($photo, $user, $extension);
+//        $extension = $this->photoManager->validate($photo);
+//        $this->proposalPhotoManager->save($photo, $user, $extension);
     }
 
     protected function updateFilters(Proposal $proposal, $filters)
