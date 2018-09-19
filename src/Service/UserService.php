@@ -2,6 +2,7 @@
 
 namespace Service;
 
+use Model\Neo4j\Neo4jException;
 use Model\Photo\GalleryManager;
 use Model\Photo\PhotoManager;
 use Model\Proposal\ProposalManager;
@@ -10,6 +11,7 @@ use Model\Profile\ProfileManager;
 use Model\Rate\RateManager;
 use Model\Token\TokensManager;
 use Model\Token\TokenStatus\TokenStatusManager;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class UserService
 {
@@ -37,8 +39,18 @@ class UserService
      * @param GalleryManager $galleryManager
      * @param ProposalManager $proposalManager
      */
-    public function __construct(UserManager $userManager, ProfileManager $profileManager, TokensManager $tokensModel, TokenStatusManager $tokenStatusManager, RateManager $rateModel, LinkService $linkService, InstantConnection $instantConnection, PhotoManager $photoManager, GalleryManager $galleryManager, ProposalManager $proposalManager)
-    {
+    public function __construct(
+        UserManager $userManager,
+        ProfileManager $profileManager,
+        TokensManager $tokensModel,
+        TokenStatusManager $tokenStatusManager,
+        RateManager $rateModel,
+        LinkService $linkService,
+        InstantConnection $instantConnection,
+        PhotoManager $photoManager,
+        GalleryManager $galleryManager,
+        ProposalManager $proposalManager
+    ) {
         $this->userManager = $userManager;
         $this->profileManager = $profileManager;
         $this->tokensModel = $tokensModel;
@@ -68,14 +80,13 @@ class UserService
 
         return $user;
     }
-    
+
     protected function updateEnabled(array $userData)
     {
         $userId = $userData['userId'];
         $user = $this->userManager->getById($userId);
 
-        if ($user->isEnabled() !== $userData['enabled'])
-        {
+        if ($user->isEnabled() !== $userData['enabled']) {
             $fromAdmin = true;
             $this->userManager->setEnabled($userId, $userData['enabled'], $fromAdmin);
         }
@@ -92,8 +103,7 @@ class UserService
 
         $user = $this->userManager->getById($userId);
         $photoId = $user->getPhoto()->getId();
-        if ($photoId)
-        {
+        if ($photoId) {
             $this->photoManager->remove($photoId);
         }
 
@@ -119,6 +129,24 @@ class UserService
         $user = $this->userManager->getById($userId);
 
         return $user;
+    }
+
+    public function getOther($slug)
+    {
+        try {
+            $user = $this->userManager->getBySlug($slug);
+        } catch (NotFoundHttpException $e) {
+            return null;
+        }
+
+        $locale = $this->profileManager->getInterfaceLocale($user->getId());
+        $proposals = $this->proposalManager->getByUser($user, $locale);
+        $user->setProposals($proposals);
+
+        $userArray = $user->jsonSerialize();
+        $userArray = $this->userManager->deleteOtherUserFields($userArray);
+
+        return $userArray;
     }
 
     public function getOtherPublic($slug)

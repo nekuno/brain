@@ -12,6 +12,7 @@ class ProposalTest extends ProposalAPITest
         $this->assertEdit();
         $this->assertDelete();
         $this->assertGetOwn();
+        $this->assertGetOther();
         $this->assertGetRecommendations();
         $this->assertGetMetadata();
     }
@@ -116,10 +117,24 @@ class ProposalTest extends ProposalAPITest
         }
     }
 
+    protected function assertGetOther()
+    {
+        $response = $this->getOtherUser('johndoe', 2);
+        $formattedResponse = $this->assertJsonResponse($response, 200, $response->getContent());
+        foreach ($formattedResponse['proposals'] as $proposal) {
+            $this->assertProposalFormat($proposal);
+        }
+    }
+
     protected function assertGetRecommendations()
     {
-        $response = $this->getRecommendations();
+        $workProposalData = $this->getWorkProposalData();
+        $this->createProposal($workProposalData, 2);
+
+        $response = $this->getRecommendations(2);
         $formattedResponse = $this->assertJsonResponse($response, 200, $response->getContent());
+
+        $this->assertEquals(10, count($formattedResponse), 'recommendation count');
     }
 
     protected function assertGetMetadata()

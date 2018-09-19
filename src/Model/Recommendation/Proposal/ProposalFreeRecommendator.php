@@ -57,7 +57,8 @@ class ProposalFreeRecommendator implements PaginatedInterface
         $proposals = [];
         foreach ($resultSet as $row)
         {
-            $proposals[] = $row->offsetGet('proposal');
+            $data = $qb->getData($row);
+            $proposals[] = $data['proposal'];
         }
 
         return $proposals;

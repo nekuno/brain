@@ -46,7 +46,10 @@ class CandidateUninterestedFreeRecommendator extends AbstractUserRecommendator
 
         $qb->match('(anyUser:UserEnabled)')
             ->with('anyUser', 'proposal', 'user')
-            ->where('NOT (proposal)<-[:INTERESTED_IN]-(anyUser)', 'NOT (proposal)-[:ACCEPTED|SKIPPED]->(anyUser)', 'NOT (proposal)--(:Availability)--(:DayPeriod)--(:Availability)--(anyUser)');
+            ->where('NOT (proposal)<-[:INTERESTED_IN]-(anyUser)',
+                'NOT (proposal)-[:ACCEPTED|SKIPPED]->(anyUser)',
+                'NOT (proposal)--(:Availability)--(:DayPeriod)--(:Availability)--(anyUser)',
+                'NOT anyUser.qnoow_id = user.qnoow_id');
         //TODO: Include filter by weekday
 
         $qb->optionalMatch('(anyUser)-[similarity:SIMILARITY]-(user)')
@@ -60,10 +63,14 @@ class CandidateUninterestedFreeRecommendator extends AbstractUserRecommendator
             $qb->match($match);
         }
 
-        $qb->match('(p)-[:LOCATION]-(l:Location)')
+        $qb->optionalMatch('(p)-[:LOCATION]-(l:Location)')
             ->with('proposal, anyUser', 'p', 'l', 'similarity', 'matching')
-            ->match('(p)-[:OPTION_OF]-(gender:DescriptiveGender)')
-            ->with('proposal', 'anyUser', 'p', 'l', 'gender', 'similarity', 'matching');
+            ->optionalMatch('(p)<-[optionOf:OPTION_OF]-(option:ProfileOption)')
+            ->with('proposal', 'anyUser', 'p', 'l', 'similarity', 'matching',
+                'collect(distinct {option: option, detail: (CASE WHEN EXISTS(optionOf.detail) THEN optionOf.detail ELSE null END)}) AS options')
+            ->optionalMatch('(p)-[tagged:TAGGED]-(tag:ProfileTag)')
+            ->with('proposal', 'anyUser', 'p', 'l', 'similarity', 'matching', 'options',
+                'collect(distinct {tag: tag, tagged: tagged}) AS tags');
 
         $qb->where($filters['conditions']);
 
@@ -75,9 +82,10 @@ class CandidateUninterestedFreeRecommendator extends AbstractUserRecommendator
             p.birthday AS birthday,
             p AS profile,
             l AS location,
-            collect(gender) AS gender,
             proposal, 
-            similarity'
+            similarity,
+            options,
+            tags'
         )
             ->orderBy($order)
             ->skip('{offset}')

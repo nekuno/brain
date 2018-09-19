@@ -4,12 +4,15 @@ namespace Service;
 
 use Model\Availability\AvailabilityManager;
 use Model\Filters\FilterUsersManager;
+use Model\Profile\ProfileManager;
+use Model\Proposal\Proposal;
 use Model\Proposal\ProposalManager;
 use Model\Recommendation\Proposal\CandidateInterestedRecommendator;
 use Model\Recommendation\Proposal\CandidateUninterestedFreeRecommendator;
 use Model\Recommendation\Proposal\CandidateUninterestedRecommendator;
 use Model\Recommendation\Proposal\ProposalFreeRecommendator;
 use Model\Recommendation\Proposal\ProposalRecommendator;
+use Model\Recommendation\UserRecommendation;
 use Model\User\User;
 use Paginator\ProposalRecommendationsPaginator;
 use Symfony\Component\HttpFoundation\Request;
@@ -25,6 +28,7 @@ class ProposalRecommendatorService
     protected $candidateInterestedRecommendator;
     protected $proposalRecommendator;
     protected $proposalFreeRecommendator;
+    protected $profileManager;
 
     /**
      * ProposalRecommendatorService constructor.
@@ -37,6 +41,7 @@ class ProposalRecommendatorService
      * @param FilterUsersManager $filterUsersManager
      * @param AvailabilityManager $availabilityManager
      * @param ProposalManager $proposalManager
+     * @param ProfileManager $profileManager
      */
     public function __construct(
         ProposalRecommendationsPaginator $paginator,
@@ -47,7 +52,8 @@ class ProposalRecommendatorService
         ProposalFreeRecommendator $proposalRecommendationFreeRecommendator,
         FilterUsersManager $filterUsersManager,
         AvailabilityManager $availabilityManager,
-        ProposalManager $proposalManager
+        ProposalManager $proposalManager,
+        ProfileManager $profileManager
     ) {
         $this->paginator = $paginator;
         $this->candidateUninterestedRecommendator = $candidateUninterestedRecommendator;
@@ -58,6 +64,7 @@ class ProposalRecommendatorService
         $this->filterUsersManager = $filterUsersManager;
         $this->availabilityManager = $availabilityManager;
         $this->proposalManager = $proposalManager;
+        $this->profileManager = $profileManager;
     }
 
     public function getRecommendations(User $user, Request $request)
@@ -84,7 +91,7 @@ class ProposalRecommendatorService
 
             $candidates = $this->mixCandidates($interestedCandidates['items'], $uninterestedCandidates['items']);
 
-            $candidateRecommendations[] = $candidates;
+            $candidateRecommendations = array_merge($candidateRecommendations, $candidates);
         }
 
         return $candidateRecommendations;
@@ -134,14 +141,42 @@ class ProposalRecommendatorService
     {
         $filters = $request->query->get('filters');
         $filters['userId'] = $user->getId();
+        $availability = $this->availabilityManager->getByUser($user);
 
-        $proposalRecommendations = $this->paginator->paginate($filters, $this->proposalRecommendator, $request);
-        $proposalRecommendations = array_slice($proposalRecommendations['items'], 10);
+        if (null == $availability) {
+            $model = $this->proposalFreeRecommendator;
+        } else {
+            $model = $this->proposalRecommendator;
+        }
+
+        $proposalPagination = $this->paginator->paginate($filters, $model, $request);
+        $proposalRecommendations = $this->buildProposals($proposalPagination['items'], $user);
 
         return $proposalRecommendations;
     }
 
-    protected function mixRecommendations($candidateRecommendations, $proposalRecommendations)
+    protected function buildProposals(array $proposalData, User $user)
+    {
+        $locale = $this->profileManager->getInterfaceLocale($user->getId());
+
+        $proposalRecommendations = array();
+        foreach ($proposalData as $proposalDatum)
+        {
+            $proposalId = $proposalDatum['id'];
+            $proposal = $this->proposalManager->getById($proposalId, $locale);
+            $proposalRecommendations[] = $proposal;
+        }
+        $proposalRecommendations = array_slice($proposalRecommendations, 0, 10);
+
+        return $proposalRecommendations;
+    }
+
+    /**
+     * @param UserRecommendation[] $candidateRecommendations
+     * @param Proposal[] $proposalRecommendations
+     * @return array
+     */
+    protected function mixRecommendations(array $candidateRecommendations, array $proposalRecommendations)
     {
         $recommendations = array();
         for ($i = 0; $i < 10; $i++) {
@@ -160,24 +195,13 @@ class ProposalRecommendatorService
     {
         $interestedDesired = 3;
         $unInterestedDesired = 7;
-        $totalDesired = $interestedDesired + $unInterestedDesired;
 
-        $length = min(count($interested), $interestedDesired);
+        $interested = array_slice($interested, 0, $interestedDesired);
+        $unInterested = array_slice($unInterested, 0, $unInterestedDesired);
 
-        $candidates = array();
-        for ($i = 0; $i < $length; $i++) {
-            $partial = [$interested[$i], $unInterested[$i]];
-            shuffle($partial);
+        $candidates = array_merge($interested, $unInterested);
 
-            $candidates = array_merge($candidates, $partial);
-        }
-
-        if (count($unInterested) > $length) {
-            $extra = array_slice($unInterested, $length);
-            $candidates = array_merge($candidates, $extra);
-        }
-
-        $candidates = array_slice($candidates, $totalDesired);
+        shuffle($candidates);
 
         return $candidates;
     }

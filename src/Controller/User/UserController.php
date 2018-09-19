@@ -88,7 +88,7 @@ class UserController extends FOSRestController implements ClassResourceInterface
      *
      * @Get("/users/{slug}")
      * @param string $slug
-     * @param UserManager $userManager
+     * @param UserService $userService
      * @return \FOS\RestBundle\View\View
      * @SWG\Response(
      *     response=200,
@@ -104,10 +104,9 @@ class UserController extends FOSRestController implements ClassResourceInterface
      * @Security(name="Bearer")
      * @SWG\Tag(name="users")
      */
-    public function getOtherAction($slug, UserManager $userManager)
+    public function getOtherAction($slug, UserService $userService)
     {
-        $userArray = $userManager->getBySlug($slug)->jsonSerialize();
-        $userArray = $userManager->deleteOtherUserFields($userArray);
+        $userArray = $userService->getOther($slug);
 
         if (empty($userArray)) {
             return $this->view($userArray, 404);

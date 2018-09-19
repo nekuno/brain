@@ -11,6 +11,11 @@ abstract class ProposalAPITest extends APITest
         return $this->getResponseByRouteWithCredentials('/proposals', 'GET', array(), $loggedInUserId);
     }
 
+    protected function getOtherUser($slug, $loggedInUser = self::OWN_USER_ID)
+    {
+        return $this->getResponseByRouteWithCredentials('/users/' . $slug, 'GET', array(), $loggedInUser);
+    }
+
     protected function createProposal($data, $loggedInUserId = self::OWN_USER_ID)
     {
         return $this->getResponseByRouteWithCredentials('/proposals', 'POST', $data, $loggedInUserId);
