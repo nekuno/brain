@@ -396,11 +396,11 @@ class ProposalController extends FOSRestController implements ClassResourceInter
      * @Security(name="Bearer")
      * @SWG\Tag(name="proposals")
      */
-    public function setSkippedCandidateAction (Request $request, User $user, ProposalService $proposalService)
+    public function setSkippedCandidateAction (Request $request, ProposalService $proposalService)
     {
         $data = $request->request->all();
 
-        $interested = $proposalService->setSkippedCandidate($data, $user);
+        $interested = $proposalService->setSkippedCandidate($data);
 
         return $this->view($interested, 201);
     }

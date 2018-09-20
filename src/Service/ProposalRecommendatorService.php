@@ -8,6 +8,7 @@ use Model\Profile\ProfileManager;
 use Model\Proposal\Proposal;
 use Model\Proposal\ProposalManager;
 use Model\Recommendation\Proposal\CandidateInterestedRecommendator;
+use Model\Recommendation\Proposal\CandidateRecommendator;
 use Model\Recommendation\Proposal\CandidateUninterestedFreeRecommendator;
 use Model\Recommendation\Proposal\CandidateUninterestedRecommendator;
 use Model\Recommendation\Proposal\ProposalFreeRecommendator;
@@ -26,6 +27,7 @@ class ProposalRecommendatorService
     protected $candidateUninterestedRecommendator;
     protected $candidateUninterestedFreeRecommendator;
     protected $candidateInterestedRecommendator;
+    protected $candidateRecommendator;
     protected $proposalRecommendator;
     protected $proposalFreeRecommendator;
     protected $profileManager;
@@ -36,6 +38,7 @@ class ProposalRecommendatorService
      * @param CandidateUninterestedRecommendator $candidateUninterestedRecommendator
      * @param CandidateUninterestedFreeRecommendator $candidateUninterestedFreeRecommendator
      * @param CandidateInterestedRecommendator $candidateInterestedRecommendator
+     * @param CandidateRecommendator $candidateRecommendator
      * @param ProposalRecommendator $proposalRecommendator
      * @param ProposalFreeRecommendator $proposalRecommendationFreeRecommendator
      * @param FilterUsersManager $filterUsersManager
@@ -48,6 +51,7 @@ class ProposalRecommendatorService
         CandidateUninterestedRecommendator $candidateUninterestedRecommendator,
         CandidateUninterestedFreeRecommendator $candidateUninterestedFreeRecommendator,
         CandidateInterestedRecommendator $candidateInterestedRecommendator,
+        CandidateRecommendator $candidateRecommendator,
         ProposalRecommendator $proposalRecommendator,
         ProposalFreeRecommendator $proposalRecommendationFreeRecommendator,
         FilterUsersManager $filterUsersManager,
@@ -59,6 +63,7 @@ class ProposalRecommendatorService
         $this->candidateUninterestedRecommendator = $candidateUninterestedRecommendator;
         $this->candidateUninterestedFreeRecommendator = $candidateUninterestedFreeRecommendator;
         $this->candidateInterestedRecommendator = $candidateInterestedRecommendator;
+        $this->candidateRecommendator = $candidateRecommendator;
         $this->proposalRecommendator = $proposalRecommendator;
         $this->proposalFreeRecommendator = $proposalRecommendationFreeRecommendator;
         $this->filterUsersManager = $filterUsersManager;
@@ -85,13 +90,15 @@ class ProposalRecommendatorService
         foreach ($proposalIds as $proposalId) {
             $filters = $this->getFiltersByProposalId($proposalId);
             $filters['userId'] = $user->getId();
+            $filters = $this->setIncludeSkipped($filters, $request);
 
-            $interestedCandidates = $this->getInterestedCandidates($filters, $request);
-            $uninterestedCandidates = $this->getUninterestedCandidates($filters, $request);
+//            $interestedCandidates = $this->getInterestedCandidates($filters, $request);
+//            $uninterestedCandidates = $this->getUninterestedCandidates($filters, $request);
+//
+//            $candidates = $this->mixCandidates($interestedCandidates['items'], $uninterestedCandidates['items']);
 
-            $candidates = $this->mixCandidates($interestedCandidates['items'], $uninterestedCandidates['items']);
-
-            $candidateRecommendations = array_merge($candidateRecommendations, $candidates);
+            $candidates = $this->paginator->paginate($filters, $this->candidateRecommendator, $request);
+            $candidateRecommendations = array_merge($candidateRecommendations, $candidates['items']);
         }
 
         return $candidateRecommendations;
@@ -106,6 +113,17 @@ class ProposalRecommendatorService
         $filters = $this->filterUsersManager->getFilterUsersByProposalId($proposalId);
         $filters = $filters->jsonSerialize();
         $filters['proposalId'] = $proposalId;
+
+        return $filters;
+    }
+
+    protected function setIncludeSkipped(array $filters, Request $request)
+    {
+        $candidatesNotSeenYet = $this->candidateRecommendator->countTotal($filters);
+
+        $limit = $request->get('limit');
+        $includeSkipped = $candidatesNotSeenYet < $limit;
+        $filters['includeSkipped'] = $includeSkipped;
 
         return $filters;
     }
