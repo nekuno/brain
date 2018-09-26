@@ -99,6 +99,26 @@ class DayPeriodManager
         return $this->buildFromResult($data);
     }
 
+    public function createAll()
+    {
+        $qb = $this->graphManager->createQueryBuilder();
+
+        $qb->match('(day:Day)');
+
+        $qb->merge('(day)<-[:PERIOD_OF]-(morning:DayPeriod:Morning)')
+            ->merge('(day)<-[:PERIOD_OF]-(evening:DayPeriod:Evening)')
+            ->merge('(day)<-[:PERIOD_OF]-(night:DayPeriod:Night)')
+            ->with('day');
+
+        $qb->match('(day)<-[:PERIOD_OF]-(period:DayPeriod)')
+            ->returns('count(period) AS periods');
+
+        $resultSet = $qb->getQuery()->getResultSet();
+        $data = $qb->getData($resultSet->current());
+
+        return $data['periods'];
+    }
+
     /**
      * @param $periodId
      * @param $dayId

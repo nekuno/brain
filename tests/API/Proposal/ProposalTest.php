@@ -135,6 +135,19 @@ class ProposalTest extends ProposalAPITest
         $formattedResponse = $this->assertJsonResponse($response, 200, $response->getContent());
 
         $this->assertEquals(10, count($formattedResponse), 'recommendation count');
+        var_dump($formattedResponse);
+        $this->assertProposalFormat($formattedResponse[1]);
+        $this->assertProposalFormat($formattedResponse[3]);
+        $this->assertProposalFormat($formattedResponse[5]);
+        $this->assertProposalFormat($formattedResponse[7]);
+        $this->assertProposalFormat($formattedResponse[9]);
+
+        $this->assertUserRecommendationFormat($formattedResponse[0]);
+        $this->assertUserRecommendationFormat($formattedResponse[2]);
+        $this->assertUserRecommendationFormat($formattedResponse[4]);
+        $this->assertUserRecommendationFormat($formattedResponse[6]);
+        $this->assertUserRecommendationFormat($formattedResponse[8]);
+
     }
 
     protected function assertGetMetadata()
@@ -228,8 +241,16 @@ class ProposalTest extends ProposalAPITest
                 'dynamic' => array(
                     array(
                         'weekday' => 'friday',
-                        'range' => array('min' => '3600', 'max' => '7200')
-                    )
+                        'range' => array('Night')
+                    ),
+                    array(
+                        'weekday' => 'saturday',
+                        'range' => array('Morning', 'Evening', 'Night')
+                    ),
+                    array(
+                        'weekday' => 'sunday',
+                        'range' => array('Morning')
+                    ),
                 ),
                 'static' => array(
                     array('day' => '2018-01-10', 'range' => array('Morning')),
@@ -274,6 +295,22 @@ class ProposalTest extends ProposalAPITest
             $this->assertArrayHasKey('value', $field);
             $this->assertArrayHasKey('type', $field);
         }
+    }
+
+    protected function assertUserRecommendationFormat($recommendation)
+    {
+        $this->assertArrayHasKey('id', $recommendation);
+        $this->assertArrayHasKey('username', $recommendation);
+        $this->assertArrayHasKey('slug', $recommendation);
+        $this->assertArrayHasKey('photo', $recommendation);
+        $this->isType('array')->evaluate($recommendation['photo']);
+        $this->assertArrayHasKey('matching', $recommendation);
+        $this->assertArrayHasKey('similarity', $recommendation);
+        $this->assertArrayHasKey('age', $recommendation);
+        $this->assertArrayHasKey('location', $recommendation);
+        $this->isType('array')->evaluate($recommendation['location']);
+
+
     }
 
     protected function assertMetadataFormat($metadata)

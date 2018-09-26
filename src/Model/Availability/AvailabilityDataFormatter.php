@@ -54,15 +54,15 @@ class AvailabilityDataFormatter
             return array();
         }
 
-        $ranges = array();
-        foreach ($data['availability']['dynamic'] as $datum) {
-            $weekday = $datum['weekday'];
-            $range = $datum['range'];
 
-            $ranges[] = array('weekday' => $weekday, 'range' => array($range['min'], $range['max']));
+        $dynamic = array();
+        foreach ($data['availability']['dynamic'] as $each){
+            $range = $each['range'];
+            $weekday = ucfirst($each['weekday']);
+            $dynamic[] = array('weekday' => $weekday, 'range' => $range);
         }
 
-        return $ranges;
+        return $dynamic;
     }
 
     /**

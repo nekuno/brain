@@ -173,9 +173,6 @@ services:
         arguments:
             $username: "%env(db_neo4j_user)%"
             $password: "%env(db_neo4j_pass)%"
-    Model\Date\DateManager:
-        arguments:
-            $lastYear: "%env(last_year)%"
     Model\User\UserManager:
         arguments:
             $imagesBaseDir: "%env(resolve:images_absolute_web_dir)%"

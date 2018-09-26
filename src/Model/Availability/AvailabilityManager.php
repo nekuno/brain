@@ -127,8 +127,14 @@ class AvailabilityManager
         foreach ($dynamic as $each) {
             $weekday = $each['weekday'];
             $range = $each['range'];
-            $qb->set("availability.$weekday = { $weekday }")
-                ->setParameter($weekday, $range);
+            $qb->match("(day:$weekday)");
+            foreach($range as $index => $dayPeriod)
+            {
+                $qb->match("(day)-[:PERIOD_OF]-(period:$dayPeriod)");
+                $qb->merge('(availability)-[:INCLUDES]->(period)');
+                $qb->with('availability', 'day');
+            }
+
             $qb->with('availability');
         }
 

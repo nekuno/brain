@@ -128,7 +128,7 @@ class CandidateRecommendator extends AbstractUserRecommendator
         $resultSet = $qb->getQuery()->getResultSet();
 
         $userRecommendations = $this->userRecommendationBuilder->buildUserRecommendations($resultSet);
-var_dump($userRecommendations);
+
         return $userRecommendations;
     }
 
