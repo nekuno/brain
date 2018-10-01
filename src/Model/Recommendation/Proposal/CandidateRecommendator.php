@@ -45,55 +45,37 @@ class CandidateRecommendator extends AbstractUserRecommendator
         $qb->match('(user)-[:PROPOSES]->(proposal:Proposal)')
             ->with('proposal', 'user');
 
-        $qb->optionalMatch('(proposal)<-[:INTERESTED_IN]-(anyUser:UserEnabled)-[:PROFILE_OF]-(p:Profile)')
+        $qb->optionalMatch('(proposal)<-[:INTERESTED_IN]-(anyUser:UserEnabled)')
             ->where($previousCondition)
-            ->with('proposal', 'user', 'anyUser', 'p');
+            ->with('proposal', 'user', '{user: anyUser, interested: true} AS anyUser')
+            ->with('proposal', 'user', 'collect(anyUser) AS interested');
 
-        $qb->optionalMatch('(p)-[:LOCATION]-(l:Location)')
-            ->with('proposal', 'user', 'anyUser', 'p', 'l');
-
-        foreach ($filters['matches'] as $match) {
-            $qb->match($match);
-        }
-        $qb->where($filters['conditions']);
-
-        $qb->with('proposal', 'user', 'anyUser')
-            ->limit('{limitInterested}')
-            ->setParameter('limitInterested', $limitInterested);
-
-        $qb->with('proposal', 'user', 'collect(anyUser) AS interested');
-
-        $previousCondition[] = 'NOT (proposal)--(:Availability)--(:DayPeriod)--(:Availability)--(anyUser)';
+        $previousCondition[] = 'NOT (proposal)<-[:INTERESTED_IN]-(anyUser:UserEnabled)';
         $qb->optionalMatch('(anyUser:UserEnabled)')
             ->where($previousCondition)
-            ->with('anyUser', 'proposal', 'user', 'interested');
+            ->with('proposal', 'user', 'interested', '{user: anyUser, interested: false} AS anyUser')
+            ->with('proposal', 'user', 'interested', 'collect(anyUser) AS uninterested')
+            ->with('proposal', 'user', 'interested + uninterested AS candidates')
+            ->unwind('candidates AS candidate');
 
-        $qb->match('(anyUser)-[:PROFILE_OF]-(p)')
-            ->with('anyUser', 'proposal', 'user', 'interested', 'p');
+        $qb->match('(candidate)-[:PROFILE_OF]-(p)')
+            ->with('candidate', 'proposal', 'user', 'p');
 
         $qb->optionalMatch('(p)-[:LOCATION]-(l:Location)')
-            ->with('anyUser', 'proposal', 'user', 'interested', 'p', 'l');
+            ->with('candidate', 'proposal', 'user', 'p', 'l');
 
         foreach ($filters['matches'] as $match) {
             $qb->match($match);
         }
+
         $qb->where($filters['conditions']);
 
-        $qb->with('proposal', 'user', 'anyUser', 'interested')
-            ->limit('{limitUninterested}')
-            ->setParameter('limitUninterested', $limitUninterested);
-
-        $qb->with('proposal', 'user', 'interested', 'collect(anyUser) AS uninterested')
-            ->with('proposal', 'user', 'interested + uninterested AS candidates')
-            ->unwind('candidates AS candidate')
-            ->with('proposal', 'user', 'candidate');
+        $qb->with('candidate', 'proposal', 'user', 'p');
         
         $qb->optionalMatch('(candidate)-[similarity:SIMILARITY]-(user)')
-            ->with('candidate', 'proposal', 'user', 'similarity');
+            ->with('candidate', 'proposal', 'user', 'p', 'similarity');
         $qb->optionalMatch('(candidate)-[matching:MATCHING]-(user)')
-            ->with('candidate', 'proposal', 'user', 'similarity', 'matching');
-        $qb->match('(candidate)-[:PROFILE_OF]-(p:Profile)')
-            ->with('proposal', 'candidate', 'p', 'similarity', 'matching');
+            ->with('candidate', 'proposal', 'user', 'p', 'similarity', 'matching');
 
         $qb->optionalMatch('(p)-[:LOCATION]-(l:Location)')
             ->with('proposal', 'candidate', 'p', 'l', 'similarity', 'matching')
@@ -136,8 +118,7 @@ class CandidateRecommendator extends AbstractUserRecommendator
     {
         $proposalId = $filtersArray['proposalId'];
         $filters = $this->applyFilters($filtersArray);
-
-
+        
         $qb = $this->gm->createQueryBuilder();
 
         $qb->match('(proposal:Proposal)')
@@ -178,8 +159,9 @@ class CandidateRecommendator extends AbstractUserRecommendator
     protected function buildPreviousCondition(array $filtersArray)
     {
         $includeSkipped = isset($filtersArray['includeSkipped']) ? $filtersArray['includeSkipped'] : false;
+        $excluded = json_encode($filtersArray['excluded']);
 
-        $previousCondition = array('NOT (proposal)-[:ACCEPTED]->(anyUser)', 'NOT anyUser.qnoow_id = user.qnoow_id');
+        $previousCondition = array('NOT (proposal)-[:ACCEPTED]->(anyUser)', 'NOT anyUser.qnoow_id = user.qnoow_id', "NOT anyUser.username IN $excluded");
         if (!$includeSkipped){
             $previousCondition[] = 'NOT (proposal)-[:SKIPPED]->(anyUser)';
         }

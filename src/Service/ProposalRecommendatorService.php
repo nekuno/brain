@@ -91,11 +91,7 @@ class ProposalRecommendatorService
             $filters = $this->getFiltersByProposalId($proposalId);
             $filters['userId'] = $user->getId();
             $filters = $this->setIncludeSkipped($filters, $request);
-
-//            $interestedCandidates = $this->getInterestedCandidates($filters, $request);
-//            $uninterestedCandidates = $this->getUninterestedCandidates($filters, $request);
-//
-//            $candidates = $this->mixCandidates($interestedCandidates['items'], $uninterestedCandidates['items']);
+            $filters['excluded'] = $request->get('excluded', array());
 
             $candidates = $this->paginator->paginate($filters, $this->candidateRecommendator, $request);
             $candidateRecommendations = array_merge($candidateRecommendations, $candidates['items']);

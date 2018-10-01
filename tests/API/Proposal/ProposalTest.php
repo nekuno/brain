@@ -135,7 +135,7 @@ class ProposalTest extends ProposalAPITest
         $formattedResponse = $this->assertJsonResponse($response, 200, $response->getContent());
 
         $this->assertEquals(10, count($formattedResponse), 'recommendation count');
-        var_dump($formattedResponse);
+
         $this->assertProposalFormat($formattedResponse[1]);
         $this->assertProposalFormat($formattedResponse[3]);
         $this->assertProposalFormat($formattedResponse[5]);
@@ -145,8 +145,6 @@ class ProposalTest extends ProposalAPITest
         $this->assertUserRecommendationFormat($formattedResponse[0]);
         $this->assertUserRecommendationFormat($formattedResponse[2]);
         $this->assertUserRecommendationFormat($formattedResponse[4]);
-        $this->assertUserRecommendationFormat($formattedResponse[6]);
-        $this->assertUserRecommendationFormat($formattedResponse[8]);
 
     }
 
@@ -253,8 +251,8 @@ class ProposalTest extends ProposalAPITest
                     ),
                 ),
                 'static' => array(
-                    array('day' => '2018-01-10', 'range' => array('Morning')),
-                    array('day' => '2018-01-12', 'range' => array('Morning', 'Night')),
+                    array('days' => array('start'=> '2018-01-10', 'end' => '2018-01-10'), 'range' => array('Morning')),
+                    array('days' => array('start'=> '2018-01-12', 'end' => '2018-01-13'), 'range' => array('Morning', 'Night')),
                 )
             ),
             'participantLimit' => 5,

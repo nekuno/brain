@@ -77,6 +77,7 @@ class AvailabilityDataFormatter
         }
 
         $dayStrings = $this->getDayStrings($data);
+        //TODO: Check if necessary now that dates and periods are pre-charged
         $dates = $this->saveDates($dayStrings);
 
         return $dates;
@@ -112,14 +113,26 @@ class AvailabilityDataFormatter
 
     protected function getDayStrings(array $data)
     {
-        $days = array_map(
+        $daysIntervals = array_map(
             function ($object) {
-                return $object['day'];
+                return $object['days'];
             },
             $data['availability']['static']
         );
 
-        return $days;
+        $dayStrings = array();
+        foreach ($daysIntervals as $days){
+            $dateStart = new \DateTime($days['start']);
+            $dateEnd = new \DateTime($days['end']);
+            $period = new \DatePeriod($dateStart, new \DateInterval('P1D'), $dateEnd);
+
+            /** @var \DateTime $day */
+            foreach ($period as $day){
+                $dayStrings[] = $day->format('Y-m-d');
+            }
+        }
+
+        return $dayStrings;
     }
 
     protected function createPeriodObjects($data)
