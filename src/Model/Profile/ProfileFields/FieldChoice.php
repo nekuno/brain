@@ -1,8 +1,8 @@
 <?php
 
-namespace Model\Proposal\ProposalFields;
+namespace Model\Profile\ProfileFields;
 
-class ProposalFieldChoice extends AbstractProposalField
+class FieldChoice extends AbstractField
 {
     protected $value = array();
 
@@ -12,7 +12,7 @@ class ProposalFieldChoice extends AbstractProposalField
         $queryVariables2 = array_merge($variables, array("collect($this->name) AS $this->name"));
         $variables[] = "$this->name";
 
-        return " OPTIONAL MATCH (proposal)-[:INCLUDES]->($this->name:ProposalOption)"
+        return " OPTIONAL MATCH ($this->nodeName)-[:INCLUDES]->($this->name:ProfileOption)"
             . " WITH " . implode(', ', $queryVariables1)
             . " WITH " . implode(', ', $queryVariables2);
     }
@@ -24,7 +24,7 @@ class ProposalFieldChoice extends AbstractProposalField
         foreach ($this->value AS $index => $optionValue)
         {
             $thisName = $this->name . $index;
-            $lines[] = " MERGE (proposal)-[:INCLUDES]->($thisName:ProposalOption{value: '$optionValue'})";
+            $lines[] = " MERGE ($this->nodeName)-[:INCLUDES]->($thisName:ProfileOption{value: '$optionValue'})";
         }
 
         $lines[] = " WITH " . implode(', ', $variables);

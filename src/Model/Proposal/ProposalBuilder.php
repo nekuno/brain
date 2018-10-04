@@ -1,9 +1,15 @@
 <?php
 
-namespace Model\Proposal\ProposalFields;
+namespace Model\Proposal;
 
 use Model\Availability\Availability;
 use Model\Metadata\ProposalMetadataManager;
+use Model\Profile\ProfileFields\AbstractField;
+use Model\Profile\ProfileFields\FieldAvailability;
+use Model\Profile\ProfileFields\FieldBoolean;
+use Model\Profile\ProfileFields\FieldChoice;
+use Model\Profile\ProfileFields\FieldString;
+use Model\Profile\ProfileFields\FieldTag;
 use Model\Proposal\Proposal;
 
 class ProposalBuilder
@@ -40,7 +46,7 @@ class ProposalBuilder
             $proposalField->setName($fieldName);
             $proposalField->setValue($value);
 
-            if ($proposalField instanceof ProposalFieldAvailability && ($value instanceof Availability)) {
+            if ($proposalField instanceof FieldAvailability && ($value instanceof Availability)) {
                 $proposalField->setAvailability($value);
             }
 
@@ -73,33 +79,34 @@ class ProposalBuilder
 
     /**
      * @param $fieldMetadata
-     * @return AbstractProposalField
+     * @return AbstractField
      */
     protected function buildField(array $fieldMetadata)
     {
         $type = $fieldMetadata['type'];
         switch ($type) {
             case 'string':
-                $proposalField = new ProposalFieldString();
+                $proposalField = new FieldString();
                 break;
             case 'tag':
             case 'tag_and_suggestion':
-                $proposalField = new ProposalFieldTag();
+                $proposalField = new FieldTag();
                 break;
             case 'choice':
-                $proposalField = new ProposalFieldChoice();
+                $proposalField = new FieldChoice();
                 break;
             case 'boolean':
-                $proposalField = new ProposalFieldBoolean();
+                $proposalField = new FieldBoolean();
                 break;
             case 'availability':
-                $proposalField = new ProposalFieldAvailability();
+                $proposalField = new FieldAvailability();
                 break;
             default:
-                $proposalField = new ProposalFieldString();
+                $proposalField = new FieldString();
                 break;
         }
         $proposalField->setType($type);
+        $proposalField->setNodeName('proposal');
 
         return $proposalField;
     }

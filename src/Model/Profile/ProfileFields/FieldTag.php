@@ -1,8 +1,8 @@
 <?php
 
-namespace Model\Proposal\ProposalFields;
+namespace Model\Profile\ProfileFields;
 
-class ProposalFieldTag extends AbstractProposalField
+class FieldTag extends AbstractField
 {
     protected $value = array();
 
@@ -13,7 +13,7 @@ class ProposalFieldTag extends AbstractProposalField
         $queryVariables2 = array_merge($variables, array("collect($this->name) AS $this->name"));
         $variables[] = "$this->name";
 
-        return "OPTIONAL MATCH (proposal)-[:INCLUDES]->($this->name:ProposalTag:$tagLabel)<-[:TEXT_OF]-(text$this->name:TextLanguage{locale: {locale}})"
+        return "OPTIONAL MATCH ($this->nodeName)-[:INCLUDES]->($this->name:ProfileTag:$tagLabel)<-[:TEXT_OF]-(text$this->name:TextLanguage{locale: {locale}})"
             . " WITH " . implode(', ', $queryVariables1)
             . " WITH " . implode(', ', $queryVariables2);
     }
@@ -26,8 +26,8 @@ class ProposalFieldTag extends AbstractProposalField
         foreach ($this->value AS $index => $tagValue)
         {
             $thisName = $this->name . $index;
-            $lines[] = " MERGE ($thisName:ProposalTag:$tagLabel)<-[:TEXT_OF]-(:TextLanguage{locale: {locale}, canonical: '$tagValue'})"
-                . " MERGE (proposal)-[:INCLUDES]->($thisName)";
+            $lines[] = " MERGE ($thisName:ProfileTag:$tagLabel)<-[:TEXT_OF]-(:TextLanguage{locale: {locale}, canonical: '$tagValue'})"
+                . " MERGE ($this->nodeName)-[:INCLUDES]->($thisName)";
         }
 
         $lines[] = " WITH " . implode(', ', $variables);

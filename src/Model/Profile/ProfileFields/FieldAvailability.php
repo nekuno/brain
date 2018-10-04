@@ -1,10 +1,10 @@
 <?php
 
-namespace Model\Proposal\ProposalFields;
+namespace Model\Profile\ProfileFields;
 
 use Model\Availability\Availability;
 
-class ProposalFieldAvailability extends AbstractProposalField
+class FieldAvailability extends AbstractField
 {
     /**
      * @var Availability
@@ -16,7 +16,7 @@ class ProposalFieldAvailability extends AbstractProposalField
         $queryVariables = array_merge($variables, array("id(availability) AS availabilityId"));
         $variables[] = 'availabilityId';
 
-        return 'OPTIONAL MATCH (proposal)-[:HAS_AVAILABILITY]->(availability:Availability)'
+        return 'OPTIONAL MATCH (' . $this->nodeName . ')-[:HAS_AVAILABILITY]->(availability:Availability)'
             . " WITH " . implode(', ', $queryVariables);
 
     }

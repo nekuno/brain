@@ -56,13 +56,14 @@ class CandidateRecommendator extends AbstractUserRecommendator
             ->with('proposal', 'user', 'interested', '{user: anyUser, interested: false} AS anyUser')
             ->with('proposal', 'user', 'interested', 'collect(anyUser) AS uninterested')
             ->with('proposal', 'user', 'interested + uninterested AS candidates')
-            ->unwind('candidates AS candidate');
+            ->unwind('candidates AS candidate')
+            ->with('proposal', 'user', 'candidate', 'candidate.user AS anyUser');
 
-        $qb->match('(candidate)-[:PROFILE_OF]-(p)')
-            ->with('candidate', 'proposal', 'user', 'p');
+        $qb->match('(anyUser)-[:PROFILE_OF]-(p)')
+            ->with('candidate', 'anyUser', 'proposal', 'user', 'p');
 
         $qb->optionalMatch('(p)-[:LOCATION]-(l:Location)')
-            ->with('candidate', 'proposal', 'user', 'p', 'l');
+            ->with('candidate', 'anyUser', 'proposal', 'user', 'p', 'l');
 
         foreach ($filters['matches'] as $match) {
             $qb->match($match);
@@ -70,36 +71,37 @@ class CandidateRecommendator extends AbstractUserRecommendator
 
         $qb->where($filters['conditions']);
 
-        $qb->with('candidate', 'proposal', 'user', 'p');
+        $qb->with('candidate', 'anyUser', 'proposal', 'user', 'p');
         
-        $qb->optionalMatch('(candidate)-[similarity:SIMILARITY]-(user)')
-            ->with('candidate', 'proposal', 'user', 'p', 'similarity');
-        $qb->optionalMatch('(candidate)-[matching:MATCHING]-(user)')
-            ->with('candidate', 'proposal', 'user', 'p', 'similarity', 'matching');
+        $qb->optionalMatch('(anyUser)-[similarity:SIMILARITY]-(user)')
+            ->with('candidate', 'anyUser', 'proposal', 'user', 'p', 'similarity');
+        $qb->optionalMatch('(anyUser)-[matching:MATCHING]-(user)')
+            ->with('candidate', 'proposal', 'anyUser', 'user', 'p', 'similarity', 'matching');
 
         $qb->optionalMatch('(p)-[:LOCATION]-(l:Location)')
-            ->with('proposal', 'candidate', 'p', 'l', 'similarity', 'matching')
+            ->with('proposal', 'candidate', 'anyUser', 'p', 'l', 'similarity', 'matching')
             ->optionalMatch('(p)<-[optionOf:OPTION_OF]-(option:ProfileOption)')
-            ->with('proposal', 'candidate', 'p', 'l', 'similarity', 'matching',
+            ->with('proposal', 'candidate', 'anyUser', 'p', 'l', 'similarity', 'matching',
                 'collect(distinct {option: option, detail: (CASE WHEN EXISTS(optionOf.detail) THEN optionOf.detail ELSE null END)}) AS options')
             ->optionalMatch('(p)-[tagged:TAGGED]-(tag:ProfileTag)')
-            ->with('proposal', 'candidate', 'p', 'l', 'similarity', 'matching', 'options',
+            ->with('proposal', 'candidate', 'anyUser', 'p', 'l', 'similarity', 'matching', 'options',
                 'collect(distinct {tag: tag, tagged: tagged}) AS tags');
 
         $qb->where($filters['conditions']);
 
         $qb->returns(
-            'candidate.qnoow_id AS id, 
-            candidate.username AS username, 
-            candidate.photo AS photo,
-            candidate.createdAt AS createdAt,
+            'anyUser.qnoow_id AS id, 
+            anyUser.username AS username, 
+            anyUser.photo AS photo,
+            anyUser.createdAt AS createdAt,
             p.birthday AS birthday,
             p AS profile,
             l AS location,
             proposal, 
             similarity,
             options,
-            tags'
+            tags,
+            candidate.interested AS interested'
         )
             ->orderBy($order)
             ->skip('{offset}')
@@ -118,7 +120,7 @@ class CandidateRecommendator extends AbstractUserRecommendator
     {
         $proposalId = $filtersArray['proposalId'];
         $filters = $this->applyFilters($filtersArray);
-        
+
         $qb = $this->gm->createQueryBuilder();
 
         $qb->match('(proposal:Proposal)')

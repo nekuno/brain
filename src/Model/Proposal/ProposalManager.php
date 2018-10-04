@@ -3,7 +3,6 @@
 namespace Model\Proposal;
 
 use Model\Neo4j\GraphManager;
-use Model\Proposal\ProposalFields\ProposalBuilder;
 use Model\User\User;
 
 class ProposalManager

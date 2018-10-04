@@ -572,8 +572,18 @@ profile:
                 max: 10
                 label: *professionLabel
                 labelEdit: *professionLabel
-
-
+    show:
+        type: multiple_choices
+        label: &showLabel
+            en: 'Shows'
+            es: 'Espectáculos'
+        labelEdit: *showLabel
+    restaurant:
+        type: multiple_choices
+        label: &restaurantLabel
+            en: 'Restaurants'
+            es: 'Restaurantes'
+        labelEdit: *restaurantLabel
 content:
     type:
         type: choice

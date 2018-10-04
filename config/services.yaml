@@ -205,7 +205,7 @@ services:
             $metadata: "%fields%"
             $defaultLocale: "en"
     Model\Recommendation\UserRecommendationBuilder:
-    Model\Proposal\ProposalFields\ProposalBuilder:
+    Model\Proposal\ProposalBuilder:
     Model\Availability\AvailabilityDataFormatter:
 
     # End Model explicit parameters

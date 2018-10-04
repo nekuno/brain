@@ -8,7 +8,7 @@ use Model\Filters\FilterUsersManager;
 use Model\Photo\PhotoManager;
 use Model\Photo\ProposalPhotoManager;
 use Model\Proposal\Proposal;
-use Model\Proposal\ProposalFields\ProposalFieldAvailability;
+use Model\Profile\ProfileFields\FieldAvailability;
 use Model\Proposal\ProposalManager;
 use Model\Proposal\ProposalTagManager;
 use Model\User\User;
@@ -56,10 +56,10 @@ class ProposalService
         $proposal = $this->proposalManager->getById($proposalId, $locale);
 
         $availability = $this->availabilityService->getByProposal($proposal);
-        /** @var ProposalFieldAvailability $availabilityField */
+        /** @var FieldAvailability $availabilityField */
 
         if (null !== $availability) {
-            $availabilityField = new ProposalFieldAvailability();
+            $availabilityField = new FieldAvailability();
             $availabilityField->setAvailability($availability);
             $proposal->addField($availabilityField);
         }
@@ -83,7 +83,7 @@ class ProposalService
                 continue;
             }
 
-            $availabilityField = new ProposalFieldAvailability();
+            $availabilityField = new FieldAvailability();
             $availabilityField->setAvailability($availability);
             $proposal->addField($availabilityField);
         }
@@ -198,7 +198,7 @@ class ProposalService
 
     protected function getAvailabilityId(Proposal $proposal)
     {
-        /** @var ProposalFieldAvailability $availabilityField */
+        /** @var FieldAvailability $availabilityField */
         $availabilityField = $proposal->getField('availability');
         $availabilityId = $availabilityField->getAvailability()->getId();
 
@@ -212,7 +212,7 @@ class ProposalService
         if ($availability) {
             $this->availabilityManager->relateToProposal($availability, $proposal);
 
-            $availabilityField = new ProposalFieldAvailability();
+            $availabilityField = new FieldAvailability();
             $availabilityField->setAvailability($availability);
             $proposal->addField($availabilityField);
         }

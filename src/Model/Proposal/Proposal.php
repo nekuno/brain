@@ -3,7 +3,7 @@
 namespace Model\Proposal;
 
 use Model\Filters\FilterUsers;
-use Model\Proposal\ProposalFields\AbstractProposalField;
+use Model\Profile\ProfileFields\AbstractField;
 
 class Proposal
 {
@@ -11,7 +11,7 @@ class Proposal
 
     protected $name;
 
-    /** @var AbstractProposalField[] */
+    /** @var AbstractField[] */
     protected $fields = array();
 
     /** @var FilterUsers */
@@ -20,7 +20,7 @@ class Proposal
     /**
      * Proposal constructor.
      * @param $name
-     * @param AbstractProposalField[] $fields
+     * @param AbstractField[] $fields
      */
     public function __construct($name, array $fields)
     {
@@ -66,7 +66,7 @@ class Proposal
     }
 
     /**
-     * @return AbstractProposalField[]
+     * @return AbstractField[]
      */
     public function getFields(): array
     {
@@ -74,14 +74,14 @@ class Proposal
     }
 
     /**
-     * @param AbstractProposalField[] $fields
+     * @param AbstractField[] $fields
      */
     public function setFields(array $fields): void
     {
         $this->fields = $fields;
     }
 
-    public function addField(AbstractProposalField $field)
+    public function addField(AbstractField $field)
     {
         $this->fields[] = $field;
     }

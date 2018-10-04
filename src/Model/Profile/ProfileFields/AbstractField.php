@@ -1,9 +1,10 @@
 <?php
 
-namespace Model\Proposal\ProposalFields;
+namespace Model\Profile\ProfileFields;
 
-abstract class AbstractProposalField
+abstract class AbstractField
 {
+    protected $nodeName;
     protected $name;
     protected $value;
     protected $type;
@@ -66,5 +67,19 @@ abstract class AbstractProposalField
         $this->type = $type;
     }
 
+    /**
+     * @return mixed
+     */
+    public function getNodeName()
+    {
+        return $this->nodeName;
+    }
 
+    /**
+     * @param mixed $nodeName
+     */
+    public function setNodeName($nodeName): void
+    {
+        $this->nodeName = $nodeName;
+    }
 }

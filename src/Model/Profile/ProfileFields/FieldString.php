@@ -1,12 +1,12 @@
 <?php
 
-namespace Model\Proposal\ProposalFields;
+namespace Model\Profile\ProfileFields;
 
-class ProposalFieldString extends AbstractProposalField
+class FieldString extends AbstractField
 {
     public function addInformation(array &$variables)
     {
-        $queryVariables = array_merge($variables, array("proposal.$this->name AS $this->name"));
+        $queryVariables = array_merge($variables, array("$this->nodeName.$this->name AS $this->name"));
         $variables[] = "$this->name";
 
         return 'WITH ' . implode(', ', $queryVariables);
@@ -14,7 +14,7 @@ class ProposalFieldString extends AbstractProposalField
 
     public function getSaveQuery(array $variables)
     {
-        return "SET proposal.$this->name = '$this->value'"
+        return "SET $this->nodeName.$this->name = '$this->value'"
             . ' WITH ' . implode(', ', $variables);
     }
 }
