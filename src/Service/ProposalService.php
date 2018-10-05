@@ -77,6 +77,8 @@ class ProposalService
             $proposals[] = $proposal;
         }
 
+        $proposals = $this->orderByMatches($proposals);
+
         foreach ($proposals as $proposal) {
             $availability = $this->availabilityService->getByProposal($proposal);
             if (null == $availability) {
@@ -87,6 +89,30 @@ class ProposalService
             $availabilityField->setAvailability($availability);
             $proposal->addField($availabilityField);
         }
+
+        return $proposals;
+    }
+
+    /**
+     * @param Proposal[] $proposals
+     * @return Proposal[]
+     */
+    protected function orderByMatches(array $proposals)
+    {
+        foreach ($proposals as $proposal) {
+            $matches = $this->proposalManager->countMatches($proposal);
+            $proposal->setMatches($matches);
+        }
+
+        usort($proposals, function($a, $b){
+            /** @var $a Proposal */
+            /** @var $b Proposal */
+            if ($a->getMatches() == $b->getMatches()){
+                return 0;
+            }
+
+            return ($a->getMatches() > $b->getMatches()) ? 1 : 1;
+        });
 
         return $proposals;
     }
@@ -184,6 +210,7 @@ class ProposalService
     {
         $proposalId = $data['proposalId'];
         $skipped = $data['skipped'];
+
         return $this->proposalManager->setSkippedProposal($user, $proposalId, $skipped);
     }
 

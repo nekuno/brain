@@ -292,6 +292,11 @@ class ProposalTest extends ProposalAPITest
             $this->assertArrayHasKey('name', $field);
             $this->assertArrayHasKey('value', $field);
             $this->assertArrayHasKey('type', $field);
+            if ($field['type'] === 'choice'){
+                $value = $field['value'];
+                $this->assertArrayHasKey('value', $value);
+                $this->assertArrayHasKey('image', $value);
+            }
         }
     }
 

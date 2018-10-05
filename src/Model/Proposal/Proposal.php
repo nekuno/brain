@@ -11,6 +11,8 @@ class Proposal
 
     protected $name;
 
+    protected $matches = 0;
+
     /** @var AbstractField[] */
     protected $fields = array();
 
@@ -124,6 +126,22 @@ class Proposal
     public function setFilters(FilterUsers $filters): void
     {
         $this->filters = $filters;
+    }
+
+    /**
+     * @return int
+     */
+    public function getMatches(): int
+    {
+        return $this->matches;
+    }
+
+    /**
+     * @param int $matches
+     */
+    public function setMatches(int $matches): void
+    {
+        $this->matches = $matches;
     }
 
 }
