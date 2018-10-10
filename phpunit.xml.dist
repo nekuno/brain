@@ -51,7 +51,7 @@
 
     <testsuites>
         <testsuite name="Project Test Suite">
-            <directory>tests/API/Proposal</directory>
+            <directory>tests</directory>
         </testsuite>
     </testsuites>
 

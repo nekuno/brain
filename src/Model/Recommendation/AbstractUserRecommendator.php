@@ -6,6 +6,7 @@ use Model\LanguageText\LanguageTextManager;
 use Model\Metadata\MetadataUtilities;
 use Model\Neo4j\GraphManager;
 use Model\Metadata\UserFilterMetadataManager;
+use Model\Profile\ProfileManager;
 use Paginator\PaginatedInterface;
 
 abstract class AbstractUserRecommendator implements PaginatedInterface
@@ -26,13 +27,16 @@ abstract class AbstractUserRecommendator implements PaginatedInterface
 
     protected $languageTextManager;
 
-    public function __construct(GraphManager $gm, MetadataUtilities $metadataUtilities, UserFilterMetadataManager $userFilterMetadataManager,  UserRecommendationBuilder $userRecommendationBuilder, LanguageTextManager $languageTextManager)
+    protected $profileManager;
+
+    public function __construct(GraphManager $gm, MetadataUtilities $metadataUtilities, UserFilterMetadataManager $userFilterMetadataManager,  UserRecommendationBuilder $userRecommendationBuilder, LanguageTextManager $languageTextManager, ProfileManager $profileManager)
     {
         $this->gm = $gm;
         $this->metadataUtilities = $metadataUtilities;
         $this->userFilterMetadataManager = $userFilterMetadataManager;
         $this->userRecommendationBuilder = $userRecommendationBuilder;
         $this->languageTextManager = $languageTextManager;
+        $this->profileManager = $profileManager;
     }
 
     /**

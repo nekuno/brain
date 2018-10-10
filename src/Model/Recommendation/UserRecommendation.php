@@ -7,7 +7,6 @@ class UserRecommendation extends AbstractUserRecommendation
     protected $like;
     protected $profile;
     protected $topLinks = array();
-    protected $sharedLinks;
 
     /**
      * @return mixed
@@ -55,22 +54,6 @@ class UserRecommendation extends AbstractUserRecommendation
     public function setTopLinks($topLinks)
     {
         $this->topLinks = $topLinks;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getSharedLinks()
-    {
-        return $this->sharedLinks;
-    }
-
-    /**
-     * @param mixed $sharedLinks
-     */
-    public function setSharedLinks($sharedLinks)
-    {
-        $this->sharedLinks = $sharedLinks;
     }
 
 }

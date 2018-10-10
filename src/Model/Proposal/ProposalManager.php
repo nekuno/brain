@@ -66,7 +66,7 @@ class ProposalManager
         $qb->returns('proposal');
         $qb->getQuery()->getResultSet();
 
-        return $proposal;
+        return $this->getById($proposalId);
     }
 
     public function delete($proposalId)
@@ -120,15 +120,15 @@ class ProposalManager
         return !!($result->count());
     }
 
-    public function getById($proposalId, $locale)
+    public function getById($proposalId, $locale = null)
     {
-        $this->locale = $locale;
+        $this->locale = $locale ? $locale : $this->locale;
 
         $qb = $this->graphManager->createQueryBuilder();
 
         $qb->match('(proposal:Proposal)')
             ->where('id(proposal) = {proposalId}')
-            ->setParameter('proposalId', $proposalId);
+            ->setParameter('proposalId', (integer)$proposalId);
 
         $qb->returns('{id: id(proposal), labels: labels(proposal)} AS proposal');
 

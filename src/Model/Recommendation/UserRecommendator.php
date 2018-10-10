@@ -30,7 +30,7 @@ class UserRecommendator extends AbstractUserRecommendator
 
         $return = array('items' => array());
 
-        $profile = $this->profileModel->getById($id);
+        $profile = $this->profileManager->getById($id);
         $objectives = $profile->get('objective') ?: array();
 
         $parameters = array(

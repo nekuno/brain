@@ -17,6 +17,7 @@ class AbstractUserRecommendation implements \JsonSerializable
     protected $age;
     protected $username;
     protected $matching;
+    protected $sharedLinks;
 
     /**
      * @return mixed
@@ -165,5 +166,21 @@ class AbstractUserRecommendation implements \JsonSerializable
             'age' => $this->getAge(),
             'location' => $this->getLocation(),
         );
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getSharedLinks()
+    {
+        return $this->sharedLinks;
+    }
+
+    /**
+     * @param mixed $sharedLinks
+     */
+    public function setSharedLinks($sharedLinks)
+    {
+        $this->sharedLinks = $sharedLinks;
     }
 }

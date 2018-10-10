@@ -85,7 +85,7 @@ class ProposalTest extends ProposalAPITest
         $editData = $this->getWorkProposalData2();
 
         $response = $this->editProposal($workProposalId, $editData);
-        $formattedResponse = $this->assertJsonResponse($response, 201);
+        $formattedResponse = $this->assertJsonResponse($response, 201, $response->getContent());
         $this->assertProposalFormat($formattedResponse);
     }
 
@@ -294,8 +294,9 @@ class ProposalTest extends ProposalAPITest
             $this->assertArrayHasKey('type', $field);
             if ($field['type'] === 'choice'){
                 $value = $field['value'];
-                $this->assertArrayHasKey('value', $value);
-                $this->assertArrayHasKey('image', $value);
+                $this->assertArrayOfType('array', $value, 'choice value is array');
+                $this->assertArrayHasKey('value', $value[0]);
+                $this->assertArrayHasKey('image', $value[0]);
             }
         }
     }

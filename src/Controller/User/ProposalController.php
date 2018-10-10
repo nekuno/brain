@@ -63,12 +63,7 @@ class ProposalController extends FOSRestController implements ClassResourceInter
         $data = $request->request->all();
         $data['locale'] = $request->query->get('locale', 'en');
 
-        try {
-            $proposal = $proposalService->create($data, $user);
-        } catch (\Exception $e) {
-            var_dump($e->getMessage());
-            var_dump($e->getTraceAsString());
-        }
+        $proposal = $proposalService->create($data, $user);
 
         return $this->view($proposal, 201);
     }
@@ -218,14 +213,7 @@ class ProposalController extends FOSRestController implements ClassResourceInter
      */
     public function getRecommendationsAction(User $user, Request $request, ProposalRecommendatorService $proposalRecommendatorService)
     {
-        try {
-            $recommendations = $proposalRecommendatorService->getRecommendations($user, $request);
-        } catch (\Exception $e) {
-            var_dump($e->getMessage());
-            var_dump($e->getTraceAsString());
-            throw $e;
-
-        }
+        $recommendations = $proposalRecommendatorService->getRecommendations($user, $request);
 
         return $this->view($recommendations, 200);
     }
@@ -284,7 +272,7 @@ class ProposalController extends FOSRestController implements ClassResourceInter
      * @Security(name="Bearer")
      * @SWG\Tag(name="proposals")
      */
-    public function setInterestedAction (Request $request, User $user, ProposalService $proposalService)
+    public function setInterestedAction(Request $request, User $user, ProposalService $proposalService)
     {
         $data = $request->request->all();
 
@@ -323,7 +311,7 @@ class ProposalController extends FOSRestController implements ClassResourceInter
      * @Security(name="Bearer")
      * @SWG\Tag(name="proposals")
      */
-    public function setAcceptedAction (Request $request, ProposalService $proposalService)
+    public function setAcceptedAction(Request $request, ProposalService $proposalService)
     {
         $data = $request->request->all();
 
@@ -362,7 +350,7 @@ class ProposalController extends FOSRestController implements ClassResourceInter
      * @Security(name="Bearer")
      * @SWG\Tag(name="proposals")
      */
-    public function setSkippedProposalAction (Request $request, User $user, ProposalService $proposalService)
+    public function setSkippedProposalAction(Request $request, User $user, ProposalService $proposalService)
     {
         $data = $request->request->all();
 
@@ -401,7 +389,7 @@ class ProposalController extends FOSRestController implements ClassResourceInter
      * @Security(name="Bearer")
      * @SWG\Tag(name="proposals")
      */
-    public function setSkippedCandidateAction (Request $request, ProposalService $proposalService)
+    public function setSkippedCandidateAction(Request $request, ProposalService $proposalService)
     {
         $data = $request->request->all();
 

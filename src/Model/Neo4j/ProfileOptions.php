@@ -1632,6 +1632,71 @@ class ProfileOptions implements LoggerAwareInterface
                     'name_es' => 'Aventuras programadas',
                 ),
             ),
+            'Restaurants' => array(
+                array(
+                    'id' => 'asian',
+                    'name_en' => 'Asian',
+                    'name_es' => 'Asiáticos'
+                ),
+                array(
+                    'id' => 'italian',
+                    'name_en' => 'Italian',
+                    'name_es' => 'Italianos'
+                ),
+                array(
+                    'id' => 'fast',
+                    'name_en' => 'Fast food',
+                    'name_es' => 'Comida rápida'
+                ),
+            ),
+            //Copiado de Tickets
+            'Shows' => array(
+                array(
+                    'id' => 'theater-dance',
+                    'name_en' => 'Theater and dance',
+                    'name_es' => 'Teatro y danza',
+                ),
+                array(
+                    'id' => 'concerts-music',
+                    'name_en' => 'Concerts and music',
+                    'name_es' => 'Conciertos y música',
+                ),
+                array(
+                    'id' => 'museums-exhibitions',
+                    'name_en' => 'Museums and exhibitions',
+                    'name_es' => 'Museos y exposiciones',
+                ),
+                array(
+                    'id' => 'circus',
+                    'name_en' => 'Circus',
+                    'name_es' => 'Circo',
+                ),
+                array(
+                    'id' => 'cinema',
+                    'name_en' => 'Cinema',
+                    'name_es' => 'Cine',
+                ),
+                array(
+                    'id' => 'sports-events',
+                    'name_en' => 'Sports events',
+                    'name_es' => 'Eventos de deportes',
+                ),
+                array(
+                    'id' => 'theme-parks',
+                    'name_en' => 'Theme parks',
+                    'name_es' => 'Parques temáticos',
+                ),
+                array(
+                    'id' => 'conferences',
+                    'name_en' => 'Conferences',
+                    'name_es' => 'Conferencias',
+                ),
+                array(
+                    'id' => 'thematic-fairs',
+                    'name_en' => 'Thematic fairs',
+                    'name_es' => 'Ferias temáticas',
+                ),
+            )
         );
 
         foreach ($options as $type => $values) {
