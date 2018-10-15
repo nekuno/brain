@@ -24,7 +24,6 @@ class ProfileOptions implements LoggerAwareInterface
 
     public function __construct(GraphManager $gm)
     {
-
         $this->gm = $gm;
     }
 
@@ -1636,17 +1635,20 @@ class ProfileOptions implements LoggerAwareInterface
                 array(
                     'id' => 'asian',
                     'name_en' => 'Asian',
-                    'name_es' => 'Asiáticos'
+                    'name_es' => 'Asiáticos',
+                    'picture' => 'http://cdn.shopify.com/s/files/1/1291/3261/products/DSC_7797-Edit_grande.jpg?v=1475050576'
                 ),
                 array(
                     'id' => 'italian',
                     'name_en' => 'Italian',
-                    'name_es' => 'Italianos'
+                    'name_es' => 'Italianos',
+                    'picture' => 'https://cdn.vox-cdn.com/thumbor/LBrK9HXbpy41EzO1f8BlofvFWsw=/155x0:4763x3456/1200x800/filters:focal(155x0:4763x3456)/cdn.vox-cdn.com/uploads/chorus_image/image/50864567/shutterstock_314337134.0.0.jpg',
                 ),
                 array(
                     'id' => 'fast',
                     'name_en' => 'Fast food',
-                    'name_es' => 'Comida rápida'
+                    'name_es' => 'Comida rápida',
+                    'picture' => 'https://upload.wikimedia.org/wikipedia/commons/2/2e/Fast_food_meal.jpg'
                 ),
             ),
             //Copiado de Tickets
@@ -1701,95 +1703,144 @@ class ProfileOptions implements LoggerAwareInterface
 
         foreach ($options as $type => $values) {
             foreach ($values as $value) {
-                $id = $value['id'];
-                $names = array(
-                    'name_es' => $value['name_es'],
-                    'name_en' => $value['name_en'],
-                );
-                $order = isset($value['order']) ? $value['order'] : null;
+                $value['type'] = $type;
+                $value['order'] = isset($value['order']) ? $value['order'] : null;
+                $value['picture'] = isset($value['picture']) ? $value['picture'] : '';
 
-                $this->processOption($type, $id, $names, $order);
+                $this->merge($value);
             }
         }
 
         return $this->result;
     }
+//
+//    /**
+//     * @param $type
+//     * @param $id
+//     * @param $names
+//     * @param $order
+//     * @param string $picture
+//     */
+//    public function processOption($type, $id, $names, $order = null, $picture = '')
+//    {
+//
+//        $this->result->incrementTotal();
+//
+//        $data = array(
+//            'type' => $type,
+//            'id' => $id,
+//            'name_es' => $names['name_es'],
+//            'name_en' => $names['name_en'],
+//            'order' => $order,
+//            'picture' => $picture
+//        );
+//
+//        $this->merge($data);
+//        if ($this->optionExists($type, $id)) {
+//
+//            if ($this->optionExists($type, $id, $names, $order)) {
+//
+//                $this->logger->info(sprintf('Skipping, Already exists ProfileOption:%s id: "%s", name_en: "%s", name_es: "%s"', $type, $id, $names['name_en'], $names['name_es']));
+//
+//            } else {
+//
+//                $this->result->incrementUpdated();
+//                $this->logger->info(sprintf('Updating ProfileOption:%s id: "%s", name_en: "%s", name_es: "%s"', $type, $id, $names['name_en'], $names['name_es']));
+//                $parameters = array('type' => $type, 'id' => $id);
+//                $parameters = array_merge($parameters, $names);
+//                $cypher = "MATCH (o:ProfileOption) WHERE {type} IN labels(o) AND o.id = {id} SET o.name_en = {name_en}, o.name_es = {name_es}";
+//                if ($order !== null) {
+//                    $cypher .= " SET o.order = {order}";
+//                    $parameters['order'] = $order;
+//                }
+//                $cypher .= " RETURN o;";
+//
+//                $query = $this->gm->createQuery($cypher, $parameters);
+//                $query->getResultSet();
+//            }
+//
+//        } else {
+//
+//            $this->result->incrementCreated();
+//            $this->logger->info(sprintf('Creating ProfileOption:%s id: "%s", name_en: "%s", name_es: "%s"', $type, $id, $names['name_en'], $names['name_es']));
+//            $parameters = array('id' => $id);
+//            $parameters = array_merge($parameters, $names);
+//            $cypher = "CREATE (o:ProfileOption:" . $type . " { id: {id}, name_en: {name_en}, name_es: {name_es} })";
+//            if ($order !== null) {
+//                $cypher .= " SET o.order = {order}";
+//                $parameters['order'] = $order;
+//            }
+//
+//            $query = $this->gm->createQuery($cypher, $parameters);
+//            $query->getResultSet();
+//        }
+//    }
+//
+//    /**
+//     * @param array $data
+//     * @return boolean
+//     * @throws \Exception
+//     */
+//    public function optionExists($type, $id, $names = array(), $order = null)
+//    {
+//        $qb = $this->gm->createQueryBuilder();
+//
+//        $qb->match('MATCH (o:ProfileOption)')
+//            ->where('{type} IN labels(o) AND o.id = {id}')
+//            ->with('o')
+//            ->setParameter('type', $type)
+//            ->setParameter('id', $id);
+//
+//        if (!empty($names)) {
+//            $qb->where('o.name_es = {name_es}', 'o.name_en = {name_en}')
+//                ->setParameter('name_es', $names('name_es'))
+//                ->setParameter('name_en', $names('name_en'))
+//                ->with('o');
+//        }
+//        if ($order !== null) {
+//            $qb->where('o.order = {order}')
+//                ->setParameter('order', $order)
+//                ->with('o');
+//        }
+//
+//        $qb->returns('o');
+//
+//        $query = $qb->getQuery();
+//        $result = $query->getResultSet();
+//
+//        return count($result) > 0;
+//    }
 
-    /**
-     * @param $type
-     * @param $id
-     * @param $names
-     * @param $order
-     * @throws \Exception
-     */
-    public function processOption($type, $id, $names, $order = null)
+    public function merge(array $data)
     {
+        $type = $data['type'];
+        $id = $data['id'];
+        $name_en = $data['name_en'];
+        $name_es = $data['name_es'];
+        $order = $data['order'];
+        $picture = $data['picture'];
 
-        $this->result->incrementTotal();
+        $qb = $this->gm->createQueryBuilder();
 
-        if ($this->optionExists($type, $id)) {
+        $qb->merge("(o:ProfileOption:$type{id: {id}})")
+            ->with('o')
+            ->setParameter('id', $id);
 
-            if ($this->optionExists($type, $id, $names, $order)) {
+        $qb->set('o.name_es = {name_es}', 'o.name_en = {name_en}', 'o.picture = {picture}')
+            ->setParameter('name_es', $name_es)
+            ->setParameter('name_en', $name_en)
+            ->setParameter('picture', $picture)
+            ->with('o');
 
-                $this->logger->info(sprintf('Skipping, Already exists ProfileOption:%s id: "%s", name_en: "%s", name_es: "%s"', $type, $id, $names['name_en'], $names['name_es']));
-
-            } else {
-
-                $this->result->incrementUpdated();
-                $this->logger->info(sprintf('Updating ProfileOption:%s id: "%s", name_en: "%s", name_es: "%s"', $type, $id, $names['name_en'], $names['name_es']));
-                $parameters = array('type' => $type, 'id' => $id);
-                $parameters = array_merge($parameters, $names);
-                $cypher = "MATCH (o:ProfileOption) WHERE {type} IN labels(o) AND o.id = {id} SET o.name_en = {name_en}, o.name_es = {name_es}";
-                if ($order !== null) {
-                    $cypher .= " SET o.order = {order}";
-                    $parameters['order'] = $order;
-                }
-                $cypher .= " RETURN o;";
-
-                $query = $this->gm->createQuery($cypher, $parameters);
-                $query->getResultSet();
-            }
-
-        } else {
-
-            $this->result->incrementCreated();
-            $this->logger->info(sprintf('Creating ProfileOption:%s id: "%s", name_en: "%s", name_es: "%s"', $type, $id, $names['name_en'], $names['name_es']));
-            $parameters = array('id' => $id);
-            $parameters = array_merge($parameters, $names);
-            $cypher = "CREATE (o:ProfileOption:" . $type . " { id: {id}, name_en: {name_en}, name_es: {name_es} })";
-            if ($order !== null) {
-                $cypher .= " SET o.order = {order}";
-                $parameters['order'] = $order;
-            }
-
-            $query = $this->gm->createQuery($cypher, $parameters);
-            $query->getResultSet();
-        }
-    }
-
-    /**
-     * @param $type
-     * @param $id
-     * @param array $names
-     * @param $order
-     * @return boolean
-     * @throws \Exception
-     */
-    public function optionExists($type, $id, $names = array(), $order = null)
-    {
-        $parameters = array('type' => $type, 'id' => $id);
-        $cypher = "MATCH (o:ProfileOption) WHERE {type} IN labels(o) AND o.id = {id}\n";
-        if (!empty($names)) {
-            $parameters = array_merge($parameters, $names);
-            $cypher .= "AND o.name_es = {name_es} AND o.name_en = {name_en}";
-        }
         if ($order !== null) {
-            $cypher .= " AND o.order = {order}";
-            $parameters['order'] = $order;
+            $qb->set('o.order = {order}')
+                ->setParameter('order', $order)
+                ->with('o');
         }
-        $cypher .= " RETURN o;";
 
-        $query = $this->gm->createQuery($cypher, $parameters);
+        $qb->returns('o');
+
+        $query = $qb->getQuery();
         $result = $query->getResultSet();
 
         return count($result) > 0;
