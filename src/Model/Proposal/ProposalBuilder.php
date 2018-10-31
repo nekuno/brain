@@ -10,7 +10,6 @@ use Model\Profile\ProfileFields\FieldBoolean;
 use Model\Profile\ProfileFields\FieldChoice;
 use Model\Profile\ProfileFields\FieldString;
 use Model\Profile\ProfileFields\FieldTag;
-use Model\Proposal\Proposal;
 
 class ProposalBuilder
 {
@@ -26,23 +25,22 @@ class ProposalBuilder
     }
 
     /**
-     * @param $proposalName
+     * @param $proposalType
      * @param $proposalData
      * @return Proposal
      */
-    public function buildFromData($proposalName, $proposalData)
+    public function buildFromData($proposalType, $proposalData)
     {
         $metadata = $this->metadataManager->getMetadata();
-        $metadatum = $metadata[$proposalName];
-
+        $metadatum = $metadata[$proposalType];
+        $dataFields = $proposalData['fields'];
         $fields = array();
         foreach ($metadatum AS $fieldName => $fieldMetadata) {
-            if (!isset($proposalData[$fieldName])) {
+            if (!array_key_exists($fieldName, $dataFields)) {
                 continue;
             }
-            $value = $proposalData[$fieldName];
+            $value = $dataFields[$fieldName];
             $proposalField = $this->buildField($fieldMetadata);
-
             $proposalField->setName($fieldName);
             $proposalField->setValue($value);
 
@@ -53,18 +51,18 @@ class ProposalBuilder
             $fields[] = $proposalField;
         }
 
-        $proposal = new Proposal($proposalName, $fields);
+        $proposal = new Proposal($proposalType, $fields);
         if (isset($proposalData['proposalId'])) {
             $proposal->setId($proposalData['proposalId']);
         }
 
-        return new Proposal($proposalName, $fields);
+        return $proposal;
     }
 
-    public function buildEmpty($proposalName)
+    public function buildEmpty($proposalType)
     {
         $metadata = $this->metadataManager->getMetadata();
-        $metadatum = $metadata[$proposalName];
+        $metadatum = $metadata[$proposalType];
 
         $fields = array();
         foreach ($metadatum AS $fieldName => $fieldMetadata) {
@@ -74,7 +72,7 @@ class ProposalBuilder
             $fields[] = $proposalField;
         }
 
-        return new Proposal($proposalName, $fields);
+        return new Proposal($proposalType, $fields);
     }
 
     /**

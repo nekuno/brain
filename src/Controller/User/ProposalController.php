@@ -31,18 +31,9 @@ class ProposalController extends FOSRestController implements ClassResourceInter
      *      in="body",
      *      type="json",
      *      schema=@SWG\Schema(
-     *          @SWG\Property(property="name", type="string"),
-     *          @SWG\Property(property="description", type="string"),
-     *          @SWG\Property(property="industry", type="string"),
-     *          @SWG\Property(property="profession", type="string"),
-     *          @SWG\Property(property="sport", type="string"),
-     *          @SWG\Property(property="videogame", type="string"),
-     *          @SWG\Property(property="hobby", type="string"),
-     *          @SWG\Property(property="show", type="string"),
-     *          @SWG\Property(property="restaurant", type="string"),
-     *          @SWG\Property(property="plan", type="string"),
-     *          @SWG\Property(property="availability", type="array[]"),
-     *          example={ "name" = "work", "description" = "my first proposal", "industry" = "CS", "profession" = "web dev"},
+     *          @SWG\Property(property="type", type="string"),
+     *          @SWG\Property(property="fields", type="array"),
+     *          example={ "type" = "work", "fields" = { "title" = "my 1st proposal", "description" = "my first proposal", "industry" = "CS", "profession" = "web dev"}},
      *      )
      * )
      * @SWG\Parameter(
@@ -58,7 +49,7 @@ class ProposalController extends FOSRestController implements ClassResourceInter
      * @Security(name="Bearer")
      * @SWG\Tag(name="proposals")
      */
-    public function createProposalAction(User $user, Request $request, ProposalService $proposalService)
+    public function createAction(User $user, Request $request, ProposalService $proposalService)
     {
         $data = $request->request->all();
         $data['locale'] = $request->query->get('locale', 'en');
@@ -83,7 +74,8 @@ class ProposalController extends FOSRestController implements ClassResourceInter
      *      type="json",
      *      schema=@SWG\Schema(
      *          @SWG\Property(property="proposalId", type="string"),
-     *          @SWG\Property(property="name", type="string"),
+     *          @SWG\Property(property="type", type="string"),
+     *          @SWG\Property(property="title", type="string"),
      *          @SWG\Property(property="description", type="string"),
      *          @SWG\Property(property="industry", type="string"),
      *          @SWG\Property(property="profession", type="string"),
@@ -94,7 +86,7 @@ class ProposalController extends FOSRestController implements ClassResourceInter
      *          @SWG\Property(property="restaurant", type="string"),
      *          @SWG\Property(property="plan", type="string"),
      *          @SWG\Property(property="availability", type="array[]"),
-     *          example={ "proposalId" = "15899079", "name" = "work", "description" = "my first proposal", "industry" = "CS", "profession" = "web dev"},
+     *          example={ "proposalId" = "15899079", "name" = "my 1st proposal", "description" = "my first proposal", "industry" = "CS", "profession" = "web dev"},
      *      )
      * )
      * @SWG\Parameter(
@@ -110,7 +102,7 @@ class ProposalController extends FOSRestController implements ClassResourceInter
      * @Security(name="Bearer")
      * @SWG\Tag(name="proposals")
      */
-    public function updateProposalAction($proposalId, Request $request, User $user, ProposalService $proposalService)
+    public function updateAction($proposalId, Request $request, User $user, ProposalService $proposalService)
     {
         $data = $request->request->all();
         $data['locale'] = $request->query->get('locale', 'en');
@@ -123,7 +115,8 @@ class ProposalController extends FOSRestController implements ClassResourceInter
     /**
      * Delete a proposal
      *
-     * @Delete("/proposals")
+     * @Delete("/proposals/{proposalId}", requirements={"proposalId"="\d+"})
+     * @param $proposalId
      * @param Request $request
      * @param ProposalService $proposalService
      * @return \FOS\RestBundle\View\View
@@ -149,12 +142,12 @@ class ProposalController extends FOSRestController implements ClassResourceInter
      * @Security(name="Bearer")
      * @SWG\Tag(name="proposals")
      */
-    public function deleteProposalAction(Request $request, ProposalService $proposalService)
+    public function deleteAction($proposalId, Request $request, ProposalService $proposalService)
     {
         $data = $request->request->all();
         $data['locale'] = $request->query->get('locale', 'en');
 
-        $proposalService->delete($data);
+        $proposalService->delete($proposalId, $data);
 
         return $this->view(array(), 201);
     }

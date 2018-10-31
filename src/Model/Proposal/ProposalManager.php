@@ -41,8 +41,8 @@ class ProposalManager
 
     public function update($proposalId, array $data)
     {
-        $proposalName = $data['name'];
-        $proposal = $this->proposalBuilder->buildFromData($proposalName, $data);
+        $proposalType = $data['type'];
+        $proposal = $this->proposalBuilder->buildFromData($proposalType, $data);
         $proposal->setId($proposalId);
 
         $qb = $this->graphManager->createQueryBuilder();
@@ -76,7 +76,7 @@ class ProposalManager
         $qb->match('(proposal:Proposal)')
             ->where('id(proposal) = {proposalId}')
             ->with('proposal')
-            ->setParameter('proposalId', $proposalId);
+            ->setParameter('proposalId', (integer)$proposalId);
 
         $qb->optionalMatch('(proposal)-[rel:INCLUDES]->(:ProposalOption)')
             ->delete('rel')
@@ -136,10 +136,10 @@ class ProposalManager
 
         $proposalData = $qb->getData($resultSet->current());
 
-        $proposalName = $this->getProposalName($proposalData);
+        $proposalType = $this->getProposalType($proposalData);
         $proposalId = $proposalData['proposal']['id'];
 
-        $proposal = $this->getProposalData($proposalId, $proposalName);
+        $proposal = $this->getProposalData($proposalId, $proposalType);
         $proposal->setId($proposalId);
 
         return $proposal;
@@ -328,9 +328,9 @@ class ProposalManager
         return $resultSet->count();
     }
 
-    protected function getProposalData($proposalId, $proposalName)
+    protected function getProposalData($proposalId, $proposalType)
     {
-        $proposal = $this->proposalBuilder->buildEmpty($proposalName);
+        $proposal = $this->proposalBuilder->buildEmpty($proposalType);
 
         $qb = $this->graphManager->createQueryBuilder();
 
@@ -350,11 +350,20 @@ class ProposalManager
 
         $resultSet = $qb->getQuery()->getResultSet();
         $data = $qb->getData($resultSet->current());
+        $proposalData = array('proposal' => $data['proposal'], 'fields' => array());
+        foreach ($data as $name => $datum)
+        {
+            if ($name == 'proposal'){
+                continue;
+            }
 
-        return $this->proposalBuilder->buildFromData($proposalName, $data);
+            $proposalData['fields'][$name] = $datum;
+        }
+
+        return $this->proposalBuilder->buildFromData($proposalType, $proposalData);
     }
 
-    protected function getProposalName($proposalData)
+    protected function getProposalType($proposalData)
     {
         $labels = $proposalData['proposal']['labels'];
 

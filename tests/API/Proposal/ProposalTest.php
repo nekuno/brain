@@ -20,7 +20,7 @@ class ProposalTest extends ProposalAPITest
     protected function assertGetOwnEmpty()
     {
         $response = $this->getOwnProposals();
-        $formattedResponse = $this->assertJsonResponse($response, 200, "Get Proposals");
+        $formattedResponse = $this->assertJsonResponse($response, 200, $response->getContent());
         $this->assertEquals([], $formattedResponse);
     }
 
@@ -77,7 +77,7 @@ class ProposalTest extends ProposalAPITest
         $workProposals = array_filter(
             $formattedResponse,
             function ($proposal) {
-                return $proposal['name'] == 'work';
+                return $proposal['type'] == 'work';
             }
         );
         $workProposalId = reset($workProposals)['id'];
@@ -97,13 +97,12 @@ class ProposalTest extends ProposalAPITest
         $workProposals = array_filter(
             $formattedResponse,
             function ($proposal) {
-                return $proposal['name'] == 'work';
+                return $proposal['type'] == 'work';
             }
         );
         $proposalId = reset($workProposals)['id'];
-        $data = array('proposalId' => $proposalId);
 
-        $response = $this->deleteProposal($data);
+        $response = $this->deleteProposal($proposalId);
         $formattedResponse = $this->assertJsonResponse($response, 201);
         $this->assertEquals([], $formattedResponse);
     }
@@ -158,101 +157,128 @@ class ProposalTest extends ProposalAPITest
     protected function getWorkProposalData()
     {
         return array(
-            'name' => 'work',
-            'description' => 'my work proposal',
-            'industry' => array('CS'),
-            'profession' => array('web dev')
+            'type' => 'work',
+            'fields' => array(
+                'title' => 'work title',
+                'description' => 'my work proposal',
+                'industry' => array('CS'),
+                'profession' => array('web dev')
+            )
         );
     }
 
     protected function getWorkProposalData2()
     {
         return array(
-            'name' => 'work',
-            'description' => 'my edited work proposal',
-            'industry' => array('Coffee drinking'),
-            'profession' => array('web dev')
+            'type' => 'work',
+            'fields' => array(
+                'title' => 'work title edited',
+                'description' => 'my edited work proposal',
+                'industry' => array('Coffee drinking'),
+                'profession' => array('web dev')
+            )
         );
     }
 
     protected function getSportProposalData()
     {
         return array(
-            'name' => 'sport',
-            'description' => 'my sport proposal',
-            'sport' => array('football')
+            'type' => 'sport',
+            'fields' => array(
+                'title' => 'sport proposal title',
+                'description' => 'my sport proposal',
+                'sport' => array('football')
+            )
         );
     }
 
     protected function getVideogameProposalData()
     {
         return array(
-            'name' => 'videogame',
-            'description' => 'my videogame proposal',
-            'videogame' => array('GTA')
+            'type' => 'videogame',
+            'fields' => array(
+                'title' => 'videogame proposal title',
+                'description' => 'my videogame proposal',
+                'videogame' => array('GTA')
+            )
         );
     }
 
     protected function getHobbyProposalData()
     {
         return array(
-            'name' => 'hobby',
-            'description' => 'my hobby proposal',
-            'hobby' => array('Painting')
+            'type' => 'hobby',
+            'fields' => array(
+                'title' => 'hobby proposal title',
+                'description' => 'my hobby proposal',
+                'hobby' => array('Painting')
+            )
         );
     }
 
     protected function getShowProposalData()
     {
         return array(
-            'name' => 'show',
-            'description' => 'my show proposal',
-            'show' => array('Theater')
+            'type' => 'show',
+            'fields' => array(
+                'title' => 'show proposal title',
+                'description' => 'my show proposal',
+                'show' => array('Theater')
+            )
         );
     }
 
     protected function getRestaurantProposalData()
     {
         return array(
-            'name' => 'restaurant',
-            'description' => 'my restaurant proposal',
-            'restaurant' => array('Italian')
+            'type' => 'restaurant',
+            'fields' => array(
+                'title' => 'restaurant proposal title',
+                'description' => 'my restaurant proposal',
+                'restaurant' => array('Italian')
+            )
         );
     }
 
     protected function getPlanProposalData()
     {
         return array(
-            'name' => 'plan',
-            'description' => 'my plan proposal',
-            'plan' => array('planning')
+            'type' => 'plan',
+            'fields' => array(
+                'title' => 'plan proposal title',
+                'description' => 'my plan proposal',
+                'plan' => array('planning')
+            )
         );
     }
 
     protected function getFullProposalData()
     {
         return array(
-            'name' => 'plan',
-            'description' => 'my plan proposal',
-            'plan' => array('planning'),
-            'availability' => array(
-                'dynamic' => array(
-                    array(
-                        'weekday' => 'friday',
-                        'range' => array('Night')
+            'type' => 'plan',
+            'fields' => array(
+                'title' => 'plan proposal title',
+                'description' => 'my plan proposal',
+                'plan' => array('planning'),
+                'availability' => array(
+                    'dynamic' => array(
+                        array(
+                            'weekday' => 'friday',
+                            'range' => array('Night')
+                        ),
+                        array(
+                            'weekday' => 'saturday',
+                            'range' => array('Morning', 'Evening', 'Night')
+                        ),
+                        array(
+                            'weekday' => 'sunday',
+                            'range' => array('Morning')
+                        ),
                     ),
-                    array(
-                        'weekday' => 'saturday',
-                        'range' => array('Morning', 'Evening', 'Night')
-                    ),
-                    array(
-                        'weekday' => 'sunday',
-                        'range' => array('Morning')
-                    ),
-                ),
-                'static' => array(
-                    array('days' => array('start'=> '2018-01-10', 'end' => '2018-01-10'), 'range' => array('Morning')),
-                    array('days' => array('start'=> '2018-01-12', 'end' => '2018-01-13'), 'range' => array('Morning', 'Night')),
+                    'static' => array(
+                        array('days' => array('start' => '2018-01-10', 'end' => '2018-01-10'), 'range' => array('Morning')),
+                        array('days' => array('start' => '2018-01-12', 'end' => '2018-01-13'), 'range' => array('Morning', 'Night')),
+                    )
                 )
             ),
             'participantLimit' => 5,
@@ -283,16 +309,20 @@ class ProposalTest extends ProposalAPITest
     protected function assertProposalFormat($proposal)
     {
         $this->assertArrayHasKey('id', $proposal);
-        $this->assertArrayHasKey('name', $proposal);
-        $this->isType('string')->evaluate($proposal['name']);
+        $this->assertArrayHasKey('type', $proposal);
+        $this->isType('string')->evaluate($proposal['type']);
 
         $this->assertArrayHasKey('fields', $proposal);
         $this->assertArrayOfType('array', $proposal['fields'], 'fields is an array of arrays');
+        $this->assertArrayHasKey('title', $proposal['fields']);
+        $this->assertArrayHasKey('description', $proposal['fields']);
+        $this->assertArrayHasKey('photo', $proposal['fields']);
+        $this->assertArrayHasKey('participantLimit', $proposal['fields']);
         foreach ($proposal['fields'] as $field) {
             $this->assertArrayHasKey('name', $field);
             $this->assertArrayHasKey('value', $field);
             $this->assertArrayHasKey('type', $field);
-            if ($field['type'] === 'choice'){
+            if ($field['type'] === 'choice') {
                 $value = $field['value'];
                 $this->assertArrayOfType('array', $value, 'choice value is array');
                 $this->assertArrayHasKey('value', $value[0]);
@@ -313,7 +343,6 @@ class ProposalTest extends ProposalAPITest
         $this->assertArrayHasKey('age', $recommendation);
         $this->assertArrayHasKey('location', $recommendation);
         $this->isType('array')->evaluate($recommendation['location']);
-
 
     }
 

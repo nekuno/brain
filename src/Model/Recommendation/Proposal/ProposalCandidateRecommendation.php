@@ -32,7 +32,7 @@ class ProposalCandidateRecommendation extends AbstractUserRecommendation
     {
         $array = parent::jsonSerialize();
 
-        $array['proposal'] = $this->proposal->getName();
+        $array['proposalId'] = $this->proposal->getId();
 
         return $array;
     }

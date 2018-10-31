@@ -79,15 +79,8 @@ class ProposalService
 
         $proposals = $this->orderByMatches($proposals);
 
-        foreach ($proposals as $proposal) {
-            $availability = $this->availabilityService->getByProposal($proposal);
-            if (null == $availability) {
-                continue;
-            }
-
-            $availabilityField = new FieldAvailability();
-            $availabilityField->setAvailability($availability);
-            $proposal->addField($availabilityField);
+        foreach ($proposals as $index => $proposal) {
+            $proposals[$index] = $this->addAvailabilityField($proposal);
         }
 
         return $proposals;
@@ -117,13 +110,33 @@ class ProposalService
         return $proposals;
     }
 
+    /**
+     * @param Proposal $proposal
+     * @return Proposal
+     */
+    protected function addAvailabilityField(Proposal $proposal)
+    {
+        $availability = $this->availabilityService->getByProposal($proposal);
+        if (null == $availability) {
+            return $proposal;
+        }
+
+        $availabilityField = new FieldAvailability();
+        $availabilityField->setAvailability($availability);
+        $availabilityField->setName('availability');
+        $proposal->addField($availabilityField);
+
+        return $proposal;
+    }
+
     public function create($data, User $user)
     {
         $proposalId = $this->proposalManager->create();
         $proposal = $this->proposalManager->update($proposalId, $data);
         $this->proposalManager->relateToUser($proposal, $user);
 
-        $proposal = $this->createAvailability($proposal, $data);
+        $this->createAvailability($proposal, $data);
+        $proposal = $this->addAvailabilityField($proposal);
 
         $filters = $this->getFiltersData($data);
 
@@ -131,8 +144,8 @@ class ProposalService
             try {
 //            $this->validateFilters($data, $user->getId());
             } catch (ValidationException $e) {
-                $data = array('proposalId' => $proposal->getId());
-                $this->delete($data);
+                $data = array('locale' => 'en');
+                $this->delete($proposal->getId(), $data);
                 throw $e;
             }
 
@@ -153,7 +166,8 @@ class ProposalService
             $this->availabilityManager->delete($availabilityId);
             $proposal->removeField('availability');
         }
-        $proposal = $this->createAvailability($proposal, $data);
+        $this->createAvailability($proposal, $data);
+        $proposal = $this->addAvailabilityField($proposal);
 
         return $proposal;
     }
@@ -174,9 +188,8 @@ class ProposalService
         return $proposal;
     }
 
-    public function delete(array $data)
+    public function delete($proposalId, array $data)
     {
-        $proposalId = (integer)$data['proposalId'];
         $locale = $data['locale'];
         $proposal = $this->getById($proposalId, $locale);
 
@@ -234,17 +247,13 @@ class ProposalService
 
     protected function createAvailability(Proposal $proposal, array $data)
     {
-        $availability = $this->availabilityService->saveWithData($data);
+        $availability = $this->availabilityService->saveWithData($data['fields']);
 
         if ($availability) {
             $this->availabilityManager->relateToProposal($availability, $proposal);
-
-            $availabilityField = new FieldAvailability();
-            $availabilityField->setAvailability($availability);
-            $proposal->addField($availabilityField);
         }
 
-        return $proposal;
+        return $availability;
     }
 
     protected function deleteTags(Proposal $proposal)

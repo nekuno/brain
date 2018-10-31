@@ -26,9 +26,9 @@ abstract class ProposalAPITest extends APITest
         return $this->getResponseByRouteWithCredentials('/proposals/'.$proposalId, 'PUT', $data, $loggedInUserId);
     }
 
-    protected function deleteProposal($data, $loggedInUserId = self::OWN_USER_ID)
+    protected function deleteProposal($proposalId, $loggedInUserId = self::OWN_USER_ID)
     {
-        return $this->getResponseByRouteWithCredentials('/proposals', 'DELETE', $data, $loggedInUserId);
+        return $this->getResponseByRouteWithCredentials('/proposals/'.$proposalId, 'DELETE', array(), $loggedInUserId);
     }
 
     protected function getRecommendations($loggedInUserId = self::OWN_USER_ID)

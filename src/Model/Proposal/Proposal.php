@@ -5,11 +5,11 @@ namespace Model\Proposal;
 use Model\Filters\FilterUsers;
 use Model\Profile\ProfileFields\AbstractField;
 
-class Proposal
+class Proposal implements \JsonSerializable
 {
     protected $id;
 
-    protected $name;
+    protected $type;
 
     protected $matches = 0;
 
@@ -21,12 +21,12 @@ class Proposal
 
     /**
      * Proposal constructor.
-     * @param $name
+     * @param $type
      * @param AbstractField[] $fields
      */
-    public function __construct($name, array $fields)
+    public function __construct($type, array $fields)
     {
-        $this->name = $name;
+        $this->type = $type;
         $this->fields = $fields;
     }
 
@@ -49,22 +49,22 @@ class Proposal
     /**
      * @return mixed
      */
-    public function getName()
+    public function getType()
     {
-        return $this->name;
+        return $this->type;
     }
 
     public function getLabel()
     {
-        return ucfirst($this->name);
+        return ucfirst($this->type);
     }
 
     /**
-     * @param mixed $name
+     * @param mixed $type
      */
-    public function setName($name): void
+    public function setType($type): void
     {
-        $this->name = $name;
+        $this->type = $type;
     }
 
     /**
@@ -115,7 +115,7 @@ class Proposal
     /**
      * @return FilterUsers
      */
-    public function getFilters(): FilterUsers
+    public function getFilters()
     {
         return $this->filters;
     }
@@ -142,6 +142,24 @@ class Proposal
     public function setMatches(int $matches): void
     {
         $this->matches = $matches;
+    }
+
+    public function jsonSerialize()
+    {
+        $proposal = array(
+            'id' => $this->getId(),
+            'type' => $this->getType(),
+            'filters' => $this->getFilters(),
+            'matches' => $this->getMatches(),
+            'fields' => array(),
+        );
+
+        foreach ($this->getFields() as $field)
+        {
+            $proposal['fields'][$field->getName()] = $field;
+        }
+
+        return $proposal;
     }
 
 }

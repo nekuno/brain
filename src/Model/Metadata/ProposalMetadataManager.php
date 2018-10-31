@@ -13,11 +13,12 @@ class ProposalMetadataManager extends MetadataManager
     {
         parent::__construct($translator, $metadataUtilities, $metadata, $defaultLocale);
 
-        foreach ($this->metadata as $name => &$proposalData) {
-            $proposalData['description'] = array('type' => 'string');
-            $proposalData['participantLimit'] = array('type' => 'integer');
-            $proposalData['availability'] = array('type' => 'availability');
-            $proposalData['photo'] = array('type' => 'string');
+        foreach ($this->metadata as &$metadatum) {
+            $metadatum['title'] = array('type' => 'string');
+            $metadatum['description'] = array('type' => 'string');
+            $metadatum['participantLimit'] = array('type' => 'integer');
+            $metadatum['availability'] = array('type' => 'availability');
+            $metadatum['photo'] = array('type' => 'string');
         }
     }
 
