@@ -6,7 +6,7 @@ class FieldChoice extends AbstractField
 {
     protected $value = array();
 
-    public function addInformation(array &$variables)
+    public function queryAddInformation(array &$variables)
     {
         $queryVariables1 = array_merge($variables, array("{value: $this->name.value, image: $this->name.image} AS $this->name"));
         $queryVariables2 = array_merge($variables, array("collect($this->name) AS $this->name"));

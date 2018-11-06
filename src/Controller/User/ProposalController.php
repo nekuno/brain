@@ -32,7 +32,7 @@ class ProposalController extends FOSRestController implements ClassResourceInter
      *      type="json",
      *      schema=@SWG\Schema(
      *          @SWG\Property(property="type", type="string"),
-     *          @SWG\Property(property="fields", type="array"),
+     *          @SWG\Property(property="fields", type="array", @SWG\Items(type = "string")),
      *          example={ "type" = "work", "fields" = { "title" = "my 1st proposal", "description" = "my first proposal", "industry" = "CS", "profession" = "web dev"}},
      *      )
      * )
@@ -85,7 +85,7 @@ class ProposalController extends FOSRestController implements ClassResourceInter
      *          @SWG\Property(property="show", type="string"),
      *          @SWG\Property(property="restaurant", type="string"),
      *          @SWG\Property(property="plan", type="string"),
-     *          @SWG\Property(property="availability", type="array[]"),
+     *          @SWG\Property(property="availability", type="array", @SWG\Items(type = "string")),
      *          example={ "proposalId" = "15899079", "name" = "my 1st proposal", "description" = "my first proposal", "industry" = "CS", "profession" = "web dev"},
      *      )
      * )
@@ -169,7 +169,7 @@ class ProposalController extends FOSRestController implements ClassResourceInter
      * )
      * @SWG\Response(
      *     response=200,
-     *     description="Returns all proposals",
+     *     description="Returns all proposals"
      * )
      * @Security(name="Bearer")
      * @SWG\Tag(name="proposals")
@@ -221,7 +221,7 @@ class ProposalController extends FOSRestController implements ClassResourceInter
      *
      * @SWG\Response(
      *     response=200,
-     *     description="Returns proposal metadata",
+     *     description="Returns proposal metadata"
      * )
      * @Security(name="Bearer")
      * @SWG\Tag(name="proposals")
@@ -249,7 +249,7 @@ class ProposalController extends FOSRestController implements ClassResourceInter
      *      type="json",
      *      schema=@SWG\Schema(
      *          @SWG\Property(property="proposalId", type="string"),
-     *          @SWG\Property(property="interested", type="boolean"),
+     *          @SWG\Property(property="interested", type="boolean")
      *          )
      * )
      * @SWG\Parameter(

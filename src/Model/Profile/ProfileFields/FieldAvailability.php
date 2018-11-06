@@ -11,7 +11,7 @@ class FieldAvailability extends AbstractField
      */
     protected $availability;
 
-    public function addInformation(array &$variables)
+    public function queryAddInformation(array &$variables)
     {
         $queryVariables = array_merge($variables, array("id(availability) AS availabilityId"));
         $variables[] = 'availabilityId';

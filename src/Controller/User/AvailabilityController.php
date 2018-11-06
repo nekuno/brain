@@ -29,7 +29,6 @@ class AvailabilityController extends FOSRestController implements ClassResourceI
      *      in="body",
      *      type="json",
      *      schema=@SWG\Schema(
-     *          @SWG\Property(property="availability", type="array"),
      *      )
      * )
      * @SWG\Parameter(
@@ -88,7 +87,6 @@ class AvailabilityController extends FOSRestController implements ClassResourceI
      *      in="body",
      *      type="json",
      *      schema=@SWG\Schema(
-     *          @SWG\Property(property="availability", type="array"),
      *      )
      * )
      * @SWG\Parameter(
@@ -99,7 +97,7 @@ class AvailabilityController extends FOSRestController implements ClassResourceI
      * )
      * @SWG\Response(
      *     response=201,
-     *     description="Returns edited availability.",
+     *     description="Returns edited availability",
      * )
      * @Security(name="Bearer")
      * @SWG\Tag(name="availability")

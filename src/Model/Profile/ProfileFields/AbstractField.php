@@ -4,23 +4,28 @@ namespace Model\Profile\ProfileFields;
 
 abstract class AbstractField
 {
+    /** @var string */
     protected $nodeName;
+    /** @var string */
     protected $name;
+    /** @var string */
     protected $value;
+    /** @var string */
     protected $type;
-    /**
-     * Add new variable to $variables to be used with WITH later
-     * Return partial query to add
-     * @param array $variables Already available variables from the earlier query, ready to be used with WITH
-     * @return mixed
-     */
-    public abstract function addInformation(array &$variables);
 
+    /**
+     * @return string
+     */
+    public abstract function queryAddInformation(array &$variables);
+
+    /**
+     * @return string
+     */
     public abstract function getSaveQuery(array $variables);
 
 
     /**
-     * @return mixed
+     * @return string
      */
     public function getName()
     {
@@ -36,7 +41,7 @@ abstract class AbstractField
     }
 
     /**
-     * @return mixed
+     * @return string
      */
     public function getValue()
     {
@@ -52,7 +57,7 @@ abstract class AbstractField
     }
 
     /**
-     * @return mixed
+     * @return string
      */
     public function getType()
     {

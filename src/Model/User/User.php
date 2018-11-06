@@ -748,7 +748,7 @@ class User implements UserInterface, \JsonSerializable
     /**
      * @return Proposal[]
      */
-    public function getProposals(): array
+    public function getProposals()
     {
         return $this->proposals;
     }

@@ -6,7 +6,7 @@ class FieldTag extends AbstractField
 {
     protected $value = array();
 
-    public function addInformation(array &$variables)
+    public function queryAddInformation(array &$variables)
     {
         $tagLabel = $this->getTagLabel();
         $queryVariables1 = array_merge($variables, array("text$this->name.canonical AS $this->name"));

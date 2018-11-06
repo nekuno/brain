@@ -7,10 +7,19 @@ use Model\Profile\ProfileFields\AbstractField;
 
 class Proposal implements \JsonSerializable
 {
+    /**
+     * @var string
+     */
     protected $id;
 
+    /**
+     * @var string
+     */
     protected $type;
 
+    /**
+     * @var int
+     */
     protected $matches = 0;
 
     /** @var AbstractField[] */
@@ -31,7 +40,7 @@ class Proposal implements \JsonSerializable
     }
 
     /**
-     * @return mixed
+     * @return string
      */
     public function getId()
     {
@@ -47,13 +56,16 @@ class Proposal implements \JsonSerializable
     }
 
     /**
-     * @return mixed
+     * @return string
      */
     public function getType()
     {
         return $this->type;
     }
 
+    /**
+     * @return string
+     */
     public function getLabel()
     {
         return ucfirst($this->type);
@@ -88,6 +100,7 @@ class Proposal implements \JsonSerializable
         $this->fields[] = $field;
     }
 
+    /** @return AbstractField */
     public function getField($name)
     {
         foreach ($this->fields as $field)
