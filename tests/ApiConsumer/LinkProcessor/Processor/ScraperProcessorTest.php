@@ -110,7 +110,7 @@ class ScraperProcessorTest extends AbstractProcessorTest
     {
         return array(
             array('name' => 'cabello'),
-            array('name' => 'pelirrojos')
+            array('name' => 'eumelanina')
         );
     }
 

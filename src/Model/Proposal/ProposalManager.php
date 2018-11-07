@@ -341,7 +341,7 @@ class ProposalManager
 
         $variables = array('proposal');
         foreach ($proposal->getFields() as $field) {
-            $qb->add('', $field->addInformation($variables));
+            $qb->add('', $field->queryAddInformation($variables));
         }
         $qb->setParameter('locale', $this->locale);
 
