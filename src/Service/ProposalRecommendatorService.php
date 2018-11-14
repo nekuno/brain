@@ -14,7 +14,9 @@ use Model\Recommendation\Proposal\CandidateUninterestedRecommendator;
 use Model\Recommendation\Proposal\ProposalFreeRecommendator;
 use Model\Recommendation\Proposal\ProposalRecommendator;
 use Model\Recommendation\UserRecommendation;
+use Model\Recommendation\UserRecommendationBuilder;
 use Model\User\User;
+use Model\User\UserManager;
 use Paginator\ProposalRecommendationsPaginator;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -31,6 +33,8 @@ class ProposalRecommendatorService
     protected $proposalRecommendator;
     protected $proposalFreeRecommendator;
     protected $profileManager;
+    protected $userManager;
+    protected $userRecommendationBuilder;
 
     /**
      * ProposalRecommendatorService constructor.
@@ -45,6 +49,8 @@ class ProposalRecommendatorService
      * @param AvailabilityManager $availabilityManager
      * @param ProposalManager $proposalManager
      * @param ProfileManager $profileManager
+     * @param UserManager $userManager
+     * @param UserRecommendationBuilder $userRecommendationBuilder
      */
     public function __construct(
         ProposalRecommendationsPaginator $paginator,
@@ -57,7 +63,9 @@ class ProposalRecommendatorService
         FilterUsersManager $filterUsersManager,
         AvailabilityManager $availabilityManager,
         ProposalManager $proposalManager,
-        ProfileManager $profileManager
+        ProfileManager $profileManager,
+        UserManager $userManager,
+        UserRecommendationBuilder $userRecommendationBuilder
     ) {
         $this->paginator = $paginator;
         $this->candidateUninterestedRecommendator = $candidateUninterestedRecommendator;
@@ -70,6 +78,8 @@ class ProposalRecommendatorService
         $this->availabilityManager = $availabilityManager;
         $this->proposalManager = $proposalManager;
         $this->profileManager = $profileManager;
+        $this->userManager = $userManager;
+        $this->userRecommendationBuilder = $userRecommendationBuilder;
     }
 
     public function getRecommendations(User $user, Request $request)
@@ -164,22 +174,30 @@ class ProposalRecommendatorService
         }
 
         $proposalPagination = $this->paginator->paginate($filters, $model, $request);
-        $proposalRecommendations = $this->buildProposals($proposalPagination['items'], $user);
+        $proposalRecommendations = $this->buildProposalRecommendations($proposalPagination['items'], $user);
 
         return $proposalRecommendations;
     }
 
-    protected function buildProposals(array $proposalData, User $user)
+    protected function buildProposalRecommendations(array $proposalData, User $user)
     {
         $locale = $this->profileManager->getInterfaceLocale($user->getId());
 
         $proposalRecommendations = array();
         foreach ($proposalData as $proposalDatum)
         {
-            $proposalId = $proposalDatum['id'];
+            $proposalId = $proposalDatum['proposalId'];
             $proposal = $this->proposalManager->getById($proposalId, $locale);
-            $proposalRecommendations[] = $proposal;
+
+            $userId = $proposalDatum['ownerId'];
+            $ownUserId = $user->getId();
+            $userRecommendationData = $this->userManager->getAsRecommendation($userId, $ownUserId);
+            $owners = $this->userRecommendationBuilder->buildUserRecommendations($userRecommendationData);
+            $owner = reset($owners);
+
+            $proposalRecommendations[] = ['proposal' => $proposal, 'owner' => $owner];
         }
+
         $proposalRecommendations = array_slice($proposalRecommendations, 0, 10);
 
         return $proposalRecommendations;

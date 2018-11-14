@@ -243,6 +243,73 @@ class UserManager
     }
 
     /**
+     * @param $userId
+     * @param $ownUserId
+     * @return ResultSet
+     * @throws \Exception
+     */
+    public function getAsRecommendation($userId, $ownUserId)
+    {
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(anyUser:User{qnoow_id:{userId}})')
+            ->with('anyUser')
+            ->setParameter('userId', $userId);
+
+        $qb->match('(ownUser:User{qnoow_id:{ownUserId}})')
+            ->with('ownUser', 'anyUser')
+            ->setParameter('ownUserId', $ownUserId);
+
+        $qb->optionalMatch('(anyUser)-[similarity:SIMILARITY]-(ownUser)')
+            ->with('ownUser', 'anyUser', 'similarity');
+        $qb->optionalMatch('(anyUser)-[matching:MATCHING]-(ownUser)')
+            ->with('anyUser', 'similarity', 'matching');
+
+        $qb->match('(anyUser)-[:PROFILE_OF]-(p)')
+            ->with('anyUser', 'p', 'similarity', 'matching');
+
+        $qb->optionalMatch('(p)-[:LOCATION]-(l:Location)')
+            ->with('anyUser', 'p', 'l', 'similarity', 'matching')
+            ->optionalMatch('(p)<-[optionOf:OPTION_OF]-(option:ProfileOption)')
+            ->with(
+                'anyUser',
+                'p',
+                'l',
+                'similarity',
+                'matching',
+                'collect(distinct {option: option, detail: (CASE WHEN EXISTS(optionOf.detail) THEN optionOf.detail ELSE null END)}) AS options'
+            )
+            ->optionalMatch('(p)-[tagged:TAGGED]-(tag:ProfileTag)')
+            ->with(
+                'anyUser',
+                'p',
+                'l',
+                'similarity',
+                'matching',
+                'options',
+                'collect(distinct {tag: tag, tagged: tagged}) AS tags'
+            );
+
+        $qb->returns(
+            'anyUser.qnoow_id AS id, 
+            anyUser.username AS username, 
+            anyUser.photo AS photo,
+            anyUser.createdAt AS createdAt,
+            p.birthday AS birthday,
+            p AS profile,
+            l AS location,
+            similarity,
+            matching,
+            options,
+            tags'
+        );
+
+        $resultSet = $qb->getQuery()->getResultSet();
+
+        return $resultSet;
+    }
+
+    /**
      * @param array $criteria
      * @return User
      * @throws Neo4jException
@@ -564,7 +631,7 @@ class UserManager
     public function setEnabled($userId, $enabled, $fromAdmin = false)
     {
         $conditions = array('u.qnoow_id = { qnoow_id }');
-        if (!$fromAdmin){
+        if (!$fromAdmin) {
             $conditions[] = 'NOT EXISTS(u.canReenable) OR NOT u.canReenable = false';
         }
 

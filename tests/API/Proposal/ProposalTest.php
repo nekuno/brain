@@ -135,11 +135,11 @@ class ProposalTest extends ProposalAPITest
 
         $this->assertEquals(10, count($formattedResponse), 'recommendation count');
 
-        $this->assertProposalFormat($formattedResponse[1]);
-        $this->assertProposalFormat($formattedResponse[3]);
-        $this->assertProposalFormat($formattedResponse[5]);
-        $this->assertProposalFormat($formattedResponse[7]);
-        $this->assertProposalFormat($formattedResponse[9]);
+        $this->assertProposalRecommendationFormat($formattedResponse[1]);
+        $this->assertProposalRecommendationFormat($formattedResponse[3]);
+        $this->assertProposalRecommendationFormat($formattedResponse[5]);
+        $this->assertProposalRecommendationFormat($formattedResponse[7]);
+        $this->assertProposalRecommendationFormat($formattedResponse[9]);
 
         $this->assertUserRecommendationFormat($formattedResponse[0]);
         $this->assertUserRecommendationFormat($formattedResponse[2]);
@@ -329,6 +329,17 @@ class ProposalTest extends ProposalAPITest
                 $this->assertArrayHasKey('image', $value[0]);
             }
         }
+    }
+
+    protected function assertProposalRecommendationFormat($recommendation)
+    {
+        $this->assertArrayHasKey('proposal', $recommendation);
+        $proposal = $recommendation['proposal'];
+        $this->assertProposalFormat($proposal);
+
+        $this->assertArrayHasKey('owner', $recommendation);
+        $user = $recommendation['owner'];
+        $this->assertUserRecommendationFormat($user);
     }
 
     protected function assertUserRecommendationFormat($recommendation)

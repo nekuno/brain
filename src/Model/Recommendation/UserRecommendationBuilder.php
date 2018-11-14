@@ -24,6 +24,7 @@ class UserRecommendationBuilder
         $this->profileManager = $profileManager;
     }
 
+    //TODO: Refactor to use protected buildBasicData
     /**
      * @param ResultSet $result
      * @return UserRecommendation[]
