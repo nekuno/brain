@@ -55,6 +55,10 @@ services:
         resource: '../src/Model/Question/QuestionCategory/*Manager.php'
     Model\Token\TokenStatus\:
         resource: '../src/Model/Token/TokenStatus/*Manager.php'
+    Model\Recommendation\:
+        resource: '../src/Model/Recommendation/*{Builder.php,Recommendator.php}'
+    Model\Recommendation\Proposal\:
+        resource: '../src/Model/Recommendation/Proposal/*Recommendator.php'
     Service\:
         resource: '../src/Service/*'
     Worker\:
@@ -179,6 +183,9 @@ services:
     Model\Photo\GalleryManager:
         arguments:
             $base: "%env(resolve:images_absolute_web_dir)%"
+    Model\Photo\ProposalPhotoManager:
+        arguments:
+            $base: "%env(resolve:images_absolute_web_dir)%"
     Model\Invitation\InvitationManager:
         arguments:
             $adminDomain: "%env(admin_domain_plus_port)%"
@@ -197,6 +204,10 @@ services:
             $config: "%metadata_config%"
             $metadata: "%fields%"
             $defaultLocale: "en"
+    Model\Recommendation\UserRecommendationBuilder:
+    Model\Proposal\ProposalBuilder:
+    Model\Availability\AvailabilityDataFormatter:
+
     # End Model explicit parameters
 
     # Model metadata explicit parameters
@@ -206,6 +217,9 @@ services:
     Model\Metadata\UserFilterMetadataManager:
         factory: 'Model\Metadata\MetadataManagerFactory:build'
         arguments: ['user_filter']
+    Model\Metadata\ProposalMetadataManager:
+        factory: 'Model\Metadata\MetadataManagerFactory:build'
+        arguments: ['proposal']
     # End Model metadata explicit parameters
 
     # Validators

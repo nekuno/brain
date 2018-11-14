@@ -572,8 +572,18 @@ profile:
                 max: 10
                 label: *professionLabel
                 labelEdit: *professionLabel
-
-
+    show:
+        type: multiple_choices
+        label: &showLabel
+            en: 'Shows'
+            es: 'Espectáculos'
+        labelEdit: *showLabel
+    restaurant:
+        type: multiple_choices
+        label: &restaurantLabel
+            en: 'Restaurants'
+            es: 'Restaurantes'
+        labelEdit: *restaurantLabel
 content:
     type:
         type: choice
@@ -882,3 +892,35 @@ device:
     platform:
         required: true
         type: string
+
+proposal:
+    work:
+        industry:
+            type: tag
+        profession:
+            type: tag
+    sport:
+        sport:
+            type: tag_and_suggestion
+    videogame:
+        videogame:
+            type: tag_and_suggestion
+    hobby:
+        hobby:
+            type: choice
+    show:
+        show:
+            type: choice
+    restaurant:
+        restaurant:
+            type: choice
+    plan:
+        plan:
+            type: choice
+
+availability:
+    date:
+        type: date
+    id:
+        type: integer
+        required: false

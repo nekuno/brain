@@ -12,7 +12,7 @@ use Service\ImageTransformations;
 use Service\Validator\FilterContentValidator;
 use Service\Validator\ValidatorInterface;
 
-abstract class AbstractContentPaginatedManager implements PaginatedInterface
+abstract class AbstractContentRecommendator implements PaginatedInterface
 {
     const POP_LOWER_LIMIT = 0.0000001;
     const POP_UPPER_LIMIT = 0.01;

@@ -80,8 +80,8 @@ class ScraperProcessorTest extends AbstractProcessorTest
         $expected = new Link();
         $expected->setTitle('¿De dónde proceden los pelirrojos? - ¡No sabes nada!');
         $expected->setDescription('El gen responsable del color rojizo del cabello ya se encontraba en los emigrantes africanos que decidieron explorar el resto del mundo hace 50.000 años.');
-        $expected->setThumbnail('http://d2ruuu7iu87htj.cloudfront.net/uploads/2017/03/02204111/portada-pelirrojos-curiosidades-beqbe.jpg');
-        $expected->setUrl('http://www.nosabesnada.com/otras-curiosidades/85357/de-donde-proceden-los-pelirrojos');
+        $expected->setThumbnail('https://d2ruuu7iu87htj.cloudfront.net/uploads/2017/03/02204111/portada-pelirrojos-curiosidades-beqbe.jpg');
+        $expected->setUrl('https://www.nosabesnada.com/otras-curiosidades/85357/de-donde-proceden-los-pelirrojos');
         $expected->setLanguage('es');
         return array(
             array(
@@ -103,14 +103,14 @@ class ScraperProcessorTest extends AbstractProcessorTest
 
     public function getUrl()
     {
-        return 'http://www.nosabesnada.com/otras-curiosidades/85357/de-donde-proceden-los-pelirrojos/';
+        return 'https://www.nosabesnada.com/otras-curiosidades/85357/de-donde-proceden-los-pelirrojos/';
     }
 
     public function getTags()
     {
         return array(
             array('name' => 'cabello'),
-            array('name' => 'pelirrojos')
+            array('name' => 'eumelanina')
         );
     }
 

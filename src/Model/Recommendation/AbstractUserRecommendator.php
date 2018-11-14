@@ -2,17 +2,14 @@
 
 namespace Model\Recommendation;
 
-use Everyman\Neo4j\Query\ResultSet;
-use Everyman\Neo4j\Query\Row;
 use Model\LanguageText\LanguageTextManager;
-use Model\Photo\PhotoManager;
 use Model\Metadata\MetadataUtilities;
 use Model\Neo4j\GraphManager;
-use Model\Profile\ProfileManager;
 use Model\Metadata\UserFilterMetadataManager;
+use Model\Profile\ProfileManager;
 use Paginator\PaginatedInterface;
 
-abstract class AbstractUserRecommendationPaginatedManager implements PaginatedInterface
+abstract class AbstractUserRecommendator implements PaginatedInterface
 {
     /**
      * @var GraphManager
@@ -26,26 +23,20 @@ abstract class AbstractUserRecommendationPaginatedManager implements PaginatedIn
      */
     protected $userFilterMetadataManager;
 
-    /**
-     * @var PhotoManager
-     */
-    protected $pm;
-
-    /**
-     * @var ProfileManager
-     */
-    protected $profileModel;
+    protected $userRecommendationBuilder;
 
     protected $languageTextManager;
 
-    public function __construct(GraphManager $gm, MetadataUtilities $metadataUtilities, UserFilterMetadataManager $userFilterMetadataManager, PhotoManager $pm, ProfileManager $profileModel, LanguageTextManager $languageTextManager)
+    protected $profileManager;
+
+    public function __construct(GraphManager $gm, MetadataUtilities $metadataUtilities, UserFilterMetadataManager $userFilterMetadataManager,  UserRecommendationBuilder $userRecommendationBuilder, LanguageTextManager $languageTextManager, ProfileManager $profileManager)
     {
         $this->gm = $gm;
         $this->metadataUtilities = $metadataUtilities;
         $this->userFilterMetadataManager = $userFilterMetadataManager;
-        $this->pm = $pm;
-        $this->profileModel = $profileModel;
+        $this->userRecommendationBuilder = $userRecommendationBuilder;
         $this->languageTextManager = $languageTextManager;
+        $this->profileManager = $profileManager;
     }
 
     /**
@@ -140,7 +131,7 @@ abstract class AbstractUserRecommendationPaginatedManager implements PaginatedIn
         $query = $qb->getQuery();
         $result = $query->getResultSet();
 
-        return $this->buildUserRecommendations($result);
+        return $this->userRecommendationBuilder->buildUserRecommendations($result);
     }
 
     protected function applyFilters(array $filters)
@@ -357,50 +348,6 @@ abstract class AbstractUserRecommendationPaginatedManager implements PaginatedIn
         );
     }
 
-    /**
-     * @param ResultSet $result
-     * @return UserRecommendation[]
-     */
-    public function buildUserRecommendations(ResultSet $result)
-    {
-        $response = array();
-        /** @var Row $row */
-        foreach ($result as $row) {
-
-            $age = null;
-            if ($row['birthday']) {
-                $date = new \DateTime($row['birthday']);
-                $now = new \DateTime();
-                $interval = $now->diff($date);
-                $age = $interval->y;
-            }
-
-            $photo = $this->pm->createProfilePhoto();
-            $photo->setPath($row->offsetGet('photo'));
-            $photo->setUserId($row->offsetGet('id'));
-
-            $user = new UserRecommendation();
-            $user->setId($row->offsetGet('id'));
-            $user->setUsername($row->offsetGet('username'));
-            $user->setSlug($row->offsetGet('slug'));
-            $user->setPhoto($photo);
-            $user->setMatching($row->offsetGet('matching_questions'));
-            $user->setSimilarity($row->offsetGet('similarity'));
-            $user->setAge($age);
-            $user->setLike($row->offsetGet('like'));
-
-            $profile = $this->profileModel->build($row);
-            $user->setProfile($profile);
-            if (!empty($profile->get('location'))) {
-                $user->setLocation($profile->get('location'));
-            }
-
-            $response[] = $user;
-        }
-
-        return $response;
-    }
-
     protected function buildGroupMatch($value)
     {
         foreach ($value as $index => $groupId) {
@@ -427,13 +374,5 @@ abstract class AbstractUserRecommendationPaginatedManager implements PaginatedIn
         $valuePerOne = intval($value) / 100;
 
         return "($valuePerOne <= $attribute)";
-    }
-
-    protected function getCanonicalTags($tags)
-    {
-        foreach ($tags as $tag)
-        {
-
-        }
     }
 }

@@ -46,7 +46,7 @@ security:
             pattern: ^/login$
         public_get:
             anonymous: true
-            pattern: (^/profile/metadata$)|(^/profile/categories)|(^/profile/tags)|(^/users/available/)|(^/client/)|(^/public/)
+            pattern: (^/profile/metadata$)|(^/profile/categories)|(^/profile/tags)|(^/proposal/metadata)|(^/users/available/)|(^/client/)|(^/public/)
             methods: [GET]
         public_post:
             anonymous: true

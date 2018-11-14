@@ -4,7 +4,7 @@ namespace Model\Recommendation;
 
 use Everyman\Neo4j\Query\ResultSet;
 
-class UserRecommendationPaginatedManager extends AbstractUserRecommendationPaginatedManager
+class UserRecommendator extends AbstractUserRecommendator
 {
     const USER_SAFETY_LIMIT = 5000;
 
@@ -30,7 +30,7 @@ class UserRecommendationPaginatedManager extends AbstractUserRecommendationPagin
 
         $return = array('items' => array());
 
-        $profile = $this->profileModel->getById($id);
+        $profile = $this->profileManager->getById($id);
         $objectives = $profile->get('objective') ?: array();
 
         $parameters = array(
@@ -174,7 +174,7 @@ class UserRecommendationPaginatedManager extends AbstractUserRecommendationPagin
 
     public function buildResponseFromResult(ResultSet $result)
     {
-        return array('items' => $this->buildUserRecommendations($result));
+        return array('items' => $this->userRecommendationBuilder->buildUserRecommendations($result));
     }
 
     /**

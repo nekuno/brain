@@ -2,5 +2,6 @@ metadata.config:
     categories: Model\Metadata\CategoryMetadataManager
     content_filter: Model\Metadata\ContentFilterMetadataManager
     profile: Model\Metadata\ProfileMetadataManager
+    proposal: Model\Metadata\ProposalMetadataManager
     user_filter: Model\Metadata\UserFilterMetadataManager
     default: Model\Metadata\MetadataManager

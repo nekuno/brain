@@ -4,8 +4,10 @@ namespace Model\Filters;
 
 class FilterUsers implements \JsonSerializable
 {
+    /** @var string */
     protected $id;
 
+    /** @var string[] */
     protected $values = array();
 
     /**
@@ -19,6 +21,10 @@ class FilterUsers implements \JsonSerializable
         }
     }
 
+    /**
+     * @param $field
+     * @return string
+     */
     public function get($field)
     {
         if (!array_key_exists($field, $this->values)) {
@@ -47,6 +53,7 @@ class FilterUsers implements \JsonSerializable
         $this->id = $id;
     }
 
+    /** @return array */
     public function getValues()
     {
         $values = $this->values;
