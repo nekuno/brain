@@ -261,7 +261,7 @@ class UserManager
             ->setParameter('ownUserId', $ownUserId);
 
         $qb->optionalMatch('(anyUser)-[similarity:SIMILARITY]-(ownUser)')
-            ->with('ownUser', 'anyUser', 'similarity');
+            ->with('ownUser', 'anyUser', 'similarity.similarity AS similarity');
         $qb->optionalMatch('(anyUser)-[matching:MATCHING]-(ownUser)')
             ->with('anyUser', 'similarity', 'matching');
 
@@ -292,14 +292,15 @@ class UserManager
 
         $qb->returns(
             'anyUser.qnoow_id AS id, 
-            anyUser.username AS username, 
+            anyUser.username AS username,
+            anyUser.slug AS slug,
             anyUser.photo AS photo,
             anyUser.createdAt AS createdAt,
             p.birthday AS birthday,
             p AS profile,
             l AS location,
             similarity,
-            matching,
+            matching AS matching_questions,
             options,
             tags'
         );

@@ -6,13 +6,13 @@ class ProposalTest extends ProposalAPITest
 {
     public function testProposal()
     {
-        $this->assertGetOwnEmpty();
+//        $this->assertGetOwnEmpty();
         $this->assertCreate();
         $this->assertCreateWithAvailability();
         $this->assertEdit();
         $this->assertDelete();
-        $this->assertGetOwn();
-        $this->assertGetOther();
+//        $this->assertGetOwn();
+//        $this->assertGetOther();
         $this->assertGetRecommendations();
         $this->assertGetMetadata();
     }
@@ -354,7 +354,6 @@ class ProposalTest extends ProposalAPITest
         $this->assertArrayHasKey('age', $recommendation);
         $this->assertArrayHasKey('location', $recommendation);
         $this->isType('array')->evaluate($recommendation['location']);
-
     }
 
     protected function assertMetadataFormat($metadata)

@@ -103,8 +103,24 @@ class ProposalRecommendatorService
             $filters = $this->setIncludeSkipped($filters, $request);
             $filters['excluded'] = $request->get('excluded', array());
 
-            $candidates = $this->paginator->paginate($filters, $this->candidateRecommendator, $request);
-            $candidateRecommendations = array_merge($candidateRecommendations, $candidates['items']);
+            $candidatesResult = $this->paginator->paginate($filters, $this->candidateRecommendator, $request);
+
+            $thisCandidateRecommendations = $this->userRecommendationBuilder->buildCandidates($candidatesResult['items']);
+
+            foreach ($thisCandidateRecommendations as $index => $candidateRecommendation)
+            {
+                $userId = $candidateRecommendation->getId();
+                $locale = $this->profileManager->getInterfaceLocale($userId);
+
+                $candidateDatum = $candidatesResult['items'][$index];
+                $proposalId = $candidateDatum['proposalId'];
+
+                $proposal = $this->proposalManager->getById($proposalId, $locale);
+
+                $candidateRecommendation->setProposal($proposal);
+            }
+
+            $candidateRecommendations = array_merge($candidateRecommendations, $thisCandidateRecommendations);
         }
 
         return $candidateRecommendations;

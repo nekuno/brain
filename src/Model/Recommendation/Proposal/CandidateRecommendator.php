@@ -74,7 +74,7 @@ class CandidateRecommendator extends AbstractUserRecommendator
         $qb->with('candidate', 'anyUser', 'proposal', 'user', 'p');
         
         $qb->optionalMatch('(anyUser)-[similarity:SIMILARITY]-(user)')
-            ->with('candidate', 'anyUser', 'proposal', 'user', 'p', 'similarity');
+            ->with('candidate', 'anyUser', 'proposal', 'user', 'p', 'similarity.similarity AS similarity');
         $qb->optionalMatch('(anyUser)-[matching:MATCHING]-(user)')
             ->with('candidate', 'proposal', 'anyUser', 'user', 'p', 'similarity', 'matching');
 
@@ -92,12 +92,14 @@ class CandidateRecommendator extends AbstractUserRecommendator
         $qb->returns(
             'anyUser.qnoow_id AS id, 
             anyUser.username AS username, 
+            anyUser.slug AS slug,
             anyUser.photo AS photo,
             anyUser.createdAt AS createdAt,
             p.birthday AS birthday,
             p AS profile,
             l AS location,
-            proposal, 
+            id(proposal) AS proposalId,
+            matching AS matching_questions,
             similarity,
             options,
             tags,
@@ -111,9 +113,7 @@ class CandidateRecommendator extends AbstractUserRecommendator
 
         $resultSet = $qb->getQuery()->getResultSet();
 
-        $userRecommendations = $this->userRecommendationBuilder->buildUserRecommendations($resultSet);
-
-        return $userRecommendations;
+        return $qb->getData($resultSet);
     }
 
     public function countTotal(array $filtersArray)

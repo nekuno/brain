@@ -4,6 +4,7 @@ namespace Model\Recommendation;
 
 use Everyman\Neo4j\Query\ResultSet;
 use Everyman\Neo4j\Query\Row;
+use Model\Location\LocationManager;
 use Model\Photo\PhotoManager;
 use Model\Profile\ProfileManager;
 use Model\Recommendation\Proposal\ProposalCandidateRecommendation;
@@ -12,16 +13,18 @@ class UserRecommendationBuilder
 {
     protected $photoManager;
     protected $profileManager;
+    protected $locationManager;
 
     /**
      * UserRecommendationBuilder constructor.
      * @param $photoManager
      * @param $profileManager
      */
-    public function __construct(PhotoManager $photoManager, ProfileManager $profileManager)
+    public function __construct(PhotoManager $photoManager, ProfileManager $profileManager, LocationManager $locationManager)
     {
         $this->photoManager = $photoManager;
         $this->profileManager = $profileManager;
+        $this->locationManager = $locationManager;
     }
 
     //TODO: Refactor to use protected buildBasicData
@@ -86,7 +89,11 @@ class UserRecommendationBuilder
             $candidate->setPhoto($photo);
             $candidate->setMatching($row['matching_questions']);
             $candidate->setSimilarity($row['similarity']);
+            $candidate->setInterested($row['interested']);
             $candidate->setAge($age);
+
+            $location = $this->locationManager->buildFromNode($row['location']);
+            $candidate->setLocation($location);
 
             $response[] = $candidate;
         }
@@ -94,7 +101,11 @@ class UserRecommendationBuilder
         return $response;
     }
 
-    protected function getAgeFromBirthday(\ArrayAccess $row)
+    /**
+     * @param array | \ArrayAccess $row
+     * @return int|null
+     */
+    protected function getAgeFromBirthday($row)
     {
         $age = null;
         if ($row['birthday']) {

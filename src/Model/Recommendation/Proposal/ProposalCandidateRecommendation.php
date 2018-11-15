@@ -13,6 +13,11 @@ class ProposalCandidateRecommendation extends AbstractUserRecommendation
     protected $proposal;
 
     /**
+     * @var bool
+     */
+    protected $interested = false;
+
+    /**
      * @return Proposal
      */
     public function getProposal(): Proposal
@@ -26,6 +31,22 @@ class ProposalCandidateRecommendation extends AbstractUserRecommendation
     public function setProposal(Proposal $proposal): void
     {
         $this->proposal = $proposal;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isInterested(): bool
+    {
+        return $this->interested;
+    }
+
+    /**
+     * @param bool $interested
+     */
+    public function setInterested(bool $interested): void
+    {
+        $this->interested = $interested;
     }
 
     function jsonSerialize()
