@@ -2,7 +2,7 @@
 
 namespace Model\Profile\ProfileFields;
 
-abstract class AbstractField
+abstract class AbstractField implements \JsonSerializable
 {
     /** @var string */
     protected $nodeName;
@@ -87,4 +87,10 @@ abstract class AbstractField
     {
         $this->nodeName = $nodeName;
     }
+
+    public function jsonSerialize()
+    {
+        return $this->value;
+    }
+
 }

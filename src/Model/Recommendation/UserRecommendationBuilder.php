@@ -92,6 +92,10 @@ class UserRecommendationBuilder
             $candidate->setInterested($row['interested']);
             $candidate->setAge($age);
 
+            $profile = $this->profileManager->getById($candidate->getId());
+            $aboutMe = $profile->get('description') ?: '';
+            $candidate->setAboutMe($aboutMe);
+
             $location = $this->locationManager->buildFromNode($row['location']);
             $candidate->setLocation($location);
 

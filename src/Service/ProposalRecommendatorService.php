@@ -11,6 +11,7 @@ use Model\Recommendation\Proposal\CandidateInterestedRecommendator;
 use Model\Recommendation\Proposal\CandidateRecommendator;
 use Model\Recommendation\Proposal\CandidateUninterestedFreeRecommendator;
 use Model\Recommendation\Proposal\CandidateUninterestedRecommendator;
+use Model\Recommendation\Proposal\ProposalCandidateRecommendation;
 use Model\Recommendation\Proposal\ProposalFreeRecommendator;
 use Model\Recommendation\Proposal\ProposalRecommendator;
 use Model\Recommendation\UserRecommendation;

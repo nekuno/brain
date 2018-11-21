@@ -17,6 +17,8 @@ class ProposalCandidateRecommendation extends AbstractUserRecommendation
      */
     protected $interested = false;
 
+    protected $aboutMe = '';
+
     /**
      * @return Proposal
      */
@@ -49,11 +51,28 @@ class ProposalCandidateRecommendation extends AbstractUserRecommendation
         $this->interested = $interested;
     }
 
+    /**
+     * @return string
+     */
+    public function getAboutMe(): string
+    {
+        return $this->aboutMe;
+    }
+
+    /**
+     * @param string $aboutMe
+     */
+    public function setAboutMe(string $aboutMe): void
+    {
+        $this->aboutMe = $aboutMe;
+    }
+
     function jsonSerialize()
     {
         $array = parent::jsonSerialize();
 
-        $array['proposalId'] = $this->proposal->getId();
+        $array['proposal'] = $this->proposal;
+        $array['aboutMe'] = $this->aboutMe;
 
         return $array;
     }

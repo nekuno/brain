@@ -228,13 +228,13 @@ class ProposalManager
             ->where('id(proposal) = {proposalId}')
             ->setParameter('proposalId', $proposalId);
 
-        $qb->match('(user)-[r]->(proposal)')
+        $qb->optionalMatch('(user)-[r]->(proposal)')
             ->delete('r')
             ->with('user', 'proposal');
 
         if ($interested)
         {
-            $qb->create('(user)-[:INTERESTED_IN)->(proposal)');
+            $qb->create('(user)-[:INTERESTED_IN]->(proposal)');
         }
 
         $qb->returns('user', 'proposal');
@@ -256,13 +256,13 @@ class ProposalManager
             ->where('id(proposal) = {proposalId}')
             ->setParameter('proposalId', $proposalId);
 
-        $qb->match('(proposal)-[r]->(user)')
+        $qb->optionalMatch('(proposal)-[r]->(user)')
             ->delete('r')
             ->with('proposal', 'user');
 
         if ($accepted)
         {
-            $qb->create('(proposal)-[:ACCEPTED)->(user)');
+            $qb->create('(proposal)-[:ACCEPTED]->(user)');
         }
 
         $qb->returns('user', 'proposal');
@@ -284,13 +284,13 @@ class ProposalManager
             ->where('id(proposal) = {proposalId}')
             ->setParameter('proposalId', $proposalId);
 
-        $qb->match('(proposal)<-[r]-(user)')
+        $qb->optionalMatch('(proposal)<-[r]-(user)')
             ->delete('r')
             ->with('proposal', 'user');
 
         if ($skipped)
         {
-            $qb->create('(proposal)<-[:SKIPPED)-(user)');
+            $qb->create('(proposal)<-[:SKIPPED]-(user)');
         }
 
         $qb->returns('user', 'proposal');
@@ -312,13 +312,13 @@ class ProposalManager
             ->where('id(proposal) = {proposalId}')
             ->setParameter('proposalId', $proposalId);
 
-        $qb->match('(proposal)-[r]->(user)')
+        $qb->optionalMatch('(proposal)-[r]->(user)')
             ->delete('r')
             ->with('proposal', 'user');
 
         if ($skipped)
         {
-            $qb->create('(proposal)-[:SKIPPED)->(user)');
+            $qb->create('(proposal)-[:SKIPPED]->(user)');
         }
 
         $qb->returns('user', 'proposal');

@@ -56,6 +56,19 @@ class ProposalBuilder
             $proposal->setId($proposalData['proposalId']);
         }
 
+        $proposal = $this->setDefaultPhoto($proposal);
+
+        return $proposal;
+    }
+
+    protected function setDefaultPhoto(Proposal $proposal)
+    {
+        $defaultProposalPhoto = 'http://via.placeholder.com/360x180';
+        $photoField = $proposal->getField('photo');
+        if (!$photoField->getValue()){
+            $photoField->setValue($defaultProposalPhoto);
+        }
+
         return $proposal;
     }
 
