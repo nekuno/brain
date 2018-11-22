@@ -165,6 +165,7 @@ class AbstractUserRecommendation implements \JsonSerializable
             'similarity' => $this->getSimilarity(),
             'age' => $this->getAge(),
             'location' => $this->getLocation(),
+            'sharedLinks' => $this->sharedLinks,
         );
     }
 
