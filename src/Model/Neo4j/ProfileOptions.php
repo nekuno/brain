@@ -1547,58 +1547,11 @@ class ProfileOptions implements LoggerAwareInterface
                     'order' => 3
                 ),
             ),
-            'Tickets' => array(
+            'Plan' => array(
                 array(
-                    'id' => 'theater-dance',
-                    'name_en' => 'Theater and dance',
-                    'name_es' => 'Teatro y danza',
-                ),
-                array(
-                    'id' => 'concerts-music',
-                    'name_en' => 'Concerts and music',
-                    'name_es' => 'Conciertos y música',
-                ),
-                array(
-                    'id' => 'museums-exhibitions',
-                    'name_en' => 'Museums and exhibitions',
-                    'name_es' => 'Museos y exposiciones',
-                ),
-                array(
-                    'id' => 'circus',
-                    'name_en' => 'Circus',
-                    'name_es' => 'Circo',
-                ),
-                array(
-                    'id' => 'cinema',
-                    'name_en' => 'Cinema',
-                    'name_es' => 'Cine',
-                ),
-                array(
-                    'id' => 'sports-events',
-                    'name_en' => 'Sports events',
-                    'name_es' => 'Eventos de deportes',
-                ),
-                array(
-                    'id' => 'theme-parks',
-                    'name_en' => 'Theme parks',
-                    'name_es' => 'Parques temáticos',
-                ),
-                array(
-                    'id' => 'conferences',
-                    'name_en' => 'Conferences',
-                    'name_es' => 'Conferencias',
-                ),
-                array(
-                    'id' => 'thematic-fairs',
-                    'name_en' => 'Thematic fairs',
-                    'name_es' => 'Ferias temáticas',
-                ),
-            ),
-            'Activity' => array(
-                array(
-                    'id' => 'restaurants',
-                    'name_en' => 'Restaurants',
-                    'name_es' => 'Restaurantes',
+                    'id' => 'party',
+                    'name_en' => 'Throw a party',
+                    'name_es' => 'Fiestas en casa',
                 ),
                 array(
                     'id' => 'massages-spa',
@@ -1630,12 +1583,22 @@ class ProfileOptions implements LoggerAwareInterface
                     'name_en' => 'Scheduled adventures',
                     'name_es' => 'Aventuras programadas',
                 ),
+                array(
+                    'id' => 'scheduled-adventures',
+                    'name_en' => 'Scheduled adventures',
+                    'name_es' => 'Aventuras programadas',
+                ),
+                array(
+                    'id' => 'scheduled-adventures',
+                    'name_en' => 'Scheduled adventures',
+                    'name_es' => 'Aventuras programadas',
+                ),
             ),
-            'Restaurants' => array(
+            'Restaurant' => array(
                 array(
                     'id' => 'asian',
-                    'name_en' => 'Asian',
-                    'name_es' => 'Asiáticos',
+                    'name_en' => 'Japonés',
+                    'name_es' => 'Japanese',
                     'picture' => 'http://cdn.shopify.com/s/files/1/1291/3261/products/DSC_7797-Edit_grande.jpg?v=1475050576'
                 ),
                 array(
@@ -1650,9 +1613,45 @@ class ProfileOptions implements LoggerAwareInterface
                     'name_es' => 'Comida rápida',
                     'picture' => 'https://upload.wikimedia.org/wikipedia/commons/2/2e/Fast_food_meal.jpg'
                 ),
+                array(
+                    'id' => 'american',
+                    'name_en' => 'American',
+                    'name_es' => 'Americanos',
+                    'picture' => ''
+                ),
+                array(
+                    'id' => 'spanish',
+                    'name_en' => 'Spanish',
+                    'name_es' => 'Español',
+                    'picture' => 'https://upload.wikimedia.org/wikipedia/commons/2/2e/Fast_food_meal.jpg'
+                ),
+                array(
+                    'id' => 'indian',
+                    'name_en' => 'Indian',
+                    'name_es' => 'Indio',
+                    'picture' => 'https://upload.wikimedia.org/wikipedia/commons/2/2e/Fast_food_meal.jpg'
+                ),
+                array(
+                    'id' => 'latin',
+                    'name_en' => 'Latin',
+                    'name_es' => 'Latinos',
+                    'picture' => 'https://upload.wikimedia.org/wikipedia/commons/2/2e/Fast_food_meal.jpg'
+                ),
+                array(
+                    'id' => 'vegetarian',
+                    'name_en' => 'Vegetarian',
+                    'name_es' => 'Vegetariano',
+                    'picture' => 'https://upload.wikimedia.org/wikipedia/commons/2/2e/Fast_food_meal.jpg'
+                ),
+                array(
+                    'id' => 'arab',
+                    'name_en' => 'Arab',
+                    'name_es' => 'Árabe',
+                    'picture' => 'https://upload.wikimedia.org/wikipedia/commons/2/2e/Fast_food_meal.jpg'
+                ),
             ),
             //Copiado de Tickets
-            'Shows' => array(
+            'Show' => array(
                 array(
                     'id' => 'theater-dance',
                     'name_en' => 'Theater and dance',
