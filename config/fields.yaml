@@ -428,9 +428,9 @@ profile:
                     es: "y es importante"
                 not_important:
                     en: "and it's not important"
-                    es: "y no es importante":
-                            en: "and laughing about it"
-                laughing_about_it
+                    es: "y no es importante"
+                laughing_about_it:
+                    en: "and laughing about it"
                     es: "y me río de ello"
             atheism: *religionDetails
             christianity: *religionDetails
