@@ -57,11 +57,11 @@ categories:
         - label:
             en: Hobbies
             es: Aficiones
-          fields: [sports, games, creative]
+          fields: [sport, hobby, game]
         - label:
             en: Leisure
             es: Ocio
-          fields: [leisureMoney, leisureTime, tickets, activity, travelling, leisurePlan]
+          fields: [leisureMoney, show, plan, restaurant]
         - label:
             en: Description
             es: Descripción
@@ -97,13 +97,13 @@ categories:
             es: Trabajo, ideas y proyectos
           fields: [profession, industry]
         - label:
-            en: Hobbies
-            es: Aficiones
-          fields: [sports, games, creative]
-        - label:
             en: Leisure
             es: Ocio
-          fields: [leisureMoney, leisureTime, tickets, activity, travelling]
+          fields: [sport, hobby, game]
+        - label:
+            en: Experiences
+            es: Experiencias
+          fields: [leisureMoney, show, plan, restaurant]
 profile:
     mode:
         type: choice
@@ -428,9 +428,9 @@ profile:
                     es: "y es importante"
                 not_important:
                     en: "and it's not important"
-                    es: "y no es importante"
-                laughing_about_it:
-                    en: "and laughing about it"
+                    es: "y no es importante":
+                            en: "and laughing about it"
+                laughing_about_it
                     es: "y me río de ello"
             atheism: *religionDetails
             christianity: *religionDetails
@@ -474,24 +474,24 @@ profile:
             es: 'Ubicación'
         labelEdit: *locationLabel
         notErasable: true
-    sports:
+    sport:
         type: tags
         label: &sportsLabel
             en: 'Sports and physical'
             es: 'Deportes y físico'
         labelEdit: *sportsLabel
-    games:
+    game:
         type: tags
         label: &gamesLabel
             en: 'Videogames and board games'
             es: 'Videojuegos y juegos de mesa'
         labelEdit: *gamesLabel
         schema: VideoGame
-    creative:
+    hobby:
         type: tags
         label: &creativeLabel
-            en: 'Creative'
-            es: 'Creativo'
+            en: 'Hobbies'
+            es: 'Aficiones'
         labelEdit: *creativeLabel
     leisureMoney:
         type: multiple_choices
@@ -502,76 +502,12 @@ profile:
         min: 0
         max: 4
         isRange: true
-    leisureTime:
+    plan:
         type: multiple_choices
-        label: &leisureTimeLabel
-            en: 'Leisure time'
-            es: 'Tiempo de ocio'
-        labelEdit: *leisureTimeLabel
-        min: 0
-        max: 5
-        isRange: true
-    tickets:
-        type: multiple_choices
-        label: &ticketsLabel
-            en: 'Tickets'
-            es: 'Entradas'
-        labelEdit: *ticketsLabel
-    activity:
-        type: multiple_choices
-        label: &activityLabel
-            en: 'Activities'
-            es: 'Actividades'
-        labelEdit: *activityLabel
-    travelling:
-        type: multiple_locations
-        max: 10
-        label: &travellingLabel
-            en: 'Travelling'
-            es: 'Viajes'
-        labelEdit: *travellingLabel
-    leisurePlan:
-        type: multiple_fields
         label: &leisurePlanLabel
-            en: 'Planes'
+            en: 'Plans'
             es: 'Planes'
         labelEdit: *leisurePlanLabel
-        max: 3
-        metadata:
-            name:
-                type: textarea
-                required: true
-                max: 100
-                label: &leisurePlanNameLabel
-                    en: 'Plan description'
-                    es: 'Descripción del plan'
-                labelEdit: *leisurePlanNameLabel
-    proposal:
-        type: multiple_fields
-        label: &proposalLabel
-            en: 'Proposals'
-            es: 'Propuestas'
-        labelEdit: *proposalLabel
-        max: 3
-        metadata:
-            name:
-                type: textarea
-                required: true
-                max: 100
-                label: &proposalNameLabel
-                    en: 'Proposal description'
-                    es: 'Descripción de la propuesta'
-                labelEdit: *proposalNameLabel
-            industry:
-                type: multiple_choices
-                max: 3
-                label: *industryLabel
-                labelEdit: *industryLabel
-            profession:
-                type: tags
-                max: 10
-                label: *professionLabel
-                labelEdit: *professionLabel
     show:
         type: multiple_choices
         label: &showLabel
@@ -902,8 +838,8 @@ proposal:
     sport:
         sport:
             type: tag_and_suggestion
-    videogame:
-        videogame:
+    game:
+        game:
             type: tag_and_suggestion
     hobby:
         hobby:

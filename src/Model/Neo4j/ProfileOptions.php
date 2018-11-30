@@ -1489,38 +1489,6 @@ class ProfileOptions implements LoggerAwareInterface
                     'name_es' => 'Otra',
                 ),
             ),
-            'LeisureTime' => array(
-                array(
-                    'id' => '1-hour',
-                    'name_en' => '1 hour',
-                    'name_es' => '1 hora',
-                    'order' => 0
-                ),
-                array(
-                    'id' => '3-hours',
-                    'name_en' => '3 hours',
-                    'name_es' => '3 horas',
-                    'order' => 1
-                ),
-                array(
-                    'id' => 'all-day',
-                    'name_en' => 'All day',
-                    'name_es' => 'Todo el día',
-                    'order' => 2
-                ),
-                array(
-                    'id' => 'weekend',
-                    'name_en' => 'A weekend',
-                    'name_es' => 'Un fin de semana',
-                    'order' => 3
-                ),
-                array(
-                    'id' => 'week-or-more',
-                    'name_en' => 'A week or more',
-                    'name_es' => 'Una semana o más',
-                    'order' => 4
-                ),
-            ),
             'LeisureMoney' => array(
                 array(
                     'id' => 'free',
@@ -1552,46 +1520,55 @@ class ProfileOptions implements LoggerAwareInterface
                     'id' => 'party',
                     'name_en' => 'Throw a party',
                     'name_es' => 'Fiestas en casa',
+                    'picture' => 'https://us.123rf.com/450wm/ivankoivanko/ivankoivanko1704/ivankoivanko170400006/110563225-friends-eating-pizza-they-are-having-party-at-home-eating-pizza-and-having-fun-.jpg?ver=6'
                 ),
                 array(
                     'id' => 'massages-spa',
                     'name_en' => 'Massages and Spa',
                     'name_es' => 'Masajes y Spas',
+                    'picture' => 'http://arayaspa.com/wp-content/uploads/2015/05/massage.jpg'
                 ),
                 array(
                     'id' => 'hairdressing-beauty',
                     'name_en' => 'Hairdressing and beauty',
                     'name_es' => 'Peluquería y belleza',
+                    'picture' => 'https://cdn.britannica.com/s:300x300/53/136653-004-E2E9D001.jpg'
                 ),
                 array(
                     'id' => 'hiking',
                     'name_en' => 'Hiking',
                     'name_es' => 'Rutas y excursiones',
+                    'picture' => 'https://cms.groupeditors.com/img/139670ab-8a69-4b2e-9ebc-7e8ad63a7fc0.jpg'
                 ),
                 array(
                     'id' => 'wine-tasting',
                     'name_en' => 'Wine tasting',
                     'name_es' => 'Catas de vinos',
+                    'picture' => 'https://i1.wp.com/www.tufts-skidmore.es/wp-content/uploads/2017/04/cata-vinos-pasos.jpeg?fit=750%2C393'
                 ),
                 array(
                     'id' => 'courses',
-                    'name_en' => 'Courses',
+                    'name_en' => 'Take classes',
                     'name_es' => 'Cursos',
+                    'picture' => 'data:image/png;base64,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'
                 ),
                 array(
                     'id' => 'scheduled-adventures',
                     'name_en' => 'Scheduled adventures',
                     'name_es' => 'Aventuras programadas',
+                    'picture' => 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQCeA-j3vRBIk-M1z8MSyPxo8lKGWhvbuDZG9su4BwbcPGlDCWD'
                 ),
                 array(
-                    'id' => 'scheduled-adventures',
-                    'name_en' => 'Scheduled adventures',
-                    'name_es' => 'Aventuras programadas',
+                    'id' => 'take a walk',
+                    'name_en' => 'Take a walk',
+                    'name_es' => 'Dar un paseo',
+                    'picture' => 'https://www.callumswanrealty.com/blog/es/wp-content/uploads/sites/2/2016/04/paseo-maritimo-marbella-1650x928.jpg'
                 ),
                 array(
-                    'id' => 'scheduled-adventures',
-                    'name_en' => 'Scheduled adventures',
-                    'name_es' => 'Aventuras programadas',
+                    'id' => 'go-to-sales',
+                    'name_en' => 'Go to the sales',
+                    'name_es' => 'Ir a las rebajas',
+                    'picture' => 'https://static2.diariosur.es/www/multimedia/201801/11/media/cortadas/rebajas-U30430927147wfG-U50591802181wbG-624x385@Diario%20Sur-DiarioSur.jpg'
                 ),
             ),
             'Restaurant' => array(
@@ -1617,85 +1594,88 @@ class ProfileOptions implements LoggerAwareInterface
                     'id' => 'american',
                     'name_en' => 'American',
                     'name_es' => 'Americanos',
-                    'picture' => ''
+                    'picture' => 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/70/Mac-and-cheese.jpg/1200px-Mac-and-cheese.jpg'
                 ),
                 array(
                     'id' => 'spanish',
                     'name_en' => 'Spanish',
                     'name_es' => 'Español',
-                    'picture' => 'https://upload.wikimedia.org/wikipedia/commons/2/2e/Fast_food_meal.jpg'
-                ),
+                    'picture' => 'https://1dib1q3k1s3e11a5av3bhlnb-wpengine.netdna-ssl.com/wp-content/uploads/2012/05/spanish-tortilla.jpg'                ),
                 array(
                     'id' => 'indian',
                     'name_en' => 'Indian',
                     'name_es' => 'Indio',
-                    'picture' => 'https://upload.wikimedia.org/wikipedia/commons/2/2e/Fast_food_meal.jpg'
-                ),
+                    'picture' => 'https://media-cdn.tripadvisor.com/media/photo-s/0b/71/97/4e/north-indian-food-kaitaia.jpg'                ),
                 array(
                     'id' => 'latin',
                     'name_en' => 'Latin',
                     'name_es' => 'Latinos',
-                    'picture' => 'https://upload.wikimedia.org/wikipedia/commons/2/2e/Fast_food_meal.jpg'
-                ),
+                    'picture' => 'https://cdn10.phillymag.com/wp-content/uploads/sites/3/2014/10/MO-quetzally-michael-persico-940.jpg'                ),
                 array(
                     'id' => 'vegetarian',
                     'name_en' => 'Vegetarian',
                     'name_es' => 'Vegetariano',
-                    'picture' => 'https://upload.wikimedia.org/wikipedia/commons/2/2e/Fast_food_meal.jpg'
-                ),
+                    'picture' => 'https://www.vegetariantimes.com/.image/t_share/MTQ3MDM3MzQ5NjA2MzM2NDA3/zi3000-shutterstock-buddha-bowl.jpg'                ),
                 array(
                     'id' => 'arab',
                     'name_en' => 'Arab',
                     'name_es' => 'Árabe',
-                    'picture' => 'https://upload.wikimedia.org/wikipedia/commons/2/2e/Fast_food_meal.jpg'
-                ),
+                    'picture' => 'http://www.davehazzan.com/wp-content/uploads/2017/06/BW-Berlin-8420-1.jpg'                ),
             ),
-            //Copiado de Tickets
             'Show' => array(
                 array(
                     'id' => 'theater-dance',
                     'name_en' => 'Theater and dance',
                     'name_es' => 'Teatro y danza',
+                    'picture' => 'https://www.jccmanhattan.org/image/arts-ideas/performances/Music_Dance_landing_page_image.jpg'
                 ),
                 array(
                     'id' => 'concerts-music',
                     'name_en' => 'Concerts and music',
                     'name_es' => 'Conciertos y música',
+                    'picture' => 'http://www.millenniumparkconcerts.org/wp-content/uploads/2015/07/music-concert.jpg'
                 ),
                 array(
                     'id' => 'museums-exhibitions',
                     'name_en' => 'Museums and exhibitions',
                     'name_es' => 'Museos y exposiciones',
+                    'picture' => 'https://www.museumnext.com/app/uploads/2017/04/met_big.jpg'
                 ),
                 array(
                     'id' => 'circus',
                     'name_en' => 'Circus',
                     'name_es' => 'Circo',
+                    'picture' => 'https://cdn10.phillymag.com/wp-content/uploads/sites/3/2017/11/OTO-Caribbean-Dynasty-UniverSoulCircus-900x600.jpg'
                 ),
                 array(
                     'id' => 'cinema',
                     'name_en' => 'Cinema',
                     'name_es' => 'Cine',
+                    'picture' => 'https://i.blogs.es/72b166/cine/450_1000.jpg'
                 ),
                 array(
                     'id' => 'sports-events',
                     'name_en' => 'Sports events',
                     'name_es' => 'Eventos de deportes',
+                    'picture' => 'http://www.reservationsystems.com/Images/Sports_Large.png'
                 ),
                 array(
                     'id' => 'theme-parks',
                     'name_en' => 'Theme parks',
                     'name_es' => 'Parques temáticos',
+                    'picture' => 'https://www.tripsavvy.com/thmb/ZjcjQTJj3vs8a-FGVW0T0-rYlL8=/960x0/filters:no_upscale():max_bytes(150000):strip_icc()/GettyImages-530779260-5aafd013875db900377746bd.jpg'
                 ),
                 array(
                     'id' => 'conferences',
                     'name_en' => 'Conferences',
                     'name_es' => 'Conferencias',
+                    'picture' => 'http://www.laspositascollege.edu/gv/pdc/assets/images/conference.jpg'
                 ),
                 array(
                     'id' => 'thematic-fairs',
                     'name_en' => 'Thematic fairs',
                     'name_es' => 'Ferias temáticas',
+                    'picture' => 'http://spaplatform.com/wp-content/uploads/2017/05/Beauty-Duesseldorf-4-sections.jpg'
                 ),
             )
         );
