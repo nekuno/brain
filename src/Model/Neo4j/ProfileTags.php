@@ -461,7 +461,7 @@ class ProfileTags implements LoggerAwareInterface
                     ),
                 ),
             ),
-            'Hobby' => array(
+            'Hobbies' => array(
                 array(
                     'locales' => array(
                         'es' => 'Punto de cruz',

@@ -1515,7 +1515,7 @@ class ProfileOptions implements LoggerAwareInterface
                     'order' => 3
                 ),
             ),
-            'Plan' => array(
+            'Plans' => array(
                 array(
                     'id' => 'party',
                     'name_en' => 'Throw a party',
@@ -1571,7 +1571,7 @@ class ProfileOptions implements LoggerAwareInterface
                     'picture' => 'https://static2.diariosur.es/www/multimedia/201801/11/media/cortadas/rebajas-U30430927147wfG-U50591802181wbG-624x385@Diario%20Sur-DiarioSur.jpg'
                 ),
             ),
-            'Restaurant' => array(
+            'Restaurants' => array(
                 array(
                     'id' => 'asian',
                     'name_en' => 'Japonés',
@@ -1622,7 +1622,7 @@ class ProfileOptions implements LoggerAwareInterface
                     'name_es' => 'Árabe',
                     'picture' => 'http://www.davehazzan.com/wp-content/uploads/2017/06/BW-Berlin-8420-1.jpg'                ),
             ),
-            'Show' => array(
+            'Shows' => array(
                 array(
                     'id' => 'theater-dance',
                     'name_en' => 'Theater and dance',

@@ -36,6 +36,9 @@ class ProposalBuilder
         $dataFields = $proposalData['fields'];
         $fields = array();
         foreach ($metadatum AS $fieldName => $fieldMetadata) {
+            if ($fieldName == 'photo'){
+                $dataFields['photo'] = 'http://via.placeholder.com/360x180';
+            }
             if (!array_key_exists($fieldName, $dataFields)) {
                 continue;
             }
@@ -54,19 +57,6 @@ class ProposalBuilder
         $proposal = new Proposal($proposalType, $fields);
         if (isset($proposalData['proposalId'])) {
             $proposal->setId($proposalData['proposalId']);
-        }
-
-        $proposal = $this->setDefaultPhoto($proposal);
-
-        return $proposal;
-    }
-
-    protected function setDefaultPhoto(Proposal $proposal)
-    {
-        $defaultProposalPhoto = 'http://via.placeholder.com/360x180';
-        $photoField = $proposal->getField('photo');
-        if (!$photoField->getValue()){
-            $photoField->setValue($defaultProposalPhoto);
         }
 
         return $proposal;

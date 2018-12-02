@@ -53,7 +53,7 @@ class ProposalManager
             ->setParameter('proposalId', (integer)$proposalId);
 
         $proposalLabel = $proposal->getLabel();
-        $qb->remove('proposal:Work:Sport:Videogame:Hobby:Show:Restaurant:Plan');
+        $qb->remove('proposal:Work:Sports:Games:Hobbies:Shows:Restaurants:Plans');
         $qb->set("proposal:$proposalLabel")
             ->with('proposal');
 

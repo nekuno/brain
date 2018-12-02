@@ -183,11 +183,11 @@ class ProposalTest extends ProposalAPITest
     protected function getSportProposalData()
     {
         return array(
-            'type' => 'sport',
+            'type' => 'sports',
             'fields' => array(
                 'title' => 'sport proposal title',
                 'description' => 'my sport proposal',
-                'sport' => array('football')
+                'sports' => array('football')
             )
         );
     }
@@ -195,11 +195,11 @@ class ProposalTest extends ProposalAPITest
     protected function getVideogameProposalData()
     {
         return array(
-            'type' => 'videogame',
+            'type' => 'games',
             'fields' => array(
                 'title' => 'videogame proposal title',
                 'description' => 'my videogame proposal',
-                'videogame' => array('GTA')
+                'games' => array('GTA')
             )
         );
     }
@@ -207,11 +207,11 @@ class ProposalTest extends ProposalAPITest
     protected function getHobbyProposalData()
     {
         return array(
-            'type' => 'hobby',
+            'type' => 'hobbies',
             'fields' => array(
                 'title' => 'hobby proposal title',
                 'description' => 'my hobby proposal',
-                'hobby' => array('Painting')
+                'hobbies' => array('Painting')
             )
         );
     }
@@ -219,7 +219,7 @@ class ProposalTest extends ProposalAPITest
     protected function getShowProposalData()
     {
         return array(
-            'type' => 'show',
+            'type' => 'shows',
             'fields' => array(
                 'title' => 'show proposal title',
                 'description' => 'my show proposal',
@@ -231,7 +231,7 @@ class ProposalTest extends ProposalAPITest
     protected function getRestaurantProposalData()
     {
         return array(
-            'type' => 'restaurant',
+            'type' => 'restaurants',
             'fields' => array(
                 'title' => 'restaurant proposal title',
                 'description' => 'my restaurant proposal',
@@ -243,7 +243,7 @@ class ProposalTest extends ProposalAPITest
     protected function getPlanProposalData()
     {
         return array(
-            'type' => 'plan',
+            'type' => 'plans',
             'fields' => array(
                 'title' => 'plan proposal title',
                 'description' => 'my plan proposal',
@@ -255,7 +255,7 @@ class ProposalTest extends ProposalAPITest
     protected function getFullProposalData()
     {
         return array(
-            'type' => 'plan',
+            'type' => 'plans',
             'fields' => array(
                 'title' => 'plan proposal title',
                 'description' => 'my plan proposal',

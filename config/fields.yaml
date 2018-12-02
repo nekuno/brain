@@ -57,11 +57,11 @@ categories:
         - label:
             en: Hobbies
             es: Aficiones
-          fields: [sport, hobby, game]
+          fields: [sports, hobbies, games]
         - label:
             en: Leisure
             es: Ocio
-          fields: [leisureMoney, show, plan, restaurant]
+          fields: [leisureMoney, shows, plans, restaurants]
         - label:
             en: Description
             es: Descripción
@@ -99,11 +99,11 @@ categories:
         - label:
             en: Leisure
             es: Ocio
-          fields: [sport, hobby, game]
+          fields: [sports, hobbies, games]
         - label:
             en: Experiences
             es: Experiencias
-          fields: [leisureMoney, show, plan, restaurant]
+          fields: [leisureMoney, shows, plans, restaurants]
 profile:
     mode:
         type: choice
@@ -474,20 +474,20 @@ profile:
             es: 'Ubicación'
         labelEdit: *locationLabel
         notErasable: true
-    sport:
+    sports:
         type: tags
         label: &sportsLabel
             en: 'Sports and physical'
             es: 'Deportes y físico'
         labelEdit: *sportsLabel
-    game:
+    games:
         type: tags
         label: &gamesLabel
             en: 'Videogames and board games'
             es: 'Videojuegos y juegos de mesa'
         labelEdit: *gamesLabel
         schema: VideoGame
-    hobby:
+    hobbies:
         type: tags
         label: &creativeLabel
             en: 'Hobbies'
@@ -502,19 +502,19 @@ profile:
         min: 0
         max: 4
         isRange: true
-    plan:
+    plans:
         type: multiple_choices
         label: &leisurePlanLabel
             en: 'Plans'
             es: 'Planes'
         labelEdit: *leisurePlanLabel
-    show:
+    shows:
         type: multiple_choices
         label: &showLabel
             en: 'Shows'
             es: 'Espectáculos'
         labelEdit: *showLabel
-    restaurant:
+    restaurants:
         type: multiple_choices
         label: &restaurantLabel
             en: 'Restaurants'
@@ -832,26 +832,26 @@ device:
 proposal:
     work:
         industry:
-            type: tag
+            type: choice
         profession:
             type: tag
-    sport:
-        sport:
+    sports:
+        sports:
             type: tag_and_suggestion
-    game:
-        game:
+    games:
+        games:
             type: tag_and_suggestion
-    hobby:
-        hobby:
+    hobbies:
+        hobbies:
             type: choice
-    show:
-        show:
+    shows:
+        shows:
             type: choice
-    restaurant:
-        restaurant:
+    restaurants:
+        restaurants:
             type: choice
-    plan:
-        plan:
+    plans:
+        plans:
             type: choice
 
 availability:
