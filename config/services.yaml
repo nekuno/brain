@@ -183,7 +183,10 @@ services:
     Model\Photo\GalleryManager:
         arguments:
             $base: "%env(resolve:images_absolute_web_dir)%"
-    Model\Photo\ProposalPhotoManager:
+    Model\Photo\ProposalGalleryManager:
+        arguments:
+            $base: "%env(resolve:images_absolute_web_dir)%"
+    Model\Photo\ProfileOptionGalleryManager:
         arguments:
             $base: "%env(resolve:images_absolute_web_dir)%"
     Model\Invitation\InvitationManager:

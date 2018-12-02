@@ -2,7 +2,7 @@
 
 namespace Model\Photo;
 
-class ProposalPhotoManager extends GalleryManager
+class ProposalGalleryManager extends GalleryManager
 {
     protected $folderBase = 'uploads/proposals/';
 

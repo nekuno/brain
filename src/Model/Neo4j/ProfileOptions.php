@@ -2,6 +2,7 @@
 
 namespace Model\Neo4j;
 
+use Model\Photo\ProfileOptionGalleryManager;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 
@@ -22,9 +23,15 @@ class ProfileOptions implements LoggerAwareInterface
      */
     protected $result;
 
-    public function __construct(GraphManager $gm)
+    /**
+     * @var ProfileOptionGalleryManager
+     */
+    protected $profileOptionGalleryManager;
+
+    public function __construct(GraphManager $gm, ProfileOptionGalleryManager $profileOptionGalleryManager)
     {
         $this->gm = $gm;
+        $this->profileOptionGalleryManager = $profileOptionGalleryManager;
     }
 
     /**
@@ -1520,7 +1527,7 @@ class ProfileOptions implements LoggerAwareInterface
                     'id' => 'party',
                     'name_en' => 'Throw a party',
                     'name_es' => 'Fiestas en casa',
-                    'picture' => 'https://us.123rf.com/450wm/ivankoivanko/ivankoivanko1704/ivankoivanko170400006/110563225-friends-eating-pizza-they-are-having-party-at-home-eating-pizza-and-having-fun-.jpg?ver=6'
+                    'picture' => 'https://us.123rf.com/450wm/ivankoivanko/ivankoivanko1704/ivankoivanko170400006/110563225-friends-eating-pizza-they-are-having-party-at-home-eating-pizza-and-having-fun-.jpg'
                 ),
                 array(
                     'id' => 'massages-spa',
@@ -1544,19 +1551,19 @@ class ProfileOptions implements LoggerAwareInterface
                     'id' => 'wine-tasting',
                     'name_en' => 'Wine tasting',
                     'name_es' => 'Catas de vinos',
-                    'picture' => 'https://i1.wp.com/www.tufts-skidmore.es/wp-content/uploads/2017/04/cata-vinos-pasos.jpeg?fit=750%2C393'
+                    'picture' => 'https://i1.wp.com/www.tufts-skidmore.es/wp-content/uploads/2017/04/cata-vinos-pasos.jpeg'
                 ),
                 array(
                     'id' => 'courses',
                     'name_en' => 'Take classes',
                     'name_es' => 'Cursos',
-                    'picture' => 'data:image/png;base64,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'
+                    'picture' => 'https://mhadegree.org/files/2013/06/online-courses-free-healthcare-300x200.jpg'
                 ),
                 array(
                     'id' => 'scheduled-adventures',
                     'name_en' => 'Scheduled adventures',
                     'name_es' => 'Aventuras programadas',
-                    'picture' => 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQCeA-j3vRBIk-M1z8MSyPxo8lKGWhvbuDZG9su4BwbcPGlDCWD'
+                    'picture' => 'http://www.smliv.com/downloads/2290/download/AT%20Hikers.jpeg'
                 ),
                 array(
                     'id' => 'take a walk',
@@ -1576,7 +1583,7 @@ class ProfileOptions implements LoggerAwareInterface
                     'id' => 'asian',
                     'name_en' => 'Japonés',
                     'name_es' => 'Japanese',
-                    'picture' => 'http://cdn.shopify.com/s/files/1/1291/3261/products/DSC_7797-Edit_grande.jpg?v=1475050576'
+                    'picture' => 'http://cdn.shopify.com/s/files/1/1291/3261/products/DSC_7797-Edit_grande.jpg'
                 ),
                 array(
                     'id' => 'italian',
@@ -1600,27 +1607,32 @@ class ProfileOptions implements LoggerAwareInterface
                     'id' => 'spanish',
                     'name_en' => 'Spanish',
                     'name_es' => 'Español',
-                    'picture' => 'https://1dib1q3k1s3e11a5av3bhlnb-wpengine.netdna-ssl.com/wp-content/uploads/2012/05/spanish-tortilla.jpg'                ),
+                    'picture' => 'https://1dib1q3k1s3e11a5av3bhlnb-wpengine.netdna-ssl.com/wp-content/uploads/2012/05/spanish-tortilla.jpg'
+                ),
                 array(
                     'id' => 'indian',
                     'name_en' => 'Indian',
                     'name_es' => 'Indio',
-                    'picture' => 'https://media-cdn.tripadvisor.com/media/photo-s/0b/71/97/4e/north-indian-food-kaitaia.jpg'                ),
+                    'picture' => 'https://media-cdn.tripadvisor.com/media/photo-s/0b/71/97/4e/north-indian-food-kaitaia.jpg'
+                ),
                 array(
                     'id' => 'latin',
                     'name_en' => 'Latin',
                     'name_es' => 'Latinos',
-                    'picture' => 'https://cdn10.phillymag.com/wp-content/uploads/sites/3/2014/10/MO-quetzally-michael-persico-940.jpg'                ),
+                    'picture' => 'https://cdn10.phillymag.com/wp-content/uploads/sites/3/2014/10/MO-quetzally-michael-persico-940.jpg'
+                ),
                 array(
                     'id' => 'vegetarian',
                     'name_en' => 'Vegetarian',
                     'name_es' => 'Vegetariano',
-                    'picture' => 'https://www.vegetariantimes.com/.image/t_share/MTQ3MDM3MzQ5NjA2MzM2NDA3/zi3000-shutterstock-buddha-bowl.jpg'                ),
+                    'picture' => 'https://www.vegetariantimes.com/.image/t_share/MTQ3MDM3MzQ5NjA2MzM2NDA3/zi3000-shutterstock-buddha-bowl.jpg'
+                ),
                 array(
                     'id' => 'arab',
                     'name_en' => 'Arab',
                     'name_es' => 'Árabe',
-                    'picture' => 'http://www.davehazzan.com/wp-content/uploads/2017/06/BW-Berlin-8420-1.jpg'                ),
+                    'picture' => 'http://www.davehazzan.com/wp-content/uploads/2017/06/BW-Berlin-8420-1.jpg'
+                ),
             ),
             'Shows' => array(
                 array(
@@ -1692,103 +1704,6 @@ class ProfileOptions implements LoggerAwareInterface
 
         return $this->result;
     }
-//
-//    /**
-//     * @param $type
-//     * @param $id
-//     * @param $names
-//     * @param $order
-//     * @param string $picture
-//     */
-//    public function processOption($type, $id, $names, $order = null, $picture = '')
-//    {
-//
-//        $this->result->incrementTotal();
-//
-//        $data = array(
-//            'type' => $type,
-//            'id' => $id,
-//            'name_es' => $names['name_es'],
-//            'name_en' => $names['name_en'],
-//            'order' => $order,
-//            'picture' => $picture
-//        );
-//
-//        $this->merge($data);
-//        if ($this->optionExists($type, $id)) {
-//
-//            if ($this->optionExists($type, $id, $names, $order)) {
-//
-//                $this->logger->info(sprintf('Skipping, Already exists ProfileOption:%s id: "%s", name_en: "%s", name_es: "%s"', $type, $id, $names['name_en'], $names['name_es']));
-//
-//            } else {
-//
-//                $this->result->incrementUpdated();
-//                $this->logger->info(sprintf('Updating ProfileOption:%s id: "%s", name_en: "%s", name_es: "%s"', $type, $id, $names['name_en'], $names['name_es']));
-//                $parameters = array('type' => $type, 'id' => $id);
-//                $parameters = array_merge($parameters, $names);
-//                $cypher = "MATCH (o:ProfileOption) WHERE {type} IN labels(o) AND o.id = {id} SET o.name_en = {name_en}, o.name_es = {name_es}";
-//                if ($order !== null) {
-//                    $cypher .= " SET o.order = {order}";
-//                    $parameters['order'] = $order;
-//                }
-//                $cypher .= " RETURN o;";
-//
-//                $query = $this->gm->createQuery($cypher, $parameters);
-//                $query->getResultSet();
-//            }
-//
-//        } else {
-//
-//            $this->result->incrementCreated();
-//            $this->logger->info(sprintf('Creating ProfileOption:%s id: "%s", name_en: "%s", name_es: "%s"', $type, $id, $names['name_en'], $names['name_es']));
-//            $parameters = array('id' => $id);
-//            $parameters = array_merge($parameters, $names);
-//            $cypher = "CREATE (o:ProfileOption:" . $type . " { id: {id}, name_en: {name_en}, name_es: {name_es} })";
-//            if ($order !== null) {
-//                $cypher .= " SET o.order = {order}";
-//                $parameters['order'] = $order;
-//            }
-//
-//            $query = $this->gm->createQuery($cypher, $parameters);
-//            $query->getResultSet();
-//        }
-//    }
-//
-//    /**
-//     * @param array $data
-//     * @return boolean
-//     * @throws \Exception
-//     */
-//    public function optionExists($type, $id, $names = array(), $order = null)
-//    {
-//        $qb = $this->gm->createQueryBuilder();
-//
-//        $qb->match('MATCH (o:ProfileOption)')
-//            ->where('{type} IN labels(o) AND o.id = {id}')
-//            ->with('o')
-//            ->setParameter('type', $type)
-//            ->setParameter('id', $id);
-//
-//        if (!empty($names)) {
-//            $qb->where('o.name_es = {name_es}', 'o.name_en = {name_en}')
-//                ->setParameter('name_es', $names('name_es'))
-//                ->setParameter('name_en', $names('name_en'))
-//                ->with('o');
-//        }
-//        if ($order !== null) {
-//            $qb->where('o.order = {order}')
-//                ->setParameter('order', $order)
-//                ->with('o');
-//        }
-//
-//        $qb->returns('o');
-//
-//        $query = $qb->getQuery();
-//        $result = $query->getResultSet();
-//
-//        return count($result) > 0;
-//    }
 
     public function merge(array $data)
     {
@@ -1797,7 +1712,8 @@ class ProfileOptions implements LoggerAwareInterface
         $name_en = $data['name_en'];
         $name_es = $data['name_es'];
         $order = $data['order'];
-        $picture = $data['picture'];
+
+        $picture = $this->profileOptionGalleryManager->saveOption($data);
 
         $qb = $this->gm->createQueryBuilder();
 

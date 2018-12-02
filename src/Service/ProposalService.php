@@ -6,7 +6,7 @@ use Model\Availability\AvailabilityManager;
 use Model\Exception\ValidationException;
 use Model\Filters\FilterUsersManager;
 use Model\Photo\PhotoManager;
-use Model\Photo\ProposalPhotoManager;
+use Model\Photo\ProposalGalleryManager;
 use Model\Proposal\Proposal;
 use Model\Profile\ProfileFields\FieldAvailability;
 use Model\Proposal\ProposalManager;
@@ -19,7 +19,7 @@ class ProposalService
     protected $availabilityService;
     protected $proposalManager;
     protected $proposalTagManager;
-    protected $proposalPhotoManager;
+    protected $proposalGalleryManager;
     protected $photoManager;
     protected $filterUsersManager;
 
@@ -30,7 +30,7 @@ class ProposalService
      * @param ProposalManager $proposalManager
      * @param ProposalTagManager $proposalTagManager
      * @param FilterUsersManager $filterUsersManager
-     * @param ProposalPhotoManager $proposalPhotoManager
+     * @param ProposalGalleryManager $proposalGalleryManager
      * @param PhotoManager $photoManager
      */
     public function __construct(
@@ -39,14 +39,14 @@ class ProposalService
         ProposalManager $proposalManager,
         ProposalTagManager $proposalTagManager,
         FilterUsersManager $filterUsersManager,
-        ProposalPhotoManager $proposalPhotoManager,
+        ProposalGalleryManager $proposalGalleryManager,
         PhotoManager $photoManager
     ) {
         $this->availabilityManager = $availabilityManager;
         $this->availabilityService = $availabilityService;
         $this->proposalManager = $proposalManager;
         $this->proposalTagManager = $proposalTagManager;
-        $this->proposalPhotoManager = $proposalPhotoManager;
+        $this->proposalGalleryManager = $proposalGalleryManager;
         $this->photoManager = $photoManager;
         $this->filterUsersManager = $filterUsersManager;
     }
@@ -174,9 +174,9 @@ class ProposalService
 
     protected function saveProposalPhoto(User $user, array $data)
     {
-        $photo = isset($data['photo']) ? $data['photo'] : $this->proposalPhotoManager->getRandomPhoto();
+        $photo = isset($data['photo']) ? $data['photo'] : $this->proposalGalleryManager->getRandomPhoto();
 //        $extension = $this->photoManager->validate($photo);
-//        $this->proposalPhotoManager->save($photo, $user, $extension);
+//        $this->proposalGalleryManager->save($photo, $user, $extension);
     }
 
     protected function updateFilters(Proposal $proposal, $filters)

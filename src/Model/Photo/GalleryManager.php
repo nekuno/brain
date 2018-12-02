@@ -21,10 +21,16 @@ class GalleryManager
     {
         $name = $this->buildFileName($user->getUsernameCanonical(), $extension);
         $folder = $this->buildFolderName($user->getId());
+
+        return $this->saveFile($name, $folder, $file);
+    }
+
+    protected function saveFile($fileName, $folder, $file)
+    {
         if (!is_dir($this->base . $folder)) {
             mkdir($this->base . $folder, 0775);
         }
-        $path = $folder . $name;
+        $path = $folder . $fileName;
         $saved = file_put_contents($this->base . $path, $file);
 
         if ($saved === false) {

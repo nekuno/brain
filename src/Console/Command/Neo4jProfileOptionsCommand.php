@@ -8,6 +8,7 @@ use Model\Neo4j\GraphManager;
 use Model\Neo4j\PrivacyOptions;
 use Model\Neo4j\ProfileOptions;
 use Model\Neo4j\ProfileTags;
+use Model\Photo\ProfileOptionGalleryManager;
 use Model\Profile\ProfileTagManager;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
@@ -30,16 +31,21 @@ class Neo4jProfileOptionsCommand extends ApplicationAwareCommand
     protected $profileTagManager;
 
     /**
+     * @var ProfileOptionGalleryManager
+     */
+    protected $profileOptionGalleryManager;
+    /**
      * @var LanguageTextManager
      */
     protected $languageTextManager;
 
-    public function __construct(LoggerInterface $logger, GraphManager $graphManager, ProfileTagManager $profileTagManager, LanguageTextManager $languageTextManager)
+    public function __construct(LoggerInterface $logger, GraphManager $graphManager, ProfileTagManager $profileTagManager, ProfileOptionGalleryManager $profileOptionGalleryManager, LanguageTextManager $languageTextManager)
     {
         parent::__construct($logger);
         $this->graphManager = $graphManager;
         $this->profileTagManager = $profileTagManager;
         $this->languageTextManager = $languageTextManager;
+        $this->profileOptionGalleryManager = $profileOptionGalleryManager;
     }
 
     protected function configure()
@@ -57,7 +63,7 @@ class Neo4jProfileOptionsCommand extends ApplicationAwareCommand
 
     protected function loadProfileOptions(OutputInterface $output)
     {
-        $profileOptions = new ProfileOptions($this->graphManager);
+        $profileOptions = new ProfileOptions($this->graphManager, $this->profileOptionGalleryManager);
 
         $verbosityLevelMap = array(
             LogLevel::NOTICE => OutputInterface::VERBOSITY_NORMAL,

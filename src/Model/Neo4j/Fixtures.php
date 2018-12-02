@@ -11,6 +11,7 @@ use Model\Link\Image;
 use Model\Link\Link;
 use Model\Link\LinkManager;
 use Model\Link\Video;
+use Model\Photo\ProfileOptionGalleryManager;
 use Model\Question\Admin\AnswerAdmin;
 use Model\Question\Admin\QuestionAdmin;
 use Model\Question\QuestionCorrelationManager;
@@ -83,6 +84,11 @@ class Fixtures
     protected $pm;
 
     /**
+     * @var ProfileOptionGalleryManager
+     */
+    protected $profileOptionGalleryManager;
+
+    /**
      * @var  PrivacyManager
      * */
     protected $prim;
@@ -124,7 +130,7 @@ class Fixtures
 
     public function __construct(GraphManager $graphManager, Constraints $constraints, UserManager $userManager, EnterpriseUserManager $enterpriseUserManager, GroupManager $groupManager,
                                 GroupService $groupService, InvitationManager $invitationManager, LinkManager $linkManager, QuestionService $questionService, QuestionCorrelationManager $questionCorrelationManager,
-                                AnswerManager $answerManager, ProfileManager $profileManager, PrivacyManager $privacyManager, RateManager $rateManager)
+                                AnswerManager $answerManager, ProfileManager $profileManager, ProfileOptionGalleryManager $profileOptionGalleryManager, PrivacyManager $privacyManager, RateManager $rateManager)
     {
         $this->gm = $graphManager;
         $this->constraints = $constraints;
@@ -138,6 +144,7 @@ class Fixtures
         $this->correlationManager = $questionCorrelationManager;
         $this->am = $answerManager;
         $this->pm = $profileManager;
+        $this->profileOptionGalleryManager = $profileOptionGalleryManager;
         $this->prim = $privacyManager;
         $this->rm = $rateManager;
     }
@@ -192,7 +199,7 @@ class Fixtures
 
     protected function loadUsers()
     {
-
+//TODO: Change to use RegisterService like TestingFixtures
         $this->logger->notice(sprintf('Loading %d users', self::NUM_OF_USERS));
 
         for ($i = 1; $i <= self::NUM_OF_USERS; $i++) {
@@ -544,7 +551,7 @@ class Fixtures
 
     private function loadProfileOptions()
     {
-        $profileOptions = new ProfileOptions($this->gm);
+        $profileOptions = new ProfileOptions($this->gm, $this->profileOptionGalleryManager);
 
         $logger = $this->logger;
         $profileOptions->setLogger($logger);
