@@ -3,6 +3,7 @@
 parameters:
     env(locale_default): 'en'
     env(images_web_dir): ''
+    env(brain_images_web_dir): ''
     env(images_absolute_web_dir): "%kernel.project_dir%%env(images_web_dir)%"
     env(social_host): ''
     env(admin_domain_plus_port): ''
@@ -188,7 +189,8 @@ services:
             $base: "%env(resolve:images_absolute_web_dir)%"
     Model\Photo\ProfileOptionGalleryManager:
         arguments:
-            $base: "%env(resolve:images_absolute_web_dir)%"
+            $base: "%env(brain_images_web_dir)%"
+            $brainBaseUrl: "%env(brain_base_url)%"
     Model\Invitation\InvitationManager:
         arguments:
             $adminDomain: "%env(admin_domain_plus_port)%"

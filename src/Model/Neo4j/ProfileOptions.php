@@ -48,7 +48,8 @@ class ProfileOptions implements LoggerAwareInterface
      */
     public function load()
     {
-
+//IMAGES NOT OWNED BY NEKUNO, HERE AS PLACEHOLDER
+//IMÁGENES NO PROPIEDAD DE NEKUNO, AQUÍ COMO MUESTRA
         $this->result = new OptionsResult();
 
         $options = array(
@@ -1713,7 +1714,7 @@ class ProfileOptions implements LoggerAwareInterface
         $name_es = $data['name_es'];
         $order = $data['order'];
 
-        $picture = $this->profileOptionGalleryManager->saveOption($data);
+        $pictureAbsolutePath = $this->profileOptionGalleryManager->saveOption($data);
 
         $qb = $this->gm->createQueryBuilder();
 
@@ -1724,7 +1725,7 @@ class ProfileOptions implements LoggerAwareInterface
         $qb->set('o.name_es = {name_es}', 'o.name_en = {name_en}', 'o.picture = {picture}')
             ->setParameter('name_es', $name_es)
             ->setParameter('name_en', $name_en)
-            ->setParameter('picture', $picture)
+            ->setParameter('picture', $pictureAbsolutePath)
             ->with('o');
 
         if ($order !== null) {

@@ -4,7 +4,15 @@ namespace Model\Photo;
 
 class ProfileOptionGalleryManager extends GalleryManager
 {
-    protected $folderBase = 'uploads/../../../brain/public/options/';
+    protected $folderBase = 'options/';
+
+    protected $brainBaseUrl;
+
+    public function __construct($base, $brainBaseUrl)
+    {
+        $this->brainBaseUrl = $brainBaseUrl;
+        parent::__construct($base);
+    }
 
     public function saveOption(array $data)
     {
@@ -21,7 +29,9 @@ class ProfileOptionGalleryManager extends GalleryManager
         $type = $data['type'];
         $folder = $this->buildFolderName($type);
 
-        return $this->saveFile($fileName, $folder, $file);
+        $relativePath = $this->saveFile($fileName, $folder, $file);
+
+        return $this->brainBaseUrl . $relativePath;
     }
 
     protected function buildFolderName($type)
