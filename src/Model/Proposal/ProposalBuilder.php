@@ -37,7 +37,7 @@ class ProposalBuilder
         $fields = array();
         foreach ($metadatum AS $fieldName => $fieldMetadata) {
             if ($fieldName == 'photo'){
-                $dataFields['photo'] = 'http://via.placeholder.com/360x180';
+                $dataFields['photo'] = '';
             }
             if (!array_key_exists($fieldName, $dataFields)) {
                 continue;
