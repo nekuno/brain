@@ -48,12 +48,14 @@ class CandidateRecommendator extends AbstractUserRecommendator
         $qb->optionalMatch('(proposal)<-[:INTERESTED_IN]-(anyUser:UserEnabled)')
             ->where($previousCondition)
             ->with('proposal', 'user', '{user: anyUser, interested: true} AS anyUser')
+            ->limit($limitInterested)
             ->with('proposal', 'user', 'collect(anyUser) AS interested');
 
         $previousCondition[] = 'NOT (proposal)<-[:INTERESTED_IN]-(anyUser:UserEnabled)';
         $qb->optionalMatch('(anyUser:UserEnabled)')
             ->where($previousCondition)
             ->with('proposal', 'user', 'interested', '{user: anyUser, interested: false} AS anyUser')
+            ->limit($limitUninterested)
             ->with('proposal', 'user', 'interested', 'collect(anyUser) AS uninterested')
             ->with('proposal', 'user', 'interested + uninterested AS candidates')
             ->unwind('candidates AS candidate')

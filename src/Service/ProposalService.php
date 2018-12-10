@@ -213,7 +213,7 @@ class ProposalService
     public function setAcceptedCandidate(array $data)
     {
         $proposalId = $data['proposalId'];
-        $otherUserId = $data['otherUserId'];
+        $otherUserId = $data['candidateId'];
         $accepted = $data['accepted'];
 
         return $this->proposalManager->setAcceptedCandidate($otherUserId, $proposalId, $accepted);
@@ -230,7 +230,7 @@ class ProposalService
     public function setSkippedCandidate(array $data)
     {
         $proposalId = $data['proposalId'];
-        $otherUserId = $data['otherUserId'];
+        $otherUserId = $data['candidateId'];
         $skipped = $data['skipped'];
 
         return $this->proposalManager->setSkippedCandidate($proposalId, $otherUserId, $skipped);
