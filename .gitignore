@@ -1,7 +1,6 @@
 ###> symfony/framework-bundle ###
 /.env
 /public/bundles/
-/public/options/
 /var/cache
 /var/log
 /var/logs/*

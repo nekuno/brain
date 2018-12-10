@@ -26,7 +26,7 @@ class ProfileOptionGalleryManager extends GalleryManager
         $extension = $ext = pathinfo($picture, PATHINFO_EXTENSION);
         $fileName = $this->buildFileName($id, $extension);
 
-        $type = $data['type'];
+        $type = strtolower($data['type']);
         $folder = $this->buildFolderName($type);
 
         $relativePath = $this->saveFile($fileName, $folder, $file);
