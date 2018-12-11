@@ -8,6 +8,10 @@ class ProposalMetadataManager extends MetadataManager
 {
     /**
      * ProposalMetadataManager constructor.
+     * @param TranslatorInterface $translator
+     * @param MetadataUtilities $metadataUtilities
+     * @param array $metadata
+     * @param $defaultLocale
      */
     public function __construct(TranslatorInterface $translator, MetadataUtilities $metadataUtilities, array $metadata, $defaultLocale)
     {

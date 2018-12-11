@@ -112,6 +112,7 @@ profile:
             es: 'Modo'
         notErasable: true
         hidden: true
+        withImages: false
     description:
         type: textarea
         min: 0
@@ -210,6 +211,7 @@ profile:
         labelEdit: &zodiacSignLabelEdit
             en: 'Zodiac'
             es: 'Zodiaco'
+        withImages: false
     height:
         type: integer
         min: 50
@@ -225,6 +227,7 @@ profile:
             es: 'Sector'
         labelEdit: *industryLabel
         max: 3
+        withImages: false
     allergy:
         type: tags
         label:
@@ -260,7 +263,7 @@ profile:
                 not_want:
                     en: "and doesn’t want any"
                     es: "y no quiero ninguno"
-
+        withImages: false
     language:
         type: tags_and_choice
         label: &languageLabel
@@ -286,7 +289,7 @@ profile:
             native:
                 en: 'Native or bilingual proficiency'
                 es: 'Competencia bilingüe o nativa'
-
+        withImages: false
     gender:
         type: choice
         label: &genderLabel
@@ -297,6 +300,7 @@ profile:
             es: 'Quiero salir en búsquedas por género'
         notErasable: true
         hidden: true
+        withImages: false
     descriptiveGender:
         type: multiple_choices
         label: &descriptiveGenderLabel
@@ -304,6 +308,7 @@ profile:
             es: 'Género'
         labelEdit: *descriptiveGenderLabel
         max: 5
+        withImages: false
     objective:
         type: multiple_choices
         label: &objectiveLabel
@@ -312,42 +317,49 @@ profile:
         labelEdit: *objectiveLabel
         min: 1
         notErasable: true
+        withImages: false
     hairColor:
         type: choice
         label: &hairColorLabel
             en: 'Hair color'
             es: 'Color de pelo'
         labelEdit: *hairColorLabel
+        withImages: false
     ethnicGroup:
         type: multiple_choices
         label: &ethnicGroupLabel
             en: 'Ethnicity'
             es: 'Étnia'
         labelEdit: *ethnicGroupLabel
+        withImages: false
     complexion:
         type: choice
         label: &complexionLabel
             en: 'Body type'
             es: 'Tipo de cuerpo'
         labelEdit: *complexionLabel
+        withImages: false
     eyeColor:
         type: choice
         label: &eyeColorLabel
             en: 'Eyes color'
             es: 'Color ojos'
         labelEdit: *eyeColorLabel
+        withImages: false
     civilStatus:
         type: choice
         label: &civilStatusLabel
             en: 'Civil status'
             es: 'Estado civil'
         labelEdit: *civilStatusLabel
+        withImages: false
     income:
         type: choice
         label: &incomeLabel
             en: 'Income'
             es: 'Ingresos'
         labelEdit: *incomeLabel
+        withImages: false
     pets:
         type: choice
         label: &petsLabel
@@ -356,6 +368,7 @@ profile:
         labelEdit:
             en: 'Do you have pets?'
             es: '¿Tienes mascotas?'
+        withImages: false
     smoke:
         type: choice
         label: &smokeLabel
@@ -364,6 +377,7 @@ profile:
         labelEdit:
             en: 'Do you smoke?'
             es: '¿Fumas?'
+        withImages: false
     alcohol:
         type: choice
         label: &alcoholLabel
@@ -372,12 +386,14 @@ profile:
         labelEdit:
             en: 'Do you drink alcohol?'
             es: '¿Bebes Alcohol?'
+        withImages: false
     drugs:
         type: multiple_choices
         label: &drugsLabel
             en: 'Other'
             es: 'Otras'
         labelEdit: *drugsLabel
+        withImages: false
     diet:
         type: choice
         label: &dietLabel
@@ -386,6 +402,7 @@ profile:
         labelEdit:
             en: 'Are you on a special diet?'
             es: '¿Sigues alguna dieta especial?'
+        withImages: false
     orientation:
         type: multiple_choices
         label: &orientationLabel
@@ -393,6 +410,7 @@ profile:
             es: 'Orientación'
         labelEdit: *orientationLabel
         notErasable: true
+        withImages: false
     orientationRequired:
         type: boolean
         label:
@@ -406,6 +424,7 @@ profile:
         labelEdit:
             en: 'What are your interests on relations?'
             es: '¿Qué te interesa de las relaciones?'
+        withImages: false
     interfaceLanguage:
         type: choice
         label: &interfaceLanguageLabel
@@ -414,6 +433,7 @@ profile:
         labelEdit:
             en: 'What interface language do you prefer?'
             es: '¿Qué lenguaje de interfaz prefieres?'
+        withImages: false
         notErasable: true
     religion:
         type: double_choice
@@ -442,6 +462,7 @@ profile:
             sikh: *religionDetails
             kopimism: *religionDetails
             other: *religionDetails
+        withImages: false
     handicap:
         type: tags
         label: &handicapLabel
@@ -502,24 +523,28 @@ profile:
         min: 0
         max: 4
         isRange: true
+        withImages: false
     plans:
         type: multiple_choices
         label: &leisurePlanLabel
             en: 'Plans'
             es: 'Planes'
         labelEdit: *leisurePlanLabel
+        withImages: false
     shows:
         type: multiple_choices
         label: &showLabel
             en: 'Shows'
             es: 'Espectáculos'
         labelEdit: *showLabel
+        withImages: false
     restaurants:
         type: multiple_choices
         label: &restaurantLabel
             en: 'Restaurants'
             es: 'Restaurantes'
         labelEdit: *restaurantLabel
+        withImages: false
 content:
     type:
         type: choice
@@ -540,6 +565,7 @@ threads:
     category:
         type: choice
         required: true
+        withImages: false
     default:
         type: boolean
 groups:
@@ -634,6 +660,7 @@ content_filter:
         label:
             en: 'Type of content (Music, images, etc…)'
             es: 'Tipo de contenido (Música, imágenes, etc…)'
+        withImages: false
     tags:
         type: tags
         label:
@@ -651,6 +678,7 @@ user_filter:
         label:
             en: 'Badges'
             es: 'Insignias'
+        withImages: false
     compatibility:
         type: integer
         min: 50
@@ -673,6 +701,7 @@ user_filter:
     zodiacSign:
         type: multiple_choices
         label: *zodiacSignLabelEdit
+        withImages: false
     height:
         type: integer_range
         min: 50
@@ -682,70 +711,90 @@ user_filter:
         type: choice_and_multiple_choices
         label: *sonsLabel
         doubleChoices: *sonsDoubleChoices
+        withImages: false
     language:
         type: tags_and_multiple_choices
         label: *languageLabel
         choiceLabel: *languageChoiceLabel
         choices: *languageChoices
-#        gender:
+        withImages: false
+    #        gender:
 #            type: multiple_choices
 #            label: *genderLabel
     descriptiveGender:
         type: multiple_choices
         label: *descriptiveGenderLabel
+        withImages: false
     objective:
         type: multiple_choices
         label: *objectiveLabel
+        withImages: false
     hairColor:
         type: multiple_choices
         label: *hairColorLabel
+        withImages: false
     ethnicGroup:
         type: multiple_choices
         label: *ethnicGroupLabel
+        withImages: false
     complexion:
         type: multiple_choices
         label: *complexionLabel
+        withImages: false
     eyeColor:
         type: multiple_choices
         label: *eyeColorLabel
+        withImages: false
     civilStatus:
         type: multiple_choices
         label: *civilStatusLabel
+        withImages: false
     income:
         type: multiple_choices
         label: *incomeLabel
+        withImages: false
     pets:
         type: multiple_choices
         label: *petsLabel
+        withImages: false
     smoke:
         type: multiple_choices
         label: *smokeLabel
+        withImages: false
     alcohol:
         type: multiple_choices
         label: *alcoholLabel
+        withImages: false
     drugs:
         type: multiple_choices
         label: *drugsLabel
+        withImages: false
     diet:
         type: multiple_choices
         label: *dietLabel
+        withImages: false
     industry:
         type: multiple_choices
         label: *industryLabel
+        withImages: false
         max: 10
     orientation:
         type: multiple_choices
         label: *orientationLabel
+        withImages: false
     relationshipInterest:
         type: multiple_choices
         label: *relationshipInterestLabel
+        withImages: false
     interfaceLanguage:
         type: multiple_choices
         label: *interfaceLanguageLabel
+        withImages: false
     religion:
         type: double_multiple_choices
         label: *religionLabel
         doubleChoices: *religionDoubleChoices
+        withImages: false
     allergy:
         type: tags
         label: *allergyLabel
@@ -833,6 +882,7 @@ proposal:
     work:
         industry:
             type: choice
+            withImages: false
         profession:
             type: tag
     sports:
@@ -844,15 +894,19 @@ proposal:
     hobbies:
         hobbies:
             type: choice
+            withImages: false
     shows:
         shows:
             type: choice
+            withImages: true
     restaurants:
         restaurants:
             type: choice
+            withImages: true
     plans:
         plans:
             type: choice
+            withImages: true
 
 availability:
     date:
