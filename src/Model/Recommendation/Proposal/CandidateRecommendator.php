@@ -71,6 +71,8 @@ class CandidateRecommendator extends AbstractUserRecommendator
             $qb->match($match);
         }
 
+        $qb->with('candidate', 'anyUser', 'proposal', 'user', 'p', 'l');
+
         $qb->where($filters['conditions']);
 
         $qb->with('candidate', 'anyUser', 'proposal', 'user', 'p');

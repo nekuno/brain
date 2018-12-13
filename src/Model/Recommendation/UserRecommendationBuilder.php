@@ -96,8 +96,10 @@ class UserRecommendationBuilder
             $aboutMe = $profile->get('description') ?: '';
             $candidate->setAboutMe($aboutMe);
 
-            $location = $this->locationManager->buildFromNode($row['location']);
-            $candidate->setLocation($location);
+            if ($row['location']){
+                $location = $this->locationManager->buildFromNode($row['location']);
+                $candidate->setLocation($location);
+            }
 
             $response[] = $candidate;
         }
