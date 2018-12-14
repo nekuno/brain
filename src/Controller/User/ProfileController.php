@@ -6,6 +6,7 @@ use FOS\RestBundle\Controller\Annotations\Get;
 use FOS\RestBundle\Controller\Annotations\Put;
 use FOS\RestBundle\Controller\FOSRestController;
 use FOS\RestBundle\Routing\ClassResourceInterface;
+use Service\ProfileService;
 use Swagger\Annotations as SWG;
 use Model\User\UserManager;
 use Model\Profile\ProfileManager;
@@ -40,6 +41,33 @@ class ProfileController extends FOSRestController implements ClassResourceInterf
         $profile = $profileManager->getById($user->getId());
 
         return $this->view($profile->jsonSerialize());
+    }
+
+    /**
+     * Get profile data for other user´s page
+     *
+     * @Get("/profile/{slug}/page")
+     * @param User $user
+     * @param ProfileService $profileService
+     * @return \FOS\RestBundle\View\View
+     * @SWG\Response(
+     *     response=200,
+     *     description="Returns profile data",
+     *     schema=@SWG\Schema(
+     *         @SWG\Property(property="matching", type="integer"),
+     *         @SWG\Property(property="similarity", type="integer"),
+     *         @SWG\Property(property="location", type="object"),
+     *
+     *     )
+     * )
+     * @Security(name="Bearer")
+     * @SWG\Tag(name="profiles")
+     */
+    public function getOtherPageAction($slug, User $user, ProfileService $profileService)
+    {
+        $otherPage = $profileService->getOtherPage($slug, $user);
+
+        return $this->view($otherPage);
     }
 
     /**
