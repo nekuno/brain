@@ -2,7 +2,7 @@ privacy:
     profile:
         type: choice
         label:
-            en: 'Who can access my profile'
+            en: 'Who can access my profileeeeeeeeeeeeeeeeeee'
             es: 'Quién puede acceder a mi perfil'
     description:
         type: choice
@@ -104,6 +104,32 @@ categories:
             en: Experiences
             es: Experiencias
           fields: [leisureMoney, shows, plans, restaurants]
+    otherProfile:
+        - label:
+            en: Basic
+            es: Básico
+          fields: [gender, descriptiveGender, complexion, ethnicGroup, eyeColor, hairColor, height]
+        - label:
+            en: Miscellaneus
+            es: Miscelánea
+          fields: [alcohol, smoke, drugs, pets, sons, zodiacSign]
+        - label:
+            en: About Me
+            es: Sobre mí
+          fields: [description]
+        - label:
+            en: Work
+            es: Trabajo
+          fields: [language, industry, profession, income]
+        - label:
+            en: Leisure
+            es: Ocio
+          fields: [sports, hobbies, games]
+        - label:
+            en: Experience
+            es: Experiencia
+          fields: [shows, restaurants, plans]
+
 profile:
     mode:
         type: choice
@@ -270,6 +296,16 @@ profile:
             en: 'Languages'
             es: 'Idiomas'
         labelEdit: *languageLabel
+        natural:
+            prefix:
+                en: 'I speak'
+                es: 'Hablo'
+            interfix:
+                en: 'at'
+                es: 'con nivel'
+            suffix:
+                en: 'level'
+                es: ''
         choiceLabel: &languageChoiceLabel
             en: 'Level'
             es: 'Nivel'

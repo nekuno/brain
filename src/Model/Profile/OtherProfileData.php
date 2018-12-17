@@ -2,7 +2,7 @@
 
 namespace Model\Profile;
 
-class OtherProfileData
+class OtherProfileData implements \JsonSerializable
 {
     protected $userName;
 
@@ -130,5 +130,17 @@ class OtherProfileData
         $this->birthday = $birthday;
     }
 
+    public function jsonSerialize()
+    {
+        return array(
+            'username' => $this->userName,
+            'photos' => $this->photos,
+            'naturalProfile' => $this->naturalProfile,
+            'matching' => $this->matching,
+            'similarity' => $this->similarity,
+            'birthday' => $this->birthday,
+            'location' => $this->location,
+        );
+    }
 
 }

@@ -212,6 +212,7 @@ services:
     Model\Recommendation\UserRecommendationBuilder:
     Model\Proposal\ProposalBuilder:
     Model\Availability\AvailabilityDataFormatter:
+    Model\Profile\NaturalProfileBuilder:
 
     # End Model explicit parameters
 
@@ -225,6 +226,9 @@ services:
     Model\Metadata\ProposalMetadataManager:
         factory: 'Model\Metadata\MetadataManagerFactory:build'
         arguments: ['proposal']
+    Model\Metadata\CategoryMetadataManager:
+        factory: 'Model\Metadata\MetadataManagerFactory:build'
+        arguments: ['categories']
     # End Model metadata explicit parameters
 
     # Validators
