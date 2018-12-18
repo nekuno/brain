@@ -44,6 +44,11 @@ class ProfileService
     protected $photoManager;
 
     /**
+     * @var MetadataService
+     */
+    protected $metadataService;
+
+    /**
      * ProfileService constructor.
      * @param UserManager $userManager
      * @param ProfileManager $profileManager
@@ -52,7 +57,7 @@ class ProfileService
      * @param SimilarityManager $similarityManager
      * @param PhotoManager $photoManager
      */
-    public function __construct(UserManager $userManager, ProfileManager $profileManager, NaturalProfileBuilder $naturalProfileBuilder, MatchingManager $matchingManager, SimilarityManager $similarityManager, PhotoManager $photoManager)
+    public function __construct(UserManager $userManager, ProfileManager $profileManager, NaturalProfileBuilder $naturalProfileBuilder, MatchingManager $matchingManager, SimilarityManager $similarityManager, PhotoManager $photoManager, MetadataService $metadataService)
     {
         $this->userManager = $userManager;
         $this->profileManager = $profileManager;
@@ -60,6 +65,7 @@ class ProfileService
         $this->matchingManager = $matchingManager;
         $this->similarityManager = $similarityManager;
         $this->photoManager = $photoManager;
+        $this->metadataService = $metadataService;
     }
 
     public function getOtherPage($slug, User $ownUser)
@@ -84,6 +90,10 @@ class ProfileService
 
         $photos = $this->photoManager->getAll($otherUserId);
         $otherProfileData->setPhotos($photos);
+
+        $locale = $profile->get('interfaceLanguage');
+        $profileMetadata = $this->metadataService->getProfileMetadataWithChoices($locale);
+        $this->naturalProfileBuilder->setMetadata($profileMetadata);
 
         $naturalProfile = $this->naturalProfileBuilder->buildNaturalProfile($profile);
         $otherProfileData->setNaturalProfile($naturalProfile);

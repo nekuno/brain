@@ -2,16 +2,11 @@
 
 namespace Model\Profile;
 
+use Http\Discovery\Exception\NotFoundException;
 use Model\Metadata\CategoryMetadataManager;
-use Model\Metadata\ProfileMetadataManager;
 
 class NaturalProfileBuilder
 {
-    /**
-     * @var ProfileMetadataManager
-     */
-    protected $profileMetadataManager;
-
     /**
      * @var CategoryMetadataManager
      */
@@ -23,19 +18,26 @@ class NaturalProfileBuilder
 
     /**
      * NaturalProfileBuilder constructor.
-     * @param ProfileMetadataManager $profileMetadataManager
      * @param CategoryMetadataManager $categoryMetadataManager
      */
-    public function __construct(ProfileMetadataManager $profileMetadataManager, CategoryMetadataManager $categoryMetadataManager)
+    public function __construct(CategoryMetadataManager $categoryMetadataManager)
     {
-        $this->profileMetadataManager = $profileMetadataManager;
         $this->categoryMetadataManager = $categoryMetadataManager;
+    }
+
+    /**
+     * @param mixed $metadata
+     */
+    public function setMetadata($metadata): void
+    {
+        $this->metadata = $metadata;
     }
 
     public function buildNaturalProfile(Profile $profile)
     {
-        $interfaceLanguage = $profile->get('interfaceLanguage');
-        $this->metadata = $this->profileMetadataManager->getMetadata($interfaceLanguage);
+        if (empty($this->metadata)){
+            throw new NotFoundException('Metadata not found for natural profile building');
+        }
 
         foreach ($profile->getValues() as $fieldName => $profileValue) {
             if (!$this->findCategory($fieldName)) {
@@ -59,16 +61,19 @@ class NaturalProfileBuilder
         $naturalValue2 = '';
 
         switch ($metadatum['type']) {
-            case 'choice':
+
             case 'textArea':
                 $naturalValue1 = $value;
                 break;
+            case 'choice':
+                $naturalValue1 = $this->getChoiceText($value, $metadatum);
+                break;
             case 'multiple_choices':
-                $naturalValue1 = implode(', ', $value);
+                $choices = $this->getMultipleChoicesTexts($value, $metadatum);
+                $naturalValue1 = implode(', ', $choices);
                 break;
             case 'double_choice':
-                $naturalValue1 = $value['choice'];
-                $naturalValue2 = $value['detail'];
+                $naturalValue1 = $this->getDoubleChoicesTexts($value, $metadatum);
                 break;
             case 'tags':
                 $labelValue = array_map(
@@ -80,7 +85,7 @@ class NaturalProfileBuilder
                 $naturalValue1 = implode(', ', $labelValue);
                 break;
             case 'tags_and_choice':
-                $naturalValue1 = $this->getTagsAndChoiceNaturalValue($value, $natural);
+                $naturalValue1 = $this->getTagsAndChoiceNaturalValue($value, $natural, $metadatum);
                 $natural['interfix'] = '';
                 break;
             default:
@@ -94,13 +99,13 @@ class NaturalProfileBuilder
     }
 
     //Japonés: básico, inglés: nativo
-    protected function getTagsAndChoiceNaturalValue($profileValue, $natural)
+    protected function getTagsAndChoiceNaturalValue($profileValue, $natural, $metadatum)
     {
         $languages = array();
 
         foreach ($profileValue as $tagAndChoice) {
             $tag = $tagAndChoice['tag']['name'];
-            $choice = $tagAndChoice['choice'];
+            $choice = $this->getTextFromKeys($tagAndChoice['choice'], $metadatum['choices']);
 
             $languages[] = $tag . ' ' . $natural['interfix'] . ' ' . $choice;
         }
@@ -153,6 +158,59 @@ class NaturalProfileBuilder
         }
 
         return $finalResult;
+    }
+
+    protected function getChoiceText($choiceId, $metadatum)
+    {
+        $choices = $metadatum['choices'];
+        foreach ($choices as $choice)
+        {
+            if ($choice['id'] == $choiceId){
+                return $choice['text'];
+            }
+        }
+
+        return $choiceId;
+    }
+
+    protected function getMultipleChoicesTexts($choicesIds, $metadatum)
+    {
+        $choicesTexts = array();
+        foreach ($choicesIds as $choicesId)
+        {
+            $choicesTexts[] = $this->getChoiceText($choicesId, $metadatum);
+        }
+
+        return $choicesTexts;
+    }
+
+    protected function getDoubleChoicesTexts($values, $metadatum)
+    {
+        $choice = $this->getChoiceText($values['choice'], $metadatum);
+        $detail = $this->getDoubleChoiceText($values, $metadatum);
+
+        return $choice . ' ' . $detail;
+    }
+
+    protected function getDoubleChoiceText($values, $metadatum)
+    {
+        $mainChoiceId = $values['choice'];
+        $choices = $metadatum['doubleChoices'][$mainChoiceId];
+        $secondChoiceId = $values['detail'];
+
+        return $this->getTextFromKeys($secondChoiceId, $choices);
+    }
+
+    protected function getTextFromKeys($targetId, $choices)
+    {
+        foreach ($choices as $id => $choice)
+        {
+            if ($id == $targetId){
+                return $choice;
+            }
+        }
+
+        return $targetId;
     }
 
 }

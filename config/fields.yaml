@@ -108,7 +108,7 @@ categories:
         - label:
             en: Basic
             es: Básico
-          fields: [gender, descriptiveGender, complexion, ethnicGroup, eyeColor, hairColor, height]
+          fields: [descriptiveGender, complexion, ethnicGroup, eyeColor, hairColor, height]
         - label:
             en: Miscellaneus
             es: Miscelánea
@@ -237,6 +237,10 @@ profile:
         labelEdit: &zodiacSignLabelEdit
             en: 'Zodiac'
             es: 'Zodiaco'
+        natural:
+            prefix:
+                en: 'I am'
+                es: 'Soy'
         withImages: false
     height:
         type: integer
@@ -246,12 +250,23 @@ profile:
             en: 'Height (cm)'
             es: 'Altura (cm)'
         labelEdit: *heightLabel
+        natural:
+            prefix:
+                en: 'My height is'
+                es: 'Mido'
+            interfix:
+                en: 'cm'
+                es: 'cm'
     industry:
         type: multiple_choices
         label: &industryLabel
             en: 'Industry'
             es: 'Sector'
         labelEdit: *industryLabel
+        natural:
+            prefix:
+                en: 'I work on'
+                es: 'Trabajo en'
         max: 3
         withImages: false
     allergy:
@@ -290,6 +305,10 @@ profile:
                     en: "and doesn’t want any"
                     es: "y no quiero ninguno"
         withImages: false
+        natural:
+            interfix:
+                en: 'want to have children'
+                es: 'quiero tener hijos'
     language:
         type: tags_and_choice
         label: &languageLabel
@@ -343,6 +362,10 @@ profile:
             en: 'Gender'
             es: 'Género'
         labelEdit: *descriptiveGenderLabel
+        natural:
+            prefix:
+                es: 'Género'
+                en: 'Gender'
         max: 5
         withImages: false
     objective:
@@ -360,6 +383,13 @@ profile:
             en: 'Hair color'
             es: 'Color de pelo'
         labelEdit: *hairColorLabel
+        natural:
+            prefix:
+                es: 'Pelo'
+                en: ''
+            interfix:
+                es: ''
+                en: 'hair'
         withImages: false
     ethnicGroup:
         type: multiple_choices
@@ -367,6 +397,10 @@ profile:
             en: 'Ethnicity'
             es: 'Étnia'
         labelEdit: *ethnicGroupLabel
+        natural:
+            prefix:
+                en: 'From ethnic group'
+                es: 'Mi etnia es '
         withImages: false
     complexion:
         type: choice
@@ -381,6 +415,13 @@ profile:
             en: 'Eyes color'
             es: 'Color ojos'
         labelEdit: *eyeColorLabel
+        natural:
+            prefix:
+                en: 'I have'
+                es: 'Tengo ojos de color'
+            interfix:
+                en: 'eyes'
+                es: ''
         withImages: false
     civilStatus:
         type: choice
@@ -395,6 +436,10 @@ profile:
             en: 'Income'
             es: 'Ingresos'
         labelEdit: *incomeLabel
+        natural:
+            prefix:
+                en: 'I earn'
+                es: 'Gano'
         withImages: false
     pets:
         type: choice
@@ -404,6 +449,13 @@ profile:
         labelEdit:
             en: 'Do you have pets?'
             es: '¿Tienes mascotas?'
+        natural:
+            prefix:
+                en: 'I have'
+                es: 'Tengo'
+            interfix:
+                en: 'as a pet'
+                es: 'como mascota'
         withImages: false
     smoke:
         type: choice
@@ -413,6 +465,10 @@ profile:
         labelEdit:
             en: 'Do you smoke?'
             es: '¿Fumas?'
+        natural:
+            prefix:
+                en: 'Smoking?'
+                es: 'Fumar?'
         withImages: false
     alcohol:
         type: choice
@@ -422,6 +478,10 @@ profile:
         labelEdit:
             en: 'Do you drink alcohol?'
             es: '¿Bebes Alcohol?'
+        natural:
+            prefix:
+                en: 'I drink'
+                es: 'Bebo'
         withImages: false
     drugs:
         type: multiple_choices
@@ -429,6 +489,10 @@ profile:
             en: 'Other'
             es: 'Otras'
         labelEdit: *drugsLabel
+        natural:
+            prefix:
+                en: 'I like'
+                es: 'Me gusta'
         withImages: false
     diet:
         type: choice
@@ -445,6 +509,10 @@ profile:
             en: 'Orientation'
             es: 'Orientación'
         labelEdit: *orientationLabel
+        natural:
+            prefix:
+                en: 'I am'
+                es: 'Soy'
         notErasable: true
         withImages: false
     orientationRequired:
@@ -517,6 +585,10 @@ profile:
             en: 'Skills'
             es: 'Habilidades profesionales'
         labelEdit: *professionLabel
+        natural:
+            prefix:
+                en: 'Mi skills are'
+                es: 'Mis habilidades son'
         max: 10
     education:
         type: tags
@@ -524,6 +596,10 @@ profile:
             en: 'Education'
             es: 'Educación'
         labelEdit: *educationLabel
+        natural:
+            prefix:
+                en: 'My education is'
+                es: 'Mi educación es'
     location:
         type: location
         label: &locationLabel
@@ -537,12 +613,20 @@ profile:
             en: 'Sports and physical'
             es: 'Deportes y físico'
         labelEdit: *sportsLabel
+        natural:
+            prefix:
+                en: 'I play'
+                es: 'Practico'
     games:
         type: tags
         label: &gamesLabel
             en: 'Videogames and board games'
             es: 'Videojuegos y juegos de mesa'
         labelEdit: *gamesLabel
+        natural:
+            prefix:
+                en: 'I play'
+                es: 'Juego a'
         schema: VideoGame
     hobbies:
         type: tags
@@ -550,6 +634,10 @@ profile:
             en: 'Hobbies'
             es: 'Aficiones'
         labelEdit: *creativeLabel
+        natural:
+            prefix:
+                en: 'I make'
+                es: 'Hago'
     leisureMoney:
         type: multiple_choices
         label: &leisureMoneyLabel
@@ -566,6 +654,10 @@ profile:
             en: 'Plans'
             es: 'Planes'
         labelEdit: *leisurePlanLabel
+        natural:
+            prefix:
+                en: 'I enjoy'
+                es: 'Me gusta'
         withImages: false
     shows:
         type: multiple_choices
@@ -573,6 +665,10 @@ profile:
             en: 'Shows'
             es: 'Espectáculos'
         labelEdit: *showLabel
+        natural:
+            prefix:
+                en: 'I go to'
+                es: 'Voy a'
         withImages: false
     restaurants:
         type: multiple_choices
@@ -580,6 +676,13 @@ profile:
             en: 'Restaurants'
             es: 'Restaurantes'
         labelEdit: *restaurantLabel
+        natural:
+            prefix:
+                en: 'I like'
+                es: 'Me gusta la comida'
+            interfix:
+                en: 'food'
+                es: ''
         withImages: false
 content:
     type:
