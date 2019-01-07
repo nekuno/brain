@@ -23,6 +23,16 @@ class NaturalProfileBuilder
     public function __construct(CategoryMetadataManager $categoryMetadataManager)
     {
         $this->categoryMetadataManager = $categoryMetadataManager;
+        $this->initializeResult();
+    }
+
+    protected function initializeResult()
+    {
+        $categoryMetadata = $this->categoryMetadataManager->getMetadata()['otherProfile'];
+        foreach ( $categoryMetadata as $categoryMetadatum)
+        {
+            $this->result[$categoryMetadatum['label']] = array();
+        }
     }
 
     /**
@@ -47,7 +57,9 @@ class NaturalProfileBuilder
             $metadatum = $this->metadata[$fieldName];
 
             $naturalText = $this->getNaturalText($profileValue, $metadatum);
-
+//            var_dump('----');
+//var_dump($fieldName);
+//var_dump($naturalText);
             $this->addToResult($fieldName, $naturalText);
         }
 
@@ -154,6 +166,9 @@ class NaturalProfileBuilder
     {
         $finalResult = array();
         foreach ($this->result as $category => $categoryValues) {
+            if (empty($categoryValues)){
+                continue;
+            }
             $finalResult[$category] = implode('; ', $categoryValues) . '.';
         }
 

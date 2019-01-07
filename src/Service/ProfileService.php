@@ -7,6 +7,7 @@ use Model\Photo\PhotoManager;
 use Model\Profile\NaturalProfileBuilder;
 use Model\Profile\OtherProfileData;
 use Model\Profile\ProfileManager;
+use Model\Rate\RateManager;
 use Model\Similarity\SimilarityManager;
 use Model\User\User;
 use Model\User\UserManager;
@@ -44,6 +45,11 @@ class ProfileService
     protected $photoManager;
 
     /**
+     * @var RateManager
+     */
+    protected $rateManager;
+
+    /**
      * @var MetadataService
      */
     protected $metadataService;
@@ -56,8 +62,10 @@ class ProfileService
      * @param MatchingManager $matchingManager
      * @param SimilarityManager $similarityManager
      * @param PhotoManager $photoManager
+     * @param RateManager $rateManager
+     * @param MetadataService $metadataService
      */
-    public function __construct(UserManager $userManager, ProfileManager $profileManager, NaturalProfileBuilder $naturalProfileBuilder, MatchingManager $matchingManager, SimilarityManager $similarityManager, PhotoManager $photoManager, MetadataService $metadataService)
+    public function __construct(UserManager $userManager, ProfileManager $profileManager, NaturalProfileBuilder $naturalProfileBuilder, MatchingManager $matchingManager, SimilarityManager $similarityManager, PhotoManager $photoManager, RateManager $rateManager, MetadataService $metadataService)
     {
         $this->userManager = $userManager;
         $this->profileManager = $profileManager;
@@ -65,6 +73,7 @@ class ProfileService
         $this->matchingManager = $matchingManager;
         $this->similarityManager = $similarityManager;
         $this->photoManager = $photoManager;
+        $this->rateManager = $rateManager;
         $this->metadataService = $metadataService;
     }
 
@@ -94,6 +103,9 @@ class ProfileService
         $locale = $profile->get('interfaceLanguage');
         $profileMetadata = $this->metadataService->getProfileMetadataWithChoices($locale);
         $this->naturalProfileBuilder->setMetadata($profileMetadata);
+
+        $liked = $this->rateManager->isLiked($ownUserId, $otherUserId);
+        $otherProfileData->setLike($liked);
 
         $naturalProfile = $this->naturalProfileBuilder->buildNaturalProfile($profile);
         $otherProfileData->setNaturalProfile($naturalProfile);

@@ -18,6 +18,8 @@ class OtherProfileData implements \JsonSerializable
 
     protected $birthday = '1970-01-01';
 
+    protected $like = false;
+
     /**
      * @return mixed
      */
@@ -130,6 +132,22 @@ class OtherProfileData implements \JsonSerializable
         $this->birthday = $birthday;
     }
 
+    /**
+     * @return bool
+     */
+    public function isLike(): bool
+    {
+        return $this->like;
+    }
+
+    /**
+     * @param bool $like
+     */
+    public function setLike(bool $like): void
+    {
+        $this->like = $like;
+    }
+
     public function jsonSerialize()
     {
         return array(
@@ -140,6 +158,7 @@ class OtherProfileData implements \JsonSerializable
             'similarity' => $this->similarity,
             'birthday' => $this->birthday,
             'location' => $this->location,
+            'liked' => $this->like
         );
     }
 

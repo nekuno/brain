@@ -79,6 +79,27 @@ class RateManager
 
         return $result;
     }
+    
+    public function isLiked($sourceUserId, $targetUserId)
+    {
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(u:User {qnoow_id: { sourceUserId }})')
+            ->match('(u2:User {qnoow_id: { targetUserId }})')
+            ->optionalMatch("(u)-[r:LIKES]->(u2)")
+            ->returns('r');
+
+        $qb->setParameters(array(
+            'sourceUserId' => (integer)$sourceUserId,
+            'targetUserId' => (integer)$targetUserId,
+        ));
+
+        $result = $qb->getQuery()->getResultSet();
+
+        $liked = $result->current()->offsetGet('r');
+
+        return !!$liked;
+    }
 
     /**
      * @param $userId
