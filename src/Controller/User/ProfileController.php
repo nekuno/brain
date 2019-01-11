@@ -71,6 +71,31 @@ class ProfileController extends FOSRestController implements ClassResourceInterf
     }
 
     /**
+     * Get profile data for other user´s page
+     *
+     * @Get("/profile/page")
+     * @param User $user
+     * @param ProfileService $profileService
+     * @return \FOS\RestBundle\View\View
+     * @SWG\Response(
+     *     response=200,
+     *     description="Returns own profile data",
+     *     schema=@SWG\Schema(
+     *         @SWG\Property(property="location", type="object"),
+     *
+     *     )
+     * )
+     * @Security(name="Bearer")
+     * @SWG\Tag(name="profiles")
+     */
+    public function getOwnPageAction(User $user, ProfileService $profileService)
+    {
+        $ownPage = $profileService->getOwnPage($user);
+
+        return $this->view($ownPage);
+    }
+
+    /**
      * Get profile metadata
      *
      * @Get("/profile/metadata")

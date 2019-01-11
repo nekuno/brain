@@ -2,6 +2,7 @@
 
 namespace Service;
 
+use Model\Profile\OwnProfileData;
 use Model\Matching\MatchingManager;
 use Model\Photo\PhotoManager;
 use Model\Profile\NaturalProfileBuilder;
@@ -111,5 +112,29 @@ class ProfileService
         $otherProfileData->setNaturalProfile($naturalProfile);
 
         return $otherProfileData;
+    }
+
+    public function getOwnPage(User $user)
+    {
+        $ownUserId = $user->getId();
+
+        $ownProfileData = new OwnProfileData();
+        $ownProfileData->setUserName($user->getUsername());
+
+        $profile = $this->profileManager->getById($ownUserId);
+        $ownProfileData->setLocation($profile->get('location'));
+        $ownProfileData->setBirthday($profile->get('birthday'));
+
+        $photos = $this->photoManager->getAll($ownUserId);
+        $ownProfileData->setPhotos($photos);
+
+        $locale = $profile->get('interfaceLanguage');
+        $profileMetadata = $this->metadataService->getProfileMetadataWithChoices($locale);
+        $this->naturalProfileBuilder->setMetadata($profileMetadata);
+
+        $naturalProfile = $this->naturalProfileBuilder->buildNaturalProfile($profile);
+        $ownProfileData->setNaturalProfile($naturalProfile);
+
+        return $ownProfileData;
     }
 }
