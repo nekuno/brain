@@ -411,6 +411,7 @@ class QueryBuilder
         $this->match("($name)");
         $wheres = array();
         foreach ($types as $type){
+            $type = ucfirst($type);
             if ($type === 'Link'){
                 continue;
             }
