@@ -11,6 +11,7 @@ use Model\Metadata\MetadataUtilities;
 use Model\Neo4j\GraphManager;
 use Model\Metadata\UserFilterMetadataManager;
 use Model\Neo4j\QueryBuilder;
+use Model\Profile\ProfileManager;
 use Model\Profile\ProfileTagManager;
 use Service\Validator\FilterUsersValidator;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -27,6 +28,8 @@ class FilterUsersManager
      */
     protected $userFilterMetadataManager;
 
+    protected $profileManager;
+
     protected $profileOptionManager;
 
     protected $profileTagManager;
@@ -42,10 +45,11 @@ class FilterUsersManager
      */
     protected $validator;
 
-    public function __construct(GraphManager $graphManager, UserFilterMetadataManager $userFilterMetadataManager, ProfileOptionManager $profileOptionManager, ProfileTagManager $profileTagManager, LanguageTextManager $languageTextManager, LocationManager $locationManager, MetadataUtilities $metadataUtilities, FilterUsersValidator $validator)
+    public function __construct(GraphManager $graphManager, UserFilterMetadataManager $userFilterMetadataManager, ProfileManager $profileManager, ProfileOptionManager $profileOptionManager, ProfileTagManager $profileTagManager, LanguageTextManager $languageTextManager, LocationManager $locationManager, MetadataUtilities $metadataUtilities, FilterUsersValidator $validator)
     {
         $this->graphManager = $graphManager;
         $this->userFilterMetadataManager = $userFilterMetadataManager;
+        $this->profileManager = $profileManager;
         $this->profileOptionManager = $profileOptionManager;
         $this->profileTagManager = $profileTagManager;
         $this->languageTextManager = $languageTextManager;
@@ -108,7 +112,7 @@ class FilterUsersManager
      * @param $filterId
      * @return FilterUsers
      */
-    public function getFilterUsersById($filterId)
+    protected function getFilterUsersById($filterId)
     {
         $filtersArray = $this->getFilters($filterId);
         $filter = $this->buildFiltersUsers($filtersArray);
@@ -471,7 +475,7 @@ class FilterUsersManager
      * @param $filterId
      * @return array ready to use in recommendation
      */
-    private function getFilters($filterId)
+    protected function getFilters($filterId)
     {
         //TODO: Refactor this into metadata
         $qb = $this->graphManager->createQueryBuilder();
@@ -484,7 +488,7 @@ class FilterUsersManager
             details: (CASE WHEN EXISTS(optionOf.details) THEN optionOf.details ELSE null END)
             }) AS options')
             ->optionalMatch('(filter)-[tagged:FILTERS_BY]->(tag:ProfileTag)-[:TEXT_OF]-(text:TextLanguage)')
-            ->with('filter', 'options', 'collect(distinct {tag: tag, tagged: tagged, text: text}) AS tags')
+            ->with('filter', 'options', 'collect(distinct {tag: tag, tagged: tagged, text: text.canonical, locale: text.locale}) AS tags')
             ->optionalMatch('(filter)-[loc_rel:FILTERS_BY]->(loc:Location)')
             ->with('filter', 'options', 'tags', 'loc', 'loc_rel')
             ->optionalMatch('(filter)-[:FILTERS_BY]->(group:Group)')
