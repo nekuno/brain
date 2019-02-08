@@ -27,29 +27,29 @@ privacy:
 categories:
     profile:
         - label:
-            en: Basic
-            es: Básicos
-          fields: [objective, birthday, gender, descriptiveGender, location, orientation]
+            en: Nekuno Profile
+            es: Perfil Nekuno
+          fields: [objective, birthday, descriptiveGender, location, interfaceLanguage]
         - label:
-            en: Availability
-            es: Disponibilidad
-          fields: [civilStatus, relationshipInterest]
+            en: Nekuno goals
+            es: Objetivos en Nekuno
+          fields: [civilStatus, relationshipInterest, gender, orientation]
         - label:
-            en: Look
-            es: Apariencia
-          fields: [complexion, ethnicGroup, eyeColor, hairColor, height]
+            en: About Me
+            es: Sobre mí
+          fields: [description]
+        - label:
+            en: Looks
+            es: Aspecto físico
+          fields: [eyeColor, hairColor, complexion, ethnicGroup, height]
         - label:
             en: Background
-            es: Cultura
+            es: Educación y cultura
           fields: [interfaceLanguage, language, education, religion, ideology]
         - label:
-            en: Drugs
-            es: Drogas
+            en: Drugs and other vices
+            es: Drogas y otros vicios
           fields: [alcohol, smoke, drugs]
-        - label:
-            en: Others
-            es: Otros
-          fields: [income, diet, pets, allergy, sons, zodiacSign, handicap]
         - label:
             en: Work, ideas and projects
             es: Trabajo, ideas y proyectos
@@ -63,9 +63,9 @@ categories:
             es: Ocio
           fields: [leisureMoney, shows, plans, restaurants]
         - label:
-            en: Description
-            es: Descripción
-          fields: [description, descriptionImportant, descriptionTime, descriptionSkills, descriptionNotice, descriptionFan, descriptionLive, descriptionThinking, descriptionFriday, descriptionMessage]
+            en: Others
+            es: Otros
+          fields: [income, diet, pets, allergy, sons, zodiacSign, handicap]
 
     filters:
         - label:
@@ -104,6 +104,7 @@ categories:
             en: Experiences
             es: Experiencias
           fields: [leisureMoney, shows, plans, restaurants]
+#          TODO: Change otherProfile to naturalProfile
     otherProfile:
         - label:
             en: Basic
