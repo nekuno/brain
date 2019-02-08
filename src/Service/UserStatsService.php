@@ -5,6 +5,7 @@ namespace Service;
 use Model\Content\ContentComparePaginatedManager;
 use Model\Content\ContentPaginatedManager;
 use Model\Group\GroupManager;
+use Model\Question\QuestionManager;
 use Model\Relations\RelationsManager;
 use Model\Shares\Shares;
 use Model\Shares\SharesManager;
@@ -44,13 +45,19 @@ class UserStatsService
      */
     protected $sharesManager;
 
+    /**
+     * @var QuestionManager
+     */
+    protected $questionManager;
+
     function __construct(
         UserStatsCalculator $userStatsManager,
         GroupManager $groupModel,
         RelationsManager $relationsModel,
         ContentPaginatedManager $contentPaginatedModel,
         ContentComparePaginatedManager $contentComparePaginatedModel,
-        SharesManager $sharesManager
+        SharesManager $sharesManager,
+        QuestionManager $questionManager
     ) {
         $this->userStatsCalculator = $userStatsManager;
         $this->groupModel = $groupModel;
@@ -58,6 +65,7 @@ class UserStatsService
         $this->contentPaginatedModel = $contentPaginatedModel;
         $this->contentComparePaginatedModel = $contentComparePaginatedModel;
         $this->sharesManager = $sharesManager;
+        $this->questionManager = $questionManager;
     }
 
     public function getStats($userId)
@@ -74,6 +82,7 @@ class UserStatsService
         $this->completeUserLikes($userStats, $userId);
         $this->completeGroups($userStats, $userId);
         $this->completeContentLikes($userStats, $userId);
+        $this->completeQuestionsCount($userStats);
     }
 
     protected function completeReceivedLikes(UserStats $userStats, $userId)
@@ -101,6 +110,12 @@ class UserStatsService
         $userStats->setNumberOfAudioLikes($contentLikes['Audio']);
         $userStats->setNumberOfImageLikes($contentLikes['Image']);
         $userStats->setNumberOfVideoLikes($contentLikes['Video']);
+    }
+
+    protected function completeQuestionsCount(UserStats $userStats)
+    {
+        $totalQuestions = $this->questionManager->count();
+        $userStats->setTotalQuestions($totalQuestions);
     }
 
     public function getComparedStats($userId, $otherUserId)

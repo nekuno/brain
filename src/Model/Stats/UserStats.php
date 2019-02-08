@@ -22,6 +22,8 @@ class UserStats
 
     protected $numberOfQuestionsAnswered;
 
+    protected $totalQuestions;
+
     protected $available_invitations;
 
     /**
@@ -168,6 +170,22 @@ class UserStats
         $this->available_invitations = $available_invitations;
     }
 
+    /**
+     * @return mixed
+     */
+    public function getTotalQuestions()
+    {
+        return $this->totalQuestions;
+    }
+
+    /**
+     * @param mixed $totalQuestions
+     */
+    public function setTotalQuestions($totalQuestions): void
+    {
+        $this->totalQuestions = $totalQuestions;
+    }
+
     public function toArray(){
         return array('numberOfContentLikes' => $this->numberOfContentLikes,
                      'numberOfVideoLikes' => $this->numberOfVideoLikes,
@@ -177,6 +195,7 @@ class UserStats
                      'numberOfUserLikes' => $this->numberOfUserLikes,
                      'groupsBelonged' => $this->groupsBelonged,
                      'numberOfQuestionsAnswered' => $this->numberOfQuestionsAnswered,
+                     'totalQuestions' => $this->totalQuestions,
                      'available_invitations' => $this->available_invitations,
         );
     }
