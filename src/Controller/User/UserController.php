@@ -176,6 +176,7 @@ class UserController extends FOSRestController implements ClassResourceInterface
      */
     public function postAction(Request $request, RegisterService $registerService, \Twig_Environment $twig, \Swift_Mailer $mailer)
     {
+
         try {
             $data = $request->request->all();
             if (!isset($data['user']) || !isset($data['profile']) || !isset($data['token']) || !isset($data['oauth']) || !isset($data['trackingData'])) {
@@ -184,6 +185,9 @@ class UserController extends FOSRestController implements ClassResourceInterface
             if (!is_array($data['user']) || !is_array($data['profile']) || !is_string($data['token']) || !is_array($data['oauth']) || !is_string($data['trackingData'])) {
                 $this->throwRegistrationException('Bad format');
             }
+            $locale = $request->query->get('locale', 'en');
+            $profile = $data['profile'];
+            $profile['interfaceLanguage'] = isset($profile['interfaceLanguage'])? $profile['interfaceLanguage'] : $locale;
             $user = $registerService->register($data['user'], $data['profile'], $data['token'], $data['oauth'], $data['trackingData']);
         } catch (\Exception $e) {
             $errorMessage = $this->exceptionMessagesToString($e);

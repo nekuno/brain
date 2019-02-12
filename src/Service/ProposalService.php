@@ -55,14 +55,9 @@ class ProposalService
     {
         $proposal = $this->proposalManager->getById($proposalId, $locale);
 
-        $availability = $this->availabilityService->getByProposal($proposal);
-        /** @var FieldAvailability $availabilityField */
+        $proposal = $this->addAvailabilityField($proposal);
 
-        if (null !== $availability) {
-            $availabilityField = new FieldAvailability();
-            $availabilityField->setAvailability($availability);
-            $proposal->addField($availabilityField);
-        }
+        $proposal = $this->addFilters($proposal);
 
         return $proposal;
     }
@@ -125,6 +120,19 @@ class ProposalService
         $availabilityField->setAvailability($availability);
         $availabilityField->setName('availability');
         $proposal->addField($availabilityField);
+
+        return $proposal;
+    }
+
+    /**
+     * @param Proposal $proposal
+     * @return Proposal
+     */
+    protected function addFilters(Proposal $proposal)
+    {
+        $proposalId = $proposal->getId();
+        $filters = $this->filterUsersManager->getFilterUsersByProposalId($proposalId);
+        $proposal->setFilters($filters);
 
         return $proposal;
     }
