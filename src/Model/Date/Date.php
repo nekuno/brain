@@ -4,7 +4,7 @@ namespace Model\Date;
 
 class Date implements \JsonSerializable
 {
-    protected $maxYear = 2020;
+    protected $maxYear = 2025;
     protected $minYear = 2017;
 
     protected $day;

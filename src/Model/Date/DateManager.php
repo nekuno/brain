@@ -82,16 +82,24 @@ class DateManager
 
     /**
      * @param $dateString yyyy-mm-dd
+     * @param $limitDateString yyyy-mm-dd
      * @return Date|null
      * @throws \Exception
      */
-    public function merge($dateString)
+    public function merge($dateString, $limitDateString = null)
     {
         $date = $this->buildDate($dateString);
         if ($date == null)
         {
             return null;
         }
+        if ($limitDateString){
+            $endDate = $this->buildDate($limitDateString);
+            if ($date->jsonSerialize() == $endDate->jsonSerialize()){
+                return null;
+            }
+        }
+
         $qb = $this->graphManager->createQueryBuilder();
 
         $qb->merge('(year:Year{value: {year}})')
@@ -122,7 +130,7 @@ class DateManager
 
         if ($data['created']) {
             $previousDateString = $this->buildPreviousDate($dateString);
-            $previousDate = $this->merge($previousDateString);
+            $previousDate = $this->merge($previousDateString, $limitDateString);
             if (null !== $previousDate)
             {
                 $this->createNext($previousDate, $date);
@@ -132,10 +140,25 @@ class DateManager
         return $date;
     }
 
+    //No limit, assumes Date from dateString is built
+    public function mergeNextDate($dateString)
+    {
+        $nextDateString = $this->buildNextDate($dateString);
+        return $this->merge($nextDateString);
+    }
+
     protected function buildPreviousDate($dateString)
     {
         $date = new \DateTime($dateString);
         $date->modify('-1 day');
+
+        return $date->format('Y-m-d');
+    }
+
+    protected function buildNextDate($dateString)
+    {
+        $date = new \DateTime($dateString);
+        $date->modify('+1 day');
 
         return $date->format('Y-m-d');
     }
@@ -152,8 +175,6 @@ class DateManager
         try {
             $date = new Date();
             $date->setDate($dateString);
-            $this->validate($date);
-
         } catch (\Exception $e) {
             return null;
         }
@@ -161,25 +182,7 @@ class DateManager
         return $date;
     }
 
-    protected function validate(Date $date)
-    {
-        $currentYear = date('Y');
-        $lastYearAvailable = $currentYear + 1;
-
-        $year = $date->getYear();
-        $month = $date->getMonth();
-        $day = $date->getDay();
-        
-        $yearCorrect = is_int($year) && $year <= $lastYearAvailable && $year >= $currentYear;
-        $monthCorrect = is_int($month) && $month > 0 && $month <= 12;
-        $dayCorrect = is_int($day) && $day > 0 && $day <= 31;
-
-        if (!$yearCorrect || !$monthCorrect || !$dayCorrect) {
-            throw new \Exception('Date format not valid');
-        }
-    }
-
-    protected function createNext(Date $previous, Date $target)
+    public function createNext(Date $previous, Date $target)
     {
         $previousId = $previous->getDayId();
         $targetId = $target->getDayId();

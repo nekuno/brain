@@ -449,6 +449,7 @@ class TestingFixtures
         $logger->notice(sprintf('%d new privacy options created.', $result->getCreated()));
     }
 
+    //TODO: Move to DateService
     private function loadDates()
     {
         $currentYear = date('Y');
