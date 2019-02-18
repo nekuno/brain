@@ -57,9 +57,6 @@ class NaturalProfileBuilder
             $metadatum = $this->metadata[$fieldName];
 
             $naturalText = $this->getNaturalText($profileValue, $metadatum);
-//            var_dump('----');
-//var_dump($fieldName);
-//var_dump($naturalText);
             $this->addToResult($fieldName, $naturalText);
         }
 

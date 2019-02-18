@@ -31,8 +31,8 @@ class AvailabilityManager
         $qb->match('(user)-[:HAS_AVAILABILITY]->(availability:Availability)')
             ->with('availability');
 
-        $qb->match('(availability)-[:INCLUDES]->(period:DayPeriod)')
-            ->returns('{id: id(availability)} AS availability', 'collect(id(period)) AS periodIds');
+        $qb->match('(availability)-[:INCLUDES{static:true}]->(period:DayPeriod)')
+            ->returns('{id: id(availability), properties: properties(availability)} AS availability', 'collect(id(period)) AS periodIds');
 
         $resultSet = $qb->getQuery()->getResultSet();
 
@@ -55,8 +55,8 @@ class AvailabilityManager
         $qb->match('(proposal)-[:HAS_AVAILABILITY]->(availability:Availability)')
             ->with('availability');
 
-        $qb->match('(availability)-[:INCLUDES]->(period:DayPeriod)')
-            ->returns('{id: id(availability)} AS availability', 'collect(id(period)) AS periodIds');
+        $qb->match('(availability)-[:INCLUDES{static:true}]->(period:DayPeriod)')
+            ->returns('{id: id(availability), properties: properties(availability)} AS availability', 'collect(id(period)) AS periodIds');
 
         $resultSet = $qb->getQuery()->getResultSet();
 
@@ -75,75 +75,86 @@ class AvailabilityManager
         $qb->create('(availability:Availability)')
             ->with('availability');
 
-        $qb->returns('{id: id(availability)} AS availability');
+        $qb->returns('{id: id(availability), properties: properties(availability)} AS availability');
 
         $resultSet = $qb->getQuery()->getResultSet();
         $data = $qb->getData($resultSet->current());
 
-        return $this->build($data['availability']);
+        return $this->build($data);
     }
 
+    /**
+     * @param Availability $availability
+     * @param DayPeriod[] $staticData
+     * @return Availability
+     * @throws \Exception
+     */
     public function addStatic(Availability $availability, array $staticData)
     {
         $qb = $this->graphManager->createQueryBuilder();
-
         $qb->match('(availability:Availability)')
             ->where('id(availability) = {availabilityId}')
             ->with('availability')
             ->setParameter('availabilityId', $availability->getId());
 
-        foreach ($staticData as $index => $staticDatum) {
-            /** @var DayPeriod[] $dayPeriods */
-            $dayPeriods = $staticDatum['range'];
+        foreach ($staticData as $index => $period) {
 
-            foreach ($dayPeriods as $secondIndex => $dayPeriod)
-            {
-                $qb->optionalMatch("(period$index$secondIndex:DayPeriod)")
-                    ->where("id(dayPeriod) = {periodId$index$secondIndex}")
-                    ->setParameter("periodId$index$secondIndex", $dayPeriod->getId());
+            $qb->optionalMatch("(period$index:DayPeriod)")
+                ->where("id(period$index) = {periodId$index}")
+                ->setParameter("periodId$index", $period->getId());
 
-                $qb->merge("(availability)-[includes:INCLUDES]->(period$index$secondIndex)");
-                $qb->with('availability');
-            }
+            $qb->merge("(availability)-[includes:INCLUDES{static:true}]->(period$index)");
+            $qb->with('availability');
         }
 
-        $qb->returns('{id: id(availability)} AS availability');
+        $qb->returns('{id: id(availability), properties: properties(availability)} AS availability');
 
         $resultSet = $qb->getQuery()->getResultSet();
         $data = $qb->getData($resultSet->current());
 
-        return $this->build($data['availability']);
+        return $this->build($data);
     }
 
     public function addDynamic(Availability $availability, array $dynamic)
     {
-        $qb = $this->graphManager->createQueryBuilder();
-
-        $qb->match('(availability:Availability)')
-            ->where('id(availability) = {availabilityId}')
-            ->with('availability')
-            ->setParameter('availabilityId', $availability->getId());
-
-        foreach ($dynamic as $each) {
-            $weekday = $each['weekday'];
-            $range = $each['range'];
-            $qb->match("(day:$weekday)");
-            foreach($range as $index => $dayPeriod)
-            {
-                $qb->match("(day)-[:PERIOD_OF]-(period:$dayPeriod)");
-                $qb->merge('(availability)-[:INCLUDES]->(period)');
-                $qb->with('availability', 'day');
-            }
-
-            $qb->with('availability');
+        if (empty($dynamic)) {
+            return null;
         }
 
-        $qb->returns('{id: id(availability)} AS availability');
+        foreach ($dynamic as $each) {
 
-        $resultSet = $qb->getQuery()->getResultSet();
+            $weekday = $each['weekday'];
+            $range = $each['range'];
+
+            foreach ($range as $index => $dayPeriod) {
+
+                $qb = $this->graphManager->createQueryBuilder();
+
+                $qb->match('(availability:Availability)')
+                    ->where('id(availability) = {availabilityId}')
+                    ->with('availability')
+                    ->setParameter('availabilityId', $availability->getId());
+
+                $qb->set("availability.$weekday = COALESCE(availability.$weekday, [])");
+                $qb->with('availability');
+                $qb->set("availability.$weekday = availability.$weekday + ['$dayPeriod']");
+                $qb->with('availability');
+
+                $qb->match("(day:$weekday)");
+                $qb->match("(day)-[:PERIOD_OF]-(period:$dayPeriod)")
+                    ->merge('(availability)-[:INCLUDES]->(period)');
+                $qb->with('availability');
+
+                $qb->returns('{id: id(availability), properties: properties(availability)} AS availability');
+
+                $resultSet = $qb->getQuery()->getResultSet();
+            }
+        }
+
+        $qb = $this->graphManager->createQueryBuilder();
         $data = $qb->getData($resultSet->current());
 
-        return $this->build($data['availability']);
+        return $this->build($data);
     }
 
     public function relateToUser(Availability $availability, User $user)
@@ -191,7 +202,7 @@ class AvailabilityManager
 
         $qb->merge('(availability)-[:INCLUDES]->(dayPeriod)');
 
-        $qb->returns('{id: id(availability)} AS availability');
+        $qb->returns('{id: id(availability), properties: properties(availability)} AS availability');
 
         $resultSet = $qb->getQuery()->getResultSet();
 
@@ -216,16 +227,33 @@ class AvailabilityManager
         return true;
     }
 
-    protected function build(array $availabilityData)
+    protected function build(array $data)
     {
+        $availabilityData = $data['availability'];
         $availability = new Availability();
         $availability->setId($availabilityData['id']);
 
-        if (isset($availabilityData['periodIds'])) {
-            $availability->setPeriodIds($availabilityData['periodIds']);
+        $this->setDynamicData($availability, $availabilityData);
+
+        if (isset($data['periodIds'])) {
+            $availability->setPeriodIds($data['periodIds']);
         }
 
         return $availability;
+    }
+
+    protected function setDynamicData(Availability $availability, array $availabilityData)
+    {
+        if (!isset($availabilityData['properties'])) {
+            return;
+        }
+
+        $properties = $availabilityData['properties'];
+        $dynamicData = array();
+        foreach ($properties as $weekday => $range) {
+            $dynamicData[] = ['weekday' => $weekday, 'range' => $range];
+        }
+        $availability->setDynamic($dynamicData);
     }
 
     public function relateToProposal(Availability $availability, Proposal $proposal)
@@ -241,7 +269,7 @@ class AvailabilityManager
         $proposalId = $proposal->getId();
         $qb->match('(proposal:Proposal)')
             ->where('id(proposal) = {proposalId}')
-            ->with('proposal')
+            ->with('proposal', 'availability')
             ->setParameter('proposalId', (integer)$proposalId);
 
         $qb->merge('(proposal)-[:HAS_AVAILABILITY]-(availability)');

@@ -8,7 +8,7 @@ class FieldChoice extends AbstractField
 
     public function queryAddInformation(array &$variables)
     {
-        $queryVariables1 = array_merge($variables, array("{value: $this->name.value, image: $this->name.image} AS $this->name"));
+        $queryVariables1 = array_merge($variables, array("{value: $this->name.id, image: $this->name.image} AS $this->name"));
         $queryVariables2 = array_merge($variables, array("collect($this->name) AS $this->name"));
         $variables[] = "$this->name";
 
@@ -24,7 +24,9 @@ class FieldChoice extends AbstractField
         foreach ($this->value AS $index => $optionValue)
         {
             $thisName = $this->name . $index;
-            $lines[] = " MERGE ($this->nodeName)-[:INCLUDES]->($thisName:ProfileOption{value: '$optionValue'})";
+            $lines[] = " MATCH ($thisName:ProfileOption{id: '$optionValue'})";
+            $lines[] = " MERGE ($this->nodeName)-[:INCLUDES]->($thisName)";
+            $lines[] = " WITH " . implode(', ', $variables);
         }
 
         $lines[] = " WITH " . implode(', ', $variables);

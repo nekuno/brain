@@ -20,7 +20,7 @@ class ProposalMetadataManager extends MetadataManager
         foreach ($this->metadata as &$metadatum) {
             $metadatum['title'] = array('type' => 'string');
             $metadatum['description'] = array('type' => 'string');
-            $metadatum['participantLimit'] = array('type' => 'integer');
+            $metadatum['participantLimit'] = array('type' => 'integer', 'min' => 1);
             $metadatum['availability'] = array('type' => 'availability');
             $metadatum['photo'] = array('type' => 'string');
         }

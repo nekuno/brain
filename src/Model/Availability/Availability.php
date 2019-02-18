@@ -10,6 +10,8 @@ class Availability
 
     protected $periodIds = array();
 
+    protected $dynamic = array();
+
     //TODO: Dynamic ranges
     /**
      * @return mixed
@@ -59,4 +61,19 @@ class Availability
         $this->periodIds = $periodIds;
     }
 
+    /**
+     * @return array
+     */
+    public function getDynamic(): array
+    {
+        return $this->dynamic;
+    }
+
+    /**
+     * @param array $dynamic
+     */
+    public function setDynamic(array $dynamic): void
+    {
+        $this->dynamic = $dynamic;
+    }
 }

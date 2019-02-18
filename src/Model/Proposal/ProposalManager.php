@@ -350,6 +350,7 @@ class ProposalManager
 
         $resultSet = $qb->getQuery()->getResultSet();
         $data = $qb->getData($resultSet->current());
+
         $proposalData = array('proposal' => $data['proposal'], 'fields' => array());
         foreach ($data as $name => $datum)
         {

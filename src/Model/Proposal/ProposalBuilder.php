@@ -8,6 +8,7 @@ use Model\Profile\ProfileFields\AbstractField;
 use Model\Profile\ProfileFields\FieldAvailability;
 use Model\Profile\ProfileFields\FieldBoolean;
 use Model\Profile\ProfileFields\FieldChoice;
+use Model\Profile\ProfileFields\FieldInteger;
 use Model\Profile\ProfileFields\FieldString;
 use Model\Profile\ProfileFields\FieldTag;
 
@@ -71,6 +72,7 @@ class ProposalBuilder
         foreach ($metadatum AS $fieldName => $fieldMetadata) {
             $proposalField = $this->buildField($fieldMetadata);
             $proposalField->setName(($fieldName));
+            $proposalField->setNodeName('proposal');
 
             $fields[] = $proposalField;
         }
@@ -88,6 +90,9 @@ class ProposalBuilder
         switch ($type) {
             case 'string':
                 $proposalField = new FieldString();
+                break;
+            case 'integer':
+                $proposalField = new FieldInteger();
                 break;
             case 'tag':
             case 'tag_and_suggestion':

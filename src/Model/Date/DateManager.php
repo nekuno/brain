@@ -20,37 +20,6 @@ class DateManager
     }
 
     /**
-     * @param Availability $availability
-     * @return Date[]
-     * @throws \Exception
-     */
-    public function getByAvailability(Availability $availability)
-    {
-        $availabilityId = $availability->getId();
-
-        $qb = $this->graphManager->createQueryBuilder();
-
-        $qb->match('(availability)')
-            ->where('id(availability) = {availabilityId}')
-            ->with('availability')
-            ->setParameter('availabilityId', $availabilityId);
-
-        $qb->match('(availability)-[:INCLUDES]-(day:Day)-[:DAY_OF]->(month:Month)-[:MONTH_OF]-(year:Year)')
-            ->returns('year.value AS year', 'month.value AS month', 'day.value AS day', 'id(day) AS dayId');
-
-        $result = $qb->getQuery()->getResultSet();
-
-        $dates = array();
-        foreach ($result as $row) {
-            $data = $qb->getData($row);
-            $date = $this->build($data);
-            $dates[] = $date;
-        }
-
-        return $dates;
-    }
-
-    /**
      * @param DayPeriod $dayPeriod
      * @return Date
      * @throws \Exception

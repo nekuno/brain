@@ -37,12 +37,20 @@ class AvailabilityDataFormatter
      */
     protected function getStaticData(array $data)
     {
-        $dates = $this->createDates($data);
-        $ranges = $this->createPeriodObjects($data);
+        if (!isset($data['availability']) || !isset($data['availability']['static'])) {
+            return array();
+        }
+
+        $staticData = $data['availability']['static'];
 
         $formattedData = array();
-        foreach ($dates as $index => $date) {
-            $formattedData[] = array('date' => $date, 'range' => $ranges[$index]);
+        foreach ($staticData as $datum) {
+            $periodObjects = $this->createPeriodObjects($datum);
+
+            foreach ($periodObjects as $periodObject)
+            {
+                $formattedData[] = $periodObject;
+            }
         }
 
         return $formattedData;
@@ -54,9 +62,8 @@ class AvailabilityDataFormatter
             return array();
         }
 
-
         $dynamic = array();
-        foreach ($data['availability']['dynamic'] as $each){
+        foreach ($data['availability']['dynamic'] as $each) {
             $range = $each['range'];
             $weekday = ucfirst($each['weekday']);
             $dynamic[] = array('weekday' => $weekday, 'range' => $range);
@@ -66,17 +73,13 @@ class AvailabilityDataFormatter
     }
 
     /**
-     * @param $data
+     * @param $datum
      * @return Date[]
      * @throws \Exception
      */
-    protected function createDates($data)
+    protected function createDates($datum)
     {
-        if (!isset($data['availability'])) {
-            return array();
-        }
-
-        $dayStrings = $this->getDayStrings($data);
+        $dayStrings = $this->getDayStrings($datum);
         //TODO: Check if necessary now that dates and periods are pre-charged
         $dates = $this->saveDates($dayStrings);
 
@@ -93,7 +96,7 @@ class AvailabilityDataFormatter
                 continue;
             }
 
-            $this->createDayPeriods($date);
+            $this->saveDayPeriods($date);
 
             $dates[] = $date;
         }
@@ -101,54 +104,37 @@ class AvailabilityDataFormatter
         return $dates;
     }
 
-    protected function createDayPeriods(Date $date)
+    protected function saveDayPeriods(Date $date)
     {
         $dayId = $date->getDayId();
         $periods = $this->dayPeriodManager->createByDay($dayId);
-        foreach ($periods as $period)
-        {
+        foreach ($periods as $period) {
             $this->dayPeriodManager->relateToDay($period->getId(), $dayId);
         }
     }
 
     protected function getDayStrings(array $data)
     {
-        $daysIntervals = array_map(
-            function ($object) {
-                return $object['days'];
-            },
-            $data['availability']['static']
-        );
+        $daysInterval = $data['days'];
+
+        $dateStart = new \DateTime($daysInterval['start']);
+        $dateEnd = new \DateTime($daysInterval['end']);
+        $period = new \DatePeriod($dateStart, new \DateInterval('P1D'), $dateEnd);
 
         $dayStrings = array();
-        foreach ($daysIntervals as $days){
-            $dateStart = new \DateTime($days['start']);
-            $dateEnd = new \DateTime($days['end']);
-            $period = new \DatePeriod($dateStart, new \DateInterval('P1D'), $dateEnd);
-
-            /** @var \DateTime $day */
-            foreach ($period as $day){
-                $dayStrings[] = $day->format('Y-m-d');
-            }
+        /** @var \DateTime $day */
+        foreach ($period as $day) {
+            $dayStrings[] = $day->format('Y-m-d');
         }
 
         return $dayStrings;
     }
 
-    protected function createPeriodObjects($data)
+    protected function createPeriodObjects($datum)
     {
-        if (!isset($data['availability'])) {
-            return array();
-        }
-
-        $ranges = array_map(
-            function ($object) {
-                return $object['range'];
-            },
-            $data['availability']['static']
-        );
-
-        $periods = $this->dayPeriodManager->buildFromData($ranges);
+        $dates = $this->createDates($datum);
+        $ranges = $datum['range'];
+        $periods = $this->dayPeriodManager->buildFromData($ranges, $dates);
 
         return $periods;
     }

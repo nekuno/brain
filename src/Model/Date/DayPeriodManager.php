@@ -48,7 +48,7 @@ class DayPeriodManager
      * @return DayPeriod[]
      * @throws \Exception
      */
-    public function getByAvailability(Availability $availability)
+    public function getByAvailabilityStatic(Availability $availability)
     {
         $availabilityId = $availability->getId();
 
@@ -59,7 +59,7 @@ class DayPeriodManager
             ->with('availability')
             ->setParameter('availabilityId', $availabilityId);
 
-        $qb->match('(availability)-[:INCLUDES]-(period:DayPeriod)')
+        $qb->match('(availability)-[:INCLUDES{static: true}]-(period:DayPeriod)')
             ->with('{id: id(period), labels: labels(period)} AS period')
             ->returns('collect(period) AS periods');
         $result = $qb->getQuery()->getResultSet();
@@ -67,6 +67,30 @@ class DayPeriodManager
         $data = $qb->getData($result->current());
 
         return $this->buildFromResult($data);
+    }
+
+    protected function getId(DayPeriod $dayPeriod)
+    {
+        $dayId = $dayPeriod->getDate()->getDayId();
+        $name = $dayPeriod->getName();
+
+        $qb = $this->graphManager->createQueryBuilder();
+        $qb->match('(day:Day)')
+            ->where('id(day) = {dayId}')
+            ->setParameter('dayId', $dayId)
+            ->with('day');
+
+        $qb->match("(day)<-[:PERIOD_OF]-(period:$name)")
+            ->returns('id(period) AS periodId');
+
+        $result = $qb->getQuery()->getResultSet();
+        if ($result->count() == 0) {
+            return null;
+        }
+
+        $data = $qb->getData($result->current());
+
+        return $data['periodId'];
     }
 
     /**
@@ -106,7 +130,7 @@ class DayPeriodManager
         $qb->match('(day:Day)');
 
         $qb->merge('(day)<-[:PERIOD_OF]-(morning:DayPeriod:Morning)')
-            ->merge('(day)<-[:PERIOD_OF]-(evening:DayPeriod:Evening)')
+            ->merge('(day)<-[:PERIOD_OF]-(afternoon:DayPeriod:Afternoon)')
             ->merge('(day)<-[:PERIOD_OF]-(night:DayPeriod:Night)')
             ->with('day');
 
@@ -169,18 +193,24 @@ class DayPeriodManager
     }
 
     /**
-     * @param array $data
+     * @param array $periodStrings
+     * @param Date[] $dates
      * @return DayPeriod[]
      */
-    public function buildFromData(array $data)
+    public function buildFromData(array $periodStrings, array $dates = [])
     {
         $periods = [];
-        foreach ($data as $periodName) {
+        foreach ($periodStrings as $periodName) {
+            foreach ($dates as $date) {
+                $period = new DayPeriod();
+                $period->setName($periodName);
+                $period->setDate($date);
 
-            $period = new DayPeriod();
-            $period->setName($periodName);
+                $id = $this->getId($period);
+                $period->setId($id);
 
-            $periods[] = $period;
+                $periods[] = $period;
+            }
         }
 
         return $periods;

@@ -94,7 +94,7 @@ class AvailabilityService
 
     protected function complete(Availability $availability)
     {
-        $dayPeriods = $this->dayPeriodManager->getByAvailability($availability);
+        $dayPeriods = $this->dayPeriodManager->getByAvailabilityStatic($availability);
         foreach ($dayPeriods as $dayPeriod)
         {
             $date = $this->dateManager->getByPeriod($dayPeriod);
