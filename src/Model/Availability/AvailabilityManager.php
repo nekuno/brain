@@ -107,6 +107,12 @@ class AvailabilityManager
             $qb->with('availability');
         }
 
+        //TODO: Remove this necessity and build static data from relationships when retrieving data
+        $staticDataString = $availability->getStatic();
+        $qb->set("availability.static = {staticData}")
+            ->with('availability')
+            ->setParameter('staticData', $staticDataString);
+
         $qb->returns('{id: id(availability), properties: properties(availability)} AS availability');
 
         $resultSet = $qb->getQuery()->getResultSet();
@@ -233,7 +239,11 @@ class AvailabilityManager
         $availability = new Availability();
         $availability->setId($availabilityData['id']);
 
-        $this->setDynamicData($availability, $availabilityData);
+        if (isset($availabilityData['properties']))
+        {
+            $this->setDynamicData($availability, $availabilityData);
+            $this->setStaticData($availability, $availabilityData);
+        }
 
         if (isset($data['periodIds'])) {
             $availability->setPeriodIds($data['periodIds']);
@@ -244,16 +254,19 @@ class AvailabilityManager
 
     protected function setDynamicData(Availability $availability, array $availabilityData)
     {
-        if (!isset($availabilityData['properties'])) {
-            return;
-        }
-
         $properties = $availabilityData['properties'];
         $dynamicData = array();
         foreach ($properties as $weekday => $range) {
             $dynamicData[] = ['weekday' => $weekday, 'range' => $range];
         }
         $availability->setDynamic($dynamicData);
+    }
+
+    protected function setStaticData(Availability $availability, array $availabilityData)
+    {
+        $properties = $availabilityData['properties'];
+        $static = isset($properties['static']) ? $properties['static'] : '';
+        $availability->setStatic($static);
     }
 
     public function relateToProposal(Availability $availability, Proposal $proposal)

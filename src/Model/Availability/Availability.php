@@ -12,6 +12,8 @@ class Availability
 
     protected $dynamic = array();
 
+    protected $static = '';
+
     //TODO: Dynamic ranges
     /**
      * @return mixed
@@ -75,5 +77,21 @@ class Availability
     public function setDynamic(array $dynamic): void
     {
         $this->dynamic = $dynamic;
+    }
+
+    /**
+     * @return string
+     */
+    public function getStatic(): string
+    {
+        return $this->static;
+    }
+
+    /**
+     * @param string $static
+     */
+    public function setStatic(string $static): void
+    {
+        $this->static = $static;
     }
 }

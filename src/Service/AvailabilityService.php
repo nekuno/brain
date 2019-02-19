@@ -73,7 +73,13 @@ class AvailabilityService
 
         $availability = $this->availabilityManager->create();
         $availability = $this->availabilityManager->addDynamic($availability, $formattedData['dynamic']);
-        $availability = $this->availabilityManager->addStatic($availability, $formattedData['static']);
+
+        //TODO: Remove this necessity and build static data from relationships
+        if ($availability){
+            $staticOriginalData = isset($data['availability']) && isset($data['availability']['static']) ? json_encode($data['availability']['static']) : '';
+            $availability->setStatic($staticOriginalData);
+            $availability = $this->availabilityManager->addStatic($availability, $formattedData['static']);
+        }
 
         return $availability;
     }
