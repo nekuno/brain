@@ -126,6 +126,8 @@ class AvailabilityDataFormatter
         foreach ($period as $day) {
             $dayStrings[] = $day->format('Y-m-d');
         }
+        $day->modify('+1 day');
+        $dayStrings[] = $day->format('Y-m-d');
 
         return $dayStrings;
     }

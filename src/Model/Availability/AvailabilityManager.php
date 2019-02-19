@@ -124,7 +124,7 @@ class AvailabilityManager
     public function addDynamic(Availability $availability, array $dynamic)
     {
         if (empty($dynamic)) {
-            return null;
+            return $availability;
         }
 
         foreach ($dynamic as $each) {
@@ -257,6 +257,9 @@ class AvailabilityManager
         $properties = $availabilityData['properties'];
         $dynamicData = array();
         foreach ($properties as $weekday => $range) {
+            if ($weekday == 'static'){
+                continue;
+            }
             $dynamicData[] = ['weekday' => $weekday, 'range' => $range];
         }
         $availability->setDynamic($dynamicData);
