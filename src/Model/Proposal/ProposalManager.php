@@ -192,28 +192,6 @@ class ProposalManager
         return $proposals;
     }
 
-    public function countMatches(Proposal $proposal)
-    {
-        $proposalId = $proposal->getId();
-
-        $qb = $this->graphManager->createQueryBuilder();
-
-        $qb->match('(proposal:Proposal)')
-            ->where('id(proposal) = {proposalId}')
-            ->setParameter('proposalId', $proposalId);
-
-        $qb->optionalMatch('(proposal)<-[:INTERESTED_IN]-(candidate:UserEnabled)')
-            ->where('(proposal)-[:ACCEPTED]->(candidate)');
-
-        $qb->returns('count(candidate) AS amount');
-
-        $resultSet = $qb->getQuery()->getResultSet();
-
-        $amount = $resultSet->current()->offsetGet('amount');
-
-        return $amount;
-    }
-
     public function setInterestedInProposal(User $user, $proposalId, $interested)
     {
         $userId = $user->getId();

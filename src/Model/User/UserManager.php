@@ -14,6 +14,7 @@ use Model\Neo4j\Neo4jException;
 use Model\GhostUser\GhostUserManager;
 use Model\LookUp\LookUpManager;
 use Model\Photo\PhotoManager;
+use Model\Proposal\Proposal;
 use Model\SocialNetwork\SocialProfile;
 use Model\Token\TokensManager;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -846,6 +847,29 @@ class UserManager
         $result = $qb->getQuery()->getResultSet();
 
         return $this->build($result->current());
+    }
+
+    public function getByProposal(Proposal $proposal)
+    {
+        $proposalId = $proposal->getId();
+
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(proposal:Proposal)')
+            ->where('id(proposal) = {proposalId}')
+            ->setParameter('proposalId', $proposalId);
+
+        $qb->optionalMatch('(proposal)<-[:INTERESTED_IN]-(candidate:UserEnabled)')
+//            ->where('(proposal)-[:ACCEPTED]->(candidate)')
+        ;
+
+        $qb->returns('collect(candidate.slug) AS slugs');
+
+        $resultSet = $qb->getQuery()->getResultSet();
+
+        $data = $qb->getData($resultSet->current());
+
+        return $data['slugs'];
     }
 
     /**

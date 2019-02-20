@@ -163,4 +163,16 @@ class UserService
         return $userArray;
     }
 
+    public function getOtherByProposal($proposal)
+    {
+        $candidateSlugs = $this->userManager->getByProposal($proposal);
+
+        $matches = array();
+        foreach ($candidateSlugs as $candidateSlug) {
+            $matches[] = $this->getOtherPublic($candidateSlug);
+        }
+
+        return $matches;
+    }
+
 }

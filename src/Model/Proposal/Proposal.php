@@ -18,9 +18,9 @@ class Proposal implements \JsonSerializable
     protected $type;
 
     /**
-     * @var int
+     * @var
      */
-    protected $matches = 0;
+    protected $matches = [];
 
     /** @var AbstractField[] */
     protected $fields = array();
@@ -142,19 +142,24 @@ class Proposal implements \JsonSerializable
     }
 
     /**
-     * @return int
+     * @return mixed
      */
-    public function getMatches(): int
+    public function getMatches()
     {
         return $this->matches;
     }
 
     /**
-     * @param int $matches
+     * @param mixed $matches
      */
-    public function setMatches(int $matches): void
+    public function setMatches($matches): void
     {
         $this->matches = $matches;
+    }
+
+    public function countMatches()
+    {
+        return count($this->matches);
     }
 
     public function jsonSerialize()
@@ -164,6 +169,7 @@ class Proposal implements \JsonSerializable
             'type' => $this->getType(),
             'filters' => $this->getFilters(),
             'matches' => $this->getMatches(),
+            'countMatches' => $this->countMatches(),
             'fields' => array(),
         );
 

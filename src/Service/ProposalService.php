@@ -15,6 +15,7 @@ use Model\User\User;
 
 class ProposalService
 {
+    protected $userService;
     protected $availabilityManager;
     protected $availabilityService;
     protected $proposalManager;
@@ -25,6 +26,7 @@ class ProposalService
 
     /**
      * ProposalService constructor.
+     * @param UserService $userService
      * @param AvailabilityManager $availabilityManager
      * @param AvailabilityService $availabilityService
      * @param ProposalManager $proposalManager
@@ -34,6 +36,7 @@ class ProposalService
      * @param PhotoManager $photoManager
      */
     public function __construct(
+        UserService $userService,
         AvailabilityManager $availabilityManager,
         AvailabilityService $availabilityService,
         ProposalManager $proposalManager,
@@ -42,6 +45,7 @@ class ProposalService
         ProposalGalleryManager $proposalGalleryManager,
         PhotoManager $photoManager
     ) {
+        $this->userService = $userService;
         $this->availabilityManager = $availabilityManager;
         $this->availabilityService = $availabilityService;
         $this->proposalManager = $proposalManager;
@@ -72,10 +76,21 @@ class ProposalService
             $proposals[] = $proposal;
         }
 
+        $proposals = $this->setMatches($proposals);
         $proposals = $this->orderByMatches($proposals);
 
         foreach ($proposals as $index => $proposal) {
             $proposals[$index] = $this->addAvailabilityField($proposal);
+        }
+
+        return $proposals;
+    }
+
+    protected function setMatches(array $proposals)
+    {
+        foreach ($proposals as $proposal) {
+            $matches = $this->userService->getOtherByProposal($proposal);
+            $proposal->setMatches($matches);
         }
 
         return $proposals;
@@ -87,19 +102,14 @@ class ProposalService
      */
     protected function orderByMatches(array $proposals)
     {
-        foreach ($proposals as $proposal) {
-            $matches = $this->proposalManager->countMatches($proposal);
-            $proposal->setMatches($matches);
-        }
-
         usort($proposals, function($a, $b){
             /** @var $a Proposal */
             /** @var $b Proposal */
-            if ($a->getMatches() == $b->getMatches()){
+            if ($a->countMatches() == $b->countMatches()){
                 return 0;
             }
 
-            return ($a->getMatches() > $b->getMatches()) ? 1 : 1;
+            return ($a->countMatches() > $b->countMatches()) ? 1 : 1;
         });
 
         return $proposals;
