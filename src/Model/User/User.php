@@ -2,6 +2,7 @@
 
 namespace Model\User;
 
+use Model\Availability\Availability;
 use Model\Photo\ProfilePhoto;
 use Model\Proposal\Proposal;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -159,6 +160,11 @@ class User implements UserInterface, \JsonSerializable
      * @var Proposal[]
      */
     protected $proposals;
+
+    /**
+     * @var Availability
+     */
+    protected $availability = null;
 
     public function __construct()
     {
@@ -759,6 +765,22 @@ class User implements UserInterface, \JsonSerializable
     public function setProposals(array $proposals): void
     {
         $this->proposals = $proposals;
+    }
+
+    /**
+     * @return Availability
+     */
+    public function getAvailability(): Availability
+    {
+        return $this->availability;
+    }
+
+    /**
+     * @param Availability $availability
+     */
+    public function setAvailability(Availability $availability = null): void
+    {
+        $this->availability = $availability;
     }
 
     public function __toString()

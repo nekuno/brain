@@ -1051,7 +1051,7 @@ class UserManager
 
         return $status;
     }
-
+//TODO: Move to MetadataManager
     protected function getMetadata($isUpdate = false)
     {
         $metadata = array(
@@ -1075,6 +1075,7 @@ class UserManager
             'status' => array('type' => 'string', 'editable' => false),
             'photo' => array('type' => 'photo'),
             'tutorials' => array('type' => 'array'),
+            'availability' => array('type' => 'availability')
         );
 
         if ($isUpdate) {
@@ -1088,6 +1089,7 @@ class UserManager
     {
         $userId = (integer)$data['userId'];
         unset($data['userId']);
+        unset($data['availability']);
 
         $this->updateCanonicalFields($data);
         $this->updatePassword($data);

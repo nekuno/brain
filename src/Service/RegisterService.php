@@ -44,11 +44,16 @@ class RegisterService
     protected $groupService;
 
     /**
+     * @var AvailabilityService
+     */
+    protected $availabilityService;
+
+    /**
      * @var EventDispatcherInterface
      */
     protected $dispatcher;
 
-    public function __construct(UserManager $um, GhostUserManager $gum, TokensManager $tm, ProfileManager $pm, InvitationManager $im, GroupService $groupService, EventDispatcherInterface $dispatcher)
+    public function __construct(UserManager $um, GhostUserManager $gum, TokensManager $tm, ProfileManager $pm, InvitationManager $im, GroupService $groupService, AvailabilityService $availabilityService, EventDispatcherInterface $dispatcher)
     {
         $this->um = $um;
         $this->gum = $gum;
@@ -56,6 +61,7 @@ class RegisterService
         $this->pm = $pm;
         $this->im = $im;
         $this->groupService = $groupService;
+        $this->availabilityService = $availabilityService;
         $this->dispatcher = $dispatcher;
     }
 
@@ -66,6 +72,7 @@ class RegisterService
      * @param $oauth
      * @param $trackingData
      * @return string
+     * @throws \Exception
      */
     public function register($userData, $profileData, $invitationToken, $oauth, $trackingData)
     {
@@ -89,6 +96,9 @@ class RegisterService
         if (isset($invitation['invitation']['group'])) {
             $this->groupService->addUser($invitation['invitation']['group']->getId(), $user->getId());
         }
+        $availability = $this->availabilityService->create($userData, $user);
+        $user->setAvailability($availability);
+
         $this->dispatcher->dispatch(\AppEvents::USER_REGISTERED, new UserRegisteredEvent($user, $profile, $invitation, $token, $trackingData));
 
         return $user->jsonSerialize();

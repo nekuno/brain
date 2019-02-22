@@ -43,6 +43,10 @@ class AvailabilityDataFormatter
 
         $staticData = $data['availability']['static'];
 
+        if (empty($staticData)){
+            return array();
+        }
+
         $formattedData = array();
         foreach ($staticData as $datum) {
             $periodObjects = $this->createPeriodObjects($datum);

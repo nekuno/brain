@@ -31,7 +31,7 @@ class AvailabilityManager
         $qb->match('(user)-[:HAS_AVAILABILITY]->(availability:Availability)')
             ->with('availability');
 
-        $qb->match('(availability)-[:INCLUDES{static:true}]->(period:DayPeriod)')
+        $qb->optionalMatch('(availability)-[:INCLUDES{static:true}]->(period:DayPeriod)')
             ->returns('{id: id(availability), properties: properties(availability)} AS availability', 'collect(id(period)) AS periodIds');
 
         $resultSet = $qb->getQuery()->getResultSet();
@@ -183,38 +183,6 @@ class AvailabilityManager
         $created = !!($resultSet->count());
 
         return $created;
-    }
-
-    //TODO: Not used
-    public function update($availabilityId, $data)
-    {
-        $qb = $this->graphManager->createQueryBuilder();
-
-        $dates = $data['dates'];
-
-        $qb->match('(availability:Availability)')
-            ->where('id(availability) = {availabilityId}')
-            ->with('availability')
-            ->setParameter('availabilityId', $availabilityId);
-
-        $qb->optionalMatch('(availability)-[includes:INCLUDES]->(:DayPeriod)')
-            ->delete('includes')
-            ->with('availability');
-
-        $qb->match('(dayPeriod:DayPeriod)')
-            ->where('id(dayPeriod) IN {dayPeriods}')
-            ->with('availability', 'dayPeriod')
-            ->setParameter('dayPeriods', $dates);
-
-        $qb->merge('(availability)-[:INCLUDES]->(dayPeriod)');
-
-        $qb->returns('{id: id(availability), properties: properties(availability)} AS availability');
-
-        $resultSet = $qb->getQuery()->getResultSet();
-
-        $availabilityData = $qb->getData($resultSet->current());
-
-        return $this->build($availabilityData);
     }
 
     public function delete($availabilityId)

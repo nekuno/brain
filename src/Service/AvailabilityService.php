@@ -38,18 +38,22 @@ class AvailabilityService
 
     public function getByUser(User $user)
     {
-        $availabilities = $this->availabilityManager->getByUser($user);
-        foreach ($availabilities AS $availability) {
-            $this->complete($availability);
+        $availability = $this->availabilityManager->getByUser($user);
+
+        if (null == $availability)
+        {
+            return null;
         }
 
-        return $availabilities;
+        $this->complete($availability);
+
+        return $availability;
     }
 
     public function getByProposal(Proposal $proposal)
     {
         $availability = $this->availabilityManager->getByProposal($proposal);
-        if (null == $availability){
+        if (null == $availability) {
             return null;
         }
 
@@ -75,7 +79,7 @@ class AvailabilityService
         $availability = $this->availabilityManager->addDynamic($availability, $formattedData['dynamic']);
 
         //TODO: Remove this necessity and build static data from relationships
-        if ($availability){
+        if ($availability) {
             $staticOriginalData = isset($data['availability']) && isset($data['availability']['static']) ? json_encode($data['availability']['static']) : '';
             $availability->setStatic($staticOriginalData);
             $availability = $this->availabilityManager->addStatic($availability, $formattedData['static']);
@@ -95,14 +99,18 @@ class AvailabilityService
     {
         $availability = $this->getByUser($user);
 
+        if ($availability == null)
+        {
+            return null;
+        }
+
         return $this->availabilityManager->delete($availability->getId());
     }
 
     protected function complete(Availability $availability)
     {
         $dayPeriods = $this->dayPeriodManager->getByAvailabilityStatic($availability);
-        foreach ($dayPeriods as $dayPeriod)
-        {
+        foreach ($dayPeriods as $dayPeriod) {
             $date = $this->dateManager->getByPeriod($dayPeriod);
             $dayPeriod->setDate($date);
         }

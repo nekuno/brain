@@ -2,10 +2,12 @@
 
 namespace Service;
 
-use Model\Neo4j\Neo4jException;
+use Model\Availability\AvailabilityManager;
 use Model\Photo\GalleryManager;
 use Model\Photo\PhotoManager;
 use Model\Proposal\ProposalManager;
+use Model\Question\UserAnswerPaginatedManager;
+use Model\User\User;
 use Model\User\UserManager;
 use Model\Profile\ProfileManager;
 use Model\Rate\RateManager;
@@ -21,10 +23,13 @@ class UserService
     protected $tokenStatusManager;
     protected $rateModel;
     protected $linkService;
+    protected $authService;
     protected $instantConnection;
     protected $photoManager;
     protected $galleryManager;
     protected $proposalManager;
+    protected $availabilityManager;
+    protected $userAnswerPaginatedManager;
 
     /**
      * UserService constructor.
@@ -34,10 +39,12 @@ class UserService
      * @param TokenStatusManager $tokenStatusManager
      * @param RateManager $rateModel
      * @param LinkService $linkService
+     * @param AuthService $authService
      * @param InstantConnection $instantConnection
      * @param PhotoManager $photoManager
      * @param GalleryManager $galleryManager
      * @param ProposalManager $proposalManager
+     * @param UserAnswerPaginatedManager $userAnswerPaginatedManager
      */
     public function __construct(
         UserManager $userManager,
@@ -46,10 +53,13 @@ class UserService
         TokenStatusManager $tokenStatusManager,
         RateManager $rateModel,
         LinkService $linkService,
+        AuthService $authService,
         InstantConnection $instantConnection,
         PhotoManager $photoManager,
         GalleryManager $galleryManager,
-        ProposalManager $proposalManager
+        ProposalManager $proposalManager,
+        AvailabilityManager $availabilityManager,
+        UserAnswerPaginatedManager $userAnswerPaginatedManager
     ) {
         $this->userManager = $userManager;
         $this->profileManager = $profileManager;
@@ -57,11 +67,14 @@ class UserService
         $this->tokenStatusManager = $tokenStatusManager;
         $this->rateModel = $rateModel;
         $this->linkService = $linkService;
+        $this->authService = $authService;
         $this->instantConnection = $instantConnection;
+        $this->userAnswerPaginatedManager = $userAnswerPaginatedManager;
         //TODO: Move to PhotoService and remove USerManager->PhotoManager dependencies
         $this->photoManager = $photoManager;
         $this->galleryManager = $galleryManager;
         $this->proposalManager = $proposalManager;
+        $this->availabilityManager = $availabilityManager;
     }
 
     public function createUser(array $userData, array $profileData)
@@ -122,6 +135,30 @@ class UserService
         $this->userManager->delete($userId);
 
         return $user;
+    }
+
+    //TODO: Move to AuthService?
+    public function getOwnUser($jwt, $locale)
+    {
+        $user = $this->authService->getUser($jwt);
+
+        $data = $this->buildOwnUser($user, $locale);
+        $data['jwt'] = $jwt;
+
+        return $data;
+    }
+
+    //TODO: Do we want locale be fetched from profile?
+    public function buildOwnUser(User $user, $locale)
+    {
+        $profile = $this->profileManager->getById($user->getId());
+        $questionsFilters = array('id' => $user->getId(), 'locale' => $locale);
+        $countQuestions = $this->userAnswerPaginatedManager->countTotal($questionsFilters);
+
+        $availability = $this->availabilityManager->getByUser($user);
+        $user->setAvailability($availability);
+
+        return ['user' => $user, 'profile' => $profile, 'questionsTotal' => $countQuestions];
     }
 
     public function getOneUser($userId)
