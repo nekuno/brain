@@ -1364,6 +1364,8 @@ class UserManager
         unset($userArray['tutorials']);
         unset($userArray['updatedAt']);
         unset($userArray['lastLogin']);
+        unset($userArray['availability']);
+        unset($userArray['proposals']);
 
         return $userArray;
     }

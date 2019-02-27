@@ -2,16 +2,33 @@
 
 namespace Model\Availability;
 
+use Model\Date\DayPeriod;
+
 class Availability
 {
+    /**
+     * @var int
+     */
     protected $id;
 
+    /**
+     * @var DayPeriod[]
+     */
     protected $dayPeriods = array();
 
+    /**
+     * @var int[]
+     */
     protected $periodIds = array();
 
+    /**
+     * @var string[]
+     */
     protected $dynamic = array();
 
+    /**
+     * @var string
+     */
     protected $static = '';
 
     //TODO: Dynamic ranges

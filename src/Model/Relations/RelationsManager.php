@@ -11,6 +11,7 @@ use Model\Exception\ErrorList;
 use Model\Exception\ValidationException;
 use Model\Neo4j\GraphManager;
 use Model\Neo4j\QueryBuilder;
+use Model\User\User;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -164,6 +165,30 @@ class RelationsManager
         $this->returnRelationshipQuery($qb);
 
         return $qb;
+    }
+
+    public function getFriendsIds(User $user)
+    {
+        //TODO: Not done in "query parts" like the rest of the model because a refactoring is needed
+
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(u:User{qnoow_id: {userId}})')
+            ->with('u')
+            ->setParameter('userId', $user->getId());
+
+        $qb->optionalMatch('(u)-[:LIKES]->(friend:UserEnabled)');
+
+        $qb->returns('collect(friend.qnoow_id) AS friends');
+
+        $result = $qb->getQuery()->getResultSet();
+
+        if ($result->count() == 0)
+        {
+            return array();
+        }
+
+        return $qb->getData($result->current())['friends'];
     }
 
     protected function buildOne(Row $row)

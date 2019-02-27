@@ -130,7 +130,7 @@ class AvailabilityController extends FOSRestController implements ClassResourceI
      *     description="Returns empty",
      * )
      * @Security(name="Bearer")
-     * @SWG\Tag(name="proposals")
+     * @SWG\Tag(name="availability")
      */
     public function deleteAction(User $user, AvailabilityService $availabilityService)
     {

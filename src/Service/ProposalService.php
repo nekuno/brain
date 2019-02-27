@@ -86,6 +86,10 @@ class ProposalService
         return $proposals;
     }
 
+    /**
+     * @param Proposal[] $proposals
+     * @return array
+     */
     protected function setMatches(array $proposals)
     {
         foreach ($proposals as $proposal) {

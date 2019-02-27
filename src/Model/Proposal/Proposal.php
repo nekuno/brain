@@ -18,7 +18,7 @@ class Proposal implements \JsonSerializable
     protected $type;
 
     /**
-     * @var
+     * @var string[]
      */
     protected $matches = [];
 
@@ -142,7 +142,7 @@ class Proposal implements \JsonSerializable
     }
 
     /**
-     * @return mixed
+     * @return string[]
      */
     public function getMatches()
     {
@@ -150,9 +150,9 @@ class Proposal implements \JsonSerializable
     }
 
     /**
-     * @param mixed $matches
+     * @param array[] $matches
      */
-    public function setMatches($matches): void
+    public function setMatches(array $matches): void
     {
         $this->matches = $matches;
     }

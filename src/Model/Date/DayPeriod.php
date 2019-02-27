@@ -4,15 +4,24 @@ namespace Model\Date;
 
 class DayPeriod implements \JsonSerializable
 {
+    /**
+     * @var int
+     */
     protected $id;
 
+    /**
+     * @var string
+     */
     protected $name;
 
+    /**
+     * @var Date
+     */
     protected $date;
 
     public function jsonSerialize()
     {
-        return $this->name . ' of '. $this->date;
+        return $this->name . ' of '. $this->date->jsonSerialize();
     }
 
     /**

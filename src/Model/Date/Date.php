@@ -7,14 +7,28 @@ class Date implements \JsonSerializable
     protected $maxYear = 2025;
     protected $minYear = 2017;
 
+    /**
+     * @var int
+     */
     protected $day;
+    /**
+     * @var int
+     */
     protected $month;
+    /**
+     * @var int
+     */
     protected $year;
 
+    /**
+     * @var int
+     */
     protected $dayId;
 
-    protected $periods = [];
-
+    /**
+     * @param string $string
+     * @throws \Exception
+     */
     public function setDate($string)
     {
         $this->year = $this->extractYear($string);
@@ -112,22 +126,6 @@ class Date implements \JsonSerializable
     public function setDayId($dayId): void
     {
         $this->dayId = $dayId;
-    }
-
-    /**
-     * @return array
-     */
-    public function getPeriods(): array
-    {
-        return $this->periods;
-    }
-
-    /**
-     * @param array $periods
-     */
-    public function setPeriods(array $periods): void
-    {
-        $this->periods = $periods;
     }
 
     public function jsonSerialize()

@@ -49,8 +49,10 @@ class UserRecommendationBuilder
             $user->setUsername($row->offsetGet('username'));
             $user->setSlug($row->offsetGet('slug'));
             $user->setPhoto($photo);
-            $user->setMatching($row->offsetGet('matching_questions'));
-            $user->setSimilarity($row->offsetGet('similarity'));
+            $matching = $row->offsetGet('matching_questions') ? $row->offsetGet('matching_questions') : 0;
+            $user->setMatching($matching);
+            $similarity = $row->offsetGet('similarity') ? $row->offsetGet('similarity') : 0;
+            $user->setSimilarity($similarity);
             $user->setAge($age);
             $user->setLike($row->offsetGet('like'));
 

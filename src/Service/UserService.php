@@ -5,6 +5,7 @@ namespace Service;
 use Model\Availability\AvailabilityManager;
 use Model\Photo\GalleryManager;
 use Model\Photo\PhotoManager;
+use Model\Proposal\Proposal;
 use Model\Proposal\ProposalManager;
 use Model\Question\UserAnswerPaginatedManager;
 use Model\User\User;
@@ -200,7 +201,11 @@ class UserService
         return $userArray;
     }
 
-    public function getOtherByProposal($proposal)
+    /**
+     * @param Proposal $proposal
+     * @return array[]
+     */
+    public function getOtherByProposal(Proposal $proposal)
     {
         $candidateSlugs = $this->userManager->getByProposal($proposal);
 
