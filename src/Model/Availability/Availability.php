@@ -4,7 +4,7 @@ namespace Model\Availability;
 
 use Model\Date\DayPeriod;
 
-class Availability
+class Availability implements \JsonSerializable
 {
     /**
      * @var int
@@ -111,4 +111,16 @@ class Availability
     {
         $this->static = $static;
     }
+
+    public function jsonSerialize()
+    {
+        return array(
+            'id' => $this->id,
+            'dayPeriods' => $this->dayPeriods,
+            'periodIds' => $this->periodIds,
+            'dynamic' => $this->dynamic,
+            'static' => json_decode($this->static),
+        );
+    }
+
 }

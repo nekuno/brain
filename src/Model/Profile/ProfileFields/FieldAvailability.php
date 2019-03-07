@@ -44,6 +44,10 @@ class FieldAvailability extends AbstractField
 
     public function jsonSerialize()
     {
-        return $this->availability;
+        if ($this->availability === null){
+            return null;
+        }
+
+        return $this->availability->jsonSerialize();
     }
 }
