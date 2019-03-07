@@ -6,6 +6,7 @@ namespace Model\Stats;
 class UserStats
 {
 
+    //TODO: Remove unneeded fields (Likes)
     protected $numberOfContentLikes;
 
     protected $numberOfVideoLikes;
@@ -25,6 +26,8 @@ class UserStats
     protected $totalQuestions;
 
     protected $available_invitations;
+
+    protected $likesByTypeAndNetwork = [];
 
     /**
      * @return mixed
@@ -186,6 +189,22 @@ class UserStats
         $this->totalQuestions = $totalQuestions;
     }
 
+    /**
+     * @return array
+     */
+    public function getLikesByTypeAndNetwork(): array
+    {
+        return $this->likesByTypeAndNetwork;
+    }
+
+    /**
+     * @param array $likesByTypeAndNetwork
+     */
+    public function setLikesByTypeAndNetwork(array $likesByTypeAndNetwork): void
+    {
+        $this->likesByTypeAndNetwork = $likesByTypeAndNetwork;
+    }
+
     public function toArray(){
         return array('numberOfContentLikes' => $this->numberOfContentLikes,
                      'numberOfVideoLikes' => $this->numberOfVideoLikes,
@@ -197,6 +216,7 @@ class UserStats
                      'numberOfQuestionsAnswered' => $this->numberOfQuestionsAnswered,
                      'totalQuestions' => $this->totalQuestions,
                      'available_invitations' => $this->available_invitations,
+                     'likesByTypeAndNetwork' => $this->likesByTypeAndNetwork,
         );
     }
 

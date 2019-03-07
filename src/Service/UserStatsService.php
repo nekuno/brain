@@ -6,11 +6,13 @@ use Model\Content\ContentComparePaginatedManager;
 use Model\Content\ContentPaginatedManager;
 use Model\Group\GroupManager;
 use Model\Question\QuestionManager;
+use Model\Rate\RateManager;
 use Model\Relations\RelationsManager;
 use Model\Shares\Shares;
 use Model\Shares\SharesManager;
 use Model\Stats\UserStats;
 use Model\Stats\UserStatsCalculator;
+use Model\Token\TokensManager;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class UserStatsService
@@ -50,6 +52,16 @@ class UserStatsService
      */
     protected $questionManager;
 
+    /**
+     * @var TokensManager
+     */
+    protected $tokensManager;
+
+    /**
+     * @var RateManager
+     */
+    protected $rateManager;
+
     function __construct(
         UserStatsCalculator $userStatsManager,
         GroupManager $groupModel,
@@ -57,7 +69,9 @@ class UserStatsService
         ContentPaginatedManager $contentPaginatedModel,
         ContentComparePaginatedManager $contentComparePaginatedModel,
         SharesManager $sharesManager,
-        QuestionManager $questionManager
+        QuestionManager $questionManager,
+        TokensManager $tokensManager,
+        RateManager $rateManager
     ) {
         $this->userStatsCalculator = $userStatsManager;
         $this->groupModel = $groupModel;
@@ -66,6 +80,8 @@ class UserStatsService
         $this->contentComparePaginatedModel = $contentComparePaginatedModel;
         $this->sharesManager = $sharesManager;
         $this->questionManager = $questionManager;
+        $this->tokensManager = $tokensManager;
+        $this->rateManager = $rateManager;
     }
 
     public function getStats($userId)
@@ -105,11 +121,15 @@ class UserStatsService
 
     protected function completeContentLikes(UserStats $userStats, $userId)
     {
-        $contentLikes = $this->contentPaginatedModel->countAll($userId);
-        $userStats->setNumberOfContentLikes($contentLikes['Link']);
-        $userStats->setNumberOfAudioLikes($contentLikes['Audio']);
-        $userStats->setNumberOfImageLikes($contentLikes['Image']);
-        $userStats->setNumberOfVideoLikes($contentLikes['Video']);
+        $resources = $this->tokensManager->getConnectedNetworks($userId);
+//
+        $ratesByType = array();
+        foreach($resources as $resource)
+        {
+            $ratesByType[$resource] = $this->rateManager->getUserRatesByNetworkAndType($userId, $resource);
+        }
+
+        $userStats->setLikesByTypeAndNetwork($ratesByType);
     }
 
     protected function completeQuestionsCount(UserStats $userStats)

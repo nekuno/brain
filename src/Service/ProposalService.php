@@ -126,6 +126,7 @@ class ProposalService
     protected function addAvailabilityField(Proposal $proposal)
     {
         $availability = $this->availabilityService->getByProposal($proposal);
+
         if (null == $availability) {
             return $proposal;
         }

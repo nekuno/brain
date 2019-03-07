@@ -14,7 +14,8 @@ class FieldString extends AbstractField
 
     public function getSaveQuery(array $variables)
     {
-        return "SET $this->nodeName.$this->name = '$this->value'"
+        $value = str_replace("'", "\'", $this->value);
+        return "SET $this->nodeName.$this->name = '$value'"
             . ' WITH ' . implode(', ', $variables);
     }
 }
