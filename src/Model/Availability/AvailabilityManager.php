@@ -55,7 +55,7 @@ class AvailabilityManager
         $qb->match('(proposal)-[:HAS_AVAILABILITY]->(availability:Availability)')
             ->with('availability');
 
-        $qb->match('(availability)-[:INCLUDES{static:true}]->(period:DayPeriod)')
+        $qb->optionalMatch('(availability)-[:INCLUDES{static:true}]->(period:DayPeriod)')
             ->returns('{id: id(availability), properties: properties(availability)} AS availability', 'collect(id(period)) AS periodIds');
 
         $resultSet = $qb->getQuery()->getResultSet();
