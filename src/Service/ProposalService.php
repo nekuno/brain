@@ -106,15 +106,18 @@ class ProposalService
      */
     protected function orderByMatches(array $proposals)
     {
-        usort($proposals, function($a, $b){
-            /** @var $a Proposal */
-            /** @var $b Proposal */
-            if ($a->countMatches() == $b->countMatches()){
-                return 0;
-            }
+        usort(
+            $proposals,
+            function ($a, $b) {
+                /** @var $a Proposal */
+                /** @var $b Proposal */
+                if ($a->countMatches() == $b->countMatches()) {
+                    return 0;
+                }
 
-            return ($a->countMatches() > $b->countMatches()) ? 1 : 1;
-        });
+                return ($a->countMatches() > $b->countMatches()) ? 1 : 1;
+            }
+        );
 
         return $proposals;
     }
@@ -161,19 +164,7 @@ class ProposalService
         $this->createAvailability($proposal, $data);
         $proposal = $this->addAvailabilityField($proposal);
 
-        $filters = $this->getFiltersData($data);
-
-        if (!empty($filters)) {
-            try {
-//            $this->validateFilters($data, $user->getId());
-            } catch (ValidationException $e) {
-                $data = array('locale' => 'en');
-                $this->delete($proposal->getId(), $data);
-                throw $e;
-            }
-
-            $proposal = $this->updateFilters($proposal, $filters);
-        }
+        $proposal = $this->updateFilters($proposal, $data);
 
         return $proposal;
     }
@@ -183,6 +174,7 @@ class ProposalService
         $this->saveProposalPhoto($user, $data);
 
         $proposal = $this->proposalManager->update($proposalId, $data);
+        $proposal = $this->addAvailabilityField($proposal);
 
         if ($proposal->getField('availability')) {
             $availabilityId = $this->getAvailabilityId($proposal);
@@ -191,6 +183,8 @@ class ProposalService
         }
         $this->createAvailability($proposal, $data);
         $proposal = $this->addAvailabilityField($proposal);
+
+        $proposal = $this->updateFilters($proposal, $data);
 
         return $proposal;
     }
@@ -202,8 +196,13 @@ class ProposalService
 //        $this->proposalGalleryManager->save($photo, $user, $extension);
     }
 
-    protected function updateFilters(Proposal $proposal, $filters)
+    protected function updateFilters(Proposal $proposal, $data)
     {
+        $filters = $this->getFiltersData($data);
+
+        if (empty($filters)) {
+            return $proposal;
+        }
         $proposalId = $proposal->getId();
         $filters = $this->filterUsersManager->updateFilterUsersByProposalId($proposalId, $filters);
         $proposal->setFilters($filters);
