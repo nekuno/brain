@@ -119,7 +119,7 @@ class Availability implements \JsonSerializable
             'dayPeriods' => $this->dayPeriods,
             'periodIds' => $this->periodIds,
             'dynamic' => $this->dynamic,
-            'static' => json_decode($this->static),
+            'static' => json_decode($this->static, true),
         );
     }
 
