@@ -14,22 +14,25 @@ class ProfileOptionGalleryManager extends GalleryManager
         parent::__construct($base);
     }
 
+    //TODO: Refactor to use committed files
     public function saveOption(array $data)
     {
         $picture = $data['picture'];
         if (empty($picture)){
             return '';
         }
-        $file = @file_get_contents($picture);
+//        $file = @file_get_contents($picture);
 
         $id = $data['id'];
-        $extension = $ext = pathinfo($picture, PATHINFO_EXTENSION);
+//        $extension = $ext = pathinfo($picture, PATHINFO_EXTENSION);
+        $extension = 'jpg';
         $fileName = $this->buildFileName($id, $extension);
 
         $type = strtolower($data['type']);
         $folder = $this->buildFolderName($type);
 
-        $relativePath = $this->saveFile($fileName, $folder, $file);
+//        $relativePath = $this->saveFile($fileName, $folder, $file);
+        $relativePath = $folder . $fileName;
 
         return $this->brainBaseUrl . $relativePath;
     }

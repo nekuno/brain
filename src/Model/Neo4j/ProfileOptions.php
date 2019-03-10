@@ -1523,6 +1523,7 @@ class ProfileOptions implements LoggerAwareInterface
                     'order' => 3
                 ),
             ),
+            //TODO: Add manicure option (manicure.jpg already in files) if wanted
             'Plans' => array(
                 array(
                     'id' => 'party',
@@ -1579,6 +1580,7 @@ class ProfileOptions implements LoggerAwareInterface
                     'picture' => 'https://static2.diariosur.es/www/multimedia/201801/11/media/cortadas/rebajas-U30430927147wfG-U50591802181wbG-624x385@Diario%20Sur-DiarioSur.jpg'
                 ),
             ),
+            //TODO: Add mexican option (mexican.jpg already in files) if wanted
             'Restaurants' => array(
                 array(
                     'id' => 'asian',
