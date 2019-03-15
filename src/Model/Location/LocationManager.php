@@ -40,8 +40,13 @@ class LocationManager
 
     public function buildLocation(Row $row)
     {
-        /** @var Node $locationNode */
         $locationNode = $row->offsetGet('location');
+
+        return $this->buildFromNode($locationNode);
+    }
+
+    public function buildFromNode(Node $locationNode)
+    {
         $properties = $locationNode->getProperties();
 
         $location = new Location();
@@ -54,5 +59,4 @@ class LocationManager
 
         return $location;
     }
-
 }

@@ -5,11 +5,14 @@ namespace Service;
 use Model\Content\ContentComparePaginatedManager;
 use Model\Content\ContentPaginatedManager;
 use Model\Group\GroupManager;
+use Model\Question\QuestionManager;
+use Model\Rate\RateManager;
 use Model\Relations\RelationsManager;
 use Model\Shares\Shares;
 use Model\Shares\SharesManager;
 use Model\Stats\UserStats;
 use Model\Stats\UserStatsCalculator;
+use Model\Token\TokensManager;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class UserStatsService
@@ -44,13 +47,31 @@ class UserStatsService
      */
     protected $sharesManager;
 
+    /**
+     * @var QuestionManager
+     */
+    protected $questionManager;
+
+    /**
+     * @var TokensManager
+     */
+    protected $tokensManager;
+
+    /**
+     * @var RateManager
+     */
+    protected $rateManager;
+
     function __construct(
         UserStatsCalculator $userStatsManager,
         GroupManager $groupModel,
         RelationsManager $relationsModel,
         ContentPaginatedManager $contentPaginatedModel,
         ContentComparePaginatedManager $contentComparePaginatedModel,
-        SharesManager $sharesManager
+        SharesManager $sharesManager,
+        QuestionManager $questionManager,
+        TokensManager $tokensManager,
+        RateManager $rateManager
     ) {
         $this->userStatsCalculator = $userStatsManager;
         $this->groupModel = $groupModel;
@@ -58,6 +79,9 @@ class UserStatsService
         $this->contentPaginatedModel = $contentPaginatedModel;
         $this->contentComparePaginatedModel = $contentComparePaginatedModel;
         $this->sharesManager = $sharesManager;
+        $this->questionManager = $questionManager;
+        $this->tokensManager = $tokensManager;
+        $this->rateManager = $rateManager;
     }
 
     public function getStats($userId)
@@ -74,6 +98,7 @@ class UserStatsService
         $this->completeUserLikes($userStats, $userId);
         $this->completeGroups($userStats, $userId);
         $this->completeContentLikes($userStats, $userId);
+        $this->completeQuestionsCount($userStats);
     }
 
     protected function completeReceivedLikes(UserStats $userStats, $userId)
@@ -96,11 +121,21 @@ class UserStatsService
 
     protected function completeContentLikes(UserStats $userStats, $userId)
     {
-        $contentLikes = $this->contentPaginatedModel->countAll($userId);
-        $userStats->setNumberOfContentLikes($contentLikes['Link']);
-        $userStats->setNumberOfAudioLikes($contentLikes['Audio']);
-        $userStats->setNumberOfImageLikes($contentLikes['Image']);
-        $userStats->setNumberOfVideoLikes($contentLikes['Video']);
+        $resources = $this->tokensManager->getConnectedNetworks($userId);
+//
+        $ratesByType = array();
+        foreach($resources as $resource)
+        {
+            $ratesByType[$resource] = $this->rateManager->getUserRatesByNetworkAndType($userId, $resource);
+        }
+
+        $userStats->setLikesByTypeAndNetwork($ratesByType);
+    }
+
+    protected function completeQuestionsCount(UserStats $userStats)
+    {
+        $totalQuestions = $this->questionManager->count();
+        $userStats->setTotalQuestions($totalQuestions);
     }
 
     public function getComparedStats($userId, $otherUserId)

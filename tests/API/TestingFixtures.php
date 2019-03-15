@@ -2,6 +2,8 @@
 
 namespace Tests\API;
 
+use Model\Date\DateManager;
+use Model\Date\DayPeriodManager;
 use Model\Link\Audio;
 use Model\Link\Image;
 use Model\Link\Link;
@@ -11,6 +13,7 @@ use Model\Neo4j\Constraints;
 use Model\Neo4j\GraphManager;
 use Model\Neo4j\PrivacyOptions;
 use Model\Neo4j\ProfileOptions;
+use Model\Photo\ProfileOptionGalleryManager;
 use Model\Question\QuestionCorrelationManager;
 use Model\Invitation\InvitationManager;
 use Psr\Log\LoggerInterface;
@@ -80,9 +83,24 @@ class TestingFixtures
     protected $im;
 
     /**
+     * @var DateManager
+     */
+    protected $dateManager;
+
+    /**
+     * @var DayPeriodManager
+     */
+    protected $dayPeriodManager;
+
+    /**
      * @var LinkService
      */
     protected $linkService;
+
+    /**
+     * @var ProfileOptionGalleryManager
+     */
+    protected $profileOptionGalleryManager;
 
     public function __construct(
         GraphManager $graphManager,
@@ -93,7 +111,10 @@ class TestingFixtures
         LinkManager $linkManager,
         QuestionService $questionService,
         QuestionCorrelationManager $questionCorrelationManager,
+        DateManager $dateManager,
+        DayPeriodManager $dayPeriodManager,
         LinkService $linkService,
+        ProfileOptionGalleryManager $profileOptionGalleryManager,
         LoggerInterface $logger
     )
     {
@@ -105,7 +126,10 @@ class TestingFixtures
         $this->lm = $linkManager;
         $this->questionService = $questionService;
         $this->correlationManager = $questionCorrelationManager;
+        $this->dateManager = $dateManager;
+        $this->dayPeriodManager = $dayPeriodManager;
         $this->linkService = $linkService;
+        $this->profileOptionGalleryManager = $profileOptionGalleryManager;
         $this->logger = $logger;
     }
 
@@ -132,6 +156,7 @@ class TestingFixtures
         $this->loadQuestions();
         $this->loadLinkTags();
         $this->loadLikes($createdLinks);
+        $this->loadDates();
         $this->calculateRegisterQuestions();
     }
 
@@ -382,7 +407,7 @@ class TestingFixtures
 
     private function loadProfileOptions()
     {
-        $profileOptions = new ProfileOptions($this->gm);
+        $profileOptions = new ProfileOptions($this->gm, $this->profileOptionGalleryManager);
 
         $logger = $this->logger;
         $profileOptions->setLogger($logger);
@@ -422,6 +447,15 @@ class TestingFixtures
         $logger->notice(sprintf('%d new privacy options processed.', $result->getTotal()));
         $logger->notice(sprintf('%d new privacy options updated.', $result->getUpdated()));
         $logger->notice(sprintf('%d new privacy options created.', $result->getCreated()));
+    }
+
+    //TODO: Move to DateService
+    private function loadDates()
+    {
+        $currentYear = date('Y');
+        $endDate = ($currentYear + 1) . '-12-31';
+        $this->dateManager->merge($endDate);
+        $this->dayPeriodManager->createAll();
     }
 
     private function calculateRegisterQuestions()

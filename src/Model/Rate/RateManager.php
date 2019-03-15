@@ -79,6 +79,27 @@ class RateManager
 
         return $result;
     }
+    
+    public function isLiked($sourceUserId, $targetUserId)
+    {
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(u:User {qnoow_id: { sourceUserId }})')
+            ->match('(u2:User {qnoow_id: { targetUserId }})')
+            ->optionalMatch("(u)-[r:LIKES]->(u2)")
+            ->returns('r');
+
+        $qb->setParameters(array(
+            'sourceUserId' => (integer)$sourceUserId,
+            'targetUserId' => (integer)$targetUserId,
+        ));
+
+        $result = $qb->getQuery()->getResultSet();
+
+        $liked = $result->current()->offsetGet('r');
+
+        return !!$liked;
+    }
 
     /**
      * @param $userId
@@ -112,6 +133,39 @@ class RateManager
         }
 
         return $rates;
+    }
+
+    public function getUserRatesByNetworkAndType($userId, $resource)
+    {
+        $types = ['Audio', 'Video', 'Image', 'Creator', 'Game', 'Web'];
+
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(u:User {qnoow_id: { userId }})')
+            ->with('u')
+            ->setParameter('userId', $userId);
+
+        $variables = ['u'];
+        foreach ($types as $type)
+        {
+            $initialVariables = $variables;
+
+            $qb->optionalMatch("(u)-[likes:LIKES]->(:$type)")
+                ->where("EXISTS (likes.$resource)");
+
+            $initialVariables[] = "count(likes) AS $type";
+            $qb->with($initialVariables);
+
+            $variables[] = $type;
+        }
+
+        unset($variables[0]);
+
+        $qb->returns($variables);
+
+        $result = $qb->getQuery()->getResultSet();
+
+        return $qb->getData($result->current());
     }
 
     /**

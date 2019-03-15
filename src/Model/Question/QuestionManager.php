@@ -244,6 +244,17 @@ class QuestionManager
         }
     }
 
+    public function count()
+    {
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(question:Question)')
+            ->returns('count(question) AS amount');
+
+        $result = $qb->getQuery()->getResultSet();
+
+        return $result->current()->offsetGet('amount');
+    }
+
     /**
      * @param $id
      * @return array

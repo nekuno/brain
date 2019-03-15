@@ -30,6 +30,7 @@ use Service\AuthService;
 use Service\MetadataService;
 use Service\RecommendatorService;
 use Service\RegisterService;
+use Service\UserService;
 use Service\UserStatsService;
 use Swagger\Annotations as SWG;
 use Symfony\Component\HttpFoundation\Request;
@@ -87,7 +88,7 @@ class UserController extends FOSRestController implements ClassResourceInterface
      *
      * @Get("/users/{slug}")
      * @param string $slug
-     * @param UserManager $userManager
+     * @param UserService $userService
      * @return \FOS\RestBundle\View\View
      * @SWG\Response(
      *     response=200,
@@ -103,10 +104,9 @@ class UserController extends FOSRestController implements ClassResourceInterface
      * @Security(name="Bearer")
      * @SWG\Tag(name="users")
      */
-    public function getOtherAction($slug, UserManager $userManager)
+    public function getOtherAction($slug, UserService $userService)
     {
-        $userArray = $userManager->getBySlug($slug)->jsonSerialize();
-        $userArray = $userManager->deleteOtherUserFields($userArray);
+        $userArray = $userService->getOther($slug);
 
         if (empty($userArray)) {
             return $this->view($userArray, 404);
@@ -120,7 +120,7 @@ class UserController extends FOSRestController implements ClassResourceInterface
      *
      * @Get("/public/users/{slug}")
      * @param string $slug
-     * @param UserManager $userManager
+     * @param UserService $userService
      * @return \FOS\RestBundle\View\View
      * @SWG\Response(
      *     response=200,
@@ -135,10 +135,9 @@ class UserController extends FOSRestController implements ClassResourceInterface
      * )
      * @SWG\Tag(name="users")
      */
-    public function getOtherPublicAction($slug, UserManager $userManager)
+    public function getOtherPublicAction($slug, UserService $userService)
     {
-        $userArray = $userManager->getPublicBySlug($slug)->jsonSerialize();
-        $userArray = $userManager->deleteOtherUserFields($userArray);
+        $userArray = $userService->getOtherPublic($slug);
 
         if (empty($userArray)) {
             return $this->view($userArray, 404);
@@ -177,6 +176,7 @@ class UserController extends FOSRestController implements ClassResourceInterface
      */
     public function postAction(Request $request, RegisterService $registerService, \Twig_Environment $twig, \Swift_Mailer $mailer)
     {
+
         try {
             $data = $request->request->all();
             if (!isset($data['user']) || !isset($data['profile']) || !isset($data['token']) || !isset($data['oauth']) || !isset($data['trackingData'])) {
@@ -185,6 +185,9 @@ class UserController extends FOSRestController implements ClassResourceInterface
             if (!is_array($data['user']) || !is_array($data['profile']) || !is_string($data['token']) || !is_array($data['oauth']) || !is_string($data['trackingData'])) {
                 $this->throwRegistrationException('Bad format');
             }
+            $locale = $request->query->get('locale', 'en');
+            $profile = $data['profile'];
+            $profile['interfaceLanguage'] = isset($profile['interfaceLanguage'])? $profile['interfaceLanguage'] : $locale;
             $user = $registerService->register($data['user'], $data['profile'], $data['token'], $data['oauth'], $data['trackingData']);
         } catch (\Exception $e) {
             $errorMessage = $this->exceptionMessagesToString($e);

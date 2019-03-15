@@ -14,6 +14,7 @@ use Model\Neo4j\Neo4jException;
 use Model\GhostUser\GhostUserManager;
 use Model\LookUp\LookUpManager;
 use Model\Photo\PhotoManager;
+use Model\Proposal\Proposal;
 use Model\SocialNetwork\SocialProfile;
 use Model\Token\TokensManager;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -240,6 +241,74 @@ class UserManager
         $row = $result->current();
 
         return $this->buildPublic($row);
+    }
+
+    /**
+     * @param $userId
+     * @param $ownUserId
+     * @return ResultSet
+     * @throws \Exception
+     */
+    public function getAsRecommendation($userId, $ownUserId)
+    {
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(anyUser:User{qnoow_id:{userId}})')
+            ->with('anyUser')
+            ->setParameter('userId', $userId);
+
+        $qb->match('(ownUser:User{qnoow_id:{ownUserId}})')
+            ->with('ownUser', 'anyUser')
+            ->setParameter('ownUserId', $ownUserId);
+
+        $qb->optionalMatch('(anyUser)-[similarity:SIMILARITY]-(ownUser)')
+            ->with('ownUser', 'anyUser', 'similarity.similarity AS similarity');
+        $qb->optionalMatch('(anyUser)-[matching:MATCHING]-(ownUser)')
+            ->with('anyUser', 'similarity', 'matching');
+
+        $qb->match('(anyUser)-[:PROFILE_OF]-(p)')
+            ->with('anyUser', 'p', 'similarity', 'matching');
+
+        $qb->optionalMatch('(p)-[:LOCATION]-(l:Location)')
+            ->with('anyUser', 'p', 'l', 'similarity', 'matching')
+            ->optionalMatch('(p)<-[optionOf:OPTION_OF]-(option:ProfileOption)')
+            ->with(
+                'anyUser',
+                'p',
+                'l',
+                'similarity',
+                'matching',
+                'collect(distinct {option: option, detail: (CASE WHEN EXISTS(optionOf.detail) THEN optionOf.detail ELSE null END)}) AS options'
+            )
+            ->optionalMatch('(p)-[tagged:TAGGED]-(tag:ProfileTag)')
+            ->with(
+                'anyUser',
+                'p',
+                'l',
+                'similarity',
+                'matching',
+                'options',
+                'collect(distinct {tag: tag, tagged: tagged}) AS tags'
+            );
+
+        $qb->returns(
+            'anyUser.qnoow_id AS id, 
+            anyUser.username AS username,
+            anyUser.slug AS slug,
+            anyUser.photo AS photo,
+            anyUser.createdAt AS createdAt,
+            p.birthday AS birthday,
+            p AS profile,
+            l AS location,
+            similarity,
+            matching AS matching_questions,
+            options,
+            tags'
+        );
+
+        $resultSet = $qb->getQuery()->getResultSet();
+
+        return $resultSet;
     }
 
     /**
@@ -564,7 +633,7 @@ class UserManager
     public function setEnabled($userId, $enabled, $fromAdmin = false)
     {
         $conditions = array('u.qnoow_id = { qnoow_id }');
-        if (!$fromAdmin){
+        if (!$fromAdmin) {
             $conditions[] = 'NOT EXISTS(u.canReenable) OR NOT u.canReenable = false';
         }
 
@@ -780,6 +849,29 @@ class UserManager
         return $this->build($result->current());
     }
 
+    public function getByProposal(Proposal $proposal)
+    {
+        $proposalId = $proposal->getId();
+
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(proposal:Proposal)')
+            ->where('id(proposal) = {proposalId}')
+            ->setParameter('proposalId', $proposalId);
+
+        $qb->optionalMatch('(proposal)<-[:INTERESTED_IN]-(candidate:UserEnabled)')
+//            ->where('(proposal)-[:ACCEPTED]->(candidate)')
+        ;
+
+        $qb->returns('collect(candidate.slug) AS slugs');
+
+        $resultSet = $qb->getQuery()->getResultSet();
+
+        $data = $qb->getData($resultSet->current());
+
+        return $data['slugs'];
+    }
+
     /**
      * @param $id
      * @return User
@@ -959,7 +1051,7 @@ class UserManager
 
         return $status;
     }
-
+//TODO: Move to MetadataManager
     protected function getMetadata($isUpdate = false)
     {
         $metadata = array(
@@ -983,6 +1075,7 @@ class UserManager
             'status' => array('type' => 'string', 'editable' => false),
             'photo' => array('type' => 'photo'),
             'tutorials' => array('type' => 'array'),
+            'availability' => array('type' => 'availability')
         );
 
         if ($isUpdate) {
@@ -996,6 +1089,7 @@ class UserManager
     {
         $userId = (integer)$data['userId'];
         unset($data['userId']);
+        unset($data['availability']);
 
         $this->updateCanonicalFields($data);
         $this->updatePassword($data);
@@ -1270,6 +1364,8 @@ class UserManager
         unset($userArray['tutorials']);
         unset($userArray['updatedAt']);
         unset($userArray['lastLogin']);
+        unset($userArray['availability']);
+        unset($userArray['proposals']);
 
         return $userArray;
     }

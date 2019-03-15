@@ -63,7 +63,10 @@ abstract class AbstractProfileOptionManager
         }
         $qb = $this->graphManager->createQueryBuilder();
         $qb->match('(option:ProfileOption)')
-            ->returns("head(filter(x IN labels(option) WHERE x <> 'ProfileOption')) AS labelName, option.id AS id, option." . $translationField . " AS name")
+            ->returns("head(filter(x IN labels(option) WHERE x <> 'ProfileOption')) AS labelName, 
+            option.id AS id, 
+            option." . $translationField . " AS name,
+            option.picture AS picture")
             ->orderBy('option.order');
 
         $query = $qb->getQuery();
@@ -75,10 +78,12 @@ abstract class AbstractProfileOptionManager
             $typeName = $this->metadataUtilities->labelToType($row->offsetGet('labelName'));
             $optionId = $row->offsetGet('id');
             $optionName = $row->offsetGet('name');
+            $optionPicture = $row->offsetGet('picture');
 
             $choiceOptions[$typeName][] = array(
                 'id' => $optionId,
-                'text' => $optionName
+                'text' => $optionName,
+                'picture' => $optionPicture,
             );
         }
 

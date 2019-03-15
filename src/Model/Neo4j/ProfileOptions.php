@@ -2,6 +2,7 @@
 
 namespace Model\Neo4j;
 
+use Model\Photo\ProfileOptionGalleryManager;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 
@@ -22,10 +23,15 @@ class ProfileOptions implements LoggerAwareInterface
      */
     protected $result;
 
-    public function __construct(GraphManager $gm)
-    {
+    /**
+     * @var ProfileOptionGalleryManager
+     */
+    protected $profileOptionGalleryManager;
 
+    public function __construct(GraphManager $gm, ProfileOptionGalleryManager $profileOptionGalleryManager)
+    {
         $this->gm = $gm;
+        $this->profileOptionGalleryManager = $profileOptionGalleryManager;
     }
 
     /**
@@ -42,7 +48,8 @@ class ProfileOptions implements LoggerAwareInterface
      */
     public function load()
     {
-
+//IMAGES NOT OWNED BY NEKUNO, HERE AS PLACEHOLDER
+//IMÁGENES NO PROPIEDAD DE NEKUNO, AQUÍ COMO MUESTRA
         $this->result = new OptionsResult();
 
         $options = array(
@@ -1490,38 +1497,6 @@ class ProfileOptions implements LoggerAwareInterface
                     'name_es' => 'Otra',
                 ),
             ),
-            'LeisureTime' => array(
-                array(
-                    'id' => '1-hour',
-                    'name_en' => '1 hour',
-                    'name_es' => '1 hora',
-                    'order' => 0
-                ),
-                array(
-                    'id' => '3-hours',
-                    'name_en' => '3 hours',
-                    'name_es' => '3 horas',
-                    'order' => 1
-                ),
-                array(
-                    'id' => 'all-day',
-                    'name_en' => 'All day',
-                    'name_es' => 'Todo el día',
-                    'order' => 2
-                ),
-                array(
-                    'id' => 'weekend',
-                    'name_en' => 'A weekend',
-                    'name_es' => 'Un fin de semana',
-                    'order' => 3
-                ),
-                array(
-                    'id' => 'week-or-more',
-                    'name_en' => 'A week or more',
-                    'name_es' => 'Una semana o más',
-                    'order' => 4
-                ),
-            ),
             'LeisureMoney' => array(
                 array(
                     'id' => 'free',
@@ -1548,183 +1523,222 @@ class ProfileOptions implements LoggerAwareInterface
                     'order' => 3
                 ),
             ),
-            'Tickets' => array(
+            //TODO: Add manicure option (manicure.jpg already in files) if wanted
+            'Plans' => array(
                 array(
-                    'id' => 'theater-dance',
-                    'name_en' => 'Theater and dance',
-                    'name_es' => 'Teatro y danza',
-                ),
-                array(
-                    'id' => 'concerts-music',
-                    'name_en' => 'Concerts and music',
-                    'name_es' => 'Conciertos y música',
-                ),
-                array(
-                    'id' => 'museums-exhibitions',
-                    'name_en' => 'Museums and exhibitions',
-                    'name_es' => 'Museos y exposiciones',
-                ),
-                array(
-                    'id' => 'circus',
-                    'name_en' => 'Circus',
-                    'name_es' => 'Circo',
-                ),
-                array(
-                    'id' => 'cinema',
-                    'name_en' => 'Cinema',
-                    'name_es' => 'Cine',
-                ),
-                array(
-                    'id' => 'sports-events',
-                    'name_en' => 'Sports events',
-                    'name_es' => 'Eventos de deportes',
-                ),
-                array(
-                    'id' => 'theme-parks',
-                    'name_en' => 'Theme parks',
-                    'name_es' => 'Parques temáticos',
-                ),
-                array(
-                    'id' => 'conferences',
-                    'name_en' => 'Conferences',
-                    'name_es' => 'Conferencias',
-                ),
-                array(
-                    'id' => 'thematic-fairs',
-                    'name_en' => 'Thematic fairs',
-                    'name_es' => 'Ferias temáticas',
-                ),
-            ),
-            'Activity' => array(
-                array(
-                    'id' => 'restaurants',
-                    'name_en' => 'Restaurants',
-                    'name_es' => 'Restaurantes',
+                    'id' => 'party',
+                    'name_en' => 'Throw a party',
+                    'name_es' => 'Fiestas en casa',
+                    'picture' => 'https://us.123rf.com/450wm/ivankoivanko/ivankoivanko1704/ivankoivanko170400006/110563225-friends-eating-pizza-they-are-having-party-at-home-eating-pizza-and-having-fun-.jpg'
                 ),
                 array(
                     'id' => 'massages-spa',
                     'name_en' => 'Massages and Spa',
                     'name_es' => 'Masajes y Spas',
+                    'picture' => 'http://arayaspa.com/wp-content/uploads/2015/05/massage.jpg'
                 ),
                 array(
                     'id' => 'hairdressing-beauty',
                     'name_en' => 'Hairdressing and beauty',
                     'name_es' => 'Peluquería y belleza',
+                    'picture' => 'https://cdn.britannica.com/s:300x300/53/136653-004-E2E9D001.jpg'
                 ),
                 array(
                     'id' => 'hiking',
                     'name_en' => 'Hiking',
                     'name_es' => 'Rutas y excursiones',
+                    'picture' => 'https://cms.groupeditors.com/img/139670ab-8a69-4b2e-9ebc-7e8ad63a7fc0.jpg'
                 ),
                 array(
                     'id' => 'wine-tasting',
                     'name_en' => 'Wine tasting',
                     'name_es' => 'Catas de vinos',
+                    'picture' => 'https://i1.wp.com/www.tufts-skidmore.es/wp-content/uploads/2017/04/cata-vinos-pasos.jpeg'
                 ),
                 array(
                     'id' => 'courses',
-                    'name_en' => 'Courses',
+                    'name_en' => 'Take classes',
                     'name_es' => 'Cursos',
+                    'picture' => 'https://mhadegree.org/files/2013/06/online-courses-free-healthcare-300x200.jpg'
                 ),
                 array(
                     'id' => 'scheduled-adventures',
                     'name_en' => 'Scheduled adventures',
                     'name_es' => 'Aventuras programadas',
+                    'picture' => 'http://www.smliv.com/downloads/2290/download/AT%20Hikers.jpeg'
+                ),
+                array(
+                    'id' => 'take a walk',
+                    'name_en' => 'Take a walk',
+                    'name_es' => 'Dar un paseo',
+                    'picture' => 'https://www.callumswanrealty.com/blog/es/wp-content/uploads/sites/2/2016/04/paseo-maritimo-marbella-1650x928.jpg'
+                ),
+                array(
+                    'id' => 'go-to-sales',
+                    'name_en' => 'Go to the sales',
+                    'name_es' => 'Ir a las rebajas',
+                    'picture' => 'https://static2.diariosur.es/www/multimedia/201801/11/media/cortadas/rebajas-U30430927147wfG-U50591802181wbG-624x385@Diario%20Sur-DiarioSur.jpg'
                 ),
             ),
+            //TODO: Add mexican option (mexican.jpg already in files) if wanted
+            'Restaurants' => array(
+                array(
+                    'id' => 'asian',
+                    'name_en' => 'Japonés',
+                    'name_es' => 'Japanese',
+                    'picture' => 'http://cdn.shopify.com/s/files/1/1291/3261/products/DSC_7797-Edit_grande.jpg'
+                ),
+                array(
+                    'id' => 'italian',
+                    'name_en' => 'Italian',
+                    'name_es' => 'Italianos',
+                    'picture' => 'https://cdn.vox-cdn.com/thumbor/LBrK9HXbpy41EzO1f8BlofvFWsw=/155x0:4763x3456/1200x800/filters:focal(155x0:4763x3456)/cdn.vox-cdn.com/uploads/chorus_image/image/50864567/shutterstock_314337134.0.0.jpg',
+                ),
+                array(
+                    'id' => 'fast',
+                    'name_en' => 'Fast food',
+                    'name_es' => 'Comida rápida',
+                    'picture' => 'https://upload.wikimedia.org/wikipedia/commons/2/2e/Fast_food_meal.jpg'
+                ),
+                array(
+                    'id' => 'american',
+                    'name_en' => 'American',
+                    'name_es' => 'Americanos',
+                    'picture' => 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/70/Mac-and-cheese.jpg/1200px-Mac-and-cheese.jpg'
+                ),
+                array(
+                    'id' => 'spanish',
+                    'name_en' => 'Spanish',
+                    'name_es' => 'Español',
+                    'picture' => 'https://1dib1q3k1s3e11a5av3bhlnb-wpengine.netdna-ssl.com/wp-content/uploads/2012/05/spanish-tortilla.jpg'
+                ),
+                array(
+                    'id' => 'indian',
+                    'name_en' => 'Indian',
+                    'name_es' => 'Indio',
+                    'picture' => 'https://media-cdn.tripadvisor.com/media/photo-s/0b/71/97/4e/north-indian-food-kaitaia.jpg'
+                ),
+                array(
+                    'id' => 'latin',
+                    'name_en' => 'Latin',
+                    'name_es' => 'Latinos',
+                    'picture' => 'https://cdn10.phillymag.com/wp-content/uploads/sites/3/2014/10/MO-quetzally-michael-persico-940.jpg'
+                ),
+                array(
+                    'id' => 'vegetarian',
+                    'name_en' => 'Vegetarian',
+                    'name_es' => 'Vegetariano',
+                    'picture' => 'https://www.vegetariantimes.com/.image/t_share/MTQ3MDM3MzQ5NjA2MzM2NDA3/zi3000-shutterstock-buddha-bowl.jpg'
+                ),
+                array(
+                    'id' => 'arab',
+                    'name_en' => 'Arab',
+                    'name_es' => 'Árabe',
+                    'picture' => 'http://www.davehazzan.com/wp-content/uploads/2017/06/BW-Berlin-8420-1.jpg'
+                ),
+            ),
+            'Shows' => array(
+                array(
+                    'id' => 'theater-dance',
+                    'name_en' => 'Theater and dance',
+                    'name_es' => 'Teatro y danza',
+                    'picture' => 'https://www.jccmanhattan.org/image/arts-ideas/performances/Music_Dance_landing_page_image.jpg'
+                ),
+                array(
+                    'id' => 'concerts-music',
+                    'name_en' => 'Concerts and music',
+                    'name_es' => 'Conciertos y música',
+                    'picture' => 'http://www.millenniumparkconcerts.org/wp-content/uploads/2015/07/music-concert.jpg'
+                ),
+                array(
+                    'id' => 'museums-exhibitions',
+                    'name_en' => 'Museums and exhibitions',
+                    'name_es' => 'Museos y exposiciones',
+                    'picture' => 'https://www.museumnext.com/app/uploads/2017/04/met_big.jpg'
+                ),
+                array(
+                    'id' => 'circus',
+                    'name_en' => 'Circus',
+                    'name_es' => 'Circo',
+                    'picture' => 'https://cdn10.phillymag.com/wp-content/uploads/sites/3/2017/11/OTO-Caribbean-Dynasty-UniverSoulCircus-900x600.jpg'
+                ),
+                array(
+                    'id' => 'cinema',
+                    'name_en' => 'Cinema',
+                    'name_es' => 'Cine',
+                    'picture' => 'https://i.blogs.es/72b166/cine/450_1000.jpg'
+                ),
+                array(
+                    'id' => 'sports-events',
+                    'name_en' => 'Sports events',
+                    'name_es' => 'Eventos de deportes',
+                    'picture' => 'http://www.reservationsystems.com/Images/Sports_Large.png'
+                ),
+                array(
+                    'id' => 'theme-parks',
+                    'name_en' => 'Theme parks',
+                    'name_es' => 'Parques temáticos',
+                    'picture' => 'https://www.tripsavvy.com/thmb/ZjcjQTJj3vs8a-FGVW0T0-rYlL8=/960x0/filters:no_upscale():max_bytes(150000):strip_icc()/GettyImages-530779260-5aafd013875db900377746bd.jpg'
+                ),
+                array(
+                    'id' => 'conferences',
+                    'name_en' => 'Conferences',
+                    'name_es' => 'Conferencias',
+                    'picture' => 'http://www.laspositascollege.edu/gv/pdc/assets/images/conference.jpg'
+                ),
+                array(
+                    'id' => 'thematic-fairs',
+                    'name_en' => 'Thematic fairs',
+                    'name_es' => 'Ferias temáticas',
+                    'picture' => 'http://spaplatform.com/wp-content/uploads/2017/05/Beauty-Duesseldorf-4-sections.jpg'
+                ),
+            )
         );
 
         foreach ($options as $type => $values) {
             foreach ($values as $value) {
-                $id = $value['id'];
-                $names = array(
-                    'name_es' => $value['name_es'],
-                    'name_en' => $value['name_en'],
-                );
-                $order = isset($value['order']) ? $value['order'] : null;
+                $value['type'] = $type;
+                $value['order'] = isset($value['order']) ? $value['order'] : null;
+                $value['picture'] = isset($value['picture']) ? $value['picture'] : '';
 
-                $this->processOption($type, $id, $names, $order);
+                $this->merge($value);
             }
         }
 
         return $this->result;
     }
 
-    /**
-     * @param $type
-     * @param $id
-     * @param $names
-     * @param $order
-     * @throws \Exception
-     */
-    public function processOption($type, $id, $names, $order = null)
+    public function merge(array $data)
     {
+        $type = $data['type'];
+        $id = $data['id'];
+        $name_en = $data['name_en'];
+        $name_es = $data['name_es'];
+        $order = $data['order'];
 
-        $this->result->incrementTotal();
+        $pictureAbsolutePath = $this->profileOptionGalleryManager->saveOption($data);
 
-        if ($this->optionExists($type, $id)) {
+        $qb = $this->gm->createQueryBuilder();
 
-            if ($this->optionExists($type, $id, $names, $order)) {
+        $qb->merge("(o:ProfileOption:$type{id: {id}})")
+            ->with('o')
+            ->setParameter('id', $id);
 
-                $this->logger->info(sprintf('Skipping, Already exists ProfileOption:%s id: "%s", name_en: "%s", name_es: "%s"', $type, $id, $names['name_en'], $names['name_es']));
+        $qb->set('o.name_es = {name_es}', 'o.name_en = {name_en}', 'o.picture = {picture}')
+            ->setParameter('name_es', $name_es)
+            ->setParameter('name_en', $name_en)
+            ->setParameter('picture', $pictureAbsolutePath)
+            ->with('o');
 
-            } else {
-
-                $this->result->incrementUpdated();
-                $this->logger->info(sprintf('Updating ProfileOption:%s id: "%s", name_en: "%s", name_es: "%s"', $type, $id, $names['name_en'], $names['name_es']));
-                $parameters = array('type' => $type, 'id' => $id);
-                $parameters = array_merge($parameters, $names);
-                $cypher = "MATCH (o:ProfileOption) WHERE {type} IN labels(o) AND o.id = {id} SET o.name_en = {name_en}, o.name_es = {name_es}";
-                if ($order !== null) {
-                    $cypher .= " SET o.order = {order}";
-                    $parameters['order'] = $order;
-                }
-                $cypher .= " RETURN o;";
-
-                $query = $this->gm->createQuery($cypher, $parameters);
-                $query->getResultSet();
-            }
-
-        } else {
-
-            $this->result->incrementCreated();
-            $this->logger->info(sprintf('Creating ProfileOption:%s id: "%s", name_en: "%s", name_es: "%s"', $type, $id, $names['name_en'], $names['name_es']));
-            $parameters = array('id' => $id);
-            $parameters = array_merge($parameters, $names);
-            $cypher = "CREATE (o:ProfileOption:" . $type . " { id: {id}, name_en: {name_en}, name_es: {name_es} })";
-            if ($order !== null) {
-                $cypher .= " SET o.order = {order}";
-                $parameters['order'] = $order;
-            }
-
-            $query = $this->gm->createQuery($cypher, $parameters);
-            $query->getResultSet();
-        }
-    }
-
-    /**
-     * @param $type
-     * @param $id
-     * @param array $names
-     * @param $order
-     * @return boolean
-     * @throws \Exception
-     */
-    public function optionExists($type, $id, $names = array(), $order = null)
-    {
-        $parameters = array('type' => $type, 'id' => $id);
-        $cypher = "MATCH (o:ProfileOption) WHERE {type} IN labels(o) AND o.id = {id}\n";
-        if (!empty($names)) {
-            $parameters = array_merge($parameters, $names);
-            $cypher .= "AND o.name_es = {name_es} AND o.name_en = {name_en}";
-        }
         if ($order !== null) {
-            $cypher .= " AND o.order = {order}";
-            $parameters['order'] = $order;
+            $qb->set('o.order = {order}')
+                ->setParameter('order', $order)
+                ->with('o');
         }
-        $cypher .= " RETURN o;";
 
-        $query = $this->gm->createQuery($cypher, $parameters);
+        $qb->returns('o');
+
+        $query = $qb->getQuery();
         $result = $query->getResultSet();
 
         return count($result) > 0;

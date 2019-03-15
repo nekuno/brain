@@ -6,11 +6,10 @@ use FOS\RestBundle\Controller\Annotations\Get;
 use FOS\RestBundle\Controller\Annotations\Options;
 use FOS\RestBundle\Controller\Annotations\Post;
 use FOS\RestBundle\Controller\FOSRestController;
-use Model\Profile\ProfileManager;
-use Model\Question\UserAnswerPaginatedManager;
 use Model\User\User;
 use Nelmio\ApiDocBundle\Annotation\Security;
 use Service\AuthService;
+use Service\UserService;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -45,8 +44,7 @@ class AuthController extends FOSRestController
      * @Post("/login")
      * @param Request $request
      * @param AuthService $authService
-     * @param ProfileManager $profileManager
-     * @param UserAnswerPaginatedManager $userAnswerPaginatedManager
+     * @param UserService $userService
      * @return mixed
      * @SWG\Parameter(
      *      name="body",
@@ -73,13 +71,13 @@ class AuthController extends FOSRestController
      * )
      * @SWG\Tag(name="auth")
      */
-    public function loginAction(Request $request, AuthService $authService, ProfileManager $profileManager, UserAnswerPaginatedManager $userAnswerPaginatedManager)
+    public function loginAction(Request $request, AuthService $authService, UserService $userService)
     {
         $resourceOwner = $request->request->get('resourceOwner');
         $oauthToken = $request->request->get('oauthToken');
         $refreshToken = $request->request->get('refreshToken');
         $locale = $request->query->get('locale', 'es');
-
+//TODO: Move to AuthService?
         if ($resourceOwner && $oauthToken) {
             $jwt = $authService->loginByResourceOwner($resourceOwner, $oauthToken, $refreshToken);
         }
@@ -87,12 +85,9 @@ class AuthController extends FOSRestController
             throw new BadRequestHttpException('Los datos introducidos no coinciden con nuestros registros.');
         }
 
-        $user = $authService->getUser($jwt);
-        $profile = $profileManager->getById($user->getId());
-        $questionsFilters = array('id' => $user->getId(), 'locale' => $locale);
-        $countQuestions = $userAnswerPaginatedManager->countTotal($questionsFilters);
+        $data = $userService->getOwnUser($jwt, $locale);
 
-        return $this->view(['jwt' => $jwt, 'profile' => $profile, 'questionsTotal' => $countQuestions]);
+        return $this->view($data);
     }
 
     /**
@@ -101,8 +96,7 @@ class AuthController extends FOSRestController
      * @Get("/autologin")
      * @param Request $request
      * @param User $user
-     * @param ProfileManager $profileManager
-     * @param UserAnswerPaginatedManager $userAnswerPaginatedManager
+     * @param UserService $userService
      * @return mixed
      * @SWG\Parameter(
      *      name="locale",
@@ -118,14 +112,12 @@ class AuthController extends FOSRestController
      * @Security(name="Bearer")
      * @SWG\Tag(name="auth")
      */
-    public function autologinAction(Request $request, User $user, ProfileManager $profileManager, UserAnswerPaginatedManager $userAnswerPaginatedManager)
+    public function autologinAction(Request $request, User $user, UserService $userService)
     {
-        $profile = $profileManager->getById($user->getId());
-
         $locale = $request->query->get('locale');
-        $questionFilters = array('id' => $user->getId(), 'locale' => $locale);
-        $questionsTotal = $userAnswerPaginatedManager->countTotal($questionFilters);
 
-        return $this->view(['user' => $user, 'profile' => $profile, 'questionsTotal' => $questionsTotal]);
+        $data = $userService->buildOwnUser($user, $locale);
+
+        return $this->view($data);
     }
 }

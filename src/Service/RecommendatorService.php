@@ -4,11 +4,11 @@ namespace Service;
 
 
 use Model\Group\GroupManager;
-use Model\Recommendation\ContentPopularRecommendationPaginatedManager;
-use Model\Recommendation\ContentRecommendationPaginatedManager;
-use Model\Recommendation\UserPopularRecommendationPaginatedManager;
+use Model\Recommendation\ContentPopularRecommendator;
+use Model\Recommendation\ContentRecommendator;
+use Model\Recommendation\UserPopularRecommendator;
 use Model\Recommendation\UserRecommendation;
-use Model\Recommendation\UserRecommendationPaginatedManager;
+use Model\Recommendation\UserRecommendator;
 use Model\Shares\SharesManager;
 use Model\Thread\ContentThread;
 use Model\Thread\Thread;
@@ -28,11 +28,11 @@ class RecommendatorService
     protected $contentPaginator;
     /** @var  $groupModel GroupManager */
     protected $groupModel;
-    /** @var  $userRecommendationPaginatedModel UserRecommendationPaginatedManager */
+    /** @var  $userRecommendationPaginatedModel UserRecommendator */
     protected $userRecommendationPaginatedModel;
-    /** @var  $contentRecommendationPaginatedModel ContentRecommendationPaginatedManager */
+    /** @var  $contentRecommendationPaginatedModel ContentRecommendator */
     protected $contentRecommendationPaginatedModel;
-    /** @var $contentPopularRecommendationPaginatedModel ContentPopularRecommendationPaginatedManager */
+    /** @var $contentPopularRecommendationPaginatedModel ContentPopularRecommendator */
     protected $contentPopularRecommendationPaginatedModel;
     /** @var $sharesManager SharesManager */
     protected $sharesManager;
@@ -46,10 +46,10 @@ class RecommendatorService
                                 ContentPaginator $contentPaginator,
                                 GroupManager $groupModel,
                                 UserManager $userManager,
-                                UserRecommendationPaginatedManager $userRecommendationPaginatedModel,
-                                ContentRecommendationPaginatedManager $contentRecommendationPaginatedModel,
-                                UserPopularRecommendationPaginatedManager $userPopularRecommendationPaginatedModel,
-                                ContentPopularRecommendationPaginatedManager $contentPopularRecommendationPaginatedModel,
+                                UserRecommendator $userRecommendationPaginatedModel,
+                                ContentRecommendator $contentRecommendationPaginatedModel,
+                                UserPopularRecommendator $userPopularRecommendationPaginatedModel,
+                                ContentPopularRecommendator $contentPopularRecommendationPaginatedModel,
                                 SharesManager $sharesManager)
     {
         $this->paginator = $paginator;

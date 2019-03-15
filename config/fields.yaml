@@ -2,7 +2,7 @@ privacy:
     profile:
         type: choice
         label:
-            en: 'Who can access my profile'
+            en: 'Who can access my profileeeeeeeeeeeeeeeeeee'
             es: 'Quién puede acceder a mi perfil'
     description:
         type: choice
@@ -27,29 +27,29 @@ privacy:
 categories:
     profile:
         - label:
-            en: Basic
-            es: Básicos
-          fields: [objective, birthday, gender, descriptiveGender, location, orientation]
+            en: Nekuno Profile
+            es: Perfil Nekuno
+          fields: [objective, birthday, descriptiveGender, location, interfaceLanguage]
         - label:
-            en: Availability
-            es: Disponibilidad
-          fields: [civilStatus, relationshipInterest]
+            en: Nekuno goals
+            es: Objetivos en Nekuno
+          fields: [civilStatus, relationshipInterest, gender, orientation]
         - label:
-            en: Look
-            es: Apariencia
-          fields: [complexion, ethnicGroup, eyeColor, hairColor, height]
+            en: About Me
+            es: Sobre mí
+          fields: [description]
+        - label:
+            en: Looks
+            es: Aspecto físico
+          fields: [eyeColor, hairColor, complexion, ethnicGroup, height]
         - label:
             en: Background
-            es: Cultura
+            es: Educación y cultura
           fields: [interfaceLanguage, language, education, religion, ideology]
         - label:
-            en: Drugs
-            es: Drogas
+            en: Drugs and other vices
+            es: Drogas y otros vicios
           fields: [alcohol, smoke, drugs]
-        - label:
-            en: Others
-            es: Otros
-          fields: [income, diet, pets, allergy, sons, zodiacSign, handicap]
         - label:
             en: Work, ideas and projects
             es: Trabajo, ideas y proyectos
@@ -57,15 +57,15 @@ categories:
         - label:
             en: Hobbies
             es: Aficiones
-          fields: [sports, games, creative]
+          fields: [sports, hobbies, games]
         - label:
             en: Leisure
             es: Ocio
-          fields: [leisureMoney, leisureTime, tickets, activity, travelling, leisurePlan]
+          fields: [leisureMoney, shows, plans, restaurants]
         - label:
-            en: Description
-            es: Descripción
-          fields: [description, descriptionImportant, descriptionTime, descriptionSkills, descriptionNotice, descriptionFan, descriptionLive, descriptionThinking, descriptionFriday, descriptionMessage]
+            en: Others
+            es: Otros
+          fields: [income, diet, pets, allergy, sons, zodiacSign, handicap]
 
     filters:
         - label:
@@ -97,13 +97,40 @@ categories:
             es: Trabajo, ideas y proyectos
           fields: [profession, industry]
         - label:
-            en: Hobbies
-            es: Aficiones
-          fields: [sports, games, creative]
+            en: Leisure
+            es: Ocio
+          fields: [sports, hobbies, games]
+        - label:
+            en: Experiences
+            es: Experiencias
+          fields: [leisureMoney, shows, plans, restaurants]
+#          TODO: Change otherProfile to naturalProfile
+    otherProfile:
+        - label:
+            en: Basic
+            es: Básico
+          fields: [descriptiveGender, complexion, ethnicGroup, eyeColor, hairColor, height]
+        - label:
+            en: Miscellaneus
+            es: Miscelánea
+          fields: [alcohol, smoke, drugs, pets, sons, zodiacSign]
+        - label:
+            en: About Me
+            es: Sobre mí
+          fields: [description]
+        - label:
+            en: Work
+            es: Trabajo
+          fields: [language, industry, profession, income]
         - label:
             en: Leisure
             es: Ocio
-          fields: [leisureMoney, leisureTime, tickets, activity, travelling]
+          fields: [sports, hobbies, games]
+        - label:
+            en: Experience
+            es: Experiencia
+          fields: [shows, restaurants, plans]
+
 profile:
     mode:
         type: choice
@@ -112,6 +139,7 @@ profile:
             es: 'Modo'
         notErasable: true
         hidden: true
+        withImages: false
     description:
         type: textarea
         min: 0
@@ -210,6 +238,11 @@ profile:
         labelEdit: &zodiacSignLabelEdit
             en: 'Zodiac'
             es: 'Zodiaco'
+        natural:
+            prefix:
+                en: 'I am'
+                es: 'Soy'
+        withImages: false
     height:
         type: integer
         min: 50
@@ -218,13 +251,25 @@ profile:
             en: 'Height (cm)'
             es: 'Altura (cm)'
         labelEdit: *heightLabel
+        natural:
+            prefix:
+                en: 'My height is'
+                es: 'Mido'
+            interfix:
+                en: 'cm'
+                es: 'cm'
     industry:
         type: multiple_choices
         label: &industryLabel
             en: 'Industry'
             es: 'Sector'
         labelEdit: *industryLabel
+        natural:
+            prefix:
+                en: 'I work on'
+                es: 'Trabajo en'
         max: 3
+        withImages: false
     allergy:
         type: tags
         label:
@@ -260,13 +305,27 @@ profile:
                 not_want:
                     en: "and doesn’t want any"
                     es: "y no quiero ninguno"
-
+        withImages: false
+        natural:
+            interfix:
+                en: 'want to have children'
+                es: 'quiero tener hijos'
     language:
         type: tags_and_choice
         label: &languageLabel
             en: 'Languages'
             es: 'Idiomas'
         labelEdit: *languageLabel
+        natural:
+            prefix:
+                en: 'I speak'
+                es: 'Hablo'
+            interfix:
+                en: 'at'
+                es: 'con nivel'
+            suffix:
+                en: 'level'
+                es: ''
         choiceLabel: &languageChoiceLabel
             en: 'Level'
             es: 'Nivel'
@@ -286,7 +345,7 @@ profile:
             native:
                 en: 'Native or bilingual proficiency'
                 es: 'Competencia bilingüe o nativa'
-
+        withImages: false
     gender:
         type: choice
         label: &genderLabel
@@ -297,13 +356,19 @@ profile:
             es: 'Quiero salir en búsquedas por género'
         notErasable: true
         hidden: true
+        withImages: false
     descriptiveGender:
         type: multiple_choices
         label: &descriptiveGenderLabel
             en: 'Gender'
             es: 'Género'
         labelEdit: *descriptiveGenderLabel
+        natural:
+            prefix:
+                es: 'Género'
+                en: 'Gender'
         max: 5
+        withImages: false
     objective:
         type: multiple_choices
         label: &objectiveLabel
@@ -312,42 +377,71 @@ profile:
         labelEdit: *objectiveLabel
         min: 1
         notErasable: true
+        withImages: false
     hairColor:
         type: choice
         label: &hairColorLabel
             en: 'Hair color'
             es: 'Color de pelo'
         labelEdit: *hairColorLabel
+        natural:
+            prefix:
+                es: 'Pelo'
+                en: ''
+            interfix:
+                es: ''
+                en: 'hair'
+        withImages: false
     ethnicGroup:
         type: multiple_choices
         label: &ethnicGroupLabel
             en: 'Ethnicity'
             es: 'Étnia'
         labelEdit: *ethnicGroupLabel
+        natural:
+            prefix:
+                en: 'From ethnic group'
+                es: 'Mi etnia es '
+        withImages: false
     complexion:
         type: choice
         label: &complexionLabel
             en: 'Body type'
             es: 'Tipo de cuerpo'
         labelEdit: *complexionLabel
+        withImages: false
     eyeColor:
         type: choice
         label: &eyeColorLabel
             en: 'Eyes color'
             es: 'Color ojos'
         labelEdit: *eyeColorLabel
+        natural:
+            prefix:
+                en: 'I have'
+                es: 'Tengo ojos de color'
+            interfix:
+                en: 'eyes'
+                es: ''
+        withImages: false
     civilStatus:
         type: choice
         label: &civilStatusLabel
             en: 'Civil status'
             es: 'Estado civil'
         labelEdit: *civilStatusLabel
+        withImages: false
     income:
         type: choice
         label: &incomeLabel
             en: 'Income'
             es: 'Ingresos'
         labelEdit: *incomeLabel
+        natural:
+            prefix:
+                en: 'I earn'
+                es: 'Gano'
+        withImages: false
     pets:
         type: choice
         label: &petsLabel
@@ -356,6 +450,14 @@ profile:
         labelEdit:
             en: 'Do you have pets?'
             es: '¿Tienes mascotas?'
+        natural:
+            prefix:
+                en: 'I have'
+                es: 'Tengo'
+            interfix:
+                en: 'as a pet'
+                es: 'como mascota'
+        withImages: false
     smoke:
         type: choice
         label: &smokeLabel
@@ -364,6 +466,11 @@ profile:
         labelEdit:
             en: 'Do you smoke?'
             es: '¿Fumas?'
+        natural:
+            prefix:
+                en: 'Smoking?'
+                es: 'Fumar?'
+        withImages: false
     alcohol:
         type: choice
         label: &alcoholLabel
@@ -372,12 +479,22 @@ profile:
         labelEdit:
             en: 'Do you drink alcohol?'
             es: '¿Bebes Alcohol?'
+        natural:
+            prefix:
+                en: 'I drink'
+                es: 'Bebo'
+        withImages: false
     drugs:
         type: multiple_choices
         label: &drugsLabel
             en: 'Other'
             es: 'Otras'
         labelEdit: *drugsLabel
+        natural:
+            prefix:
+                en: 'I like'
+                es: 'Me gusta'
+        withImages: false
     diet:
         type: choice
         label: &dietLabel
@@ -386,13 +503,19 @@ profile:
         labelEdit:
             en: 'Are you on a special diet?'
             es: '¿Sigues alguna dieta especial?'
+        withImages: false
     orientation:
         type: multiple_choices
         label: &orientationLabel
             en: 'Orientation'
             es: 'Orientación'
         labelEdit: *orientationLabel
+        natural:
+            prefix:
+                en: 'I am'
+                es: 'Soy'
         notErasable: true
+        withImages: false
     orientationRequired:
         type: boolean
         label:
@@ -406,6 +529,7 @@ profile:
         labelEdit:
             en: 'What are your interests on relations?'
             es: '¿Qué te interesa de las relaciones?'
+        withImages: false
     interfaceLanguage:
         type: choice
         label: &interfaceLanguageLabel
@@ -414,6 +538,7 @@ profile:
         labelEdit:
             en: 'What interface language do you prefer?'
             es: '¿Qué lenguaje de interfaz prefieres?'
+        withImages: false
         notErasable: true
     religion:
         type: double_choice
@@ -442,6 +567,7 @@ profile:
             sikh: *religionDetails
             kopimism: *religionDetails
             other: *religionDetails
+        withImages: false
     handicap:
         type: tags
         label: &handicapLabel
@@ -460,6 +586,10 @@ profile:
             en: 'Skills'
             es: 'Habilidades profesionales'
         labelEdit: *professionLabel
+        natural:
+            prefix:
+                en: 'Mi skills are'
+                es: 'Mis habilidades son'
         max: 10
     education:
         type: tags
@@ -467,6 +597,10 @@ profile:
             en: 'Education'
             es: 'Educación'
         labelEdit: *educationLabel
+        natural:
+            prefix:
+                en: 'My education is'
+                es: 'Mi educación es'
     location:
         type: location
         label: &locationLabel
@@ -480,19 +614,31 @@ profile:
             en: 'Sports and physical'
             es: 'Deportes y físico'
         labelEdit: *sportsLabel
+        natural:
+            prefix:
+                en: 'I play'
+                es: 'Practico'
     games:
         type: tags
         label: &gamesLabel
             en: 'Videogames and board games'
             es: 'Videojuegos y juegos de mesa'
         labelEdit: *gamesLabel
+        natural:
+            prefix:
+                en: 'I play'
+                es: 'Juego a'
         schema: VideoGame
-    creative:
+    hobbies:
         type: tags
         label: &creativeLabel
-            en: 'Creative'
-            es: 'Creativo'
+            en: 'Hobbies'
+            es: 'Aficiones'
         labelEdit: *creativeLabel
+        natural:
+            prefix:
+                en: 'I make'
+                es: 'Hago'
     leisureMoney:
         type: multiple_choices
         label: &leisureMoneyLabel
@@ -502,78 +648,43 @@ profile:
         min: 0
         max: 4
         isRange: true
-    leisureTime:
+        withImages: false
+    plans:
         type: multiple_choices
-        label: &leisureTimeLabel
-            en: 'Leisure time'
-            es: 'Tiempo de ocio'
-        labelEdit: *leisureTimeLabel
-        min: 0
-        max: 5
-        isRange: true
-    tickets:
-        type: multiple_choices
-        label: &ticketsLabel
-            en: 'Tickets'
-            es: 'Entradas'
-        labelEdit: *ticketsLabel
-    activity:
-        type: multiple_choices
-        label: &activityLabel
-            en: 'Activities'
-            es: 'Actividades'
-        labelEdit: *activityLabel
-    travelling:
-        type: multiple_locations
-        max: 10
-        label: &travellingLabel
-            en: 'Travelling'
-            es: 'Viajes'
-        labelEdit: *travellingLabel
-    leisurePlan:
-        type: multiple_fields
         label: &leisurePlanLabel
-            en: 'Planes'
+            en: 'Plans'
             es: 'Planes'
         labelEdit: *leisurePlanLabel
-        max: 3
-        metadata:
-            name:
-                type: textarea
-                required: true
-                max: 100
-                label: &leisurePlanNameLabel
-                    en: 'Plan description'
-                    es: 'Descripción del plan'
-                labelEdit: *leisurePlanNameLabel
-    proposal:
-        type: multiple_fields
-        label: &proposalLabel
-            en: 'Proposals'
-            es: 'Propuestas'
-        labelEdit: *proposalLabel
-        max: 3
-        metadata:
-            name:
-                type: textarea
-                required: true
-                max: 100
-                label: &proposalNameLabel
-                    en: 'Proposal description'
-                    es: 'Descripción de la propuesta'
-                labelEdit: *proposalNameLabel
-            industry:
-                type: multiple_choices
-                max: 3
-                label: *industryLabel
-                labelEdit: *industryLabel
-            profession:
-                type: tags
-                max: 10
-                label: *professionLabel
-                labelEdit: *professionLabel
-
-
+        natural:
+            prefix:
+                en: 'I enjoy'
+                es: 'Me gusta'
+        withImages: false
+    shows:
+        type: multiple_choices
+        label: &showLabel
+            en: 'Shows'
+            es: 'Espectáculos'
+        labelEdit: *showLabel
+        natural:
+            prefix:
+                en: 'I go to'
+                es: 'Voy a'
+        withImages: false
+    restaurants:
+        type: multiple_choices
+        label: &restaurantLabel
+            en: 'Restaurants'
+            es: 'Restaurantes'
+        labelEdit: *restaurantLabel
+        natural:
+            prefix:
+                en: 'I like'
+                es: 'Me gusta la comida'
+            interfix:
+                en: 'food'
+                es: ''
+        withImages: false
 content:
     type:
         type: choice
@@ -594,6 +705,7 @@ threads:
     category:
         type: choice
         required: true
+        withImages: false
     default:
         type: boolean
 groups:
@@ -688,6 +800,7 @@ content_filter:
         label:
             en: 'Type of content (Music, images, etc…)'
             es: 'Tipo de contenido (Música, imágenes, etc…)'
+        withImages: false
     tags:
         type: tags
         label:
@@ -705,6 +818,7 @@ user_filter:
         label:
             en: 'Badges'
             es: 'Insignias'
+        withImages: false
     compatibility:
         type: integer
         min: 50
@@ -727,6 +841,7 @@ user_filter:
     zodiacSign:
         type: multiple_choices
         label: *zodiacSignLabelEdit
+        withImages: false
     height:
         type: integer_range
         min: 50
@@ -736,70 +851,90 @@ user_filter:
         type: choice_and_multiple_choices
         label: *sonsLabel
         doubleChoices: *sonsDoubleChoices
+        withImages: false
     language:
         type: tags_and_multiple_choices
         label: *languageLabel
         choiceLabel: *languageChoiceLabel
         choices: *languageChoices
-#        gender:
+        withImages: false
+    #        gender:
 #            type: multiple_choices
 #            label: *genderLabel
     descriptiveGender:
         type: multiple_choices
         label: *descriptiveGenderLabel
+        withImages: false
     objective:
         type: multiple_choices
         label: *objectiveLabel
+        withImages: false
     hairColor:
         type: multiple_choices
         label: *hairColorLabel
+        withImages: false
     ethnicGroup:
         type: multiple_choices
         label: *ethnicGroupLabel
+        withImages: false
     complexion:
         type: multiple_choices
         label: *complexionLabel
+        withImages: false
     eyeColor:
         type: multiple_choices
         label: *eyeColorLabel
+        withImages: false
     civilStatus:
         type: multiple_choices
         label: *civilStatusLabel
+        withImages: false
     income:
         type: multiple_choices
         label: *incomeLabel
+        withImages: false
     pets:
         type: multiple_choices
         label: *petsLabel
+        withImages: false
     smoke:
         type: multiple_choices
         label: *smokeLabel
+        withImages: false
     alcohol:
         type: multiple_choices
         label: *alcoholLabel
+        withImages: false
     drugs:
         type: multiple_choices
         label: *drugsLabel
+        withImages: false
     diet:
         type: multiple_choices
         label: *dietLabel
+        withImages: false
     industry:
         type: multiple_choices
         label: *industryLabel
+        withImages: false
         max: 10
     orientation:
         type: multiple_choices
         label: *orientationLabel
+        withImages: false
     relationshipInterest:
         type: multiple_choices
         label: *relationshipInterestLabel
+        withImages: false
     interfaceLanguage:
         type: multiple_choices
         label: *interfaceLanguageLabel
+        withImages: false
     religion:
         type: double_multiple_choices
         label: *religionLabel
         doubleChoices: *religionDoubleChoices
+        withImages: false
     allergy:
         type: tags
         label: *allergyLabel
@@ -882,3 +1017,40 @@ device:
     platform:
         required: true
         type: string
+
+proposal:
+    work:
+        industry:
+            type: choice
+            withImages: false
+        profession:
+            type: tag
+    sports:
+        sports:
+            type: tag_and_suggestion
+    games:
+        games:
+            type: tag_and_suggestion
+    hobbies:
+        hobbies:
+            type: choice
+            withImages: false
+    shows:
+        shows:
+            type: choice
+            withImages: true
+    restaurants:
+        restaurants:
+            type: choice
+            withImages: true
+    plans:
+        plans:
+            type: choice
+            withImages: true
+
+availability:
+    date:
+        type: date
+    id:
+        type: integer
+        required: false

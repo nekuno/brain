@@ -45,12 +45,13 @@
         <env name="rabbitmq_user" value="guest" />
         <env name="rabbitmq_pass" value="guest" />
         <env name="DATABASE_URL" value="sqlite:///%kernel.project_dir%/var/cache/nekuno_brain.db" force="true" />
+        <env name="last_year" value="2018" />
         <!-- define your env variables for the test env here -->
     </php>
 
     <testsuites>
         <testsuite name="Project Test Suite">
-            <directory>tests/API</directory>
+            <directory>tests</directory>
         </testsuite>
     </testsuites>
 

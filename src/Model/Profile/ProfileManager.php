@@ -62,7 +62,7 @@ class ProfileManager
             ->optionalMatch('(profile)<-[optionOf:OPTION_OF]-(option:ProfileOption)')
             ->with('profile', 'collect(distinct {option: option, detail: (CASE WHEN EXISTS(optionOf.detail) THEN optionOf.detail ELSE null END)}) AS options')
             ->optionalMatch('(profile)<-[tagged:TAGGED]-(tag:ProfileTag)-[:TEXT_OF]-(text:TextLanguage)')
-            ->returns('profile', 'options', 'collect(distinct {tag: tag, tagged: tagged, text: text}) AS tags')
+            ->returns('profile', 'options', 'collect(distinct {tag: tag, tagged: tagged, text: text.canonical, locale: text.locale}) AS tags')
             ->limit(1);
 
         $query = $qb->getQuery();
@@ -214,7 +214,7 @@ class ProfileManager
             $profile->set($field, $profileOption);
         }
 
-        $profileTags = $this->profileTagManager->buildTags($row);
+        $profileTags = $this->profileTagManager->buildTags($row, $interfaceLocale);
         foreach ($profileTags as $field => $profileTag)
         {
             $profile->set($field, $profileTag);
@@ -285,10 +285,11 @@ class ProfileManager
             ->optionalMatch('(multiple)<-[optionOf:OPTION_OF]-(option:ProfileOption)')
             ->with('multiple', 'collect(distinct {option: option, detail: (CASE WHEN EXISTS(optionOf.detail) THEN optionOf.detail ELSE null END)}) AS options')
             ->optionalMatch('(multiple)<-[tagged:TAGGED]-(tag:ProfileTag)-[:TEXT_OF]-(text:TextLanguage)')
-            ->returns('multiple', 'options', 'collect(distinct {tag: tag, tagged: tagged, text: text}) AS tags', 'head(labels(multiple)) AS label');
+            ->returns('multiple', 'options', 'collect(distinct {tag: tag, tagged: tagged, text: text.canonical, locale: text.locale}) AS tags', 'head(labels(multiple)) AS label');
 
         $result = $qb->getQuery()->getResultSet();
 
+        $interfaceLocale = $this->getInterfaceLocaleByProfileId($profileId);
         $multiples = array();
         //TODO: Change to multiples = array(field=> Profile())
         foreach ($result as $row)
@@ -298,7 +299,7 @@ class ProfileManager
             $multiple = $multipleNode->getProperties();
 
             $multiple += $this->profileOptionManager->buildOptions($row->offsetGet('options'));
-            $multiple += $this->profileTagManager->buildTags($row);
+            $multiple += $this->profileTagManager->buildTags($row, $interfaceLocale);
             //if Location or Travelling is needed, remove :Profile requirement from methods or move this to own manager
             $label = $row->offsetGet('label');
             $field = $this->metadataUtilities->labelToType($label);

@@ -7,6 +7,7 @@ use FOS\RestBundle\Controller\Annotations\Get;
 use FOS\RestBundle\Controller\Annotations\Post;
 use FOS\RestBundle\Controller\FOSRestController;
 use FOS\RestBundle\Routing\ClassResourceInterface;
+use Service\RelationsService;
 use Swagger\Annotations as SWG;
 use Model\User\UserManager;
 use Model\Relations\RelationsManager;
@@ -200,5 +201,32 @@ class RelationsController extends FOSRestController implements ClassResourceInte
         }
 
         return $result;
+    }
+
+    /**
+     * Get users liked
+     *
+     * @Get("/friends")
+     * @param User $user
+     * @param RelationsService $relationsService
+     * @return \FOS\RestBundle\View\View
+     * @SWG\Parameter(
+     *      name="locale",
+     *      in="query",
+     *      type="string",
+     *      default="es"
+     * )
+     * @SWG\Response(
+     *     response=200,
+     *     description="Returns users liked",
+     * )
+     * @Security(name="Bearer")
+     * @SWG\Tag(name="relations")
+     */
+    public function getFriendsAction(User $user, RelationsService $relationsService)
+    {
+        $result = $relationsService->getFriends($user);
+
+        return $this->view($result);
     }
 }

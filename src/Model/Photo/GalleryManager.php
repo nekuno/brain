@@ -10,6 +10,8 @@ class GalleryManager
 {
     protected $base;
 
+    protected $folderBase = 'uploads/gallery/';
+
     public function __construct($base)
     {
         $this->base = $base;
@@ -18,11 +20,17 @@ class GalleryManager
     public function save($file, User $user, $extension)
     {
         $name = $this->buildFileName($user->getUsernameCanonical(), $extension);
-        $folder = $this->buildGalleryFolderName($user->getId());
+        $folder = $this->buildFolderName($user->getId());
+
+        return $this->saveFile($name, $folder, $file);
+    }
+
+    protected function saveFile($fileName, $folder, $file)
+    {
         if (!is_dir($this->base . $folder)) {
             mkdir($this->base . $folder, 0775);
         }
-        $path = $folder . $name;
+        $path = $folder . $fileName;
         $saved = file_put_contents($this->base . $path, $file);
 
         if ($saved === false) {
@@ -37,7 +45,7 @@ class GalleryManager
     public function deleteAllFromUser(User $user)
     {
         $userId = $user->getId();
-        $folder = $this->buildGalleryFolderName($userId);
+        $folder = $this->buildFolderName($userId);
         $fullPath = $this->base . $folder;
 
         //https://stackoverflow.com/questions/4594180/deleting-all-files-from-a-folder-using-php
@@ -56,8 +64,8 @@ class GalleryManager
         return sha1(uniqid($username . '_' . time(), true)) . '.' . $extension;
     }
 
-    protected function buildGalleryFolderName($userId)
+    protected function buildFolderName($userId)
     {
-        return 'uploads/gallery/' . md5($userId) . '/';
+        return $this->folderBase . md5($userId) . '/';
     }
 }

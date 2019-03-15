@@ -346,14 +346,16 @@ class ProfileTagManager
         $query->getResultSet();
     }
 
-    public function buildTags(Row $row)
+    public function buildTags(Row $row, $interfaceLocale = null)
     {
+        $interfaceLocale = $interfaceLocale?: 'es'; //For calls from filters, change to real when called from Service
         $tags = $row->offsetGet('tags');
         $tagsResult = array();
         /** @var Row $tagData */
         foreach ($tags as $tagData) {
             $text = $tagData->offsetGet('text');
-            if ($text === null){
+            $locale = $tagData->offsetGet('locale');
+            if ($text === null || $locale !== $interfaceLocale){
                 continue;
             }
             $tag = $tagData->offsetGet('tag');
@@ -368,14 +370,14 @@ class ProfileTagManager
                     $detail = $tagged->getProperty('detail');
                     if (!is_null($detail)) {
                         $tagResult = array();
-                        $tagResult['tag'] = array('name' => $text->getProperty('canonical'));
+                        $tagResult['tag'] = array('name' => $text);
                         if (is_array($detail)){
                             $tagResult['choices'] = $detail;
                         } else {
                             $tagResult['choice'] = $detail;
                         }
                     } else {
-                        $tagResult = array('name' => $text->getProperty('canonical'));
+                        $tagResult = array('name' => $text);
                     }
 
                     $tagsResult[$typeName][] = $tagResult;
