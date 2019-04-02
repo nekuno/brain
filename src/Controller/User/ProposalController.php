@@ -212,6 +212,35 @@ class ProposalController extends FOSRestController implements ClassResourceInter
     }
 
     /**
+     * Get a proposal
+     *
+     * @Get("/proposals/{proposalId}", requirements={"proposalId"="\d+"})
+     * @param $proposalId
+     * @param Request $request
+     * @param ProposalService $proposalService
+     * @return \FOS\RestBundle\View\View
+     * @SWG\Parameter(
+     *      name="locale",
+     *      in="query",
+     *      type="string",
+     *      default="es"
+     * )
+     * @SWG\Response(
+     *     response=200,
+     *     description="Returns given proposal",
+     * )
+     * @Security(name="Bearer")
+     * @SWG\Tag(name="proposals")
+     */
+    public function getByIdAction($proposalId, Request $request, ProposalService $proposalService)
+    {
+        $locale = $request->query->get('locale', 'en');
+        $proposal = $proposalService->getById($proposalId, $locale);
+
+        return $this->view($proposal, 200);
+    }
+
+    /**
      * Get all proposals for a user
      *
      * @Get("/proposals/metadata")

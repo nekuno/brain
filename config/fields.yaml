@@ -630,7 +630,7 @@ profile:
                 es: 'Juego a'
         schema: VideoGame
     hobbies:
-        type: tags
+        type: multiple_choices
         label: &creativeLabel
             en: 'Hobbies'
             es: 'Aficiones'
