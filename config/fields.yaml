@@ -2,7 +2,7 @@ privacy:
     profile:
         type: choice
         label:
-            en: 'Who can access my profileeeeeeeeeeeeeeeeeee'
+            en: 'Who can access my profile'
             es: 'Quién puede acceder a mi perfil'
     description:
         type: choice
