@@ -205,9 +205,9 @@ class UserService
      * @param Proposal $proposal
      * @return array[]
      */
-    public function getOtherByProposal(Proposal $proposal)
+    public function getOtherInterestedInProposal(Proposal $proposal)
     {
-        $candidateSlugs = $this->userManager->getByProposal($proposal);
+        $candidateSlugs = $this->userManager->getInterestedInProposal($proposal);
 
         $matches = array();
         foreach ($candidateSlugs as $candidateSlug) {
@@ -216,5 +216,4 @@ class UserService
 
         return $matches;
     }
-
 }

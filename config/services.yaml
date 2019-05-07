@@ -211,6 +211,7 @@ services:
             $defaultLocale: "en"
     Model\Recommendation\UserRecommendationBuilder:
     Model\Proposal\ProposalBuilder:
+    Model\Proposal\OwnProposalLikedPaginated:
     Model\Availability\AvailabilityDataFormatter:
     Model\Profile\NaturalProfileBuilder:
 

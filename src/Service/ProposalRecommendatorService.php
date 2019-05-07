@@ -84,8 +84,10 @@ class ProposalRecommendatorService
 
     public function getRecommendations(User $user, Request $request)
     {
-        $candidateRecommendations = $this->getCandidateRecommendations($user, $request);
+//        $candidateRecommendations = $this->getCandidateRecommendations($user, $request);
+        $candidateRecommendations = array();
         $proposalRecommendations = $this->getProposalRecommendations($user, $request);
+//        $proposalRecommendations = array();
 
         $recommendations = $this->mixRecommendations($candidateRecommendations, $proposalRecommendations);
 
@@ -142,8 +144,9 @@ class ProposalRecommendatorService
     protected function setIncludeSkipped(array $filters, Request $request)
     {
         $candidatesNotSeenYet = $this->candidateRecommendator->countTotal($filters);
-
+//var_dump($candidatesNotSeenYet);
         $limit = $request->get('limit');
+//        var_dump($limit);
         $includeSkipped = $candidatesNotSeenYet < $limit;
         $filters['includeSkipped'] = $includeSkipped;
 

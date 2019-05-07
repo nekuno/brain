@@ -183,6 +183,36 @@ class ProposalController extends FOSRestController implements ClassResourceInter
     }
 
     /**
+     * Get proposals that I have liked
+     *
+     * @Get("/proposals/liked")
+     * @param Request $request
+     * @param User $user
+     * @param ProposalService $proposalService
+     * @return \FOS\RestBundle\View\View
+     *
+     * @SWG\Parameter(
+     *      name="locale",
+     *      in="query",
+     *      type="string",
+     *      default="es"
+     * )
+     * @SWG\Response(
+     *     response=200,
+     *     description="Returns liked proposals"
+     * )
+     * @Security(name="Bearer")
+     * @SWG\Tag(name="proposals")
+     */
+    public function getOwnProposalsLikedAction(Request $request, User $user, ProposalService $proposalService)
+    {
+        $locale = $request->query->get('locale', 'en');
+        $proposals = $proposalService->getOwnLiked($locale, $request, $user);
+
+        return $this->view($proposals, 200);
+    }
+
+    /**
      * Get recommendations for all proposals
      *
      * @Get("/proposals/recommendations")

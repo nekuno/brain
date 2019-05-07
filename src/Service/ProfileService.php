@@ -92,10 +92,10 @@ class ProfileService
         $otherProfileData->setLocation($profile->get('location'));
         $otherProfileData->setBirthday($profile->get('birthday'));
 
-        $matching = $this->matchingManager->getMatchingBetweenTwoUsersBasedOnAnswers($otherUserId, $ownUserId);
+        $matching = $this->matchingManager->getMatchingBetweenTwoUsersBasedOnAnswers(5, 42);
         $otherProfileData->setMatching($matching->getMatching());
 
-        $similarity = $this->similarityManager->getCurrentSimilarity($otherUserId, $ownUserId);
+        $similarity = $this->similarityManager->getCurrentSimilarity(5, 42);
         $otherProfileData->setSimilarity($similarity->getSimilarity());
 
         $photos = $this->photoManager->getAll($otherUserId);

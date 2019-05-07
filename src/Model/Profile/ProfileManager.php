@@ -79,6 +79,36 @@ class ProfileManager
     }
 
     /**
+     * @param string $slug
+     * @return Profile
+     * @throws NotFoundHttpException
+     */
+    public function getBySlug($slug)
+    {
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(user:User)<-[:PROFILE_OF]-(profile:Profile)')
+            ->where('user.slug = { slug }')
+            ->setParameter('slug', $slug)
+            ->optionalMatch('(profile)<-[optionOf:OPTION_OF]-(option:ProfileOption)')
+            ->with('profile', 'collect(distinct {option: option, detail: (CASE WHEN EXISTS(optionOf.detail) THEN optionOf.detail ELSE null END)}) AS options')
+            ->optionalMatch('(profile)<-[tagged:TAGGED]-(tag:ProfileTag)-[:TEXT_OF]-(text:TextLanguage)')
+            ->returns('profile', 'options', 'collect(distinct {tag: tag, tagged: tagged, text: text.canonical, locale: text.locale}) AS tags')
+            ->limit(1);
+
+        $query = $qb->getQuery();
+        $result = $query->getResultSet();
+
+        if (count($result) < 1) {
+            throw new NotFoundHttpException('Profile not found');
+        }
+
+        /* @var $row Row */
+        $row = $result->current();
+
+        return $this->build($row);
+    }
+
+    /**
      * @param $id
      * @param array $data
      * @return Profile

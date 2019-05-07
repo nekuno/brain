@@ -849,7 +849,7 @@ class UserManager
         return $this->build($result->current());
     }
 
-    public function getByProposal(Proposal $proposal)
+    public function getInterestedInProposal(Proposal $proposal)
     {
         $proposalId = $proposal->getId();
 
@@ -870,6 +870,25 @@ class UserManager
         $data = $qb->getData($resultSet->current());
 
         return $data['slugs'];
+    }
+
+    public function getByProposalCreated(Proposal $proposal)
+    {
+        $proposalId = $proposal->getId();
+
+        $qb = $this->gm->createQueryBuilder();
+
+        $qb->match('(proposal:Proposal)')
+            ->where('id(proposal) = {proposalId}')
+            ->setParameter('proposalId', $proposalId);
+
+        $qb->match('(proposal)<-[:PROPOSES]-(user:UserEnabled)');
+
+        $qb->returns('user.slug AS slug');
+
+        $resultSet = $qb->getQuery()->getResultSet();
+
+        return $this->getBySlug($resultSet->current()->offsetGet('slug'));
     }
 
     /**
