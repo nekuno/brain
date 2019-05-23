@@ -29,7 +29,7 @@ categories:
         - label:
             en: Nekuno Profile
             es: Perfil Nekuno
-          fields: [objective, birthday, descriptiveGender, location, interfaceLanguage]
+          fields: [objective, birthday, descriptiveGender, location]
         - label:
             en: Nekuno goals
             es: Objetivos en Nekuno
@@ -45,7 +45,7 @@ categories:
         - label:
             en: Background
             es: Educación y cultura
-          fields: [interfaceLanguage, language, education, religion, ideology]
+          fields: [language, education, religion, ideology]
         - label:
             en: Drugs and other vices
             es: Drogas y otros vicios

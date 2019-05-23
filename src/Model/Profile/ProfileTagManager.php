@@ -81,10 +81,11 @@ class ProfileTagManager
      * @param $type
      * @param $startingWith
      * @param int $limit
-     * @throws \Exception
+     * @param string $locale
      * @return array
+     * @throws \Exception
      */
-    public function getProfileTagsSuggestion($type, $startingWith = null, $limit = 3)
+    public function getProfileTagsSuggestion($type, $startingWith = null, $limit = 3, $locale = 'en')
     {
         $startingWith = $this->languageTextManager->buildCanonical($startingWith);
         $label = $this->metadataUtilities->typeToLabel($type);
@@ -93,8 +94,10 @@ class ProfileTagManager
 
         $qb->match("(tag:ProfileTag:$label)<-[:TEXT_OF]-(text:TextLanguage)");
         if ($startingWith !== null && $startingWith !== '') {
-            $qb->where('text.canonical STARTS WITH {starts}')
-                ->setParameter('starts', $startingWith);
+            $qb->where('text.canonical STARTS WITH {starts}', 'text.locale = {locale}')
+                ->setParameter('starts', $startingWith)
+                ->setParameter('locale', $locale)
+            ;
         }
 
         $qb->returns('distinct text.canonical AS text')

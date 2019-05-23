@@ -211,12 +211,13 @@ class ProfileController extends FOSRestController implements ClassResourceInterf
     {
         $search = $request->get('search', '');
         $limit = $request->get('limit', 3);
+        $locale = $request->query->get('locale', 'en');
 
         if ($search) {
             $search = urldecode($search);
         }
 
-        $result = $profileTagManager->getProfileTagsSuggestion($type, $search, $limit);
+        $result = $profileTagManager->getProfileTagsSuggestion($type, $search, $limit, $locale);
 
         return $this->view($result);
     }
