@@ -38,6 +38,7 @@ class ProposalRecommendator implements PaginatedInterface
     public function slice(array $filters, $offset, $limit)
     {
         $userId = $filters['userId'];
+        $previousCondition = $this->buildPreviousCondition($filters);
 
         $qb = $this->graphManager->createQueryBuilder();
 
@@ -48,10 +49,9 @@ class ProposalRecommendator implements PaginatedInterface
         $qb->match('(user)-[:HAS_AVAILABILITY]->(:Availability)-[:INCLUDES]->(day:DayPeriod)');
 
         $qb->match('(day)<-[includes:INCLUDES]-(:Availability)<-[anyHas:HAS_AVAILABILITY]-(proposal:Proposal)')
-
             ->with('user', 'proposal')
-            ->where('NOT ((user)-[:PROPOSES|SKIPPED]->(proposal))')
-            ->with('proposal');
+            ->where($previousCondition)
+            ->with('distinct proposal');
 
         $qb->match('(owner:UserEnabled)-[:PROPOSES]->(proposal)');
 
@@ -60,8 +60,7 @@ class ProposalRecommendator implements PaginatedInterface
         $resultSet = $qb->getQuery()->getResultSet();
 
         $proposals = [];
-        foreach ($resultSet as $row)
-        {
+        foreach ($resultSet as $row) {
             $data = $qb->getData($row);
             $proposals[] = $data;
         }
@@ -97,5 +96,23 @@ class ProposalRecommendator implements PaginatedInterface
         $amount = $resultSet->current()->offsetGet('amount');
 
         return $amount;
+    }
+
+    /**
+     * @param array $filtersArray
+     * @return array
+     */
+    protected function buildPreviousCondition(array $filtersArray)
+    {
+        $includeSkipped = isset($filtersArray['includeSkipped']) ? $filtersArray['includeSkipped'] : false;
+
+        $previousCondition = array();
+        if (!$includeSkipped) {
+            $previousCondition[] = 'NOT ((user)-[:PROPOSES|SKIPPED]->(proposal))';
+        } else {
+            $previousCondition[] = 'NOT ((user)-[:PROPOSES]->(proposal))';
+        }
+
+        return $previousCondition;
     }
 }

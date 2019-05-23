@@ -84,10 +84,8 @@ class ProposalRecommendatorService
 
     public function getRecommendations(User $user, Request $request)
     {
-//        $candidateRecommendations = $this->getCandidateRecommendations($user, $request);
-        $candidateRecommendations = array();
+        $candidateRecommendations = $this->getCandidateRecommendations($user, $request);
         $proposalRecommendations = $this->getProposalRecommendations($user, $request);
-//        $proposalRecommendations = array();
 
         $recommendations = $this->mixRecommendations($candidateRecommendations, $proposalRecommendations);
 
@@ -102,7 +100,7 @@ class ProposalRecommendatorService
         foreach ($proposalIds as $proposalId) {
             $filters = $this->getFiltersByProposalId($proposalId);
             $filters['userId'] = $user->getId();
-            $filters = $this->setIncludeSkipped($filters, $request);
+            $filters = $this->setIncludeCandidatesSkipped($filters, $request);
             $filters['excluded'] = $request->get('excluded', array());
 
             $candidatesResult = $this->paginator->paginate($filters, $this->candidateRecommendator, $request);
@@ -141,12 +139,10 @@ class ProposalRecommendatorService
         return $filters;
     }
 
-    protected function setIncludeSkipped(array $filters, Request $request)
+    protected function setIncludeCandidatesSkipped(array $filters, Request $request)
     {
         $candidatesNotSeenYet = $this->candidateRecommendator->countTotal($filters);
-//var_dump($candidatesNotSeenYet);
-        $limit = $request->get('limit');
-//        var_dump($limit);
+        $limit = $request->get('limit') ?: 20;
         $includeSkipped = $candidatesNotSeenYet < $limit;
         $filters['includeSkipped'] = $includeSkipped;
 
@@ -184,6 +180,7 @@ class ProposalRecommendatorService
     {
         $filters = $request->query->get('filters');
         $filters['userId'] = $user->getId();
+        $filters = $this->setIncludeProposalsSkipped($filters, $request);
         $availability = $this->availabilityManager->getByUser($user);
 
         if (null == $availability) {
@@ -196,6 +193,16 @@ class ProposalRecommendatorService
         $proposalRecommendations = $this->buildProposalRecommendations($proposalPagination['items'], $user);
 
         return $proposalRecommendations;
+    }
+
+    protected function setIncludeProposalsSkipped(array $filters, Request $request)
+    {
+        $proposalsNotSeenYet = $this->proposalFreeRecommendator->countTotal($filters);
+        $limit = $request->get('limit') ?: 20;
+        $includeSkipped = $proposalsNotSeenYet < $limit;
+        $filters['includeSkipped'] = $includeSkipped;
+
+        return $filters;
     }
 
     protected function buildProposalRecommendations(array $proposalData, User $user)
