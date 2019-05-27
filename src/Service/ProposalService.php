@@ -72,13 +72,15 @@ class ProposalService
         $this->ownProposalLikedPaginated = $ownProposalLikedPaginated;
     }
 
-    public function getById($proposalId, $locale)
+    public function getById($proposalId, $locale, User $user = null)
     {
         $proposal = $this->proposalManager->getById($proposalId, $locale);
 
         $proposal = $this->addAvailabilityField($proposal);
 
         $proposal = $this->addFilters($proposal);
+
+        $proposal = $this->addHasMatch($proposal, $user);
 
         return $proposal;
     }
@@ -208,7 +210,7 @@ class ProposalService
      * @param Proposal $proposal
      * @return Proposal
      */
-    protected function addAvailabilityField(Proposal $proposal)
+    public function addAvailabilityField(Proposal $proposal)
     {
         $availability = $this->availabilityService->getByProposal($proposal);
 
@@ -233,6 +235,25 @@ class ProposalService
         $proposalId = $proposal->getId();
         $filters = $this->filterUsersManager->getFilterUsersByProposalId($proposalId);
         $proposal->setFilters($filters);
+
+        return $proposal;
+    }
+
+    /**
+     * @param Proposal $proposal
+     * @param User $user
+     * @return Proposal
+     */
+    protected function addHasMatch(Proposal $proposal, User $user)
+    {
+        if (null === $user)
+        {
+            return $proposal;
+        }
+
+        $hasMatch = $this->proposalManager->getHasMatch($proposal, $user);
+
+        $proposal->setHasMatch($hasMatch);
 
         return $proposal;
     }

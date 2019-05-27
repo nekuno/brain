@@ -192,6 +192,32 @@ class ProposalManager
         return $proposals;
     }
 
+    public function getHasMatch(Proposal $proposal, User $user)
+    {
+        $userId = $user->getId();
+        $proposalId = $proposal->getId();
+
+        $qb = $this->graphManager->createQueryBuilder();
+
+        $qb->match('(user:User{qnoow_id: {userId}})')
+            ->setParameter('userId', $userId)
+            ->with('user');
+
+        $qb->match('(proposal:Proposal)')
+            ->where('id(proposal) = {proposalId}')
+            ->with('proposal', 'user')
+            ->setParameter('proposalId', $proposalId);
+
+        $qb->optionalMatch('(proposal)-[a:ACCEPTS]->(user)')
+            ->optionalMatch('(user)-[i:INTERESTED_IN]->(proposal)')
+            ->returns('(a IS NOT NULL) AND (i IS NOT NULL) AS hasMatch');
+
+        $resultSet = $qb->getQuery()->getResultSet();
+        $data = $qb->getData($resultSet->current());
+
+        return $data['hasMatch'];
+    }
+
     public function setInterestedInProposal(User $user, $proposalId, $interested)
     {
         $userId = $user->getId();

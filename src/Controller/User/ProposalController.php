@@ -246,6 +246,7 @@ class ProposalController extends FOSRestController implements ClassResourceInter
      *
      * @Get("/proposals/{proposalId}", requirements={"proposalId"="\d+"})
      * @param $proposalId
+     * @param User $user
      * @param Request $request
      * @param ProposalService $proposalService
      * @return \FOS\RestBundle\View\View
@@ -262,10 +263,10 @@ class ProposalController extends FOSRestController implements ClassResourceInter
      * @Security(name="Bearer")
      * @SWG\Tag(name="proposals")
      */
-    public function getByIdAction($proposalId, Request $request, ProposalService $proposalService)
+    public function getByIdAction($proposalId, User $user, Request $request, ProposalService $proposalService)
     {
         $locale = $request->query->get('locale', 'en');
-        $proposal = $proposalService->getById($proposalId, $locale);
+        $proposal = $proposalService->getById($proposalId, $locale, $user);
 
         return $this->view($proposal, 200);
     }

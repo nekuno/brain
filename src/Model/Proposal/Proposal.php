@@ -28,6 +28,8 @@ class Proposal implements \JsonSerializable
     /** @var FilterUsers */
     protected $filters;
 
+    protected $hasMatch = false;
+
     /**
      * Proposal constructor.
      * @param $type
@@ -162,6 +164,22 @@ class Proposal implements \JsonSerializable
         return count($this->matches);
     }
 
+    /**
+     * @return bool
+     */
+    public function hasMatch(): bool
+    {
+        return $this->hasMatch;
+    }
+
+    /**
+     * @param bool $hasMatch
+     */
+    public function setHasMatch(bool $hasMatch): void
+    {
+        $this->hasMatch = $hasMatch;
+    }
+
     public function jsonSerialize()
     {
         $proposal = array(
@@ -170,6 +188,7 @@ class Proposal implements \JsonSerializable
             'filters' => $this->getFilters(),
             'matches' => $this->getMatches(),
             'countMatches' => $this->countMatches(),
+            'hasMatch' => $this->hasMatch(),
             'fields' => array(),
         );
 
