@@ -23,6 +23,7 @@ use Symfony\Component\HttpFoundation\Request;
 class ProposalRecommendatorService
 {
     protected $paginator;
+    protected $proposalService;
     protected $filterUsersManager;
     protected $availabilityManager;
     protected $proposalManager;
@@ -39,6 +40,7 @@ class ProposalRecommendatorService
     /**
      * ProposalRecommendatorService constructor.
      * @param ProposalRecommendationsPaginator $paginator
+     * @param ProposalService $proposalService
      * @param CandidateUninterestedRecommendator $candidateUninterestedRecommendator
      * @param CandidateUninterestedFreeRecommendator $candidateUninterestedFreeRecommendator
      * @param CandidateInterestedRecommendator $candidateInterestedRecommendator
@@ -54,6 +56,7 @@ class ProposalRecommendatorService
      */
     public function __construct(
         ProposalRecommendationsPaginator $paginator,
+        ProposalService $proposalService,
         CandidateUninterestedRecommendator $candidateUninterestedRecommendator,
         CandidateUninterestedFreeRecommendator $candidateUninterestedFreeRecommendator,
         CandidateInterestedRecommendator $candidateInterestedRecommendator,
@@ -68,6 +71,7 @@ class ProposalRecommendatorService
         UserRecommendationBuilder $userRecommendationBuilder
     ) {
         $this->paginator = $paginator;
+        $this->proposalService = $proposalService;
         $this->candidateUninterestedRecommendator = $candidateUninterestedRecommendator;
         $this->candidateUninterestedFreeRecommendator = $candidateUninterestedFreeRecommendator;
         $this->candidateInterestedRecommendator = $candidateInterestedRecommendator;
@@ -156,7 +160,7 @@ class ProposalRecommendatorService
 
     protected function getUninterestedCandidates($filters, $request)
     {
-        $availability = $this->getAvailabilityByProposal($filters['proposalId']);
+        $availability = $this->getAvailabilityByProposalId($filters['proposalId']);
 
         if (null == $availability) {
             $model = $this->candidateUninterestedFreeRecommendator;
@@ -167,10 +171,16 @@ class ProposalRecommendatorService
         return $this->paginator->paginate($filters, $model, $request);
     }
 
-    protected function getAvailabilityByProposal($proposalId)
+    protected function getAvailabilityByProposalId($proposalId)
     {
-        $defaultLocale = 'en';
+        $defaultLocale = 'es';
         $proposal = $this->proposalManager->getById($proposalId, $defaultLocale);
+
+        return $this->getAvailabilityByProposal($proposal);
+    }
+
+    protected function getAvailabilityByProposal(Proposal $proposal)
+    {
         $availability = $this->availabilityManager->getByProposal($proposal);
 
         return $availability;
@@ -191,6 +201,14 @@ class ProposalRecommendatorService
 
         $proposalPagination = $this->paginator->paginate($filters, $model, $request);
         $proposalRecommendations = $this->buildProposalRecommendations($proposalPagination['items'], $user);
+
+        foreach ($proposalRecommendations as $index => $proposalRecommendation)
+        {
+            /** @var Proposal $proposal */
+            $proposal = $proposalRecommendation['proposal'];
+            $proposal = $this->proposalService->addAvailabilityField($proposal);
+            $proposalRecommendations[$index]['proposal'] = $proposal;
+        }
 
         return $proposalRecommendations;
     }
