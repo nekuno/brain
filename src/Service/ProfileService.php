@@ -101,7 +101,7 @@ class ProfileService
         $photos = $this->photoManager->getAll($otherUserId);
         $otherProfileData->setPhotos($photos);
 
-        $locale = $profile->get('interfaceLanguage');
+        $locale = $this->profileManager->getInterfaceLocale($ownUserId);
         $profileMetadata = $this->metadataService->getProfileMetadataWithChoices($locale);
         $this->naturalProfileBuilder->setMetadata($profileMetadata);
 

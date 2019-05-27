@@ -415,6 +415,9 @@ class ProfileManager
 
     public function getInterfaceLocale($userId)
     {
+        //while application is only in Spanish
+        return 'es';
+
         $qb = $this->gm->createQueryBuilder();
 
         $qb->match('(profile:Profile)-[:PROFILE_OF]->(u:User)')

@@ -47,6 +47,8 @@ class ProfileController extends FOSRestController implements ClassResourceInterf
      * Get profile data for other user´s page
      *
      * @Get("/profile/{slug}/page")
+     * @param string $slug
+
      * @param User $user
      * @param ProfileService $profileService
      * @return \FOS\RestBundle\View\View
