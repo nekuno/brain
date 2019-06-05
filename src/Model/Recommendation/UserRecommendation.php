@@ -56,4 +56,15 @@ class UserRecommendation extends AbstractUserRecommendation
         $this->topLinks = $topLinks;
     }
 
+    function jsonSerialize()
+    {
+        $user = parent::jsonSerialize();
+
+        $user['like'] = $this->like;
+        $user['profile'] = $this->profile;
+        $user['topLinks'] = $this->topLinks;
+
+        return $user;
+    }
+
 }
