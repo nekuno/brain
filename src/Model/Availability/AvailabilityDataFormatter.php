@@ -33,7 +33,6 @@ class AvailabilityDataFormatter
     /**
      * @param array $data
      * @return array
-     * @throws \Exception
      */
     protected function getStaticData(array $data)
     {

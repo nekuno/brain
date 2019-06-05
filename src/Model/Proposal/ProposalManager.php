@@ -13,7 +13,7 @@ class ProposalManager
 
     protected $proposalBuilder;
 
-    protected $locale = 'en';
+    protected $locale = 'es';
 
     /**
      * ProposalManager constructor.
