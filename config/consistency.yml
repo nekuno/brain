@@ -147,8 +147,8 @@ profile:
         birthday:
             type: datetime
             maximum: "now"
-        orientationRequired:
-            type: boolean
+#        orientationRequired:
+#            type: boolean
         height:
             type: integer
 

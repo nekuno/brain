@@ -250,7 +250,6 @@ class Fixtures
         $this->logger->notice('Loading generic invitation');
 
         $invitationData = array(
-            'orientationRequired' => false,
             'available' => 10000,
             'token' => 'join',
         );
@@ -283,7 +282,6 @@ class Fixtures
 
             $invitationData = array(
                 'groupId' => $group->getId(),
-                'orientationRequired' => false,
                 'available' => 100,
             );
             $invitation = $this->im->create($invitationData);

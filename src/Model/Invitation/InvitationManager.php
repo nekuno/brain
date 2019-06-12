@@ -784,7 +784,7 @@ class InvitationManager
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(u:User {qnoow_id: { otherUserId }})')
             ->merge('(u)-[:CREATED_INVITATION]-(inv:Invitation:InvitationSharedUser {token: { token }})')
-            ->set('inv.available = COALESCE(inv.available, 10000) - 1', 'inv.consumed = COALESCE(inv.consumed, 0) + 1', 'inv.createdAt = COALESCE(inv.createdAt , timestamp())', 'inv.orientationRequired = true')
+            ->set('inv.available = COALESCE(inv.available, 10000) - 1', 'inv.consumed = COALESCE(inv.consumed, 0) + 1', 'inv.createdAt = COALESCE(inv.createdAt , timestamp())')
             ->returns('inv AS invitation')
             ->setParameters(
                 array(

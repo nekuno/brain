@@ -516,11 +516,11 @@ profile:
                 es: 'Soy'
         notErasable: true
         withImages: false
-    orientationRequired:
-        type: boolean
-        label:
-            en: 'Orientation required'
-            es: 'Orientación obligatoria'
+#    orientationRequired:
+#        type: boolean
+#        label:
+#            en: 'Orientation required'
+#            es: 'Orientación obligatoria'
     relationshipInterest:
         type: choice
         label: &relationshipInterestLabel
@@ -659,7 +659,7 @@ profile:
             prefix:
                 en: 'I enjoy'
                 es: 'Me gusta'
-        withImages: false
+        withImages: true
     shows:
         type: multiple_choices
         label: &showLabel
@@ -670,7 +670,7 @@ profile:
             prefix:
                 en: 'I go to'
                 es: 'Voy a'
-        withImages: false
+        withImages: true
     restaurants:
         type: multiple_choices
         label: &restaurantLabel
@@ -684,7 +684,7 @@ profile:
             interfix:
                 en: 'food'
                 es: ''
-        withImages: false
+        withImages: true
 content:
     type:
         type: choice
@@ -763,9 +763,9 @@ invitations:
     image_path:
         required: false
         type: image_path
-    orientationRequired:
-        required: false
-        type: boolean
+#    orientationRequired:
+#        required: false
+#        type: boolean
 
 tokens:
     resourceOwner:

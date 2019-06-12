@@ -371,10 +371,6 @@ class ProfileManager
         $this->profileTagManager->deleteAllTagRelationships($userId);
         $this->deleteAllMultipleFields($userId);
 
-        if (isset($data['objective']) && in_array('human-contact', $data['objective'])) {
-            $data['orientationRequired'] = true;
-        }
-
         $qb = $this->gm->createQueryBuilder();
         $qb->match('(profile:Profile)-[:PROFILE_OF]->(u:User)')
             ->where('u.qnoow_id = { id }')
