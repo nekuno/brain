@@ -23,10 +23,6 @@
         <env name="push_private_key" value="" />
         <env name="firebase_url" value="" />
         <env name="firebase_api_key" value="" />
-        <env name="dev_custom_ip_1" value="" />
-        <env name="dev_custom_ip_2" value="" />
-        <env name="dev_custom_ip_3" value="" />
-        <env name="dev_custom_ip_4" value="" />
         <env name="support_email_1" value="yourEmail@nekuno.com" />
         <env name="locale_default" value="en" />
         <env name="locale" value="en" />
