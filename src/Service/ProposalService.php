@@ -244,7 +244,7 @@ class ProposalService
      * @param User $user
      * @return Proposal
      */
-    protected function addHasMatch(Proposal $proposal, User $user)
+    protected function addHasMatch(Proposal $proposal, User $user = null)
     {
         if (null === $user)
         {
