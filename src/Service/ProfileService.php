@@ -137,4 +137,11 @@ class ProfileService
 
         return $ownProfileData;
     }
+
+    public function getProfile(User $user)
+    {
+        //get profile
+        //add natural profile
+        //return
+    }
 }

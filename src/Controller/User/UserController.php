@@ -84,6 +84,28 @@ class UserController extends FOSRestController implements ClassResourceInterface
     }
 
     /**
+     * Get own liked users
+     *
+     * @Get("/users/liked")
+     * @param Request $request
+     * @param User $user
+     * @param UserService $userService
+     * @return \FOS\RestBundle\View\View
+     * @SWG\Response(
+     *     response=200,
+     *     description="Returns liked users"
+     * )
+     * @Security(name="Bearer")
+     * @SWG\Tag(name="users")
+     */
+    public function getOwnLikedAction(Request $request, User $user, UserService $userService)
+    {
+        $users = $userService->getOwnLiked($user, $request);
+
+        return $this->view($users, 200);
+    }
+
+    /**
      * Get other user.
      *
      * @Get("/users/{slug}")
@@ -187,7 +209,7 @@ class UserController extends FOSRestController implements ClassResourceInterface
             }
             $locale = $request->query->get('locale', 'en');
             $profile = $data['profile'];
-            $profile['interfaceLanguage'] = isset($profile['interfaceLanguage'])? $profile['interfaceLanguage'] : $locale;
+            $profile['interfaceLanguage'] = isset($profile['interfaceLanguage']) ? $profile['interfaceLanguage'] : $locale;
             $user = $registerService->register($data['user'], $data['profile'], $data['token'], $data['oauth'], $data['trackingData']);
         } catch (\Exception $e) {
             $errorMessage = $this->exceptionMessagesToString($e);
@@ -212,6 +234,7 @@ class UserController extends FOSRestController implements ClassResourceInterface
 
             $exceptionMessage = $this->env === 'dev' ? $errorMessage . ' ' . $e->getFile() . ' ' . $e->getLine() : "Error registering user";
             $this->throwRegistrationException($exceptionMessage);
+
             return null;
         }
 
@@ -249,10 +272,13 @@ class UserController extends FOSRestController implements ClassResourceInterface
         $user = $userManager->update($data);
         $jwt = $authService->getToken($data['userId']);
 
-        return $this->view(array(
-            'user' => $user,
-            'jwt' => $jwt,
-        ), 200);
+        return $this->view(
+            array(
+                'user' => $user,
+                'jwt' => $jwt,
+            ),
+            200
+        );
     }
 
     /**
@@ -291,7 +317,6 @@ class UserController extends FOSRestController implements ClassResourceInterface
      * @param User $user
      * @param UserManager $userManager
      * @param DeviceManager $deviceManager
-     * @throws NotFoundHttpException
      * @return \FOS\RestBundle\View\View
      * @SWG\Response(
      *     response=200,
@@ -303,6 +328,7 @@ class UserController extends FOSRestController implements ClassResourceInterface
      * )
      * @Security(name="Bearer")
      * @SWG\Tag(name="users")
+     * @throws NotFoundHttpException
      */
     public function setEnableAction(Request $request, User $user, UserManager $userManager, DeviceManager $deviceManager)
     {
@@ -319,7 +345,6 @@ class UserController extends FOSRestController implements ClassResourceInterface
 
         return $this->view([]);
     }
-
 
     /**
      * Get matching with other user
@@ -877,7 +902,6 @@ class UserController extends FOSRestController implements ClassResourceInterface
 
         return $this->view($stats->toArray(), 200);
     }
-
 
     /**
      * Get link affinity

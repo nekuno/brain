@@ -9,12 +9,15 @@ use Model\Proposal\Proposal;
 use Model\Proposal\ProposalManager;
 use Model\Question\UserAnswerPaginatedManager;
 use Model\User\User;
+use Model\User\UserLikedPaginatedManager;
 use Model\User\UserManager;
 use Model\Profile\ProfileManager;
 use Model\Rate\RateManager;
 use Model\Token\TokensManager;
 use Model\Token\TokenStatus\TokenStatusManager;
+use Paginator\Paginator;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpFoundation\Request;
 
 class UserService
 {
@@ -24,13 +27,16 @@ class UserService
     protected $tokenStatusManager;
     protected $rateModel;
     protected $linkService;
+    protected $profileService;
     protected $authService;
+    protected $paginator;
     protected $instantConnection;
     protected $photoManager;
     protected $galleryManager;
     protected $proposalManager;
     protected $availabilityManager;
     protected $userAnswerPaginatedManager;
+    protected $userLikedPaginatedManager;
 
     /**
      * UserService constructor.
@@ -40,12 +46,16 @@ class UserService
      * @param TokenStatusManager $tokenStatusManager
      * @param RateManager $rateModel
      * @param LinkService $linkService
+     * @param ProfileService $profileService
      * @param AuthService $authService
+     * @param Paginator $paginator
      * @param InstantConnection $instantConnection
      * @param PhotoManager $photoManager
      * @param GalleryManager $galleryManager
      * @param ProposalManager $proposalManager
+     * @param AvailabilityManager $availabilityManager
      * @param UserAnswerPaginatedManager $userAnswerPaginatedManager
+     * @param UserLikedPaginatedManager $userLikedPaginatedManager
      */
     public function __construct(
         UserManager $userManager,
@@ -54,13 +64,16 @@ class UserService
         TokenStatusManager $tokenStatusManager,
         RateManager $rateModel,
         LinkService $linkService,
+        ProfileService $profileService,
         AuthService $authService,
+        Paginator $paginator,
         InstantConnection $instantConnection,
         PhotoManager $photoManager,
         GalleryManager $galleryManager,
         ProposalManager $proposalManager,
         AvailabilityManager $availabilityManager,
-        UserAnswerPaginatedManager $userAnswerPaginatedManager
+        UserAnswerPaginatedManager $userAnswerPaginatedManager,
+        UserLikedPaginatedManager $userLikedPaginatedManager
     ) {
         $this->userManager = $userManager;
         $this->profileManager = $profileManager;
@@ -68,7 +81,9 @@ class UserService
         $this->tokenStatusManager = $tokenStatusManager;
         $this->rateModel = $rateModel;
         $this->linkService = $linkService;
+        $this->profileService = $profileService;
         $this->authService = $authService;
+        $this->paginator = $paginator;
         $this->instantConnection = $instantConnection;
         $this->userAnswerPaginatedManager = $userAnswerPaginatedManager;
         //TODO: Move to PhotoService and remove USerManager->PhotoManager dependencies
@@ -76,6 +91,7 @@ class UserService
         $this->galleryManager = $galleryManager;
         $this->proposalManager = $proposalManager;
         $this->availabilityManager = $availabilityManager;
+        $this->userLikedPaginatedManager = $userLikedPaginatedManager;
     }
 
     public function createUser(array $userData, array $profileData)
@@ -215,5 +231,23 @@ class UserService
         }
 
         return $matches;
+    }
+
+    public function getOwnLiked(User $user, Request $request)
+    {
+        $filters = array('userId' => $user->getId());
+
+        $pagination = $this->paginator->paginate($filters, $this->userLikedPaginatedManager, $request);
+        $slugs = $pagination['items'];
+
+        $users = array();
+        foreach ($slugs AS $slug)
+        {
+            $users[] = $this->getOther($slug);
+        }
+
+        $pagination['items'] = $users;
+
+        return $pagination;
     }
 }
