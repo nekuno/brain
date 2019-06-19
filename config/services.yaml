@@ -211,6 +211,9 @@ services:
             $defaultLocale: "en"
     Model\Recommendation\UserRecommendationBuilder:
     Model\Proposal\ProposalBuilder:
+        arguments:
+            $base: "%env(resolve:images_absolute_web_dir)%"
+            $host: "%env(social_host)%"
     Model\Proposal\OwnProposalLikedPaginated:
     Model\Availability\AvailabilityDataFormatter:
     Model\Profile\NaturalProfileBuilder:

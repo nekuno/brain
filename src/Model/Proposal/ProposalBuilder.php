@@ -17,12 +17,24 @@ class ProposalBuilder
     protected $metadataManager;
 
     /**
+     * @var string
+     */
+    protected $base;
+
+    /**
+     * @var string
+     */
+    protected $host;
+
+    /**
      * ProposalFieldBuilder constructor.
      * @param $metadataManager
      */
-    public function __construct(ProposalMetadataManager $metadataManager)
+    public function __construct(ProposalMetadataManager $metadataManager, $base, $host)
     {
         $this->metadataManager = $metadataManager;
+        $this->base = $base;
+        $this->host = $host;
     }
 
     /**
@@ -52,7 +64,7 @@ class ProposalBuilder
             $fields[] = $proposalField;
         }
 
-        $proposal = new Proposal($proposalType, $fields);
+        $proposal = new Proposal($proposalType, $fields, $this->base, $this->host);
         if (isset($proposalData['proposalId'])) {
             $proposal->setId($proposalData['proposalId']);
         }
@@ -74,7 +86,7 @@ class ProposalBuilder
             $fields[] = $proposalField;
         }
 
-        return new Proposal($proposalType, $fields);
+        return new Proposal($proposalType, $fields, $this->base, $this->host);
     }
 
     /**

@@ -31,14 +31,26 @@ class Proposal implements \JsonSerializable
     protected $hasMatch = false;
 
     /**
+     * @var string
+     */
+    protected $base;
+
+    /**
+     * @var string
+     */
+    protected $host;
+
+    /**
      * Proposal constructor.
      * @param $type
      * @param AbstractField[] $fields
      */
-    public function __construct($type, array $fields)
+    public function __construct($type, array $fields, $base, $host)
     {
         $this->type = $type;
         $this->fields = $fields;
+        $this->base = $base;
+        $this->host = $host;
     }
 
     /**
@@ -105,9 +117,8 @@ class Proposal implements \JsonSerializable
     /** @return AbstractField */
     public function getField($name)
     {
-        foreach ($this->fields as $field)
-        {
-            if ($field->getName() === $name){
+        foreach ($this->fields as $field) {
+            if ($field->getName() === $name) {
                 return $field;
             }
         }
@@ -117,9 +128,8 @@ class Proposal implements \JsonSerializable
 
     public function removeField($name)
     {
-        foreach ($this->fields as $index => $field)
-        {
-            if ($field->getName() === $name){
+        foreach ($this->fields as $index => $field) {
+            if ($field->getName() === $name) {
                 unset($this->fields[$index]);
             }
         }
@@ -192,9 +202,11 @@ class Proposal implements \JsonSerializable
             'fields' => array(),
         );
 
-        foreach ($this->getFields() as $field)
-        {
+        foreach ($this->getFields() as $field) {
             $proposal['fields'][$field->getName()] = $field;
+            if ($field->getName() === 'photo') {
+                $proposal['fields'][$field->getName()] = $this->host . $field->getValue();
+            }
         }
 
         return $proposal;
