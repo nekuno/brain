@@ -107,7 +107,7 @@ class ProposalController extends FOSRestController implements ClassResourceInter
         $data = $request->request->all();
         $data['locale'] = $request->query->get('locale', 'en');
 
-        $proposal = $proposalService->update($proposalId, $user, $data);
+        $proposal = $proposalService->update($proposalId, $data, $user);
 
         return $this->view($proposal, 201);
     }

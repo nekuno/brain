@@ -27,9 +27,14 @@ class GalleryManager
 
     protected function saveFile($fileName, $folder, $file)
     {
+        if (!is_dir($this->base . $this->folderBase)) {
+            mkdir($this->base . $this->folderBase, 0775);
+        }
+
         if (!is_dir($this->base . $folder)) {
             mkdir($this->base . $folder, 0775);
         }
+
         $path = $folder . $fileName;
         $saved = file_put_contents($this->base . $path, $file);
 
@@ -50,8 +55,8 @@ class GalleryManager
 
         //https://stackoverflow.com/questions/4594180/deleting-all-files-from-a-folder-using-php
         $files = glob($fullPath . '*'); // get all file names
-        foreach($files as $file){ // iterate files
-            if(is_file($file)){
+        foreach ($files as $file) { // iterate files
+            if (is_file($file)) {
                 unlink($file); // delete file
             }
         }
@@ -59,9 +64,9 @@ class GalleryManager
         rmdir($fullPath);
     }
 
-    protected function buildFileName($username, $extension)
+    protected function buildFileName($name, $extension)
     {
-        return sha1(uniqid($username . '_' . time(), true)) . '.' . $extension;
+        return sha1(uniqid($name . '_' . time(), true)) . '.' . $extension;
     }
 
     protected function buildFolderName($userId)

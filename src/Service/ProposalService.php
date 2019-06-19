@@ -133,8 +133,7 @@ class ProposalService
     {
         $proposalsLiked = array();
 
-        foreach($items as $item)
-        {
+        foreach ($items as $item) {
             $proposalData = $item['proposalData'];
 
             $proposalLiked = new ProposalLiked();
@@ -246,8 +245,7 @@ class ProposalService
      */
     protected function addHasMatch(Proposal $proposal, User $user = null)
     {
-        if (null === $user)
-        {
+        if (null === $user) {
             return $proposal;
         }
 
@@ -260,7 +258,16 @@ class ProposalService
 
     public function create($data, User $user)
     {
+
         $proposalId = $this->proposalManager->create();
+
+        if (!isset($data['photo'])) {
+            $data['photo'] = base64_encode($this->proposalGalleryManager->getRandomPhoto());
+        }
+
+        $path = $this->saveProposalPhoto($proposalId, $user, $data);
+        $data['fields']['photo'] = $path ? $path : '';
+
         $proposal = $this->proposalManager->update($proposalId, $data);
         $this->proposalManager->relateToUser($proposal, $user);
 
@@ -272,9 +279,11 @@ class ProposalService
         return $proposal;
     }
 
-    public function update($proposalId, User $user, $data)
+    public function update($proposalId, $data, User $user)
     {
-        $this->saveProposalPhoto($user, $data);
+
+        $path = $this->saveProposalPhoto($proposalId, $user, $data);
+        $data['fields']['photo'] = $path ? $path : '';
 
         $proposal = $this->proposalManager->update($proposalId, $data);
         $proposal = $this->addAvailabilityField($proposal);
@@ -292,11 +301,18 @@ class ProposalService
         return $proposal;
     }
 
-    protected function saveProposalPhoto(User $user, array $data)
+    protected function saveProposalPhoto($proposalId, User $user, array $data)
     {
-        $photo = isset($data['photo']) ? $data['photo'] : $this->proposalGalleryManager->getRandomPhoto();
-//        $extension = $this->photoManager->validate($photo);
-//        $this->proposalGalleryManager->save($photo, $user, $extension);
+
+        $path = null;
+
+        if (isset($data['photo'])) {
+            $file = base64_decode($data['photo']);
+            $extension = $this->photoManager->validate($file);
+            $path = $this->proposalGalleryManager->save($file, $user, $extension, $proposalId);
+        }
+
+        return $path;
     }
 
     protected function updateFilters(Proposal $proposal, $data)

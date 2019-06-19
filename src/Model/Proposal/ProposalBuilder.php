@@ -37,9 +37,6 @@ class ProposalBuilder
         $dataFields = $proposalData['fields'];
         $fields = array();
         foreach ($metadatum AS $fieldName => $fieldMetadata) {
-            if ($fieldName == 'photo'){
-                $dataFields['photo'] = '';
-            }
             if (!array_key_exists($fieldName, $dataFields)) {
                 continue;
             }
