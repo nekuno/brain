@@ -24,7 +24,7 @@ class ProfileController extends FOSRestController implements ClassResourceInterf
      *
      * @Get("/profile")
      * @param User $user
-     * @param ProfileManager $profileManager
+     * @param ProfileService $profileService
      * @return \FOS\RestBundle\View\View
      * @SWG\Response(
      *     response=200,
@@ -36,9 +36,9 @@ class ProfileController extends FOSRestController implements ClassResourceInterf
      * @Security(name="Bearer")
      * @SWG\Tag(name="profiles")
      */
-    public function getAction(User $user, ProfileManager $profileManager)
+    public function getAction(User $user, ProfileService $profileService)
     {
-        $profile = $profileManager->getById($user->getId());
+        $profile = $profileService->get($user);
 
         return $this->view($profile->jsonSerialize());
     }
@@ -229,8 +229,7 @@ class ProfileController extends FOSRestController implements ClassResourceInterf
      *
      * @Get("/profile/{slug}")
      * @param string $slug
-     * @param UserManager $userManager
-     * @param ProfileManager $profileManager
+     * @param ProfileService $profileService
      * @return \FOS\RestBundle\View\View
      * @SWG\Response(
      *     response=200,
@@ -246,10 +245,9 @@ class ProfileController extends FOSRestController implements ClassResourceInterf
      * @Security(name="Bearer")
      * @SWG\Tag(name="profiles")
      */
-    public function getOtherAction($slug, UserManager $userManager, ProfileManager $profileManager)
+    public function getOtherAction($slug, ProfileService $profileService)
     {
-        $userId = $userManager->getBySlug($slug)->getId();
-        $profile = $profileManager->getById($userId);
+        $profile = $profileService->getBySlug($slug);
 
         return $this->view($profile->jsonSerialize());
     }

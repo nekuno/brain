@@ -168,7 +168,8 @@ class UserService
     //TODO: Do we want locale be fetched from profile?
     public function buildOwnUser(User $user, $locale)
     {
-        $profile = $this->profileManager->getById($user->getId());
+        $profile = $this->profileService->get($user);
+
         $questionsFilters = array('id' => $user->getId(), 'locale' => $locale);
         $countQuestions = $this->userAnswerPaginatedManager->countTotal($questionsFilters);
 

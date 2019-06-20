@@ -15,6 +15,11 @@ class Profile implements \JsonSerializable
     protected $values = array();
 
     /**
+     * @var array
+     */
+    protected $naturalProfile = array();
+
+    /**
      * FilterUsers constructor.
      * @param array $metadata
      */
@@ -56,6 +61,22 @@ class Profile implements \JsonSerializable
         $this->id = $id;
     }
 
+    /**
+     * @return array
+     */
+    public function getNaturalProfile(): array
+    {
+        return $this->naturalProfile;
+    }
+
+    /**
+     * @param array $naturalProfile
+     */
+    public function setNaturalProfile(array $naturalProfile): void
+    {
+        $this->naturalProfile = $naturalProfile;
+    }
+
     public function getValues()
     {
         $values = $this->values;
@@ -78,6 +99,8 @@ class Profile implements \JsonSerializable
     public function jsonSerialize()
     {
         $idArray = array('id' => $this->getId());
+
+        $idArray['naturalProfile'] = $this->naturalProfile;
 
         $values = $this->values;
         foreach ($values as $key => $value) {

@@ -138,10 +138,24 @@ class ProfileService
         return $ownProfileData;
     }
 
-    public function getProfile(User $user)
+    public function get(User $user)
     {
-        //get profile
-        //add natural profile
-        //return
+        $slug = $user->getSlug();
+
+        return $this->getBySlug($slug);
+    }
+
+    public function getBySlug($slug)
+    {
+        $profile = $this->profileManager->getBySlug($slug);
+
+        $locale = $profile->get('interfaceLanguage');
+        $profileMetadata = $this->metadataService->getProfileMetadataWithChoices($locale);
+        $this->naturalProfileBuilder->setMetadata($profileMetadata);
+
+        $naturalProfile = $this->naturalProfileBuilder->buildNaturalProfile($profile);
+        $profile->setNaturalProfile($naturalProfile);
+
+        return $profile;
     }
 }
