@@ -22,9 +22,9 @@ class TumblrResourceOwner extends GenericOAuth1ResourceOwner
     /** @var  TumblrUrlParser */
     protected $urlParser;
 
-    public function __construct($httpClient, $httpUtils, $options, $name, $storage, $dispatcher)
+    public function __construct($httpClient, $httpUtils, $options, $name, $storage, $dispatcher, $APIStatusManager)
     {
-        $this->traitConstructor($httpClient, $httpUtils, $options, $name, $storage, $dispatcher);
+        $this->traitConstructor($httpClient, $httpUtils, $options, $name, $storage, $dispatcher, $APIStatusManager);
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace ApiConsumer\ResourceOwner;
 
+use ApiConsumer\APIStatusManager;
 use ApiConsumer\Event\OAuthTokenEvent;
 use ApiConsumer\LinkProcessor\UrlParser\UrlParser;
 use Http\Client\HttpClient as HttpClientInterface;
@@ -23,6 +24,11 @@ trait AbstractResourceOwnerTrait
      */
     protected $dispatcher;
 
+    /**
+     * @var APIStatusManager
+     */
+    protected $APIStatusManager;
+
     protected $expire_time_margin = 0;
 
     /**
@@ -32,14 +38,16 @@ trait AbstractResourceOwnerTrait
      * @param string $name Name for the resource owner
      * @param RequestDataStorageInterface $storage Request token storage
      * @param EventDispatcherInterface $dispatcher
+     * @param APIStatusManager $APIStatusManager
      */
-    public function __construct(HttpClientInterface $httpClient, HttpUtils $httpUtils, array $options, $name, RequestDataStorageInterface $storage, EventDispatcherInterface $dispatcher)
+    public function __construct(HttpClientInterface $httpClient, HttpUtils $httpUtils, array $options, $name, RequestDataStorageInterface $storage, EventDispatcherInterface $dispatcher, APIStatusManager $APIStatusManager)
     {
         $this->httpClient = $httpClient;
         $this->name = $name;
         $this->httpUtils = $httpUtils;
         $this->storage = $storage;
         $this->dispatcher = $dispatcher;
+        $this->APIStatusManager = $APIStatusManager;
 
         if (!empty($options['paths'])) {
             $this->addPaths($options['paths']);
@@ -217,14 +225,37 @@ trait AbstractResourceOwnerTrait
 
     protected function executeHttpRequest($url, $content = null, $headers = array(), $method = null)
     {
+        //permite o no hacer la llamada a la api
+        $this->checkSavedAPIStatus();
+
         $response = $this->httpRequest($url, $content, $headers, $method);
 
+        $this->saveAPIStatus($response);
+
         if ($this->isAPILimitReached($response)) {
-            $this->waitForAPILimit();
-            $response = $this->httpRequest($url);
+            //comportamiento antiguo
+            if ($this->weWantToWait()){
+                $this->waitForAPILimit();
+                $response = $this->httpRequest($url);
+            } else {
+                //comportamiento nuevo
+                $this->throwAPILimitException();
+            }
         }
 
+
         return $response;
+    }
+
+    protected function checkSavedAPIStatus()
+    {}
+
+    protected function saveAPIStatus(Response $response)
+    {}
+
+    protected function weWantToWait()
+    {
+        return true;
     }
 
     protected function isAPILimitReached(Response $response)
@@ -234,6 +265,14 @@ trait AbstractResourceOwnerTrait
 
     protected function waitForAPILimit()
     {
+    }
+
+    /**
+     * @throws \Exception
+     */
+    protected function throwAPILimitException()
+    {
+        throw new \Exception('Exceeded API limit');
     }
 
     protected function needsRefreshing(Token $token)

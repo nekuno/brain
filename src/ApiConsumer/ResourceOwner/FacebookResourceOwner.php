@@ -2,12 +2,15 @@
 
 namespace ApiConsumer\ResourceOwner;
 
+use ApiConsumer\APIStatus;
 use ApiConsumer\Event\OAuthTokenEvent;
+use ApiConsumer\Exception\CannotProcessException;
 use ApiConsumer\LinkProcessor\UrlParser\FacebookUrlParser;
 use Event\ExceptionEvent;
 use GuzzleHttp\Exception\RequestException;
 use HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\FacebookResourceOwner as FacebookResourceOwnerBase;
 use Model\Token\Token;
+use Psr\Http\Message\ResponseInterface as Response;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 class FacebookResourceOwner extends FacebookResourceOwnerBase
@@ -15,14 +18,15 @@ class FacebookResourceOwner extends FacebookResourceOwnerBase
     use AbstractResourceOwnerTrait {
         AbstractResourceOwnerTrait::configureOptions as traitConfigureOptions;
         AbstractResourceOwnerTrait::__construct as private traitConstructor;
+        AbstractResourceOwnerTrait::request as traitRequest;
     }
 
     /** @var FacebookUrlParser */
     protected $urlParser;
 
-    public function __construct($httpClient, $httpUtils, $options, $name, $storage, $dispatcher)
+    public function __construct($httpClient, $httpUtils, $options, $name, $storage, $dispatcher, $APIStatusManager)
     {
-        $this->traitConstructor($httpClient, $httpUtils, $options, $name, $storage, $dispatcher);
+        $this->traitConstructor($httpClient, $httpUtils, $options, $name, $storage, $dispatcher, $APIStatusManager);
         $this->expire_time_margin = 1728000; //20 days
     }
 
@@ -43,6 +47,21 @@ class FacebookResourceOwner extends FacebookResourceOwnerBase
         $resolver->setDefined('redirect_uri');
     }
 
+    public function request($url, array $query = array(), Token $token = null)
+    {
+        try {
+            $response = $this->traitRequest($url, $query, $token);
+        } catch (\Exception $e) {
+            $message = $e->getMessage();
+            $cannotProcessException = new CannotProcessException($message);
+            $cannotProcessException->setCanScrape(false);
+
+            throw $cannotProcessException;
+        }
+
+        return $response;
+    }
+
     public function canRequestAsClient()
     {
         return true;
@@ -58,6 +77,54 @@ class FacebookResourceOwner extends FacebookResourceOwnerBase
         $response = $this->httpRequest($this->normalizeUrl($url, $query));
 
         return $this->getResponseContent($response);
+    }
+
+    protected function weWantToWait()
+    {
+        return false;
+    }
+
+    protected function checkSavedAPIStatus()
+    {
+        $APIStatusData = $this->APIStatusManager->checkAPIStatus('facebook');
+
+        //si no estamos en el limite, adelante
+
+        $percentageLimit = 25;//FIXME
+        $isPercentageReached = $APIStatusData->getPercentageUsed() >= $percentageLimit;
+
+        if (!$isPercentageReached){
+            return;
+        }
+
+        //si estamos en el limite y han pasado diez minutos, adelante
+
+        $now = time();
+        $difference = $now - $APIStatusData->getTimeChecked();
+        $timeIntervalBetweenChecks = 100000000;//FIXME
+
+        if ($difference > $timeIntervalBetweenChecks){
+            return;
+        }
+
+        //si estamos en el limite y no han pasado diez minutos, excepcion
+
+        $this->throwAPILimitException();
+    }
+
+    protected function saveAPIStatus(Response $response)
+    {
+        $status = new APIStatus();
+
+        $appUsageHeader = $response->getHeaderLine('x-app-usage');
+        $appUsageData = json_decode($appUsageHeader, true);
+        $percentage = $appUsageData['call_count'];
+        $status->setPercentageUsed($percentage);
+
+        $now = time();
+        $status->setTimeChecked($now);
+
+        return $this->APIStatusManager->saveAPIStatus('facebook', $status);
     }
 
     /**

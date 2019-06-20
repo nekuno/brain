@@ -140,6 +140,8 @@ services:
     # End Autowire needed vendor classes
 
     # Api consumer classes parameters and autowire
+    ApiConsumer\APIStatusManager:
+        autowire: true
     ApiConsumer\Images\ImageAnalyzer:
         autowire: true
     ApiConsumer\Fetcher\FetcherService:

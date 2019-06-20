@@ -87,7 +87,7 @@ class LinksProcessNewCommand extends ApplicationAwareCommand
                 $processedLinks = $this->processorService->process(array($preprocessedLink), $userToProcess);
 
                 foreach ($processedLinks as $processedLink) {
-                    $this->outputLink($processedLink, $output);
+//                    $this->outputLink($processedLink, $output);
                 }
 
             } catch (\Exception $e) {

@@ -395,6 +395,8 @@ class ProcessorService implements LoggerAwareInterface
         try {
             $links = $this->linkProcessor->process($preprocessedLink);
         } catch (CannotProcessException $e) {
+            var_dump('well catched');
+            var_dump($e->canScrape());
             if (!$e->canScrape()) {
                 $this->overwriteWithUnprocessed($preprocessedLink);
                 $preprocessedLink->setLinks(array());
@@ -446,6 +448,8 @@ class ProcessorService implements LoggerAwareInterface
 
     private function isLinkSavedAndProcessed(PreprocessedLink $preprocessedLink)
     {
+        return false;
+
         try {
             $linkUrl = $preprocessedLink->getUrl();
             $storedLink = $this->linkModel->findLinkByUrl($linkUrl);

@@ -20,9 +20,9 @@ class SteamResourceOwner extends AbstractResourceOwner
         AbstractResourceOwnerTrait::__construct as private traitConstructor;
     }
 
-    public function __construct($httpClient, $httpUtils, $options, $name, $storage, $dispatcher)
+    public function __construct($httpClient, $httpUtils, $options, $name, $storage, $dispatcher, $APIStatusManager)
     {
-        $this->traitConstructor($httpClient, $httpUtils, $options, $name, $storage, $dispatcher);
+        $this->traitConstructor($httpClient, $httpUtils, $options, $name, $storage, $dispatcher, $APIStatusManager);
     }
 
     public function canRequestAsClient()
