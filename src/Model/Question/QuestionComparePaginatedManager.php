@@ -10,10 +10,12 @@ use Service\AnswerService;
 
 class QuestionComparePaginatedManager implements PaginatedInterface
 {
+
+    const AGREEMENT_AGREE = 'agree';
+    const AGREEMENT_DISAGREE = 'disagree';
+
     protected $answerService;
-
     protected $questionModel;
-
     protected $graphManager;
 
     /**
@@ -46,8 +48,8 @@ class QuestionComparePaginatedManager implements PaginatedInterface
      * @param array $filters
      * @param int $offset
      * @param int $limit
-     * @throws \Exception
      * @return array
+     * @throws \Exception
      */
     public function slice(array $filters, $offset, $limit)
     {
@@ -61,6 +63,8 @@ class QuestionComparePaginatedManager implements PaginatedInterface
         if (isset($filters['showOnlyCommon'])) {
             $showOnlyCommon = $filters['showOnlyCommon'];
         }
+
+        $showOnlyAgreement = isset($filters['showOnlyAgreement']) && in_array($filters['showOnlyAgreement'], array(self::AGREEMENT_AGREE, self::AGREEMENT_DISAGREE)) ? $filters['showOnlyAgreement'] : null;
 
         $qb->match('(u:User), (u2:User)')
             ->where('u.qnoow_id = {userId} AND u2.qnoow_id = {userId2}')
@@ -79,6 +83,12 @@ class QuestionComparePaginatedManager implements PaginatedInterface
         } else {
             $qb->match('(u2)-[ua2:ANSWERS]-(answer2:Answer)-[:IS_ANSWER_OF]-(question)')
                 ->with('u, u2, ua, ua2, question, answer, answer2');
+        }
+
+        if ($showOnlyAgreement === self::AGREEMENT_AGREE) {
+            $qb->where('(u)-[:ACCEPTS]-(answer2) AND (u2)-[:ACCEPTS]-(answer)');
+        } elseif ($showOnlyAgreement === self::AGREEMENT_DISAGREE) {
+            $qb->where('NOT (u)-[:ACCEPTS]-(answer2) OR NOT (u2)-[:ACCEPTS]-(answer)');
         }
 
         $qb->optionalMatch('(u)-[:ACCEPTS]-(acceptedAnswers:Answer)-[:IS_ANSWER_OF]-(question)');
@@ -135,7 +145,7 @@ class QuestionComparePaginatedManager implements PaginatedInterface
         $questionsCount = isset($other_questions_results['questions']) && !empty($other_questions_results['questions']) ?
             count($other_questions_results['questions']) : 0;
         $other_not_answered_questions_results = [];
-        if ($questionsCount < $limit) {
+        if (!$showOnlyCommon && !$showOnlyAgreement && $questionsCount < $limit) {
             $filters['showOnlyCommon'] = true;
             $answeredTotal = $this->countTotal($filters);
             $limit = $limit - $questionsCount;
@@ -145,8 +155,7 @@ class QuestionComparePaginatedManager implements PaginatedInterface
 
         $resultArray = array();
         $noResults = empty($other_questions_results) && empty($other_not_answered_questions_results);
-        if (!$noResults)
-        {
+        if (!$noResults) {
             $resultArray = array(
                 'otherQuestions' => $other_questions_results,
                 'ownQuestions' => $own_questions_results,
@@ -186,6 +195,7 @@ class QuestionComparePaginatedManager implements PaginatedInterface
             )
         );
         $result = $qb->getQuery()->getResultSet();
+
         return $this->buildNotAnsweredQuestionResults($result, 'other_not_answered_questions', $locale);
 
     }
@@ -241,8 +251,8 @@ class QuestionComparePaginatedManager implements PaginatedInterface
     /**
      * Counts the total results from queryset.
      * @param array $filters
-     * @throws \Exception
      * @return int
+     * @throws \Exception
      */
     public function countTotal(array $filters)
     {
@@ -256,6 +266,8 @@ class QuestionComparePaginatedManager implements PaginatedInterface
         if (isset($filters['showOnlyCommon'])) {
             $showOnlyCommon = $filters['showOnlyCommon'];
         }
+
+        $showOnlyAgreement = isset($filters['showOnlyAgreement']) && in_array($filters['showOnlyAgreement'], array(self::AGREEMENT_AGREE, self::AGREEMENT_DISAGREE)) ? $filters['showOnlyAgreement'] : null;
 
         $params = array(
             'userId' => (integer)$id,
@@ -281,6 +293,12 @@ class QuestionComparePaginatedManager implements PaginatedInterface
         } else {
             $qb->match('(u2)-[ua2:ANSWERS]-(answer2:Answer)-[:IS_ANSWER_OF]-(question)')
                 ->with('u, u2, ua, ua2, question, answer, answer2');
+        }
+
+        if ($showOnlyAgreement === self::AGREEMENT_AGREE) {
+            $qb->where('(u)-[:ACCEPTS]-(answer2) AND (u2)-[:ACCEPTS]-(answer)');
+        } elseif ($showOnlyAgreement === self::AGREEMENT_DISAGREE) {
+            $qb->where('NOT (u)-[:ACCEPTS]-(answer2) OR NOT (u2)-[:ACCEPTS]-(answer)');
         }
 
         $qb->returns('count(distinct question) as total');

@@ -326,12 +326,13 @@ class AnswerController extends FOSRestController implements ClassResourceInterfa
     {
         $locale = $this->getLocale($request);
         $showOnlyCommon = $request->query->get('showOnlyCommon', 0);
+        $showOnlyAgreement = $request->query->get('showOnlyAgreement', null);
 
         if (null === $userId || null === $user->getId()) {
             return $this->view([], 400);
         }
 
-        $filters = array('id' => $userId, 'id2' => $user->getId(), 'locale' => $locale, 'showOnlyCommon' => $showOnlyCommon);
+        $filters = array('id' => $userId, 'id2' => $user->getId(), 'locale' => $locale, 'showOnlyCommon' => $showOnlyCommon, 'showOnlyAgreement' => $showOnlyAgreement);
 
         try {
             $result = $paginator->paginate($filters, $questionComparePaginatedManager, $request);
