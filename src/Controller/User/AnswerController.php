@@ -12,6 +12,7 @@ use Model\Metadata\MetadataManager;
 use Model\Question\Answer;
 use Model\Question\AnswerManager;
 use Model\Question\QuestionComparePaginatedManager;
+use Model\Question\QuestionNotAnsweredPaginatedManager;
 use Model\Question\QuestionCorrelationManager;
 use Model\Question\QuestionManager;
 use Model\Question\UserAnswerPaginatedManager;
@@ -74,8 +75,7 @@ class AnswerController extends FOSRestController implements ClassResourceInterfa
         $filters = array('id' => $user->getId(), 'locale' => $locale);
         $result = $paginator->paginate($filters, $userAnswerPaginatedManager, $request);
 
-        foreach ($result['items'] as &$questionData)
-        {
+        foreach ($result['items'] as &$questionData) {
             $question = $questionData['question'];
             $questionData['question'] = $this->setIsRegisterQuestion($question, $user, $questionCorrelationManager);
         }
@@ -281,6 +281,7 @@ class AnswerController extends FOSRestController implements ClassResourceInterfa
      * @param Request $request
      * @param Paginator $paginator
      * @param QuestionComparePaginatedManager $questionComparePaginatedManager
+     * @param QuestionNotAnsweredPaginatedManager $questionNotAnsweredPaginatedManager
      * @param QuestionCorrelationManager $questionCorrelationManager
      * @return \FOS\RestBundle\View\View
      * @SWG\Parameter(
@@ -322,11 +323,19 @@ class AnswerController extends FOSRestController implements ClassResourceInterfa
      * @Security(name="Bearer")
      * @SWG\Tag(name="answers")
      */
-    public function getUserAnswersCompareAction($userId, User $user, Request $request, Paginator $paginator, QuestionComparePaginatedManager $questionComparePaginatedManager, QuestionCorrelationManager $questionCorrelationManager)
-    {
+    public function getUserAnswersCompareAction(
+        $userId,
+        User $user,
+        Request $request,
+        Paginator $paginator,
+        QuestionComparePaginatedManager $questionComparePaginatedManager,
+        QuestionNotAnsweredPaginatedManager $questionNotAnsweredPaginatedManager,
+        QuestionCorrelationManager $questionCorrelationManager
+    ) {
         $locale = $this->getLocale($request);
         $showOnlyCommon = $request->query->get('showOnlyCommon', 0);
         $showOnlyAgreement = $request->query->get('showOnlyAgreement', null);
+        $showOnlyOtherNotAnsweredQuestions = $request->query->get('showOnlyOtherNotAnsweredQuestions', false);
 
         if (null === $userId || null === $user->getId()) {
             return $this->view([], 400);
@@ -334,12 +343,13 @@ class AnswerController extends FOSRestController implements ClassResourceInterfa
 
         $filters = array('id' => $userId, 'id2' => $user->getId(), 'locale' => $locale, 'showOnlyCommon' => $showOnlyCommon, 'showOnlyAgreement' => $showOnlyAgreement);
 
-        try {
-            $result = $paginator->paginate($filters, $questionComparePaginatedManager, $request);
+        $model = $showOnlyOtherNotAnsweredQuestions ? $questionNotAnsweredPaginatedManager : $questionComparePaginatedManager;
 
-            foreach ($result['items'] as &$questionData)
-            {
-                if (empty($question)){
+        try {
+            $result = $paginator->paginate($filters, $model, $request);
+
+            foreach ($result['items'] as &$questionData) {
+                if (empty($question)) {
                     continue;
                 }
                 $question = $questionData['question'];
@@ -371,6 +381,7 @@ class AnswerController extends FOSRestController implements ClassResourceInterfa
         if (empty($registerModes)) {
             $question['isRegisterQuestion'] = false;
             unset($question['registerModes']);
+
             return $question;
         }
 
