@@ -276,7 +276,11 @@ class QuestionComparePaginatedManager implements PaginatedInterface
 //        $qb->match('(u2)<-[:PROFILE_OF]-(:Profile)<-[:OPTION_OF]-(:Mode)<-[:INCLUDED_IN]-(:QuestionCategory)-[:CATEGORY_OF]->(question)');
 
         if ($showOnlyCommon) {
-            $qb->match('(u2)-[ua2:ANSWERS]-(answer2:Answer)-[:IS_ANSWER_OF]-(question)');
+            $qb->match('(u2)-[ua2:ANSWERS]-(answer)')
+                ->with('u, u2, ua, ua2, question, answer, answer as answer2');
+        } else {
+            $qb->match('(u2)-[ua2:ANSWERS]-(answer2:Answer)-[:IS_ANSWER_OF]-(question)')
+                ->with('u, u2, ua, ua2, question, answer, answer2');
         }
 
         $qb->returns('count(distinct question) as total');
