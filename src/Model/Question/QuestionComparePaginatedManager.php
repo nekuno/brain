@@ -174,8 +174,10 @@ class QuestionComparePaginatedManager implements PaginatedInterface
             ->where('otherUser.qnoow_id = {otherUserId} AND ownUser.qnoow_id = {ownUserId}')
             ->with('otherUser', 'ownUser')
             ->limit(1);
-        $qb->match('(otherUser)-[:ANSWERS]->(possible_answers:Answer)-[:IS_ANSWER_OF]->(question:Question)')
-            ->where("NOT (ownUser)-[:ANSWERS]->(:Answer)-[:IS_ANSWER_OF]->(question) AND EXISTS(possible_answers.text_$locale) AND EXISTS(question.text_$locale)");
+        $qb->match('(otherUser)-[:ANSWERS]->(answer:Answer)-[:IS_ANSWER_OF]->(question:Question)')
+            ->where("NOT (ownUser)-[:ANSWERS]->(:Answer)-[:IS_ANSWER_OF]->(question) AND EXISTS(answer.text_$locale) AND EXISTS(question.text_$locale)");
+        $qb->with('question')
+            ->match('(possible_answers:Answer)-[:IS_ANSWER_OF]-(question)');
         $qb->returns(
             'question',
             '{
