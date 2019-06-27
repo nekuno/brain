@@ -689,6 +689,29 @@ class UserManager
         return true;
     }
 
+    public function setShowname($userId, $showname)
+    {
+        $qb = $this->gm->createQueryBuilder();
+        $qb->match('(u:User)')
+            ->where('u.qnoow_id = { qnoow_id }')
+            ->with('u')
+            ->limit(1)
+            ->setParameter('qnoow_id', (integer)$userId);
+
+        $qb->set('u.showname = {showname}')
+            ->setParameter('showname', $showname);
+
+        $qb->returns('u');
+
+        $result = $qb->getQuery()->getResultSet();
+
+        if ($result->count() == 0) {
+            throw new NotFoundHttpException(sprintf('User "%d" not found', $userId));
+        }
+
+        return $this->build($result->current());
+    }
+
     /**
      * @param bool $includeGhost
      * @param integer $groupId
@@ -1076,6 +1099,7 @@ class UserManager
         $metadata = array(
             'qnoow_id' => array('type' => 'string', 'editable' => false),
             'username' => array('type' => 'string', 'editable' => true),
+            'showname' => array('type' => 'string', 'editable' => true),
             'usernameCanonical' => array('type' => 'string', 'editable' => false),
             'email' => array('type' => 'string'),
             'emailCanonical' => array('type' => 'string', 'editable' => false),

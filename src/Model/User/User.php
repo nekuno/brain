@@ -31,6 +31,11 @@ class User implements UserInterface, \JsonSerializable
     /**
      * @var string
      */
+    protected $showname;
+
+    /**
+     * @var string
+     */
     protected $usernameCanonical;
 
     /**
@@ -217,6 +222,14 @@ class User implements UserInterface, \JsonSerializable
         return $this->username;
     }
 
+    /**
+     * @return string
+     */
+    public function getShowname(): string
+    {
+        return $this->showname;
+    }
+
     public function getUsernameCanonical()
     {
         return $this->usernameCanonical;
@@ -395,6 +408,14 @@ class User implements UserInterface, \JsonSerializable
         $this->username = $username;
 
         return $this;
+    }
+
+    /**
+     * @param string $showname
+     */
+    public function setShowname(string $showname): void
+    {
+        $this->showname = $showname;
     }
 
     public function setUsernameCanonical($usernameCanonical)
@@ -803,6 +824,8 @@ class User implements UserInterface, \JsonSerializable
         if ($vars['enabled']){
             unset($vars['canReenable']);
         }
+
+        $vars['username'] = isset($vars['showname']) ? $vars['showname'] : $vars['username'];
 
         return $vars;
     }

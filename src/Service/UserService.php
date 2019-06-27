@@ -126,6 +126,13 @@ class UserService
         return $userData;
     }
 
+    public function updateShowname(User $user, $showname)
+    {
+        $userId = $user->getId();
+
+        return $this->userManager->updateShowname($userId, $showname);
+    }
+
     public function deleteUser($userId)
     {
         $messagesData = array('userId' => $userId);

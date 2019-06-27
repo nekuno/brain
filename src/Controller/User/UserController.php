@@ -281,6 +281,14 @@ class UserController extends FOSRestController implements ClassResourceInterface
         );
     }
 
+    public function editShownameAction(Request $request, User $user, UserService $userService)
+    {
+        $data = $request->request->all();
+        $showname = $data['showname'];
+
+        return $userService->updateShowname($user, $showname);
+    }
+
     /**
      * Get username available
      *
