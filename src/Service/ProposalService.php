@@ -262,7 +262,7 @@ class ProposalService
         $proposalId = $this->proposalManager->create();
 
         if (!isset($data['photo'])) {
-            $data['photo'] = base64_encode($this->proposalGalleryManager->getRandomPhoto());
+            $data['photo'] = base64_encode($this->proposalGalleryManager->getRandomPhoto($data['type']));
         }
 
         $path = $this->saveProposalPhoto($proposalId, $user, $data);
