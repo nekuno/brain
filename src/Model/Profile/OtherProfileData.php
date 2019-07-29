@@ -6,6 +6,8 @@ class OtherProfileData implements \JsonSerializable
 {
     protected $userName;
 
+    protected $slug;
+
     protected $photos = array();
 
     protected $naturalProfile = array();
@@ -37,6 +39,22 @@ class OtherProfileData implements \JsonSerializable
     }
 
     /**
+     * @return mixed
+     */
+    public function getSlug()
+    {
+        return $this->slug;
+    }
+
+    /**
+     * @param mixed $slug
+     */
+    public function setSlug($slug): void
+    {
+        $this->slug = $slug;
+    }
+
+    /**
      * @return array
      */
     public function getPhotos(): array
@@ -53,7 +71,7 @@ class OtherProfileData implements \JsonSerializable
     }
 
     /**
-     * @return array
+     * @return string[]
      */
     public function getNaturalProfile(): array
     {
@@ -152,6 +170,7 @@ class OtherProfileData implements \JsonSerializable
     {
         return array(
             'username' => $this->userName,
+            'slug' => $this->slug,
             'photos' => $this->photos,
             'naturalProfile' => $this->naturalProfile,
             'matching' => $this->matching,

@@ -148,6 +148,7 @@ class ProposalService
 
             $profileData = new OtherProfileData();
             $profileData->setUserName($user->getUsername());
+            $profileData->setSlug($user->getSlug());
 
             $photo = $user->getPhoto();
             $thumbnail = $photo->getUrl();

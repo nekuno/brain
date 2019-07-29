@@ -15,7 +15,7 @@ class Profile implements \JsonSerializable
     protected $values = array();
 
     /**
-     * @var array
+     * @var string[]
      */
     protected $naturalProfile = array();
 

@@ -4,7 +4,7 @@ namespace Model\Proposal;
 
 use Model\Profile\OtherProfileData;
 
-class ProposalLiked
+class ProposalLiked implements \JsonSerializable
 {
     /** @var Proposal */
     protected $proposal;
@@ -60,4 +60,14 @@ class ProposalLiked
     {
         $this->owner = $owner;
     }
+
+    public function jsonSerialize()
+    {
+        return array(
+            'proposal' => $this->proposal,
+            'has_match' => $this->hasMatch,
+            'owner' => $this->owner
+        );
+    }
+
 }
