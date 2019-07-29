@@ -71,39 +71,23 @@ categories:
         - label:
             en: Basic
             es: Básicos
-          fields: [objective, birthday, gender, descriptiveGender, location, orientation, groups, compatibility, similarity]
+          fields: [location, birthday, descriptiveGender, orientation]
         - label:
-            en: Availability
-            es: Disponibilidad
-          fields: [civilStatus, relationshipInterest]
+            en: Background
+            es: Cultura
+          fields: [language, education, religion, ideology]
         - label:
             en: Look
             es: Apariencia
           fields: [complexion, ethnicGroup, eyeColor, hairColor, height]
         - label:
-            en: Background
-            es: Cultura
-          fields: [interfaceLanguage, language, education, religion, ideology]
+            en: Details
+            es: Detalles
+          fields: [alcohol, smoke, drugs, diet, pets, sons, zodiacSign]
         - label:
-            en: Drugs
-            es: Drogas
-          fields: [alcohol, smoke, drugs]
-        - label:
-            en: Others
-            es: Otros
-          fields: [income, diet, pets, allergy, sons, zodiacSign, handicap]
-        - label:
-            en: Work, ideas and projects
-            es: Trabajo, ideas y proyectos
-          fields: [profession, industry]
-        - label:
-            en: Leisure
-            es: Ocio
-          fields: [sports, hobbies, games]
-        - label:
-            en: Experiences
-            es: Experiencias
-          fields: [leisureMoney, shows, plans, restaurants]
+            en: I'm looking for...
+            es: Busco...
+          fields: [objective, civilStatus, relationshipInterest]
 #          TODO: Change otherProfile to naturalProfile
     otherProfile:
         - label:
@@ -282,7 +266,7 @@ profile:
         type: double_choice
         label: &sonsLabel
             en: 'Sons'
-            es: 'Hijos'
+            es: 'Hijes'
         labelEdit: *sonsLabel
         doubleChoices: &sonsDoubleChoices
             yes:
@@ -396,7 +380,7 @@ profile:
         type: multiple_choices
         label: &ethnicGroupLabel
             en: 'Ethnicity'
-            es: 'Étnia'
+            es: 'Etnia'
         labelEdit: *ethnicGroupLabel
         natural:
             prefix:
@@ -414,7 +398,7 @@ profile:
         type: choice
         label: &eyeColorLabel
             en: 'Eyes color'
-            es: 'Color ojos'
+            es: 'Color de ojos'
         labelEdit: *eyeColorLabel
         natural:
             prefix:
@@ -462,7 +446,7 @@ profile:
         type: choice
         label: &smokeLabel
              en: 'Smoker'
-             es: 'Fumador/a'
+             es: 'Fumadore'
         labelEdit:
             en: 'Do you smoke?'
             es: '¿Fumas?'
@@ -907,7 +891,9 @@ user_filter:
         withImages: false
     drugs:
         type: multiple_choices
-        label: *drugsLabel
+        label:
+          en: Other drugs
+          es: Otras drogas
         withImages: false
     diet:
         type: multiple_choices
