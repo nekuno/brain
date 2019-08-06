@@ -291,6 +291,18 @@ class AnswerController extends FOSRestController implements ClassResourceInterfa
      *      default=0
      * )
      * @SWG\Parameter(
+     *      name="showOnlyAgreement",
+     *      in="query",
+     *      type="string",
+     *      default=null
+     * )
+     * @SWG\Parameter(
+     *      name="showOnlyOtherNotAnsweredQuestions",
+     *      in="query",
+     *      type="boolean",
+     *      default=false
+     * )
+     * @SWG\Parameter(
      *      name="offset",
      *      in="query",
      *      type="integer",
@@ -341,6 +353,8 @@ class AnswerController extends FOSRestController implements ClassResourceInterfa
             return $this->view([], 400);
         }
 
+        //$showOnlyOtherNotAnsweredQuestions uses its own model. $showOnlyAgreement agree or disagree share a model.
+        //$showOnlyCommon is not usable with the above and its only kept for legacy compatibility purposes.
         $filters = array('id' => $userId, 'id2' => $user->getId(), 'locale' => $locale, 'showOnlyCommon' => $showOnlyCommon, 'showOnlyAgreement' => $showOnlyAgreement);
 
         $model = $showOnlyOtherNotAnsweredQuestions ? $questionNotAnsweredPaginatedManager : $questionComparePaginatedManager;
