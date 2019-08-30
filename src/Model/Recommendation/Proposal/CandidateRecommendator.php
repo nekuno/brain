@@ -78,7 +78,8 @@ class CandidateRecommendator extends AbstractUserRecommendator
         $qb->with('candidate', 'anyUser', 'proposal', 'user', 'p');
         
         $qb->optionalMatch('(anyUser)-[similarity:SIMILARITY]-(user)')
-            ->with('candidate', 'anyUser', 'proposal', 'user', 'p', 'similarity.similarity AS similarity');
+            ->with('candidate', 'anyUser', 'proposal', 'user', 'p', 'similarity.similarity AS similarity')
+            ->orderBy('similarity DESC');
         $qb->optionalMatch('(anyUser)-[matching:MATCHING]-(user)')
             ->with('candidate', 'proposal', 'anyUser', 'user', 'p', 'similarity', 'matching');
 
