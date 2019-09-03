@@ -377,7 +377,7 @@ class ProfileOptions implements LoggerAwareInterface
                 ),
                 array(
                     'id' => 'transfeminine',
-                    'name_en' => 'Transfeminine',
+                    'name_en' => 'Transfemenina',
                     'name_es' => 'Transfeminino',
                 ),
                 array(
@@ -398,12 +398,12 @@ class ProfileOptions implements LoggerAwareInterface
                 array(
                     'id' => 'trans-man',
                     'name_en' => 'Trans Man',
-                    'name_es' => 'Trans Hombre',
+                    'name_es' => 'Hombre trans',
                 ),
                 array(
                     'id' => 'trans-woman',
                     'name_en' => 'Trans Woman',
-                    'name_es' => 'Trans Mujer',
+                    'name_es' => 'Mujer trans',
                 ),
                 array(
                     'id' => 'two-spirit',
@@ -1651,8 +1651,8 @@ class ProfileOptions implements LoggerAwareInterface
                 ),
                 array(
                     'id' => 'concerts-music',
-                    'name_en' => 'Concerts and music',
-                    'name_es' => 'Conciertos y música',
+                    'name_en' => 'Concerts',
+                    'name_es' => 'Conciertos',
                     'picture' => 'http://www.millenniumparkconcerts.org/wp-content/uploads/2015/07/music-concert.jpg'
                 ),
                 array(
@@ -1664,7 +1664,7 @@ class ProfileOptions implements LoggerAwareInterface
                 array(
                     'id' => 'circus',
                     'name_en' => 'Circus',
-                    'name_es' => 'Circo',
+                    'name_es' => 'Circos',
                     'picture' => 'https://cdn10.phillymag.com/wp-content/uploads/sites/3/2017/11/OTO-Caribbean-Dynasty-UniverSoulCircus-900x600.jpg'
                 ),
                 array(
@@ -1676,7 +1676,7 @@ class ProfileOptions implements LoggerAwareInterface
                 array(
                     'id' => 'sports-events',
                     'name_en' => 'Sports events',
-                    'name_es' => 'Eventos de deportes',
+                    'name_es' => 'Eventos deportivos',
                     'picture' => 'http://www.reservationsystems.com/Images/Sports_Large.png'
                 ),
                 array(

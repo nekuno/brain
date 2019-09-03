@@ -50,18 +50,46 @@ class NaturalProfileBuilder
         }
 
         $values = $profile->getValues();
-        foreach ($values as $fieldName => $profileValue) {
-            if (!$this->findCategory($fieldName)) {
-                continue;
+        $categories = $this->categoryMetadataManager->getMetadata()['otherProfile'];
+        $finalResult = array();
+
+        foreach ($categories as $category) {
+            $categoryValues = array();
+
+            foreach ($category['fields'] as $name) {
+                if (!isset($values[name])) {
+                    continue;
+                }
+                $metadatum = $this->metadata[$fieldName];
+                $naturalText = $this->getNaturalText($profileValue, $metadatum, $values['gender']);
+                if (isset($naturalText)) {
+                    $categoryValues[] = $naturalText;
+                }
             }
 
-            $metadatum = $this->metadata[$fieldName];
-
-            $naturalText = $this->getNaturalText($profileValue, $metadatum, $values['gender']);
-            $this->addToResult($fieldName, $naturalText);
+            if (!empty($categoryValues)) {
+                $finalResult[$category['label']] = implode('; ', $categoryValues);
+            }
         }
 
-        return $this->buildResult();
+        return $finalResult;
+    }
+
+    protected function joinValues($values, $natural)
+    {
+        if (empty($values)) {
+            return null;
+        }
+        $last = $values[count($values)-1];
+        $head = array_slice($values, 0, count($values)-1);
+        return empty($head) ? $last : (implode(', ', $head) . $natural['joinerLast'] . $last);
+    }
+
+    protected function applyTransform($value, $natural) {
+        if ($natural['transform'] == 'lowercase') {
+            return strtolower($value); // FIXME: only lowercase first char
+        }
+        return $value;
     }
 
     protected function getNaturalText($value, $metadatum, $pronoun)
@@ -71,108 +99,81 @@ class NaturalProfileBuilder
         switch ($metadatum['type']) {
 
             case 'textArea':
-                $naturalValue1 = $value;
+                $naturalValue = $value;
                 break;
             case 'choice':
-                $naturalValue1 = $this->getChoiceText($value, $metadatum);
+                $naturalValue = $this->getChoiceText($value, $metadatum);
                 break;
             case 'multiple_choices':
                 $choices = $this->getMultipleChoicesTexts($value, $metadatum);
-                $naturalValue1 = implode(', ', $choices);
+                $naturalValue = $this->joinValues($choices, $natural);
                 break;
             case 'double_choice':
-                $naturalValue1 = $this->getDoubleChoicesTexts($value, $metadatum);
+                $naturalValue = $this->getDoubleChoicesTexts($value, $metadatum);
                 break;
             case 'tags':
                 $labelValue = array_map(
                     function ($tag) {
-                        return $tag['name'];
+                        return $this->applyTransform($tag['name'], $natural);
                     },
                     $value
                 );
-                $naturalValue1 = implode(', ', $labelValue);
+                $naturalValue = $this->joinValues($labelValue, $natural);
                 break;
             case 'tags_and_choice':
-                $naturalValue1 = $this->getTagsAndChoiceNaturalValue($value, $natural, $metadatum, $pronoun);
-                $natural['interfix'] = '';
+                $naturalValue = $this->getTagsAndChoiceNaturalValue($value, $metadatum, $pronoun);
                 break;
             default:
-                $naturalValue1 = $value;
+                $naturalValue = $value;
                 break;
         }
 
-        $naturalText = $this->buildNaturalText($natural, $naturalValue1, $pronoun);
-
-        return $naturalText;
+        if (isset($naturalValue)) {
+            return $this->buildNaturalText($natural, $naturalValue, $pronoun);
+        }
+        return null;
     }
 
     //Japonés: básico, inglés: nativo
-    protected function getTagsAndChoiceNaturalValue($profileValue, $natural, $metadatum, $pronoun)
+    protected function getTagsAndChoiceNaturalValue($profileValue, $metadatum, $pronoun)
     {
+        $natural = $metadatum['natural'];
         $languages = array();
         $interfix = \MessageFormatter::formatMessage('en', $natural['interfix'], [
             'pronoun' => $pronoun,
         ]);
 
         foreach ($profileValue as $tagAndChoice) {
-            $tag = $tagAndChoice['tag']['name'];
+            $tag = $this->applyTransform($tagAndChoice['tag']['name'], $natural);
             $choice = $this->getTextFromKeys($tagAndChoice['choice'], $metadatum['choices']);
 
             $languages[] = $tag . ' ' . $interfix . ' ' . $choice;
         }
 
-        return implode(', ', $languages);
+        return $this->joinValues($languages, $natural);
     }
 
     protected function buildNaturalText($natural, $value1, $pronoun)
     {
-        return \MessageFormatter::formatMessage('en', $natural['format'], [
+        return \MessageFormatter::formatMessage('en', $natural['format'], [ // FIXME: use correct locale
             'x' => $value1,
             'pronoun' => $pronoun,
         ]);
     }
 
-    protected function findCategory($name)
-    {
-        $categories = $this->categoryMetadataManager->getMetadata();
-        $otherProfileCategories = $categories['otherProfile'];
-
-        foreach ($otherProfileCategories as $otherProfileCategory) {
-            if (in_array($name, $otherProfileCategory['fields'])) {
-                return $otherProfileCategory['label'];
-            }
-        }
-
-        return false;
-    }
-
-    protected function addToResult($fieldName, $naturalText)
-    {
-        $category = $this->findCategory($fieldName);
-
-        $this->result[$category][] = $naturalText;
-    }
-
-    protected function buildResult()
-    {
-        $finalResult = array();
-        foreach ($this->result as $category => $categoryValues) {
-            if (empty($categoryValues)){
-                continue;
-            }
-            $finalResult[$category] = implode('; ', $categoryValues) . '.';
-        }
-
-        return $finalResult;
-    }
-
     protected function getChoiceText($choiceId, $metadatum)
     {
+        $natural = $metadatum['natural'];
         $choices = $metadatum['choices'];
+
+        if ($natural['skipOther'] && $choiceId == 'other') {
+            return null;
+        }
+
         foreach ($choices as $choice)
         {
             if ($choice['id'] == $choiceId){
-                return $choice['text'];
+                return $this->applyTransform($choice['text'], $natural);
             }
         }
 
@@ -184,7 +185,10 @@ class NaturalProfileBuilder
         $choicesTexts = array();
         foreach ($choicesIds as $choicesId)
         {
-            $choicesTexts[] = $this->getChoiceText($choicesId, $metadatum);
+            $choice = $this->getChoiceText($choicesId, $metadatum);
+            if (isset($choice)) {
+                $choicesTexts[] = $choice;
+            }
         }
 
         return $choicesTexts;

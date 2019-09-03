@@ -39,6 +39,9 @@ class ProfileMetadataManager extends MetadataManager
         
         $natural['format'] = isset($values['format']) ? $this->metadataUtilities->getLocaleString($values['format'], $locale) : null;
         $natural['interfix'] = isset($values['interfix']) ? $this->metadataUtilities->getLocaleString($values['interfix'], $locale) : null;
+        $natural['skipOther'] = isset($values['skipOther']) ? $values['skipOther'] : false;
+        $natural['transform'] = isset($values['transform']) ? $values['transform'] : null;
+        $natural['joinerLast'] = $locale == 'es' ? ' y ' : ' and '; // FIXME
         
         return $natural;
     }

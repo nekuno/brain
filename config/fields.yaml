@@ -224,7 +224,7 @@ profile:
             es: 'Zodiaco'
         natural:
             format:
-                en: 'I am {x} {pronoun, select, female {girl} male {boy} other {other}}'
+                en: 'I am {x}'
                 es: 'Soy {x}'
         withImages: false
     height:
@@ -237,11 +237,8 @@ profile:
         labelEdit: *heightLabel
         natural:
             format:
-                en: 'My height is {x}'
-                es: 'Mido {x}'
-            interfix:
-                en: 'cm'
-                es: 'cm'
+                en: '{x}cm'
+                es: 'Mido {x}cm'
     industry:
         type: multiple_choices
         label: &industryLabel
@@ -346,8 +343,8 @@ profile:
         labelEdit: *descriptiveGenderLabel
         natural:
             format:
-                es: 'Género {x}'
-                en: 'Gender {x}'
+                es: '{x}'
+                en: '{x}'
         max: 5
         withImages: false
     objective:
@@ -378,8 +375,8 @@ profile:
         labelEdit: *ethnicGroupLabel
         natural:
             format:
-                en: 'From ethnic group {x}'
-                es: 'Mi etnia es {x}'
+                en: '{x}'
+                es: 'Etnia: {x}'
         withImages: false
     complexion:
         type: choice
@@ -397,7 +394,9 @@ profile:
         natural:
             format:
                 en: 'I have {x} eyes'
-                es: 'Tengo ojos de color {x}'
+                es: 'Ojos {x}'
+            transform: lowercase
+            skipOther: true
         withImages: false
     civilStatus:
         type: choice
@@ -416,6 +415,7 @@ profile:
             format:
                 en: 'I earn {x}'
                 es: 'Gano {x}'
+            transform: lowercase
         withImages: false
     pets:
         type: choice
@@ -427,11 +427,8 @@ profile:
             es: '¿Tienes mascotas?'
         natural:
             format:
-                en: 'I have {x}'
-                es: 'Tengo {x}'
-            interfix:
-                en: 'as a pet'
-                es: 'como mascota'
+                en: 'I have {x, select, Dog {dog(s)} Cat {cat(s)} Other {pets}}'
+                es: 'Tengo {x, select, Perro {perro(s)} Gato {gato(s)} Otras {mascotas}}'
         withImages: false
     smoke:
         type: choice
@@ -443,8 +440,9 @@ profile:
             es: '¿Fumas?'
         natural:
             format:
-                en: 'Smoking? {x}'
-                es: 'Fumar? {x}'
+                en: 'Smoker: {x}'
+                es: 'Fumador: {x}'
+            transform: lowercase
         withImages: false
     alcohol:
         type: choice
@@ -467,8 +465,9 @@ profile:
         labelEdit: *drugsLabel
         natural:
             format:
-                en: 'I like {x}'
-                es: 'Me gusta {x}'
+                en: 'I use {x}'
+                es: 'Uso/tomo {x}'
+            transform: lowercase
         withImages: false
     diet:
         type: choice
@@ -487,8 +486,8 @@ profile:
         labelEdit: *orientationLabel
         natural:
             format:
-                en: 'I am {x}'
-                es: 'Soy {x}'
+                en: '{x}'
+                es: '{x}'
         notErasable: true
         withImages: false
 #    orientationRequired:
@@ -563,8 +562,8 @@ profile:
         labelEdit: *professionLabel
         natural:
             format:
-                en: 'Mi skills are {x}'
-                es: 'Mis habilidades son {x}'
+                en: 'Skills: {x}'
+                es: 'Habilidades: {x}'
         max: 10
     education:
         type: tags
@@ -574,8 +573,8 @@ profile:
         labelEdit: *educationLabel
         natural:
             format:
-                en: 'My education is {x}'
-                es: 'Mi educación es {x}'
+                en: 'Education: {x}'
+                es: 'Educación: {x}'
     location:
         type: location
         label: &locationLabel
@@ -612,8 +611,8 @@ profile:
         labelEdit: *creativeLabel
         natural:
             format:
-                en: 'I make {x}'
-                es: 'Hago {x}'
+                en: 'Hobbies: {x}'
+                es: 'Aficiones: {x}'
     leisureMoney:
         type: multiple_choices
         label: &leisureMoneyLabel
@@ -645,6 +644,7 @@ profile:
             format:
                 en: 'I go to {x}'
                 es: 'Voy a {x}'
+            transform: lowercase
         withImages: false
     restaurants:
         type: multiple_choices
@@ -654,11 +654,8 @@ profile:
         labelEdit: *restaurantLabel
         natural:
             format:
-                en: 'I like {x}'
+                en: 'Food I like: {x}'
                 es: 'Me gusta la comida {x}'
-            interfix:
-                en: 'food'
-                es: ''
         withImages: true
 content:
     type:
