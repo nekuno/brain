@@ -270,10 +270,12 @@ class QuestionManager
             ->with('q', 'a', 'COUNT(maleAnswers) AS maleAnswersCount')
             ->optionalMatch('(:Gender {id: "female"})-[:OPTION_OF]->(:Profile)-[:PROFILE_OF]->(:User)-[femaleAnswers:ANSWERS]->(a)')
             ->with('a, id(a) AS answer', 'maleAnswersCount', 'COUNT(femaleAnswers) AS femaleAnswersCount')
+            ->optionalMatch('(:Gender {id: "nb"})-[:OPTION_OF]->(:Profile)-[:PROFILE_OF]->(:User)-[nbAnswers:ANSWERS]->(a)')
+            ->with('a, id(a) AS answer', 'maleAnswersCount', 'femaleAnswersCount', 'COUNT(nbAnswers) AS nbAnswersCount')
             ->optionalMatch('(profile:Profile)-[:PROFILE_OF]->(:User)-[:ANSWERS]->(a)')
-            ->with('answer', 'maleAnswersCount', 'femaleAnswersCount, profile')
+            ->with('answer', 'maleAnswersCount', 'femaleAnswersCount', 'nbAnswersCount', 'profile')
             ->orderBy('answer')
-            ->returns('answer', 'maleAnswersCount', 'femaleAnswersCount', 'collect(profile) as profiles');
+            ->returns('answer', 'maleAnswersCount', 'femaleAnswersCount', 'nbAnswersCount', 'collect(profile) as profiles');
 
         $query = $qb->getQuery();
 
@@ -297,12 +299,14 @@ class QuestionManager
                 'answerId' => $row['answer'],
                 'maleAnswersCount' => $row['maleAnswersCount'],
                 'femaleAnswersCount' => $row['femaleAnswersCount'],
+                'nbAnswersCount' => $row['nbAnswersCount'],
                 'youngAnswersCount' => $youngAnswersCount,
                 'oldAnswersCount' => $oldAnswersCount,
             );
 
             $stats['maleAnswersCount'] = isset($stats['maleAnswersCount']) ? $stats['maleAnswersCount'] + $row['maleAnswersCount'] : $row['maleAnswersCount'];
             $stats['femaleAnswersCount'] = isset($stats['femaleAnswersCount']) ? $stats['femaleAnswersCount'] + $row['femaleAnswersCount'] : $row['femaleAnswersCount'];
+            $stats['nbAnswersCount'] = isset($stats['nbAnswersCount']) ? $stats['nbAnswersCount'] + $row['nbAnswersCount'] : $row['nbAnswersCount'];
             $stats['youngAnswersCount'] = isset($stats['youngAnswersCount']) ? $stats['youngAnswersCount'] + $youngAnswersCount : $youngAnswersCount;
             $stats['oldAnswersCount'] = isset($stats['oldAnswersCount']) ? $stats['oldAnswersCount'] + $oldAnswersCount : $oldAnswersCount;
         }
@@ -368,11 +372,13 @@ class QuestionManager
         $stats = $this->getQuestionStats($question->getId());
         $maleAnswersStats = array();
         $femaleAnswersStats = array();
+        $nbAnswersStats = array();
         $youngAnswersStats = array();
         $oldAnswersStats = array();
         foreach ($stats['answers'] as $answer) {
             $maleAnswersStats[$answer['answerId']] = $answer['maleAnswersCount'];
             $femaleAnswersStats[$answer['answerId']] = $answer['femaleAnswersCount'];
+            $nbAnswersStats[$answer['answerId']] = $answer['nbAnswersCount'];
             $youngAnswersStats[$answer['answerId']] = $answer['youngAnswersCount'];
             $oldAnswersStats[$answer['answerId']] = $answer['oldAnswersCount'];
         }
@@ -381,6 +387,7 @@ class QuestionManager
             'questionId' => $questionId,
             'maleAnswersCount' => $stats['maleAnswersCount'],
             'femaleAnswersCount' => $stats['femaleAnswersCount'],
+            'nbAnswersCount' => $stats['nbAnswersCount'],
             'youngAnswersCount' => $stats['youngAnswersCount'],
             'oldAnswersCount' => $stats['oldAnswersCount'],
             'answers' => array(),
@@ -401,6 +408,7 @@ class QuestionManager
                 'answerId' => $answer->getId(),
                 'maleAnswersCount' => $maleAnswersStats[$answer->getId()],
                 'femaleAnswersCount' => $femaleAnswersStats[$answer->getId()],
+                'nbAnswersCount' => $nbAnswersStats[$answer->getId()],
                 'youngAnswersCount' => $youngAnswersStats[$answer->getId()],
                 'oldAnswersCount' => $oldAnswersStats[$answer->getId()],
             );

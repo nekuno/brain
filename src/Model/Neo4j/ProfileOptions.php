@@ -289,14 +289,19 @@ class ProfileOptions implements LoggerAwareInterface
             ),
             'Gender' => array(
                 array(
-                    'id' => 'male',
-                    'name_en' => 'Male',
-                    'name_es' => 'Masculino',
-                ),
-                array(
                     'id' => 'female',
                     'name_en' => 'Female',
                     'name_es' => 'Femenino',
+                ),
+                array(
+                    'id' => 'nb',
+                    'name_en' => 'Non-binary',
+                    'name_es' => 'No binarie',
+                ),
+                array(
+                    'id' => 'male',
+                    'name_en' => 'Male',
+                    'name_es' => 'Masculino',
                 ),
             ),
             'DescriptiveGender' => array(
