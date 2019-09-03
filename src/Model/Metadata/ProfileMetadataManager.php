@@ -37,9 +37,8 @@ class ProfileMetadataManager extends MetadataManager
     {
         $natural = array();
         
-        $natural['prefix'] = isset($values['prefix']) ? $this->metadataUtilities->getLocaleString($values['prefix'], $locale) : null;
+        $natural['format'] = isset($values['format']) ? $this->metadataUtilities->getLocaleString($values['format'], $locale) : null;
         $natural['interfix'] = isset($values['interfix']) ? $this->metadataUtilities->getLocaleString($values['interfix'], $locale) : null;
-        $natural['suffix'] = isset($values['suffix']) ? $this->metadataUtilities->getLocaleString($values['suffix'], $locale) : null;
         
         return $natural;
     }

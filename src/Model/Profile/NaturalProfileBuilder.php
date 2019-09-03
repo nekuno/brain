@@ -49,25 +49,24 @@ class NaturalProfileBuilder
             throw new NotFoundException('Metadata not found for natural profile building');
         }
 
-        foreach ($profile->getValues() as $fieldName => $profileValue) {
+        $values = $profile->getValues();
+        foreach ($values as $fieldName => $profileValue) {
             if (!$this->findCategory($fieldName)) {
                 continue;
             }
 
             $metadatum = $this->metadata[$fieldName];
 
-            $naturalText = $this->getNaturalText($profileValue, $metadatum);
+            $naturalText = $this->getNaturalText($profileValue, $metadatum, $values['gender']);
             $this->addToResult($fieldName, $naturalText);
         }
 
         return $this->buildResult();
     }
 
-    protected function getNaturalText($value, $metadatum)
+    protected function getNaturalText($value, $metadatum, $pronoun)
     {
         $natural = $metadatum['natural'];
-
-        $naturalValue2 = '';
 
         switch ($metadatum['type']) {
 
@@ -94,7 +93,7 @@ class NaturalProfileBuilder
                 $naturalValue1 = implode(', ', $labelValue);
                 break;
             case 'tags_and_choice':
-                $naturalValue1 = $this->getTagsAndChoiceNaturalValue($value, $natural, $metadatum);
+                $naturalValue1 = $this->getTagsAndChoiceNaturalValue($value, $natural, $metadatum, $pronoun);
                 $natural['interfix'] = '';
                 break;
             default:
@@ -102,40 +101,35 @@ class NaturalProfileBuilder
                 break;
         }
 
-        $naturalText = $this->buildNaturalText($natural, $naturalValue1, $naturalValue2);
+        $naturalText = $this->buildNaturalText($natural, $naturalValue1, $pronoun);
 
         return $naturalText;
     }
 
     //Japonés: básico, inglés: nativo
-    protected function getTagsAndChoiceNaturalValue($profileValue, $natural, $metadatum)
+    protected function getTagsAndChoiceNaturalValue($profileValue, $natural, $metadatum, $pronoun)
     {
         $languages = array();
+        $interfix = \MessageFormatter::formatMessage('en', $natural['interfix'], [
+            'pronoun' => $pronoun,
+        ]);
 
         foreach ($profileValue as $tagAndChoice) {
             $tag = $tagAndChoice['tag']['name'];
             $choice = $this->getTextFromKeys($tagAndChoice['choice'], $metadatum['choices']);
 
-            $languages[] = $tag . ' ' . $natural['interfix'] . ' ' . $choice;
+            $languages[] = $tag . ' ' . $interfix . ' ' . $choice;
         }
 
         return implode(', ', $languages);
     }
 
-    protected function buildNaturalText($natural, $value1, $value2)
+    protected function buildNaturalText($natural, $value1, $pronoun)
     {
-        $string = '';
-        if (!empty($natural['prefix'])) {
-            $string .= $natural['prefix'] . ' ';
-        }
-        $string .= $value1;
-        if (!empty($natural['interfix'])) {
-            $string .= $natural['interfix'] . ' ';
-        }
-        $string .= $value2;
-        $string .= $natural['suffix'];
-
-        return $string;
+        return \MessageFormatter::formatMessage('en', $natural['format'], [
+            'x' => $value1,
+            'pronoun' => $pronoun,
+        ]);
     }
 
     protected function findCategory($name)

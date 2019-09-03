@@ -223,9 +223,9 @@ profile:
             en: 'Zodiac'
             es: 'Zodiaco'
         natural:
-            prefix:
-                en: 'I am'
-                es: 'Soy'
+            format:
+                en: 'I am {x} {pronoun, select, female {girl} male {boy} other {other}}'
+                es: 'Soy {x}'
         withImages: false
     height:
         type: integer
@@ -236,9 +236,9 @@ profile:
             es: 'Altura (cm)'
         labelEdit: *heightLabel
         natural:
-            prefix:
-                en: 'My height is'
-                es: 'Mido'
+            format:
+                en: 'My height is {x}'
+                es: 'Mido {x}'
             interfix:
                 en: 'cm'
                 es: 'cm'
@@ -249,9 +249,9 @@ profile:
             es: 'Sector'
         labelEdit: *industryLabel
         natural:
-            prefix:
-                en: 'I work on'
-                es: 'Trabajo en'
+            format:
+                en: 'I work on {x}'
+                es: 'Trabajo en {x}'
         max: 3
         withImages: false
     allergy:
@@ -301,15 +301,12 @@ profile:
             es: 'Idiomas'
         labelEdit: *languageLabel
         natural:
-            prefix:
-                en: 'I speak'
-                es: 'Hablo'
+            format:
+                en: 'I speak {x} level'
+                es: 'Hablo {x}'
             interfix:
                 en: 'at'
                 es: 'con nivel'
-            suffix:
-                en: 'level'
-                es: ''
         choiceLabel: &languageChoiceLabel
             en: 'Level'
             es: 'Nivel'
@@ -348,9 +345,9 @@ profile:
             es: 'Género'
         labelEdit: *descriptiveGenderLabel
         natural:
-            prefix:
-                es: 'Género'
-                en: 'Gender'
+            format:
+                es: 'Género {x}'
+                en: 'Gender {x}'
         max: 5
         withImages: false
     objective:
@@ -369,12 +366,9 @@ profile:
             es: 'Color de pelo'
         labelEdit: *hairColorLabel
         natural:
-            prefix:
-                es: 'Pelo'
-                en: ''
-            interfix:
-                es: ''
-                en: 'hair'
+            format:
+                es: 'Pelo {x}'
+                en: '{x} hair'
         withImages: false
     ethnicGroup:
         type: multiple_choices
@@ -383,9 +377,9 @@ profile:
             es: 'Etnia'
         labelEdit: *ethnicGroupLabel
         natural:
-            prefix:
-                en: 'From ethnic group'
-                es: 'Mi etnia es '
+            format:
+                en: 'From ethnic group {x}'
+                es: 'Mi etnia es {x}'
         withImages: false
     complexion:
         type: choice
@@ -401,12 +395,9 @@ profile:
             es: 'Color de ojos'
         labelEdit: *eyeColorLabel
         natural:
-            prefix:
-                en: 'I have'
-                es: 'Tengo ojos de color'
-            interfix:
-                en: 'eyes'
-                es: ''
+            format:
+                en: 'I have {x} eyes'
+                es: 'Tengo ojos de color {x}'
         withImages: false
     civilStatus:
         type: choice
@@ -422,9 +413,9 @@ profile:
             es: 'Ingresos'
         labelEdit: *incomeLabel
         natural:
-            prefix:
-                en: 'I earn'
-                es: 'Gano'
+            format:
+                en: 'I earn {x}'
+                es: 'Gano {x}'
         withImages: false
     pets:
         type: choice
@@ -435,9 +426,9 @@ profile:
             en: 'Do you have pets?'
             es: '¿Tienes mascotas?'
         natural:
-            prefix:
-                en: 'I have'
-                es: 'Tengo'
+            format:
+                en: 'I have {x}'
+                es: 'Tengo {x}'
             interfix:
                 en: 'as a pet'
                 es: 'como mascota'
@@ -451,9 +442,9 @@ profile:
             en: 'Do you smoke?'
             es: '¿Fumas?'
         natural:
-            prefix:
-                en: 'Smoking?'
-                es: 'Fumar?'
+            format:
+                en: 'Smoking? {x}'
+                es: 'Fumar? {x}'
         withImages: false
     alcohol:
         type: choice
@@ -464,9 +455,9 @@ profile:
             en: 'Do you drink alcohol?'
             es: '¿Bebes Alcohol?'
         natural:
-            prefix:
-                en: 'I drink'
-                es: 'Bebo'
+            format:
+                en: 'I drink {x}'
+                es: 'Bebo {x}'
         withImages: false
     drugs:
         type: multiple_choices
@@ -475,9 +466,9 @@ profile:
             es: 'Otras'
         labelEdit: *drugsLabel
         natural:
-            prefix:
-                en: 'I like'
-                es: 'Me gusta'
+            format:
+                en: 'I like {x}'
+                es: 'Me gusta {x}'
         withImages: false
     diet:
         type: choice
@@ -495,9 +486,9 @@ profile:
             es: 'Orientación'
         labelEdit: *orientationLabel
         natural:
-            prefix:
-                en: 'I am'
-                es: 'Soy'
+            format:
+                en: 'I am {x}'
+                es: 'Soy {x}'
         notErasable: true
         withImages: false
 #    orientationRequired:
@@ -571,9 +562,9 @@ profile:
             es: 'Habilidades profesionales'
         labelEdit: *professionLabel
         natural:
-            prefix:
-                en: 'Mi skills are'
-                es: 'Mis habilidades son'
+            format:
+                en: 'Mi skills are {x}'
+                es: 'Mis habilidades son {x}'
         max: 10
     education:
         type: tags
@@ -582,9 +573,9 @@ profile:
             es: 'Educación'
         labelEdit: *educationLabel
         natural:
-            prefix:
-                en: 'My education is'
-                es: 'Mi educación es'
+            format:
+                en: 'My education is {x}'
+                es: 'Mi educación es {x}'
     location:
         type: location
         label: &locationLabel
@@ -599,9 +590,9 @@ profile:
             es: 'Deportes y físico'
         labelEdit: *sportsLabel
         natural:
-            prefix:
-                en: 'I play'
-                es: 'Practico'
+            format:
+                en: 'I play {x}'
+                es: 'Practico {x}'
     games:
         type: tags
         label: &gamesLabel
@@ -609,9 +600,9 @@ profile:
             es: 'Videojuegos y juegos de mesa'
         labelEdit: *gamesLabel
         natural:
-            prefix:
-                en: 'I play'
-                es: 'Juego a'
+            format:
+                en: 'I play {x}'
+                es: 'Juego a {x}'
         schema: VideoGame
     hobbies:
         type: multiple_choices
@@ -620,9 +611,9 @@ profile:
             es: 'Aficiones'
         labelEdit: *creativeLabel
         natural:
-            prefix:
-                en: 'I make'
-                es: 'Hago'
+            format:
+                en: 'I make {x}'
+                es: 'Hago {x}'
     leisureMoney:
         type: multiple_choices
         label: &leisureMoneyLabel
@@ -640,10 +631,10 @@ profile:
             es: 'Planes'
         labelEdit: *leisurePlanLabel
         natural:
-            prefix:
-                en: 'I enjoy'
-                es: 'Me gusta'
-        withImages: true
+            format:
+                en: 'I enjoy {x}'
+                es: 'Me gusta {x}'
+        withImages: false
     shows:
         type: multiple_choices
         label: &showLabel
@@ -651,10 +642,10 @@ profile:
             es: 'Espectáculos'
         labelEdit: *showLabel
         natural:
-            prefix:
-                en: 'I go to'
-                es: 'Voy a'
-        withImages: true
+            format:
+                en: 'I go to {x}'
+                es: 'Voy a {x}'
+        withImages: false
     restaurants:
         type: multiple_choices
         label: &restaurantLabel
@@ -662,9 +653,9 @@ profile:
             es: 'Restaurantes'
         labelEdit: *restaurantLabel
         natural:
-            prefix:
-                en: 'I like'
-                es: 'Me gusta la comida'
+            format:
+                en: 'I like {x}'
+                es: 'Me gusta la comida {x}'
             interfix:
                 en: 'food'
                 es: ''
