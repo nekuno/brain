@@ -93,7 +93,7 @@ categories:
         - label:
             en: Basic
             es: Básico
-          fields: [descriptiveGender, complexion, ethnicGroup, eyeColor, hairColor, height]
+          fields: [descriptiveGender, orientation, ethnicGroup, eyeColor, hairColor, height]
         - label:
             en: Miscellaneus
             es: Miscelánea
@@ -131,6 +131,10 @@ profile:
         label: &descriptionLabel
             en: 'About me'
             es: 'Sobre mí'
+        natural:
+            format:
+                en: '{x}'
+                es: '{x}'
         labelEdit: *descriptionLabel
     descriptionImportant:
         type: textarea
@@ -249,6 +253,7 @@ profile:
             format:
                 en: 'I work on {x}'
                 es: 'Trabajo en {x}'
+            transform: lowercase
         max: 3
         withImages: false
     allergy:
@@ -288,9 +293,9 @@ profile:
                     es: "y no quiero ninguno"
         withImages: false
         natural:
-            interfix:
-                en: 'want to have children'
-                es: 'quiero tener hijos'
+            format:
+                en: '{x}'
+                es: '{x}'
     language:
         type: tags_and_choice
         label: &languageLabel
@@ -345,6 +350,7 @@ profile:
             format:
                 es: '{x}'
                 en: '{x}'
+            skipOther: true
         max: 5
         withImages: false
     objective:
@@ -366,6 +372,8 @@ profile:
             format:
                 es: 'Pelo {x}'
                 en: '{x} hair'
+            transform: lowercase
+            skipOther: true
         withImages: false
     ethnicGroup:
         type: multiple_choices
@@ -383,6 +391,10 @@ profile:
         label: &complexionLabel
             en: 'Body type'
             es: 'Tipo de cuerpo'
+        natural:
+            format:
+                en: '{x}'
+                es: '{x}'
         labelEdit: *complexionLabel
         withImages: false
     eyeColor:
@@ -427,8 +439,8 @@ profile:
             es: '¿Tienes mascotas?'
         natural:
             format:
-                en: 'I have {x, select, Dog {dog(s)} Cat {cat(s)} Other {pets}}'
-                es: 'Tengo {x, select, Perro {perro(s)} Gato {gato(s)} Otras {mascotas}}'
+                en: 'I have {x, select, Dog {dog(s)} Cat {cat(s)} other {pets}}'
+                es: 'Tengo {x, select, Perro {perro(s)} Gato {gato(s)} other {mascotas}}'
         withImages: false
     smoke:
         type: choice
@@ -440,9 +452,8 @@ profile:
             es: '¿Fumas?'
         natural:
             format:
-                en: 'Smoker: {x}'
-                es: 'Fumador: {x}'
-            transform: lowercase
+                en: '{x}'
+                es: '{x}'
         withImages: false
     alcohol:
         type: choice
@@ -454,8 +465,8 @@ profile:
             es: '¿Bebes Alcohol?'
         natural:
             format:
-                en: 'I drink {x}'
-                es: 'Bebo {x}'
+                en: 'Alcohol: {x}' # FIXME
+                es: '{x, select, Sí {Bebo alcohol} No {No bebo} Ocasionalmente {Bebo ocasionalmente} other {Bebo socialmente / en fiestas}}'
         withImages: false
     drugs:
         type: multiple_choices
@@ -629,10 +640,11 @@ profile:
             en: 'Plans'
             es: 'Planes'
         labelEdit: *leisurePlanLabel
-        natural:
+        natural: # FIXME: revisar gramática name_en, eliminar mayúsculas innecesarias
             format:
-                en: 'I enjoy {x}'
-                es: 'Me gusta {x}'
+                en: 'Plans I enjoy: {x}'
+                es: 'Planes que me gustan: {x}'
+            transform: lowercase
         withImages: false
     shows:
         type: multiple_choices
@@ -655,7 +667,8 @@ profile:
         natural:
             format:
                 en: 'Food I like: {x}'
-                es: 'Me gusta la comida {x}'
+                es: 'Me gustan los restaurantes {x}'
+            transform: lowercase # FIXME: only spanish
         withImages: true
 content:
     type:

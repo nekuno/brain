@@ -52,16 +52,17 @@ class NaturalProfileBuilder
         $values = $profile->getValues();
         $categories = $this->categoryMetadataManager->getMetadata()['otherProfile'];
         $finalResult = array();
+        $pronoun = isset($values['gender']) ? $values['gender'] : 'nb';
 
         foreach ($categories as $category) {
             $categoryValues = array();
 
             foreach ($category['fields'] as $name) {
-                if (!isset($values[name])) {
+                if (!isset($values[$name])) {
                     continue;
                 }
-                $metadatum = $this->metadata[$fieldName];
-                $naturalText = $this->getNaturalText($profileValue, $metadatum, $values['gender']);
+                $metadatum = $this->metadata[$name];
+                $naturalText = $this->getNaturalText($values[$name], $metadatum, $pronoun);
                 if (isset($naturalText)) {
                     $categoryValues[] = $naturalText;
                 }
@@ -80,9 +81,16 @@ class NaturalProfileBuilder
         if (empty($values)) {
             return null;
         }
+        if (count($values) == 1) {
+            return $values[0];
+        }
         $last = $values[count($values)-1];
         $head = array_slice($values, 0, count($values)-1);
-        return empty($head) ? $last : (implode(', ', $head) . $natural['joinerLast'] . $last);
+        $joiner = $natural['joinerLast'];
+        if ($joiner == ' y ' && preg_match('/^\s*h?[ií]/iu', $last)) {
+            $joiner = ' e ';
+        }
+        return implode(', ', $head) . $joiner . $last;
     }
 
     protected function applyTransform($value, $natural) {
@@ -113,7 +121,7 @@ class NaturalProfileBuilder
                 break;
             case 'tags':
                 $labelValue = array_map(
-                    function ($tag) {
+                    function ($tag) use ($natural) {
                         return $this->applyTransform($tag['name'], $natural);
                     },
                     $value
@@ -199,7 +207,7 @@ class NaturalProfileBuilder
         $choice = $this->getChoiceText($values['choice'], $metadatum);
         $detail = $this->getDoubleChoiceText($values, $metadatum);
 
-        return $choice . ' ' . $detail;
+        return $detail ? $choice . ' ' . $detail : $choice;
     }
 
     protected function getDoubleChoiceText($values, $metadatum)

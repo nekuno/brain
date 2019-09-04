@@ -323,7 +323,7 @@ class ProfileOptions implements LoggerAwareInterface
                 array(
                     'id' => 'androgynous',
                     'name_en' => 'Androgynous',
-                    'name_es' => 'Andrógino',
+                    'name_es' => 'Andrógine',
                 ),
                 array(
                     'id' => 'bigender',
@@ -332,13 +332,13 @@ class ProfileOptions implements LoggerAwareInterface
                 ),
                 array(
                     'id' => 'cis-man',
-                    'name_en' => 'Cis Man',
-                    'name_es' => 'Cis Hombre',
+                    'name_en' => 'Cis man',
+                    'name_es' => 'Hombre cis',
                 ),
                 array(
                     'id' => 'cis-woman',
-                    'name_en' => 'Cis Woman',
-                    'name_es' => 'Cis Mujer',
+                    'name_en' => 'Cis woman',
+                    'name_es' => 'Mujer cis',
                 ),
                 array(
                     'id' => 'genderfluid',
@@ -368,7 +368,7 @@ class ProfileOptions implements LoggerAwareInterface
                 array(
                     'id' => 'non-binary',
                     'name_en' => 'Non-binary',
-                    'name_es' => 'No binario',
+                    'name_es' => 'No binarie',
                 ),
                 array(
                     'id' => 'pangender',
@@ -468,13 +468,13 @@ class ProfileOptions implements LoggerAwareInterface
             'Sons' => array(
                 array(
                     'id' => 'yes',
-                    'name_en' => 'Have kids(s)',
-                    'name_es' => 'Tengo hijos',
+                    'name_en' => 'I have kids(s)',
+                    'name_es' => 'Tengo hijes',
                 ),
                 array(
                     'id' => 'no',
-                    'name_en' => "Doesn't have kids",
-                    'name_es' => 'No tengo hijos',
+                    'name_en' => "I don't have kids",
+                    'name_es' => 'No tengo hijes',
                 ),
             ),
             'HairColor' => array(
@@ -500,8 +500,8 @@ class ProfileOptions implements LoggerAwareInterface
                 ),
                 array(
                     'id' => 'gray-or-white',
-                    'name_en' => 'Gray or White',
-                    'name_es' => 'Gris o Blanco',
+                    'name_en' => 'Gray / white',
+                    'name_es' => 'Gris / blanco',
                 ),
                 array(
                     'id' => 'other',
@@ -1357,18 +1357,18 @@ class ProfileOptions implements LoggerAwareInterface
             'Smoke' => array(
                 array(
                     'id' => 'yes',
-                    'name_en' => 'Yes',
-                    'name_es' => 'Sí',
+                    'name_en' => 'I smoke',
+                    'name_es' => 'Fumo',
                 ),
                 array(
                     'id' => 'no-but-i-tolerate-it',
-                    'name_en' => 'No, but I tolerate it',
-                    'name_es' => 'No, pero lo toleraría',
+                    'name_en' => "I don't smoke, but I tolerate it",
+                    'name_es' => 'No fumo, pero lo toleraría',
                 ),
                 array(
                     'id' => 'no-and-i-hate-it',
-                    'name_en' => 'No, and cannot stand it',
-                    'name_es' => 'No, y no lo soporto',
+                    'name_en' => "I can't stand tobacco",
+                    'name_es' => 'No aguanto el tabaco',
                 ),
             ),
             'InterfaceLanguage' => array(
@@ -1589,8 +1589,8 @@ class ProfileOptions implements LoggerAwareInterface
             'Restaurants' => array(
                 array(
                     'id' => 'asian',
-                    'name_en' => 'Japonés',
-                    'name_es' => 'Japanese',
+                    'name_en' => 'Japanese',
+                    'name_es' => 'Japoneses',
                     'picture' => 'http://cdn.shopify.com/s/files/1/1291/3261/products/DSC_7797-Edit_grande.jpg'
                 ),
                 array(
@@ -1602,7 +1602,7 @@ class ProfileOptions implements LoggerAwareInterface
                 array(
                     'id' => 'fast',
                     'name_en' => 'Fast food',
-                    'name_es' => 'Comida rápida',
+                    'name_es' => 'De comida rápida',
                     'picture' => 'https://upload.wikimedia.org/wikipedia/commons/2/2e/Fast_food_meal.jpg'
                 ),
                 array(
@@ -1614,13 +1614,13 @@ class ProfileOptions implements LoggerAwareInterface
                 array(
                     'id' => 'spanish',
                     'name_en' => 'Spanish',
-                    'name_es' => 'Español',
+                    'name_es' => 'Españoles',
                     'picture' => 'https://1dib1q3k1s3e11a5av3bhlnb-wpengine.netdna-ssl.com/wp-content/uploads/2012/05/spanish-tortilla.jpg'
                 ),
                 array(
                     'id' => 'indian',
                     'name_en' => 'Indian',
-                    'name_es' => 'Indio',
+                    'name_es' => 'Indios',
                     'picture' => 'https://media-cdn.tripadvisor.com/media/photo-s/0b/71/97/4e/north-indian-food-kaitaia.jpg'
                 ),
                 array(
@@ -1632,13 +1632,13 @@ class ProfileOptions implements LoggerAwareInterface
                 array(
                     'id' => 'vegetarian',
                     'name_en' => 'Vegetarian',
-                    'name_es' => 'Vegetariano',
+                    'name_es' => 'Vegetarianos',
                     'picture' => 'https://www.vegetariantimes.com/.image/t_share/MTQ3MDM3MzQ5NjA2MzM2NDA3/zi3000-shutterstock-buddha-bowl.jpg'
                 ),
                 array(
                     'id' => 'arab',
                     'name_en' => 'Arab',
-                    'name_es' => 'Árabe',
+                    'name_es' => 'Árabes',
                     'picture' => 'http://www.davehazzan.com/wp-content/uploads/2017/06/BW-Berlin-8420-1.jpg'
                 ),
             ),
