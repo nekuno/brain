@@ -51,7 +51,7 @@ class ProposalRecommendator implements PaginatedInterface
         $qb->match('(day)<-[includes:INCLUDES]-(:Availability)<-[anyHas:HAS_AVAILABILITY]-(proposal:Proposal)')
             ->with('user', 'proposal')
             ->where($previousCondition)
-            ->with('user', 'distinct proposal');
+            ->with('distinct proposal', 'user');
 
         $qb->match('(owner:UserEnabled)-[:PROPOSES]->(proposal)')
             ->optionalMatch('(owner)-[similarity:SIMILARITY]-(user)')
