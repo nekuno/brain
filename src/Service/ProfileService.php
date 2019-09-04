@@ -158,4 +158,17 @@ class ProfileService
 
         return $profile;
     }
+
+    public function enrichEditedProfile($profile)
+    {
+        $locale = $profile->get('interfaceLanguage');
+        $profileMetadata = $this->metadataService->getProfileMetadataWithChoices($locale);
+        $this->naturalProfileBuilder->setMetadata($profileMetadata);
+
+        $naturalProfile = $this->naturalProfileBuilder->buildNaturalProfile($profile);
+        $profile->setNaturalProfile($naturalProfile);
+
+        return $profile;
+    }
+
 }

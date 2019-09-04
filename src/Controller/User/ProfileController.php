@@ -275,9 +275,10 @@ class ProfileController extends FOSRestController implements ClassResourceInterf
      * @Security(name="Bearer")
      * @SWG\Tag(name="profiles")
      */
-    public function putAction(Request $request, User $user, ProfileManager $profileManager)
+    public function putAction(Request $request, User $user, ProfileManager $profileManager, ProfileService $profileService)
     {
         $profile = $profileManager->update($user->getId(), $request->request->all());
+        $profileService->enrichEditedProfile($profile);
 
         return $this->view($profile->jsonSerialize());
     }
