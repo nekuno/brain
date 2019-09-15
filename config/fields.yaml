@@ -29,11 +29,11 @@ categories:
         - label:
             en: Nekuno Profile
             es: Perfil Nekuno
-          fields: [objective, birthday, descriptiveGender, location]
+          fields: [objective, birthday, gender, descriptiveGender, location]
         - label:
-            en: Nekuno goals
-            es: Objetivos en Nekuno
-          fields: [civilStatus, relationshipInterest, gender, orientation]
+            en: Relationships
+            es: Relaciones
+          fields: [civilStatus, relationshipInterest, orientation]
         - label:
             en: About Me
             es: Sobre mí
