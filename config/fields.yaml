@@ -363,6 +363,7 @@ profile:
             en: 'Objectives'
             es: 'Objetivos'
         labelEdit: *objectiveLabel
+        hidden: true
         min: 1
         notErasable: true
         withImages: false
