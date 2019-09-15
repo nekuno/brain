@@ -117,7 +117,7 @@ class NaturalProfileBuilder
                 $naturalValue = $this->joinValues($choices, $natural);
                 break;
             case 'double_choice':
-                $naturalValue = $this->getDoubleChoicesTexts($value, $metadatum);
+                $naturalValue = $this->getDoubleChoicesTexts($value, $metadatum, $pronoun);
                 break;
             case 'tags':
                 $labelValue = array_map(
@@ -147,15 +147,16 @@ class NaturalProfileBuilder
     {
         $natural = $metadatum['natural'];
         $languages = array();
-        $interfix = \MessageFormatter::formatMessage('en', $natural['interfix'], [
-            'pronoun' => $pronoun,
-        ]);
 
         foreach ($profileValue as $tagAndChoice) {
             $tag = $this->applyTransform($tagAndChoice['tag']['name'], $natural);
             $choice = $this->getTextFromKeys($tagAndChoice['choice'], $metadatum['choices']);
 
-            $languages[] = $tag . ' ' . $interfix . ' ' . $choice;
+            $languages[] = (!empty($choice)) ? \MessageFormatter::formatMessage('en', $natural['interfix'], [ // FIXME: use correct locale
+                'x' => $tag,
+                'y' => $this->applyTransform($choice, $natural),
+                'pronoun' => $pronoun,
+            ]) : $tag;
         }
 
         return $this->joinValues($languages, $natural);
@@ -202,12 +203,20 @@ class NaturalProfileBuilder
         return $choicesTexts;
     }
 
-    protected function getDoubleChoicesTexts($values, $metadatum)
+    protected function getDoubleChoicesTexts($values, $metadatum, $pronoun)
     {
+        $natural = $metadatum['natural'];
         $choice = $this->getChoiceText($values['choice'], $metadatum);
+        if (!isset($choice)) {
+            return null;
+        }
         $detail = $this->getDoubleChoiceText($values, $metadatum);
 
-        return $detail ? $choice . ' ' . $detail : $choice;
+        return (!empty($detail)) ? \MessageFormatter::formatMessage('en', $natural['interfix'], [ // FIXME: use correct locale
+            'x' => $choice,
+            'y' => $this->applyTransform($detail, $natural),
+            'pronoun' => $pronoun,
+        ]) : $choice;
     }
 
     protected function getDoubleChoiceText($values, $metadatum)

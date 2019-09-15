@@ -209,8 +209,8 @@ class ProfileOptions implements LoggerAwareInterface
                 ),
                 array(
                     'id' => 'others',
-                    'name_en' => 'Others',
-                    'name_es' => 'Otros',
+                    'name_en' => 'Other substances',
+                    'name_es' => 'Otras sustancias',
                 ),
             ),
             'EthnicGroup' => array(
@@ -290,18 +290,18 @@ class ProfileOptions implements LoggerAwareInterface
             'Gender' => array(
                 array(
                     'id' => 'female',
-                    'name_en' => 'Female',
-                    'name_es' => 'Femenino',
+                    'name_en' => 'She/her',
+                    'name_es' => 'Ella',
                 ),
                 array(
                     'id' => 'nb',
-                    'name_en' => 'Non-binary',
-                    'name_es' => 'No binarie',
+                    'name_en' => 'They/them',
+                    'name_es' => 'Elle',
                 ),
                 array(
                     'id' => 'male',
-                    'name_en' => 'Male',
-                    'name_es' => 'Masculino',
+                    'name_en' => 'He/him',
+                    'name_es' => 'Él',
                 ),
             ),
             'DescriptiveGender' => array(

@@ -296,47 +296,51 @@ profile:
             format:
                 en: '{x}'
                 es: '{x}'
+            interfix:
+                en: '{x} {y}'
+                es: '{x} {y}'
     language:
         type: tags_and_choice
         label: &languageLabel
             en: 'Languages'
             es: 'Idiomas'
         labelEdit: *languageLabel
-        natural:
+        natural: # FIXME
             format:
                 en: 'I speak {x} level'
                 es: 'Hablo {x}'
             interfix:
-                en: 'at'
-                es: 'con nivel'
+                en: '{x} ({y})'
+                es: '{x} ({y})'
+            transform: lowercase
         choiceLabel: &languageChoiceLabel
             en: 'Level'
             es: 'Nivel'
         choices: &languageChoices
             elementary:
                 en: 'Elementary proficiency'
-                es: 'Competencia básica'
+                es: 'Nivel básico'
             limited_working:
                 en: 'Limited working proficiency'
-                es: 'Competencia básica limitada'
+                es: 'Nivel básico limitado'
             professional_working:
                 en: 'Professional working proficiency'
-                es: 'Competencia básica profesional'
+                es: 'Nivel básico profesional'
             full_professional:
                 en: 'Full professional proficiency'
-                es: 'Competencia profesional completa'
+                es: 'Nivel profesional'
             native:
                 en: 'Native or bilingual proficiency'
-                es: 'Competencia bilingüe o nativa'
+                es: 'Nivel bilingüe / nativo'
         withImages: false
     gender:
         type: choice
         label: &genderLabel
-            en: 'Want to be found in searches by gender'
-            es: 'Quiero salir en búsquedas por género'
+            en: 'Pronouns'
+            es: 'Pronombre'
         labelEdit:
-            en: 'Want to be found in searches by gender'
-            es: 'Quiero salir en búsquedas por género'
+            en: 'What''s your pronouns?'
+            es: '¿Qué pronombres usas?'
         notErasable: true
         hidden: true
         withImages: false
@@ -445,8 +449,8 @@ profile:
     smoke:
         type: choice
         label: &smokeLabel
-             en: 'Smoker'
-             es: 'Fumadore'
+             en: 'Tobacco'
+             es: 'Tabaco'
         labelEdit:
             en: 'Do you smoke?'
             es: '¿Fumas?'
@@ -552,6 +556,13 @@ profile:
             sikh: *religionDetails
             kopimism: *religionDetails
             other: *religionDetails
+        natural:
+            format:
+                en: '{x}'
+                es: '{x}'
+            interfix:
+                en: 'I''m {x} {y}'
+                es: 'Soy {x} {y}'
         withImages: false
     handicap:
         type: tags
@@ -1041,3 +1052,4 @@ availability:
     id:
         type: integer
         required: false
+
