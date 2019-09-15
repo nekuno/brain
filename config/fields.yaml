@@ -29,7 +29,7 @@ categories:
         - label:
             en: Nekuno Profile
             es: Perfil Nekuno
-          fields: [objective, birthday, gender, descriptiveGender, location]
+          fields: [birthday, gender, descriptiveGender, location]
         - label:
             en: Relationships
             es: Relaciones
@@ -87,7 +87,7 @@ categories:
         - label:
             en: I'm looking for...
             es: Busco...
-          fields: [objective, civilStatus, relationshipInterest]
+          fields: [civilStatus, relationshipInterest]
 #          TODO: Change otherProfile to naturalProfile
     otherProfile:
         - label:
