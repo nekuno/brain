@@ -101,13 +101,10 @@ class ProfileService
         $photos = $this->photoManager->getAll($otherUserId);
         $otherProfileData->setPhotos($photos);
 
-        $locale = $this->profileManager->getInterfaceLocale($ownUserId);
-        $profileMetadata = $this->metadataService->getProfileMetadataWithChoices($locale);
-        $this->naturalProfileBuilder->setMetadata($profileMetadata);
-
         $liked = $this->rateManager->isLiked($ownUserId, $otherUserId);
         $otherProfileData->setLike($liked);
 
+        $this->prepareNaturalForUser($ownUserId);
         $naturalProfile = $this->naturalProfileBuilder->buildNaturalProfile($profile);
         $otherProfileData->setNaturalProfile($naturalProfile);
 
@@ -128,10 +125,7 @@ class ProfileService
         $photos = $this->photoManager->getAll($ownUserId);
         $ownProfileData->setPhotos($photos);
 
-        $locale = $profile->get('interfaceLanguage');
-        $profileMetadata = $this->metadataService->getProfileMetadataWithChoices($locale);
-        $this->naturalProfileBuilder->setMetadata($profileMetadata);
-
+        $this->prepareNatural($profile->get('interfaceLanguage'));
         $naturalProfile = $this->naturalProfileBuilder->buildNaturalProfile($profile);
         $ownProfileData->setNaturalProfile($naturalProfile);
 
@@ -149,25 +143,29 @@ class ProfileService
     {
         $profile = $this->profileManager->getBySlug($slug);
 
-        $locale = $profile->get('interfaceLanguage');
-        $profileMetadata = $this->metadataService->getProfileMetadataWithChoices($locale);
-        $this->naturalProfileBuilder->setMetadata($profileMetadata);
-
-        $naturalProfile = $this->naturalProfileBuilder->buildNaturalProfile($profile);
-        $profile->setNaturalProfile($naturalProfile);
+        $this->prepareNatural($profile->get('interfaceLanguage'));
+        $this->enrichProfile($profile);
 
         return $profile;
     }
 
-    public function enrichEditedProfile($profile)
+    public function prepareNaturalForUser($userId)
     {
-        $locale = $profile->get('interfaceLanguage');
+        $this->prepareNatural($this->profileManager->getInterfaceLocale($userId));
+    }
+
+    public function prepareNatural($locale)
+    {
+        // FIXME: ensure correct locale is being used in all calls
+        // FIXME: ensure natural profile is always added
         $profileMetadata = $this->metadataService->getProfileMetadataWithChoices($locale);
         $this->naturalProfileBuilder->setMetadata($profileMetadata);
+    }
 
+    public function enrichProfile($profile)
+    {
         $naturalProfile = $this->naturalProfileBuilder->buildNaturalProfile($profile);
         $profile->setNaturalProfile($naturalProfile);
-
         return $profile;
     }
 

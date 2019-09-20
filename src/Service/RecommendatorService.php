@@ -36,6 +36,8 @@ class RecommendatorService
     protected $contentPopularRecommendationPaginatedModel;
     /** @var $sharesManager SharesManager */
     protected $sharesManager;
+    /** @var $profileService ProfileService */
+    protected $profileService;
 
     //TODO: Check if user can be passed as argument and remove this dependency
     /** @var  $userManager UserManager */
@@ -50,7 +52,8 @@ class RecommendatorService
                                 ContentRecommendator $contentRecommendationPaginatedModel,
                                 UserPopularRecommendator $userPopularRecommendationPaginatedModel,
                                 ContentPopularRecommendator $contentPopularRecommendationPaginatedModel,
-                                SharesManager $sharesManager)
+                                SharesManager $sharesManager,
+                                ProfileService $profileService)
     {
         $this->paginator = $paginator;
         $this->contentPaginator = $contentPaginator;
@@ -61,6 +64,7 @@ class RecommendatorService
         $this->contentPopularRecommendationPaginatedModel = $contentPopularRecommendationPaginatedModel;
         $this->userPopularRecommendationPaginatedModel = $userPopularRecommendationPaginatedModel;
         $this->sharesManager = $sharesManager;
+        $this->profileService = $profileService;
     }
 
     public function getRecommendationFromThread(Thread $thread)
@@ -286,6 +290,11 @@ class RecommendatorService
 
         $result = $this->contentPaginator->paginate($filters, $this->userRecommendationPaginatedModel, $request);
         $result = $this->addTopLinks($result, $requestingUserId);
+
+        $this->profileService->prepareNaturalForUser($requestingUserId);
+        foreach ($result['items'] as $user) {
+            $this->profileService->enrichProfile($user->getProfile());
+        }
 
         return $result;
     }

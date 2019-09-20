@@ -278,7 +278,8 @@ class ProfileController extends FOSRestController implements ClassResourceInterf
     public function putAction(Request $request, User $user, ProfileManager $profileManager, ProfileService $profileService)
     {
         $profile = $profileManager->update($user->getId(), $request->request->all());
-        $profileService->enrichEditedProfile($profile);
+        $profileService->prepareNatural($profile->get('interfaceLanguage'));
+        $profileService->enrichProfile($profile);
 
         return $this->view($profile->jsonSerialize());
     }
